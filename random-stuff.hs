@@ -1,5 +1,3 @@
-{-# LANGUAGE NamedFieldPuns #-}
-
 module Main (main) where
 
 import Edges
@@ -36,7 +34,7 @@ main = do
     let (part1, part2, part3, part4, part5) = transform syntax "" (show time)
     let out = output config ++ ".als"
     writeFile out (part1 ++ part2 ++ part3 ++ part4 ++ part5)
-    putStrLn ("More output written to " ++ output config)
+    putStrLn ("More output written to " ++ out)
     instances <- giveMeInstances config
     mapM_ (\(i, insta) -> drawOdFromInstance insta (show i) Pdf) (zip [1 :: Integer ..] instances)
 
