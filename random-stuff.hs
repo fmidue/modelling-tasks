@@ -12,7 +12,7 @@ import Data.List.Split     (splitOn)
 import Data.GraphViz
 import Data.Time.LocalTime
 
-import System.FilePath.Posix (searchPathSeparator)
+import System.FilePath (searchPathSeparator)
 import System.IO
 import System.Process
 
