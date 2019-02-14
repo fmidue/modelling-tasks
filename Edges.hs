@@ -6,7 +6,9 @@ module Edges (
   -- * Checks
   compositionCycles, doubleConnections, inheritanceCycles, multipleInheritances,
   selfEdges, wrongLimits,
-  anyRedEdge, shouldBeRed
+  anyRedEdge, shouldBeRed,
+  -- * Utility functions
+  isComposition
   ) where
 
 import Types (AssociationType (..), Connection (..), Syntax)
@@ -45,19 +47,18 @@ inheritanceCycles = cycles isInheritance
 
 compositionCycles :: [DiagramEdge] -> [[DiagramEdge]]
 compositionCycles = cycles isComposition
-  where
-    isComposition (Assoc Composition _ _ _) = True
-    isComposition _                         = False
+
+isComposition :: Connection -> Bool
+isComposition (Assoc Composition _ _ _) = True
+isComposition _                         = False
 
 wrongLimits :: [DiagramEdge] -> [DiagramEdge]
 wrongLimits es =
-  [c | c@(_, _, Assoc t s@(sl, sh) e _) <- es
+  [c | c@(_, _, t@(Assoc _ s@(sl, sh) e _)) <- es
      , isComposition t && (sh /= Just 1 || sl < 0 || sl > 1)
        || not (inLimit s)
        || not (inLimit e)]
   where
-    isComposition Composition = True
-    isComposition _           = False
     inLimit (l, Nothing)
       | 0 <= l && l <= 2 = True
       | otherwise        = False
