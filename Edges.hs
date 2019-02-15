@@ -6,13 +6,10 @@ module Edges (
   -- * Checks
   compositionCycles, doubleConnections, inheritanceCycles, multipleInheritances,
   selfEdges, wrongLimits,
-  anyRedEdge, shouldBeRed,
-  -- * Utility functions
-  isComposition
+  anyRedEdge, shouldBeRed
   ) where
 
 import Types (AssociationType (..), Connection (..), Syntax)
-
 import Util
 
 import Data.Maybe

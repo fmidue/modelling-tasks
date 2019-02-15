@@ -3,43 +3,46 @@ module Mutation where
 import Types
 import Edges
 
+import Data.List ((\\))
+import Data.Set  (Set, fromList)
+
+data Target = TAssociation | TAggregation | TComposition | TInheritance
+  deriving (Bounded, Enum, Eq, Ord)
+
+type Targets = Set Target
+
 data Mutation =
-    Add Addition
-  | Remove Removal
-  | ChangeMultiplicity
-  | Transform Transformation
+    Add       Target
+  | Remove    Target
+  | Transform Target Target
+  | MultiplicityRange Alteration Target
 
-data Addition       = AddInheritance     | AddComposition    | AddOther
-data Removal        = RemoveInheritance  | RemoveComposition | RemoveOther
-data Transformation = FromInheritance    | ToInheritance
-                    | CompositionToOther | OtherToComposition
-                    | OtherToOther
+data Alteration = Increase | Decrease
 
-allInheritances :: [DiagramEdge] -> [DiagramEdge]
-allInheritances xs =
-  [x | x@(_, _, Inheritance) <- xs]
+targetSet :: Targets
+targetSet = fromList [minBound ..]
 
-allAssocs :: [DiagramEdge] -> [DiagramEdge]
-allAssocs xs =
-  [x | x@(_, _, Assoc {}) <- xs]
+isTarget :: Connection -> Target -> Bool
+isTarget (Assoc Association _ _ _) TAssociation = True
+isTarget (Assoc Aggregation _ _ _) TAggregation = True
+isTarget (Assoc Composition _ _ _) TComposition = True
+isTarget Inheritance               TInheritance = True
+isTarget _                         _            = False
 
-allCompositions :: [DiagramEdge] -> [DiagramEdge]
-allCompositions xs =
-  [x | x@(_, _, Assoc Composition _ _ _) <- xs]
+isTargetEdge :: DiagramEdge -> Target -> Bool
+isTargetEdge (_, _, t) = isTarget t
 
-allNonCompositions :: [DiagramEdge] -> [DiagramEdge]
-allNonCompositions xs =
-  [x | x@(_, _, k) <- xs, not $ isComposition k]
+isTargetsEdge :: DiagramEdge -> Targets -> Bool
+isTargetsEdge x ts = any (x `isTargetEdge`) ts
 
-allOthers :: [DiagramEdge] -> [DiagramEdge]
-allOthers xs =
-  [x | x@(_, _, Assoc t _ _ _) <- xs, t /= Composition]
+targets :: Targets -> [DiagramEdge] -> [DiagramEdge]
+targets ts es =
+  [e | e <- es, isTargetsEdge e ts]
 
-allRemoves :: Removal -> [DiagramEdge] -> [[DiagramEdge]]
-allRemoves r es =
-  let xs = case r of
-             RemoveInheritance -> allInheritances es
-             RemoveComposition -> allCompositions es
-             RemoveOther       -> allOthers es
-  in [filter (x /=) es | x <- xs]
+nonTargets :: Targets -> [DiagramEdge] -> [DiagramEdge]
+nonTargets ts es =
+  [e | e <- es, not $ isTargetsEdge e ts]
 
+allRemoves :: Targets -> [DiagramEdge] -> [[DiagramEdge]]
+allRemoves ts es =
+  [filter (e /=) es | e <- es, isTargetsEdge e ts]
