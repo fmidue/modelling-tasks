@@ -5,6 +5,7 @@ import Edges
 
 import Data.Function (on)
 import Data.List     ((\\))
+import Data.Maybe    (maybeToList)
 import Data.Set      (Set, fromList, toList)
 
 data Target = TAssociation | TAggregation | TComposition | TInheritance
@@ -62,13 +63,16 @@ allAdds ts vs es =
         , x <- addEdges s e t sl el]
   where
     addEdges s e TInheritance _  _  = [(s, e, Inheritance), (e, s, Inheritance)]
-    addEdges s e TAssociation sl el = [addEdge s e TAssociation sl el]
-    addEdges s e t            sl el = [addEdge s e t sl el, addEdge e s t sl el]
-    addEdge s e t sl el = (s, e, Assoc (assocType t) sl el False)
-    assocType TAssociation = Association
-    assocType TAggregation = Aggregation
-    assocType TComposition = Composition
-    assocType TInheritance = error "An inheritance is no Assoc"
+    addEdges s e TAssociation sl el = addEdge s e TAssociation sl el
+    addEdges s e t            sl el = addEdge s e t sl el ++ addEdge e s t sl el
+    addEdge s e t sl el =
+      (\k -> (s, e, Assoc k sl el False)) <$> maybeToList (assocType t)
+
+assocType :: Target -> Maybe AssociationType
+assocType TAssociation = Just Association
+assocType TAggregation = Just Aggregation
+assocType TComposition = Just Composition
+assocType TInheritance = Nothing
 
 {-|
 Generates a list of all limits (i.e. multiplicities) for the given target.
@@ -108,7 +112,7 @@ edge by the given modification op on applying targets.
 -}
 allLimitsWith :: (Limit -> Limit -> Bool) -> Targets -> [DiagramEdge] -> [[DiagramEdge]]
 allLimitsWith op ts es =
-  [(sv, ev, Assoc k sl'  el' False):filter (e /=) es
+  [ (sv, ev, Assoc k sl'  el' False) : filter (e /=) es
   | e@(sv, ev, Assoc k sl el _) <- es, t <- toList ts, isTargetEdge e t
   , (sl', el') <- bothLimits sl el t]
   where
@@ -124,3 +128,44 @@ the size of unlimited upper bounds.
 limitSize :: Limit -> Int
 limitSize (x, Nothing) = 10 - x
 limitSize (x, Just y ) = y - x
+
+allFlipTransformations :: Target -> [DiagramEdge] -> [[DiagramEdge]]
+allFlipTransformations t es =
+  [ e' : filter (e /=) es | e <- es, isTargetEdge e t
+                          , e'<- maybeToList $ maybeFlipEdge e]
+  where
+    maybeFlipEdge (s, e, k)
+      | Assoc Association sl el _ <- k, sl == el = Nothing
+      | otherwise                                = Just (e, s, k)
+
+allFromInheritances :: Targets -> [DiagramEdge] -> [[DiagramEdge]]
+allFromInheritances ts es =
+  [ (se, ee, Assoc k sl el False) : filter (e /=) es
+  | e@(se, ee, Inheritance) <- es, t <- toList ts
+  , sl <- fst $ allLimits t, el <- snd $ allLimits t
+  , k <- maybeToList $ assocType t]
+
+allToInheritances :: Targets -> [DiagramEdge] -> [[DiagramEdge]]
+allToInheritances ts es =
+  [ (se, ee, Inheritance) : filter (e /=) es
+  | e@(se, ee, Assoc {}) <- es, isTargetsEdge e ts]
+
+allFromCompositions :: Targets -> [DiagramEdge] -> [[DiagramEdge]]
+allFromCompositions ts es =
+  [ (se, ee, Assoc k sl el False) : filter (e /=) es
+  | e@(se, ee, Assoc Composition sl el _) <- es, t <- toList ts
+  , k <- maybeToList $ assocType t]
+
+allToCompositions :: Targets -> [DiagramEdge] -> [[DiagramEdge]]
+allToCompositions ts es =
+  [ (se, ee, Assoc Composition (reduce sl) el False) : filter (e /=) es
+  | e@(se, ee, Assoc k sl el _) <- es, k /= Composition, isTargetsEdge e ts]
+  where
+    reduce (0, _) = (0, Just 1)
+    reduce _      = (1, Just 1)
+
+allOtherTransformations :: Target -> Target -> [DiagramEdge] -> [[DiagramEdge]]
+allOtherTransformations st tt es =
+  [ (se, ee, Assoc k sl el False) : filter (e /=) es
+  | st /= tt, e@(se, ee, Assoc _ sl el _) <- es, isTargetEdge e st
+  , k <- maybeToList $ assocType tt]
