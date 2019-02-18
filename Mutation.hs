@@ -6,7 +6,7 @@ import Edges
 import Data.Function (on)
 import Data.List     ((\\))
 import Data.Maybe    (maybeToList)
-import Data.Set      (Set, fromList, toList)
+import Data.Set      (Set, delete, fromList, member, toList, union)
 
 data Target = TAssociation | TAggregation | TComposition | TInheritance
   deriving (Bounded, Enum, Eq, Ord)
@@ -14,12 +14,39 @@ data Target = TAssociation | TAggregation | TComposition | TInheritance
 type Targets = Set Target
 
 data Mutation =
-    Add       Target
-  | Remove    Target
-  | Transform Target Target
-  | MultiplicityRange Alteration Target
+    Add       Targets
+  | Remove    Targets
+  | Transform Targets Targets
+  | LimitRange Alteration Targets
+  | LimitShift Alteration Targets
 
 data Alteration = Increase | Decrease
+
+getMutationResults :: [String] -> [DiagramEdge] -> Mutation -> [[DiagramEdge]]
+getMutationResults vs es m = case m of
+  Add                 t -> allAdds t vs es
+  Remove              t -> allRemoves t es
+  Transform         s t -> transform s t es
+  LimitRange Increase t -> allIncreaseLimitsRange t es
+  LimitRange Decrease t -> allDecreaseLimitsRange t es
+  LimitShift Increase t -> allShiftDownLimitsRange t es
+  LimitShift Decrease t -> allShiftUpLimitsRange t es
+
+transform :: Targets -> Targets -> [DiagramEdge] -> [[DiagramEdge]]
+transform s t es =
+  (concat $ flip allFlipTransformations es <$> toList (s `union` t))
+  ++ addWhen (TInheritance `member` s) (allFromInheritances ti es)
+  ++ addWhen (TInheritance `member` t) (allToInheritances si es)
+  ++ addWhen (TComposition `member` si) (allFromCompositions tc es)
+  ++ addWhen (TComposition `member` ti) (allToCompositions sc es)
+  ++ concat [allOtherTransformations sa ta es
+            | sa <- toList sc, ta <- toList tc, sa /= ta]
+  where
+    addWhen b xs = if b then xs else []
+    ti = delete TInheritance t
+    si = delete TInheritance s
+    tc = delete TComposition ti
+    sc = delete TComposition si
 
 targetSet :: Targets
 targetSet = fromList [minBound ..]
