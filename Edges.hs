@@ -2,7 +2,7 @@ module Edges (
   -- * Types
   DiagramEdge,
   -- * Transformation
-  toEdges,
+  fromEdges, toEdges,
   -- * Checks
   compositionCycles, doubleConnections, inheritanceCycles, multipleInheritances,
   selfEdges, wrongLimits,
@@ -12,7 +12,8 @@ module Edges (
 import Types (AssociationType (..), Connection (..), Syntax)
 import Util
 
-import Data.Maybe
+import Data.List  (partition)
+import Data.Maybe (fromJust)
 
 type DiagramEdge = (String, String, Connection)
 
@@ -20,6 +21,15 @@ toEdges :: Syntax -> [DiagramEdge]
 toEdges (is, as) =
   [(s, e, Inheritance) | (s, Just e) <- is]
   ++ [(s, e, Assoc t m1 m2 False) | (t, _, m1, s, e, m2) <- as]
+
+fromEdges :: [String] -> [DiagramEdge] -> Syntax
+fromEdges classNames es =
+  let isInheritance (_, _, Inheritance) = True
+      isInheritance (_, _, _          ) = False
+      (ihs, ass) = partition isInheritance es
+      classes' = (\x -> (x, foldl (\p (s, e, Inheritance) -> if s == x then Just e else p) Nothing ihs)) <$> classNames
+      assocs   = [(t, s ++ "and" ++ e, m1, s, e, m2) | (s, e, Assoc t m1 m2 False) <- ass]
+  in (classes', assocs)
 
 selfEdges :: [DiagramEdge] -> [DiagramEdge]
 selfEdges es = [x | x@(s, e, _) <- es, e == s]

@@ -4,7 +4,6 @@ import Edges
 import Types
 
 import Data.Maybe
-import Data.List
 
 import System.Random
 
@@ -17,19 +16,14 @@ generate c = do
   nags <- oneOfFirst (searchSpace c) $ toAvailable $ aggregations c
   if isPossible ncls nins ncos nass nags
     then do
-      es <- generateEdges (classs ncls) nins ncos nass nags
-      let isInheritance (_, _, Inheritance) = True
-          isInheritance (_, _, _          ) = False
-          (ihs, ass) = partition isInheritance es
-          classes' = (\x -> (x, foldl (\p (s, e, Inheritance) -> if s == x then Just e else p) Nothing ihs)) <$> (classs ncls)
-          assocs   = [(t, s ++ "and" ++ e, m1, s, e, m2) | (s, e, Assoc t m1 m2 False) <- ass]
-      return (classes', assocs)
+      es <- generateEdges (classNames ncls) nins ncos nass nags
+      return $ fromEdges (classNames ncls) es
     else if minimalC == c
          then error "it seems to be impossible to generate such a model; check your configuration"
          else generate minimalC
   where
     minimalC = minimise c
-    classs cla = (:[]) <$> take cla ['A'..]
+    classNames x = (:[]) <$> take x ['A'..]
     toAvailable :: (Maybe Int, Maybe Int) -> [Int]
     toAvailable (mx, Nothing) = [fromMaybe 0 mx..]
     toAvailable (mx, Just  y) = [fromMaybe 0 mx.. y]
