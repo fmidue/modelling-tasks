@@ -3,8 +3,9 @@ module Mutation where
 import Types
 import Edges
 
-import Data.List ((\\))
-import Data.Set  (Set, fromList, toList)
+import Data.Function (on)
+import Data.List     ((\\))
+import Data.Set      (Set, fromList, toList)
 
 data Target = TAssociation | TAggregation | TComposition | TInheritance
   deriving (Bounded, Enum, Eq, Ord)
@@ -69,7 +70,7 @@ allAdds ts vs es =
     assocType TComposition = Composition
     assocType TInheritance = error "An inheritance is no Assoc"
 
-{- |
+{-|
 Generates a list of all limits (i.e. multiplicities) for the given target.
 The resulting tuple contains the list of all multiplicities at the edges start
 and the list of all multiplicities at the edges end.
@@ -86,3 +87,40 @@ allLimits t = (allStartLimits, allEndLimits)
       _            -> allPossibleLimits
     allPossibleLimits = [(l, h) | l <- [0, 1, 2], h <- [Just 1, Just 2, Nothing]
                                 , maybe True (l <=) h]
+
+allIncreaseLimitsRange :: Targets -> [DiagramEdge] -> [[DiagramEdge]]
+allIncreaseLimitsRange = allLimitsWith ((>) `on` limitSize)
+
+allDecreaseLimitsRange :: Targets -> [DiagramEdge] -> [[DiagramEdge]]
+allDecreaseLimitsRange = allLimitsWith ((<) `on` limitSize)
+
+allShiftDownLimitsRange :: Targets -> [DiagramEdge] -> [[DiagramEdge]]
+allShiftDownLimitsRange =
+  allLimitsWith (\x y -> limitSize x == limitSize y && fst x > fst y)
+
+allShiftUpLimitsRange :: Targets -> [DiagramEdge] -> [[DiagramEdge]]
+allShiftUpLimitsRange =
+  allLimitsWith (\x y -> limitSize x == limitSize y && fst x > fst y)
+
+{-|
+Returns all possible sets of edges by modifying the limits on one side of one
+edge by the given modification op on applying targets.
+-}
+allLimitsWith :: (Limit -> Limit -> Bool) -> Targets -> [DiagramEdge] -> [[DiagramEdge]]
+allLimitsWith op ts es =
+  [(sv, ev, Assoc k sl'  el' False):filter (e /=) es
+  | e@(sv, ev, Assoc k sl el _) <- es, t <- toList ts, isTargetEdge e t
+  , (sl', el') <- bothLimits sl el t]
+  where
+    bothLimits s e t = zip (repeat s) (endLimits e t)
+                    ++ zip (startLimits s t) (repeat e)
+    startLimits l t = [l' | l' <- fst $ allLimits t, l' `op` l]
+    endLimits   l t = [l' | l' <- snd $ allLimits t, l' `op` l]
+
+{-|
+Beware! This function just takes a constant value (at the moment 10) to measure
+the size of unlimited upper bounds.
+-}
+limitSize :: Limit -> Int
+limitSize (x, Nothing) = 10 - x
+limitSize (x, Just y ) = y - x
