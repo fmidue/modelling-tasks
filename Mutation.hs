@@ -43,35 +43,46 @@ nonTargets :: Targets -> [DiagramEdge] -> [DiagramEdge]
 nonTargets ts es =
   [e | e <- es, not $ isTargetsEdge e ts]
 
-allRemoves :: Targets -> [DiagramEdge] -> [DiagramEdge]
+allRemoves :: Targets -> [DiagramEdge] -> [[DiagramEdge]]
 allRemoves ts es =
-  [e | e <- es, isTargetsEdge e ts]
-
-applyRemove :: [DiagramEdge] -> DiagramEdge -> [DiagramEdge]
-applyRemove es e = filter (e /=) es
+  [filter (e /=) es | e <- es, isTargetsEdge e ts]
 
 nonEdges :: [String] -> [DiagramEdge] -> [(String, String)]
 nonEdges vs es = [(x, y) | x <- vs, y <- vs, x < y] \\ connections
   where
     connections = [e | (x, y, _) <- es, e <- [(x, y), (y, x)]]
 
-type AddEdge = Either (Target, Multiplicity -> Multiplicity -> DiagramEdge) DiagramEdge
-type Multiplicity = (Int, Maybe Int)
+type Limit = (Int, Maybe Int)
 
-allAdds :: Targets -> [String] -> [DiagramEdge] -> [AddEdge]
+allAdds :: Targets -> [String] -> [DiagramEdge] -> [[DiagramEdge]]
 allAdds ts vs es =
-  [x | (s, e) <- nonEdges vs es, t <- toList ts, x <- addEdges s e t]
+  [x:es | (s, e) <- nonEdges vs es, t <- toList ts
+        , sl <- fst $ allLimits t, el <- snd $ allLimits t
+        , x <- addEdges s e t sl el]
   where
-    addEdges s e TInheritance = [Right (s, e, Inheritance), Right (e, s, Inheritance)]
-    addEdges s e t            =
-      let addEdge s' e' = Left (t, \x y -> (s', e', Assoc (assocType t) x y False))
-      in case t of
-        TAssociation -> [addEdge s e]
-        _            -> [addEdge s e, addEdge e s]
+    addEdges s e TInheritance _  _  = [(s, e, Inheritance), (e, s, Inheritance)]
+    addEdges s e TAssociation sl el = [addEdge s e TAssociation sl el]
+    addEdges s e t            sl el = [addEdge s e t sl el, addEdge e s t sl el]
+    addEdge s e t sl el = (s, e, Assoc (assocType t) sl el False)
     assocType TAssociation = Association
     assocType TAggregation = Aggregation
     assocType TComposition = Composition
     assocType TInheritance = error "An inheritance is no Assoc"
 
-applyAdd :: Functor f => [DiagramEdge] -> (AddEdge -> f DiagramEdge) -> AddEdge -> f [DiagramEdge]
-applyAdd es f e = (:es) <$> f e
+{- |
+Generates a list of all limits (i.e. multiplicities) for the given target.
+The resulting tuple contains the list of all multiplicities at the edges start
+and the list of all multiplicities at the edges end.
+-}
+allLimits :: Target -> ([Limit], [Limit])
+allLimits t = (allStartLimits, allEndLimits)
+  where
+    allStartLimits = case t of
+      TInheritance -> []
+      TComposition -> [(0, Just 1), (1, Just 1)]
+      _            -> allPossibleLimits
+    allEndLimits   = case t of
+      TInheritance -> []
+      _            -> allPossibleLimits
+    allPossibleLimits = [(l, h) | l <- [0, 1, 2], h <- [Just 1, Just 2, Nothing]
+                                , maybe True (l <=) h]
