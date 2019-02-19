@@ -38,7 +38,6 @@ main = do
     let (part1, part2, part3, part4, part5) = transform cd1 "1" (show time)
         als1 = part1 ++ part2 ++ part3 ++ part4 ++ part5
     instances1 <- getAlloyInstances (maxInstances config) als1
-    writeFile "output1.als" $ als1
     unless (null instances1) $ do
       mutations <- shuffleM $ getAllMutationResults names edges
       let cd2 = fromEdges names $ getFirstValid names mutations
