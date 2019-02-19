@@ -7,7 +7,7 @@ import Data.Maybe
 
 import System.Random
 
-generate :: Config -> IO Syntax
+generate :: Config -> IO ([String], [DiagramEdge])
 generate c = do
   ncls <- oneOfFirst (searchSpace c) $ toAvailable $ classes c
   nins <- oneOfFirst (searchSpace c) $ toAvailable $ inheritances c
@@ -16,8 +16,9 @@ generate c = do
   nags <- oneOfFirst (searchSpace c) $ toAvailable $ aggregations c
   if isPossible ncls nins ncos nass nags
     then do
-      es <- generateEdges (classNames ncls) nins ncos nass nags
-      return $ fromEdges (classNames ncls) es
+      let names = classNames ncls
+      es <- generateEdges names nins ncos nass nags
+      return (names, es)
     else if minimalC == c
          then error "it seems to be impossible to generate such a model; check your configuration"
          else generate minimalC
@@ -61,7 +62,7 @@ generateEdges classs inh com ass agg =
       e <- oneOf $ filter (s /=) classs
       l <- generateLimits mt
       let c = (s, e, l)
-      if checkConstraints $ c:cs
+      if checkMultiEdge $ c:cs
         then return $ c:cs
         else generateEdge cs mt
     generateLimits :: (Maybe AssociationType) -> IO Connection
@@ -79,13 +80,6 @@ generateEdges classs inh com ass agg =
       l <- randomRIO (0, 2)
       h <- oneOf $ drop (l - 1) [Just 1, Just 2, Nothing]
       return (l, h)
-    checkConstraints cs =
-      null (doubleConnections cs)
-      -- && null (selfEdges cs)
-      && null (multipleInheritances cs)
-      && null (inheritanceCycles cs)
-      && null (compositionCycles cs)
-      -- && null (wrongLimits cs)
 
 minimise :: Config -> Config
 minimise c = c {

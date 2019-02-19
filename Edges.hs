@@ -4,6 +4,9 @@ module Edges (
   -- * Transformation
   fromEdges, toEdges,
   -- * Checks
+  -- ** Check sets (reusing single checks)
+  checkMultiEdge, checkObvious,
+  -- ** Single checks
   compositionCycles, doubleConnections, inheritanceCycles, multipleInheritances,
   selfEdges, wrongLimits,
   anyRedEdge, shouldBeRed
@@ -120,3 +123,15 @@ shouldBeRed a b classesWithSubclasses = any (\(a',b') ->
                                                   in (one && (two || b `isSubOf` b') || two && (one || a `isSubOf` a'))
                                             )
   where x `isSubOf` y = x `elem` fromJust (lookup y classesWithSubclasses)
+
+checkMultiEdge :: [DiagramEdge] -> Bool
+checkMultiEdge cs =
+     null (doubleConnections cs)
+  && null (multipleInheritances cs)
+  && null (inheritanceCycles cs)
+  && null (compositionCycles cs)
+
+checkObvious :: [DiagramEdge] -> Bool
+checkObvious cs =
+     null (selfEdges cs)
+  && null (wrongLimits cs)

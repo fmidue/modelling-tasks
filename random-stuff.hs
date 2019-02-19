@@ -1,7 +1,8 @@
 module Main (main) where
 
 import Edges
-import Generate (generate)
+import Generate  (generate)
+import Mutation  (getAllMutationResults)
 import Output
 import Transform (transform)
 import Types
@@ -15,6 +16,7 @@ import Data.Time.LocalTime
 import System.FilePath (searchPathSeparator)
 import System.IO
 import System.Process
+import System.Random.Shuffle (shuffleM)
 
 main :: IO ()
 main = do
@@ -28,14 +30,27 @@ main = do
           output       = "output",
           maxInstances = -1
         }
-  syntax <- generate config
-  drawCdFromSyntax syntax (output config) Pdf
+  (names, edges) <- generate config
+  let syntax = fromEdges names edges
+  drawCdFromSyntax syntax (output config ++ "1") Pdf
   unless (anyRedEdge syntax) $ do
     time <- getZonedTime
     let (part1, part2, part3, part4, part5) = transform syntax "" (show time)
         als = part1 ++ part2 ++ part3 ++ part4 ++ part5
     instances <- getAlloyInstances (maxInstances config) als
+    mutations <- shuffleM $ getAllMutationResults names edges
+    let cd2 = fromEdges names $ getFirstValid names mutations
+    drawCdFromSyntax cd2 (output config ++ "2") Pdf
     mapM_ (\(i, insta) -> drawOdFromInstance insta (show i) Pdf) (zip [1 :: Integer ..] instances)
+
+getFirstValid :: [String] -> [[DiagramEdge]] -> [DiagramEdge]
+getFirstValid _     []
+  = error "There is no (further) valid mutation for this chart!"
+getFirstValid names (x:xs)
+  | checkMultiEdge x, not (anyRedEdge $ fromEdges names x)
+  = x
+  | otherwise
+  = getFirstValid names xs
 
 getAlloyInstances :: Int -> String -> IO [String]
 getAlloyInstances maxInsta content = do

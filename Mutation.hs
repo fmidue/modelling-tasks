@@ -1,4 +1,9 @@
-module Mutation where
+module Mutation (
+  -- * Types
+  Mutation (..), Targets, Target (..), Alteration (..),
+  -- * Perform mutation operations
+  getAllMutationResults, getMutationResults
+  ) where
 
 import Types
 import Edges
@@ -6,12 +11,16 @@ import Edges
 import Data.Function (on)
 import Data.List     ((\\))
 import Data.Maybe    (maybeToList)
-import Data.Set      (Set, delete, fromList, member, toList, union)
+import Data.Set      (Set, delete, member, singleton, toList, union)
 
-data Target = TAssociation | TAggregation | TComposition | TInheritance
-  deriving (Bounded, Enum, Eq, Ord)
-
-type Targets = Set Target
+getAllMutationResults :: [String] -> [DiagramEdge] -> [[DiagramEdge]]
+getAllMutationResults vs es =
+  let singleTargets   = [singleton t | t <- [minBound :: Target ..]]
+      mutations       = [m | t <- singleTargets, m <- [Add t, Remove t]]
+        ++ [Transform t1 t2 | t1 <- singleTargets, t2 <- singleTargets]
+        ++ [m | a <- [minBound :: Alteration ..], t <- singleTargets
+              , m <- [LimitRange a t, LimitShift a t]]
+  in concatMap (getMutationResults vs es) mutations
 
 data Mutation =
     Add       Targets
@@ -20,7 +29,13 @@ data Mutation =
   | LimitRange Alteration Targets
   | LimitShift Alteration Targets
 
+data Target = TAssociation | TAggregation | TComposition | TInheritance
+  deriving (Bounded, Enum, Eq, Ord)
+
+type Targets = Set Target
+
 data Alteration = Increase | Decrease
+  deriving (Bounded, Enum, Eq, Ord)
 
 getMutationResults :: [String] -> [DiagramEdge] -> Mutation -> [[DiagramEdge]]
 getMutationResults vs es m = case m of
@@ -34,7 +49,7 @@ getMutationResults vs es m = case m of
 
 transform :: Targets -> Targets -> [DiagramEdge] -> [[DiagramEdge]]
 transform s t es =
-  (concat $ flip allFlipTransformations es <$> toList (s `union` t))
+  (concatMap (flip allFlipTransformations es) $ toList (s `union` t))
   ++ addWhen (TInheritance `member` s) (allFromInheritances ti es)
   ++ addWhen (TInheritance `member` t) (allToInheritances si es)
   ++ addWhen (TComposition `member` si) (allFromCompositions tc es)
@@ -47,9 +62,6 @@ transform s t es =
     si = delete TInheritance s
     tc = delete TComposition ti
     sc = delete TComposition si
-
-targetSet :: Targets
-targetSet = fromList [minBound ..]
 
 isTarget :: Connection -> Target -> Bool
 isTarget (Assoc Association _ _ _) TAssociation = True
@@ -68,13 +80,9 @@ targets :: Targets -> [DiagramEdge] -> [DiagramEdge]
 targets ts es =
   [e | e <- es, isTargetsEdge e ts]
 
-nonTargets :: Targets -> [DiagramEdge] -> [DiagramEdge]
-nonTargets ts es =
-  [e | e <- es, not $ isTargetsEdge e ts]
-
 allRemoves :: Targets -> [DiagramEdge] -> [[DiagramEdge]]
 allRemoves ts es =
-  [filter (e /=) es | e <- es, isTargetsEdge e ts]
+  [filter (e /=) es | e <- targets ts es]
 
 nonEdges :: [String] -> [DiagramEdge] -> [(String, String)]
 nonEdges vs es = [(x, y) | x <- vs, y <- vs, x < y] \\ connections
@@ -140,7 +148,7 @@ edge by the given modification op on applying targets.
 allLimitsWith :: (Limit -> Limit -> Bool) -> Targets -> [DiagramEdge] -> [[DiagramEdge]]
 allLimitsWith op ts es =
   [ (sv, ev, Assoc k sl'  el' False) : filter (e /=) es
-  | e@(sv, ev, Assoc k sl el _) <- es, t <- toList ts, isTargetEdge e t
+  | e@(sv, ev, Assoc k sl el _) <- targets ts es, t <- toList ts
   , (sl', el') <- bothLimits sl el t]
   where
     bothLimits s e t = zip (repeat s) (endLimits e t)
@@ -175,7 +183,7 @@ allFromInheritances ts es =
 allToInheritances :: Targets -> [DiagramEdge] -> [[DiagramEdge]]
 allToInheritances ts es =
   [ (se, ee, Inheritance) : filter (e /=) es
-  | e@(se, ee, Assoc {}) <- es, isTargetsEdge e ts]
+  | e@(se, ee, Assoc {}) <- targets ts es]
 
 allFromCompositions :: Targets -> [DiagramEdge] -> [[DiagramEdge]]
 allFromCompositions ts es =
@@ -186,7 +194,7 @@ allFromCompositions ts es =
 allToCompositions :: Targets -> [DiagramEdge] -> [[DiagramEdge]]
 allToCompositions ts es =
   [ (se, ee, Assoc Composition (reduce sl) el False) : filter (e /=) es
-  | e@(se, ee, Assoc k sl el _) <- es, k /= Composition, isTargetsEdge e ts]
+  | e@(se, ee, Assoc k sl el _) <- targets ts es, k /= Composition]
   where
     reduce (0, _) = (0, Just 1)
     reduce _      = (1, Just 1)
