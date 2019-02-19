@@ -46,6 +46,9 @@ fact NonEmptyInstancesOnly {
   some Obj
 }
 
+fact LimitIsolatedObjects {
+  #{ o: Obj | #o.get > 0 } >= #{ o: Obj | #o.get = 0 }
+}
 
 ///////////////////////////////////////////////////
 // Structures potentially common to multiple CDs
