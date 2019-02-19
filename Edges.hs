@@ -29,9 +29,12 @@ fromEdges :: [String] -> [DiagramEdge] -> Syntax
 fromEdges classNames es =
   let isInheritance (_, _, Inheritance) = True
       isInheritance (_, _, _          ) = False
+      getName s e
+        | s <= e    = s ++ "and" ++ e
+        | otherwise = e ++ "and" ++ s
       (ihs, ass) = partition isInheritance es
       classes' = (\x -> (x, foldl (\p (s, e, Inheritance) -> if s == x then Just e else p) Nothing ihs)) <$> classNames
-      assocs   = [(t, s ++ "and" ++ e, m1, s, e, m2) | (s, e, Assoc t m1 m2 False) <- ass]
+      assocs   = [(t, getName s e, m1, s, e, m2) | (s, e, Assoc t m1 m2 False) <- ass]
   in (classes', assocs)
 
 selfEdges :: [DiagramEdge] -> [DiagramEdge]

@@ -11,7 +11,7 @@ import Edges
 import Data.Function (on)
 import Data.List     ((\\))
 import Data.Maybe    (maybeToList)
-import Data.Set      (Set, delete, member, singleton, toList, union)
+import Data.Set      (Set, delete, intersection, member, singleton, toList)
 
 getAllMutationResults :: [String] -> [DiagramEdge] -> [[DiagramEdge]]
 getAllMutationResults vs es =
@@ -49,7 +49,7 @@ getMutationResults vs es m = case m of
 
 transform :: Targets -> Targets -> [DiagramEdge] -> [[DiagramEdge]]
 transform s t es =
-  (concatMap (flip allFlipTransformations es) $ toList (s `union` t))
+  (concatMap (flip allFlipTransformations es) $ toList (s `intersection` t))
   ++ addWhen (TInheritance `member` s) (allFromInheritances ti es)
   ++ addWhen (TInheritance `member` t) (allToInheritances si es)
   ++ addWhen (TComposition `member` si) (allFromCompositions tc es)
