@@ -47,7 +47,7 @@ fact NonEmptyInstancesOnly {
 }
 
 fact LimitIsolatedObjects {
-  #{ o: Obj | #o.get > 0 } >= #{ o: Obj | #o.get = 0 }
+  #Obj >= mul[2, #{o : Obj | no o.get and no get.o}]
 }
 
 ///////////////////////////////////////////////////
