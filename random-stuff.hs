@@ -45,7 +45,7 @@ main = do
       nonEmpty2 <- Alloy.existInstances als2
       when nonEmpty2 $ do
         instances12 <- Alloy.getInstances maxInstances als12
-        mapM_ (\(i, insta) -> drawOdFromInstance insta (show i) Pdf) (zip [1 :: Integer ..] instances12)
+        mapM_ (\(i, insta) -> drawOdFromInstance True insta (show i) Pdf) (zip [1 :: Integer ..] instances12)
   where
     unionL x y = unlines $ lines x `union` lines y
 
