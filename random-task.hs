@@ -45,9 +45,9 @@ getRandomTask config output searchSpace maxInstances = do
     instances3not2 <- getInstancesOfMerged parts2 parts3 cd3not2
     instances2and3 <- getInstancesOfMerged parts2 parts3 cd2and3
     let takes = [ (take x, take y, take z)
-                | x <- [1 .. min 3 (length instances2not3)]
-                , y <- [1 .. min 3 (length instances3not2)]
-                , z <- [1 .. min 3 (length instances2and3)]
+                | x <- [0 .. min 3 (length instances2not3)]
+                , y <- [0 .. min 3 (length instances3not2)]
+                , z <- [0 .. min 3 (length instances2and3)]
                 , 5 == x + y + z ]
     continueIf (not $ null takes) $ do
       (take2not3, take3not2, take2and3) <- head <$> shuffleM takes
