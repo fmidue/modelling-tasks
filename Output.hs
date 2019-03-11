@@ -74,7 +74,7 @@ drawOdFromInstance printNames input file format = do
     map (\(i, l) -> (i, let [n,z] = splitOn "$" l in firstLower n ++ (if z == "0" then "" else z) ++ " "))
     <$> drop (length theNodes `div` 3)
     <$> shuffleM numberedNodes
-  let dotGraph = setDirectedness graphToDot (nonClusteredParams {
+  let dotGraph = graphToDot (nonClusteredParams {
                    fmtNode = \(i,l) -> [underlinedLabel (fromMaybe "" (lookup i objectNames) ++ ": " ++ takeWhile (/= '$') l),
                                         shape BoxShape, Margin $ DVal $ 0.04, Width 0, Height 0],
                    fmtEdge = \(_,_,l) -> [edgeEnds NoDir] ++ [toLabel l | printNames] }) graph
