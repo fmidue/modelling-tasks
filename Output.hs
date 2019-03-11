@@ -79,5 +79,5 @@ drawOdFromInstance printNames input file format = do
                                         shape BoxShape, Margin $ DVal $ 0.04, Width 0, Height 0],
                    fmtEdge = \(_,_,l) -> [edgeEnds NoDir] ++ [toLabel l | printNames] }) graph
   quitWithoutGraphviz "Please install GraphViz executables from http://graphviz.org/ and put them on your PATH"
-  output <- addExtension (runGraphviz dotGraph) format (dropExtension file)
+  output <- addExtension (runGraphvizCommand undirCommand dotGraph) format (dropExtension file)
   putStrLn $ "Output written to " ++ output
