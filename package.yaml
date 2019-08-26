@@ -11,16 +11,24 @@ ghc-options:
 dependencies:
   - base
   - array
+  - colour
   - containers
+  - diagrams-core
+  - diagrams-graphviz
+  - diagrams-lib
+  - diagrams-svg
   - fgl
   - file-embed
   - filepath
   - graphviz
+  - lens
+  - linear
   - MonadRandom
   - process
   - random
   - random-shuffle
   - split
+  - SVGFonts
   - text
 library:
   source-dirs: .
