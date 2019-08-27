@@ -16,7 +16,8 @@ import Data.List
 import Data.List.Split
 import Data.Maybe                       (fromJust, fromMaybe, mapMaybe)
 import Diagrams.Align                   (center)
-import Diagrams.Angle                   (Angle, (@@), cosA, deg, sinA)
+import Diagrams.Angle                   (Angle, (@@), cosA, deg, sinA, tanA)
+import Diagrams.Attributes              (lineWidth)
 import Diagrams.Backend.SVG             (B, renderSVG)
 import Diagrams.Combinators             (frame)
 import Diagrams.Core                    (local, maxTraceP, moveTo)
@@ -97,16 +98,16 @@ drawOdFromInstance printNames input file format = do
   let objectNames' = (\(i, n) -> (fromMaybe "" $ lookup i numberedNodes, n)) <$> objectNames
   let params = nonClusteredParams {
                    fmtNode = \(i,l) -> [underlinedLabel (fromMaybe "" (lookup i objectNames) ++ ": " ++ takeWhile (/= '$') l),
-                                         shape BoxShape, Margin $ DVal $ 0.04, Width 0, Height 0, FontSize 12],
+                                        shape BoxShape, Margin $ DVal $ 0.04, Width 0, Height 0, FontSize 12],
                    fmtEdge = \(_,_,l) -> [edgeEnds NoDir, FontSize 12] ++ [toLabel l | printNames] }
   let undirected = Neato
-  graph' <- layoutGraph'  params undirected graph
-  sfont <- lin
+  graph' <- layoutGraph' params undirected graph
+  sfont  <- lin
   let qdiagram = drawGraph (renderNode sfont objectNames') (\_ _ _ _ _ _ -> mempty) graph'
-      qdiagram' = drawGraph (\_ _ -> mempty) drawEdge graph'
-      edgeAngle = 15 @@ deg
+      qdiagram' = frame 1 $ drawGraph (\_ _ -> mempty) drawEdge graph'
+      edgeAngle = 30 @@ deg
       arrowOpts
-        | printArrows = with & arrowHead .~ varrow & headLength .~ local 6
+        | printArrows = with & arrowHead .~ varrow & headLength .~ local 10
         | otherwise   = with & arrowHead .~ noHead
       drawEdge fl fp tl tp l _ =
         (if printNames
@@ -114,11 +115,12 @@ drawOdFromInstance printNames input file format = do
          else id)
         (if bothDirs
          then arrowBetween' (arrowOpts & arrowShaft .~ connectArc) arcs arce
-         else qdiagram # connectOutside' arrowOpts fl tl)
+         else qdiagram # connectOutside' arrowOpts fl tl) # lineWidth 2
         where
-          edgeLabel = moveTo lp (center $ textSVG_ (TextOpts sfont INSIDE_H KERN False 14 14) l)
+          edgeLabel = moveTo lp (center $ textSVG_ (TextOpts sfont INSIDE_H KERN False 18 18) l)
             # fc black
             # lc black
+            # lineWidth 0.6
           bothDirs = containsEdge (tl, fl) theEdges
           ashift = 15
           a1 = angleBetween' fp tp ^. deg - ashift @@ deg
@@ -126,6 +128,8 @@ drawOdFromInstance printNames input file format = do
           connectArc = arc (dirBetween fp tp) edgeAngle
           vec = arce - arcs
           vecLen = sqrt $ ((vec ^. _x) ** 2) + ((vec ^. _y) ** 2)
+          labelOffset = 0.06
+          offsetVec = labelOffset *. rotate (90 @@ deg) vec
           -- calculate start and endpoint of the connector as connectPerim' does
           Just sub1 = lookupName (toName fl) qdiagram'
           Just sub2 = lookupName (toName tl) qdiagram'
@@ -133,11 +137,10 @@ drawOdFromInstance printNames input file format = do
           oe = location sub2
           arcs = fromMaybe os (maxTraceP os (unitX # rotate a1) sub1)
           arce = fromMaybe oe (maxTraceP oe (unitX # rotate a2) sub2)
-          -- calculate the label distance by using trigonometric triangle laws
-          lp = arcs + (vec / 2) - if bothDirs then ld else 0
-          rLen = vecLen / sinA edgeAngle
-          sideHalfLen = sqrt $ rLen ** 2 - 1 / 4 * vecLen ** 2
-          ld = ((rLen - sideHalfLen) / vecLen) *. rotate (90 @@ deg) vec
+          -- calculate the label distance by using trigonometric arc laws
+          lp = arcs + (vec / 2) - if bothDirs then ld else offsetVec
+          h = vecLen / 2 * tanA (edgeAngle ^. deg / 4 @@ deg)
+          ld = (h / vecLen + 2 * labelOffset) *. rotate (90 @@ deg) vec
   let dotGraph = graphToDot params graph
   let file' = file ++ ".svg"
   renderSVG file' (mkWidth 250) qdiagram'
@@ -154,14 +157,25 @@ drawOdFromInstance printNames input file format = do
      -> String
      -> Point V2 Double
      -> Diagram B
-    renderNode sfont objectNames t (P p) = translate p $ center $
-      frame 0.4 (frame 1 (textSVG_ (TextOpts sfont INSIDE_H KERN True 16 16) (fromMaybe "" (lookup t objectNames) ++ ": " ++ takeWhile (/= '$') t) # snugCenterXY)
-                    # fc black # lc black # bg white)
+    renderNode sfont objectNames t (P p) = translate p $ center $ blackFrame t $
+      textSVG_ (TextOpts sfont INSIDE_H KERN True 18 18)
+               (fromMaybe "" (lookup t objectNames) ++ ": " ++ takeWhile (/= '$') t)
+      # snugCenterXY
+      # lineWidth 0.6
+    blackFrame
+      :: String
+      -> Diagram B
+      -> Diagram B
+    blackFrame t object =
+      frame 1 (frame 2 object
+               # fc black
+               # lc black
+               # bg white)
       # bg black
       # named t
 
 varrow :: ArrowHT Double
-varrow = arrowheadV (160 @@ deg)
+varrow = arrowheadV (155 @@ deg)
 
 arrowheadV :: RealFloat n => Angle n -> ArrowHT n
 arrowheadV theta len shaftWidth = (jt, mempty)
