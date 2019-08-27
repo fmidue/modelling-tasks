@@ -174,6 +174,15 @@ drawOdFromInstance printNames input file format = do
       # bg black
       # named t
 
+main :: IO ()
+main = do
+  let file = "/Users/marcellus/Documents/research/alloy-cd-od-paper/instances/double-od.txt"
+  contents <- readFile file
+  let printNames = True
+      input = contents
+      format = Pdf
+  drawOdFromInstance printNames input file format
+
 varrow :: ArrowHT Double
 varrow = arrowheadV (155 @@ deg)
 
