@@ -83,6 +83,7 @@ drawCdFromSyntax printNames marking syntax file format = do
 
 drawOdFromInstance :: Bool -> String -> FilePath -> GraphvizOutput -> IO ()
 drawOdFromInstance printNames input file format = do
+  let printArrows = False
   let [objLine, objGetLine] = filter ("this/Obj" `isPrefixOf`) (lines input)
   let theNodes = splitOn ", " (init (tail (fromJust (stripPrefix "this/Obj=" objLine))))
   let theEdges = map ((\[from,v,to] -> (from, to, takeWhile (/= '$') v)) . splitOn "->") $
@@ -104,15 +105,20 @@ drawOdFromInstance printNames input file format = do
   let qdiagram = drawGraph (renderNode sfont objectNames') (\_ _ _ _ _ _ -> mempty) graph'
       qdiagram' = drawGraph (\_ _ -> mempty) drawEdge graph'
       edgeAngle = 15 @@ deg
-      arrowOpts = with & arrowHead .~ varrow & headLength .~ local 6
+      arrowOpts
+        | printArrows = with & arrowHead .~ varrow & headLength .~ local 6
+        | otherwise   = with & arrowHead .~ noHead
       drawEdge fl fp tl tp l _ =
-        moveTo lp (center $ textSVG_ (TextOpts sfont INSIDE_H KERN False 14 14) l)
-        # fc black
-        # lc black
-        <> (if bothDirs
-            then arrowBetween' (arrowOpts & arrowShaft .~ connectArc) arcs arce
-            else qdiagram # connectOutside' arrowOpts fl tl)
+        (if printNames
+         then (edgeLabel <>)
+         else id)
+        (if bothDirs
+         then arrowBetween' (arrowOpts & arrowShaft .~ connectArc) arcs arce
+         else qdiagram # connectOutside' arrowOpts fl tl)
         where
+          edgeLabel = moveTo lp (center $ textSVG_ (TextOpts sfont INSIDE_H KERN False 14 14) l)
+            # fc black
+            # lc black
           bothDirs = containsEdge (tl, fl) theEdges
           ashift = 15
           a1 = angleBetween' fp tp ^. deg - ashift @@ deg
