@@ -87,7 +87,7 @@ fact NonEmptyInstancesOnly {
       | any isJust xs = f $ catMaybes xs
       | otherwise     = ""
     limitLinks = withJusts (\ps -> [i|
-fact LimitLinks {
+fact SizeConstraints {
 #{unlines ps}
 }
 |]) [
