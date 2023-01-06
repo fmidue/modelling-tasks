@@ -61,7 +61,7 @@ module umlp2alloy/CD#{index}Module
 
 #{template}
 #{objectsFact}
-#{limitLinks}
+#{sizeConstraints}
 #{loops}
 ///////////////////////////////////////////////////
 // Structures potentially common to multiple CDs
@@ -86,7 +86,7 @@ fact NonEmptyInstancesOnly {
     withJusts f xs
       | any isJust xs = f $ catMaybes xs
       | otherwise     = ""
-    limitLinks = withJusts (\ps -> [i|
+    sizeConstraints = withJusts (\ps -> [i|
 fact SizeConstraints {
 #{unlines ps}
 }
