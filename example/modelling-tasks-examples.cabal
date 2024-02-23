@@ -10,11 +10,11 @@ build-type:     Simple
 
 library
   exposed-modules:
-      Modelling.ActivityDiagram.EnterAS.Config
-      Modelling.ActivityDiagram.FindSupportST.Config
+      Modelling.ActivityDiagram.EnterAs.Config
+      Modelling.ActivityDiagram.FindSupportSt.Config
       Modelling.ActivityDiagram.MatchAd.Config
       Modelling.ActivityDiagram.MatchPetri.Config
-      Modelling.ActivityDiagram.SelectAS.Config
+      Modelling.ActivityDiagram.SelectAs.Config
       Modelling.ActivityDiagram.SelectPetri.Config
       Modelling.CdOd.DifferentNames.Config
       Modelling.CdOd.MatchCdOd.Config

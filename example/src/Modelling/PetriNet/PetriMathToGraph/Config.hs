@@ -1,7 +1,7 @@
 {-|
 Configurations might work for @PetriGraphToMath@ and @PetriMathToGraph@ tasks
 -}
-module Modelling.PetriNet.PetriGraphToMath.Config where
+module Modelling.PetriNet.PetriMathToGraph.Config where
 
 import Modelling.PetriNet.MatchToMath (
   MathConfig (..),
