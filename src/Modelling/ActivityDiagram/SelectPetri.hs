@@ -121,6 +121,8 @@ data SelectPetriConfig = SelectPetriConfig {
   hideNodeNames :: Bool,
   hideBranchConditions :: Bool,
   hidePetriNodeLabels :: Bool,
+  -- | Enable putting label information inside generated SVGs
+  petriAnnotatedLabels :: Bool,
   petriLayout :: [GraphvizCommand],
   numberOfWrongAnswers :: Int,
   numberOfModifications :: Int,
@@ -146,6 +148,7 @@ defaultSelectPetriConfig = SelectPetriConfig {
   hideNodeNames = False,
   hideBranchConditions = False,
   hidePetriNodeLabels = False,
+  petriAnnotatedLabels = False,
   petriLayout = [Dot],
   numberOfWrongAnswers = 2,
   numberOfModifications = 3,
@@ -422,6 +425,7 @@ getSelectPetriTask config = do
         suppressBranchConditions = hideBranchConditions config
       }
       petriDrawConf = DrawSettings {
+        withAnnotatedLabels = petriAnnotatedLabels config,
         withPlaceNames = not $ hidePetriNodeLabels config,
         withTransitionNames = not $ hidePetriNodeLabels config,
         with1Weights = False,
@@ -494,6 +498,7 @@ defaultSelectPetriInstance =  SelectPetriInstance {
   },
   plantUMLConf = defaultPlantUmlConfig,
   petriDrawConf = DrawSettings {
+    withAnnotatedLabels = False,
     withPlaceNames = True,
     withTransitionNames = True,
     with1Weights = False,

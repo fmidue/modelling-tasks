@@ -115,6 +115,8 @@ data MatchPetriConfig = MatchPetriConfig {
   adConfig :: AdConfig,
   maxInstances :: Maybe Integer,
   hideBranchConditions :: Bool,
+  -- | Enable putting label information inside generated SVGs
+  petriAnnotatedLabels :: Bool,
   petriLayout :: [GraphvizCommand],
   -- | Option to prevent support STs from occurring
   supportSTAbsent :: Maybe Bool,
@@ -135,6 +137,7 @@ defaultMatchPetriConfig = MatchPetriConfig
   { adConfig = defaultAdConfig {activityFinalNodes = 0, flowFinalNodes = 2},
     maxInstances = Just 25,
     hideBranchConditions = False,
+    petriAnnotatedLabels = False,
     petriLayout = [Dot],
     supportSTAbsent = Nothing,
     activityFinalsExist = Just False,
@@ -422,6 +425,7 @@ getMatchPetriTask config = do
       },
     petriDrawConf =
       DrawSettings {
+        withAnnotatedLabels = petriAnnotatedLabels config,
         withPlaceNames = True,
         withTransitionNames = True,
         with1Weights = False,
@@ -882,6 +886,7 @@ defaultMatchPetriInstance = MatchPetriInstance
   , plantUMLConf = defaultPlantUmlConfig
   , petriDrawConf =
     DrawSettings {
+      withAnnotatedLabels = False,
       withPlaceNames = True,
       withTransitionNames = True,
       with1Weights = False,
