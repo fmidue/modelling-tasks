@@ -329,8 +329,8 @@ findConcurrencyGenerate config segment seed = flip evalRandT (mkStdGen seed) $ d
      c
   return $ FindInstance {
     drawFindWith   = DrawSettings {
-      withAnnotatedLabels = False,
       withPlaceNames = not $ hidePlaceNames gc,
+      withSvgHighlighting = True,
       withTransitionNames = not $ hideTransitionNames gc,
       with1Weights = not $ hideWeight1 gc,
       withGraphvizCommand = gl
@@ -518,8 +518,8 @@ defaultPickConcurrencyInstance = PickInstance {
           ]
         },
       DrawSettings {
-        withAnnotatedLabels = False,
         withPlaceNames = False,
+        withSvgHighlighting = True,
         withTransitionNames = False,
         with1Weights = False,
         withGraphvizCommand = Fdp
@@ -538,8 +538,8 @@ defaultPickConcurrencyInstance = PickInstance {
           ]
         },
       DrawSettings {
-        withAnnotatedLabels = False,
         withPlaceNames = False,
+        withSvgHighlighting = True,
         withTransitionNames = False,
         with1Weights = False,
         withGraphvizCommand = Fdp
@@ -552,8 +552,8 @@ defaultPickConcurrencyInstance = PickInstance {
 defaultFindConcurrencyInstance :: FindInstance SimplePetriNet (Concurrent Transition)
 defaultFindConcurrencyInstance = FindInstance {
   drawFindWith = DrawSettings {
-    withAnnotatedLabels = False,
     withPlaceNames = False,
+    withSvgHighlighting = True,
     withTransitionNames = True,
     with1Weights = False,
     withGraphvizCommand = Circo
