@@ -31,8 +31,10 @@ module Modelling.PetriNet.Types (
   DrawSettings (..),
   FindConcurrencyConfig (..),
   FindConflictConfig (..),
+  FindMistakeConfig (..),
   GraphConfig (..),
   InvalidPetriNetException (..),
+  MistakeConfig(..),
   Net (..),
   Node (..),
   Petri (..),
@@ -56,6 +58,7 @@ module Modelling.PetriNet.Types (
   defaultChangeConfig,
   defaultFindConcurrencyConfig,
   defaultFindConflictConfig,
+  defaultFindMistakeConfig,
   defaultGraphConfig,
   defaultPickConcurrencyConfig,
   defaultPickConflictConfig,
@@ -880,6 +883,51 @@ defaultPickConcurrencyConfig = PickConcurrencyConfig
   , prohibitSourceTransitions = False
   , useDifferentGraphLayouts = False
   , alloyConfig  = defaultAlloyConfig
+  }
+
+data FindMistakeConfig = FindMistakeConfig
+  { basicConfig :: BasicConfig
+  , advConfig :: AdvConfig
+  , changeConfig :: ChangeConfig
+  , graphConfig :: GraphConfig
+  , printSolution :: Bool
+  , alloyConfig  :: AlloyConfig
+  , mistakeConfig :: MistakeConfig
+  } deriving (Generic, Read, Show)
+
+defaultFindMistakeConfig :: FindMistakeConfig
+defaultFindMistakeConfig = FindMistakeConfig
+  { basicConfig = defaultBasicConfig { atLeastActive = 3 }
+  , advConfig = defaultAdvConfig{ presenceOfSourceTransitions = Nothing }
+  , changeConfig = defaultChangeConfig
+  , graphConfig = defaultGraphConfig { hidePlaceNames = True }
+  , printSolution = False
+  , alloyConfig  = defaultAlloyConfig
+  , mistakeConfig = defaultMistakeConfig
+  }
+
+data MistakeConfig = MistakeConfig
+  { mistakes :: Int
+  , negativeTokenCost :: Bool
+  , negativeTokenCostNum :: Int
+  -- ^ negative cost of tokens + corresponding number of mistakes (can be zero)
+  , tranToTran :: Bool
+  , tranToTranNum :: Int
+  -- ^ connection between transition and transition + corresponding number of mistakes (can be zero)
+  , placetoPlace :: Bool
+  , placetoPlaceNum :: Int
+  -- ^ connection between places and places + corresponding number of mistakes (can be zero)
+  } deriving (Generic, Read, Show)
+
+defaultMistakeConfig :: MistakeConfig
+defaultMistakeConfig = MistakeConfig
+  { mistakes = 3
+  , negativeTokenCost = True
+  , negativeTokenCostNum = 1
+  , tranToTran = True
+  , tranToTranNum = 2
+  , placetoPlace = False
+  , placetoPlaceNum = 0
   }
 
 data DrawSettings = DrawSettings {
