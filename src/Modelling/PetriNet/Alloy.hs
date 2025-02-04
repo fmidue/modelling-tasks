@@ -18,6 +18,7 @@ module Modelling.PetriNet.Alloy (
   modulePetriConcepts,
   modulePetriConstraints,
   modulePetriSignature,
+  modulePetriSignatureMistake,
   petriScopeBitWidth,
   petriScopeMaxSeq,
   signatures,
@@ -76,6 +77,9 @@ petriScopeMaxSeq BasicConfig{places,transitions} = places+transitions
 
 modulePetriSignature :: String
 modulePetriSignature = removeLines 2 $(embedStringFile "alloy/petri/PetriSignature.als")
+
+modulePetriSignatureMistake :: String
+modulePetriSignatureMistake = removeLines 2 $(embedStringFile "alloy/petri/PetriSignatureMistake.als")
 
 modulePetriAdditions :: String
 modulePetriAdditions = removeLines 11 $(embedStringFile "alloy/petri/PetriAdditions.als")
