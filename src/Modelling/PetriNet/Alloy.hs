@@ -13,6 +13,7 @@ module Modelling.PetriNet.Alloy (
   connected,
   defaultConstraints,
   isolated,
+  mistakeIsLegal,
   moduleHelpers,
   modulePetriAdditions,
   modulePetriConcepts,
@@ -38,6 +39,7 @@ import Modelling.PetriNet.Types (
   AlloyConfig,
   BasicConfig (..),
   ChangeConfig (..),
+  MistakeConfig (..)
   )
 
 import qualified Modelling.PetriNet.Types         as T (
@@ -191,6 +193,33 @@ compChange ChangeConfig
   (sum p : Places | abs[p.tokenChange]) = #{tokenChangeOverall}
   maxTokenChangePerPlace[#{maxTokenChangePerPlace}]
 |]
+
+mistakeIsLegal :: MistakeConfig -> String
+mistakeIsLegal MistakeConfig
+                { negativeTokenCost, negativeTokenCostNum
+                , transitionToIllegal, transitionToIllegalNum
+                , placeToIllegal, placeToIllegalNum
+                } = [i|
+  #{mistakeNegative negativeTokenCost negativeTokenCostNum}
+  #{mistakeTransition transitionToIllegal transitionToIllegalNum}
+  #{mistakePlace placeToIllegal placeToIllegalNum}
+|]
+  where
+    mistakeNegative :: Bool -> Int -> String
+    mistakeNegative True num = [i|some w : Nodes.flow[Nodes] | w < 0 && #{num} < (#{countIllegalNegative})|]
+    mistakeNegative False _  = "all w : Nodes.flow[Nodes] | w > 0"
+
+    mistakeTransition :: Bool -> Int -> String
+    mistakeTransition True num = [i|some t : Transitions | t.flow.Int in Places && #{num} < (#{countIllegalTransition})|]
+    mistakeTransition False _  = "Transitions.flow.Int in Places"
+
+    mistakePlace :: Bool -> Int -> String
+    mistakePlace True num = [i|some p : Places | some p.flow.Int in Transitions && #{num} < (#{countIllegalPlace})|]
+    mistakePlace False _  = "Places.flow.Int in Transitions"
+
+    countIllegalNegative      = "let cn = {w : Nodes.flow[Nodes] | w < 0} | #cn"
+    countIllegalTransition    = "let cit = {t : Transitions | some t.flow.Int in Places} | #cit"
+    countIllegalPlace         = "let cip = {p : Places | some p.flow.Int in Transitions} | #cip"
 
 {-|
 Generates signatures of the given kind, number of places and transitions.

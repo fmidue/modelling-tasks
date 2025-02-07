@@ -47,6 +47,7 @@ import Modelling.PetriNet.Alloy (
   compBasicConstraints,
   compChange,
   defaultConstraints,
+  mistakeIsLegal,
   moduleHelpers,
   modulePetriAdditions,
   modulePetriConcepts,
@@ -85,6 +86,7 @@ import Modelling.PetriNet.Types         (
   DrawSettings (..),
   FindMistakeConfig (..),
   GraphConfig (..),
+  MistakeConfig (..),
   Net (..),
   PetriLike (PetriLike, allNodes),
   SimpleNode (..),
@@ -117,7 +119,7 @@ import Control.Monad.Random (
 import Control.Monad.Trans              (MonadTrans (lift))
 import Data.Bifunctor                   (Bifunctor (bimap))
 import Data.Either                      (isLeft)
-import Data.GraphViz.Commands           (GraphvizCommand (Circo, Fdp))
+import Data.GraphViz.Commands           (GraphvizCommand (Circo))
 import Data.String.Interpolate          (i, iii)
 import Language.Alloy.Call (
   AlloyInstance,
@@ -263,18 +265,15 @@ findMistake
   => FindMistakeConfig
   -> Int
   -> RandT g m (p n String, Concurrent String)
-findMistake = taskInstance
-  findTaskInstance
-  petriNetFindMist
-  parseConcurrency
-  Find.alloyConfig
+findMistake = taskInstance findTaskInstance petriNetFindMist parseConcurrency Find.alloyConfig
 
 petriNetFindMist :: FindMistakeConfig -> String
 petriNetFindMist FindMistakeConfig{
   basicConfig,
   advConfig,
-  changeConfig
-  } = petriNetMistakeAlloy basicConfig changeConfig $ Right advConfig
+  changeConfig,
+  mistakeConfig
+  } = petriNetMistakeAlloy basicConfig changeConfig (Right advConfig) mistakeConfig
 
 {-|
 Generate code for Mistake PetriNet tasks
@@ -284,9 +283,10 @@ petriNetMistakeAlloy
   -> ChangeConfig
   -> Either Bool AdvConfig
   -- ^ Right for find task; Left for pick task
+  -> MistakeConfig
   -> String
-petriNetMistakeAlloy basicC changeC specific
-  = [i|module PetriNetConcur
+petriNetMistakeAlloy basicC changeC specific mistakeC
+  = [i|module PetriNetMist
 
 #{modulePetriSignatureMistake}
 #{either (const sigs) (const modulePetriAdditions) specific}
@@ -301,16 +301,8 @@ pred #{mistakePredicateName}[#{defaultActiveTrans}#{activated} : set Transitions
   #{compChange changeC}
   #{sourceTransitionConstraints}
   #{compConstraints}
+  #{mistakeIsLegal mistakeC}
 
-  not (all w : Nodes.flow[Nodes] | w > 0)
-  Places.flow.Int in Transitions
-  not (Transitions.flow.Int in Places)
-} 
-
-pred isLegalPetriNet[] {
-  all w : Nodes.flow[Nodes] | w > 0
-  not (Places.flow.Int in Transitions)
-  not (Transitions.flow.Int in Places)
 }
 
 run #{mistakePredicateName} for exactly #{petriScopeMaxSeq basicC} Nodes, #{petriScopeBitWidth basicC} Int
@@ -322,7 +314,7 @@ run #{mistakePredicateName} for exactly #{petriScopeMaxSeq basicC} Nodes, #{petr
       (const $ defaultConstraints activatedDefault basicC)
       compAdvConstraints
       specific
-    sourceTransitionConstraints 
+    sourceTransitionConstraints
       | Left True <- specific = [i|
   no t : givenTransitions | no givenPlaces.flow[t]
   no t : Transitions | sourceTransitions[t]|]
