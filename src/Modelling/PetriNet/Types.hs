@@ -907,27 +907,25 @@ defaultFindMistakeConfig = FindMistakeConfig
   }
 
 data MistakeConfig = MistakeConfig
-  { mistakes :: Int
-  , negativeTokenCost :: Bool
+  { negativeTokenCost :: Bool
   , negativeTokenCostNum :: Int
-  -- ^ negative cost of tokens + corresponding number of mistakes (can be zero)
-  , tranToTran :: Bool
-  , tranToTranNum :: Int
-  -- ^ connection between transition and transition + corresponding number of mistakes (can be zero)
-  , placetoPlace :: Bool
-  , placetoPlaceNum :: Int
-  -- ^ connection between places and places + corresponding number of mistakes (can be zero)
+  -- ^ negative cost of tokens + corresponding number of mistakes
+  , transitionToIllegal :: Bool
+  , transitionToIllegalNum :: Int
+  -- ^ transition connects to something illegal + corresponding number of mistakes
+  , placeToIllegal :: Bool
+  , placeToIllegalNum :: Int
+  -- ^ place connects to something illegal + corresponding number of mistakes
   } deriving (Generic, Read, Show)
 
 defaultMistakeConfig :: MistakeConfig
 defaultMistakeConfig = MistakeConfig
-  { mistakes = 3
-  , negativeTokenCost = True
-  , negativeTokenCostNum = 1
-  , tranToTran = True
-  , tranToTranNum = 2
-  , placetoPlace = False
-  , placetoPlaceNum = 0
+  { negativeTokenCost = True
+  , negativeTokenCostNum = 2
+  , transitionToIllegal = False
+  , transitionToIllegalNum = 1
+  , placeToIllegal = False
+  , placeToIllegalNum = 2
   }
 
 data DrawSettings = DrawSettings {
