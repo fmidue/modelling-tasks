@@ -217,9 +217,9 @@ mistakeIsLegal MistakeConfig
     mistakePlace True num = [i|some p : Places | some p.flow.Int in Transitions && #{num} < (#{countIllegalPlace})|]
     mistakePlace False _  = "Places.flow.Int in Transitions"
 
-    countIllegalNegative      = "let cn = {w : Nodes.flow[Nodes] | w < 0} | #cn"
-    countIllegalTransition    = "let cit = {t : Transitions | some t.flow.Int in Places} | #cit"
-    countIllegalPlace         = "let cip = {p : Places | some p.flow.Int in Transitions} | #cip"
+    countIllegalNegative      = "let countIllegalNegative = {w : Nodes.flow[Nodes] | w < 0} | #countIllegalNegative"
+    countIllegalTransition    = "let countIllegalTransition = {t : Transitions | some t.flow.Int in Places} | #countIllegalTransition"
+    countIllegalPlace         = "let countIllegalPlace = {p : Places | some p.flow.Int in Transitions} | #countIllegalPlace"
 
 {-|
 Generates signatures of the given kind, number of places and transitions.
