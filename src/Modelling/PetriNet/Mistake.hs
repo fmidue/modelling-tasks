@@ -5,22 +5,16 @@
 {-# Language QuasiQuotes #-}
 
 module Modelling.PetriNet.Mistake (
-  checkFindMistakeConfig,
-  defaultFindMistakeInstance,
-  findMistake,
-  findMistakeEvaluation,
-  findMistakeGenerate,
-  findMistakeSolution,
-  findMistakeSyntax,
-  findMistakeTask,
-  parseConcurrency,
-  petriNetFindMist,
-  simpleFindMistakeTask,
+  defaultPickMistakeInstance,
+  parseMistake,
+  petriNetPickMist,
+  pickMistake,
+  pickMistakeGenerate,
+  pickMistakeTask,
   ) where
 
-import qualified Modelling.PetriNet.Find          as F (showSolution)
-import qualified Modelling.PetriNet.Types         as Find (
-  FindMistakeConfig (..),
+import qualified Modelling.PetriNet.Types         as Pick (
+  PickMistakeConfig (..),
   )
 
 import qualified Data.Map                         as M (
@@ -32,113 +26,81 @@ import Capabilities.Alloy               (MonadAlloy)
 import Capabilities.Cache               (MonadCache)
 import Capabilities.Diagrams            (MonadDiagrams)
 import Capabilities.Graphviz            (MonadGraphviz)
-import Control.Monad.IO.Class           (MonadIO, liftIO)
-import Debug.Trace                      (trace)
-import Modelling.Auxiliary.Common (
-  Object,
-  oneOf,
-  parseWith,
-  )
+import Modelling.Auxiliary.Common       (Object)
 import Modelling.Auxiliary.Output (
   hoveringInformation,
   )
 import Modelling.PetriNet.Alloy (
-  compAdvConstraints,
   compBasicConstraints,
   compChange,
   defaultConstraints,
-  mistakeIsLegal,
+  mistakeConstraints,
   moduleHelpers,
-  modulePetriAdditions,
   modulePetriConcepts,
   modulePetriConstraints,
-  modulePetriSignatureMistake,
+  modulePetriSignature,
   petriScopeBitWidth,
   petriScopeMaxSeq,
-  signatures,
   skolemVariable,
   taskInstance,
   unscopedSingleSig,
   )
-import Modelling.PetriNet.Diagram (
-  renderWith,
-  )
-import Modelling.PetriNet.Find (
-  FindInstance (..),
-  checkConfigForFind,
-  findInitial,
-  findTaskInstance,
-  toFindEvaluation,
-  toFindSyntax,
-  )
 import Modelling.PetriNet.Parser        (
   asSingleton,
   )
-import Modelling.PetriNet.Reach.Type (
-  Transition (Transition),
-  parseTransitionPrec,
+import Modelling.PetriNet.Pick (
+  PickInstance (..),
+  pickGenerate,
+  pickTaskInstance,
+  renderPick,
+  wrongInstances,
   )
 import Modelling.PetriNet.Types         (
-  AdvConfig,
   BasicConfig (..),
   ChangeConfig,
   Concurrent (Concurrent),
   DrawSettings (..),
-  FindMistakeConfig (..),
-  GraphConfig (..),
-  MistakeConfig (..),
+  MistakeConfig,
   Net (..),
   PetriLike (PetriLike, allNodes),
+  PickMistakeConfig (..),
   SimpleNode (..),
   SimplePetriNet,
-  transitionPairShow,
   )
 
 import Control.Monad.Catch              (MonadThrow)
 import Control.OutputCapable.Blocks (
-  ArticleToUse (DefiniteArticle),
   GenericOutputCapable (..),
-  LangM',
   LangM,
   OutputCapable,
-  Rated,
   ($=<<),
   english,
   german,
-  printSolutionAndAssert,
   translate,
-  translations,
-  unLangM,
   )
 import Control.Monad.Random (
   RandT,
   RandomGen,
-  evalRandT,
-  mkStdGen,
   )
-import Control.Monad.Trans              (MonadTrans (lift))
-import Data.Bifunctor                   (Bifunctor (bimap))
-import Data.Either                      (isLeft)
-import Data.GraphViz.Commands           (GraphvizCommand (Circo))
+import Data.GraphViz.Commands           (GraphvizCommand (Fdp))
 import Data.String.Interpolate          (i, iii)
 import Language.Alloy.Call (
   AlloyInstance,
   )
 
-simpleFindMistakeTask
-  :: (
-    MonadCache m,
-    MonadDiagrams m,
-    MonadGraphviz m,
-    MonadThrow m,
-    OutputCapable m
-    )
-  => FilePath
-  -> FindInstance SimplePetriNet (Concurrent Transition)
-  -> LangM m
-simpleFindMistakeTask = findMistakeTask
+pickMistakeGenerate
+  :: (MonadAlloy m, MonadThrow m, Net p n)
+  => PickMistakeConfig
+  -> Int
+  -> Int
+  -> m (PickInstance (p n String))
+pickMistakeGenerate = pickGenerate pickMistake gc ud ws
+  where
+    gc = Pick.graphConfig
+    ud = Pick.useDifferentGraphLayouts
+    ws = Pick.printSolution
 
-findMistakeTask
+pickMistakeTask
   :: (
     MonadCache m,
     MonadDiagrams m,
@@ -148,148 +110,87 @@ findMistakeTask
     OutputCapable m
     )
   => FilePath
-  -> FindInstance (p n String) (Concurrent Transition)
+  -> PickInstance (p n String)
   -> LangM m
-findMistakeTask path task = do
-  paragraph $ translate $ do
-    english "Consider the following Petri net:"
-    german "Betrachten Sie folgendes Petrinetz:"
-  image
-    $=<< renderWith path "concurrent" (net task) (drawFindWith task)
+pickMistakeTask path task = do
   paragraph $ translate $ do
     english [iii|
-      Which pair of transitions is concurrently activated
-      under the initial marking?
+      Which of the following Petri nets is "illegal" meaning it violates fundamental constraints?
       |]
     german [iii|
-      Welches Paar von Transitionen ist unter der Startmarkierung
-      nebenläufig aktiviert?
+      Welches dieser Petri-Netze ist "illegal", das heißt, es verletzt grundlegende Bedingungen?
       |]
+  images show snd
+    $=<< renderPick path "mistake" task
+  paragraph $ translate $ do
+    english [iii|
+      State your answer by giving the number of the Petri net
+      that is incorrect.
+      #{" "}|]
+    german [iii|
+      Geben Sie Ihre Antwort durch Angabe der Nummer des Petrinetzes an,
+      das inkorrekt ist.
+      #{" "}|]
+  let plural = wrongInstances task > 1
   paragraph $ do
-    translate $ do
-      english [iii|
-        State your answer by giving a pair
-        of concurrently activated transitions.
-        #{" "}|]
-      german [iii|
-        Geben Sie Ihre Antwort durch Angabe eines Paars
-        von nebenläufig aktivierten Transitionen an.
-        #{" "}|]
     translate $ do
       english [i|Stating |]
       german [i|Die Angabe von |]
-    let ts = transitionPairShow findInitial
-    code $ show ts
+    code "1"
     translate $ do
-      let (t1, t2) = bimap show show ts
       english [iii|
-        #{" "}as answer would indicate that transitions #{t1} and #{t2}
-        are concurrently activated under the initial marking.
-        #{" "}|]
-      german [iii|
-        #{" "}als Antwort würde bedeuten, dass Transitionen #{t1} und #{t2}
-        unter der Startmarkierung nebenläufig aktiviert sind.
-        #{" "}|]
-    translate $ do
-      english "The order of transitions within the pair does not matter here."
-      german [iii|
-        Die Reihenfolge der Transitionen innerhalb
-        des Paars spielt hierbei keine Rolle.
+        #{" "}as answer would indicate that Petri net 1 is "illegal" (and the other Petri
+        #{if plural then "nets are valid" else "net is valid"}).
         |]
+      german $ [iii|
+        #{" "}als Antwort würde bedeuten, dass Petri-Netz 1
+        "illegal" ist, während
+        #{" "}
+        |]
+        ++ (if plural
+            then "die anderen Petri-Netze gültig sind"
+            else "das andere Petri-Netz gültig ist")
     pure ()
   paragraph hoveringInformation
   pure ()
 
-findMistakeSyntax
-  :: OutputCapable m
-  => FindInstance net (Concurrent Transition)
-  -> (Transition, Transition)
-  -> LangM' m ()
-findMistakeSyntax = toFindSyntax False . numberOfTransitions
-
-findMistakeEvaluation
-  :: (Monad m, OutputCapable m)
-  => FindInstance net (Concurrent Transition)
-  -> (Transition, Transition)
-  -> Rated m
-findMistakeEvaluation task x = do
-  let what = translations $ do
-        english "are concurrently activated"
-        german "sind nebenläufig aktiviert"
-  uncurry (printSolutionAndAssert DefiniteArticle)
-    $=<< unLangM $ toFindEvaluation what withSol concur x
-  where
-    concur = findMistakeSolution task
-    withSol = F.showSolution task
-
-findMistakeSolution :: FindInstance net (Concurrent a) -> (a, a)
-findMistakeSolution task = concur
-  where
-    Concurrent concur = toFind task
-
-findMistakeGenerate
-  :: (MonadAlloy m, MonadThrow m, MonadIO m, Net p n)
-  => FindMistakeConfig
-  -> Int
-  -> Int
-  -> m (FindInstance (p n String) (Concurrent Transition))
-findMistakeGenerate config segment seed = flip evalRandT (mkStdGen seed) $ do
-  let alloyFile = petriNetFindMist config
-  let fileName = "output.als"
-  liftIO $ writeFile fileName alloyFile
-  (d, c) <- trace "findMistake successful" <$> findMistake config segment
-  gl <- oneOf $ graphLayouts gc
-  c' <- lift $ traverse
-     (parseWith parseTransitionPrec)
-     c
-  return $ FindInstance {
-    drawFindWith   = DrawSettings {
-      withPlaceNames = not $ hidePlaceNames gc,
-      withSvgHighlighting = True,
-      withTransitionNames = not $ hideTransitionNames gc,
-      with1Weights = not $ hideWeight1 gc,
-      withGraphvizCommand = gl
-      },
-    toFind = c',
-    net = d,
-    numberOfPlaces = places bc,
-    numberOfTransitions = transitions bc,
-    showSolution = Find.printSolution config
-    }
-  where
-    bc = Find.basicConfig config
-    gc = Find.graphConfig config
-
-findMistake
+pickMistake
   :: (MonadAlloy m, MonadThrow m, Net p n, RandomGen g)
-  => FindMistakeConfig
+  => PickMistakeConfig
   -> Int
-  -> RandT g m (p n String, Concurrent String)
-findMistake = taskInstance findTaskInstance petriNetFindMist parseConcurrency Find.alloyConfig
+  -> RandT
+    g
+    m
+    [(p n String, Maybe (Concurrent String))]
+pickMistake = taskInstance
+  pickTaskInstance
+  petriNetPickMist
+  parseMistake
+  Pick.alloyConfig
 
-petriNetFindMist :: FindMistakeConfig -> String
-petriNetFindMist FindMistakeConfig{
+petriNetPickMist :: PickMistakeConfig -> String
+petriNetPickMist PickMistakeConfig{
   basicConfig,
-  advConfig,
   changeConfig,
   mistakeConfig
-  } = petriNetMistakeAlloy basicConfig changeConfig (Right advConfig) mistakeConfig
+  } =
+  petriNetMistakeAlloy
+    basicConfig
+    changeConfig
+    mistakeConfig
 
 {-|
-Generate code for Mistake PetriNet tasks
+Generate code for PetriNet mistake tasks
 -}
 petriNetMistakeAlloy
   :: BasicConfig
   -> ChangeConfig
-  -> Either Bool AdvConfig
-  -- ^ Right for find task; Left for pick task
   -> MistakeConfig
   -> String
-petriNetMistakeAlloy basicC changeC specific mistakeC
-  = [i|module PetriNetMist
+petriNetMistakeAlloy basicC changeC mistakeC
+  = [i|module PetriNetMistake
 
-#{modulePetriSignatureMistake}
-#{either (const sigs) (const modulePetriAdditions) specific}
+#{modulePetriSignature}
 #{moduleHelpers}
 #{modulePetriConcepts}
 #{modulePetriConstraints}
@@ -300,9 +201,9 @@ pred #{mistakePredicateName}[#{defaultActiveTrans}#{activated} : set Transitions
   #{compBasicConstraints activated basicC}
   #{compChange changeC}
   #{sourceTransitionConstraints}
+  #{sinkTransitionConstraints}
   #{compConstraints}
-  #{mistakeIsLegal mistakeC}
-
+  #{mistakeConstraints mistakeC}
 }
 
 run #{mistakePredicateName} for exactly #{petriScopeMaxSeq basicC} Nodes, #{petriScopeBitWidth basicC} Int
@@ -310,19 +211,15 @@ run #{mistakePredicateName} for exactly #{petriScopeMaxSeq basicC} Nodes, #{petr
   where
     activated        = "activatedTrans"
     activatedDefault = "defaultActiveTrans"
-    compConstraints = either
-      (const $ defaultConstraints activatedDefault basicC)
-      compAdvConstraints
-      specific
-    sourceTransitionConstraints
-      | Left True <- specific = [i|
+    sourceTransitionConstraints :: String
+    sourceTransitionConstraints = [i|
   no t : givenTransitions | no givenPlaces.flow[t]
   no t : Transitions | sourceTransitions[t]|]
-      | otherwise = ""
-    defaultActiveTrans
-      | isLeft specific    = [i|#{activatedDefault} : set givenTransitions,|]
-      | otherwise          = ""
-    sigs = signatures "given" (places basicC) (transitions basicC)
+    sinkTransitionConstraints :: String
+    sinkTransitionConstraints = "no t : Transitions | sinkTransitions[t]"
+    defaultActiveTrans :: String
+    defaultActiveTrans = [i|#{activatedDefault} : set givenTransitions,|]
+    compConstraints = defaultConstraints activatedDefault basicC
     t1 = transition1
     t2 = transition2
 
@@ -346,42 +243,55 @@ Parses the concurrency Skolem variables for singleton of transitions and returns
 both as tuple.
 It throws an error instead if unexpected behaviour occurs.
 -}
-parseConcurrency :: MonadThrow m => AlloyInstance -> m (Concurrent Object)
-parseConcurrency inst = do
+parseMistake :: MonadThrow m => AlloyInstance -> m (Concurrent Object)
+parseMistake inst = do
   t1 <- unscopedSingleSig inst concurrencyTransition1 ""
   t2 <- unscopedSingleSig inst concurrencyTransition2 ""
   Concurrent <$> ((,) <$> asSingleton t1 <*> asSingleton t2)
 
-checkFindMistakeConfig :: FindMistakeConfig -> Maybe String
-checkFindMistakeConfig FindMistakeConfig {
-  basicConfig,
-  changeConfig,
-  graphConfig
-  }
-  = checkConfigForFind basicConfig changeConfig graphConfig
-
-defaultFindMistakeInstance :: FindInstance SimplePetriNet (Concurrent Transition)
-defaultFindMistakeInstance = FindInstance {
-  drawFindWith = DrawSettings {
-    withPlaceNames = False,
-    withSvgHighlighting = True,
-    withTransitionNames = True,
-    with1Weights = False,
-    withGraphvizCommand = Circo
-    },
-  toFind = Concurrent (Transition 1,Transition 3),
-  net = PetriLike {
-    allNodes = M.fromList [
-      ("s1",SimplePlace {initial = 2, flowOut = M.fromList [("t1",1),("t2",2),("t3",1),("s2",-3)]}),
-      ("s2",SimplePlace {initial = 1, flowOut = M.empty}),
-      ("s3",SimplePlace {initial = 1, flowOut = M.fromList [("t3",1)]}),
-      ("s4",SimplePlace {initial = 0, flowOut = M.empty}),
-      ("t1",SimpleTransition {flowOut = M.fromList [("s3",1)]}),
-      ("t2",SimpleTransition {flowOut = M.fromList [("s2",1),("s4",2)]}),
-      ("t3",SimpleTransition {flowOut = M.fromList [("s2",2)]})
-      ]
-    },
-  numberOfPlaces = 4,
-  numberOfTransitions = 3,
+defaultPickMistakeInstance :: PickInstance SimplePetriNet
+defaultPickMistakeInstance = PickInstance {
+  nets = M.fromList [
+    (1,(False,(
+      PetriLike {
+        allNodes = M.fromList [
+          ("s1",SimplePlace {initial = 1, flowOut = M.fromList [("t1",2),("t2",1),("t3",1)]}),
+          ("s2",SimplePlace {initial = 0, flowOut = M.empty}),
+          ("s3",SimplePlace {initial = 0, flowOut = M.fromList [("t1",1)]}),
+          ("s4",SimplePlace {initial = 1, flowOut = M.empty}),
+          ("t1",SimpleTransition {flowOut = M.fromList [("s1",1),("s4",1)]}),
+          ("t2",SimpleTransition {flowOut = M.fromList [("s4",1)]}),
+          ("t3",SimpleTransition {flowOut = M.fromList [("s2",1),("s3",1)]})
+          ]
+        },
+      DrawSettings {
+        withPlaceNames = False,
+        withSvgHighlighting = True,
+        withTransitionNames = False,
+        with1Weights = False,
+        withGraphvizCommand = Fdp
+        }
+      ))),
+    (2,(True,(
+      PetriLike {
+        allNodes = M.fromList [
+          ("s1",SimplePlace {initial = 2, flowOut = M.fromList [("t1",2),("t2",1),("s2",1)]}),
+          ("s2",SimplePlace {initial = 0, flowOut = M.empty}),
+          ("s3",SimplePlace {initial = 0, flowOut = M.fromList [("t1",1)]}),
+          ("s4",SimplePlace {initial = 2, flowOut = M.fromList [("t2",-2)]}),
+          ("t1",SimpleTransition {flowOut = M.fromList [("s1",1),("s4",1)]}),
+          ("t2",SimpleTransition {flowOut = M.fromList [("s1",1),("s4",1)]}),
+          ("t3",SimpleTransition {flowOut = M.fromList [("s2",1),("s3",-1)]})
+          ]
+        },
+      DrawSettings {
+        withPlaceNames = False,
+        withSvgHighlighting = True,
+        withTransitionNames = False,
+        with1Weights = False,
+        withGraphvizCommand = Fdp
+        }
+      )))
+    ],
   showSolution = False
   }
