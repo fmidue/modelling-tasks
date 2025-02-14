@@ -31,7 +31,7 @@ module Modelling.PetriNet.Types (
   DrawSettings (..),
   FindConcurrencyConfig (..),
   FindConflictConfig (..),
-  FindMistakeConfig (..),
+  PickMistakeConfig (..),
   GraphConfig (..),
   InvalidPetriNetException (..),
   MistakeConfig(..),
@@ -58,7 +58,7 @@ module Modelling.PetriNet.Types (
   defaultChangeConfig,
   defaultFindConcurrencyConfig,
   defaultFindConflictConfig,
-  defaultFindMistakeConfig,
+  defaultPickMistakeConfig,
   defaultGraphConfig,
   defaultPickConcurrencyConfig,
   defaultPickConflictConfig,
@@ -885,47 +885,42 @@ defaultPickConcurrencyConfig = PickConcurrencyConfig
   , alloyConfig  = defaultAlloyConfig
   }
 
-data FindMistakeConfig = FindMistakeConfig
+data PickMistakeConfig = PickMistakeConfig
   { basicConfig :: BasicConfig
-  , advConfig :: AdvConfig
   , changeConfig :: ChangeConfig
   , graphConfig :: GraphConfig
-  , printSolution :: Bool
-  , alloyConfig  :: AlloyConfig
   , mistakeConfig :: MistakeConfig
+  , printSolution :: Bool
+  , prohibitSourceTransitions :: Bool
+  , prohibitSinkTransitions :: Bool
+  , useDifferentGraphLayouts :: Bool
+  , alloyConfig  :: AlloyConfig
   } deriving (Generic, Read, Show)
 
-defaultFindMistakeConfig :: FindMistakeConfig
-defaultFindMistakeConfig = FindMistakeConfig
-  { basicConfig = defaultBasicConfig { atLeastActive = 3 }
-  , advConfig = defaultAdvConfig{ presenceOfSourceTransitions = Nothing }
+defaultPickMistakeConfig :: PickMistakeConfig
+defaultPickMistakeConfig = PickMistakeConfig
+  { basicConfig = defaultBasicConfig
   , changeConfig = defaultChangeConfig
-  , graphConfig = defaultGraphConfig { hidePlaceNames = True }
+  , graphConfig = defaultGraphConfig { hidePlaceNames = True, hideTransitionNames = True }
   , printSolution = False
+  , prohibitSourceTransitions = True
+  , prohibitSinkTransitions = True
+  , useDifferentGraphLayouts = False
   , alloyConfig  = defaultAlloyConfig
   , mistakeConfig = defaultMistakeConfig
   }
 
 data MistakeConfig = MistakeConfig
   { negativeTokenCost :: Bool
-  , negativeTokenCostNum :: Int
-  -- ^ negative cost of tokens + corresponding number of mistakes
   , transitionToIllegal :: Bool
-  , transitionToIllegalNum :: Int
-  -- ^ transition connects to something illegal + corresponding number of mistakes
   , placeToIllegal :: Bool
-  , placeToIllegalNum :: Int
-  -- ^ place connects to something illegal + corresponding number of mistakes
   } deriving (Generic, Read, Show)
 
 defaultMistakeConfig :: MistakeConfig
 defaultMistakeConfig = MistakeConfig
   { negativeTokenCost = True
-  , negativeTokenCostNum = 2
-  , transitionToIllegal = False
-  , transitionToIllegalNum = 1
-  , placeToIllegal = False
-  , placeToIllegalNum = 2
+  , transitionToIllegal = True
+  , placeToIllegal = True
   }
 
 data DrawSettings = DrawSettings {
