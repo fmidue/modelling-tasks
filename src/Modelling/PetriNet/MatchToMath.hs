@@ -561,6 +561,7 @@ pred showNets[#{activated} : set Transitions] {
   \#Transitions = #{transitions}
   #{compBasicConstraints activated basicC}
   #{compAdvConstraints advConfig}
+  isLegalPetriNet
 }
 run showNets for exactly #{petriScopeMaxSeq basicC} Nodes, #{petriScopeBitWidth basicC} Int
 |]
@@ -589,6 +590,7 @@ pred showFalseNets[#{activated} : set Transitions]{
   #{compBasicConstraints activated basicConfig}
   #{compAdvConstraints advConfig}
   #{compChange changeConfig}
+  isLegalPetriNet
 }
 
 run showFalseNets for exactly #{petriScopeMaxSeq basicConfig} Nodes, #{petriScopeBitWidth basicConfig} Int

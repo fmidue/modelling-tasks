@@ -506,6 +506,7 @@ pred #{conflictPredicateName}[#{p} : some Places,#{defaultActiveTrans}#{activate
   #{conflictDistractor "" ""}
   #{conflictDistractor "given" "default"}
   #{compConstraints}
+  isLegalPetriNet
 }
 
 run #{conflictPredicateName} for exactly #{petriScopeMaxSeq basicC} Nodes, #{petriScopeBitWidth basicC} Int

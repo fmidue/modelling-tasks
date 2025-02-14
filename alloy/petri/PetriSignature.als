@@ -31,7 +31,7 @@ abstract sig Transitions extends Nodes
   defaultFlow.Int in Places
 }
 
-fact isLegalPetriNet {
+pred isLegalPetriNet {
   all w : Nodes.flow[Nodes] | w > 0
   Places.flow.Int in Transitions
   Transitions.flow.Int in Places

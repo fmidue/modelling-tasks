@@ -432,6 +432,7 @@ pred #{concurrencyPredicateName}[#{defaultActiveTrans}#{activated} : set Transit
   all disj u,v : Transitions |
     concurrent[u + v] implies #{t1} + #{t2} = u + v
   #{compConstraints}
+  isLegalPetriNet
 }
 
 run #{concurrencyPredicateName} for exactly #{petriScopeMaxSeq basicC} Nodes, #{petriScopeBitWidth basicC} Int
