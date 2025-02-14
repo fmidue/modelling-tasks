@@ -13,13 +13,12 @@ module Modelling.PetriNet.Alloy (
   connected,
   defaultConstraints,
   isolated,
-  mistakeIsLegal,
+  mistakeConstraints,
   moduleHelpers,
   modulePetriAdditions,
   modulePetriConcepts,
   modulePetriConstraints,
   modulePetriSignature,
-  modulePetriSignatureMistake,
   petriScopeBitWidth,
   petriScopeMaxSeq,
   signatures,
@@ -79,9 +78,6 @@ petriScopeMaxSeq BasicConfig{places,transitions} = places+transitions
 
 modulePetriSignature :: String
 modulePetriSignature = removeLines 2 $(embedStringFile "alloy/petri/PetriSignature.als")
-
-modulePetriSignatureMistake :: String
-modulePetriSignatureMistake = removeLines 2 $(embedStringFile "alloy/petri/PetriSignatureMistake.als")
 
 modulePetriAdditions :: String
 modulePetriAdditions = removeLines 11 $(embedStringFile "alloy/petri/PetriAdditions.als")
@@ -194,32 +190,29 @@ compChange ChangeConfig
   maxTokenChangePerPlace[#{maxTokenChangePerPlace}]
 |]
 
-mistakeIsLegal :: MistakeConfig -> String
-mistakeIsLegal MistakeConfig
-                { negativeTokenCost, negativeTokenCostNum
-                , transitionToIllegal, transitionToIllegalNum
-                , placeToIllegal, placeToIllegalNum
+mistakeConstraints :: MistakeConfig -> String
+mistakeConstraints MistakeConfig
+                { negativeTokenCost, transitionToIllegal, placeToIllegal
                 } = [i|
-  #{mistakeNegative negativeTokenCost negativeTokenCostNum}
-  #{mistakeTransition transitionToIllegal transitionToIllegalNum}
-  #{mistakePlace placeToIllegal placeToIllegalNum}
+  #{mistakeNegative negativeTokenCost}
+  #{mistakeTransition transitionToIllegal}
+  #{mistakePlace placeToIllegal}
+  no n : Nodes | selfLoop[n]
+  no t : Transitions | sinkTransitions[t]
+  no t : Transitions | sourceTransitions[t]
 |]
   where
-    mistakeNegative :: Bool -> Int -> String
-    mistakeNegative True num = [i|some w : Nodes.flow[Nodes] | w < 0 && #{num} < (#{countIllegalNegative})|]
-    mistakeNegative False _  = "all w : Nodes.flow[Nodes] | w > 0"
+    mistakeNegative = \case
+     True  -> "not(all w : Nodes.flow[Nodes] | w > 0)"
+     False -> "all w : Nodes.flow[Nodes] | w > 0"
 
-    mistakeTransition :: Bool -> Int -> String
-    mistakeTransition True num = [i|some t : Transitions | t.flow.Int in Places && #{num} < (#{countIllegalTransition})|]
-    mistakeTransition False _  = "Transitions.flow.Int in Places"
+    mistakeTransition = \case
+     True -> "not(Transitions.flow.Int in Places)"
+     False -> "Transitions.flow.Int in Places"
 
-    mistakePlace :: Bool -> Int -> String
-    mistakePlace True num = [i|some p : Places | some p.flow.Int in Transitions && #{num} < (#{countIllegalPlace})|]
-    mistakePlace False _  = "Places.flow.Int in Transitions"
-
-    countIllegalNegative      = "let countIllegalNegative = {w : Nodes.flow[Nodes] | w < 0} | #countIllegalNegative"
-    countIllegalTransition    = "let countIllegalTransition = {t : Transitions | some t.flow.Int in Places} | #countIllegalTransition"
-    countIllegalPlace         = "let countIllegalPlace = {p : Places | some p.flow.Int in Transitions} | #countIllegalPlace"
+    mistakePlace = \case
+     True -> "not(Places.flow.Int in Transitions)"
+     False -> "Places.flow.Int in Transitions"
 
 {-|
 Generates signatures of the given kind, number of places and transitions.
