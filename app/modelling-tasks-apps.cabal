@@ -207,6 +207,39 @@ executable findAuxiliaryPetriNodesTaskDemo
     , transformers
   default-language: Haskell2010
 
+executable generate-exam
+  main-is: generate-exam.hs
+  other-modules:
+      EvaluateArgs
+  hs-source-dirs:
+      ./
+      common
+  ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Widentities -Wredundant-constraints -Werror -Wwarn=incomplete-uni-patterns -Wwarn=orphans -Wwarn=unused-imports
+  build-tools:
+      alex
+    , happy
+  build-depends:
+      HaTeX
+    , MonadRandom
+    , base
+    , bytestring
+    , cassava
+    , containers
+    , diagrams-lib
+    , diagrams-svg
+    , digest
+    , directory
+    , graphviz
+    , modelling-tasks
+    , mtl
+    , output-blocks
+    , output-blocks-latex
+    , pretty-simple
+    , text
+    , transformers
+    , vector
+  default-language: Haskell2010
+
 executable match-cd-od
   main-is: match-cd-od.hs
   other-modules:

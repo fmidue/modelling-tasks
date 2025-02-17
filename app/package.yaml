@@ -130,6 +130,28 @@ executables:
       - output-blocks
     other-modules:
       - Common
+  generate-exam:
+    main: generate-exam.hs
+    source-dirs:
+      - .
+      - common
+    dependencies:
+      - HaTeX
+      - bytestring
+      - cassava
+      - digest
+      - directory
+      - graphviz
+      - modelling-tasks
+      - output-blocks
+      - output-blocks-latex
+      - pretty-simple
+      - text
+      - vector
+    other-modules:
+      - EvaluateArgs
+    ghc-options:
+      - -Wwarn=unused-imports
   match-cd-od:
     main: match-cd-od.hs
     source-dirs:
