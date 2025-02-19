@@ -891,8 +891,6 @@ data PickMistakeConfig = PickMistakeConfig
   , graphConfig :: GraphConfig
   , mistakeConfig :: MistakeConfig
   , printSolution :: Bool
-  , prohibitSourceTransitions :: Bool
-  , prohibitSinkTransitions :: Bool
   , useDifferentGraphLayouts :: Bool
   , alloyConfig  :: AlloyConfig
   } deriving (Generic, Read, Show)
@@ -903,8 +901,6 @@ defaultPickMistakeConfig = PickMistakeConfig
   , changeConfig = defaultChangeConfig
   , graphConfig = defaultGraphConfig { hidePlaceNames = True, hideTransitionNames = True }
   , printSolution = False
-  , prohibitSourceTransitions = True
-  , prohibitSinkTransitions = True
   , useDifferentGraphLayouts = False
   , alloyConfig  = defaultAlloyConfig
   , mistakeConfig = defaultMistakeConfig
