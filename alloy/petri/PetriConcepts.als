@@ -39,7 +39,7 @@ pred concurrentDefault[ts : set givenTransitions]{
   all p : givenPlaces | p.defaultTokens >= (sum t : ts | p.defaultFlow[t])
 }
 
-//check if there is a loop between two nodes
+//check if there is a loop between two nodes (in legal Petri nets; otherwise has slightly different meaning)
 pred selfLoop[n : Nodes]{
   n in n.flow.Int.flow.Int
 }
