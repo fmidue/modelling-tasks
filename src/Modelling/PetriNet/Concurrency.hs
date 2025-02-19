@@ -3,6 +3,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE NamedFieldPuns #-}
 {-# Language QuasiQuotes #-}
+{-# LANGUAGE RecordWildCards #-}
 
 module Modelling.PetriNet.Concurrency (
   checkFindConcurrencyConfig,
@@ -212,6 +213,7 @@ findConcurrencyTask path task = do
         Die Reihenfolge der Transitionen innerhalb
         des Paars spielt hierbei keine Rolle.
         |]
+
     pure ()
   paragraph hoveringInformation
   pure ()
@@ -424,7 +426,7 @@ petriNetConcurrencyAlloy basicC changeC specific
 pred #{concurrencyPredicateName}[#{defaultActiveTrans}#{activated} : set Transitions, #{t1}, #{t2} : Transitions] {
   \#Places = #{places basicC}
   \#Transitions = #{transitions basicC}
-  #{compBasicConstraints activated basicC}
+  #{compBasicConstraints True activated basicC}
   #{compChange changeC}
   #{sourceTransitionConstraints}
   no disj x,y : givenTransitions | concurrentDefault[x + y]
@@ -432,7 +434,6 @@ pred #{concurrencyPredicateName}[#{defaultActiveTrans}#{activated} : set Transit
   all disj u,v : Transitions |
     concurrent[u + v] implies #{t1} + #{t2} = u + v
   #{compConstraints}
-  isLegalPetriNet
 }
 
 run #{concurrencyPredicateName} for exactly #{petriScopeMaxSeq basicC} Nodes, #{petriScopeBitWidth basicC} Int

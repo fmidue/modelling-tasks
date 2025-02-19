@@ -99,12 +99,14 @@ A set of constraints enforcing settings of 'BasicConfig'.
 (Besides 'defaultConstraints')
 -}
 compBasicConstraints
-  :: String
+  :: Bool
+  -- ^ 'True' for legal petri nets, `False` for illegal petri nets.
+  -> String
   -- ^ The name of the Alloy variable for the set of activated Transitions.
   -> BasicConfig
   -- ^ the configuration to enforce.
   -> String
-compBasicConstraints = enforceConstraints False
+compBasicConstraints mistake = enforceConstraints mistake False
 
 {-|
 A set of constraints enforcing settings of 'BasicConfig' for the net under
@@ -116,17 +118,19 @@ defaultConstraints
   -> BasicConfig
   -- ^ the configuration to enforce.
   -> String
-defaultConstraints = enforceConstraints True
+defaultConstraints = enforceConstraints False True
 
 enforceConstraints
   :: Bool
+  -- ^ 'True' for legal petri nets, `False` for illegal petri nets.
+  -> Bool
   -- ^ If to generate constraints under default conditions.
   -> String
   -- ^ The name of the Alloy variable for the set of activated Transitions.
   -> BasicConfig
   -- ^ the configuration to enforce.
   -> String
-enforceConstraints underDefault activated BasicConfig {
+enforceConstraints mistake underDefault activated BasicConfig {
   atLeastActive,
   isConnected,
   flowOverall,
@@ -143,7 +147,8 @@ enforceConstraints underDefault activated BasicConfig {
   \##{activated} >= #{atLeastActive}
   theActivated#{upperFirst which}Transitions[#{activated}]
   #{connected (prepend "graphIsConnected") isConnected}
-  #{isolated (prepend "noIsolatedNodes") isConnected}|]
+  #{isolated (prepend "noIsolatedNodes") isConnected}
+  #{if mistake then "isLegalPetriNet" else ""}|]
   where
     (given, prepend, which)
       | underDefault = (("given" ++), (which ++) . upperFirst, "default")
@@ -194,25 +199,17 @@ mistakeConstraints :: MistakeConfig -> String
 mistakeConstraints MistakeConfig
                 { negativeTokenCost, transitionToIllegal, placeToIllegal
                 } = [i|
-  #{mistakeNegative negativeTokenCost}
-  #{mistakeTransition transitionToIllegal}
-  #{mistakePlace placeToIllegal}
+  #{mistakeControl negativeTokenCost "all w : Nodes.flow[Nodes] | w > 0"}
+  #{mistakeControl transitionToIllegal "Transitions.flow.Int in Places"}
+  #{mistakeControl placeToIllegal "Places.flow.Int in Transitions"}
   no n : Nodes | selfLoop[n]
   no t : Transitions | sinkTransitions[t]
   no t : Transitions | sourceTransitions[t]
 |]
   where
-    mistakeNegative = \case
-     True  -> "not(all w : Nodes.flow[Nodes] | w > 0)"
-     False -> "all w : Nodes.flow[Nodes] | w > 0"
-
-    mistakeTransition = \case
-     True -> "not(Transitions.flow.Int in Places)"
-     False -> "Transitions.flow.Int in Places"
-
-    mistakePlace = \case
-     True -> "not(Places.flow.Int in Transitions)"
-     False -> "Places.flow.Int in Transitions"
+    mistakeControl :: Bool -> String -> String
+    mistakeControl True  string = "not(" ++ string ++ ")"
+    mistakeControl False string = string
 
 {-|
 Generates signatures of the given kind, number of places and transitions.

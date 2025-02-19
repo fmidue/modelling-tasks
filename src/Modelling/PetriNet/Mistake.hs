@@ -198,7 +198,7 @@ petriNetMistakeAlloy basicC changeC mistakeC
 pred #{mistakePredicateName}[#{defaultActiveTrans}#{activated} : set Transitions, #{t1}, #{t2} : Transitions] {
   \#Places = #{places basicC}
   \#Transitions = #{transitions basicC}
-  #{compBasicConstraints activated basicC}
+  #{compBasicConstraints False activated basicC}
   #{compChange changeC}
   #{sourceTransitionConstraints}
   #{sinkTransitionConstraints}
