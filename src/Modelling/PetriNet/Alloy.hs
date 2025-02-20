@@ -201,19 +201,24 @@ compChange ChangeConfig
 
 mistakeConstraints :: MistakeConfig -> String
 mistakeConstraints MistakeConfig
-                { negativeTokenCost, transitionToIllegal, placeToIllegal
-                } = [i|
-  #{mistakeControl negativeTokenCost "all w : Nodes.flow[Nodes] | w > 0"}
-  #{mistakeControl transitionToIllegal "Transitions.flow.Int in Places"}
-  #{mistakeControl placeToIllegal "Places.flow.Int in Transitions"}
-  no n : Nodes | selfLoop[n]
-  no t : Transitions | sinkTransitions[t]
-  no t : Transitions | sourceTransitions[t]
-|]
+                { negativeTokenCost, transitionToTransition, placeToPlace
+                } = unlines [trueInput, falseInput]
   where
-    mistakeControl :: Bool -> String -> String
-    mistakeControl True  string = "not(" ++ string ++ ")"
-    mistakeControl False string = string
+    input :: [(Bool, String)]
+    input = [(negativeTokenCost, "all w : Nodes.flow[Nodes] | w > 0"),
+             (transitionToTransition, "Transitions.flow.Int in Places"),
+             (placeToPlace, "Places.flow.Int in Transitions")]
+
+    trueMistakes = [string | (True, string) <- input]
+    falseMistakes = [string | (False, string) <- input]
+
+    trueInput = intercalate " or " (map (\x -> "not(" ++ x ++ ")") trueMistakes)
+
+    falseInput :: String
+    falseInput = unlines (map ("  " ++) falseMistakes)
+
+
+
 
 {-|
 Generates signatures of the given kind, number of places and transitions.
