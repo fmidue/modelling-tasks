@@ -144,8 +144,7 @@ enforceConstraints mistake underDefault activated BasicConfig {
   all w : #{nodes}.#{flow}[#{nodes}] | w =< #{maxFlowPerEdge}
   let theFlow = (sum f, t : #{nodes} | f.#{flow}[t]) |
     #{fst flowOverall} =< theFlow and theFlow =< #{snd flowOverall}
-  \##{activated} >= #{atLeastActive}
-  theActivated#{upperFirst which}Transitions[#{activated}]
+  #{activatedConstraint}
   #{connected (prepend "graphIsConnected") isConnected}
   #{isolated (prepend "noIsolatedNodes") isConnected}
   #{if mistake then "isLegalPetriNet" else ""}|]
@@ -157,6 +156,11 @@ enforceConstraints mistake underDefault activated BasicConfig {
     nodes = given "Nodes"
     places = given "Places"
     tokens = prepend "tokens"
+    activatedConstraint
+      | atLeastActive > 0 = [i|
+  \##{activated} >= #{atLeastActive}
+  theActivated#{upperFirst which}Transitions[#{activated}]|]
+      | otherwise = ""
 
 connected :: String -> Maybe Bool -> String
 connected p = maybe "" $ \c -> (if c then "" else "not ") ++ p
