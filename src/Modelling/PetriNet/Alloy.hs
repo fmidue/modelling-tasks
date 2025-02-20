@@ -155,11 +155,12 @@ enforceConstraints underDefault activated BasicConfig {
     nodes = given "Nodes"
     places = given "Places"
     tokens = prepend "tokens"
-    activatedConstraint
-      | atLeastActive > 0 = [i|
+    activatedConstraint =
+      if atLeastActive <= 0
+      then ""
+      else [i|
   \##{activated} >= #{atLeastActive}
   theActivated#{upperFirst which}Transitions[#{activated}]|]
-      | otherwise = ""
 
 connected :: String -> Maybe Bool -> String
 connected p = maybe "" $ \c -> (if c then "" else "not ") ++ p
