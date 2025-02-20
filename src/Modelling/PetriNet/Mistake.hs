@@ -5,12 +5,14 @@
 {-# Language QuasiQuotes #-}
 
 module Modelling.PetriNet.Mistake (
+  checkPickMistakeConfig,
   defaultPickMistakeInstance,
   parseMistake,
   petriNetPickMist,
   pickMistake,
   pickMistakeGenerate,
   pickMistakeTask,
+  simplePickMistakeTask,
   ) where
 
 import qualified Modelling.PetriNet.Types         as Pick (
@@ -50,9 +52,11 @@ import Modelling.PetriNet.Parser        (
   )
 import Modelling.PetriNet.Pick (
   PickInstance (..),
+  checkConfigForPick,
   pickGenerate,
   pickTaskInstance,
   renderPick,
+  wrong,
   wrongInstances,
   )
 import Modelling.PetriNet.Types         (
@@ -99,6 +103,18 @@ pickMistakeGenerate = pickGenerate pickMistake gc ud ws
     gc = Pick.graphConfig
     ud = Pick.useDifferentGraphLayouts
     ws = Pick.printSolution
+
+simplePickMistakeTask
+  :: (MonadCache m,
+    MonadDiagrams m,
+    MonadGraphviz m,
+    MonadThrow m,
+    OutputCapable m
+    )
+  => FilePath
+  -> PickInstance SimplePetriNet
+  -> LangM m
+simplePickMistakeTask = pickMistakeTask
 
 pickMistakeTask
   :: (
@@ -248,6 +264,20 @@ parseMistake inst = do
   t1 <- unscopedSingleSig inst concurrencyTransition1 ""
   t2 <- unscopedSingleSig inst concurrencyTransition2 ""
   Concurrent <$> ((,) <$> asSingleton t1 <*> asSingleton t2)
+
+checkPickMistakeConfig :: PickMistakeConfig -> Maybe String
+checkPickMistakeConfig PickMistakeConfig {
+  basicConfig,
+  changeConfig,
+  graphConfig,
+  useDifferentGraphLayouts
+  }
+  = checkConfigForPick
+    useDifferentGraphLayouts
+    wrong
+    basicConfig
+    changeConfig
+    graphConfig
 
 defaultPickMistakeInstance :: PickInstance SimplePetriNet
 defaultPickMistakeInstance = PickInstance {
