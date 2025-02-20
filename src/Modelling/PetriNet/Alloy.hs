@@ -106,7 +106,9 @@ compBasicConstraints
   -> BasicConfig
   -- ^ the configuration to enforce.
   -> String
-compBasicConstraints mistake = enforceConstraints mistake False
+compBasicConstraints mistake activated basicConfig = [i|
+  #{enforceConstraints False activated basicConfig}
+  #{if mistake then "isLegalPetriNet" else ""}|]
 
 {-|
 A set of constraints enforcing settings of 'BasicConfig' for the net under
@@ -118,19 +120,17 @@ defaultConstraints
   -> BasicConfig
   -- ^ the configuration to enforce.
   -> String
-defaultConstraints = enforceConstraints False True
+defaultConstraints = enforceConstraints True
 
 enforceConstraints
   :: Bool
-  -- ^ 'True' for legal petri nets, `False` for illegal petri nets.
-  -> Bool
   -- ^ If to generate constraints under default conditions.
   -> String
   -- ^ The name of the Alloy variable for the set of activated Transitions.
   -> BasicConfig
   -- ^ the configuration to enforce.
   -> String
-enforceConstraints mistake underDefault activated BasicConfig {
+enforceConstraints underDefault activated BasicConfig {
   atLeastActive,
   isConnected,
   flowOverall,
@@ -146,8 +146,7 @@ enforceConstraints mistake underDefault activated BasicConfig {
     #{fst flowOverall} =< theFlow and theFlow =< #{snd flowOverall}
   #{activatedConstraint}
   #{connected (prepend "graphIsConnected") isConnected}
-  #{isolated (prepend "noIsolatedNodes") isConnected}
-  #{if mistake then "isLegalPetriNet" else ""}|]
+  #{isolated (prepend "noIsolatedNodes") isConnected}|]
   where
     (given, prepend, which)
       | underDefault = (("given" ++), (which ++) . upperFirst, "default")
