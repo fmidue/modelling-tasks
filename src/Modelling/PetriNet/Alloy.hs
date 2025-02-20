@@ -106,9 +106,9 @@ compBasicConstraints
   -> BasicConfig
   -- ^ the configuration to enforce.
   -> String
-compBasicConstraints mistake activated basicConfig = [i|
+compBasicConstraints legal activated basicConfig = [i|
   #{enforceConstraints False activated basicConfig}
-  #{if mistake then "isLegalPetriNet" else ""}|]
+  #{if legal then "isLegalPetriNet" else ""}|]
 
 {-|
 A set of constraints enforcing settings of 'BasicConfig' for the net under

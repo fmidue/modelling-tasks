@@ -908,15 +908,15 @@ defaultPickMistakeConfig = PickMistakeConfig
 
 data MistakeConfig = MistakeConfig
   { negativeTokenCost :: Bool
-  , transitionToIllegal :: Bool
-  , placeToIllegal :: Bool
+  , transitionToTransition :: Bool
+  , placeToPlace :: Bool
   } deriving (Generic, Read, Show)
 
 defaultMistakeConfig :: MistakeConfig
 defaultMistakeConfig = MistakeConfig
   { negativeTokenCost = True
-  , transitionToIllegal = True
-  , placeToIllegal = True
+  , transitionToTransition = True
+  , placeToPlace = False
   }
 
 data DrawSettings = DrawSettings {
