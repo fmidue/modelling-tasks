@@ -1,0 +1,53 @@
+\documentclass[12pt,a4paper]{scrartcl}
+\usepackage{enumitem}
+\usepackage{ifthen}
+\newcommand{\solution}{true}
+%\newcommand{\solution}{false}
+
+\newcommand{\course}{Modellierung}
+\newcommand{\semester}{WiSe 2024/25}
+
+\usepackage{csvsimple}
+
+\usepackage{tabularx}
+\usepackage[export]{adjustbox}
+\RequirePackage{figureSeries}
+
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta}
+\usetikzlibrary{shapes.misc}
+\usepackage{./tikz-uml}
+\usetikzlibrary{petri}
+\input{./defs.tex}
+
+\tikzset{cross/.style={cross out, draw=black, minimum size=2*(#1-\pgflinewidth), inner sep=0pt, outer sep=0pt},
+%default radius will be 1pt.
+  cross/.default={1pt}}
+
+\input{build/header}
+
+\begin{document}
+
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0.4pt}
+\chead{Wiederholungsaufgaben ``\course'' \semester}
+\rfoot{}
+\cfoot{\thepage}
+\setcounter{page}{1}
+
+\captionsetup[figure]{labelformat=empty}
+\captionsetup[subfigure]{labelformat=empty}
+
+\foreach \task in {49,...,73}{
+  \newpage
+  \section*{Aufgabe \task}
+  \input{\task-de}
+}
+\newpage
+
+\end{document}
+
+%% Local Variables:
+%% coding: utf-8
+%% ispell-local-dictionary: "german"
+%% End:

@@ -1,0 +1,128 @@
+% ---------------------------------------------------------------------------- %
+%                       Includes required for definitions                      %
+% ---------------------------------------------------------------------------- %
+
+\usepackage{xcolor}
+\usepackage{pifont}
+\usepackage{amsfonts}
+
+% ---------------------------------------------------------------------------- %
+%                            TikZ macro's and styles                           %
+% ---------------------------------------------------------------------------- %
+
+\tikzset{
+  subclass/.style={-open triangle 45},
+  reversed subclass/.style={open triangle 45-},
+  aggregation/.style={open diamond-},
+  reversed aggregation/.style={-open diamond},
+  aggregation access/.style={open diamond-stealth},
+  reversed aggregation access/.style={stealth-open diamond},
+  composition/.style={diamond-},
+  reversed composition/.style={-diamond},
+  composition access/.style={diamond-stealth},
+  reversed composition access/.style={stealth-diamond},
+  access/.style={-stealth},
+  reversed access/.style={stealth-},
+  symmetric access/.style={stealth-stealth},
+  umlmult/.style={font=\ttfamily\scriptsize},
+  umllab/.style={font=\scriptsize},
+  arlab/.style={inner sep=1pt,font=\scriptsize},
+  poly/.style={rounded corners=3mm}
+}
+
+% Activity diagrams definitions
+\tikzset{
+  adstate/.style={draw,rounded corners=3mm,minimum height=8mm,minimum width=2cm,font=\small},
+  adobject/.style={draw,minimum height=8mm,minimum width=1.6cm,font=\small},
+  adchoice/.style={diamond,draw,minimum height=8mm,minimum width=8mm},
+  adinit/.style={draw,shape=circle,minimum height=6mm,minimum width=6mm,fill=black}
+}
+
+% State transition diagram definitions
+\tikzset{
+  sdstate/.style={draw,rounded corners=2mm,minimum height=10mm,minimum width=10mm},
+  sdstart/.style={draw,fill=black,circle,inner sep=0,minimum height=2mm,minimum width=2mm},
+  sdhist/.style={draw,circle}
+}
+
+\newdimen\arrowsize
+\pgfarrowsdeclare{dashbox}{dashbox}{
+  \arrowsize=3mm
+  \advance\arrowsize by .5\pgflinewidth
+  \pgfarrowsleftextend{-0.5\pgflinewidth}
+  \pgfarrowsrightextend{\arrowsize}
+}{
+  \arrowsize=3mm
+  \advance\arrowsize by .5\pgflinewidth
+  \pgfsetdash{{2pt}{2pt}}{0cm}
+  \pgfsetbuttcap
+  \pgfsetbeveljoin
+  \pgfpathrectangle{\pgfpoint{0mm}{-.4\arrowsize}}{\pgfpoint{.8\arrowsize}{.8\arrowsize}}
+  \pgfusepathqstroke
+}
+
+\makeatletter
+\newcommand\classbox@[6]{
+  \node[rectangle split,rectangle split parts=3,draw,text width=#1,
+        anchor=north]
+    (#6) at #2 {
+      \textbf{#3}
+      \nodepart{second}
+      \texttt{\small #4}
+      \nodepart{third}
+      \texttt{\small #5}
+    } ;
+}
+\newcommand\classbox[5][4cm]{
+  \classbox@{#1}{#2}{\textbf{#3}}{#4}{#5}{#3}
+}
+\newcommand\virtualclassbox[5][4cm]{
+  \classbox@{#1}{#2}{\textbf{\textit{#3}}}{#4}{#5}{#3}
+}
+\makeatother
+
+% \newcommand\objectbox[5][4cm]{
+%   \node[rectangle,draw,text width=#1,anchor=north]
+%     (#3) at #2 {
+%       \centerline{\underline{\vphantom{fg}#4}}
+%       \ifthenelse{\not\equal{#5}{}}{%
+%         \smallskip
+%         \texttt{\small #5}
+%       }{}
+%     } ;
+% }
+
+
+%\newcommand\arlab[1]{\scriptsize{\texttt{#1}}}
+\newcommand\toto{\textrm{..}}
+
+\newcommand\substx[2]{
+  ($ (0,0)!#1!(0,1) + (#2,0) $)
+}
+\newcommand\substy[2]{
+  ($ (0,0)!#1!(1,0) + (0,#2) $)
+}
+\newcommand\horizb[3]{
+ ($ (0,#1)!#3!(1,#1) + (0,0)!#2!(0,1) $)
+}
+\newcommand\horiz[2]{
+  \horizb{0}{#1}{#2}
+}
+
+
+
+% ---------------------------------------------------------------------------- %
+%                                    Symbols                                   %
+% ---------------------------------------------------------------------------- %
+
+\newcommand\nats{\ensuremath{\mathbb{N}}}
+\newcommand\ints{\ensuremath{\mathbb{Z}}}
+
+\newcommand\pre[1]{\ensuremath{{\vphantom{#1}}^{\bullet}#1}}
+\newcommand\post[1]{\ensuremath{{#1}^{\bullet}}}
+
+\newcommand\num[1]{\ensuremath{\mathnormal{#1}}}
+
+\newcommand\Yes{{\color{blue}\ding{51}}}
+\newcommand\No{{\color{red}\ding{55}}}
+

@@ -1,0 +1,148 @@
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{times}
+\usepackage{psfrag}
+\usepackage{amssymb}
+\usepackage{wasysym}
+\usepackage{float}
+%\usepackage{esz}
+\usepackage{listings}
+
+\usepackage{afterpage}
+
+\usepackage{graphicx}
+\usepackage{multirow}
+\restylefloat{table}
+\usepackage{listings}
+\newcommand{\lstocl}{\lstset{emph={set,bag,or,and,not,implies,select,includes,let,in,forAll,context,inv,self,pre,post,if,then,else,endif},emphstyle=\textbf,basicstyle=\scriptsize,commentstyle=\scriptsize,showstringspaces=false,frame=single,breaklines=true,breakatwhitespace=true,frame=tlrb,numbers=none,framexleftmargin=0mm,numbersep=2mm}}
+
+\setlength{\parindent}{0mm}
+\usepackage{fancybox} 
+\usepackage{fancyheadings} %Header
+\usepackage{amsmath}
+%\usepackage{amsmath,amssymb,amstext,stmaryrd} %Zusätzlichezeichen
+%\usepackage{float}
+\usepackage{graphicx}%Bilder
+\usepackage{ifthen}%Solution switch
+\usepackage[ngerman]{babel}%Sprachpacket für Silbentrennung
+\usepackage[utf8]{inputenc}%Sonderzeichen
+%\usepackage[T1]{fontenc}
+
+% \usepackage{verbatim}
+% \usepackage{moreverb}
+\usepackage{color}%Farben
+\usepackage[
+        pdftitle={Exam of the course ``\course'' \semester{}},
+        pdfsubject={Exam},
+        pdfpagemode=None,
+        a4paper=true,
+        colorlinks=false,
+        urlcolor=blue]{hyperref}%PDF titel
+%\usepackage{oz}%Z und OZ Formatierung
+%\usepackage{tikz}%Hübsche Bilder
+%\usetikzlibrary{decorations.pathmorphing,shapes,decorations.text,decorations,calc,positioning,automata,matrix,arrows,chains}
+
+\usepackage[normalem]{ulem}
+
+\newcommand{\taskdescription}[2]{#1 \\ \emph{#2}}
+
+
+%% Einrückung der Aufzählungen verkleinern
+%\setlength\leftmargini{0pt}
+%\setlength\leftmargin{5ex}
+\setlength\leftmarginii{20pt}
+\setlength\leftmargini{0pt}
+
+%% Kommandas für die Lösungen
+\newcommand{\sol}[2]{\ifthenelse{\equal{\solution}{true}}{\textcolor{red}{\newline Solution:\\#1}}{#2}}
+\newcommand{\solOCL}[2]{\ifthenelse{\equal{\solution}{true}}{\newline Solution:#1}{#2}}
+\newcommand{\solTable}[2]{\ifthenelse{\equal{\solution}{true}}{\textcolor{red}{#1}}{#2}}
+\newcommand{\solText}[2]{\ifthenelse{\equal{\solution}{true}}{\textcolor{red}{#1}}{#2}}
+
+%% Es dürfen keine Leerzeichen vor einem \begin{solu} oder \end{solu} sein
+\usepackage{comment}
+\specialcomment{solu}{\begingroup~\\\color{red}\itshape}{\endgroup}
+\newenvironment{nonsolu}{}{}
+\ifthenelse{\equal{\solution}{false}}{\excludecomment{solu}}{\excludecomment{nonsolu}}
+
+\newcommand{\solRule}[2]{\ifthenelse{\equal{\solution}{false}}
+{\rule{#2}{0.1mm}}{\textcolor{red}{#1}}}
+
+\renewcommand{\labelenumi}{(\arabic{enumi})}
+\renewcommand{\labelenumii}{(\arabic{enumi}.\arabic{enumii})}
+
+%Kopf- und Fußzeilen setzen
+\pagestyle{fancy}
+%\setlength{\headrulewidth}{0.0pt}
+%\setlength{\footrulewidth}{0.4pt}
+
+\newcommand{\centeredgraphic}[1]{\centerline{\resizebox{0.8\linewidth}{!}{\includegraphics[angle=270]{#1}}}}
+
+% Punktezähler
+\newcounter{overallpoints}%[counter] 
+\newcommand{\points}[1]{
+\ifthenelse{\equal{#1}{1}}
+{~\\ \marginpar{ / #1 pt} }
+{~\\ \marginpar{ / #1 pts}  }
+\addtocounter{overallpoints}{#1} }
+
+\ifthenelse{\equal{\solution}{false}}
+{
+\newcommand{\solListing}{f}
+}{
+\newcommand{\solListing}{t}
+}
+
+
+\newcommand{\squareM}{
+\ifthenelse{\equal{\solution}{false}}
+{\square}
+{ \textcolor{red}{\boxtimes} } 
+}
+
+\ifthenelse{\equal{\solution}{false}}
+{
+\newcommand{\emphc}[1]{#1}
+\newcommand{\textbfc}[1]{#1}
+}{
+\newcommand{\emphc}[1]{\emph{#1}}
+\newcommand{\textbfc}[1]{\textbf{#1}}
+}
+
+% \newcommand{\sol}[2]{\ifthenelse{\equal{\solution}{false}}
+% {\rule{#2}{0.1mm}}{\textcolor{red}{#1}}}
+
+\newcommand{\sollineOne}[1]{\newline\ifthenelse{\equal{\solution}{false}}
+{\rule{\linewidth}{0.1mm}}{\textcolor{red}{#1}}}
+
+\newcommand{\sollineTwo}[1]{\newline ~\\ \ifthenelse{\equal{\solution}{false}}
+{\rule{\linewidth}{0.1mm} \\[0.5ex]
+\rule{\linewidth}{0.1mm}}{\textcolor{red}{#1}}}
+
+\newcommand{\pointassign}[1]{
+\ifthenelse{\equal{\solution}{true}}
+{ \textcolor{red}{#1} } 
+{}
+}
+
+\lstset{language=Java,basicstyle=\footnotesize,showstringspaces=false} %basicstyle=\small
+
+\newcommand{\wrong}[1]{}%{\ifthenelse{\equal{\solution}{false}}{}{\textcolor{blue}{\sout{#1}}}}
+
+\usepackage[sf,bf]{titlesec}
+\titleformat{\section}[hang]{\large\fontseries{bx}\selectfont}{\thesection}{5mm}{}[\vspace{0mm}]
+\titleformat{\subsection}[hang]{\normalsize\fontseries{bx}\selectfont}{\thesubsection}{5mm}{}[\vspace{0mm}]
+\setlength{\textheight}{240mm} 
+
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+
+\lhead{}
+\chead{}
+\rhead{}
+\cfoot{}
+%\lfoot{\textit{Name:} \hfill \textit{Student ID:}\hspace*{50mm}}
+%\rfoot{Page - \thepage\ -}
+\renewcommand{\headrulewidth}{0.0pt}
+\renewcommand{\footrulewidth}{0.4pt}
+
