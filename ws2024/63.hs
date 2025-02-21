@@ -1,0 +1,45 @@
+FindInstance 
+  { drawFindWith = DrawSettings 
+      { withPlaceNames = False
+      , withSvgHighlighting = True
+      , withTransitionNames = True
+      , with1Weights = False
+      , withGraphvizCommand = TwoPi 
+      }
+  , toFind = Concurrent ( Transition 3, Transition 1 )
+  , net = PetriLike 
+      { allNodes = fromList
+          [ ( "s1", SimplePlace { initial = 2, flowOut = fromList [ ] } )
+          , ( "s2"
+            , SimplePlace { initial = 0, flowOut = fromList [ ( "t6", 1 ) ] }
+            )
+          , ( "s3"
+            , SimplePlace 
+                { initial = 1
+                , flowOut = fromList
+                    [ ( "t2", 1 ), ( "t3", 1 ), ( "t4", 1 ), ( "t5", 1 ) ] 
+                } 
+            )
+          , ( "s4"
+            , SimplePlace 
+                { initial = 1
+                , flowOut = fromList
+                    [ ( "t1", 1 ), ( "t2", 1 ), ( "t4", 1 ), ( "t5", 1 ) ] 
+                } 
+            )
+          , ( "s5", SimplePlace { initial = 2, flowOut = fromList [ ] } )
+          , ( "s6"
+            , SimplePlace { initial = 2, flowOut = fromList [ ( "t2", 1 ) ] }
+            )
+          , ( "t1", SimpleTransition { flowOut = fromList [ ( "s6", 1 ) ] } )
+          , ( "t2", SimpleTransition { flowOut = fromList [ ( "s1", 1 ) ] } )
+          , ( "t3", SimpleTransition { flowOut = fromList [ ( "s1", 1 ) ] } )
+          , ( "t4", SimpleTransition { flowOut = fromList [ ( "s1", 1 ) ] } )
+          , ( "t5", SimpleTransition { flowOut = fromList [ ( "s6", 1 ) ] } )
+          , ( "t6", SimpleTransition { flowOut = fromList [ ( "s5", 1 ) ] } )
+          ] 
+      }
+  , numberOfPlaces = 6
+  , numberOfTransitions = 6
+  , showSolution = True 
+  }
