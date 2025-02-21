@@ -1,0 +1,13 @@
+Consider the following activity diagram:
+
+
+
+\begin{centering}\includegraphics[min width=0.4\textwidth=0.6\textwidth,min height=0.4\textwidth=0.6\textwidth,keepaspectratio,max width=0.9\textwidth,max height=0.9\textwidth]{72/Diagram.pdf}\end{centering}
+
+Translate the given activity diagram into a Petri net (on paper or in your head) and then state the total count of nodes (places and transitions),
+the count of auxiliary places and the count of auxiliary transitions in the net.
+
+To do this, enter your answer as in the following example:\begin{verbatim}FindAuxiliaryPetriNodesSolution {countOfPetriNodes = 10, countOfAuxiliaryPlaces = 2, countOfAuxiliaryTransitions = 3}\end{verbatim}In this example, the resulting net contains 10 nodes in total, of which 2 are auxiliary places and 3 are auxiliary transitions.
+
+Hint on the translation to a Petri net: For final nodes no additional places are introduced. They are realised in a way that a token is consumed, i.e. disappears from the net at that position. If an additional transition is required to realise this behavior at a position in the diagram where there is a final node, this transition does not count as auxiliary node.
+

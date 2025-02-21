@@ -1,0 +1,8 @@
+Betrachten Sie die folgenden Deklarationen von Konstanten und Operationen:
+
+\begin{quote}$\mathit{emptyBoard} : \mathit{Board}$$\mathit{posMax} : \mathit{Int}$$\mathit{prettyPrint} : \mathit{Board} \to \mathit{String}$$\mathit{makePos} : \mathit{Int} \times \mathit{Int} \times \mathit{String} \to \mathit{Pos}$$\mathit{yPos} : \mathit{Pos} \to \mathit{Int}$$\mathit{gridValue} : \mathit{Pos} \to \mathit{String}$\end{quote}Entscheiden Sie für die folgenden Terme, ob sie korrekt im Sinne der oben gegebenen Deklarationen sind:
+
+\begin{quote}$1.\,\mathit{yPos(makePos(yPos,posMax,prettyPrint(emptyBoard)))}$$2.\,\mathit{makePos(posMax,posMax,posMax,prettyPrint(emptyBoard))}$$3.\,\mathit{makePos(posMax,yPos(makePos(posMax,posMax,prettyPrint(emptyBoard))),prettyPrint(emptyBoard))}$$4.\,\mathit{gridValue(makePos(posMax,posMax,gridValue(makePos(posMax,posMax,prettyPrint(emptyBoard)))))}$$5.\,\mathit{makePos(yPos(makePos(posMax,posMax,prettyPrint(emptyBoard))),posMax,prettyPrint(emptyBoard))}$$6.\,\mathit{gridValue(makePos(emptyBoard,posMax,gridValue(makePos(posMax,posMax,prettyPrint(emptyBoard)))))}$$7.\,\mathit{makePos(posMax,yPos(makePos(posMax,prettyPrint(emptyBoard),posMax)),prettyPrint(emptyBoard))}$$8.\,\mathit{yPos(makePos(posMax,posMax,prettyPrint(emptyBoard)))}$$9.\,\mathit{yPos(makePos(posMax,posMax,gridValue(makePos(posMax,posMax,prettyPrint(emptyBoard)))))}$\end{quote}Bitte geben Sie Ihre Antwort in Form einer Liste von Zahlen an, die alle korrekten Terme enthält.
+
+Zum Beispiel [1, 2] würde bedeuten, dass nur die Terme 1. und 2. von den angegebenen korrekt sind.
+
