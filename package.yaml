@@ -134,6 +134,7 @@ library:
     - Modelling.PetriNet.Conflict
     - Modelling.PetriNet.ConflictPlaces
     - Modelling.PetriNet.Find
+    - Modelling.PetriNet.Mistake
     - Modelling.PetriNet.Pick
     - Modelling.PetriNet.Reach.Deadlock
     - Modelling.PetriNet.Reach.Property
