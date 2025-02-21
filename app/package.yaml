@@ -156,6 +156,19 @@ executables:
       - pretty-simple
     other-modules:
       - Common
+  mistake:
+    main: mistake.hs
+    source-dirs:
+      - .
+      - common
+    dependencies:
+      - bytestring
+      - digest
+      - modelling-tasks
+      - output-blocks
+      - pretty-simple
+    other-modules:
+      - Common
   repair-incorrect:
     main: repair-incorrect.hs
     source-dirs:
