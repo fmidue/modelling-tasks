@@ -1,8 +1,23 @@
 Consider the following declarations of constants and operations:
 
-\begin{quote}$\mathit{emptyBoard} : \mathit{Board}$$\mathit{posMax} : \mathit{Int}$$\mathit{prettyPrint} : \mathit{Board} \to \mathit{String}$$\mathit{makePos} : \mathit{Int} \times \mathit{Int} \times \mathit{String} \to \mathit{Pos}$$\mathit{yPos} : \mathit{Pos} \to \mathit{Int}$$\mathit{gridValue} : \mathit{Pos} \to \mathit{String}$\end{quote}Decide for the following terms whether or not they are correct according to the declarations given above:
+\begin{itemize}
+\item[] $\mathit{emptyBoard} : \mathit{Board}$
+\item[] $\mathit{posMax} : \mathit{Int}$
+\item[] $\mathit{prettyPrint} : \mathit{Board} \to \mathit{String}$
+\item[] $\mathit{makePos} : \mathit{Int} \times \mathit{Int} \times \mathit{String} \to \mathit{Pos}$
+\item[] $\mathit{yPos} : \mathit{Pos} \to \mathit{Int}$
+\item[] $\mathit{gridValue} : \mathit{Pos} \to \mathit{String}$\end{itemize}Decide for the following terms whether or not they are correct according to the declarations given above:
 
-\begin{quote}$1.\,\mathit{yPos(makePos(yPos,posMax,prettyPrint(emptyBoard)))}$$2.\,\mathit{makePos(posMax,posMax,posMax,prettyPrint(emptyBoard))}$$3.\,\mathit{makePos(posMax,yPos(makePos(posMax,posMax,prettyPrint(emptyBoard))),prettyPrint(emptyBoard))}$$4.\,\mathit{gridValue(makePos(posMax,posMax,gridValue(makePos(posMax,posMax,prettyPrint(emptyBoard)))))}$$5.\,\mathit{makePos(yPos(makePos(posMax,posMax,prettyPrint(emptyBoard))),posMax,prettyPrint(emptyBoard))}$$6.\,\mathit{gridValue(makePos(emptyBoard,posMax,gridValue(makePos(posMax,posMax,prettyPrint(emptyBoard)))))}$$7.\,\mathit{makePos(posMax,yPos(makePos(posMax,prettyPrint(emptyBoard),posMax)),prettyPrint(emptyBoard))}$$8.\,\mathit{yPos(makePos(posMax,posMax,prettyPrint(emptyBoard)))}$$9.\,\mathit{yPos(makePos(posMax,posMax,gridValue(makePos(posMax,posMax,prettyPrint(emptyBoard)))))}$\end{quote}Please state your answer by giving a list of numbers, indicating all correct terms.
+\begin{itemize}
+\item[1.]$\mathit{yPos(makePos(yPos,posMax,prettyPrint(emptyBoard)))}$
+\item[2.]$\mathit{makePos(posMax,posMax,posMax,prettyPrint(emptyBoard))}$
+\item[3.]$\mathit{makePos(posMax,yPos(makePos(posMax,posMax,prettyPrint(emptyBoard))),prettyPrint(emptyBoard))}$
+\item[4.]$\mathit{gridValue(makePos(posMax,posMax,gridValue(makePos(posMax,posMax,prettyPrint(emptyBoard)))))}$
+\item[5.]$\mathit{makePos(yPos(makePos(posMax,posMax,prettyPrint(emptyBoard))),posMax,prettyPrint(emptyBoard))}$
+\item[6.]$\mathit{gridValue(makePos(emptyBoard,posMax,gridValue(makePos(posMax,posMax,prettyPrint(emptyBoard)))))}$
+\item[7.]$\mathit{makePos(posMax,yPos(makePos(posMax,prettyPrint(emptyBoard),posMax)),prettyPrint(emptyBoard))}$
+\item[8.]$\mathit{yPos(makePos(posMax,posMax,prettyPrint(emptyBoard)))}$
+\item[9.]$\mathit{yPos(makePos(posMax,posMax,gridValue(makePos(posMax,posMax,prettyPrint(emptyBoard)))))}$\end{itemize}Please state your answer by giving a list of numbers, indicating all correct terms.
 
 For example, [1, 2] would indicate that only terms 1. and 2. of the given ones are correct.
 
