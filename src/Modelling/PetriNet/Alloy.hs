@@ -38,7 +38,7 @@ import Modelling.PetriNet.Types (
   AlloyConfig,
   BasicConfig (..),
   ChangeConfig (..),
-  MistakeConfig (..)
+  PossibleMistakeConfig (..)
   )
 
 import qualified Modelling.PetriNet.Types         as T (
@@ -55,7 +55,7 @@ import Control.Monad.Random (
   )
 import Data.Composition                 ((.:))
 import Data.FileEmbed                   (embedStringFile)
-import Data.List                        (intercalate)
+import Data.List                        (intercalate, partition)
 import Data.Set                         (Set)
 import Data.String.Interpolate          (i)
 import Language.Alloy.Call (
@@ -199,23 +199,21 @@ compChange ChangeConfig
   maxTokenChangePerPlace[#{maxTokenChangePerPlace}]
 |]
 
-mistakeConstraints :: MistakeConfig -> String
-mistakeConstraints MistakeConfig
-                { negativeTokenCost, transitionToTransition, placeToPlace
+mistakeConstraints :: PossibleMistakeConfig -> String
+mistakeConstraints PossibleMistakeConfig
+                { canHaveNegativeTokenCost, canHaveTransitionToTransition, canHavePlaceToPlace
                 } = unlines [trueInput, falseInput]
   where
     input :: [(Bool, String)]
-    input = [(negativeTokenCost, "all w : Nodes.flow[Nodes] | w > 0"),
-             (transitionToTransition, "Transitions.flow.Int in Places"),
-             (placeToPlace, "Places.flow.Int in Transitions")]
+    input = [(canHaveNegativeTokenCost, "all w : Nodes.flow[Nodes] | w > 0"),
+             (canHaveTransitionToTransition, "Transitions.flow.Int in Places"),
+             (canHavePlaceToPlace, "Places.flow.Int in Transitions")]
+    (trueMistakes, falseMistakes) = partition fst input
 
-    trueMistakes = [string | (True, string) <- input]
-    falseMistakes = [string | (False, string) <- input]
-
-    trueInput = intercalate " or " (map (\x -> "not(" ++ x ++ ")") trueMistakes)
+    trueInput = intercalate " or " (map (\(_,x) -> "not(" ++ x ++ ")") trueMistakes)
 
     falseInput :: String
-    falseInput = unlines (map ("  " ++) falseMistakes)
+    falseInput = unlines (map(\(_,x) -> "  " ++ x) falseMistakes)
 
 
 

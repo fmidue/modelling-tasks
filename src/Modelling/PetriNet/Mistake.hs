@@ -5,7 +5,7 @@
 {-# Language QuasiQuotes #-}
 
 module Modelling.PetriNet.Mistake (
-  checkPickMistakeConfig,
+  checkPickPossibleMistakeConfig,
   defaultPickMistakeInstance,
   parseMistake,
   petriNetPickMist,
@@ -16,7 +16,7 @@ module Modelling.PetriNet.Mistake (
   ) where
 
 import qualified Modelling.PetriNet.Types         as Pick (
-  PickMistakeConfig (..),
+  PickPossibleMistakeConfig (..),
   )
 
 import qualified Data.Map                         as M (
@@ -64,10 +64,10 @@ import Modelling.PetriNet.Types         (
   ChangeConfig,
   Concurrent (Concurrent),
   DrawSettings (..),
-  MistakeConfig,
+  PossibleMistakeConfig,
   Net (..),
   PetriLike (PetriLike, allNodes),
-  PickMistakeConfig (..),
+  PickPossibleMistakeConfig (..),
   SimpleNode (..),
   SimplePetriNet,
   )
@@ -94,7 +94,7 @@ import Language.Alloy.Call (
 
 pickMistakeGenerate
   :: (MonadAlloy m, MonadThrow m, Net p n)
-  => PickMistakeConfig
+  => PickPossibleMistakeConfig
   -> Int
   -> Int
   -> m (PickInstance (p n String))
@@ -172,7 +172,7 @@ pickMistakeTask path task = do
 
 pickMistake
   :: (MonadAlloy m, MonadThrow m, Net p n, RandomGen g)
-  => PickMistakeConfig
+  => PickPossibleMistakeConfig
   -> Int
   -> RandT
     g
@@ -184,16 +184,16 @@ pickMistake = taskInstance
   parseMistake
   Pick.alloyConfig
 
-petriNetPickMist :: PickMistakeConfig -> String
-petriNetPickMist PickMistakeConfig{
+petriNetPickMist :: PickPossibleMistakeConfig -> String
+petriNetPickMist PickPossibleMistakeConfig{
   basicConfig,
   changeConfig,
-  mistakeConfig
+  possibleMistakeConfig
   } =
   petriNetMistakeAlloy
     basicConfig
     changeConfig
-    mistakeConfig
+    possibleMistakeConfig
 
 {-|
 Generate code for PetriNet mistake tasks
@@ -201,7 +201,7 @@ Generate code for PetriNet mistake tasks
 petriNetMistakeAlloy
   :: BasicConfig
   -> ChangeConfig
-  -> MistakeConfig
+  -> PossibleMistakeConfig
   -> String
 petriNetMistakeAlloy basicC changeC mistakeC
   = [i|module PetriNetMistake
@@ -265,8 +265,8 @@ parseMistake inst = do
   t2 <- unscopedSingleSig inst concurrencyTransition2 ""
   Concurrent <$> ((,) <$> asSingleton t1 <*> asSingleton t2)
 
-checkPickMistakeConfig :: PickMistakeConfig -> Maybe String
-checkPickMistakeConfig PickMistakeConfig {
+checkPickPossibleMistakeConfig :: PickPossibleMistakeConfig -> Maybe String
+checkPickPossibleMistakeConfig PickPossibleMistakeConfig {
   basicConfig,
   changeConfig,
   graphConfig,

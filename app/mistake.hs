@@ -3,7 +3,7 @@
 module Main (main) where
 
 import qualified Modelling.PetriNet.Types         as Pick (
-  PickMistakeConfig (..),
+  PickPossibleMistakeConfig (..),
   )
 
 import Capabilities.Alloy.IO            ()
@@ -16,16 +16,16 @@ import Common (
   withLang,
   )
 import Modelling.PetriNet.Mistake (
-  checkPickMistakeConfig,
+  checkPickPossibleMistakeConfig,
   pickMistakeGenerate,
   simplePickMistakeTask,
   )
 import Modelling.PetriNet.Types (
   BasicConfig (..),
   ChangeConfig (..),
-  MistakeConfig (..),
-  PickMistakeConfig (..),
-  defaultPickMistakeConfig,
+  PossibleMistakeConfig (..),
+  PickPossibleMistakeConfig (..),
+  defaultPickPossibleMistakeConfig,
   )
 
 import Control.OutputCapable.Blocks      (Language (English))
@@ -49,24 +49,24 @@ main = do
 
 mainPick :: Int -> IO ()
 mainPick i = forceErrors $ do
-  lift $ pPrint defaultPickMistakeConfig
+  lift $ pPrint defaultPickPossibleMistakeConfig
   (pls, trns, tknChange, flwChange, negTokCost, transToTr, placeToPl) <- lift userInput
-  let config = defaultPickMistakeConfig {
-        Pick.basicConfig = (Pick.basicConfig defaultPickMistakeConfig) {
+  let config = defaultPickPossibleMistakeConfig {
+        Pick.basicConfig = (Pick.basicConfig defaultPickPossibleMistakeConfig) {
             places = pls,
             transitions = trns
             },
-        Pick.changeConfig = (Pick.changeConfig defaultPickMistakeConfig) {
+        Pick.changeConfig = (Pick.changeConfig defaultPickPossibleMistakeConfig) {
             tokenChangeOverall = tknChange,
             flowChangeOverall = flwChange
             },
-        Pick.mistakeConfig = (Pick.mistakeConfig defaultPickMistakeConfig) {
-            negativeTokenCost = negTokCost,
-            transitionToTransition = transToTr,
-            placeToPlace = placeToPl
+        Pick.possibleMistakeConfig = (Pick.possibleMistakeConfig defaultPickPossibleMistakeConfig) {
+            canHaveNegativeTokenCost = negTokCost,
+            canHaveTransitionToTransition = transToTr,
+            canHavePlaceToPlace = placeToPl
             }
-        } :: PickMistakeConfig
-  let c = checkPickMistakeConfig config
+        } :: PickPossibleMistakeConfig
+  let c = checkPickPossibleMistakeConfig config
   if isNothing c
   then do
     t <- pickMistakeGenerate config 0 i
