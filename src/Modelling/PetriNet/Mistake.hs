@@ -252,13 +252,13 @@ defaultPickMistakeInstance = PickInstance {
     (1,(False,(
       PetriLike {
         allNodes = M.fromList [
-          ("s1",SimplePlace {initial = 1, flowOut = M.fromList [("t1",2),("t2",1),("t3",1)]}),
+          ("s1",SimplePlace {initial = 3, flowOut = M.fromList [("t1",1),("t3",2)]}),
           ("s2",SimplePlace {initial = 0, flowOut = M.empty}),
-          ("s3",SimplePlace {initial = 0, flowOut = M.fromList [("t1",1)]}),
-          ("s4",SimplePlace {initial = 1, flowOut = M.empty}),
-          ("t1",SimpleTransition {flowOut = M.fromList [("s1",1),("s4",1)]}),
-          ("t2",SimpleTransition {flowOut = M.fromList [("s4",1)]}),
-          ("t3",SimpleTransition {flowOut = M.fromList [("s2",1),("s3",1)]})
+          ("s3",SimplePlace {initial = 1, flowOut = M.fromList [("t2",1)]}),
+          ("s4",SimplePlace {initial = 1, flowOut = M.fromList [("t2",1)]}),
+          ("t1",SimpleTransition {flowOut = M.fromList [("s2",1),("s3",1)]}),
+          ("t2",SimpleTransition {flowOut = M.fromList [("s1",1)]}),
+          ("t3",SimpleTransition {flowOut = M.fromList [("s4",2)]})
           ]
         },
       DrawSettings {
@@ -272,13 +272,13 @@ defaultPickMistakeInstance = PickInstance {
     (2,(True,(
       PetriLike {
         allNodes = M.fromList [
-          ("s1",SimplePlace {initial = 2, flowOut = M.fromList [("t1",2),("t2",1),("s2",1)]}),
+          ("s1",SimplePlace {initial = 3, flowOut = M.fromList [("t1",-1),("t3",2)]}),
           ("s2",SimplePlace {initial = 0, flowOut = M.empty}),
-          ("s3",SimplePlace {initial = 0, flowOut = M.fromList [("t1",1)]}),
-          ("s4",SimplePlace {initial = 2, flowOut = M.fromList [("t2",-2)]}),
-          ("t1",SimpleTransition {flowOut = M.fromList [("s1",1),("s4",1)]}),
-          ("t2",SimpleTransition {flowOut = M.fromList [("s1",1),("s4",1)]}),
-          ("t3",SimpleTransition {flowOut = M.fromList [("s2",1),("s3",-1)]})
+          ("s3",SimplePlace {initial = 1, flowOut = M.fromList [("t2",1)]}),
+          ("s4",SimplePlace {initial = 1, flowOut = M.fromList [("t2",1)]}),
+          ("t1",SimpleTransition {flowOut = M.fromList [("s2",1),("s3",1)]}),
+          ("t2",SimpleTransition {flowOut = M.fromList [("t1",1)]}),
+          ("t3",SimpleTransition {flowOut = M.fromList [("s4",2)]})
           ]
         },
       DrawSettings {
