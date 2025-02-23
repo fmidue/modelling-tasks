@@ -7,7 +7,6 @@
 module Modelling.PetriNet.Mistake (
   checkPickPossibleMistakeConfig,
   defaultPickMistakeInstance,
-  parseMistake,
   petriNetPickMist,
   pickMistake,
   pickMistakeGenerate,
@@ -28,7 +27,6 @@ import Capabilities.Alloy               (MonadAlloy)
 import Capabilities.Cache               (MonadCache)
 import Capabilities.Diagrams            (MonadDiagrams)
 import Capabilities.Graphviz            (MonadGraphviz)
-import Modelling.Auxiliary.Common       (Object)
 import Modelling.Auxiliary.Output (
   hoveringInformation,
   )
@@ -43,12 +41,7 @@ import Modelling.PetriNet.Alloy (
   modulePetriSignature,
   petriScopeBitWidth,
   petriScopeMaxSeq,
-  skolemVariable,
   taskInstance,
-  unscopedSingleSig,
-  )
-import Modelling.PetriNet.Parser        (
-  asSingleton,
   )
 import Modelling.PetriNet.Pick (
   PickInstance (..),
@@ -62,7 +55,6 @@ import Modelling.PetriNet.Pick (
 import Modelling.PetriNet.Types         (
   BasicConfig (..),
   ChangeConfig,
-  Concurrent (Concurrent),
   DrawSettings (..),
   PossibleMistakeConfig,
   Net (..),
@@ -87,10 +79,8 @@ import Control.Monad.Random (
   RandomGen,
   )
 import Data.GraphViz.Commands           (GraphvizCommand (Fdp))
+import Data.Maybe                       (listToMaybe)
 import Data.String.Interpolate          (i, iii)
-import Language.Alloy.Call (
-  AlloyInstance,
-  )
 
 pickMistakeGenerate
   :: (MonadAlloy m, MonadThrow m, Net p n)
@@ -177,11 +167,13 @@ pickMistake
   -> RandT
     g
     m
-    [(p n String, Maybe (Concurrent String))]
+    [(p n String, Maybe String)]
 pickMistake = taskInstance
-  pickTaskInstance
+  (\parse inst -> do
+    results <- pickTaskInstance parse inst
+    return $ map (\(net, mistakes) -> (net, mistakes >>= listToMaybe)) results)
   petriNetPickMist
-  parseMistake
+  (\_ -> return [])
   Pick.alloyConfig
 
 petriNetPickMist :: PickPossibleMistakeConfig -> String
@@ -211,7 +203,7 @@ petriNetMistakeAlloy basicC changeC mistakeC
 #{modulePetriConcepts}
 #{modulePetriConstraints}
 
-pred #{mistakePredicateName}[#{defaultActiveTrans}#{activated} : set Transitions, #{t1}, #{t2} : Transitions] {
+pred #{mistakePredicateName}[#{defaultActiveTrans}#{activated} : set Transitions] {
   \#Places = #{places basicC}
   \#Transitions = #{transitions basicC}
   #{compBasicConstraints False activated basicC}
@@ -236,34 +228,9 @@ run #{mistakePredicateName} for exactly #{petriScopeMaxSeq basicC} Nodes, #{petr
     defaultActiveTrans :: String
     defaultActiveTrans = [i|#{activatedDefault} : set givenTransitions,|]
     compConstraints = defaultConstraints activatedDefault basicC
-    t1 = transition1
-    t2 = transition2
 
 mistakePredicateName :: String
 mistakePredicateName = "showMistake"
-
-concurrencyTransition1 :: String
-concurrencyTransition1 = skolemVariable mistakePredicateName transition1
-
-concurrencyTransition2 :: String
-concurrencyTransition2 = skolemVariable mistakePredicateName transition2
-
-transition1 :: String
-transition1 = "transition1"
-
-transition2 :: String
-transition2 = "transition2"
-
-{-|
-Parses the concurrency Skolem variables for singleton of transitions and returns
-both as tuple.
-It throws an error instead if unexpected behaviour occurs.
--}
-parseMistake :: MonadThrow m => AlloyInstance -> m (Concurrent Object)
-parseMistake inst = do
-  t1 <- unscopedSingleSig inst concurrencyTransition1 ""
-  t2 <- unscopedSingleSig inst concurrencyTransition2 ""
-  Concurrent <$> ((,) <$> asSingleton t1 <*> asSingleton t2)
 
 checkPickPossibleMistakeConfig :: PickPossibleMistakeConfig -> Maybe String
 checkPickPossibleMistakeConfig PickPossibleMistakeConfig {
