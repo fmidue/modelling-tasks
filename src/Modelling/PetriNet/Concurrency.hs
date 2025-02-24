@@ -3,7 +3,6 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE NamedFieldPuns #-}
 {-# Language QuasiQuotes #-}
-{-# LANGUAGE RecordWildCards #-}
 
 module Modelling.PetriNet.Concurrency (
   checkFindConcurrencyConfig,
