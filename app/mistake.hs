@@ -1,10 +1,7 @@
 {-# Language DuplicateRecordFields #-}
+{-# Language RecordWildCards #-}
 
 module Main (main) where
-
-import qualified Modelling.PetriNet.Types         as Pick (
-  PickPossibleMistakeConfig (..),
-  )
 
 import Capabilities.Alloy.IO            ()
 import Capabilities.Cache.IO            ()
@@ -49,18 +46,19 @@ main = do
 
 mainPick :: Int -> IO ()
 mainPick i = forceErrors $ do
-  lift $ pPrint defaultPickPossibleMistakeConfig
-  (pls, trns, tknChange, flwChange, negTokCost, transToTr, placeToPl) <- lift userInput
-  let config = defaultPickPossibleMistakeConfig {
-        Pick.basicConfig = (Pick.basicConfig defaultPickPossibleMistakeConfig) {
+  let theConfig@PickPossibleMistakeConfig{..} = defaultPickPossibleMistakeConfig
+  lift $ pPrint theConfig
+  (pls, trns, tknChange, flwChange, negTokCost, transToTr, placeToPl) <- lift $ userInput theConfig
+  let config = theConfig {
+        basicConfig = basicConfig {
             places = pls,
             transitions = trns
             },
-        Pick.changeConfig = (Pick.changeConfig defaultPickPossibleMistakeConfig) {
+        changeConfig = changeConfig {
             tokenChangeOverall = tknChange,
             flowChangeOverall = flwChange
             },
-        Pick.possibleMistakeConfig = (Pick.possibleMistakeConfig defaultPickPossibleMistakeConfig) {
+        possibleMistakeConfig = possibleMistakeConfig {
             canHaveNegativeTokenCost = negTokCost,
             canHaveTransitionToTransition = transToTr,
             canHavePlaceToPlace = placeToPl
@@ -75,39 +73,41 @@ mainPick i = forceErrors $ do
   else
     lift $ print c
 
-boolInput :: IO Bool
-boolInput = do
+boolInput :: Bool -> IO Bool
+boolInput d = do
   input <- getLine
   case map toLower input of
+    "" -> return d
     "true"  -> return True
     "false" -> return False
     _       -> do
       putStrLn "Invalid input"
-      boolInput
+      boolInput d
 
-intInput :: IO Int
-intInput = do
+intInput :: Int -> IO Int
+intInput d = do
   input <- getLine
-  case readMaybe input of
+  if null input then return d
+  else case readMaybe input of
     Just n  -> return n
     Nothing -> do
       putStrLn "Invalid input"
-      intInput
+      intInput d
 
-userInput :: IO (Int, Int, Int, Int, Bool, Bool, Bool)
-userInput = do
+userInput :: PickPossibleMistakeConfig -> IO (Int, Int, Int, Int, Bool, Bool, Bool)
+userInput PickPossibleMistakeConfig{basicConfig = BasicConfig{..}, changeConfig = ChangeConfig{..}, possibleMistakeConfig = PossibleMistakeConfig{..}} = do
   putStr "Number of Places: "
-  pls <- intInput
+  pls <- intInput places
   putStr "Number of Transitions: "
-  trns <- intInput
+  trns <- intInput transitions
   putStr "TokenChange Overall: "
-  tknCh <- intInput
+  tknCh <- intInput tokenChangeOverall
   putStr "FlowChange Overall: "
-  flwCh <- intInput
+  flwCh <- intInput flowChangeOverall
   putStr "Negative Token Cost (True/False): "
-  negTokCost <- boolInput
+  negTokCost <- boolInput canHaveNegativeTokenCost
   putStr "Transition to Transition (True/False): "
-  transToTr <- boolInput
+  transToTr <- boolInput canHaveTransitionToTransition
   putStr "Places to Places (True/False): "
-  placeToPl <- boolInput
+  placeToPl <- boolInput canHavePlaceToPlace
   return (pls, trns, tknCh, flwCh, negTokCost, transToTr, placeToPl)
