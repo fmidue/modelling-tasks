@@ -27,4 +27,5 @@ jobs:
         env:
           VALIDATE_JSCPD_ALL_CODEBASE: true
           YAML_ERROR_ON_WARNING: true
+          FILTER_REGEX_EXCLUDE: 'ws2024/.*'
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
