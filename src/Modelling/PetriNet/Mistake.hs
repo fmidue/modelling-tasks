@@ -79,7 +79,7 @@ import Control.Monad.Random (
   RandomGen,
   )
 import Data.GraphViz.Commands           (GraphvizCommand (Fdp))
-import Data.Maybe                       (listToMaybe)
+import Data.Functor.Const               (Const(..))
 import Data.String.Interpolate          (i, iii)
 
 pickMistakeGenerate
@@ -167,13 +167,11 @@ pickMistake
   -> RandT
     g
     m
-    [(p n String, Maybe String)]
+    [(p n String, Maybe (Const () String))]
 pickMistake = taskInstance
-  (\parse inst -> do
-    results <- pickTaskInstance parse inst
-    return $ map (\(net, mistakes) -> (net, mistakes >>= listToMaybe)) results)
+  pickTaskInstance
   petriNetPickMist
-  (\_ -> return [])
+  (\_ -> return (Const ()))
   Pick.alloyConfig
 
 petriNetPickMist :: PickPossibleMistakeConfig -> String
