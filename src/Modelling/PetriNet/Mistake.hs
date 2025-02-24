@@ -5,7 +5,7 @@
 {-# Language QuasiQuotes #-}
 
 module Modelling.PetriNet.Mistake (
-  checkPickPossibleMistakeConfig,
+  checkPickMistakeConfig,
   defaultPickMistakeInstance,
   petriNetPickMist,
   pickMistake,
@@ -230,8 +230,8 @@ run #{mistakePredicateName} for exactly #{petriScopeMaxSeq basicC} Nodes, #{petr
 mistakePredicateName :: String
 mistakePredicateName = "showMistake"
 
-checkPickPossibleMistakeConfig :: PickPossibleMistakeConfig -> Maybe String
-checkPickPossibleMistakeConfig PickPossibleMistakeConfig {
+checkPickMistakeConfig :: PickPossibleMistakeConfig -> Maybe String
+checkPickMistakeConfig PickPossibleMistakeConfig {
   basicConfig,
   changeConfig,
   graphConfig,

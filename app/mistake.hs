@@ -13,7 +13,7 @@ import Common (
   withLang,
   )
 import Modelling.PetriNet.Mistake (
-  checkPickPossibleMistakeConfig,
+  checkPickMistakeConfig,
   pickMistakeGenerate,
   simplePickMistakeTask,
   )
@@ -64,7 +64,7 @@ mainPick i = forceErrors $ do
             canHavePlaceToPlace = placeToPl
             }
         } :: PickPossibleMistakeConfig
-  let c = checkPickPossibleMistakeConfig config
+  let c = checkPickMistakeConfig config
   if isNothing c
   then do
     t <- pickMistakeGenerate config 0 i
