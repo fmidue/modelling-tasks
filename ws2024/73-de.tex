@@ -7,7 +7,11 @@ Betrachten Sie folgendes Aktivitätsdiagramm:
 Übersetzen Sie das gegebene Aktivitätsdiagramm in ein Petrinetz (auf dem Papier oder in Ihrem Kopf) und geben Sie dann die Gesamtanzahl
 an Knoten (Stellen und Transitionen), die Anzahl der Hilfsstellen und die Anzahl der Hilfstransitionen des Netzes an.
 
-Geben Sie dazu Ihre Antwort wie im folgenden Beispiel an:\begin{verbatim}FindAuxiliaryPetriNodesSolution {countOfPetriNodes = 10, countOfAuxiliaryPlaces = 2, countOfAuxiliaryTransitions = 3}\end{verbatim}In diesem Beispiel etwa enthält das entstehende Netz insgesamt 10 Knoten, davon 2 Hilfsstellen und 3 Hilfstransitionen.
+Geben Sie dazu Ihre Antwort wie im folgenden Beispiel an:
+\begin{minted}{text}
+FindAuxiliaryPetriNodesSolution {countOfPetriNodes = 10, countOfAuxiliaryPlaces = 2, countOfAuxiliaryTransitions = 3}
+\end{minted}
+In diesem Beispiel etwa enthält das entstehende Netz insgesamt 10 Knoten, davon 2 Hilfsstellen und 3 Hilfstransitionen.
 
 Hinweis zur Übersetzung in ein Petrinetz: Für Endknoten werden keine zusätzlichen Stellen eingeführt. Sie werden so realisiert, dass ein Token verbraucht wird, also an dieser Position aus dem Netz verschwindet. Falls eine zusätzliche Transition erforderlich ist, um dieses Verhalten an einer Position im Diagramm zu realisieren, an der sich ein Endknoten befindet, zählt diese Transition nicht als Hilfsknoten.
 
