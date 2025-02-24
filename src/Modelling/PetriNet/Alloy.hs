@@ -108,7 +108,7 @@ compBasicConstraints
   -> String
 compBasicConstraints legal activated basicConfig = [i|
   #{enforceConstraints False activated basicConfig}
-  #{if legal then "isLegalPetriNet" else ""}|]
+  #{if legal then "isLegalPetriNet" else "not isLegalPetriNet"}|]
 
 {-|
 A set of constraints enforcing settings of 'BasicConfig' for the net under
