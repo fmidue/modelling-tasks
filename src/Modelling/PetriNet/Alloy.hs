@@ -144,7 +144,7 @@ enforceConstraints underDefault activated BasicConfig {
   all w : #{nodes}.#{flow}[#{nodes}] | w =< #{maxFlowPerEdge}
   let theFlow = (sum f, t : #{nodes} | f.#{flow}[t]) |
     #{fst flowOverall} =< theFlow and theFlow =< #{snd flowOverall}
-  #{activatedConstraint}
+  #{activatedConstraint activated}
   #{connected (prepend "graphIsConnected") isConnected}
   #{isolated (prepend "noIsolatedNodes") isConnected}|]
   where
@@ -155,8 +155,9 @@ enforceConstraints underDefault activated BasicConfig {
     nodes = given "Nodes"
     places = given "Places"
     tokens = prepend "tokens"
-    activatedConstraint =
-      if atLeastActive <= 0
+    activatedConstraint :: String -> String
+    activatedConstraint string =
+      if atLeastActive <= 0 || null string
       then ""
       else [i|
   \##{activated} >= #{atLeastActive}

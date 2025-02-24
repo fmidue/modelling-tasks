@@ -201,13 +201,11 @@ petriNetMistakeAlloy basicC changeC mistakeC
 #{modulePetriConcepts}
 #{modulePetriConstraints}
 
-pred #{mistakePredicateName}[#{defaultActiveTrans}#{activated} : set Transitions] {
+pred #{mistakePredicateName} {
   \#Places = #{places basicC}
   \#Transitions = #{transitions basicC}
-  #{compBasicConstraints False activated basicC}
+  #{compBasicConstraints False "" basicC}
   #{compChange changeC}
-  #{sourceTransitionConstraints}
-  #{sinkTransitionConstraints}
   #{compConstraints}
   #{mistakeConstraints mistakeC}
 }
@@ -215,17 +213,7 @@ pred #{mistakePredicateName}[#{defaultActiveTrans}#{activated} : set Transitions
 run #{mistakePredicateName} for exactly #{petriScopeMaxSeq basicC} Nodes, #{petriScopeBitWidth basicC} Int
 |]
   where
-    activated        = "activatedTrans"
-    activatedDefault = "defaultActiveTrans"
-    sourceTransitionConstraints :: String
-    sourceTransitionConstraints = [i|
-  no t : givenTransitions | no givenPlaces.flow[t]
-  no t : Transitions | sourceTransitions[t]|]
-    sinkTransitionConstraints :: String
-    sinkTransitionConstraints = "no t : Transitions | sinkTransitions[t]"
-    defaultActiveTrans :: String
-    defaultActiveTrans = [i|#{activatedDefault} : set givenTransitions,|]
-    compConstraints = defaultConstraints activatedDefault basicC
+    compConstraints = defaultConstraints "" basicC
 
 mistakePredicateName :: String
 mistakePredicateName = "showMistake"
