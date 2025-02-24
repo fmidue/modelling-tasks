@@ -50,3 +50,4 @@ ignore$
 ^\Qtest/Modelling/CdOd/MatchCdOdSpec.hs\E$
 ^\Qtest/Spec.hs\E$
 ^test/unit/
+^ws2024/
