@@ -1,6 +1,8 @@
 Eingereicht:
 
-\begin{verbatim}MatchPetriSolution 
+
+\begin{minted}{text}
+MatchPetriSolution 
   { actionNodes = [ ( "A", 1 ), ( "B", 2 ) ]
   , objectNodes = [ ( "C", 3 ), ( "D", 4 ) ]
   , decisionNodes = [ 5, 7 ]
@@ -11,7 +13,9 @@ Eingereicht:
   , activityFinalNodes = [ 16 ]
   , flowFinalNodes = [ ]
   , auxiliaryPetriNodes = [ 13, 14, 15 ] 
-  }\end{verbatim}
+  }
+\end{minted}
+
 
 Anmerkungen zur eingereichten Lösung:
 
@@ -19,7 +23,15 @@ Referenzierte Knotennamen sind Bestandteil der Aufgabenstellung?\begin{quote}Yes
 
 Alle angegebenen Teilantworten sind korrekt?
 
-\begin{quote}\begin{verbatim}Nein.\end{verbatim}\end{quote}
+\begin{quote}
+\begin{minted}{text}
+Nein.
+\end{minted}
+\end{quote}
 
-Die korrekte Lösung ist:\begin{verbatim}MatchPetriSolution {actionNodes = [("A",25),("B",20),("C",12),("E",41),("F",35),("G",31),("I",14),("M",23)], objectNodes = [("D",21),("H",1),("J",22),("K",15),("L",17)], decisionNodes = [3,13,32], mergeNodes = [6,18,19], forks = [10,38], joins = [26,30], initialNodes = [11], activityFinalNodes = [], flowFinalNodes = [8,27], auxiliaryPetriNodes = [2,4,5,7,9,16,24,28,29,33,34,36,37,39,40]}\end{verbatim}
+Die korrekte Lösung ist:
+\begin{minted}{text}
+MatchPetriSolution {actionNodes = [("A",25),("B",20),("C",12),("E",41),("F",35),("G",31),("I",14),("M",23)], objectNodes = [("D",21),("H",1),("J",22),("K",15),("L",17)], decisionNodes = [3,13,32], mergeNodes = [6,18,19], forks = [10,38], joins = [26,30], initialNodes = [11], activityFinalNodes = [], flowFinalNodes = [8,27], auxiliaryPetriNodes = [2,4,5,7,9,16,24,28,29,33,34,36,37,39,40]}
+\end{minted}
+
 

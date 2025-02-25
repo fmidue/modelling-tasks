@@ -1,6 +1,8 @@
 Submitted:
 
-\begin{verbatim}MatchPetriSolution 
+
+\begin{minted}{text}
+MatchPetriSolution 
   { actionNodes = [ ( "A", 1 ), ( "B", 2 ) ]
   , objectNodes = [ ( "C", 3 ), ( "D", 4 ) ]
   , decisionNodes = [ 5, 7 ]
@@ -11,7 +13,9 @@ Submitted:
   , activityFinalNodes = [ 16 ]
   , flowFinalNodes = [ ]
   , auxiliaryPetriNodes = [ 13, 14, 15 ] 
-  }\end{verbatim}
+  }
+\end{minted}
+
 
 Remarks on your solution:
 
@@ -19,7 +23,15 @@ Referenced node names were provided within task?\begin{quote}Yes.\end{quote}Refe
 
 All given answer parts are correct?
 
-\begin{quote}\begin{verbatim}No.\end{verbatim}\end{quote}
+\begin{quote}
+\begin{minted}{text}
+No.
+\end{minted}
+\end{quote}
 
-The correct solution is:\begin{verbatim}MatchPetriSolution {actionNodes = [("A",18),("B",11),("C",1),("F",16),("G",13),("L",4)], objectNodes = [("D",6),("E",5),("H",17),("I",10),("J",19),("K",14),("M",9)], decisionNodes = [7], mergeNodes = [15], forks = [12], joins = [3], initialNodes = [8], activityFinalNodes = [], flowFinalNodes = [2], auxiliaryPetriNodes = []}\end{verbatim}
+The correct solution is:
+\begin{minted}{text}
+MatchPetriSolution {actionNodes = [("A",18),("B",11),("C",1),("F",16),("G",13),("L",4)], objectNodes = [("D",6),("E",5),("H",17),("I",10),("J",19),("K",14),("M",9)], decisionNodes = [7], mergeNodes = [15], forks = [12], joins = [3], initialNodes = [8], activityFinalNodes = [], flowFinalNodes = [2], auxiliaryPetriNodes = []}
+\end{minted}
+
 

@@ -1,6 +1,8 @@
 Eingereicht:
 
-\begin{verbatim}MatchAdSolution 
+
+\begin{minted}{text}
+MatchAdSolution 
   { actionNodeNames = [ "A", "B" ]
   , objectNodeNames = [ "C", "D" ]
   , countOfDecisionNodes = 2
@@ -10,7 +12,9 @@ Eingereicht:
   , countOfInitialNodes = 1
   , countOfActivityFinalNodes = 1
   , countOfFlowFinalNodes = 0 
-  }\end{verbatim}
+  }
+\end{minted}
+
 
 Anmerkungen zur eingereichten Lösung:
 
@@ -18,7 +22,15 @@ Referenzierte Knotennamen sind Bestandteil des gegebenen Aktivitätsdiagramms?\b
 
 Alle angegebenen Teilantworten sind korrekt?
 
-\begin{quote}\begin{verbatim}Nein.\end{verbatim}\end{quote}
+\begin{quote}
+\begin{minted}{text}
+Nein.
+\end{minted}
+\end{quote}
 
-Die korrekte Lösung ist:\begin{verbatim}MatchAdSolution {actionNodeNames = ["A","D","F","G","H","I"], objectNodeNames = ["B","C","E","J","K"], countOfDecisionNodes = 2, countOfMergeNodes = 2, countOfForks = 1, countOfJoins = 1, countOfInitialNodes = 1, countOfActivityFinalNodes = 1, countOfFlowFinalNodes = 1}\end{verbatim}
+Die korrekte Lösung ist:
+\begin{minted}{text}
+MatchAdSolution {actionNodeNames = ["A","D","F","G","H","I"], objectNodeNames = ["B","C","E","J","K"], countOfDecisionNodes = 2, countOfMergeNodes = 2, countOfForks = 1, countOfJoins = 1, countOfInitialNodes = 1, countOfActivityFinalNodes = 1, countOfFlowFinalNodes = 1}
+\end{minted}
+
 
