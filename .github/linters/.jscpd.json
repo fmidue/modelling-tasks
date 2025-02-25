@@ -8,7 +8,8 @@
     "**/app/**",
     "**/example/**",
     "**/legacy-app/**",
-    "**/test/unit/**"
+    "**/test/unit/**",
+    "**/ws2024/**"
   ],
   "minLines": 15,
   "max-lines": 2000,
