@@ -205,15 +205,13 @@ pred #{mistakePredicateName} {
   \#Places = #{places basicC}
   \#Transitions = #{transitions basicC}
   #{compBasicConstraints False undefined basicC}
-  #{compChange changeC}
-  #{compConstraints}
   #{mistakeConstraints mistakeC}
+  #{compChange changeC}
+  #{defaultConstraints undefined basicC}
 }
 
 run #{mistakePredicateName} for exactly #{petriScopeMaxSeq basicC} Nodes, #{petriScopeBitWidth basicC} Int
 |]
-  where
-    compConstraints = defaultConstraints undefined basicC
 
 mistakePredicateName :: String
 mistakePredicateName = "showMistake"
