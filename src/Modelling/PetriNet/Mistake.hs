@@ -204,7 +204,7 @@ petriNetMistakeAlloy basicC changeC mistakeC
 pred #{mistakePredicateName} {
   \#Places = #{places basicC}
   \#Transitions = #{transitions basicC}
-  #{compBasicConstraints False "" basicC}
+  #{compBasicConstraints False undefined basicC}
   #{compChange changeC}
   #{compConstraints}
   #{mistakeConstraints mistakeC}
@@ -213,7 +213,7 @@ pred #{mistakePredicateName} {
 run #{mistakePredicateName} for exactly #{petriScopeMaxSeq basicC} Nodes, #{petriScopeBitWidth basicC} Int
 |]
   where
-    compConstraints = defaultConstraints "" basicC
+    compConstraints = defaultConstraints undefined basicC
 
 mistakePredicateName :: String
 mistakePredicateName = "showMistake"
