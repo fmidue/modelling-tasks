@@ -1,0 +1,80 @@
+-- stack ghci --package="output-blocks-latex" --package='HaTeX' --ghci-options="-ghci-script=ws2024/.ghci"
+:set +s
+:set -XFlexibleContexts -XLambdaCase -XScopedTypeVariables -XTypeApplications
+-- :set -i../app/common
+-- :l ../app/common/Common.hs
+:m +Control.OutputCapable.Blocks Control.Monad.Trans.Except Control.OutputCapable.Blocks.Generic Control.OutputCapable.Blocks.LaTeX System.Directory Text.LaTeX.Base.Render
+import qualified Data.Bimap as BM
+import qualified Data.Map as M
+import qualified Data.Text as T
+import Control.Monad (void)
+import Text.Parsec (parse)
+let deadlockSyntax' x = deadlockSyntax (x :: DeadlockInstance Place Transition)
+let deadlockTask' f x = deadlockTask f (toShowDeadlockInstance x)
+let findConcurrencyEvaluation' x = findConcurrencyEvaluation (x :: FindInstance SimplePetriNet (Concurrent Transition))
+let findConcurrencySyntax' x = findConcurrencySyntax (x :: FindInstance SimplePetriNet (Concurrent Transition))
+let findConcurrencyTask' f x = findConcurrencyTask f (x :: FindInstance SimplePetriNet (Concurrent Transition))
+let findConflictPlacesEvaluation' x = findConflictPlacesEvaluation (x :: FindInstance SimplePetriNet Conflict)
+let findConflictPlacesSyntax' x = findConflictPlacesSyntax (x :: FindInstance SimplePetriNet Conflict)
+let findConflictPlacesTask' f x = findConflictPlacesTask f (x :: FindInstance SimplePetriNet Conflict)
+let reachSyntax' x = reachSyntax (x :: ReachInstance Place Transition)
+let reachTask' f x = reachTask f (toShowReachInstance x)
+let task f nr = createDirectoryIfMissing False nr >> readFile (nr <> ".hs") >>= \config -> readToEnglishAndGerman (f $ nr <> "/") config >>= \(Just (en, de)) -> writeFile (nr <> "-en.tex") (T.unpack $ render en) >> writeFile (nr <> "-de.tex") (T.unpack $ render de)
+let solution' f s nr = createDirectoryIfMissing False nr >> read <$> readFile ("../" <> nr <> ".hs") >>= \taskInstance -> runLangMReport (return ()) (>>) (f "/tmp/" taskInstance s) >>= \(r, x) -> (x English :: IO ()) >> print r :: IO ()
+let solution f s nr = createDirectoryIfMissing False nr >> readFile ("../" <> nr <> ".hs") >>= \taskInstance -> forceReadToEnglishAndGerman (flip (\x y -> void $ f (nr <> "/") x y) s) taskInstance >>= \(Just (en, de)) -> writeFile (nr <> "-en.tex") (T.unpack $ render en) >> writeFile (nr <> "-de.tex") (T.unpack $ render de)
+let pretext x = paragraph (translated (\case German -> "Eingereicht:"; English -> "Submitted:")) *> paragraph (code x)
+let createFile nr = writeFile (nr <> "-en.tex") "" >> writeFile (nr <> "-de.tex") ""
+let check f s nr = print (snd s) >> createDirectoryIfMissing False nr >> readFile ("../" <> nr <> ".hs") >>= \taskInstance -> forceReadToEnglishAndGerman (flip (\x y -> void $ f (nr <> "/") x y) $ snd s) taskInstance >>= \(Just (en, de)) -> appendFile (nr <> "-en.tex") (T.unpack $ render en) >> appendFile (nr <> "-de.tex") (T.unpack $ render de)
+let evaluate f g s nr = createFile nr >> check (\x y z -> void $ pretext (fst s) *> f x y z) s nr >> check g s nr
+createDirectoryIfMissing True "ws2023/solution"
+setCurrentDirectory "ws2024/"
+--task findAuxiliaryPetriNodesTask "73"
+setCurrentDirectory "solution/"
+:set -Wno-name-shadowing
+let solutionString = "[1, 3]"
+let solution51 = (solutionString, read solutionString)
+evaluate (const $ selectValidCdSyntax) selectValidCdEvaluation solution51 "51"
+evaluate (const $ selectValidCdSyntax) selectValidCdEvaluation solution51 "52"
+evaluate (const $ selectValidCdSyntax) selectValidCdEvaluation solution51 "53"
+let solutionString = "due-to:\n- 3\n- 4\nreason: b"
+let solution54 = (solutionString, either (const $ error "parse failure") id $ parse parseNameCdErrorAnswer "" solutionString)
+evaluate (const $ nameCdErrorSyntax) (const $ nameCdErrorEvaluation) solution54 "54"
+evaluate (const $ repairCdSyntax) repairCdEvaluation solution51 "55"
+let solutionString = "[ ( a, x ), ( b, y ) ]"
+let solution56 = (solutionString, [(Name "a", Name "x"), (Name "b", Name "y")])
+evaluate (const $ differentNamesSyntax) (const $ differentNamesEvaluation) solution56 "56"
+let solutionString = "[(1, ab), (2, )]"
+let solution57 = (solutionString, [(1, Letters "ab"), (2, Letters "")])
+evaluate (const $ matchCdOdSyntax) (const $ matchCdOdEvaluation) solution57 "57"
+evaluate (const $ matchCdOdSyntax) (const $ matchCdOdEvaluation) solution57 "58"
+evaluate (const $ matchCdOdSyntax) (const $ matchCdOdEvaluation) solution57 "59"
+let solutionString = "[t4, t3, t2, t1]"
+let solution60 = (solutionString, map Transition [4, 3, 2, 1])
+evaluate (const $ reachSyntax') reachEvaluation solution60 "60"
+evaluate (const $ deadlockSyntax') deadlockEvaluation solution60 "61"
+let solutionString = "((t1,t2))"
+let solution62 = (solutionString, (Transition 1, Transition 2))
+evaluate (const $ findConcurrencySyntax') (const $ findConcurrencyEvaluation') solution62 "62"
+evaluate (const $ findConcurrencySyntax') (const $ findConcurrencyEvaluation') solution62 "63"
+let solutionString = "((t1,t2),[s1,s2])"
+let solution64 = (solutionString, ((Transition 1, Transition 2), [Place 1, Place 2]))
+evaluate (const $ findConflictPlacesSyntax') (const $ findConflictPlacesEvaluation') solution64 "64"
+evaluate (const $ findConflictPlacesSyntax') (const $ findConflictPlacesEvaluation') solution64 "65"
+evaluate (const $ findConflictPlacesSyntax') (const $ findConflictPlacesEvaluation') solution64 "66"
+let solutionString = "MatchAdSolution \n  { actionNodeNames = [ \"A\", \"B\" ]\n  , objectNodeNames = [ \"C\", \"D\" ]\n  , countOfDecisionNodes = 2\n  , countOfMergeNodes = 2\n  , countOfForks = 0\n  , countOfJoins = 0\n  , countOfInitialNodes = 1\n  , countOfActivityFinalNodes = 1\n  , countOfFlowFinalNodes = 0 \n  }"
+let solution67 = (solutionString, read solutionString)
+evaluate (const $ matchAdSyntax) (const $ matchAdEvaluation) solution67 "67"
+let solutionString = "[]"
+let solution68 = (solutionString, read solutionString)
+evaluate (const $ enterASSyntax) (const $ enterASEvaluation) solution68 "68"
+evaluate (const $ enterASSyntax) (const $ enterASEvaluation) solution68 "69"
+let solutionString = "MatchPetriSolution \n  { actionNodes = [ ( \"A\", 1 ), ( \"B\", 2 ) ]\n  , objectNodes = [ ( \"C\", 3 ), ( \"D\", 4 ) ]\n  , decisionNodes = [ 5, 7 ]\n  , mergeNodes = [ 6, 8 ]\n  , forks = [ 10 ]\n  , joins = [ 11 ]\n  , initialNodes = [ 12 ]\n  , activityFinalNodes = [ 16 ]\n  , flowFinalNodes = [ ]\n  , auxiliaryPetriNodes = [ 13, 14, 15 ] \n  }"
+let solution70 = (solutionString, read solutionString)
+evaluate (const $ matchPetriSyntax) (const $ matchPetriEvaluation) solution70 "70"
+evaluate (const $ matchPetriSyntax) (const $ matchPetriEvaluation) solution70 "71"
+let solutionString = "FindAuxiliaryPetriNodesSolution \n  { countOfPetriNodes = 10\n  , countOfAuxiliaryPlaces = 2\n  , countOfAuxiliaryTransitions = 3 \n  }"
+let solution72 = (solutionString, read solutionString)
+let noCheck = const $ \(_ ::FindAuxiliaryPetriNodesInstance) -> \(_ :: FindAuxiliaryPetriNodesSolution) -> pure ()
+evaluate noCheck (const $ findAuxiliaryPetriNodesEvaluation) solution72 "72"
+evaluate noCheck (const $ findAuxiliaryPetriNodesEvaluation) solution72 "73"
+:set -Wwarn=name-shadowing
