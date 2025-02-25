@@ -12,26 +12,26 @@
 
 \usepackage{tabularx}
 \usepackage[export]{adjustbox}
-\RequirePackage{figureSeries}
+\RequirePackage{../figureSeries}
 
 \usepackage{tikz}
 \usetikzlibrary{arrows.meta}
 \usetikzlibrary{shapes.misc}
-\usepackage{./tikz-uml}
+\usepackage{../tikz-uml}
 \usetikzlibrary{petri}
-\input{./defs.tex}
+\input{../defs.tex}
 
 \tikzset{cross/.style={cross out, draw=black, minimum size=2*(#1-\pgflinewidth), inner sep=0pt, outer sep=0pt},
 %default radius will be 1pt.
   cross/.default={1pt}}
 
-\input{build/header}
+\input{../build/header}
 
 \begin{document}
 
 \renewcommand{\headrulewidth}{0.4pt}
 \renewcommand{\footrulewidth}{0.4pt}
-\chead{Repetition Tasks ``\course'' \semester}
+\chead{Solutions for Repetition Tasks ``\course'' \semester}
 \rfoot{}
 \cfoot{\thepage}
 \setcounter{page}{1}
