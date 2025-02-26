@@ -31,10 +31,10 @@ module Modelling.PetriNet.Types (
   DrawSettings (..),
   FindConcurrencyConfig (..),
   FindConflictConfig (..),
-  PickPossibleMistakeConfig (..),
+  PickMistakeConfig (..),
   GraphConfig (..),
   InvalidPetriNetException (..),
-  PossibleMistakeConfig(..),
+  MistakeConfig(..),
   Net (..),
   Node (..),
   Petri (..),
@@ -58,7 +58,7 @@ module Modelling.PetriNet.Types (
   defaultChangeConfig,
   defaultFindConcurrencyConfig,
   defaultFindConflictConfig,
-  defaultPickPossibleMistakeConfig,
+  defaultPickMistakeConfig,
   defaultGraphConfig,
   defaultPickConcurrencyConfig,
   defaultPickConflictConfig,
@@ -885,38 +885,38 @@ defaultPickConcurrencyConfig = PickConcurrencyConfig
   , alloyConfig  = defaultAlloyConfig
   }
 
-data PickPossibleMistakeConfig = PickPossibleMistakeConfig
+data PickMistakeConfig = PickMistakeConfig
   { basicConfig :: BasicConfig
   , changeConfig :: ChangeConfig
+  , mistakeConfig :: MistakeConfig
   , graphConfig :: GraphConfig
-  , possibleMistakeConfig :: PossibleMistakeConfig
   , printSolution :: Bool
   , useDifferentGraphLayouts :: Bool
   , alloyConfig  :: AlloyConfig
   } deriving (Generic, Read, Show)
 
-defaultPickPossibleMistakeConfig :: PickPossibleMistakeConfig
-defaultPickPossibleMistakeConfig = PickPossibleMistakeConfig
-  { basicConfig = defaultBasicConfig
+defaultPickMistakeConfig :: PickMistakeConfig
+defaultPickMistakeConfig = PickMistakeConfig
+  { basicConfig = defaultBasicConfig { atLeastActive = 0 }
   , changeConfig = defaultChangeConfig
   , graphConfig = defaultGraphConfig { hidePlaceNames = True, hideTransitionNames = True }
   , printSolution = False
   , useDifferentGraphLayouts = False
   , alloyConfig  = defaultAlloyConfig
-  , possibleMistakeConfig = defaultPossibleMistakeConfig
+  , mistakeConfig = defaultMistakeConfig
   }
 
-data PossibleMistakeConfig = PossibleMistakeConfig
+data MistakeConfig = MistakeConfig
   { canHaveNegativeTokenCost :: Bool
   , canHaveTransitionToTransition :: Bool
   , canHavePlaceToPlace :: Bool
   } deriving (Generic, Read, Show)
 
-defaultPossibleMistakeConfig :: PossibleMistakeConfig
-defaultPossibleMistakeConfig = PossibleMistakeConfig
+defaultMistakeConfig :: MistakeConfig
+defaultMistakeConfig = MistakeConfig
   { canHaveNegativeTokenCost = True
   , canHaveTransitionToTransition = True
-  , canHavePlaceToPlace = False
+  , canHavePlaceToPlace = True
   }
 
 data DrawSettings = DrawSettings {

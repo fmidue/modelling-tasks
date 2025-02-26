@@ -20,9 +20,9 @@ import Modelling.PetriNet.Mistake (
 import Modelling.PetriNet.Types (
   BasicConfig (..),
   ChangeConfig (..),
-  PossibleMistakeConfig (..),
-  PickPossibleMistakeConfig (..),
-  defaultPickPossibleMistakeConfig,
+  MistakeConfig (..),
+  PickMistakeConfig (..),
+  defaultPickMistakeConfig,
   )
 
 import Control.OutputCapable.Blocks      (Language (English))
@@ -46,7 +46,7 @@ main = do
 
 mainPick :: Int -> IO ()
 mainPick i = forceErrors $ do
-  let theConfig@PickPossibleMistakeConfig{..} = defaultPickPossibleMistakeConfig
+  let theConfig@PickMistakeConfig{..} = defaultPickMistakeConfig
   lift $ pPrint theConfig
   (pls, trns, tknChange, flwChange, negTokCost, transToTr, placeToPl) <- lift $ userInput theConfig
   let config = theConfig {
@@ -58,12 +58,12 @@ mainPick i = forceErrors $ do
             tokenChangeOverall = tknChange,
             flowChangeOverall = flwChange
             },
-        possibleMistakeConfig = possibleMistakeConfig {
+        mistakeConfig = mistakeConfig {
             canHaveNegativeTokenCost = negTokCost,
             canHaveTransitionToTransition = transToTr,
             canHavePlaceToPlace = placeToPl
             }
-        } :: PickPossibleMistakeConfig
+        } :: PickMistakeConfig
   let c = checkPickMistakeConfig config
   if isNothing c
   then do
@@ -94,8 +94,8 @@ intInput d = do
       putStrLn "Invalid input"
       intInput d
 
-userInput :: PickPossibleMistakeConfig -> IO (Int, Int, Int, Int, Bool, Bool, Bool)
-userInput PickPossibleMistakeConfig{basicConfig = BasicConfig{..}, changeConfig = ChangeConfig{..}, possibleMistakeConfig = PossibleMistakeConfig{..}} = do
+userInput :: PickMistakeConfig -> IO (Int, Int, Int, Int, Bool, Bool, Bool)
+userInput PickMistakeConfig{basicConfig = BasicConfig{..}, changeConfig = ChangeConfig{..}, mistakeConfig = MistakeConfig{..}} = do
   putStr "Number of Places: "
   pls <- intInput places
   putStr "Number of Transitions: "

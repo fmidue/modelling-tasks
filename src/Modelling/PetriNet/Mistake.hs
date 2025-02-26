@@ -16,7 +16,7 @@ module Modelling.PetriNet.Mistake (
   ) where
 
 import qualified Modelling.PetriNet.Types         as Pick (
-  PickPossibleMistakeConfig (..),
+  PickMistakeConfig (..),
   )
 
 import qualified Data.Map                         as M (
@@ -35,7 +35,6 @@ import Modelling.PetriNet.Alloy (
   compBasicConstraints,
   compChange,
   defaultConstraints,
-  mistakeConstraints,
   moduleHelpers,
   modulePetriConcepts,
   modulePetriConstraints,
@@ -57,10 +56,10 @@ import Modelling.PetriNet.Types         (
   BasicConfig (..),
   ChangeConfig,
   DrawSettings (..),
-  PossibleMistakeConfig,
+  MistakeConfig (..),
   Net (..),
   PetriLike (PetriLike, allNodes),
-  PickPossibleMistakeConfig (..),
+  PickMistakeConfig (..),
   SimpleNode (..),
   SimplePetriNet,
   )
@@ -85,7 +84,7 @@ import Data.String.Interpolate          (i, iii)
 
 pickMistakeGenerate
   :: (MonadAlloy m, MonadThrow m, Net p n)
-  => PickPossibleMistakeConfig
+  => PickMistakeConfig
   -> Int
   -> Int
   -> m (PickInstance (p n String))
@@ -135,7 +134,7 @@ pickMistakeTask path task = do
       that is incorrect.
       #{" "}|]
     german [iii|
-      Geben Sie Ihre Antwort durch Angabe der Nummer des Petrinetzes an,
+      Geben Sie Ihre Antwort durch Angabe der Nummer des Petri-Netzes an,
       das inkorrekt ist.
       #{" "}|]
   let plural = wrongInstances task > 1
@@ -163,7 +162,7 @@ pickMistakeTask path task = do
 
 pickMistake
   :: (MonadAlloy m, MonadThrow m, Net p n, RandomGen g)
-  => PickPossibleMistakeConfig
+  => PickMistakeConfig
   -> Int
   -> RandT
     g
@@ -175,16 +174,16 @@ pickMistake = taskInstance
   (\_ -> return (Const ()))
   Pick.alloyConfig
 
-petriNetPickMist :: PickPossibleMistakeConfig -> String
-petriNetPickMist PickPossibleMistakeConfig{
+petriNetPickMist :: PickMistakeConfig -> String
+petriNetPickMist PickMistakeConfig{
   basicConfig,
   changeConfig,
-  possibleMistakeConfig
+  mistakeConfig
   } =
   petriNetMistakeAlloy
     basicConfig
     changeConfig
-    possibleMistakeConfig
+    mistakeConfig
 
 {-|
 Generate code for PetriNet mistake tasks
@@ -192,7 +191,7 @@ Generate code for PetriNet mistake tasks
 petriNetMistakeAlloy
   :: BasicConfig
   -> ChangeConfig
-  -> PossibleMistakeConfig
+  -> MistakeConfig
   -> String
 petriNetMistakeAlloy basicC changeC mistakeC
   = [i|module PetriNetMistake
