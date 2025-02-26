@@ -7,6 +7,7 @@
 module Modelling.PetriNet.Mistake (
   checkPickMistakeConfig,
   defaultPickMistakeInstance,
+  mistakeConstraints,
   petriNetPickMist,
   pickMistake,
   pickMistakeGenerate,
@@ -216,8 +217,25 @@ run #{mistakePredicateName} for exactly #{petriScopeMaxSeq basicC} Nodes, #{petr
 mistakePredicateName :: String
 mistakePredicateName = "showMistake"
 
-checkPickMistakeConfig :: PickPossibleMistakeConfig -> Maybe String
-checkPickMistakeConfig PickPossibleMistakeConfig {
+mistakeConstraints :: MistakeConfig -> String
+mistakeConstraints MistakeConfig
+                { canHaveNegativeTokenCost, canHaveTransitionToTransition, canHavePlaceToPlace
+                } = falseInput
+  where
+    input :: [(Bool, String)]
+    input = [(canHaveNegativeTokenCost, "all w : Nodes.flow[Nodes] | w > 0"),
+             (canHaveTransitionToTransition, "Transitions.flow.Int in Places"),
+             (canHavePlaceToPlace, "Places.flow.Int in Transitions")]
+    falseMistakes = map snd (filter (not . fst) input)
+
+    falseInput :: String
+    falseInput =
+      case falseMistakes of
+        []     -> ""
+        (x:xs) -> unlines (x : map ("  " ++) xs)
+
+checkPickMistakeConfig :: PickMistakeConfig -> Maybe String
+checkPickMistakeConfig PickMistakeConfig {
   basicConfig,
   changeConfig,
   graphConfig,

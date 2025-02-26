@@ -13,7 +13,6 @@ module Modelling.PetriNet.Alloy (
   connected,
   defaultConstraints,
   isolated,
-  mistakeConstraints,
   moduleHelpers,
   modulePetriAdditions,
   modulePetriConcepts,
@@ -38,7 +37,6 @@ import Modelling.PetriNet.Types (
   AlloyConfig,
   BasicConfig (..),
   ChangeConfig (..),
-  PossibleMistakeConfig (..)
   )
 
 import qualified Modelling.PetriNet.Types         as T (
@@ -55,7 +53,7 @@ import Control.Monad.Random (
   )
 import Data.Composition                 ((.:))
 import Data.FileEmbed                   (embedStringFile)
-import Data.List                        (intercalate, partition)
+import Data.List                        (intercalate)
 import Data.Set                         (Set)
 import Data.String.Interpolate          (i)
 import Language.Alloy.Call (
@@ -198,25 +196,6 @@ compChange ChangeConfig
   (sum p : Places | abs[p.tokenChange]) = #{tokenChangeOverall}
   maxTokenChangePerPlace[#{maxTokenChangePerPlace}]
 |]
-
-mistakeConstraints :: PossibleMistakeConfig -> String
-mistakeConstraints PossibleMistakeConfig
-                { canHaveNegativeTokenCost, canHaveTransitionToTransition, canHavePlaceToPlace
-                } = unlines [trueInput, falseInput]
-  where
-    input :: [(Bool, String)]
-    input = [(canHaveNegativeTokenCost, "all w : Nodes.flow[Nodes] | w > 0"),
-             (canHaveTransitionToTransition, "Transitions.flow.Int in Places"),
-             (canHavePlaceToPlace, "Places.flow.Int in Transitions")]
-    (trueMistakes, falseMistakes) = partition fst input
-
-    trueInput = intercalate " or " (map (\(_,x) -> "not(" ++ x ++ ")") trueMistakes)
-
-    falseInput :: String
-    falseInput = unlines (map(\(_,x) -> "  " ++ x) falseMistakes)
-
-
-
 
 {-|
 Generates signatures of the given kind, number of places and transitions.
