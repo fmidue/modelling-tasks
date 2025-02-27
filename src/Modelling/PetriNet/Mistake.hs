@@ -273,9 +273,11 @@ checkMistakeConfig BasicConfig {
   = Just "At least two transitions are required for transition mistakes"
   | canHavePlaceToPlace && places < 2
   = Just "At least two places are required for place mistakes"
-  | (canHaveTransitionToTransition || canHavePlaceToPlace) && flowChangeOverall < 2
-  = Just "flowChangeOverall must be at least 2 for mistakes"
-  | (canHaveTransitionToTransition || canHavePlaceToPlace) && maxFlowChangePerEdge < 1
+  | (canHaveTransitionToTransition || canHavePlaceToPlace) && flowChangeOverall < 1
+  = Just "flowChangeOverall must be at least 1 for mistakes"
+  | (canHaveTransitionToTransition && canHaveTransitionToTransition && canHavePlaceToPlace) && flowChangeOverall < 2
+  = Just "flowChangeOverall must be greater than 1 for all mistakes"
+  | maxFlowChangePerEdge < 1
   = Just "maxFlowChangePerEdge must be at least 1 for mistakes"
   | otherwise
   = Nothing
