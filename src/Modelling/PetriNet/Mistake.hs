@@ -54,7 +54,7 @@ import Modelling.PetriNet.Pick (
   )
 import Modelling.PetriNet.Types         (
   BasicConfig (..),
-  ChangeConfig,
+  ChangeConfig (..),
   DrawSettings (..),
   MistakeConfig (..),
   Net (..),
@@ -64,6 +64,7 @@ import Modelling.PetriNet.Types         (
   SimplePetriNet,
   )
 
+import Control.Applicative              ((<|>))
 import Control.Monad.Catch              (MonadThrow)
 import Control.OutputCapable.Blocks (
   GenericOutputCapable (..),
@@ -124,7 +125,7 @@ pickMistakeTask path task = do
       Which of the following Petri nets is "illegal" meaning it violates fundamental constraints?
       |]
     german [iii|
-      Welches dieser Petri-Netze ist "illegal", das heißt, es verletzt grundlegende Bedingungen?
+      Welches dieser Petrinetze ist "illegal", das heißt, es verletzt grundlegende Bedingungen?
       |]
   images show snd
     $=<< renderPick path "mistake" task
@@ -134,7 +135,7 @@ pickMistakeTask path task = do
       that is incorrect.
       #{" "}|]
     german [iii|
-      Geben Sie Ihre Antwort durch Angabe der Nummer des Petri-Netzes an,
+      Geben Sie Ihre Antwort durch Angabe der Nummer des Petrinetzes an,
       das inkorrekt ist.
       #{" "}|]
   let plural = wrongInstances task > 1
@@ -149,13 +150,13 @@ pickMistakeTask path task = do
         #{if plural then "nets are valid" else "net is valid"}).
         |]
       german $ [iii|
-        #{" "}als Antwort würde bedeuten, dass Petri-Netz 1
+        #{" "}als Antwort würde bedeuten, dass Petrinetz 1
         "illegal" ist, während
         #{" "}
         |]
         ++ (if plural
-            then "die anderen Petri-Netze gültig sind"
-            else "das andere Petri-Netz gültig ist")
+            then "die anderen Petrinetze gültig sind"
+            else "das andere Petrinetz gültig ist")
     pure ()
   paragraph hoveringInformation
   pure ()
@@ -237,6 +238,7 @@ checkPickMistakeConfig :: PickMistakeConfig -> Maybe String
 checkPickMistakeConfig PickMistakeConfig {
   basicConfig,
   changeConfig,
+  mistakeConfig,
   graphConfig,
   useDifferentGraphLayouts
   }
@@ -246,6 +248,37 @@ checkPickMistakeConfig PickMistakeConfig {
     basicConfig
     changeConfig
     graphConfig
+  <|> checkMistakeConfig basicConfig changeConfig mistakeConfig
+
+checkMistakeConfig :: BasicConfig -> ChangeConfig -> MistakeConfig -> Maybe String
+checkMistakeConfig BasicConfig {
+    places,
+    transitions,
+    atLeastActive
+    }
+  ChangeConfig {
+    flowChangeOverall,
+    maxFlowChangePerEdge
+    }
+  MistakeConfig {
+    canHaveNegativeTokenCost,
+    canHaveTransitionToTransition,
+    canHavePlaceToPlace
+    }
+  | not (canHaveNegativeTokenCost || canHaveTransitionToTransition || canHavePlaceToPlace)
+  = Just "At least one mistake must be enabled"
+  | atLeastActive /= 0
+  = Just "atLeastActive has to be 0"
+  | canHaveTransitionToTransition && transitions < 2
+  = Just "At least two transitions are required for transition mistakes"
+  | canHavePlaceToPlace && places < 2
+  = Just "At least two places are required for place mistakes"
+  | (canHaveTransitionToTransition || canHavePlaceToPlace) && flowChangeOverall < 2
+  = Just "flowChangeOverall must be at least 2 for mistakes"
+  | (canHaveTransitionToTransition || canHavePlaceToPlace) && maxFlowChangePerEdge < 1
+  = Just "maxFlowChangePerEdge must be at least 1 for mistakes"
+  | otherwise
+  = Nothing
 
 defaultPickMistakeInstance :: PickInstance SimplePetriNet
 defaultPickMistakeInstance = PickInstance {
