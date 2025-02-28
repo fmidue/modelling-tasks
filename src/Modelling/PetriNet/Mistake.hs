@@ -49,8 +49,8 @@ import Modelling.PetriNet.Pick (
   pickGenerate,
   pickTaskInstance,
   renderPick,
-  wrong,
-  wrongInstances,
+  wrong,           -- note that "wrong" in the context of the current module means
+  wrongInstances,  -- "not having been infused with a mistake"
   )
 import Modelling.PetriNet.Types         (
   BasicConfig (..),
