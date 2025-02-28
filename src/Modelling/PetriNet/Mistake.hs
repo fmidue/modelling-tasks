@@ -122,21 +122,21 @@ pickMistakeTask
 pickMistakeTask path task = do
   paragraph $ translate $ do
     english [iii|
-      Which of the following Petri nets is "illegal" meaning it violates fundamental constraints?
+      Which of the following Petri net candidates is not correctly formed?
       |]
     german [iii|
-      Welches dieser Petrinetze ist "illegal", das heißt, es verletzt grundlegende Bedingungen?
+      Welcher der folgenden Petrinetzkandidaten ist nicht korrekt geformt?
       |]
   images show snd
     $=<< renderPick path "mistake" task
   paragraph $ translate $ do
     english [iii|
-      State your answer by giving the number of the Petri net
-      that is incorrect.
+      State your answer by giving the number of the Petri net candidate
+      that is syntactically incorrect.
       #{" "}|]
     german [iii|
-      Geben Sie Ihre Antwort durch Angabe der Nummer des Petrinetzes an,
-      das inkorrekt ist.
+      Geben Sie Ihre Antwort durch Angabe der Nummer des Petrinetzkandidaten an,
+      der syntaktisch inkorrekt ist.
       #{" "}|]
   let plural = wrongInstances task > 1
   paragraph $ do
@@ -146,17 +146,17 @@ pickMistakeTask path task = do
     code "1"
     translate $ do
       english [iii|
-        #{" "}as answer would indicate that Petri net 1 is "illegal" (and the other Petri
-        #{if plural then "nets are valid" else "net is valid"}).
+        #{" "}as answer would indicate that Petri net candidate 1 is incorrect (and the other
+        #{if plural then "ones are" else "one is"} at least syntactically correct).
         |]
       german $ [iii|
-        #{" "}als Antwort würde bedeuten, dass Petrinetz 1
-        "illegal" ist, während
+        #{" "}als Antwort würde bedeuten, dass Petrinetzkandidat 1
+        inkorrekt ist, während
         #{" "}
         |]
         ++ (if plural
-            then "die anderen Petrinetze gültig sind"
-            else "das andere Petrinetz gültig ist")
+            then "die anderen zumindest syntaktisch korrekt sind."
+            else "der andere zumindest syntaktisch korrekt ist.")
     pure ()
   paragraph hoveringInformation
   pure ()
@@ -266,19 +266,19 @@ checkMistakeConfig BasicConfig {
     canHavePlaceToPlace
     }
   | not (canHaveNegativeTokenCost || canHaveTransitionToTransition || canHavePlaceToPlace)
-  = Just "At least one mistake must be enabled"
+  = Just "At least one mistake must be enabled."
   | atLeastActive /= 0
-  = Just "atLeastActive has to be 0"
+  = Just "atLeastActive has to be 0 in this task type."
   | canHaveTransitionToTransition && transitions < 2
-  = Just "At least two transitions are required for transition mistakes"
+  = Just "At least two transitions are required for transition mistakes."
   | canHavePlaceToPlace && places < 2
-  = Just "At least two places are required for place mistakes"
+  = Just "At least two places are required for place mistakes."
   | (canHaveTransitionToTransition || canHavePlaceToPlace) && flowChangeOverall < 1
-  = Just "flowChangeOverall must be at least 1 for mistakes"
+  = Just "flowChangeOverall must be at least 1 for mistakes."
   | (canHaveTransitionToTransition && canHaveTransitionToTransition && canHavePlaceToPlace) && flowChangeOverall < 2
-  = Just "flowChangeOverall must be greater than 1 for all mistakes"
+  = Just "flowChangeOverall must be greater than 1 for all mistakes."
   | maxFlowChangePerEdge < 1
-  = Just "maxFlowChangePerEdge must be at least 1 for mistakes"
+  = Just "maxFlowChangePerEdge must be at least 1 for mistakes to appear."
   | otherwise
   = Nothing
 
