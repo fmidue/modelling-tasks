@@ -5,9 +5,11 @@
 {-# Language QuasiQuotes #-}
 
 module Modelling.PetriNet.Mistake (
+  checkMistakeConfig,
   checkPickMistakeConfig,
   defaultPickMistakeInstance,
   mistakeConstraints,
+  parseMistake,
   petriNetPickMist,
   pickMistake,
   pickMistakeGenerate,
@@ -28,6 +30,9 @@ import Capabilities.Alloy               (MonadAlloy)
 import Capabilities.Cache               (MonadCache)
 import Capabilities.Diagrams            (MonadDiagrams)
 import Capabilities.Graphviz            (MonadGraphviz)
+import Modelling.Auxiliary.Common (
+  Object
+  )
 import Modelling.Auxiliary.Output (
   hoveringInformation,
   )
@@ -41,7 +46,12 @@ import Modelling.PetriNet.Alloy (
   modulePetriSignature,
   petriScopeBitWidth,
   petriScopeMaxSeq,
+  skolemVariable,
   taskInstance,
+  unscopedSingleSig,
+  )
+import Modelling.PetriNet.Parser (
+  asSingleton,
   )
 import Modelling.PetriNet.Pick (
   PickInstance (..),
@@ -57,6 +67,7 @@ import Modelling.PetriNet.Types         (
   ChangeConfig (..),
   DrawSettings (..),
   MistakeConfig (..),
+  Mistakes (Mistakes),
   Net (..),
   PetriLike (PetriLike, allNodes),
   PickMistakeConfig (..),
@@ -80,8 +91,10 @@ import Control.Monad.Random (
   RandomGen,
   )
 import Data.GraphViz.Commands           (GraphvizCommand (Fdp))
-import Data.Functor.Const               (Const(..))
 import Data.String.Interpolate          (i, iii)
+import Language.Alloy.Call (
+  AlloyInstance,
+  )
 
 pickMistakeGenerate
   :: (MonadAlloy m, MonadThrow m, Net p n)
@@ -161,6 +174,7 @@ pickMistakeTask path task = do
   paragraph hoveringInformation
   pure ()
 
+
 pickMistake
   :: (MonadAlloy m, MonadThrow m, Net p n, RandomGen g)
   => PickMistakeConfig
@@ -168,12 +182,13 @@ pickMistake
   -> RandT
     g
     m
-    [(p n String, Maybe (Const () String))]
+    [(p n String, Maybe (Mistakes String))]
 pickMistake = taskInstance
   pickTaskInstance
   petriNetPickMist
-  (\_ -> return (Const ()))
+  parseMistake
   Pick.alloyConfig
+
 
 petriNetPickMist :: PickMistakeConfig -> String
 petriNetPickMist PickMistakeConfig{
@@ -185,6 +200,14 @@ petriNetPickMist PickMistakeConfig{
     basicConfig
     changeConfig
     mistakeConfig
+
+parseMistake :: MonadThrow m => AlloyInstance -> m (Mistakes Object)
+parseMistake inst = do
+  t1 <- unscopedSingleSig inst mistakeTransition1 ""
+  t2 <- unscopedSingleSig inst mistakeTransition2 ""
+  p1 <- unscopedSingleSig inst mistakePlace1 ""
+  p2 <- unscopedSingleSig inst mistakePlace2 ""
+  Mistakes <$> ((,,,) <$> asSingleton t1 <*> asSingleton t2 <*> asSingleton p1 <*> asSingleton p2)
 
 {-|
 Generate code for PetriNet mistake tasks
@@ -202,20 +225,56 @@ petriNetMistakeAlloy basicC changeC mistakeC
 #{modulePetriConcepts}
 #{modulePetriConstraints}
 
-pred #{mistakePredicateName} {
+pred #{mistakePredicateName} [#{t1}, #{t2} : Transitions, #{p1}, #{p2} : Places] {
   \#Places = #{places basicC}
   \#Transitions = #{transitions basicC}
   #{compBasicConstraints False undefined basicC}
   #{mistakeConstraints mistakeC}
   #{compChange changeC}
   #{defaultConstraints undefined basicC}
+
+  disj[#{t1}, #{t2}]
+  disj[#{p1}, #{p2}]
+
+  some n1, n2 : Nodes | n1.flow[n2] < 0
+  or some t1, t2 : Transitions | (some t1.flow[t2])
+  or some p1, p2 : Places | (some p1.flow[p2])
 }
 
 run #{mistakePredicateName} for exactly #{petriScopeMaxSeq basicC} Nodes, #{petriScopeBitWidth basicC} Int
 |]
+  where
+    t1 = transition1
+    t2 = transition2
+    p1 = place1
+    p2 = place2
 
 mistakePredicateName :: String
 mistakePredicateName = "showMistake"
+
+mistakeTransition1 :: String
+mistakeTransition1 = skolemVariable mistakePredicateName transition1
+
+mistakeTransition2 :: String
+mistakeTransition2 = skolemVariable mistakePredicateName transition2
+
+mistakePlace1 :: String
+mistakePlace1 = skolemVariable mistakePredicateName place1
+
+mistakePlace2 :: String
+mistakePlace2 = skolemVariable mistakePredicateName place2
+
+transition1 :: String
+transition1 = "transition1"
+
+transition2 :: String
+transition2 = "transition2"
+
+place1 :: String
+place1 = "place1"
+
+place2 :: String
+place2 = "place2"
 
 mistakeConstraints :: MistakeConfig -> String
 mistakeConstraints MistakeConfig
@@ -273,10 +332,8 @@ checkMistakeConfig BasicConfig {
   = Just "At least two transitions are required for transition mistakes."
   | canHavePlaceToPlace && places < 2
   = Just "At least two places are required for place mistakes."
-  | (canHaveTransitionToTransition || canHavePlaceToPlace) && flowChangeOverall < 1
+  | flowChangeOverall < 1
   = Just "flowChangeOverall must be at least 1 for mistakes."
-  | (canHaveTransitionToTransition && canHaveTransitionToTransition && canHavePlaceToPlace) && flowChangeOverall < 2
-  = Just "flowChangeOverall must be greater than 1 for all mistakes."
   | maxFlowChangePerEdge < 1
   = Just "maxFlowChangePerEdge must be at least 1 for mistakes to appear."
   | otherwise

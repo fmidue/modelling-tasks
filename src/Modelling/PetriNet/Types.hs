@@ -35,6 +35,7 @@ module Modelling.PetriNet.Types (
   GraphConfig (..),
   InvalidPetriNetException (..),
   MistakeConfig(..),
+  Mistakes (..),
   Net (..),
   Node (..),
   Petri (..),
@@ -227,6 +228,9 @@ instance Bitraversable PetriConflict where
     <*> traverse f as
 
 newtype Concurrent a = Concurrent (a, a)
+  deriving (Foldable, Functor, Generic, Read, Show, Traversable)
+
+newtype Mistakes a = Mistakes (a, a, a, a)
   deriving (Foldable, Functor, Generic, Read, Show, Traversable)
 
 class Show (n String) => PetriNode n where
@@ -882,7 +886,7 @@ defaultPickConcurrencyConfig = PickConcurrencyConfig
   , printSolution = False
   , prohibitSourceTransitions = False
   , useDifferentGraphLayouts = False
-  , alloyConfig  = defaultAlloyConfig
+  , alloyConfig  = defaultAlloyConfig { timeout = Just 60000000 }
   }
 
 data PickMistakeConfig = PickMistakeConfig
