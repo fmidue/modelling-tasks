@@ -44,6 +44,8 @@ import Test.Hspec
 
 spec :: Spec
 spec = do
+  describe "defaultPickMistakeConfig" $
+    checkConfigs checkPickMistakeConfig [defaultPickMistakeConfig]
   describe "validPickMistakeConfigs" $
     checkConfigs checkPickMistakeConfig pickConfigs
   describe "pickMistake" $ do
