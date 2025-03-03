@@ -907,14 +907,14 @@ defaultPickMistakeConfig = PickMistakeConfig
   }
 
 data MistakeConfig = MistakeConfig
-  { canHaveNegativeTokenCost :: Bool
+  { canHaveNegativeWeight :: Bool
   , canHaveTransitionToTransition :: Bool
   , canHavePlaceToPlace :: Bool
   } deriving (Generic, Read, Show)
 
 defaultMistakeConfig :: MistakeConfig
 defaultMistakeConfig = MistakeConfig
-  { canHaveNegativeTokenCost = True
+  { canHaveNegativeWeight = True
   , canHaveTransitionToTransition = True
   , canHavePlaceToPlace = True
   }

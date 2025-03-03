@@ -59,7 +59,7 @@ mainPick i = forceErrors $ do
             flowChangeOverall = flwChange
             },
         mistakeConfig = mistakeConfig {
-            canHaveNegativeTokenCost = negTokCost,
+            canHaveNegativeWeight = negTokCost,
             canHaveTransitionToTransition = transToTr,
             canHavePlaceToPlace = placeToPl
             }
@@ -105,7 +105,7 @@ userInput PickMistakeConfig{basicConfig = BasicConfig{..}, changeConfig = Change
   putStr "FlowChange Overall: "
   flwCh <- intInput flowChangeOverall
   putStr "Negative Token Cost (True/False): "
-  negTokCost <- boolInput canHaveNegativeTokenCost
+  negTokCost <- boolInput canHaveNegativeWeight
   putStr "Transition to Transition (True/False): "
   transToTr <- boolInput canHaveTransitionToTransition
   putStr "Places to Places (True/False): "

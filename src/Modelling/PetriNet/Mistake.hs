@@ -222,11 +222,11 @@ mistakePredicateName = "showMistake"
 
 mistakeConstraints :: MistakeConfig -> String
 mistakeConstraints MistakeConfig
-                { canHaveNegativeTokenCost, canHaveTransitionToTransition, canHavePlaceToPlace
+                { canHaveNegativeWeight, canHaveTransitionToTransition, canHavePlaceToPlace
                 } = falseInput
   where
     input :: [(Bool, String)]
-    input = [(canHaveNegativeTokenCost, "all w : Nodes.flow[Nodes] | w > 0"),
+    input = [(canHaveNegativeWeight, "all w : Nodes.flow[Nodes] | w > 0"),
              (canHaveTransitionToTransition, "Transitions.flow.Int in Places"),
              (canHavePlaceToPlace, "Places.flow.Int in Transitions")]
     falseMistakes = map snd (filter (not . fst) input)
@@ -263,11 +263,11 @@ checkMistakeConfig BasicConfig {
     flowChangeOverall
     }
   MistakeConfig {
-    canHaveNegativeTokenCost,
+    canHaveNegativeWeight,
     canHaveTransitionToTransition,
     canHavePlaceToPlace
     }
-  | not (canHaveNegativeTokenCost || canHaveTransitionToTransition || canHavePlaceToPlace)
+  | not (canHaveNegativeWeight || canHaveTransitionToTransition || canHavePlaceToPlace)
   = Just "At least one mistake must be enabled."
   | atLeastActive /= 0
   = Just "atLeastActive has to be 0 in this task type."
