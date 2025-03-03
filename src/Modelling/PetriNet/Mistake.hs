@@ -316,8 +316,7 @@ checkMistakeConfig BasicConfig {
     atLeastActive
     }
   ChangeConfig {
-    flowChangeOverall,
-    maxFlowChangePerEdge
+    flowChangeOverall
     }
   MistakeConfig {
     canHaveNegativeTokenCost,
@@ -334,8 +333,6 @@ checkMistakeConfig BasicConfig {
   = Just "At least two places are required for place mistakes."
   | flowChangeOverall < 1
   = Just "flowChangeOverall must be at least 1 for mistakes."
-  | maxFlowChangePerEdge < 1
-  = Just "maxFlowChangePerEdge must be at least 1 for mistakes to appear."
   | otherwise
   = Nothing
 
