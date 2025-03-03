@@ -72,7 +72,7 @@ testPickMistakeConfig = testTaskGeneration
   $ checkPickMistakeInstance @(SimplePetriLike _)
 
 validMistakeConfigs :: BasicConfig -> ChangeConfig -> [MistakeConfig]
-validMistakeConfigs bc ch = filter (isNothing.checkMistakeConfig bc ch) $ do
+validMistakeConfigs bc ch = filter (isNothing . checkMistakeConfig bc ch) $ do
   negative <- [False, True]
   transitionToTransition <- [False, True]
   placeToPlace <- [False, True]
