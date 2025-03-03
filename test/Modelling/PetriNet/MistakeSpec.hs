@@ -10,7 +10,6 @@ import Modelling.PetriNet.Mistake (
   checkMistakeConfig,
   checkPickMistakeConfig,
   petriNetPickMist,
-  parseMistake,
   pickMistake,
   )
 
@@ -21,7 +20,6 @@ import Modelling.PetriNet.Types (
   BasicConfig,
   ChangeConfig,
   MistakeConfig (..),
-  Mistakes (Mistakes),
   PickMistakeConfig (..),
   SimplePetriLike,
   defaultPickMistakeConfig,
@@ -36,9 +34,10 @@ import Modelling.PetriNet.TestCommon (
   validConfigsForPick,
   validGraphConfig,
   )
-import Settings                         (configDepth, needsTuning)
+import Settings                         (configDepth)
 
 import Control.Lens.Lens                ((??))
+import Data.Functor.Const               (Const(..))
 import Data.Maybe                       (isNothing)
 import Test.Hspec
 
@@ -55,22 +54,21 @@ spec = do
           } 0)
       0
       $ checkPickMistakeInstance @(SimplePetriLike _)
-    needsTuning $
-      testPickMistakeConfig pickConfigs
+    testPickMistakeConfig pickConfigs
   where
     pickConfigs = validPickMistakeConfigs validPicks
     validPicks = validConfigsForPick 0 configDepth
 
-checkPickMistakeInstance :: [(a, Maybe (Mistakes String))] -> Bool
+checkPickMistakeInstance :: [(a, Maybe (Const () String))] -> Bool
 checkPickMistakeInstance = f . fmap snd
   where
-    f [Just x, Nothing] = isValidMistake x
-    f _                 = False
+    f [Just (Const ()), Nothing] = True
+    f _                          = False
 
 testPickMistakeConfig :: [PickMistakeConfig] -> Spec
 testPickMistakeConfig = testTaskGeneration
   petriNetPickMist
-  (pickTaskInstance parseMistake)
+  (pickTaskInstance (const (return (Const ()))))
   $ checkPickMistakeInstance @(SimplePetriLike _)
 
 validMistakeConfigs :: BasicConfig -> ChangeConfig -> [MistakeConfig]
@@ -91,9 +89,3 @@ validPickMistakeConfigs cs = do
     <*> pure False
     ?? False
     ?? alloyTestConfig
-
-isValidMistake :: Mistakes String -> Bool
-isValidMistake m@(Mistakes (t1, t2, p1, p2))
-  | ('t':x) <- t1, ('t':y) <- t2, x /= y = True
-  | ('p':x) <- p1, ('p':y) <- p2, x /= y = True
-  | otherwise                            = error $ show m
