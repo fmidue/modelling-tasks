@@ -330,19 +330,17 @@ checkFindActivatedTransitionsConfig FindActivatedTransitionsConfig {
 checkActiveTransitionConfig :: BasicConfig -> Maybe Int -> Maybe String
 checkActiveTransitionConfig BasicConfig {
     atLeastActive,
-    maxFlowPerEdge,
     maxTokensPerPlace,
-    places,
     tokensOverall,
     transitions
     }
   atMostActive
-  | transitions <= atLeastActive =
-      Just "There must be at least as many transitions as atLeastActive."
-  | maxTokensPerPlace = 0 && atLeastActive > 0 =
-      Just "There must be at least one token per place for an activated transition."
-  | tokensOverall >= 0 && atLeastActive > tokensOverall =
-      Just "There must be at least as many tokens as atLeastActive."
+  | transitions <= atLeastActive
+  = Just "There must be at least as many transitions as atLeastActive."
+  | maxTokensPerPlace == 0 && atLeastActive > 0
+  = Just "There must be at least one token per place for an activated transition."
+  | fst tokensOverall >= 0 && atLeastActive > snd tokensOverall
+  = Just "There must be at least as many tokens as atLeastActive."
   | otherwise =
       case atMostActive of
         Just atMost
