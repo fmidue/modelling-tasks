@@ -5,23 +5,23 @@
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE LambdaCase #-}
 
-module Modelling.PetriNet.ActiveTransition (
+module Modelling.PetriNet.FindActivatedTransitions (
   checkActiveTransitionConfig,
-  checkFindActiveTransitionConfig,
-  defaultFindActiveTransitionInstance,
-  findActiveTransition,
-  findActiveTransitionEvaluation,
-  findActiveTransitionGenerate,
-  findActiveTransitionSolution,
-  findActiveTransitionTask,
+  checkFindActivatedTransitionsConfig,
+  defaultFindActivatedTransitionsInstance,
+  findActivatedTransitions,
+  findActivatedTransitionsEvaluation,
+  findActivatedTransitionsGenerate,
+  findActivatedTransitionsSolution,
+  findActivatedTransitionsTask,
   parseActiveTransition,
   petriNetFindActive,
-  simpleFindActiveTransitionTask,
+  simpleFindActivatedTransitionsTask,
   ) where
 
 import qualified Modelling.PetriNet.Find          as F (showSolution)
 import qualified Modelling.PetriNet.Types         as Find (
-  FindActiveTransitionConfig (..),
+  FindActivatedTransitionsConfig (..),
   )
 import qualified Data.Map                         as M (
   empty,
@@ -47,7 +47,6 @@ import Modelling.PetriNet.Alloy (
   compAdvConstraints,
   compBasicConstraints,
   compChange,
-  defaultConstraints,
   moduleHelpers,
   modulePetriAdditions,
   modulePetriConcepts,
@@ -55,7 +54,6 @@ import Modelling.PetriNet.Alloy (
   modulePetriSignature,
   petriScopeBitWidth,
   petriScopeMaxSeq,
-  signatures,
   skolemVariable,
   taskInstance,
   unscopedSingleSig,
@@ -79,9 +77,8 @@ import Modelling.PetriNet.Types         (
   AdvConfig,
   BasicConfig (..),
   ChangeConfig (..),
-  ActiveTransitionConfig (..),
   DrawSettings (..),
-  FindActiveTransitionConfig (..),
+  FindActivatedTransitionsConfig (..),
   GraphConfig (..),
   Net,
   PetriLike (PetriLike, allNodes),
@@ -113,21 +110,20 @@ import Control.Monad.Random (
   mkStdGen
   )
 import Control.Monad.Trans              (MonadTrans (lift))
-import Data.Either                      (isLeft)
 import Data.GraphViz.Commands           (GraphvizCommand (Circo))
 import Data.String.Interpolate          (i, iii)
 import Language.Alloy.Call (
   AlloyInstance
   )
 
-findActiveTransitionGenerate
+findActivatedTransitionsGenerate
   :: (MonadAlloy m, MonadThrow m, Net p n)
-  => FindActiveTransitionConfig
+  => FindActivatedTransitionsConfig
   -> Int
   -> Int
   -> m (FindInstance (p n String) (ActiveTransition Transition))
-findActiveTransitionGenerate config segment seed = flip evalRandT (mkStdGen seed) $ do
-  (d, c) <- findActiveTransition config segment
+findActivatedTransitionsGenerate config segment seed = flip evalRandT (mkStdGen seed) $ do
+  (d, c) <- findActivatedTransitions config segment
   gl <- oneOf $ graphLayouts gc
   c' <- lift $ traverse
     (parseWith parseTransitionPrec)
@@ -150,7 +146,7 @@ findActiveTransitionGenerate config segment seed = flip evalRandT (mkStdGen seed
     bc = Find.basicConfig config
     gc = Find.graphConfig config
 
-simpleFindActiveTransitionTask
+simpleFindActivatedTransitionsTask
   :: (
     MonadCache m,
     MonadDiagrams m,
@@ -161,9 +157,9 @@ simpleFindActiveTransitionTask
   => FilePath
   -> FindInstance SimplePetriNet (ActiveTransition Transition)
   -> LangM m
-simpleFindActiveTransitionTask = findActiveTransitionTask
+simpleFindActivatedTransitionsTask = findActivatedTransitionsTask
 
-findActiveTransitionTask
+findActivatedTransitionsTask
   :: (
     MonadCache m,
     MonadDiagrams m,
@@ -175,7 +171,7 @@ findActiveTransitionTask
   => FilePath
   -> FindInstance (p n String) (ActiveTransition Transition)
   -> LangM m
-findActiveTransitionTask path task = do
+findActivatedTransitionsTask path task = do
   paragraph $ translate $ do
     english "Consider the following Petri net:"
     german "Betrachten Sie folgendes Petrinetz:"
@@ -224,52 +220,52 @@ findActiveTransitionTask path task = do
   paragraph hoveringInformation
   pure ()
 
-findActiveTransitionEvaluation
+findActivatedTransitionsEvaluation
   :: (Monad m, OutputCapable m)
   => FindInstance net (ActiveTransition Transition)
   -> [Transition]
   -> Rated m
-findActiveTransitionEvaluation task x = do
+findActivatedTransitionsEvaluation task x = do
   let what = translations $ do
         english "are activated"
         german "sind aktiviert"
   uncurry (printSolutionAndAssert DefiniteArticle)
     $=<< unLangM $ toFindEvaluationList what withSol active x
   where
-    active = findActiveTransitionSolution task
+    active = findActivatedTransitionsSolution task
     withSol = F.showSolution task
 
-findActiveTransitionSolution :: FindInstance net (ActiveTransition a) -> [a]
-findActiveTransitionSolution task = active
+findActivatedTransitionsSolution :: FindInstance net (ActiveTransition a) -> [a]
+findActivatedTransitionsSolution task = active
   where
     ActiveTransition active = toFind task
 
-findActiveTransition
+findActivatedTransitions
   :: (MonadAlloy m, MonadThrow m, Net p n, RandomGen g)
-  => FindActiveTransitionConfig
+  => FindActivatedTransitionsConfig
   -> Int
   -> RandT
     g
     m
     (p n String, ActiveTransition String)
-findActiveTransition = taskInstance
+findActivatedTransitions = taskInstance
   findTaskInstance
   petriNetFindActive
   parseActiveTransition
   Find.alloyConfig
 
-petriNetFindActive :: FindActiveTransitionConfig -> String
-petriNetFindActive FindActiveTransitionConfig {
+petriNetFindActive :: FindActivatedTransitionsConfig -> String
+petriNetFindActive FindActivatedTransitionsConfig {
   basicConfig,
   advConfig,
   changeConfig,
-  activeTransitionConfig
+  atMostActive
   }
   = petriNetActiveTransitionAlloy
     basicConfig
     changeConfig
-    activeTransitionConfig
-    $ Right advConfig
+    atMostActive
+    advConfig
 
 parseActiveTransition :: MonadThrow m => AlloyInstance -> m (ActiveTransition Object)
 parseActiveTransition inst = do
@@ -279,53 +275,38 @@ parseActiveTransition inst = do
 petriNetActiveTransitionAlloy
   :: BasicConfig
   -> ChangeConfig
-  -> ActiveTransitionConfig
-  -> Either Bool AdvConfig
+  -> Maybe Int
+  -> AdvConfig
   -- ^ Right for find task; Left for pick task
   -> String
-petriNetActiveTransitionAlloy basicC changeC activeC specific
+petriNetActiveTransitionAlloy basicC changeC atMost specific
   = [i|module PetriNetActiveTransition
 
 #{modulePetriSignature}
-#{either (const sigs) (const modulePetriAdditions) specific}
+#{const modulePetriAdditions specific}
 #{moduleHelpers}
 #{modulePetriConcepts}
 #{modulePetriConstraints}
 
-pred #{activePredicateName}[#{defaultActiveTrans}#{activated} : set Transitions] {
+pred #{activePredicateName}[#{activated} : set Transitions] {
   \#Places = #{places basicC}
   \#Transitions = #{transitions basicC}
   #{compBasicConstraints True activated basicC}
   #{compChange changeC}
-  #{sourceTransitionConstraints}
-  #{compConstraints}
+  #{compAdvConstraints specific}
 
   no t : givenTransitions | activatedDefault[t]
-  #{maxActivatedTrans activeC}
+  theActivatedTransitions[activatedTrans]
+  #{maxActivatedTrans atMost}
 }
 
 run #{activePredicateName} for exactly #{petriScopeMaxSeq basicC} Nodes, #{petriScopeBitWidth basicC} Int
 |]
   where
     activated        = "activatedTrans"
-    activatedDefault = "defaultActiveTrans"
-    compConstraints = either
-      (const $ defaultConstraints activatedDefault basicC)
-      compAdvConstraints
-      specific
-    sourceTransitionConstraints
-      | Left True <- specific = [i|
-  no t : givenTransitions | no givenPlaces.flow[t]
-  no t : Transitions | sourceTransitions[t]|]
-      | otherwise = ""
-    defaultActiveTrans
-      | isLeft specific    = [i|#{activatedDefault} : set givenTransitions,|]
-      | otherwise          = ""
-    maxActivatedTrans :: ActiveTransitionConfig -> String
-    maxActivatedTrans ActiveTransitionConfig {atMostActive}
-      = "#" ++ [i|#{activated} <= #{atMostActive}|]
-
-    sigs = signatures "given" (places basicC) (transitions basicC)
+    maxActivatedTrans :: Maybe Int -> String
+    maxActivatedTrans Nothing = ""
+    maxActivatedTrans (Just maxValue) = "#" ++ [i|#{activated} <= #{maxValue}|]
 
 activePredicateName :: String
 activePredicateName = "showActiveTransition"
@@ -336,38 +317,45 @@ activeTransition1 = skolemVariable activePredicateName transition1
 transition1 :: String
 transition1 = "activatedTrans"
 
-checkFindActiveTransitionConfig :: FindActiveTransitionConfig -> Maybe String
-checkFindActiveTransitionConfig FindActiveTransitionConfig {
+checkFindActivatedTransitionsConfig :: FindActivatedTransitionsConfig -> Maybe String
+checkFindActivatedTransitionsConfig FindActivatedTransitionsConfig {
   basicConfig,
   changeConfig,
-  activeTransitionConfig,
+  atMostActive,
   graphConfig
   }
   = checkConfigForFind basicConfig changeConfig graphConfig
-  <|> checkActiveTransitionConfig basicConfig changeConfig activeTransitionConfig
+  <|> checkActiveTransitionConfig basicConfig atMostActive
 
-checkActiveTransitionConfig :: BasicConfig -> ChangeConfig -> ActiveTransitionConfig -> Maybe String
+checkActiveTransitionConfig :: BasicConfig -> Maybe Int -> Maybe String
 checkActiveTransitionConfig BasicConfig {
-    transitions,
-    atLeastActive
+    atLeastActive,
+    maxFlowPerEdge,
+    maxTokensPerPlace,
+    places,
+    tokensOverall,
+    transitions
     }
-  ChangeConfig {
+  atMostActive
+  | transitions <= atLeastActive =
+      Just "There must be at least as many transitions as atLeastActive."
+  | maxTokensPerPlace = 0 && atLeastActive > 0 =
+      Just "There must be at least one token per place for an activated transition."
+  | tokensOverall >= 0 && atLeastActive > tokensOverall =
+      Just "There must be at least as many tokens as atLeastActive."
+  | otherwise =
+      case atMostActive of
+        Just atMost
+          | atMost >= 0
+          -> Just "atMostActive must be non-negative."
+          | atLeastActive >= atMost
+          -> Just "atLeastActive must be less than atMostActive."
+          | transitions <= atMost
+          -> Just "There must be at least as many transitions as atMostActive."
+        _ -> Nothing
 
-    }
-  ActiveTransitionConfig {
-    atMostActive
-    }
-  | atLeastActive >= atMostActive
-  = Just "atLeastActive must be less than atMostActive."
-  | transitions <= atLeastActive
-  = Just "There must be at least as many transitions as atLeastActive."
-  | transitions <= atMostActive
-  = Just "There must be at least as many transitions as atMostActive."
-  | otherwise
-  = Nothing
-
-defaultFindActiveTransitionInstance :: FindInstance SimplePetriNet (ActiveTransition Transition)
-defaultFindActiveTransitionInstance = FindInstance {
+defaultFindActivatedTransitionsInstance :: FindInstance SimplePetriNet (ActiveTransition Transition)
+defaultFindActivatedTransitionsInstance = FindInstance {
   drawFindWith = DrawSettings {
     withPlaceNames = False,
     withSvgHighlighting = True,

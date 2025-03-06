@@ -31,7 +31,7 @@ module Modelling.PetriNet.Types (
   ConflictConfig (..),
   Drawable,
   DrawSettings (..),
-  FindActiveTransitionConfig (..),
+  FindActivatedTransitionsConfig (..),
   FindConcurrencyConfig (..),
   FindConflictConfig (..),
   PickMistakeConfig (..),
@@ -59,7 +59,7 @@ module Modelling.PetriNet.Types (
   defaultAlloyConfig,
   defaultBasicConfig,
   defaultChangeConfig,
-  defaultFindActiveTransitionConfig,
+  defaultFindActivatedTransitionsConfig,
   defaultFindConcurrencyConfig,
   defaultFindConflictConfig,
   defaultPickMistakeConfig,
@@ -927,7 +927,7 @@ defaultMistakeConfig = MistakeConfig
   , canHavePlaceToPlace = True
   }
 
-data FindActiveTransitionConfig = FindActiveTransitionConfig
+data FindActivatedTransitionsConfig = FindActivatedTransitionsConfig
   { basicConfig :: BasicConfig
   , advConfig :: AdvConfig
   , changeConfig :: ChangeConfig
@@ -938,14 +938,14 @@ data FindActiveTransitionConfig = FindActiveTransitionConfig
   } deriving (Generic, Read, Show)
 
 
-defaultFindActiveTransitionConfig :: FindActiveTransitionConfig
-defaultFindActiveTransitionConfig = FindActiveTransitionConfig
-  { basicConfig = defaultBasicConfig { atLeastActive = 0 }
+defaultFindActivatedTransitionsConfig :: FindActivatedTransitionsConfig
+defaultFindActivatedTransitionsConfig = FindActivatedTransitionsConfig
+  { basicConfig = defaultBasicConfig { atLeastActive = 1 }
   , advConfig = defaultAdvConfig
   , changeConfig = defaultChangeConfig
   , activeTransitionConfig = defaultActiveTransitionConfig { atMostActive = 3 }
   , graphConfig = defaultGraphConfig { hidePlaceNames = True }
-  , printSolution = True
+  , printSolution = False
   , alloyConfig  = defaultAlloyConfig
   }
 
