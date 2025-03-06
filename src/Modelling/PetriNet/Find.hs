@@ -43,6 +43,7 @@ import Modelling.PetriNet.Types (
   checkBasicConfig,
   checkChangeConfig,
   shuffleNames,
+  transitionListShow,
   transitionPairShow,
   )
 

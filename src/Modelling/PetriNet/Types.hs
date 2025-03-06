@@ -19,6 +19,8 @@ The 'Modelling.PetriNet.Types' module defines basic type class instances and
 functions to work on and transform Petri net representations.
 -}
 module Modelling.PetriNet.Types (
+  ActiveTransition (ActiveTransition),
+  ActiveTransitionConfig (..),
   AdvConfig (..),
   AlloyConfig (..),
   BasicConfig (..),
@@ -29,6 +31,7 @@ module Modelling.PetriNet.Types (
   ConflictConfig (..),
   Drawable,
   DrawSettings (..),
+  FindActiveTransitionConfig (..),
   FindConcurrencyConfig (..),
   FindConflictConfig (..),
   PickMistakeConfig (..),
@@ -56,6 +59,7 @@ module Modelling.PetriNet.Types (
   defaultAlloyConfig,
   defaultBasicConfig,
   defaultChangeConfig,
+  defaultFindActiveTransitionConfig,
   defaultFindConcurrencyConfig,
   defaultFindConflictConfig,
   defaultPickMistakeConfig,
@@ -93,6 +97,7 @@ module Modelling.PetriNet.Types (
   randomDrawSettings,
   shuffleNames,
   transformNet,
+  transitionListShow,
   transitionNames,
   transitionPairShow,
   ) where
@@ -228,6 +233,9 @@ instance Bitraversable PetriConflict where
 
 newtype Concurrent a = Concurrent (a, a)
   deriving (Foldable, Functor, Generic, Read, Show, Traversable)
+
+newtype ActiveTransition a = ActiveTransition [a]
+  deriving (Functor, Foldable, Traversable, Generic, Read, Show)
 
 class Show (n String) => PetriNode n where
   initialTokens     :: n a -> Int
@@ -857,7 +865,7 @@ data FindConcurrencyConfig = FindConcurrencyConfig
 defaultFindConcurrencyConfig :: FindConcurrencyConfig
 defaultFindConcurrencyConfig = FindConcurrencyConfig
   { basicConfig = defaultBasicConfig { atLeastActive = 3 }
-  , advConfig = defaultAdvConfig{ presenceOfSourceTransitions = Nothing }
+  , advConfig = defaultAdvConfig { presenceOfSourceTransitions = Nothing }
   , changeConfig = defaultChangeConfig
   , graphConfig = defaultGraphConfig { hidePlaceNames = True }
   , printSolution = False
@@ -919,6 +927,37 @@ defaultMistakeConfig = MistakeConfig
   , canHavePlaceToPlace = True
   }
 
+data FindActiveTransitionConfig = FindActiveTransitionConfig
+  { basicConfig :: BasicConfig
+  , advConfig :: AdvConfig
+  , changeConfig :: ChangeConfig
+  , activeTransitionConfig :: ActiveTransitionConfig
+  , graphConfig :: GraphConfig
+  , printSolution :: Bool
+  , alloyConfig  :: AlloyConfig
+  } deriving (Generic, Read, Show)
+
+
+defaultFindActiveTransitionConfig :: FindActiveTransitionConfig
+defaultFindActiveTransitionConfig = FindActiveTransitionConfig
+  { basicConfig = defaultBasicConfig { atLeastActive = 0 }
+  , advConfig = defaultAdvConfig
+  , changeConfig = defaultChangeConfig
+  , activeTransitionConfig = defaultActiveTransitionConfig { atMostActive = 3 }
+  , graphConfig = defaultGraphConfig { hidePlaceNames = True }
+  , printSolution = True
+  , alloyConfig  = defaultAlloyConfig
+  }
+
+data ActiveTransitionConfig = ActiveTransitionConfig
+  { atMostActive :: Int
+  } deriving (Generic, Read, Show)
+
+defaultActiveTransitionConfig :: ActiveTransitionConfig
+defaultActiveTransitionConfig = ActiveTransitionConfig
+  { atMostActive = 2
+  }
+
 data DrawSettings = DrawSettings {
   withPlaceNames       :: Bool,
   withSvgHighlighting  :: Bool,
@@ -965,6 +1004,9 @@ transitionPairShow
   :: (Petri.Transition, Petri.Transition)
   -> (ShowTransition, ShowTransition)
 transitionPairShow = bimap ShowTransition ShowTransition
+
+transitionListShow :: [Petri.Transition] -> [ShowTransition]
+transitionListShow = map ShowTransition
 
 checkBasicConfig :: BasicConfig -> Maybe String
 checkBasicConfig BasicConfig{
