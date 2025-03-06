@@ -148,11 +148,11 @@ toFindEvaluationList
   -> [Transition]
   -> LangM' m (Maybe String, a)
 toFindEvaluationList what withSol correctTransitions inputTransitions = do
-  let correct = (sortCorrect correctTransitions == sortCorrect inputTransitions)
+  let correct = sortCorrect correctTransitions == sortCorrect inputTransitions
       points = if correct then 1 else 0
       maybeSolutionString =
         if withSol
-        then Just $ show $ transitionListShow (correctTransitions)
+        then Just $ show $ transitionListShow correctTransitions
         else Nothing
   assert correct $ translate $ do
     english $ "The given transitions " ++ localise English what ++ "?"
