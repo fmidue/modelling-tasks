@@ -34,7 +34,7 @@ import Modelling.PetriNet.Find (
   FindInstance (..),
   checkConfigForFind,
   drawFindWith,
-  findInitial,
+  findInitialTuple,
   )
 import Modelling.PetriNet.Diagram (
   renderWith,
@@ -153,7 +153,7 @@ Die Reihenfolge von Stellen innerhalb der Auflistung der den Konflikt verursache
   pure ()
 
 conflictInitial :: ConflictPlaces
-conflictInitial = (findInitial, [Place 0, Place 1])
+conflictInitial = (findInitialTuple, [Place 0, Place 1])
 
 findConflictPlacesSyntax
   :: OutputCapable m

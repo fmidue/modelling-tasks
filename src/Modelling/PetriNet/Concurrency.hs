@@ -73,9 +73,9 @@ import Modelling.PetriNet.Diagram (
 import Modelling.PetriNet.Find (
   FindInstance (..),
   checkConfigForFind,
-  findInitial,
+  findInitialTuple,
   findTaskInstance,
-  toFindEvaluation,
+  toFindEvaluationTuple,
   toFindSyntax,
   )
 import Modelling.PetriNet.Parser        (
@@ -194,7 +194,7 @@ findConcurrencyTask path task = do
     translate $ do
       english [i|Stating |]
       german [i|Die Angabe von |]
-    let ts = transitionPairShow findInitial
+    let ts = transitionPairShow findInitialTuple
     code $ show ts
     translate $ do
       let (t1, t2) = bimap show show ts
@@ -234,7 +234,7 @@ findConcurrencyEvaluation task x = do
         english "are concurrently activated"
         german "sind nebenläufig aktiviert"
   uncurry (printSolutionAndAssert DefiniteArticle)
-    $=<< unLangM $ toFindEvaluation what withSol concur x
+    $=<< unLangM $ toFindEvaluationTuple what withSol concur x
   where
     concur = findConcurrencySolution task
     withSol = F.showSolution task

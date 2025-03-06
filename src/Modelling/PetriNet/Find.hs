@@ -12,10 +12,12 @@ module Modelling.PetriNet.Find (
   FindInstance (..),
   checkFindBasicConfig,
   checkConfigForFind,
-  findInitial,
+  findInitialList,
+  findInitialTuple,
   findTaskInstance,
   lToFind,
-  toFindEvaluation,
+  toFindEvaluationList,
+  toFindEvaluationTuple,
   toFindSyntax,
   ) where
 
@@ -62,6 +64,7 @@ import Control.Monad.Random (
   RandomGen,
   )
 import Control.Monad.Trans.Class        (MonadTrans (lift))
+import Data.List                        (sort)
 import Data.Map                         (Map)
 import Language.Alloy.Call (
   AlloyInstance,
@@ -80,8 +83,11 @@ data FindInstance n a = FindInstance {
 
 makeLensesFor [("toFind", "lToFind")] ''FindInstance
 
-findInitial :: (Transition, Transition)
-findInitial = (Transition 0, Transition 1)
+findInitialTuple :: (Transition, Transition)
+findInitialTuple = (Transition 0, Transition 1)
+
+findInitialList :: [Transition]
+findInitialList = [Transition 0, Transition 1]
 
 toFindSyntax
   :: OutputCapable m
@@ -112,14 +118,14 @@ findTaskInstance f inst = do
   t'  <- lift $ (`BM.lookup` mapping) `mapM` t
   return (pl', t')
 
-toFindEvaluation
+toFindEvaluationTuple
   :: (Num a, OutputCapable m)
   => Map Language String
   -> Bool
   -> (Transition, Transition)
   -> (Transition, Transition)
   -> LangM' m (Maybe String, a)
-toFindEvaluation what withSol (ft, st) (fi, si) = do
+toFindEvaluationTuple what withSol (ft, st) (fi, si) = do
   let correct = ft == fi && st == si || ft == si && st == fi
       points = if correct then 1 else 0
       maybeSolutionString =
@@ -132,6 +138,29 @@ toFindEvaluation what withSol (ft, st) (fi, si) = do
   pure (maybeSolutionString, points)
   where
     assert = continueOrAbort withSol
+
+toFindEvaluationList
+  :: (Num a, OutputCapable m)
+  => Map Language String
+  -> Bool
+  -> [Transition]
+  -> [Transition]
+  -> LangM' m (Maybe String, a)
+toFindEvaluationList what withSol correctTransitions inputTransitions = do
+  let correct = (sortCorrect correctTransitions == sortCorrect inputTransitions)
+      points = if correct then 1 else 0
+      maybeSolutionString =
+        if withSol
+        then Just $ show $ transitionListShow (correctTransitions)
+        else Nothing
+  assert correct $ translate $ do
+    english $ "The given transitions " ++ localise English what ++ "?"
+    german $ "Die angegebenen Transitionen " ++ localise German what ++ "?"
+  pure (maybeSolutionString, points)
+  where
+    assert = continueOrAbort withSol
+    sortCorrect :: Ord a => [a] -> [a]
+    sortCorrect = sort
 
 checkFindBasicConfig :: BasicConfig -> Maybe String
 checkFindBasicConfig BasicConfig { atLeastActive }

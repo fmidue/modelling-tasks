@@ -82,10 +82,10 @@ import Modelling.PetriNet.Diagram (
 import Modelling.PetriNet.Find (
   FindInstance (..),
   checkConfigForFind,
-  findInitial,
+  findInitialTuple,
   findTaskInstance,
   lToFind,
-  toFindEvaluation,
+  toFindEvaluationTuple,
   toFindSyntax,
   )
 import Modelling.PetriNet.Parser        (
@@ -213,7 +213,7 @@ findConflictTask path task = do
     translate $ do
       english [i|Stating |]
       german [i|Die Angabe von |]
-    let ts = transitionPairShow findInitial
+    let ts = transitionPairShow findInitialTuple
     code $ show ts
     translate $ do
       let (t1, t2) = bimap show show ts
@@ -260,7 +260,7 @@ findConflictPlacesEvaluation
   -> ConflictPlaces
   -> Rated m
 findConflictPlacesEvaluation task (conflict, ps) =
-  toFindEvaluation what withSol conf conflict $>>= \(ms, res) -> do
+  toFindEvaluationTuple what withSol conf conflict $>>= \(ms, res) -> do
   recoverFrom $ unless (null inducing || res == 0) $ do
     for_ ps' $ \x -> assert (x `elem` inducing) $ translate $ do
       let x' = show $ ShowPlace x
