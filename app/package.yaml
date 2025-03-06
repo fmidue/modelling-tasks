@@ -100,6 +100,19 @@ executables:
       - criterion-measurement
       - modelling-tasks
       - string-interpolate
+  findActivatedTransitions:
+    main: findActivatedTransitions.hs
+    source-dirs:
+      - .
+      - common
+    dependencies:
+      - bytestring
+      - digest
+      - modelling-tasks
+      - output-blocks
+      - pretty-simple
+    other-modules:
+      - Common
   findAuxiliaryPetriNodesTaskDemo:
     main: findAuxiliaryPetriNodesTaskDemo.hs
     source-dirs:
