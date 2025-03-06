@@ -20,7 +20,6 @@ functions to work on and transform Petri net representations.
 -}
 module Modelling.PetriNet.Types (
   ActiveTransition (ActiveTransition),
-  ActiveTransitionConfig (..),
   AdvConfig (..),
   AlloyConfig (..),
   BasicConfig (..),
@@ -931,7 +930,7 @@ data FindActivatedTransitionsConfig = FindActivatedTransitionsConfig
   { basicConfig :: BasicConfig
   , advConfig :: AdvConfig
   , changeConfig :: ChangeConfig
-  , activeTransitionConfig :: ActiveTransitionConfig
+  , atMostActive :: Maybe Int
   , graphConfig :: GraphConfig
   , printSolution :: Bool
   , alloyConfig  :: AlloyConfig
@@ -943,19 +942,10 @@ defaultFindActivatedTransitionsConfig = FindActivatedTransitionsConfig
   { basicConfig = defaultBasicConfig { atLeastActive = 1 }
   , advConfig = defaultAdvConfig
   , changeConfig = defaultChangeConfig
-  , activeTransitionConfig = defaultActiveTransitionConfig { atMostActive = 3 }
+  , atMostActive = Just 3
   , graphConfig = defaultGraphConfig { hidePlaceNames = True }
   , printSolution = False
   , alloyConfig  = defaultAlloyConfig
-  }
-
-data ActiveTransitionConfig = ActiveTransitionConfig
-  { atMostActive :: Int
-  } deriving (Generic, Read, Show)
-
-defaultActiveTransitionConfig :: ActiveTransitionConfig
-defaultActiveTransitionConfig = ActiveTransitionConfig
-  { atMostActive = 2
   }
 
 data DrawSettings = DrawSettings {
