@@ -6,7 +6,7 @@
 {-# LANGUAGE LambdaCase #-}
 
 module Modelling.PetriNet.FindActivatedTransitions (
-  checkActiveTransitionConfig,
+  checkActivatedTransitionsConfig,
   checkFindActivatedTransitionsConfig,
   defaultFindActivatedTransitionsInstance,
   findActivatedTransitions,
@@ -14,8 +14,8 @@ module Modelling.PetriNet.FindActivatedTransitions (
   findActivatedTransitionsGenerate,
   findActivatedTransitionsSolution,
   findActivatedTransitionsTask,
-  parseActiveTransition,
-  petriNetFindActive,
+  parseActivatedTransitions,
+  petriNetFindActivated,
   simpleFindActivatedTransitionsTask,
   ) where
 
@@ -73,7 +73,7 @@ import Modelling.PetriNet.Reach.Type (
   parseTransitionPrec,
   )
 import Modelling.PetriNet.Types         (
-  ActiveTransition (ActiveTransition),
+  ActivatedTransitions (ActivatedTransitions),
   AdvConfig,
   BasicConfig (..),
   ChangeConfig (..),
@@ -121,7 +121,7 @@ findActivatedTransitionsGenerate
   => FindActivatedTransitionsConfig
   -> Int
   -> Int
-  -> m (FindInstance (p n String) (ActiveTransition Transition))
+  -> m (FindInstance (p n String) (ActivatedTransitions Transition))
 findActivatedTransitionsGenerate config segment seed = flip evalRandT (mkStdGen seed) $ do
   (d, c) <- findActivatedTransitions config segment
   gl <- oneOf $ graphLayouts gc
@@ -155,7 +155,7 @@ simpleFindActivatedTransitionsTask
     OutputCapable m
     )
   => FilePath
-  -> FindInstance SimplePetriNet (ActiveTransition Transition)
+  -> FindInstance SimplePetriNet (ActivatedTransitions Transition)
   -> LangM m
 simpleFindActivatedTransitionsTask = findActivatedTransitionsTask
 
@@ -169,14 +169,14 @@ findActivatedTransitionsTask
     OutputCapable m
     )
   => FilePath
-  -> FindInstance (p n String) (ActiveTransition Transition)
+  -> FindInstance (p n String) (ActivatedTransitions Transition)
   -> LangM m
 findActivatedTransitionsTask path task = do
   paragraph $ translate $ do
     english "Consider the following Petri net:"
     german "Betrachten Sie folgendes Petrinetz:"
   image
-    $=<< renderWith path "activeTransition" (net task) (drawFindWith task)
+    $=<< renderWith path "activatedTransition" (net task) (drawFindWith task)
   paragraph $ translate $ do
     english [iii|
       Which transitions are activated
@@ -222,7 +222,7 @@ findActivatedTransitionsTask path task = do
 
 findActivatedTransitionsEvaluation
   :: (Monad m, OutputCapable m)
-  => FindInstance net (ActiveTransition Transition)
+  => FindInstance net (ActivatedTransitions Transition)
   -> [Transition]
   -> Rated m
 findActivatedTransitionsEvaluation task x = do
@@ -235,10 +235,10 @@ findActivatedTransitionsEvaluation task x = do
     active = findActivatedTransitionsSolution task
     withSol = F.showSolution task
 
-findActivatedTransitionsSolution :: FindInstance net (ActiveTransition a) -> [a]
+findActivatedTransitionsSolution :: FindInstance net (ActivatedTransitions a) -> [a]
 findActivatedTransitionsSolution task = active
   where
-    ActiveTransition active = toFind task
+    ActivatedTransitions active = toFind task
 
 findActivatedTransitions
   :: (MonadAlloy m, MonadThrow m, Net p n, RandomGen g)
@@ -247,40 +247,39 @@ findActivatedTransitions
   -> RandT
     g
     m
-    (p n String, ActiveTransition String)
+    (p n String, ActivatedTransitions String)
 findActivatedTransitions = taskInstance
   findTaskInstance
-  petriNetFindActive
-  parseActiveTransition
+  petriNetFindActivated
+  parseActivatedTransitions
   Find.alloyConfig
 
-petriNetFindActive :: FindActivatedTransitionsConfig -> String
-petriNetFindActive FindActivatedTransitionsConfig {
+petriNetFindActivated :: FindActivatedTransitionsConfig -> String
+petriNetFindActivated FindActivatedTransitionsConfig {
   basicConfig,
   advConfig,
   changeConfig,
   atMostActive
   }
-  = petriNetActiveTransitionAlloy
+  = petriNetActivatedTransitionsAlloy
     basicConfig
     changeConfig
     atMostActive
     advConfig
 
-parseActiveTransition :: MonadThrow m => AlloyInstance -> m (ActiveTransition Object)
-parseActiveTransition inst = do
-  t <- unscopedSingleSig inst activeTransition1 ""
-  pure $ ActiveTransition (Set.toList t)
+parseActivatedTransitions :: MonadThrow m => AlloyInstance -> m (ActivatedTransitions Object)
+parseActivatedTransitions inst = do
+  t <- unscopedSingleSig inst activatedTransitions1 ""
+  pure $ ActivatedTransitions (Set.toList t)
 
-petriNetActiveTransitionAlloy
+petriNetActivatedTransitionsAlloy
   :: BasicConfig
   -> ChangeConfig
   -> Maybe Int
   -> AdvConfig
-  -- ^ Right for find task; Left for pick task
   -> String
-petriNetActiveTransitionAlloy basicC changeC atMost specific
-  = [i|module PetriNetActiveTransition
+petriNetActivatedTransitionsAlloy basicC changeC atMost advConfig
+  = [i|module PetriNetFindActivatedTransitions
 
 #{modulePetriSignature}
 #{const modulePetriAdditions specific}
@@ -311,8 +310,8 @@ run #{activePredicateName} for exactly #{petriScopeMaxSeq basicC} Nodes, #{petri
 activePredicateName :: String
 activePredicateName = "showActiveTransition"
 
-activeTransition1 :: String
-activeTransition1 = skolemVariable activePredicateName transition1
+activatedTransitions1 :: String
+activatedTransitions1 = skolemVariable activePredicateName transition1
 
 transition1 :: String
 transition1 = "activatedTrans"
@@ -325,10 +324,10 @@ checkFindActivatedTransitionsConfig FindActivatedTransitionsConfig {
   graphConfig
   }
   = checkConfigForFind basicConfig changeConfig graphConfig
-  <|> checkActiveTransitionConfig basicConfig atMostActive
+  <|> checkActivatedTransitionsConfig basicConfig atMostActive
 
-checkActiveTransitionConfig :: BasicConfig -> Maybe Int -> Maybe String
-checkActiveTransitionConfig BasicConfig {
+checkActivatedTransitionsConfig :: BasicConfig -> Maybe Int -> Maybe String
+checkActivatedTransitionsConfig BasicConfig {
     atLeastActive,
     maxTokensPerPlace,
     tokensOverall,
@@ -352,7 +351,7 @@ checkActiveTransitionConfig BasicConfig {
           -> Just "There must be at least as many transitions as atMostActive."
         _ -> Nothing
 
-defaultFindActivatedTransitionsInstance :: FindInstance SimplePetriNet (ActiveTransition Transition)
+defaultFindActivatedTransitionsInstance :: FindInstance SimplePetriNet (ActivatedTransitions Transition)
 defaultFindActivatedTransitionsInstance = FindInstance {
   drawFindWith = DrawSettings {
     withPlaceNames = False,
@@ -361,7 +360,7 @@ defaultFindActivatedTransitionsInstance = FindInstance {
     with1Weights = False,
     withGraphvizCommand = Circo
     },
-  toFind = ActiveTransition [Transition 1, Transition 2],
+  toFind = ActivatedTransitions [Transition 1, Transition 2],
   net = PetriLike {
     allNodes = M.fromList [
       ("s1",SimplePlace {initial = 2, flowOut = M.fromList [("t1",1),("t2",1)]}),

@@ -19,7 +19,7 @@ The 'Modelling.PetriNet.Types' module defines basic type class instances and
 functions to work on and transform Petri net representations.
 -}
 module Modelling.PetriNet.Types (
-  ActiveTransition (ActiveTransition),
+  ActivatedTransitions (ActivatedTransitions),
   AdvConfig (..),
   AlloyConfig (..),
   BasicConfig (..),
@@ -233,7 +233,7 @@ instance Bitraversable PetriConflict where
 newtype Concurrent a = Concurrent (a, a)
   deriving (Foldable, Functor, Generic, Read, Show, Traversable)
 
-newtype ActiveTransition a = ActiveTransition [a]
+newtype ActivatedTransitions a = ActivatedTransitions [a]
   deriving (Functor, Foldable, Traversable, Generic, Read, Show)
 
 class Show (n String) => PetriNode n where

@@ -88,6 +88,7 @@ library
       Modelling.PetriNet.Conflict
       Modelling.PetriNet.ConflictPlaces
       Modelling.PetriNet.Find
+      Modelling.PetriNet.FindActivatedTransitions
       Modelling.PetriNet.Pick
       Modelling.PetriNet.PickMistake
       Modelling.PetriNet.Reach.Deadlock
@@ -101,7 +102,6 @@ library
       Modelling.CdOd.Phrasing
       Modelling.CdOd.Phrasing.English
       Modelling.CdOd.Phrasing.German
-      Modelling.PetriNet.ActiveTransition
       Modelling.PetriNet.Reach.Draw
       Modelling.PetriNet.Reach.Roll
       Paths_modelling_tasks

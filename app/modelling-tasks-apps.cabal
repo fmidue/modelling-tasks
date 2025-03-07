@@ -184,6 +184,32 @@ executable evalTimeToGenerate
     , transformers
   default-language: Haskell2010
 
+executable findActivatedTransitions
+  main-is: findActivatedTransitions.hs
+  other-modules:
+      Common
+  hs-source-dirs:
+      ./
+      common
+  ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Widentities -Wredundant-constraints -Werror -Wwarn=incomplete-uni-patterns -Wwarn=orphans
+  build-tools:
+      alex
+    , happy
+  build-depends:
+      MonadRandom
+    , base
+    , bytestring
+    , containers
+    , diagrams-lib
+    , diagrams-svg
+    , digest
+    , modelling-tasks
+    , mtl
+    , output-blocks
+    , pretty-simple
+    , transformers
+  default-language: Haskell2010
+
 executable findAuxiliaryPetriNodesTaskDemo
   main-is: findAuxiliaryPetriNodesTaskDemo.hs
   other-modules:
