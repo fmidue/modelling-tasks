@@ -290,7 +290,7 @@ petriNetActivatedTransitionsAlloy basicC changeC atMost advConfig
 pred #{activePredicateName}[#{activated} : set Transitions] {
   \#Places = #{places basicC}
   \#Transitions = #{transitions basicC}
-  #{compBasicConstraints True activated basicC}
+  #{compBasicConstraints True atMost activated basicC}
   #{compChange changeC}
   #{compAdvConstraints specific}
 

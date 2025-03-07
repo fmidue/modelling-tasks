@@ -99,13 +99,15 @@ A set of constraints enforcing settings of 'BasicConfig'.
 compBasicConstraints
   :: Bool
   -- ^ 'True' for legal petri nets, `False` for illegal petri nets.
+  -> Maybe Int
+  -- ^ Whether or not to enforce a maximum number of activated transitions.
   -> String
   -- ^ The name of the Alloy variable for the set of activated Transitions.
   -> BasicConfig
   -- ^ the configuration to enforce.
   -> String
-compBasicConstraints legal activated basicConfig = [i|
-  #{enforceConstraints False activated basicConfig}
+compBasicConstraints legal atMostActive activated basicConfig = [i|
+  #{enforceConstraints False atMostActive activated basicConfig}
   #{if legal then "isLegalPetriNet" else "not isLegalPetriNet"}|]
 
 {-|
@@ -118,17 +120,19 @@ defaultConstraints
   -> BasicConfig
   -- ^ the configuration to enforce.
   -> String
-defaultConstraints = enforceConstraints True
+defaultConstraints = enforceConstraints True Nothing
 
 enforceConstraints
   :: Bool
   -- ^ If to generate constraints under default conditions.
+  -> Maybe Int
+  -- ^ Whether or not to enforce a maximum number of activated transitions.
   -> String
   -- ^ The name of the Alloy variable for the set of activated Transitions.
   -> BasicConfig
   -- ^ the configuration to enforce.
   -> String
-enforceConstraints underDefault activated BasicConfig {
+enforceConstraints underDefault atMostActive activated BasicConfig {
   atLeastActive,
   isConnected,
   flowOverall,
@@ -154,7 +158,7 @@ enforceConstraints underDefault activated BasicConfig {
     places = given "Places"
     tokens = prepend "tokens"
     activatedConstraint =
-      if atLeastActive <= 0
+      if atLeastActive <= 0 && atMostActive == Nothing
       then ""
       else [i|
   \##{activated} >= #{atLeastActive}

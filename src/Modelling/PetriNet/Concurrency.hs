@@ -425,7 +425,7 @@ petriNetConcurrencyAlloy basicC changeC specific
 pred #{concurrencyPredicateName}[#{defaultActiveTrans}#{activated} : set Transitions, #{t1}, #{t2} : Transitions] {
   \#Places = #{places basicC}
   \#Transitions = #{transitions basicC}
-  #{compBasicConstraints True activated basicC}
+  #{compBasicConstraints True Nothing activated basicC}
   #{compChange changeC}
   #{sourceTransitionConstraints}
   no disj x,y : givenTransitions | concurrentDefault[x + y]

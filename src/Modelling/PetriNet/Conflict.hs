@@ -492,7 +492,7 @@ petriNetConflictAlloy basicC changeC conflictC uniqueConflictP specific
 pred #{conflictPredicateName}[#{p} : some Places,#{defaultActiveTrans}#{activated} : set Transitions, #{t1}, #{t2} : Transitions] {
   \#Places = #{places basicC}
   \#Transitions = #{transitions basicC}
-  #{compBasicConstraints True activated basicC}
+  #{compBasicConstraints True Nothing activated basicC}
   #{compChange changeC}
   #{multiplePlaces uniqueConflictP}
   #{sourceTransitionConstraints}
