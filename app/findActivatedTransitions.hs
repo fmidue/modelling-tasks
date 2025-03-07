@@ -1,3 +1,4 @@
+{-# LANGUAGE DisambiguateRecordFields #-}
 {-# Language DuplicateRecordFields #-}
 {-# Language RecordWildCards #-}
 
