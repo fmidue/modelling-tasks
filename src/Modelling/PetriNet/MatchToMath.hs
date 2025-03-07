@@ -559,7 +559,7 @@ fact{
 pred showNets[#{activated} : set Transitions] {
   \#Places = #{places}
   \#Transitions = #{transitions}
-  #{compBasicConstraints True activated basicC}
+  #{compBasicConstraints True Nothing activated basicC}
   #{compAdvConstraints advConfig}
 }
 run showNets for exactly #{petriScopeMaxSeq basicC} Nodes, #{petriScopeBitWidth basicC} Int
@@ -586,7 +586,7 @@ fact{
 }
 
 pred showFalseNets[#{activated} : set Transitions]{
-  #{compBasicConstraints True activated basicConfig}
+  #{compBasicConstraints True Nothing activated basicConfig}
   #{compAdvConstraints advConfig}
   #{compChange changeConfig}
 }
