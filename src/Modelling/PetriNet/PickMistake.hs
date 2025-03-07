@@ -4,11 +4,11 @@
 {-# LANGUAGE NamedFieldPuns #-}
 {-# Language QuasiQuotes #-}
 
-module Modelling.PetriNet.Mistake (
+module Modelling.PetriNet.PickMistake (
   checkMistakeConfig,
   checkPickMistakeConfig,
   defaultPickMistakeInstance,
-  mistakeConstraints,
+  pickMistakeConstraints,
   petriNetPickMist,
   pickMistake,
   pickMistakeGenerate,
@@ -129,7 +129,7 @@ pickMistakeTask path task = do
       Welcher der folgenden Petrinetzkandidaten ist nicht korrekt geformt?
       |]
   images show snd
-    $=<< renderPick path "mistake" task
+    $=<< renderPick path "pickMistake" task
   paragraph $ translate $ do
     english [iii|
       State your answer by giving the number of the Petri net candidate
@@ -184,7 +184,7 @@ petriNetPickMist PickMistakeConfig{
   changeConfig,
   mistakeConfig
   } =
-  petriNetMistakeAlloy
+  petriNetPickMistakeAlloy
     basicConfig
     changeConfig
     mistakeConfig
@@ -192,13 +192,13 @@ petriNetPickMist PickMistakeConfig{
 {-|
 Generate code for PetriNet mistake tasks
 -}
-petriNetMistakeAlloy
+petriNetPickMistakeAlloy
   :: BasicConfig
   -> ChangeConfig
   -> MistakeConfig
   -> String
-petriNetMistakeAlloy basicC changeC mistakeC
-  = [i|module PetriNetMistake
+petriNetPickMistakeAlloy basicC changeC mistakeC
+  = [i|module PetriNetPickMistake
 
 #{modulePetriSignature}
 #{moduleHelpers}
@@ -208,8 +208,8 @@ petriNetMistakeAlloy basicC changeC mistakeC
 pred #{mistakePredicateName} {
   \#Places = #{places basicC}
   \#Transitions = #{transitions basicC}
-  #{compBasicConstraints False undefined basicC}
-  #{mistakeConstraints mistakeC}
+  #{compBasicConstraints False Nothing undefined basicC}
+  #{pickMistakeConstraints mistakeC}
   #{compChange changeC}
   #{defaultConstraints undefined basicC}
 }
@@ -220,8 +220,8 @@ run #{mistakePredicateName} for exactly #{petriScopeMaxSeq basicC} Nodes, #{petr
 mistakePredicateName :: String
 mistakePredicateName = "showMistake"
 
-mistakeConstraints :: MistakeConfig -> String
-mistakeConstraints MistakeConfig
+pickMistakeConstraints :: MistakeConfig -> String
+pickMistakeConstraints MistakeConfig
                 { canHaveNegativeWeight, canHaveTransitionToTransition, canHavePlaceToPlace
                 } = falseInput
   where

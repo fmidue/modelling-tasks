@@ -169,8 +169,8 @@ executables:
       - pretty-simple
     other-modules:
       - Common
-  mistake:
-    main: mistake.hs
+  pickMistake:
+    main: pickMistake.hs
     source-dirs:
       - .
       - common

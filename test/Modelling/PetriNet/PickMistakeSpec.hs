@@ -1,12 +1,12 @@
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE TypeApplications #-}
-module Modelling.PetriNet.MistakeSpec where
+module Modelling.PetriNet.PickMistakeSpec where
 
 import qualified Modelling.PetriNet.Types         as Pick (
   PickMistakeConfig (..),
   )
 
-import Modelling.PetriNet.Mistake (
+import Modelling.PetriNet.PickMistake (
   checkMistakeConfig,
   checkPickMistakeConfig,
   petriNetPickMist,

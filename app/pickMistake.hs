@@ -12,7 +12,7 @@ import Common (
   instanceInput,
   withLang,
   )
-import Modelling.PetriNet.Mistake (
+import Modelling.PetriNet.PickMistake (
   checkPickMistakeConfig,
   pickMistakeGenerate,
   simplePickMistakeTask,

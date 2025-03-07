@@ -305,8 +305,8 @@ executable matchToMath
     , transformers
   default-language: Haskell2010
 
-executable mistake
-  main-is: mistake.hs
+executable pickMistake
+  main-is: pickMistake.hs
   other-modules:
       Common
   hs-source-dirs:
