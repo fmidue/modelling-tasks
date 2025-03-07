@@ -303,7 +303,7 @@ petriNetActivatedTransitionsAlloy basicC changeC atMost advConfig
   = [i|module PetriNetFindActivatedTransitions
 
 #{modulePetriSignature}
-#{const modulePetriAdditions specific}
+#{const modulePetriAdditions advConfig}
 #{moduleHelpers}
 #{modulePetriConcepts}
 #{modulePetriConstraints}
@@ -313,10 +313,10 @@ pred #{activePredicateName}[#{activated} : set Transitions] {
   \#Transitions = #{transitions basicC}
   #{compBasicConstraints True atMost activated basicC}
   #{compChange changeC}
-  #{compAdvConstraints specific}
+  #{compAdvConstraints advConfig}
 
   no t : givenTransitions | activatedDefault[t]
-  theActivatedTransitions[activatedTrans]
+  theActivatedTransitions[#{activated}]
   #{maxActivatedTrans atMost}
 }
 
@@ -350,25 +350,16 @@ checkFindActivatedTransitionsConfig FindActivatedTransitionsConfig {
 checkActivatedTransitionsConfig :: BasicConfig -> Maybe Int -> Maybe String
 checkActivatedTransitionsConfig BasicConfig {
     atLeastActive,
-    maxTokensPerPlace,
-    tokensOverall,
     transitions
     }
-  atMostActive
-  | transitions <= atLeastActive
-  = Just "There must be at least as many transitions as atLeastActive."
-  | maxTokensPerPlace == 0 && atLeastActive > 0
-  = Just "There must be at least one token per place for an activated transition."
-  | fst tokensOverall >= 0 && atLeastActive > snd tokensOverall
-  = Just "There must be at least as many tokens as atLeastActive."
-  | otherwise =
+  atMostActive =
       case atMostActive of
         Just atMost
-          | atMost >= 0
+          | atMost <= 0
           -> Just "atMostActive must be non-negative."
-          | atLeastActive >= atMost
-          -> Just "atLeastActive must be less than atMostActive."
-          | transitions <= atMost
+          | atLeastActive > atMost
+          -> Just "atLeastActive must not be greater than atMostActive."
+          | transitions < atMost
           -> Just "There must be at least as many transitions as atMostActive."
         _ -> Nothing
 

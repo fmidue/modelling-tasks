@@ -40,7 +40,7 @@ import Text.Pretty.Simple                (pPrint)
 main :: IO ()
 main = do
   hSetBuffering stdout NoBuffering
-  putStr "Generating instance for finding active transition(s) in a net"
+  putStrLn "Generating instance for finding activated transition(s) in a net"
   i <- instanceInput
   if i >= 0
   then mainFind i
@@ -59,7 +59,7 @@ mainFind i = forceErrors $ do
             tokenChangeOverall = tknChange,
             flowChangeOverall = flwChange
             },
-        Find.atMostActive = atMost
+        Find.atMostActive = Just atMost
         } :: FindActivatedTransitionsConfig
   let c = checkFindActivatedTransitionsConfig config
   if isNothing c
