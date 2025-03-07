@@ -13,6 +13,7 @@ module Modelling.PetriNet.FindActivatedTransitions (
   findActivatedTransitionsEvaluation,
   findActivatedTransitionsGenerate,
   findActivatedTransitionsSolution,
+  findActivatedTransitionsSyntax,
   findActivatedTransitionsTask,
   parseActivatedTransitions,
   petriNetFindActivated,
@@ -69,6 +70,7 @@ import Modelling.PetriNet.Find (
   toFindEvaluationList,
   )
 import Modelling.PetriNet.Reach.Type (
+  ShowTransition (ShowTransition),
   Transition (Transition),
   parseTransitionPrec,
   )
@@ -92,10 +94,12 @@ import Control.Monad.Catch              (MonadThrow)
 import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
   GenericOutputCapable (..),
+  LangM',
   LangM,
   OutputCapable,
   Rated,
   ($=<<),
+  continueOrAbort,
   english,
   german,
   printSolutionAndAssert,
@@ -110,6 +114,7 @@ import Control.Monad.Random (
   mkStdGen
   )
 import Control.Monad.Trans              (MonadTrans (lift))
+import Data.Foldable                    (for_)
 import Data.GraphViz.Commands           (GraphvizCommand (Circo))
 import Data.String.Interpolate          (i, iii)
 import Language.Alloy.Call (
@@ -219,6 +224,22 @@ findActivatedTransitionsTask path task = do
     pure ()
   paragraph hoveringInformation
   pure ()
+
+findActivatedTransitionsSyntax
+  :: OutputCapable m
+  => FindInstance net (ActivatedTransitions Transition)
+  -> [Transition]
+  -> LangM' m ()
+findActivatedTransitionsSyntax task transitions = do
+  for_ transitions assertTransition
+  pure ()
+  where
+    assert = continueOrAbort False
+    assertTransition t = assert (isValidTransition t) $ translate $ do
+      let t' = show $ ShowTransition t
+      english $ t' ++ " is a transition of the given Petri net?"
+      german $ t' ++ " ist eine Transition des gegebenen Petrinetzes?"
+    isValidTransition (Transition x) = x >= 1 && x <= numberOfTransitions task
 
 findActivatedTransitionsEvaluation
   :: (Monad m, OutputCapable m)
