@@ -16,6 +16,7 @@ module Modelling.PetriNet.Find (
   findInitialTuple,
   findTaskInstance,
   lToFind,
+  toFindEvaluation,
   toFindEvaluationList,
   toFindEvaluationTuple,
   toFindSyntax,
@@ -119,19 +120,21 @@ findTaskInstance f inst = do
   t'  <- lift $ (`BM.lookup` mapping) `mapM` t
   return (pl', t')
 
-toFindEvaluationTuple
+toFindEvaluation
   :: (Num a, OutputCapable m)
   => Map Language String
   -> Bool
-  -> (Transition, Transition)
-  -> (Transition, Transition)
+  -> (b -> b -> Bool)
+  -> (b -> String)
+  -> b
+  -> b
   -> LangM' m (Maybe String, a)
-toFindEvaluationTuple what withSol (ft, st) (fi, si) = do
-  let correct = ft == fi && st == si || ft == si && st == fi
+toFindEvaluation what withSol isCorrect format correctValue inputValue = do
+  let correct = isCorrect correctValue inputValue
       points = if correct then 1 else 0
       maybeSolutionString =
         if withSol
-        then Just $ show $ transitionPairShow (ft, st)
+        then Just $ format correctValue
         else Nothing
   assert correct $ translate $ do
     english $ "The given transitions " ++ localise English what ++ "?"
@@ -140,6 +143,20 @@ toFindEvaluationTuple what withSol (ft, st) (fi, si) = do
   where
     assert = continueOrAbort withSol
 
+toFindEvaluationTuple
+  :: (Num a, OutputCapable m)
+  => Map Language String
+  -> Bool
+  -> (Transition, Transition)
+  -> (Transition, Transition)
+  -> LangM' m (Maybe String, a)
+toFindEvaluationTuple what withSol =
+  toFindEvaluation what withSol pairEquals formatPair
+  where
+    pairEquals (ft, st) (fi, si) =
+      (ft == fi && st == si) || (ft == si && st == fi)
+    formatPair pair = show (transitionPairShow pair)
+
 toFindEvaluationList
   :: (Num a, OutputCapable m)
   => Map Language String
@@ -147,19 +164,10 @@ toFindEvaluationList
   -> [Transition]
   -> [Transition]
   -> LangM' m (Maybe String, a)
-toFindEvaluationList what withSol correctTransitions inputTransitions = do
-  let correct = sortCorrect correctTransitions == sortCorrect inputTransitions
-      points = if correct then 1 else 0
-      maybeSolutionString =
-        if withSol
-        then Just $ show $ transitionListShow correctTransitions
-        else Nothing
-  assert correct $ translate $ do
-    english $ "The given transitions " ++ localise English what ++ "?"
-    german $ "Die angegebenen Transitionen " ++ localise German what ++ "?"
-  pure (maybeSolutionString, points)
+toFindEvaluationList what withSol =
+  toFindEvaluation what withSol (==) formatList . sortCorrect
   where
-    assert = continueOrAbort withSol
+    formatList transitions = show (transitionListShow transitions)
     sortCorrect :: Ord a => [a] -> [a]
     sortCorrect = sort
 
