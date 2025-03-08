@@ -16,6 +16,7 @@ module Modelling.PetriNet.Find (
   findInitialTuple,
   findTaskInstance,
   lToFind,
+  prohibitHideTransitionNames,
   toFindEvaluation,
   toFindEvaluationList,
   toFindEvaluationTuple,
