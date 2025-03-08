@@ -1,13 +1,7 @@
-{-# LANGUAGE DisambiguateRecordFields #-}
 {-# Language DuplicateRecordFields #-}
 {-# Language RecordWildCards #-}
 
 module Main (main) where
-
-
-import qualified Modelling.PetriNet.Types         as Find (
-  FindActivatedTransitionsConfig (..),
-  )
 
 import Capabilities.Alloy.IO            ()
 import Capabilities.Cache.IO            ()
@@ -37,6 +31,7 @@ import System.IO (
   BufferMode (NoBuffering), hSetBuffering, stdout,
   )
 import Text.Pretty.Simple                (pPrint)
+import Text.Read                         (readMaybe)
 
 main :: IO ()
 main = do
@@ -49,39 +44,57 @@ main = do
 
 mainFind :: Int -> IO ()
 mainFind i = forceErrors $ do
-  pPrint defaultFindActivatedTransitionsConfig
-  (pls, trns, tknChange, flwChange, atMost) <- lift userInput
-  let config = defaultFindActivatedTransitionsConfig {
-        Find.basicConfig = (Find.basicConfig defaultFindActivatedTransitionsConfig) {
+  let theConfig@FindActivatedTransitionsConfig{..} = defaultFindActivatedTransitionsConfig
+  lift $ pPrint theConfig
+  (pls, trns, tknChange, flwChange, atMost) <- lift $ userInput theConfig
+  let config = theConfig {
+        basicConfig = basicConfig {
             places = pls,
             transitions = trns
             },
-        Find.changeConfig = (Find.changeConfig defaultFindActivatedTransitionsConfig) {
+        changeConfig = changeConfig {
             tokenChangeOverall = tknChange,
             flowChangeOverall = flwChange
             },
-        Find.atMostActive = Just atMost
+        atMostActive = atMost
         } :: FindActivatedTransitionsConfig
   let c = checkFindActivatedTransitionsConfig config
   if isNothing c
   then do
     t <- findActivatedTransitionsGenerate config 0 i
-    lift . (`withLang` English) $ simpleFindActivatedTransitionsTask "" t
+    lift . (`withLang` English) $ simpleFindActivatedTransitionsTask "tmp/" t
     lift $ print t
   else
     lift $ print c
 
-userInput :: IO (Int, Int, Int, Int, Int)
-userInput = do
-  putStr "Number of Places: "
-  pls <- getLine
-  putStr "Number of Transitions: "
-  trns <- getLine
-  putStr "TokenChange Overall: "
-  tknCh <- getLine
-  putStr "FlowChange Overall: "
-  flwCh <- getLine
-  putStr "AtMostActive Transitions: "
-  atMost <- getLine
-  return (read pls, read trns, read tknCh, read flwCh, read atMost)
+intInput :: Int -> IO Int
+intInput d = do
+  input <- getLine
+  if null input then return d
+  else case readMaybe input of
+    Just n  -> return n
+    Nothing -> do
+      putStrLn "Invalid input"
+      intInput d
 
+maybeIntInput :: Maybe Int -> IO (Maybe Int)
+maybeIntInput d = do
+  input <- getLine
+  if null input then return d
+    else case readMaybe input of
+      Just n  -> return (Just n)
+      Nothing -> return Nothing
+
+userInput :: FindActivatedTransitionsConfig -> IO (Int, Int, Int, Int, Maybe Int)
+userInput FindActivatedTransitionsConfig{basicConfig = BasicConfig{..}, changeConfig = ChangeConfig{..}, atMostActive = atMostActiveValue}= do
+  putStr "Number of Places: "
+  pls <- intInput places
+  putStr "Number of Transitions: "
+  trns <- intInput transitions
+  putStr "TokenChange Overall: "
+  tknCh <- intInput tokenChangeOverall
+  putStr "FlowChange Overall: "
+  flwCh <- intInput flowChangeOverall
+  putStr "AtMostActive Transitions (Input anything other than a number for 'irrelevance'): "
+  atMost <- maybeIntInput atMostActiveValue
+  return (pls, trns, tknCh, flwCh, atMost)
