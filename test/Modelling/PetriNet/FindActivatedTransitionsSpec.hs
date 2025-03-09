@@ -1,0 +1,93 @@
+{-# LANGUAGE DuplicateRecordFields #-}
+{-# LANGUAGE TypeApplications #-}
+module Modelling.PetriNet.FindActivatedTransitionsSpec where
+
+import qualified Modelling.PetriNet.Types         as Find (
+  FindActivatedTransitionsConfig (alloyConfig),
+  )
+
+import Modelling.PetriNet.FindActivatedTransitions (
+  checkActivatedTransitionsConfig,
+  checkFindActivatedTransitionsConfig,
+  findActivatedTransitions,
+  parseActivatedTransitions,
+  petriNetFindActivated,
+  )
+
+import Modelling.PetriNet.Find (
+  findTaskInstance,
+  )
+import Modelling.PetriNet.Types (
+  ActivatedTransitions (..),
+  AdvConfig (AdvConfig),
+  BasicConfig,
+  ChangeConfig,
+  FindActivatedTransitionsConfig (FindActivatedTransitionsConfig),
+  SimplePetriLike,
+  defaultFindActivatedTransitionsConfig,
+  )
+
+import Modelling.PetriNet.TestCommon (
+  alloyTestConfig,
+  checkConfigs,
+  defaultConfigTaskGeneration,
+  firstInstanceConfig,
+  testTaskGeneration,
+  validAdvConfigs,
+  validConfigsForFind,
+  validGraphConfig,
+  )
+import Settings                         (configDepth)
+
+import Data.Maybe                       (isNothing)
+import Test.Hspec
+
+spec :: Spec
+spec = do
+  describe "defaultFindActivatedTransitionsConfig" $
+    checkConfigs checkFindActivatedTransitionsConfig [defaultFindActivatedTransitionsConfig]
+  describe "validFindActivatedTransitionsConfig" $
+    checkConfigs checkFindActivatedTransitionsConfig findConfigs'
+  describe "findActivatedTransitions" $ do
+    defaultConfigTaskGeneration
+      (findActivatedTransitions defaultFindActivatedTransitionsConfig {
+          Find.alloyConfig = firstInstanceConfig
+          } 0)
+      0
+      $ checkFindActivatedTransitionsInstance @(SimplePetriLike _)
+    testFindActivatedTransitionsConfig findConfigs
+  where
+    findConfigs' = validFindActivatedTransitionsConfig
+      validFinds
+      (AdvConfig Nothing Nothing Nothing)
+    findConfigs = validAdvConfigs >>= validFindActivatedTransitionsConfig validFinds
+    validFinds = validConfigsForFind 0 configDepth
+
+checkFindActivatedTransitionsInstance :: (a, ActivatedTransitions String) -> Bool
+checkFindActivatedTransitionsInstance = isValidActivatedTransitions . snd
+
+testFindActivatedTransitionsConfig :: [FindActivatedTransitionsConfig] -> Spec
+testFindActivatedTransitionsConfig = testTaskGeneration
+  petriNetFindActivated
+  (findTaskInstance parseActivatedTransitions)
+  $ checkFindActivatedTransitionsInstance @(SimplePetriLike _)
+
+validFindActivatedTransitionsConfig
+  :: [(BasicConfig, ChangeConfig)]
+  -> AdvConfig
+  -> [FindActivatedTransitionsConfig]
+validFindActivatedTransitionsConfig cs advancedConfig = do
+  (bc, ch) <- cs
+  FindActivatedTransitionsConfig bc advancedConfig ch
+    <$> validActivatedTransitionsConfigs bc
+    <*> pure validGraphConfig
+    <*> pure False
+    <*> pure alloyTestConfig
+
+validActivatedTransitionsConfigs :: BasicConfig -> [Maybe Int]
+validActivatedTransitionsConfigs bc = filter (isNothing . checkActivatedTransitionsConfig bc) $ do
+  atMost <- [Nothing] ++ [Just n | n <- [0..10]]
+  return atMost
+
+isValidActivatedTransitions :: ActivatedTransitions String -> Bool
+isValidActivatedTransitions _ = True

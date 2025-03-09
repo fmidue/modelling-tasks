@@ -190,6 +190,7 @@ test-suite modelling-tasks-test
       Modelling.PetriNet.ConcurrencySpec
       Modelling.PetriNet.ConflictSpec
       Modelling.PetriNet.DiagramSpec
+      Modelling.PetriNet.FindActivatedTransitionsSpec
       Modelling.PetriNet.MatchToMathSpec
       Modelling.PetriNet.PickMistakeSpec
       Modelling.PetriNet.Reach.DeadlockSpec
