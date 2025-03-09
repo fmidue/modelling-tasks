@@ -292,7 +292,7 @@ petriNetFindActivated FindActivatedTransitionsConfig {
 
 parseActivatedTransitions :: MonadThrow m => AlloyInstance -> m (ActivatedTransitions Object)
 parseActivatedTransitions inst = do
-  t <- unscopedSingleSig inst activatedTransitions1 ""
+  t <- unscopedSingleSig inst activatedTransitions ""
   pure $ ActivatedTransitions (Set.toList t)
 
 petriNetActivatedTransitionsAlloy
@@ -327,11 +327,11 @@ run #{activePredicateName} for exactly #{petriScopeMaxSeq basicC} Nodes, #{petri
 activePredicateName :: String
 activePredicateName = "showActiveTransition"
 
-activatedTransitions1 :: String
-activatedTransitions1 = skolemVariable activePredicateName transition1
+activatedTransitions :: String
+activatedTransitions = skolemVariable activePredicateName transition
 
-transition1 :: String
-transition1 = "activatedTrans"
+transition :: String
+transition = "activatedTrans"
 
 checkFindActivatedTransitionsConfig :: FindActivatedTransitionsConfig -> Maybe String
 checkFindActivatedTransitionsConfig FindActivatedTransitionsConfig {
@@ -353,7 +353,7 @@ checkActivatedTransitionsConfig BasicConfig {
   atMostActive =
       case atMostActive of
         Just atMost
-          | atMost <= 0
+          | atMost < 0
           -> Just "atMostActive must be non-negative."
           | atLeastActive > atMost
           -> Just "atLeastActive must not be greater than atMostActive."
