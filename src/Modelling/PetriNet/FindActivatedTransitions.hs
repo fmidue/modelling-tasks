@@ -317,18 +317,12 @@ pred #{activePredicateName}[#{activated} : set Transitions] {
   #{compChange changeC}
   #{compAdvConstraints advConfig}
 
-  no t : givenTransitions | activatedDefault[t]
-  theActivatedTransitions[#{activated}]
-  #{maxActivatedTrans atMost}
 }
 
 run #{activePredicateName} for exactly #{petriScopeMaxSeq basicC} Nodes, #{petriScopeBitWidth basicC} Int
 |]
   where
     activated        = "activatedTrans"
-    maxActivatedTrans :: Maybe Int -> String
-    maxActivatedTrans Nothing = ""
-    maxActivatedTrans (Just maxValue) = "#" ++ [i|#{activated} <= #{maxValue}|]
 
 activePredicateName :: String
 activePredicateName = "showActiveTransition"

@@ -162,9 +162,10 @@ enforceConstraints underDefault atMostActive activated BasicConfig {
         then ""
         else [i|\##{activated} >= #{atLeastActive}|],
       case atMostActive of
-        Just 0 -> [i|\##{activated} <= 0
-                  theActivated#{upperFirst which}Transitions[#{activated}]|]
-        Just atMost -> [i|\##{activated} <= #{atMost}|]
+        Just 0 -> [i|
+  \##{activated} <= 0
+  theActivated#{upperFirst which}Transitions[#{activated}]|]
+        Just atMost -> [i|  \##{activated} <= #{atMost}|]
         Nothing -> ""]
 
 connected :: String -> Maybe Bool -> String
