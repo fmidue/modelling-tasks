@@ -1,5 +1,7 @@
 {-# LANGUAGE DuplicateRecordFields #-}
+{-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE TypeApplications #-}
+
 module Modelling.PetriNet.FindActivatedTransitionsSpec where
 
 import qualified Modelling.PetriNet.Types         as Find (
@@ -20,7 +22,7 @@ import Modelling.PetriNet.Find (
 import Modelling.PetriNet.Types (
   ActivatedTransitions (..),
   AdvConfig (AdvConfig),
-  BasicConfig,
+  BasicConfig (..),
   ChangeConfig,
   FindActivatedTransitionsConfig (FindActivatedTransitionsConfig),
   SimplePetriLike,
@@ -85,9 +87,8 @@ validFindActivatedTransitionsConfig cs advancedConfig = do
     <*> pure alloyTestConfig
 
 validActivatedTransitionsConfigs :: BasicConfig -> [Maybe Int]
-validActivatedTransitionsConfigs bc = filter (isNothing . checkActivatedTransitionsConfig bc) $ do
-  atMost <- [Nothing] ++ [Just n | n <- [0..10]]
-  return atMost
+validActivatedTransitionsConfigs bc@BasicConfig{ transitions } = filter (isNothing . checkActivatedTransitionsConfig bc) $
+  Nothing : [Just n | n <- [0..transitions]]
 
 isValidActivatedTransitions :: ActivatedTransitions String -> Bool
 isValidActivatedTransitions _ = True
