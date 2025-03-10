@@ -317,6 +317,7 @@ pred #{activePredicateName}[#{activated} : set Transitions] {
   #{compChange changeC}
   #{compAdvConstraints advConfig}
 
+  no t : givenTransitions | activatedDefault[t]
 }
 
 run #{activePredicateName} for exactly #{petriScopeMaxSeq basicC} Nodes, #{petriScopeBitWidth basicC} Int

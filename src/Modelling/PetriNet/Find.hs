@@ -166,11 +166,9 @@ toFindEvaluationList
   -> [Transition]
   -> LangM' m (Maybe String, a)
 toFindEvaluationList what withSol =
-  toFindEvaluation what withSol (==) formatList . sortCorrect
+  toFindEvaluation what withSol (\x y -> sort x == sort y) formatList
   where
     formatList transitions = show (transitionListShow transitions)
-    sortCorrect :: Ord a => [a] -> [a]
-    sortCorrect = sort
 
 checkFindBasicConfig :: BasicConfig -> Maybe String
 checkFindBasicConfig BasicConfig { atLeastActive }
