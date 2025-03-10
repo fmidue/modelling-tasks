@@ -158,15 +158,17 @@ enforceConstraints underDefault atMostActive activated BasicConfig {
     places = given "Places"
     tokens = prepend "tokens"
     activatedConstraint = unlines [
-      if atLeastActive <= 0
+      if atLeastActive == 0
         then ""
         else [i|\##{activated} >= #{atLeastActive}|],
+      if atLeastActive == 0 && atMostActive == Nothing
+        then ""
+        else [i|  theActivated#{upperFirst which}Transitions[#{activated}]|],
       case atMostActive of
-        Just 0 -> [i|
-  \##{activated} <= 0
-  theActivated#{upperFirst which}Transitions[#{activated}]|]
+        Just 0 -> [i|  \##{activated} = 0|]
         Just atMost -> [i|  \##{activated} <= #{atMost}|]
-        Nothing -> ""]
+        Nothing -> ""
+      ]
 
 connected :: String -> Maybe Bool -> String
 connected p = maybe "" $ \c -> (if c then "" else "not ") ++ p
