@@ -164,10 +164,10 @@ enforceConstraints underDefault atMostActive activated BasicConfig {
       ++ (if atLeastActive == 0 && atMostActive == Nothing
         then []
         else [[i|  theActivated#{upperFirst which}Transitions[#{activated}]|]])
-      ++ (case atMostActive of
-            Just 0     -> [[i|  \##{activated} = 0|]]
-            Just atMost -> [[i|  \##{activated} <= #{atMost}|]]
-            Nothing    -> [])
+      ++ case atMostActive of
+           Just 0     -> [[i|  no #{activated}|]]
+           Just atMost -> [[i|  \##{activated} =< #{atMost}|]]
+           Nothing    -> []
 
 connected :: String -> Maybe Bool -> String
 connected p = maybe "" $ \c -> (if c then "" else "not ") ++ p
