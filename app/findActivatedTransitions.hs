@@ -67,37 +67,26 @@ mainFind i = forceErrors $ do
   else
     lift $ print c
 
-intInput :: Int -> IO Int
-intInput d = do
+validateInput :: Read a => a -> IO a
+validateInput d = do
   input <- getLine
   if null input then return d
   else case readMaybe input of
     Just n  -> return n
     Nothing -> do
       putStrLn "Invalid input"
-      intInput d
-
-maybeIntInput :: Maybe Int -> IO (Maybe Int)
-maybeIntInput d = do
-  input <- getLine
-  if null input then return d
-  else if input == "Nothing" then return Nothing
-  else case readMaybe input of
-    Just n  -> return n
-    Nothing -> do
-      putStrLn "Invalid input"
-      maybeIntInput d
+      validateInput d
 
 userInput :: FindActivatedTransitionsConfig -> IO (Int, Int, Int, Int, Maybe Int)
 userInput FindActivatedTransitionsConfig{basicConfig = BasicConfig{..}, changeConfig = ChangeConfig{..}, atMostActive = atMostActiveValue} = do
   putStr "Number of Places: "
-  pls <- intInput places
+  pls <- validateInput places
   putStr "Number of Transitions: "
-  trns <- intInput transitions
+  trns <- validateInput transitions
   putStr "TokenChange Overall: "
-  tknCh <- intInput tokenChangeOverall
+  tknCh <- validateInput tokenChangeOverall
   putStr "FlowChange Overall: "
-  flwCh <- intInput flowChangeOverall
+  flwCh <- validateInput flowChangeOverall
   putStr "AtMostActive Transitions (Just Int/Nothing): "
-  atMost <- maybeIntInput atMostActiveValue
+  atMost <- validateInput atMostActiveValue
   return (pls, trns, tknCh, flwCh, atMost)
