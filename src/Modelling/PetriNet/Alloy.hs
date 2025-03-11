@@ -159,9 +159,8 @@ enforceConstraints underDefault atMostActive activated BasicConfig {
     tokens = prepend "tokens"
     activatedConstraint = unlines $
       [ [i|\##{activated} >= #{atLeastActive}|] | atLeastActive > 0 ]
-      ++ (if atLeastActive == 0 && atMostActive == Nothing
-        then []
-        else [[i|  theActivated#{upperFirst which}Transitions[#{activated}]|]])
+      ++
+      [ [i|  theActivated#{upperFirst which}Transitions[#{activated}]|] | atLeastActive > 0 || atMostActive /= Nothing ]
       ++ case atMostActive of
            Just 0     -> [[i|  no #{activated}|]]
            Just atMost -> [[i|  \##{activated} =< #{atMost}|]]
