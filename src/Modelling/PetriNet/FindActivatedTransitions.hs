@@ -329,10 +329,7 @@ activePredicateName :: String
 activePredicateName = "showActiveTransition"
 
 activatedTransitions :: String
-activatedTransitions = skolemVariable activePredicateName transition
-
-transition :: String
-transition = "activatedTrans"
+activatedTransitions = skolemVariable activePredicateName "activatedTrans"
 
 checkFindActivatedTransitionsConfig :: FindActivatedTransitionsConfig -> Maybe String
 checkFindActivatedTransitionsConfig FindActivatedTransitionsConfig {
