@@ -54,6 +54,7 @@ import Control.Monad.Random (
 import Data.Composition                 ((.:))
 import Data.FileEmbed                   (embedStringFile)
 import Data.List                        (intercalate)
+import Data.Maybe                       (isJust)
 import Data.Set                         (Set)
 import Data.String.Interpolate          (i)
 import Language.Alloy.Call (
@@ -160,7 +161,7 @@ enforceConstraints underDefault atMostActive activated BasicConfig {
     activatedConstraint = unlines $
       [ [i|\##{activated} >= #{atLeastActive}|] | atLeastActive > 0 ]
       ++
-      [ [i|  theActivated#{upperFirst which}Transitions[#{activated}]|] | atLeastActive > 0 || atMostActive /= Nothing ]
+      [ [i|  theActivated#{upperFirst which}Transitions[#{activated}]|] | atLeastActive > 0 || isJust atMostActive ]
       ++ case atMostActive of
            Just 0     -> [[i|  no #{activated}|]]
            Just atMost -> [[i|  \##{activated} =< #{atMost}|]]
