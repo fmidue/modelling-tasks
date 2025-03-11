@@ -118,6 +118,7 @@ import Control.Monad.Random (
 import Control.Monad.Trans              (MonadTrans (lift))
 import Data.Foldable                    (for_)
 import Data.GraphViz.Commands           (GraphvizCommand (Circo))
+import Data.Maybe                       (isNothing)
 import Data.String.Interpolate          (i, iii)
 import Language.Alloy.Call (
   AlloyInstance
@@ -317,6 +318,7 @@ pred #{activePredicateName}[#{activated} : set Transitions] {
   #{compChange changeC}
   #{compAdvConstraints advConfig}
 
+  #{activatedConstraints basicC atMost}
   no t : givenTransitions | activatedDefault[t]
 }
 
@@ -324,6 +326,12 @@ run #{activePredicateName} for exactly #{petriScopeMaxSeq basicC} Nodes, #{petri
 |]
   where
     activated        = "activatedTrans"
+    activatedConstraints :: BasicConfig -> Maybe Int -> String
+    activatedConstraints BasicConfig{ atLeastActive } atMostActive
+      | atLeastActive == 0 && isNothing atMostActive
+      = [i|theActivatedTransitions[#{activated}]|]
+      | otherwise
+      = ""
 
 activePredicateName :: String
 activePredicateName = "showActiveTransition"
