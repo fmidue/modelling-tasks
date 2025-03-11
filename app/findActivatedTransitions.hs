@@ -26,8 +26,6 @@ import Modelling.PetriNet.Types         (
 
 import Control.OutputCapable.Blocks     (Language (English))
 import Control.Monad.Trans.Class        (MonadTrans (lift))
-import Data.Char                        (toLower)
-import Data.List                        (stripPrefix)
 import Data.Maybe                       (isNothing)
 import System.IO (
   BufferMode (NoBuffering), hSetBuffering, stdout,
@@ -82,22 +80,16 @@ intInput d = do
 maybeIntInput :: Maybe Int -> IO (Maybe Int)
 maybeIntInput d = do
   input <- getLine
-  let lowerInput = map toLower input
-  case lowerInput of
-    ""        -> return d
-    "nothing" -> return Nothing
-    _         -> case stripPrefix "just " lowerInput of
-                   Just num -> case readMaybe num of
-                     Just n  -> return (Just n)
-                     Nothing -> invalid
-                   Nothing -> invalid
-  where
-    invalid = do
+  if null input then return d
+  else if input == "Nothing" then return Nothing
+  else case readMaybe input of
+    Just n  -> return n
+    Nothing -> do
       putStrLn "Invalid input"
       maybeIntInput d
 
 userInput :: FindActivatedTransitionsConfig -> IO (Int, Int, Int, Int, Maybe Int)
-userInput FindActivatedTransitionsConfig{basicConfig = BasicConfig{..}, changeConfig = ChangeConfig{..}, atMostActive = atMostActiveValue}= do
+userInput FindActivatedTransitionsConfig{basicConfig = BasicConfig{..}, changeConfig = ChangeConfig{..}, atMostActive = atMostActiveValue} = do
   putStr "Number of Places: "
   pls <- intInput places
   putStr "Number of Transitions: "
