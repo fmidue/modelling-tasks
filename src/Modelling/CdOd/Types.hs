@@ -729,10 +729,10 @@ checkClassConfigWithProperties
       | Just False == y = 0
       | otherwise = x
     plusOne x = if x /= 0 then x + 1 else x
-    minNonInheritances = (+ selfRelationshipsAmount) . plusOne $ sum [
-      1 `forMaybe` hasDoubleRelationships,
-      1 `forMaybe` hasReverseRelationships
-      ]
+    minNonInheritances = (+ selfRelationshipsAmount) . plusOne $ (
+      (1 `forMaybe` hasDoubleRelationships) +
+      (1 `forMaybe` hasReverseRelationships)
+      )
     minInheritances = (+ selfInheritancesAmount) . plusOne $ sum [
       1 `for` hasReverseInheritances,
       1 `forMaybe` hasMultipleInheritances,
