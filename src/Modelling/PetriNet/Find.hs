@@ -152,11 +152,10 @@ toFindEvaluationTuple
   -> (Transition, Transition)
   -> LangM' m (Maybe String, a)
 toFindEvaluationTuple what withSol =
-  toFindEvaluation what withSol pairEquals formatPair
+  toFindEvaluation what withSol pairEquals (show . transitionPairShow)
   where
     pairEquals (ft, st) (fi, si) =
       (ft == fi && st == si) || (ft == si && st == fi)
-    formatPair pair = show (transitionPairShow pair)
 
 toFindEvaluationList
   :: (Num a, OutputCapable m)
@@ -166,9 +165,7 @@ toFindEvaluationList
   -> [Transition]
   -> LangM' m (Maybe String, a)
 toFindEvaluationList what withSol =
-  toFindEvaluation what withSol (\x y -> sort x == sort y) formatList
-  where
-    formatList transitions = show (transitionListShow transitions)
+  toFindEvaluation what withSol (\x y -> sort x == sort y) (show . transitionListShow)
 
 checkFindBasicConfig :: BasicConfig -> Maybe String
 checkFindBasicConfig BasicConfig { atLeastActive }
