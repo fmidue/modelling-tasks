@@ -158,9 +158,7 @@ enforceConstraints underDefault atMostActive activated BasicConfig {
     places = given "Places"
     tokens = prepend "tokens"
     activatedConstraint = unlines $
-      (if atLeastActive == 0
-        then []
-        else [[i|\##{activated} >= #{atLeastActive}|]])
+      [ [i|\##{activated} >= #{atLeastActive}|] | atLeastActive > 0 ]
       ++ (if atLeastActive == 0 && atMostActive == Nothing
         then []
         else [[i|  theActivated#{upperFirst which}Transitions[#{activated}]|]])
