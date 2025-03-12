@@ -556,7 +556,7 @@ fact{
   no givenTransitions
 }
 
-pred showNets[#{activated} : set Transitions] {
+pred showNets[#{skolemSet}] {
   \#Places = #{places}
   \#Transitions = #{transitions}
   #{compBasicConstraints True Nothing activated basicC}
@@ -565,7 +565,9 @@ pred showNets[#{activated} : set Transitions] {
 run showNets for exactly #{petriScopeMaxSeq basicC} Nodes, #{petriScopeBitWidth basicC} Int
 |]
   where
-    activated = "activatedTrans"
+    (skolemSet, activated)
+      | atLeastActive basicC > 0 = ([i|#{activated} : set Transitions|], "activatedTrans")
+      | otherwise                = ("", undefined)
 
 renderFalse :: Net p n => p n String -> MathConfig -> String
 renderFalse
@@ -585,7 +587,7 @@ fact{
 #{defaultFlow}
 }
 
-pred showFalseNets[#{activated} : set Transitions]{
+pred showFalseNets[#{skolemSet}]{
   #{compBasicConstraints True Nothing activated basicConfig}
   #{compAdvConstraints advConfig}
   #{compChange changeConfig}
@@ -596,7 +598,6 @@ run showFalseNets for exactly #{petriScopeMaxSeq basicConfig} Nodes, #{petriScop
   where
     allNodes    = nodes net
     (ps, ts)    = M.partition isPlaceNode allNodes
-    activated   = "activatedTrans"
     places      = unlines [extendLine p "givenPlaces" | p <- M.keys ps]
     transitions = unlines [extendLine t "givenTransitions" | t <- M.keys ts]
     initialMark = M.foldrWithKey (\k -> (++) . tokenLine k) "" $ initialTokens <$> ps
@@ -617,6 +618,9 @@ run showFalseNets for exactly #{petriScopeMaxSeq basicConfig} Nodes, #{petriScop
 |]
     flowLine from to (Just f) = [i|  #{from}.defaultFlow[#{to}] = #{f}
 |]
+    (skolemSet, activated)
+      | atLeastActive basicConfig > 0 = ([i|#{activated} : set Transitions|], "activatedTrans")
+      | otherwise                     = ("", undefined)
 
 defaultGraphToMathInstance :: GraphToMathInstance
 defaultGraphToMathInstance = MatchInstance {

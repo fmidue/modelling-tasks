@@ -422,7 +422,7 @@ petriNetConcurrencyAlloy basicC changeC specific
 #{modulePetriConcepts}
 #{modulePetriConstraints}
 
-pred #{concurrencyPredicateName}[#{defaultActiveTrans}#{activated} : set Transitions, #{t1}, #{t2} : Transitions] {
+pred #{concurrencyPredicateName}[#{skolemSets}#{t1}, #{t2} : Transitions] {
   \#Places = #{places basicC}
   \#Transitions = #{transitions basicC}
   #{compBasicConstraints True Nothing activated basicC}
@@ -450,11 +450,14 @@ run #{concurrencyPredicateName} for exactly #{petriScopeMaxSeq basicC} Nodes, #{
   no t : Transitions | sourceTransitions[t]|]
       | otherwise = ""
     defaultActiveTrans
-      | isLeft specific    = [i|#{activatedDefault} : set givenTransitions,|]
+      | isLeft specific    = [i|#{activatedDefault} : set givenTransitions, |]
       | otherwise          = ""
     sigs = signatures "given" (places basicC) (transitions basicC)
     t1 = transition1
     t2 = transition2
+    skolemSets
+      | atLeastActive basicC > 0 = [i|#{defaultActiveTrans}#{activated} : set Transitions, |]
+      | otherwise                = ""
 
 concurrencyPredicateName :: String
 concurrencyPredicateName = "showConcurrency"

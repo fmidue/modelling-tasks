@@ -489,7 +489,7 @@ petriNetConflictAlloy basicC changeC conflictC uniqueConflictP specific
 #{modulePetriConcepts}
 #{modulePetriConstraints}
 
-pred #{conflictPredicateName}[#{p} : some Places,#{defaultActiveTrans}#{activated} : set Transitions, #{t1}, #{t2} : Transitions] {
+pred #{conflictPredicateName}[#{p} : some Places, #{skolemSets}#{t1}, #{t2} : Transitions] {
   \#Places = #{places basicC}
   \#Transitions = #{transitions basicC}
   #{compBasicConstraints True Nothing activated basicC}
@@ -552,7 +552,7 @@ run #{conflictPredicateName} for exactly #{petriScopeMaxSeq basicC} Nodes, #{pet
       let ps = common#{upperFirst which}Preconditions[t1, t2] |
         \#ps > 1 and all p : ps | p.#{tokens} >= p.#{flow}[t1] and p.#{tokens} >= p.#{flow}[t2]|]
     defaultActiveTrans
-      | isLeft specific    = [i|#{activatedDefault} : set givenTransitions,|]
+      | isLeft specific    = [i|#{activatedDefault} : set givenTransitions, |]
       | otherwise          = ""
     multiplePlaces unique
       | unique == Just True
@@ -565,6 +565,9 @@ run #{conflictPredicateName} for exactly #{petriScopeMaxSeq basicC} Nodes, #{pet
     sigs = signatures "given" (places basicC) (transitions basicC)
     t1 = transition1
     t2 = transition2
+    skolemSets
+      | atLeastActive basicC > 0 = [i|#{defaultActiveTrans}#{activated} : set Transitions, |]
+      | otherwise                = ""
 
 conflictPredicateName :: String
 conflictPredicateName = "showConflict"
