@@ -318,26 +318,29 @@ pred #{activePredicateName}[#{activated} : set Transitions] {
   #{compChange changeC}
   #{compAdvConstraints advConfig}
 
-  #{activatedConstraints basicC atMost}
+  #{activatedConstraint basicC atMost}
   no t : givenTransitions | activatedDefault[t]
 }
 
 run #{activePredicateName} for exactly #{petriScopeMaxSeq basicC} Nodes, #{petriScopeBitWidth basicC} Int
 |]
   where
-    activated        = "activatedTrans"
-    activatedConstraints :: BasicConfig -> Maybe Int -> String
-    activatedConstraints BasicConfig{ atLeastActive } atMostActive
+    activated = skolemName
+    activatedConstraint :: BasicConfig -> Maybe Int -> String
+    activatedConstraint BasicConfig{ atLeastActive } atMostActive
       | atLeastActive == 0 && isNothing atMostActive
       = [i|theActivatedTransitions[#{activated}]|]
       | otherwise
-      = ""
+      = "" -- because in all other cases already compBasicConstraints emits that constraint
 
 activePredicateName :: String
 activePredicateName = "showActiveTransition"
 
 activatedTransitions :: String
-activatedTransitions = skolemVariable activePredicateName "activatedTrans"
+activatedTransitions = skolemVariable activePredicateName skolemName
+
+skolemName :: String
+skolemName = "activatedTrans"
 
 checkFindActivatedTransitionsConfig :: FindActivatedTransitionsConfig -> Maybe String
 checkFindActivatedTransitionsConfig FindActivatedTransitionsConfig {
