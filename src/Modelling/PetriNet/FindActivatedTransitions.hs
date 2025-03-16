@@ -364,6 +364,8 @@ checkActivatedTransitionsConfig BasicConfig {
         Just atMost
           | atMost < 0
           -> Just "atMostActive must be non-negative."
+          | atMost == transitions
+          -> Just "When atMostActive equals the total number of transitions, it is redundant. Rather use atMostActive = 'Nothing' instead."
           | atLeastActive > atMost
           -> Just "atLeastActive must not be greater than atMostActive."
           | transitions < atMost
