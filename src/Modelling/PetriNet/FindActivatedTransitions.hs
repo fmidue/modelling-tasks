@@ -327,10 +327,10 @@ run #{activePredicateName} for exactly #{petriScopeMaxSeq basicC} Nodes, #{petri
   where
     activated = skolemName
     activatedConstraint :: BasicConfig -> Maybe Int -> String
-    activatedConstraint BasicConfig{ atLeastActive } atMostActive
+    activatedConstraint BasicConfig{ transitions, atLeastActive } atMostActive
       | atLeastActive == 0 && isNothing atMostActive
       = [i|theActivatedTransitions[#{activated}]|]
-      | atMost == Nothing
+      | isNothing atMostActive
       = [i|\##{activated} =< #{transitions}|]
       | otherwise
       = "" -- because in all other cases already compBasicConstraints emits that constraint
