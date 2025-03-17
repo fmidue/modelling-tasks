@@ -330,8 +330,8 @@ run #{activePredicateName} for exactly #{petriScopeMaxSeq basicC} Nodes, #{petri
     activatedConstraint BasicConfig{ atLeastActive } atMostActive
       | atLeastActive == 0 && isNothing atMostActive
       = [i|theActivatedTransitions[#{activated}]|]
-      -- | atMost == Nothing
-      -- = [i|\##{activated} =< #{transitions}|]
+      | atMost == Nothing
+      = [i|\##{activated} =< #{transitions}|]
       | otherwise
       = "" -- because in all other cases already compBasicConstraints emits that constraint
 
