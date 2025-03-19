@@ -68,6 +68,7 @@ import Control.Monad.Random (
   RandomGen,
   )
 import Control.Monad.Trans.Class        (MonadTrans (lift))
+import Data.GraphViz.Attributes.Complete (GraphvizCommand (..))
 import Data.List                        (sort)
 import Data.Map                         (Map)
 import Language.Alloy.Call (
@@ -191,7 +192,7 @@ prohibitHideTransitionNames gc
 
 prohibitPatchworkRenderer :: GraphConfig -> Maybe String
 prohibitPatchworkRenderer gc
-  | any ((== "Patchwork") . show) (graphLayouts gc)
+  | any (== Patchwork) (graphLayouts gc)
   = Just "Do not use 'Patchwork' as a GraphViz Renderer as it does not work properly."
   | otherwise
   = Nothing
