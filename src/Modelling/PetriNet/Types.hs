@@ -1095,5 +1095,6 @@ checkGraphLayouts useDifferent wrongInstances gc
   | useDifferent && length (graphLayouts gc) <= wrongInstances
   = Just "The parameter 'graphLayout' has to contain more entries than the number of 'wrongInstances' if 'useDifferentGraphLayouts' is set."
   | any ((== "Patchwork") . show) (graphLayouts gc)
+  = Just "Do not use 'Patchwork' as a GraphViz Renderer as it does not work properly."
   | otherwise
   = Nothing
