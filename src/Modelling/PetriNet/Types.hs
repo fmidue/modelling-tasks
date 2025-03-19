@@ -741,7 +741,7 @@ data GraphConfig = GraphConfig {
 
 defaultGraphConfig :: GraphConfig
 defaultGraphConfig = GraphConfig {
-  graphLayouts = [Dot, Neato, TwoPi, Circo, Fdp, Sfdp, Osage, Patchwork],
+  graphLayouts = [Dot, Neato, TwoPi, Circo, Fdp, Sfdp, Osage],
   hidePlaceNames = False,
   hideTransitionNames = False,
   hideWeight1 = True
@@ -1094,5 +1094,6 @@ checkGraphLayouts useDifferent wrongInstances gc
   = Just "At least one graph layout needs to be provided."
   | useDifferent && length (graphLayouts gc) <= wrongInstances
   = Just "The parameter 'graphLayout' has to contain more entries than the number of 'wrongInstances' if 'useDifferentGraphLayouts' is set."
+  | any ((== "Patchwork") . show) (graphLayouts gc)
   | otherwise
   = Nothing

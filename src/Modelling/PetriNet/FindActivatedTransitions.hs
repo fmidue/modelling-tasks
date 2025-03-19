@@ -67,6 +67,7 @@ import Modelling.PetriNet.Find (
   findInitialList,
   findTaskInstance,
   prohibitHideTransitionNames,
+  prohibitPatchworkRenderer,
   toFindEvaluationList,
   )
 import Modelling.PetriNet.Reach.Type (
@@ -360,6 +361,7 @@ checkFindActivatedTransitionsConfig FindActivatedTransitionsConfig {
   <|> checkBasicConfig basicConfig
   <|> checkChangeConfig basicConfig changeConfig
   <|> checkActivatedTransitionsConfig basicConfig atMostActive
+  <|> prohibitPatchworkRenderer graphConfig
 
 checkActivatedTransitionsConfig :: BasicConfig -> Maybe Int -> Maybe String
 checkActivatedTransitionsConfig BasicConfig {

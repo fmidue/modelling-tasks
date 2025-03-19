@@ -17,6 +17,7 @@ module Modelling.PetriNet.Find (
   findTaskInstance,
   lToFind,
   prohibitHideTransitionNames,
+  prohibitPatchworkRenderer,
   toFindEvaluation,
   toFindEvaluationList,
   toFindEvaluationTuple,
@@ -179,10 +180,18 @@ checkConfigForFind basic change graph =
   <|> prohibitHideTransitionNames graph
   <|> checkBasicConfig basic
   <|> checkChangeConfig basic change
+  <|> prohibitPatchworkRenderer graph
 
 prohibitHideTransitionNames :: GraphConfig -> Maybe String
 prohibitHideTransitionNames gc
   | hideTransitionNames gc
   = Just "Transition names are required for this task type"
+  | otherwise
+  = Nothing
+
+prohibitPatchworkRenderer :: GraphConfig -> Maybe String
+prohibitPatchworkRenderer gc
+  | any ((== "Patchwork") . show) (graphLayouts gc)
+  = Just "Do not use 'Patchwork' as a GraphViz Renderer as it does not work properly."
   | otherwise
   = Nothing
