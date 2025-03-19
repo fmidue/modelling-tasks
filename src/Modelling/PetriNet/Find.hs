@@ -192,7 +192,7 @@ prohibitHideTransitionNames gc
 
 prohibitPatchworkRenderer :: GraphConfig -> Maybe String
 prohibitPatchworkRenderer gc
-  | any (== Patchwork) (graphLayouts gc)
+  | elem Patchwork (graphLayouts gc)
   = Just "Do not use 'Patchwork' as a GraphViz Renderer as it does not work properly."
   | otherwise
   = Nothing
