@@ -212,10 +212,19 @@ pred #{mistakePredicateName} {
   #{pickMistakeConstraints mistakeC}
   #{compChange changeC}
   #{defaultConstraints undefined basicC}
+
+  #{prohibitTransitionSelfLoop mistakeC}
 }
 
 run #{mistakePredicateName} for exactly #{petriScopeMaxSeq basicC} Nodes, #{petriScopeBitWidth basicC} Int
 |]
+  where
+    prohibitTransitionSelfLoop :: MistakeConfig -> String
+    prohibitTransitionSelfLoop MistakeConfig{ canHaveTransitionToTransition }
+      | canHaveTransitionToTransition
+      =  [i|all t : Transitions | no t.flow[t]|]
+      | otherwise
+      = ""
 
 mistakePredicateName :: String
 mistakePredicateName = "showMistake"
