@@ -213,16 +213,16 @@ pred #{mistakePredicateName} {
   #{compChange changeC}
   #{defaultConstraints undefined basicC}
 
-  #{prohibitTransitionSelfLoop mistakeC}
+  #{prohibitSelfLoops mistakeC}
 }
 
 run #{mistakePredicateName} for exactly #{petriScopeMaxSeq basicC} Nodes, #{petriScopeBitWidth basicC} Int
 |]
   where
-    prohibitTransitionSelfLoop :: MistakeConfig -> String
-    prohibitTransitionSelfLoop MistakeConfig{ canHaveTransitionToTransition }
-      | canHaveTransitionToTransition
-      =  [i|all t : Transitions | no t.flow[t]|]
+    prohibitSelfLoops :: MistakeConfig -> String
+    prohibitSelfLoops MistakeConfig{ canHaveTransitionToTransition, canHavePlaceToPlace }
+      | canHaveTransitionToTransition || canHavePlaceToPlace
+      =  [i|all n : Nodes | no n.flow[n]|]
       | otherwise
       = ""
 
