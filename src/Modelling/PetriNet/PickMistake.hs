@@ -219,8 +219,12 @@ run #{mistakePredicateName} for exactly #{petriScopeMaxSeq basicC} Nodes, #{petr
   where
     prohibitSelfLoops :: MistakeConfig -> String
     prohibitSelfLoops MistakeConfig{ canHaveTransitionToTransition, canHavePlaceToPlace }
-      | canHaveTransitionToTransition || canHavePlaceToPlace
+      | canHaveTransitionToTransition && canHavePlaceToPlace
       =  [i|all n : Nodes | no n.flow[n]|]
+      | canHaveTransitionToTransition
+      =  [i|all n : Transition | no n.flow[n]|]
+      | canHavePlaceToPlace
+      =  [i|all n : Place | no n.flow[n]|]
       | otherwise
       = ""
 
