@@ -76,7 +76,7 @@ import Modelling.PetriNet.Reach.Type (
   )
 import Modelling.PetriNet.Types         (
   ActivatedTransitions (ActivatedTransitions),
-  AdvConfig,
+  AdvConfig (..),
   BasicConfig (..),
   ChangeConfig (..),
   DrawSettings (..),
@@ -351,15 +351,26 @@ skolemName = "activatedTrans"
 checkFindActivatedTransitionsConfig :: FindActivatedTransitionsConfig -> Maybe String
 checkFindActivatedTransitionsConfig FindActivatedTransitionsConfig {
   basicConfig,
+  advConfig,
   changeConfig,
   atMostActive,
   graphConfig
   }
   = prohibitHideTransitionNames graphConfig
   <|> checkBasicConfig basicConfig
+  <|> checkAdvConfig basicConfig advConfig atMostActive
   <|> checkChangeConfig basicConfig changeConfig
   <|> checkActivatedTransitionsConfig basicConfig atMostActive
   <|> prohibitPatchworkRenderer graphConfig
+
+checkAdvConfig :: BasicConfig -> AdvConfig -> Maybe Int -> Maybe String
+checkAdvConfig BasicConfig{ atLeastActive } AdvConfig{ presenceOfSourceTransitions } atMostActive
+  | presenceOfSourceTransitions == Just True && atLeastActive == 0
+  = Just "atLeastActive has to be at least 1 for source transitions."
+  | isNothing presenceOfSourceTransitions && atMostActive == Just 0
+  = Just "When atMostActive = 'Just 0', use presenceOfSourceTransitions = 'Just False' instead."
+  | otherwise
+  = Nothing
 
 checkActivatedTransitionsConfig :: BasicConfig -> Maybe Int -> Maybe String
 checkActivatedTransitionsConfig BasicConfig {
