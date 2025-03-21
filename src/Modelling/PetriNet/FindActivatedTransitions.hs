@@ -208,20 +208,20 @@ findActivatedTransitionsTask path task = do
     let ts = transitionListShow findInitialList
     code $ show ts
     translate $ do
-      let ta = map show findInitialList
+      let ta = map show ts
       english [iii|
-        #{" "}as answer would indicate that transitions #{ta}
+        #{" "}as answer would indicate that exactly the transitions #{ta}
         are activated under the initial marking.
         #{" "}|]
       german [iii|
-        #{" "}als Antwort würde bedeuten, dass Transitionen #{ta}
+        #{" "}als Antwort würde bedeuten, dass genau die Transitionen #{ta}
         unter der Startmarkierung aktiviert sind.
         #{" "}|]
     translate $ do
-      english "The order of transitions within the pair does not matter here."
+      english "The order of transitions within the list does not matter here."
       german [iii|
         Die Reihenfolge der Transitionen innerhalb
-        des Paars spielt hierbei keine Rolle.
+        der Liste spielt hierbei keine Rolle.
         |]
 
     pure ()
