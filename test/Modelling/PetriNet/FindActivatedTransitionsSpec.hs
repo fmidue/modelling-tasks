@@ -41,6 +41,8 @@ import Modelling.PetriNet.TestCommon (
   )
 import Settings                         (configDepth)
 
+import Data.Char                        (isDigit)
+import Data.List                        (nub)
 import Data.Maybe                       (isNothing)
 import Test.Hspec
 
@@ -91,4 +93,9 @@ validActivatedTransitionsConfigs bc@BasicConfig{ transitions } = filter (isNothi
   Nothing : [Just n | n <- [0 .. transitions - 1]]
 
 isValidActivatedTransitions :: ActivatedTransitions String -> Bool
-isValidActivatedTransitions _ = True
+isValidActivatedTransitions a@(ActivatedTransitions ts)
+  | length ts == length (nub ts) && all isNumber ts    = True
+  | otherwise                                          = error $ show a
+    where
+      isNumber ('t':x) = all isDigit x
+      isNumber _ = False
