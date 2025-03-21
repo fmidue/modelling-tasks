@@ -25,7 +25,7 @@ import Modelling.PetriNet.Types         (
   )
 
 import Control.OutputCapable.Blocks     (Language (English))
-import Control.Monad.Trans.Class        (MonadTrans (lift))
+import Control.Monad.Trans.Class        (lift)
 import Data.Maybe                       (isNothing)
 import System.IO (
   BufferMode (NoBuffering), hSetBuffering, stdout,

@@ -8,7 +8,6 @@ module Modelling.PetriNet.PickMistake (
   checkMistakeConfig,
   checkPickMistakeConfig,
   defaultPickMistakeInstance,
-  pickMistakeConstraints,
   petriNetPickMist,
   pickMistake,
   pickMistakeGenerate,
@@ -212,7 +211,6 @@ pred #{mistakePredicateName} {
   #{pickMistakeConstraints mistakeC}
   #{compChange changeC}
   #{defaultConstraints undefined basicC}
-
   #{prohibitSelfLoops mistakeC}
 }
 

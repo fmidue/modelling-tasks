@@ -3,7 +3,6 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE QuasiQuotes #-}
-{-# LANGUAGE LambdaCase #-}
 
 module Modelling.PetriNet.FindActivatedTransitions (
   checkActivatedTransitionsConfig,
@@ -185,7 +184,7 @@ findActivatedTransitionsTask path task = do
     english "Consider the following Petri net:"
     german "Betrachten Sie folgendes Petrinetz:"
   image
-    $=<< renderWith path "activatedTransition" (net task) (drawFindWith task)
+    $=<< renderWith path "activatedTransitions" (net task) (drawFindWith task)
   paragraph $ translate $ do
     english [iii|
       Which transitions are activated
@@ -318,7 +317,6 @@ pred #{activePredicateName}[#{activated} : set Transitions] {
   #{compBasicConstraints True atMost activated basicC}
   #{compChange changeC}
   #{compAdvConstraints advConfig}
-
   #{activatedConstraint basicC atMost}
   #{extraAtMostActive basicC atMost}
   no t : givenTransitions | activatedDefault[t]

@@ -27,7 +27,6 @@ import Modelling.PetriNet.Types (
 
 import Control.OutputCapable.Blocks      (Language (English))
 import Control.Monad.Trans.Class         (lift)
-import Data.Char                         (toLower)
 import Data.Maybe                        (isNothing)
 import System.IO (
   BufferMode (NoBuffering), hSetBuffering, stdout,
@@ -48,7 +47,7 @@ mainPick :: Int -> IO ()
 mainPick i = forceErrors $ do
   let theConfig@PickMistakeConfig{..} = defaultPickMistakeConfig
   lift $ pPrint theConfig
-  (pls, trns, tknChange, flwChange, negTokCost, transToTr, placeToPl) <- lift $ userInput theConfig
+  (pls, trns, tknChange, flwChange, negWeight, transToTr, placeToPl) <- lift $ userInput theConfig
   let config = theConfig {
         basicConfig = basicConfig {
             places = pls,
@@ -59,7 +58,7 @@ mainPick i = forceErrors $ do
             flowChangeOverall = flwChange
             },
         mistakeConfig = mistakeConfig {
-            canHaveNegativeWeight = negTokCost,
+            canHaveNegativeWeight = negWeight,
             canHaveTransitionToTransition = transToTr,
             canHavePlaceToPlace = placeToPl
             }
@@ -73,41 +72,30 @@ mainPick i = forceErrors $ do
   else
     lift $ print c
 
-boolInput :: Bool -> IO Bool
-boolInput d = do
-  input <- getLine
-  case map toLower input of
-    "" -> return d
-    "true"  -> return True
-    "false" -> return False
-    _       -> do
-      putStrLn "Invalid input"
-      boolInput d
-
-intInput :: Int -> IO Int
-intInput d = do
+validateInput :: Read a => a -> IO a
+validateInput d = do
   input <- getLine
   if null input then return d
   else case readMaybe input of
     Just n  -> return n
     Nothing -> do
       putStrLn "Invalid input"
-      intInput d
+      validateInput d
 
 userInput :: PickMistakeConfig -> IO (Int, Int, Int, Int, Bool, Bool, Bool)
 userInput PickMistakeConfig{basicConfig = BasicConfig{..}, changeConfig = ChangeConfig{..}, mistakeConfig = MistakeConfig{..}} = do
   putStr "Number of Places: "
-  pls <- intInput places
+  pls <- validateInput places
   putStr "Number of Transitions: "
-  trns <- intInput transitions
+  trns <- validateInput transitions
   putStr "TokenChange Overall: "
-  tknCh <- intInput tokenChangeOverall
+  tknCh <- validateInput tokenChangeOverall
   putStr "FlowChange Overall: "
-  flwCh <- intInput flowChangeOverall
+  flwCh <- validateInput flowChangeOverall
   putStr "Negative Token Cost (True/False): "
-  negTokCost <- boolInput canHaveNegativeWeight
+  negWeight <- validateInput canHaveNegativeWeight
   putStr "Transition to Transition (True/False): "
-  transToTr <- boolInput canHaveTransitionToTransition
+  transToTr <- validateInput canHaveTransitionToTransition
   putStr "Places to Places (True/False): "
-  placeToPl <- boolInput canHavePlaceToPlace
-  return (pls, trns, tknCh, flwCh, negTokCost, transToTr, placeToPl)
+  placeToPl <- validateInput canHavePlaceToPlace
+  return (pls, trns, tknCh, flwCh, negWeight, transToTr, placeToPl)

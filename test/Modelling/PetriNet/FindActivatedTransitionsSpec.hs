@@ -88,7 +88,7 @@ validFindActivatedTransitionsConfig cs advancedConfig = do
 
 validActivatedTransitionsConfigs :: BasicConfig -> [Maybe Int]
 validActivatedTransitionsConfigs bc@BasicConfig{ transitions } = filter (isNothing . checkActivatedTransitionsConfig bc) $
-  Nothing : [Just n | n <- [0..transitions]]
+  Nothing : [Just n | n <- [0 .. transitions - 1]]
 
 isValidActivatedTransitions :: ActivatedTransitions String -> Bool
 isValidActivatedTransitions _ = True
