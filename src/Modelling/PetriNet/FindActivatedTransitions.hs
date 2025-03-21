@@ -15,7 +15,7 @@ module Modelling.PetriNet.FindActivatedTransitions (
   findActivatedTransitionsSyntax,
   findActivatedTransitionsTask,
   parseActivatedTransitions,
-  petriNetFindActivated,
+  petriNetFindActivatedTransitions,
   simpleFindActivatedTransitionsTask,
   ) where
 
@@ -274,12 +274,12 @@ findActivatedTransitions
     (p n String, ActivatedTransitions String)
 findActivatedTransitions = taskInstance
   findTaskInstance
-  petriNetFindActivated
+  petriNetFindActivatedTransitions
   parseActivatedTransitions
   Find.alloyConfig
 
-petriNetFindActivated :: FindActivatedTransitionsConfig -> String
-petriNetFindActivated FindActivatedTransitionsConfig {
+petriNetFindActivatedTransitions :: FindActivatedTransitionsConfig -> String
+petriNetFindActivatedTransitions FindActivatedTransitionsConfig {
   basicConfig,
   advConfig,
   changeConfig,

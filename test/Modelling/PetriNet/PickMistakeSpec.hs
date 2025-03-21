@@ -9,7 +9,7 @@ import qualified Modelling.PetriNet.Types         as Pick (
 import Modelling.PetriNet.PickMistake (
   checkMistakeConfig,
   checkPickMistakeConfig,
-  petriNetPickMist,
+  petriNetPickMistake,
   pickMistake,
   )
 
@@ -67,7 +67,7 @@ checkPickMistakeInstance = f . fmap snd
 
 testPickMistakeConfig :: [PickMistakeConfig] -> Spec
 testPickMistakeConfig = testTaskGeneration
-  petriNetPickMist
+  petriNetPickMistake
   (pickTaskInstance (const (return (Const ()))))
   $ checkPickMistakeInstance @(SimplePetriLike _)
 

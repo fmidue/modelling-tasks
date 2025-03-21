@@ -8,7 +8,7 @@ module Modelling.PetriNet.PickMistake (
   checkMistakeConfig,
   checkPickMistakeConfig,
   defaultPickMistakeInstance,
-  petriNetPickMist,
+  petriNetPickMistake,
   pickMistake,
   pickMistakeGenerate,
   pickMistakeTask,
@@ -172,13 +172,13 @@ pickMistake
     [(p n String, Maybe (Const () String))]
 pickMistake = taskInstance
   pickTaskInstance
-  petriNetPickMist
+  petriNetPickMistake
   (\_ -> return (Const ()))
   Pick.alloyConfig
 
 
-petriNetPickMist :: PickMistakeConfig -> String
-petriNetPickMist PickMistakeConfig{
+petriNetPickMistake :: PickMistakeConfig -> String
+petriNetPickMistake PickMistakeConfig{
   basicConfig,
   changeConfig,
   mistakeConfig

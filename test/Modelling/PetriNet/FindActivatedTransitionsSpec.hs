@@ -13,7 +13,7 @@ import Modelling.PetriNet.FindActivatedTransitions (
   checkFindActivatedTransitionsConfig,
   findActivatedTransitions,
   parseActivatedTransitions,
-  petriNetFindActivated,
+  petriNetFindActivatedTransitions,
   )
 
 import Modelling.PetriNet.Find (
@@ -48,7 +48,7 @@ spec :: Spec
 spec = do
   describe "defaultFindActivatedTransitionsConfig" $
     checkConfigs checkFindActivatedTransitionsConfig [defaultFindActivatedTransitionsConfig]
-  describe "validFindActivatedTransitionsConfig" $
+  describe "validFindActivatedTransitionsConfigs" $
     checkConfigs checkFindActivatedTransitionsConfig findConfigs'
   describe "findActivatedTransitions" $ do
     defaultConfigTaskGeneration
@@ -59,10 +59,10 @@ spec = do
       $ checkFindActivatedTransitionsInstance @(SimplePetriLike _)
     testFindActivatedTransitionsConfig findConfigs
   where
-    findConfigs' = validFindActivatedTransitionsConfig
+    findConfigs' = validFindActivatedTransitionsConfigs
       validFinds
       (AdvConfig Nothing Nothing Nothing)
-    findConfigs = validAdvConfigs >>= validFindActivatedTransitionsConfig validFinds
+    findConfigs = validAdvConfigs >>= validFindActivatedTransitionsConfigs validFinds
     validFinds = validConfigsForFind 0 configDepth
 
 checkFindActivatedTransitionsInstance :: (a, ActivatedTransitions String) -> Bool
@@ -70,15 +70,15 @@ checkFindActivatedTransitionsInstance = isValidActivatedTransitions . snd
 
 testFindActivatedTransitionsConfig :: [FindActivatedTransitionsConfig] -> Spec
 testFindActivatedTransitionsConfig = testTaskGeneration
-  petriNetFindActivated
+  petriNetFindActivatedTransitions
   (findTaskInstance parseActivatedTransitions)
   $ checkFindActivatedTransitionsInstance @(SimplePetriLike _)
 
-validFindActivatedTransitionsConfig
+validFindActivatedTransitionsConfigs
   :: [(BasicConfig, ChangeConfig)]
   -> AdvConfig
   -> [FindActivatedTransitionsConfig]
-validFindActivatedTransitionsConfig cs advancedConfig = do
+validFindActivatedTransitionsConfigs cs advancedConfig = do
   (bc, ch) <- cs
   FindActivatedTransitionsConfig bc advancedConfig ch
     <$> validActivatedTransitionsConfigs bc
