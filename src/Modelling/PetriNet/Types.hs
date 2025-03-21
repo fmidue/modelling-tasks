@@ -943,7 +943,7 @@ defaultFindActivatedTransitionsConfig = FindActivatedTransitionsConfig
   , advConfig = defaultAdvConfig
   , changeConfig = defaultChangeConfig
   , atMostActive = Nothing
-  , graphConfig = defaultGraphConfig { hidePlaceNames = True }
+  , graphConfig = defaultGraphConfig
   , printSolution = False
   , alloyConfig  = defaultAlloyConfig
   }
