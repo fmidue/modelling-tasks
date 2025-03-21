@@ -222,9 +222,9 @@ run #{mistakePredicateName} for exactly #{petriScopeMaxSeq basicC} Nodes, #{petr
       | canHaveTransitionToTransition && canHavePlaceToPlace
       =  [i|all n : Nodes | no n.flow[n]|]
       | canHaveTransitionToTransition
-      =  [i|all n : Transition | no n.flow[n]|]
+      =  [i|all n : Transitions | no n.flow[n]|]
       | canHavePlaceToPlace
-      =  [i|all n : Place | no n.flow[n]|]
+      =  [i|all n : Places | no n.flow[n]|]
       | otherwise
       = ""
 
