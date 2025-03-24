@@ -56,7 +56,6 @@ import Modelling.PetriNet.Alloy (
   modulePetriConcepts,
   modulePetriConstraints,
   modulePetriSignature,
-  petriScopeBitWidth,
   petriScopeMaxSeq,
   signatures,
   taskInstance,
@@ -94,6 +93,7 @@ import Modelling.PetriNet.Types (
   isPlaceNode,
   manyRandomDrawSettings,
   mapChange,
+  petriScopeBitWidth,
   randomDrawSettings,
   shuffleNames,
   )

@@ -92,6 +92,7 @@ module Modelling.PetriNet.Types (
   mapChange,
   maybeInitial,
   petriLikeToPetri,
+  petriScopeBitWidth,
   placeNames,
   randomDrawSettings,
   shuffleNames,
@@ -997,6 +998,14 @@ transitionPairShow = bimap ShowTransition ShowTransition
 
 transitionListShow :: [Petri.Transition] -> [ShowTransition]
 transitionListShow = map ShowTransition
+
+petriScopeBitWidth :: BasicConfig -> Int
+petriScopeBitWidth BasicConfig
+ { flowOverall, places, tokensOverall, transitions } =
+  floor
+     (2 + ((logBase :: Double -> Double -> Double) 2.0 . fromIntegral)
+       (maximum [snd flowOverall, snd tokensOverall, places, transitions])
+     )
 
 checkBasicConfig :: BasicConfig -> Maybe String
 checkBasicConfig BasicConfig{

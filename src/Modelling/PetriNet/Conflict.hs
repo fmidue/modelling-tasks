@@ -69,7 +69,6 @@ import Modelling.PetriNet.Alloy (
   modulePetriConcepts,
   modulePetriConstraints,
   modulePetriSignature,
-  petriScopeBitWidth,
   petriScopeMaxSeq,
   signatures,
   skolemVariable,
@@ -125,6 +124,7 @@ import Modelling.PetriNet.Types         (
   SimpleNode (..),
   SimplePetriNet,
   lConflictPlaces,
+  petriScopeBitWidth,
   transitionPairShow,
   )
 

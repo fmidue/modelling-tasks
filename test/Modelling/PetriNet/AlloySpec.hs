@@ -3,6 +3,7 @@ module Modelling.PetriNet.AlloySpec where
 import Modelling.PetriNet.Alloy
 import Modelling.PetriNet.Types (
   defaultBasicConfig,
+  petriScopeBitWidth,
   )
 
 import Test.Hspec

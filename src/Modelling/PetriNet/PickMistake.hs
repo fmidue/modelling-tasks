@@ -39,7 +39,6 @@ import Modelling.PetriNet.Alloy (
   modulePetriConcepts,
   modulePetriConstraints,
   modulePetriSignature,
-  petriScopeBitWidth,
   petriScopeMaxSeq,
   taskInstance,
   )
@@ -62,6 +61,7 @@ import Modelling.PetriNet.Types         (
   PickMistakeConfig (..),
   SimpleNode (..),
   SimplePetriNet,
+  petriScopeBitWidth,
   )
 
 import Control.Applicative              ((<|>))
