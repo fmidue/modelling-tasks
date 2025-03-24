@@ -1008,7 +1008,7 @@ petriScopeBitWidth BasicConfig
      )
 
 checkBasicConfig :: BasicConfig -> Maybe String
-checkBasicConfig BasicConfig{
+checkBasicConfig basicC@BasicConfig{
   atLeastActive,
   flowOverall,
   maxFlowPerEdge,
@@ -1051,8 +1051,8 @@ checkBasicConfig BasicConfig{
   = Just "The maximum 'flowOverall' is set unreasonably high, given the other parameters."
  | transitions + places > 1 + fst flowOverall
   = Just "The number of transitions and places exceeds the minimum 'flowOverall' too much to create a connected net."
- | maximum [snd flowOverall, snd tokensOverall, places, transitions] > 15
-  = Just "'places', 'transitions' and the maximum 'flowOverall' and 'tokensOverall' should not be greater than 15."
+ | petriScopeBitWidth basicC > 5
+  = Just "'places', 'transitions' and the maximum 'flowOverall' and 'tokensOverall' should not be set too high."
  | otherwise
   = Nothing
 
