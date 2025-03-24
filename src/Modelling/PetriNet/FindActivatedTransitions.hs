@@ -333,7 +333,7 @@ run #{activePredicateName} for exactly #{petriScopeMaxSeq basicC} Nodes, #{petri
       = "" -- because in all other cases already compBasicConstraints emits that constraint
 
 activePredicateName :: String
-activePredicateName = "showActiveTransition"
+activePredicateName = "showActivatedTransitions"
 
 activatedTransitions :: String
 activatedTransitions = skolemVariable activePredicateName skolemName
