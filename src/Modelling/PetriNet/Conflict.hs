@@ -81,6 +81,7 @@ import Modelling.PetriNet.Diagram (
 import Modelling.PetriNet.Find (
   FindInstance (..),
   checkConfigForFind,
+  checkFindTwoActive,
   findInitialTuple,
   findTaskInstance,
   lToFind,
@@ -649,7 +650,9 @@ checkFindConflictConfig FindConflictConfig {
   conflictConfig,
   graphConfig
   }
-  = checkConfigForFind basicConfig changeConfig graphConfig
+  =
+  checkFindTwoActive basicConfig
+  <|> checkConfigForFind basicConfig changeConfig graphConfig
   <|> checkConflictConfig basicConfig conflictConfig
 
 checkPickConflictConfig :: PickConflictConfig -> Maybe String

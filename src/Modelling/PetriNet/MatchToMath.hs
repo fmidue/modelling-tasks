@@ -94,6 +94,7 @@ import Modelling.PetriNet.Types (
   manyRandomDrawSettings,
   mapChange,
   petriScopeBitWidth,
+  prohibitPatchworkRenderer,
   randomDrawSettings,
   shuffleNames,
   )
@@ -514,6 +515,7 @@ checkMathConfig c@MathConfig {
   <|> checkChangeConfig basicConfig changeConfig
   <|> checkConfig c
   <|> checkGraphLayouts useDifferentGraphLayouts wrongInstances graphConfig
+  <|> prohibitPatchworkRenderer graphConfig
 
 prohibitHideNames :: GraphConfig -> Maybe String
 prohibitHideNames gc

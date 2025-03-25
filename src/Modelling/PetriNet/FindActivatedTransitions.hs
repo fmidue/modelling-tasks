@@ -62,10 +62,9 @@ import Modelling.PetriNet.Diagram (
   )
 import Modelling.PetriNet.Find (
   FindInstance (..),
+  checkConfigForFind,
   findInitialList,
   findTaskInstance,
-  prohibitHideTransitionNames,
-  prohibitPatchworkRenderer,
   toFindEvaluationList,
   )
 import Modelling.PetriNet.Reach.Type (
@@ -85,8 +84,6 @@ import Modelling.PetriNet.Types         (
   PetriLike (PetriLike, allNodes),
   SimpleNode (..),
   SimplePetriNet,
-  checkBasicConfig,
-  checkChangeConfig,
   petriScopeBitWidth,
   transitionListShow,
   )
@@ -349,12 +346,9 @@ checkFindActivatedTransitionsConfig FindActivatedTransitionsConfig {
   atMostActive,
   graphConfig
   }
-  = prohibitHideTransitionNames graphConfig
-  <|> checkBasicConfig basicConfig
+  = checkConfigForFind basicConfig changeConfig graphConfig
   <|> checkAdvConfig basicConfig advConfig atMostActive
-  <|> checkChangeConfig basicConfig changeConfig
   <|> checkActivatedTransitionsConfig basicConfig atMostActive
-  <|> prohibitPatchworkRenderer graphConfig
 
 checkAdvConfig :: BasicConfig -> AdvConfig -> Maybe Int -> Maybe String
 checkAdvConfig BasicConfig{ atLeastActive } AdvConfig{ presenceOfSourceTransitions } atMostActive

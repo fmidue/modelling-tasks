@@ -94,6 +94,7 @@ module Modelling.PetriNet.Types (
   petriLikeToPetri,
   petriScopeBitWidth,
   placeNames,
+  prohibitPatchworkRenderer,
   randomDrawSettings,
   shuffleNames,
   transformNet,
@@ -1105,6 +1106,11 @@ checkGraphLayouts useDifferent wrongInstances gc
   = Just "At least one graph layout needs to be provided."
   | useDifferent && length (graphLayouts gc) <= wrongInstances
   = Just "The parameter 'graphLayout' has to contain more entries than the number of 'wrongInstances' if 'useDifferentGraphLayouts' is set."
+  | otherwise
+  = Nothing
+
+prohibitPatchworkRenderer :: GraphConfig -> Maybe String
+prohibitPatchworkRenderer gc
   | Patchwork `elem` graphLayouts gc
   = Just "Do not use 'Patchwork' as a GraphViz Renderer as it does not work properly."
   | otherwise

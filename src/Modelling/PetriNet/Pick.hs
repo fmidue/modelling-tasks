@@ -45,6 +45,7 @@ import Modelling.PetriNet.Types         (
   checkGraphLayouts,
   manyRandomDrawSettings,
   placeNames,
+  prohibitPatchworkRenderer,
   randomDrawSettings,
   transitionNames,
   )
@@ -193,3 +194,4 @@ checkConfigForPick useDifferent numWrongInstances basic change graph
   = checkBasicConfig basic
   <|> checkChangeConfig basic change
   <|> checkGraphLayouts useDifferent numWrongInstances graph
+  <|> prohibitPatchworkRenderer graph

@@ -10,14 +10,13 @@
 
 module Modelling.PetriNet.Find (
   FindInstance (..),
-  checkFindBasicConfig,
+  checkFindTwoActive,
   checkConfigForFind,
   findInitialList,
   findInitialTuple,
   findTaskInstance,
   lToFind,
   prohibitHideTransitionNames,
-  prohibitPatchworkRenderer,
   toFindEvaluation,
   toFindEvaluationList,
   toFindEvaluationTuple,
@@ -45,6 +44,7 @@ import Modelling.PetriNet.Types (
   Net (..),
   checkBasicConfig,
   checkChangeConfig,
+  prohibitPatchworkRenderer,
   shuffleNames,
   transitionListShow,
   transitionPairShow,
@@ -68,7 +68,6 @@ import Control.Monad.Random (
   RandomGen,
   )
 import Control.Monad.Trans.Class        (MonadTrans (lift))
-import Data.GraphViz.Attributes.Complete (GraphvizCommand (..))
 import Data.List                        (sort)
 import Data.Map                         (Map)
 import Language.Alloy.Call (
@@ -169,16 +168,15 @@ toFindEvaluationList
 toFindEvaluationList what withSol =
   toFindEvaluation what withSol (\x y -> sort x == sort y) (show . transitionListShow)
 
-checkFindBasicConfig :: BasicConfig -> Maybe String
-checkFindBasicConfig BasicConfig { atLeastActive }
+checkFindTwoActive :: BasicConfig -> Maybe String
+checkFindTwoActive BasicConfig { atLeastActive }
  | atLeastActive < 2
   = Just "The parameter 'atLeastActive' must be at least 2 to create the task."
  | otherwise = Nothing
 
 checkConfigForFind :: BasicConfig -> ChangeConfig -> GraphConfig -> Maybe String
 checkConfigForFind basic change graph =
-  checkFindBasicConfig basic
-  <|> prohibitHideTransitionNames graph
+  prohibitHideTransitionNames graph
   <|> checkBasicConfig basic
   <|> checkChangeConfig basic change
   <|> prohibitPatchworkRenderer graph
@@ -187,12 +185,5 @@ prohibitHideTransitionNames :: GraphConfig -> Maybe String
 prohibitHideTransitionNames gc
   | hideTransitionNames gc
   = Just "Transition names are required for this task type"
-  | otherwise
-  = Nothing
-
-prohibitPatchworkRenderer :: GraphConfig -> Maybe String
-prohibitPatchworkRenderer gc
-  | Patchwork `elem` graphLayouts gc
-  = Just "Do not use 'Patchwork' as a GraphViz Renderer as it does not work properly."
   | otherwise
   = Nothing

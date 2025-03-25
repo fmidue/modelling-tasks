@@ -72,6 +72,7 @@ import Modelling.PetriNet.Diagram (
 import Modelling.PetriNet.Find (
   FindInstance (..),
   checkConfigForFind,
+  checkFindTwoActive,
   findInitialTuple,
   findTaskInstance,
   toFindEvaluationTuple,
@@ -110,6 +111,7 @@ import Modelling.PetriNet.Types         (
   transitionPairShow,
   )
 
+import Control.Applicative              (Alternative ((<|>)))
 import Control.Monad.Catch              (MonadThrow)
 import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
@@ -491,7 +493,9 @@ checkFindConcurrencyConfig FindConcurrencyConfig {
   changeConfig,
   graphConfig
   }
-  = checkConfigForFind basicConfig changeConfig graphConfig
+  =
+  checkFindTwoActive basicConfig
+  <|> checkConfigForFind basicConfig changeConfig graphConfig
 
 checkPickConcurrencyConfig :: PickConcurrencyConfig -> Maybe String
 checkPickConcurrencyConfig PickConcurrencyConfig {

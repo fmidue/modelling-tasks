@@ -33,6 +33,7 @@ import Modelling.PetriNet.Conflict (
 import Modelling.PetriNet.Find (
   FindInstance (..),
   checkConfigForFind,
+  checkFindTwoActive,
   drawFindWith,
   findInitialTuple,
   )
@@ -213,6 +214,7 @@ checkFindConflictPlacesConfig FindConflictConfig {
   graphConfig
   }
   = prohibitHidePlaceNames graphConfig
+  <|> checkFindTwoActive basicConfig
   <|> checkConfigForFind basicConfig changeConfig graphConfig
   <|> checkConflictConfig basicConfig conflictConfig
 
