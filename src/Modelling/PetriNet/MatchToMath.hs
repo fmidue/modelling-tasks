@@ -81,6 +81,7 @@ import Modelling.PetriNet.Types (
   PetriNode (..),
   SimpleNode (..),
   SimplePetriLike,
+  checkActivatedSourceConfig,
   checkBasicConfig,
   checkChangeConfig,
   checkGraphLayouts,
@@ -506,12 +507,14 @@ checkGraphToMathConfig c@MathConfig {
 checkMathConfig :: MathConfig -> Maybe String
 checkMathConfig c@MathConfig {
   basicConfig,
+  advConfig,
   changeConfig,
   graphConfig,
   useDifferentGraphLayouts,
   wrongInstances
   } = checkBasicConfig basicConfig
   <|> prohibitHideNames graphConfig
+  <|> checkActivatedSourceConfig basicConfig advConfig
   <|> checkChangeConfig basicConfig changeConfig
   <|> checkConfig c
   <|> checkGraphLayouts useDifferentGraphLayouts wrongInstances graphConfig

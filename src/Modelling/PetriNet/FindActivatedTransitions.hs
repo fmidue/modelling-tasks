@@ -84,6 +84,7 @@ import Modelling.PetriNet.Types         (
   PetriLike (PetriLike, allNodes),
   SimpleNode (..),
   SimplePetriNet,
+  checkActivatedSourceConfig,
   petriScopeBitWidth,
   transitionListShow,
   )
@@ -347,15 +348,15 @@ checkFindActivatedTransitionsConfig FindActivatedTransitionsConfig {
   graphConfig
   }
   = checkConfigForFind basicConfig changeConfig graphConfig
-  <|> checkAdvConfig basicConfig advConfig atMostActive
+  <|> checkActivatedSourceConfig basicConfig advConfig
+  <|> checkAdvConfig advConfig atMostActive
   <|> checkActivatedTransitionsConfig basicConfig atMostActive
 
-checkAdvConfig :: BasicConfig -> AdvConfig -> Maybe Int -> Maybe String
-checkAdvConfig BasicConfig{ atLeastActive } AdvConfig{ presenceOfSourceTransitions } atMostActive
-  | presenceOfSourceTransitions == Just True && atLeastActive == 0
-  = Just "atLeastActive has to be at least 1 for source transitions."
+checkAdvConfig :: AdvConfig -> Maybe Int -> Maybe String
+checkAdvConfig AdvConfig{ presenceOfSourceTransitions } atMostActive
   | isNothing presenceOfSourceTransitions && atMostActive == Just 0
-  = Just "When atMostActive = 'Just 0', use presenceOfSourceTransitions = 'Just False' instead."
+  -- no check for Just True necessary since already handled by checkActivatedSourceConfig
+  = Just "When atMostActive = 'Just 0', use presenceOfSourceTransitions = 'Just False'."
   | otherwise
   = Nothing
 

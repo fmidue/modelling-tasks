@@ -51,6 +51,7 @@ module Modelling.PetriNet.Types (
   SimpleNode (..),
   SimplePetriLike,
   SimplePetriNet,
+  checkActivatedSourceConfig,
   checkBasicConfig,
   checkChangeConfig,
   checkGraphLayouts,
@@ -1055,6 +1056,13 @@ checkBasicConfig basicC@BasicConfig{
  | petriScopeBitWidth basicC > 5
   = Just "'places', 'transitions' and the maximum 'flowOverall' and 'tokensOverall' should not be set too high."
  | otherwise
+  = Nothing
+
+checkActivatedSourceConfig :: BasicConfig -> AdvConfig -> Maybe String
+checkActivatedSourceConfig BasicConfig{ atLeastActive } AdvConfig{ presenceOfSourceTransitions }
+  | presenceOfSourceTransitions == Just True && atLeastActive == 0
+  = Just "atLeastActive has to be at least 1 for source transitions to exist."
+  | otherwise
   = Nothing
 
 checkChangeConfig :: BasicConfig -> ChangeConfig -> Maybe String
