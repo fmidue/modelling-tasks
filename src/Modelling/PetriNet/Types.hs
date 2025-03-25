@@ -23,6 +23,7 @@ module Modelling.PetriNet.Types (
   AdvConfig (..),
   AlloyConfig (..),
   BasicConfig (..),
+  CapacityConfig (..),
   Change,
   ChangeConfig (..),
   Concurrent (..),
@@ -58,6 +59,7 @@ module Modelling.PetriNet.Types (
   defaultAdvConfig,
   defaultAlloyConfig,
   defaultBasicConfig,
+  defaultCapacityConfig,
   defaultChangeConfig,
   defaultFindActivatedTransitionsConfig,
   defaultFindConcurrencyConfig,
@@ -949,6 +951,28 @@ defaultFindActivatedTransitionsConfig = FindActivatedTransitionsConfig
   , graphConfig = defaultGraphConfig
   , printSolution = False
   , alloyConfig  = defaultAlloyConfig
+  }
+-}
+
+data CapacityConfig = CapacityConfig
+  { basicConfig :: BasicConfig
+  , advConfig :: AdvConfig
+  , maxCapacity :: Int
+  , graphConfig :: GraphConfig
+  , printSolution :: Bool
+  , useDifferentGraphLayouts :: Bool
+  , alloyConfig :: AlloyConfig
+  } deriving (Generic, Read, Show)
+
+defaultCapacityConfig :: CapacityConfig
+defaultCapacityConfig = CapacityConfig
+  { basicConfig = defaultBasicConfig { places = 2, transitions = 2, atLeastActive = 1 }
+  , advConfig = defaultAdvConfig
+  , maxCapacity = 8
+  , graphConfig = defaultGraphConfig { hidePlaceNames = False, hideTransitionNames = False }
+  , printSolution = True
+  , useDifferentGraphLayouts = False
+  , alloyConfig = defaultAlloyConfig
   }
 
 data DrawSettings = DrawSettings {
