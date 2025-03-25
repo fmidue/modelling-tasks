@@ -39,7 +39,6 @@ import Modelling.PetriNet.Alloy (
   modulePetriConcepts,
   modulePetriConstraints,
   modulePetriSignature,
-  petriScopeMaxSeq,
   taskInstance,
   )
 import Modelling.PetriNet.Pick (
@@ -205,8 +204,6 @@ petriNetPickMistakeAlloy basicC changeC mistakeC
 #{modulePetriConstraints}
 
 pred #{mistakePredicateName} {
-  \#Places = #{places basicC}
-  \#Transitions = #{transitions basicC}
   #{compBasicConstraints False Nothing undefined basicC}
   #{pickMistakeConstraints mistakeC}
   #{compChange changeC}
@@ -214,7 +211,7 @@ pred #{mistakePredicateName} {
   #{prohibitSelfLoops mistakeC}
 }
 
-run #{mistakePredicateName} for exactly #{petriScopeMaxSeq basicC} Nodes, #{petriScopeBitWidth basicC} Int
+run #{mistakePredicateName} for exactly #{places basicC} Places, exactly #{transitions basicC} Transitions, #{petriScopeBitWidth basicC} Int
 |]
   where
     prohibitSelfLoops :: MistakeConfig -> String

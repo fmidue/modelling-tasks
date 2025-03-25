@@ -69,7 +69,6 @@ import Modelling.PetriNet.Alloy (
   modulePetriConcepts,
   modulePetriConstraints,
   modulePetriSignature,
-  petriScopeMaxSeq,
   signatures,
   skolemVariable,
   taskInstance,
@@ -491,8 +490,6 @@ petriNetConflictAlloy basicC changeC conflictC uniqueConflictP specific
 #{modulePetriConstraints}
 
 pred #{conflictPredicateName}[#{p} : some Places, #{skolemSets}#{t1}, #{t2} : Transitions] {
-  \#Places = #{places basicC}
-  \#Transitions = #{transitions basicC}
   #{compBasicConstraints True Nothing activated basicC}
   #{compChange changeC}
   #{multiplePlaces uniqueConflictP}
@@ -509,7 +506,7 @@ pred #{conflictPredicateName}[#{p} : some Places, #{skolemSets}#{t1}, #{t2} : Tr
   #{compConstraints}
 }
 
-run #{conflictPredicateName} for exactly #{petriScopeMaxSeq basicC} Nodes, #{petriScopeBitWidth basicC} Int
+run #{conflictPredicateName} for exactly #{places basicC} Places, exactly #{transitions basicC} Transitions, #{petriScopeBitWidth basicC} Int
 |]
   where
     activated        = "activatedTrans"

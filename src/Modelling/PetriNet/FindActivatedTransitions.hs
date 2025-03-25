@@ -52,7 +52,6 @@ import Modelling.PetriNet.Alloy (
   modulePetriConcepts,
   modulePetriConstraints,
   modulePetriSignature,
-  petriScopeMaxSeq,
   skolemVariable,
   taskInstance,
   unscopedSingleSig,
@@ -310,8 +309,6 @@ petriNetActivatedTransitionsAlloy basicC changeC atMost advConfig
 #{modulePetriConstraints}
 
 pred #{activePredicateName}[#{activated} : set Transitions] {
-  \#Places = #{places basicC}
-  \#Transitions = #{transitions basicC}
   #{compBasicConstraints True atMost activated basicC}
   #{compChange changeC}
   #{compAdvConstraints advConfig}
@@ -319,7 +316,7 @@ pred #{activePredicateName}[#{activated} : set Transitions] {
   no t : givenTransitions | activatedDefault[t]
 }
 
-run #{activePredicateName} for exactly #{petriScopeMaxSeq basicC} Nodes, #{petriScopeBitWidth basicC} Int
+run #{activePredicateName} for exactly #{places basicC} Places, exactly #{transitions basicC} Transitions, #{petriScopeBitWidth basicC} Int
 |]
   where
     activated = skolemName

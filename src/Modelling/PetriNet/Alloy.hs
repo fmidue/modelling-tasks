@@ -18,7 +18,6 @@ module Modelling.PetriNet.Alloy (
   modulePetriConcepts,
   modulePetriConstraints,
   modulePetriSignature,
-  petriScopeMaxSeq,
   signatures,
   skolemVariable,
   taskInstance,
@@ -62,9 +61,6 @@ import Language.Alloy.Call (
   lookupSig,
   unscoped,
   )
-
-petriScopeMaxSeq :: BasicConfig -> Int
-petriScopeMaxSeq BasicConfig{places,transitions} = places+transitions
 
 modulePetriSignature :: String
 modulePetriSignature = removeLines 2 $(embedStringFile "alloy/petri/PetriSignature.als")

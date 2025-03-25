@@ -56,7 +56,6 @@ import Modelling.PetriNet.Alloy (
   modulePetriConcepts,
   modulePetriConstraints,
   modulePetriSignature,
-  petriScopeMaxSeq,
   signatures,
   taskInstance,
   )
@@ -562,12 +561,10 @@ fact{
 }
 
 pred showNets[#{skolemSet}] {
-  \#Places = #{places}
-  \#Transitions = #{transitions}
   #{compBasicConstraints True Nothing activated basicC}
   #{compAdvConstraints advConfig}
 }
-run showNets for exactly #{petriScopeMaxSeq basicC} Nodes, #{petriScopeBitWidth basicC} Int
+run showNets for exactly #{places} Places, exactly #{transitions} Transitions, #{petriScopeBitWidth basicC} Int
 |]
   where
     (skolemSet, activated)
@@ -584,8 +581,8 @@ renderFalse
 #{modulePetriConcepts}
 #{modulePetriConstraints}
 
-#{places}
-#{transitions}
+#{thePlaces}
+#{theTransitions}
 
 fact{
 #{initialMark}
@@ -598,13 +595,13 @@ pred showFalseNets[#{skolemSet}]{
   #{compChange changeConfig}
 }
 
-run showFalseNets for exactly #{petriScopeMaxSeq basicConfig} Nodes, #{petriScopeBitWidth basicConfig} Int
+run showFalseNets for exactly #{places basicConfig} Places, exactly #{transitions basicConfig} Transitions, #{petriScopeBitWidth basicConfig} Int
 |]
   where
     allNodes    = nodes net
     (ps, ts)    = M.partition isPlaceNode allNodes
-    places      = unlines [extendLine p "givenPlaces" | p <- M.keys ps]
-    transitions = unlines [extendLine t "givenTransitions" | t <- M.keys ts]
+    thePlaces      = unlines [extendLine p "givenPlaces" | p <- M.keys ps]
+    theTransitions = unlines [extendLine t "givenTransitions" | t <- M.keys ts]
     initialMark = M.foldrWithKey (\k -> (++) . tokenLine k) "" $ initialTokens <$> ps
     defaultFlow = M.foldrWithKey (\k _ -> (printFlow k ++)) "" allNodes
     printFlow :: String -> String
