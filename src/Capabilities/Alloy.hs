@@ -4,6 +4,7 @@
 module Capabilities.Alloy (
   MonadAlloy (..),
   getInstances,
+  maxBitWidth,
   ) where
 
 import Control.Monad.Trans.Class        (MonadTrans (lift))
@@ -45,3 +46,11 @@ getInstances maybeMaxInstances maybeTimeout = getInstancesWith
 #endif
     timeout      = maybeTimeout
     }
+
+maxBitWidth :: Maybe Int
+maxBitWidth =
+#ifdef MAX_BIT_WIDTH
+  Just MAX_BIT_WIDTH
+#else
+  Nothing
+#endif

@@ -127,6 +127,7 @@ import qualified Data.Map.Lazy                    as M (
   )
 import qualified Data.Set                         as S (empty, union)
 
+import Capabilities.Alloy               (maxBitWidth)
 import Modelling.Auxiliary.Common       (lensRulesL, oneOf)
 import Modelling.PetriNet.Reach.Type    (Place, ShowTransition (ShowTransition))
 
@@ -1077,7 +1078,7 @@ checkBasicConfig basicC@BasicConfig{
   = Just "The maximum 'flowOverall' is set unreasonably high, given the other parameters."
  | transitions + places > 1 + fst flowOverall
   = Just "The number of transitions and places exceeds the minimum 'flowOverall' too much to create a connected net."
- | petriScopeBitWidth basicC > 5
+ | Just maxValue <- maxBitWidth, petriScopeBitWidth basicC > maxValue
   = Just "'places', 'transitions' and the maximum 'flowOverall' and 'tokensOverall' should not be set too high."
  | otherwise
   = Nothing

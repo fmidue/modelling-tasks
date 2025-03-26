@@ -98,6 +98,7 @@ library
       Modelling.PetriNet.Reach.Type
       Modelling.Types
   other-modules:
+      Configuration
       Modelling.Auxiliary.Diagrams
       Modelling.CdOd.Phrasing
       Modelling.CdOd.Phrasing.English
