@@ -953,7 +953,6 @@ defaultFindActivatedTransitionsConfig = FindActivatedTransitionsConfig
   , printSolution = False
   , alloyConfig  = defaultAlloyConfig
   }
--}
 
 data CapacityConfig = CapacityConfig
   { basicConfig :: BasicConfig
