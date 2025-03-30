@@ -23,7 +23,9 @@ module Modelling.PetriNet.Types (
   AdvConfig (..),
   AlloyConfig (..),
   BasicConfig (..),
+  Capacity (Capacity),
   CapacityConfig (..),
+  CapacityNode (..),
   Change,
   ChangeConfig (..),
   Concurrent (..),
@@ -242,6 +244,9 @@ newtype Concurrent a = Concurrent (a, a)
 newtype ActivatedTransitions a = ActivatedTransitions [a]
   deriving (Functor, Foldable, Traversable, Generic, Read, Show)
 
+newtype Capacity a b = Capacity ([(Place, String, Int)], [(a, b, Int)])
+  deriving (Functor, Foldable, Traversable, Generic, Read, Show)
+
 class Show (n String) => PetriNode n where
   initialTokens     :: n a -> Int
 
@@ -267,6 +272,8 @@ class Show (n String) => PetriNode n where
   on all used keys.
   -}
   mapNode           :: Ord b => (a -> b) -> n a -> n b
+
+  capacityPlace     :: n a -> Int
 
   {-|
   This function acts like 'traverse' on 'Traversable'.
@@ -356,6 +363,45 @@ instance PetriNode SimpleNode where
     SimplePlace s <$> traverseKeyMap f o
   traverseNode f (SimpleTransition o) =
     SimpleTransition <$> traverseKeyMap f o
+
+data CapacityNode a =
+  CapacityPlace {
+    initial  :: Int,
+    capacity :: Int,
+    -- | max allowed token number of a 'CapacityNode'
+    flowIn   :: Map a Int,
+    flowOut  :: Map a Int
+  } |
+  CapacityTransition {
+  flowIn  :: Map a Int,
+  flowOut :: Map a Int
+  }
+  deriving (Eq, Generic, Read, Show)
+
+instance PetriNode CapacityNode where
+  initialTokens CapacityPlace {initial} = initial
+  initialTokens CapacityTransition {} =
+    error "A CapacityTransition does not have initial tokens!"
+
+  isPlaceNode CapacityPlace {} = True
+  isPlaceNode _                = False
+
+  isTransitionNode CapacityTransition {} = True
+  isTransitionNode _                   = False
+
+  mapNode f (CapacityPlace s c i o) =
+    CapacityPlace s c (M.mapKeys f i) (M.mapKeys f o)
+  mapNode f (CapacityTransition i o) =
+    CapacityTransition (M.mapKeys f i) (M.mapKeys f o)
+
+  traverseNode f (CapacityPlace s c i o) =
+    CapacityPlace s c <$> traverseKeyMap f i <*> traverseKeyMap f o
+  traverseNode f (CapacityTransition i o) =
+    CapacityTransition <$> traverseKeyMap f i <*> traverseKeyMap f o
+
+  capacityPlace CapacityPlace {capacity} = capacity
+  capacityPlace CapacityTransition {} =
+    error "A CapacityTransition does not have a capacity!"
 
 {-|
 Returns 'Just' the 'initial' tokens of the given node, if it is a place 'PetriNode',
@@ -557,6 +603,55 @@ updateSimpleNode g (SimpleTransition o) = SimpleTransition (g o)
 
 type SimplePetriLike = PetriLike SimpleNode
 type SimplePetriNet = SimplePetriLike String
+
+--{-
+instance Net PetriLike CapacityNode where
+  emptyNet = PetriLike M.empty
+
+  flow x y = (M.lookup y . flowOutCN) <=< (M.lookup x . allNodes)
+
+  nodes = allNodes
+
+  deleteFlow x y (PetriLike ns) = PetriLike
+    . M.adjust (updateCapacityNode (M.delete y)) x
+    . M.adjust (updateCapacityNode (M.delete x)) y
+    $ ns
+
+  deleteNode x ns = PetriLike
+    . adjustAll (updateCapacityNode (M.delete x)) (Just $ M.keys $ allNodes ns)
+    . adjustAll (updateCapacityNode (M.delete x)) (Just $ M.keys $ allNodes ns)
+    . M.delete x
+    . allNodes
+    $ ns
+
+
+  alterFlow x f y = PetriLike
+    . M.adjust (updateCapacityNode (M.insert y f)) x
+    . M.adjust (updateCapacityNode (M.insert x f)) y
+    . allNodes
+
+
+  alterNode x mt = PetriLike . M.alter alterNode' x . allNodes
+    where
+      alterNode' = Just . fromMaybe
+        (maybe (CapacityTransition M.empty M.empty) (\m -> CapacityPlace m 0 M.empty M.empty) mt)
+
+  outFlow x = maybe M.empty flowOutCN . M.lookup x . allNodes
+
+  mapNet = mapPetriLike
+  traverseNet = traversePetriLike
+
+flowOutCN :: CapacityNode a -> Map a Int
+flowOutCN CapacityPlace {flowOut} = flowOut
+flowOutCN CapacityTransition {flowOut} = flowOut
+
+updateCapacityNode :: (Map a Int -> Map b Int) -> CapacityNode a -> CapacityNode b
+updateCapacityNode g (CapacityPlace t c i o)   = CapacityPlace t c (g i) (g o)
+updateCapacityNode g (CapacityTransition i o)    = CapacityTransition (g i) (g o)
+
+type CapacityPetriLike = PetriLike CapacityNode
+type CapacityPetriNet = CapacityPetriLike String
+---}
 
 {-|
 A 'Functor' like 'fmap' on 'PetriLike'.

@@ -18,6 +18,7 @@ module Modelling.PetriNet.Alloy (
   modulePetriConcepts,
   modulePetriConstraints,
   modulePetriSignature,
+  randomInSegment,
   signatures,
   skolemVariable,
   taskInstance,
