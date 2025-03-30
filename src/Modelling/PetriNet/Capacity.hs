@@ -122,7 +122,6 @@ import Language.Alloy.Call (
   )
 
 import GHC.Generics                     (Generic)
-import Control.Monad.IO.Class (liftIO, MonadIO)
 
 
 data CapacityInstance = CapacityInstance {
@@ -137,7 +136,7 @@ data CapacityInstance = CapacityInstance {
   deriving (Generic, Read, Show)
 
 capacityGenerate
-  :: (MonadAlloy m, MonadThrow m, MonadIO m)
+  :: (MonadAlloy m, MonadThrow m)
   => CapacityConfig
   -> Int
   -> Int
@@ -150,9 +149,6 @@ capacityGenerate config seed segment =
 
     (net, condition) <- findCapacity config segment
     condition' <- lift $ traverse (parseWith parseTransitionPrec) condition
-    liftIO $ print net
-    liftIO $ print condition
-    liftIO $ print tn
     return $ CapacityInstance
       { drawWith = DrawSettings
           { withPlaceNames = not $ hidePlaceNames gc
