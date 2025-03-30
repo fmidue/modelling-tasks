@@ -103,6 +103,7 @@ library
       Modelling.CdOd.Phrasing
       Modelling.CdOd.Phrasing.English
       Modelling.CdOd.Phrasing.German
+      Modelling.PetriNet.Capacity
       Modelling.PetriNet.Reach.Draw
       Modelling.PetriNet.Reach.Roll
       Paths_modelling_tasks
