@@ -604,7 +604,6 @@ updateSimpleNode g (SimpleTransition o) = SimpleTransition (g o)
 type SimplePetriLike = PetriLike SimpleNode
 type SimplePetriNet = SimplePetriLike String
 
---{-
 instance Net PetriLike CapacityNode where
   emptyNet = PetriLike M.empty
 
@@ -648,10 +647,6 @@ flowOutCN CapacityTransition {flowOut} = flowOut
 updateCapacityNode :: (Map a Int -> Map b Int) -> CapacityNode a -> CapacityNode b
 updateCapacityNode g (CapacityPlace t c i o)   = CapacityPlace t c (g i) (g o)
 updateCapacityNode g (CapacityTransition i o)    = CapacityTransition (g i) (g o)
-
-type CapacityPetriLike = PetriLike CapacityNode
-type CapacityPetriNet = CapacityPetriLike String
----}
 
 {-|
 A 'Functor' like 'fmap' on 'PetriLike'.
