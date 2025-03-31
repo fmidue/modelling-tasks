@@ -333,6 +333,8 @@ instance PetriNode Node where
   traverseNode f (TransitionNode i o) =
     TransitionNode <$> traverseKeyMap f i <*> traverseKeyMap f o
 
+  capacityPlace _ = error "This node type does not support capacities."
+
 data SimpleNode a =
   SimplePlace {
   initial           :: Int,
@@ -364,6 +366,7 @@ instance PetriNode SimpleNode where
   traverseNode f (SimpleTransition o) =
     SimpleTransition <$> traverseKeyMap f o
 
+  capacityPlace _ = error "This node type does not support capacities."
 data CapacityNode a =
   CapacityPlace {
     initial  :: Int,
