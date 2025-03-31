@@ -7,7 +7,9 @@
 {-# LANGUAGE DeriveGeneric #-}
 
 module Modelling.PetriNet.Capacity (
+  capacityEvaluation,
   capacityGenerate,
+  capacitySyntax,
   capacityTask,
   findCapacity,
   petriNetFindCapacity,
@@ -61,10 +63,11 @@ import Modelling.PetriNet.Diagram (
   renderWith,
   )
 import Modelling.PetriNet.Find (
-  FindInstance (..),
   findTaskInstance,
+  toFindEvaluationList,
   )
 import Modelling.PetriNet.Reach.Type (
+  ShowTransition (ShowTransition),
   Transition (Transition),
   parseTransitionPrec,
   )
@@ -73,22 +76,13 @@ import Modelling.PetriNet.Types         (
   AdvConfig (..),
   AlloyConfig (..),
   BasicConfig (..),
-  Capacity (Capacity),
   CapacityConfig (..),
-  Drawable,
   DrawSettings (..),
   GraphConfig (..),
-  Net (..),
   PetriLike (PetriLike, allNodes),
   SimpleNode (..),
   CapacityNode (..),
-  SimplePetriNet,
   petriScopeBitWidth,
-  transitionListShow,
-  transitionNames,
-  placeNames,
-  randomDrawSettings,
-  manyRandomDrawSettings,
   )
 
 import Control.Monad.Catch              (MonadThrow)
@@ -115,6 +109,7 @@ import Control.Monad.Random (
   mkStdGen
   )
 import Control.Monad.Trans              (MonadTrans (lift))
+import Data.Foldable                    (for_)
 import Data.GraphViz.Commands           (GraphvizCommand (Circo))
 import Data.String.Interpolate          (i, iii)
 import Language.Alloy.Call (
@@ -180,20 +175,69 @@ capacityTask
   -> CapacityInstance
   -> LangM m
 capacityTask path task = do
+  paragraph $ translate $ do
+    english "Consider the following Petri net with capacities:"
+    german "Betrachten Sie folgendes Petrinetz mit Kapazitäten:"
   image
     $=<< renderWith path "capacity" (originalNet task) (drawWith task)
-  paragraph $ translate $ do
-    english [iii|
-      State your answer by giving the number of the Petri net candidate
-      that is syntactically incorrect.
-      #{" "}|]
-    german [iii|
-      Geben Sie Ihre Antwort durch Angabe der Nummer des Petrinetzkandidaten an,
-      der syntaktisch inkorrekt ist.
-      #{" "}|]
+  image
+    $=<< renderWith path "capacity" (transformedNet task) (drawWith task)
+  paragraph $ do
+    translate $ do
+      english [iii|
+        Given the isolated Places . With how many tokens and how should they be connected to Transitions so that the
+        resulting Petri net without capacities is equivalent to the given Petri net with capacities?
+        |]
+      german [iii|
+        Gegeben der isolierten Stellen. Mit wie vielen Marken und wie sollten diese mit Transitionen verbunden werden, sodass
+        das resultierende Petrinetz ohne Kapazitäten äquivalent zum gegebenen Petrinetz mit Kapazitäten ist?
+        |]
+    translate $ do
+      english [iii|
+        State your answer by giving a tuple consisting of the complement places and their flows.
+        #{" "}|]
+      german [iii|
+        Geben Sie Ihre Antwort in Form eines Tupels an, das aus den Komplementstellen und ihren Flüssen besteht.
+        #{" "}|]
     pure ()
   paragraph hoveringInformation
   pure ()
+
+capacitySyntax
+  :: OutputCapable m
+  => CapacityInstance
+  -> [Transition]
+  -> LangM' m ()
+capacitySyntax task input = do
+  for_ input assertTransition
+  pure ()
+  where
+    assert = continueOrAbort False
+    assertTransition t = assert (isValidTransition t) $ translate $ do
+      let t' = show $ ShowTransition t
+      english $ t' ++ " is a transition of the given Petri net?"
+      german $ t' ++ " ist eine Transition des gegebenen Petrinetzes?"
+    isValidTransition (Transition x) = x >= 1 && x <= numberOfTransitions task
+
+capacityEvaluation
+  :: (Monad m, OutputCapable m)
+  => CapacityInstance
+  -> [Transition]
+  -> Rated m
+capacityEvaluation task x = do
+  let what = translations $ do
+        english "are activated"
+        german "sind aktiviert"
+  uncurry (printSolutionAndAssert DefiniteArticle)
+    $=<< unLangM $ toFindEvaluationList what withSol active x
+  where
+    active = capacitySolution task
+    withSol = showSolution task
+
+capacitySolution :: CapacityInstance -> [Transition]
+capacitySolution task = active
+  where
+    ActivatedTransitions active = toFind task
 
 findCapacity
   :: (MonadAlloy m, MonadThrow m, RandomGen g)
@@ -307,7 +351,8 @@ pred #{capacityPredicateName}[#{activated} : set Transitions] {
 
 }
 
-run #{capacityPredicateName} for exactly #{places basicC} givenPlaces, exactly #{places basicC} addedPlaces, exactly #{transitions basicC} Transitions, #{petriScopeBitWidth basicC} Int
+run #{capacityPredicateName} for exactly #{places basicC} givenPlaces, exactly #{places basicC} addedPlaces,
+exactly #{transitions basicC} Transitions, #{petriScopeBitWidth basicC} Int
 |]
   where
     activated = skolemName
@@ -321,3 +366,37 @@ activatedTransitions = skolemVariable capacityPredicateName skolemName
 skolemName :: String
 skolemName = "activatedTrans"
 
+defaultCapacityInstance :: CapacityInstance
+defaultCapacityInstance = CapacityInstance {
+  drawWith = DrawSettings {
+    withPlaceNames = True,
+    withSvgHighlighting = True,
+    withTransitionNames = True,
+    with1Weights = False,
+    withGraphvizCommand = Circo
+    },
+  toFind = ActivatedTransitions [Transition 1, Transition 2],
+  originalNet = PetriLike {
+    allNodes = M.fromList [
+      ("s1",CapacityPlace {initial = 0, capacity = 0, flowIn = M.empty, flowOut = M.empty}),
+      ("s2",CapacityPlace {initial = 0, capacity = 0, flowIn = M.empty, flowOut = M.empty}),
+      ("s3",CapacityPlace {initial = 1, capacity = 3, flowIn = M.fromList [("t1",2),("t2",2)], flowOut = M.empty}),
+      ("s4",CapacityPlace {initial = 2, capacity = 4, flowIn = M.empty, flowOut = M.fromList [("t1",1),("t2",2)]}),
+      ("t1",CapacityTransition {flowIn = M.fromList [("s3",2),("s4",1)], flowOut = M.fromList [("s3",2)]}),
+      ("t2",CapacityTransition {flowIn = M.fromList [("s3",2),("s4",2)], flowOut = M.fromList [("s3",2)]})
+      ]
+    },
+  transformedNet = PetriLike {
+    allNodes = M.fromList [
+      ("s1",SimplePlace {initial = 2, flowOut = M.fromList [("t1",2),("t2",2)]}),
+      ("s2",SimplePlace {initial = 2, flowOut = M.empty}),
+      ("s3",SimplePlace {initial = 1, flowOut = M.empty}),
+      ("s4",SimplePlace {initial = 2, flowOut = M.fromList [("t1",1),("t2",2)]}),
+      ("t1",SimpleTransition {flowOut = M.fromList [("s2",1),("s3",2)]}),
+      ("t2",SimpleTransition {flowOut = M.fromList [("s2",2),("s3",2)]})
+      ]
+    },
+  numberOfPlaces = 4,
+  numberOfTransitions = 3,
+  showSolution = False
+}
