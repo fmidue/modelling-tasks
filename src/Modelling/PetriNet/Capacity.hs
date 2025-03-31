@@ -11,6 +11,7 @@ module Modelling.PetriNet.Capacity (
   capacityGenerate,
   capacitySyntax,
   capacityTask,
+  defaultCapacityInstance,
   findCapacity,
   petriNetFindCapacity,
   petriNetPickCapacity,
