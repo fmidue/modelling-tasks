@@ -21,6 +21,19 @@ dependencies:
   - mtl
   - transformers
 executables:
+  capacity:
+    main: capacity.hs
+    source-dirs:
+      - .
+      - common
+    dependencies:
+      - bytestring
+      - digest
+      - modelling-tasks
+      - output-blocks
+      - pretty-simple
+    other-modules:
+      - Common
   check-cds:
     main: check-cds.hs
     source-dirs: .

@@ -130,6 +130,7 @@ library:
     - Modelling.PetriNet.MatchToMath
     - Modelling.PetriNet.Parser
     - Modelling.PetriNet.Types
+    - Modelling.PetriNet.Capacity
     - Modelling.PetriNet.Concurrency
     - Modelling.PetriNet.Conflict
     - Modelling.PetriNet.ConflictPlaces
