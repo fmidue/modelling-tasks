@@ -79,6 +79,7 @@ import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
   GenericOutputCapable (..),
   LangM,
+  Language,
   OutputCapable,
   Rated,
   ($=<<),
@@ -102,7 +103,8 @@ import System.Random.Shuffle (shuffleM)
 data FindAuxiliaryPetriNodesInstance = FindAuxiliaryPetriNodesInstance {
   activityDiagram :: UMLActivityDiagram,
   plantUMLConf :: PlantUmlConfig,
-  showSolution :: Bool
+  showSolution :: Bool,
+  addText :: Maybe (Map Language String)
 } deriving (Generic, Read, Show)
 
 data FindAuxiliaryPetriNodesConfig = FindAuxiliaryPetriNodesConfig {
@@ -115,7 +117,8 @@ data FindAuxiliaryPetriNodesConfig = FindAuxiliaryPetriNodesConfig {
   hideBranchConditions :: Bool,
   -- | Avoid having to add new sink transitions for representing finals
   avoidAddingSinksForFinals :: Maybe Bool,
-  printSolution :: Bool
+  printSolution :: Bool,
+  extraText :: Maybe (Map Language String)
 } deriving (Generic, Read, Show)
 
 defaultFindAuxiliaryPetriNodesConfig :: FindAuxiliaryPetriNodesConfig
@@ -127,7 +130,8 @@ defaultFindAuxiliaryPetriNodesConfig =
     hideNodeNames = False,
     hideBranchConditions = False,
     avoidAddingSinksForFinals = Nothing,
-    printSolution = False
+    printSolution = False,
+    extraText = Nothing
   }
 
 checkFindAuxiliaryPetriNodesConfig :: FindAuxiliaryPetriNodesConfig -> Maybe String
@@ -299,7 +303,8 @@ getFindAuxiliaryPetriNodesTask config@FindAuxiliaryPetriNodesConfig {..} = do
         suppressNodeNames = hideNodeNames,
         suppressBranchConditions = hideBranchConditions
       },
-    showSolution = printSolution
+    showSolution = printSolution,
+    addText = extraText
   }
   where
     checkCount ad =
@@ -353,5 +358,6 @@ defaultFindAuxiliaryPetriNodesInstance = FindAuxiliaryPetriNodesInstance {
     ]
   },
   plantUMLConf = defaultPlantUmlConfig,
-  showSolution = False
+  showSolution = False,
+  addText = Nothing
 }
