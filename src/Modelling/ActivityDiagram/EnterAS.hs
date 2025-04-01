@@ -56,6 +56,7 @@ import Control.OutputCapable.Blocks (
   ArticleToUse (IndefiniteArticle),
   GenericOutputCapable (..),
   LangM,
+  Language,
   Rated,
   OutputCapable,
   ($=<<),
@@ -70,6 +71,7 @@ import Control.Monad.Random (
   evalRandT,
   mkStdGen,
   )
+import Data.Map (Map)
 import Data.Maybe                       (isNothing)
 import Data.String.Interpolate (i, iii)
 import GHC.Generics (Generic)
@@ -80,7 +82,8 @@ data EnterASInstance = EnterASInstance {
   activityDiagram :: UMLActivityDiagram,
   drawSettings :: PlantUmlConfig,
   sampleSequence :: [String],
-  showSolution :: Bool
+  showSolution :: Bool,
+  addText :: Maybe (Map Language String)
 } deriving (Eq, Generic, Read, Show)
 
 data EnterASConfig = EnterASConfig {
@@ -89,7 +92,8 @@ data EnterASConfig = EnterASConfig {
   maxInstances :: Maybe Integer,
   objectNodeOnEveryPath :: Maybe Bool,
   answerLength :: !(Int, Int),
-  printSolution :: Bool
+  printSolution :: Bool,
+  extraText :: Maybe (Map Language String)
 } deriving (Generic, Read, Show)
 
 defaultEnterASConfig :: EnterASConfig
@@ -105,7 +109,8 @@ defaultEnterASConfig = EnterASConfig {
   maxInstances = Just 50,
   objectNodeOnEveryPath = Just True,
   answerLength = (5, 8),
-  printSolution = False
+  printSolution = False,
+  extraText = Nothing
 }
 
 checkEnterASConfig :: EnterASConfig -> Maybe String
@@ -282,7 +287,8 @@ getEnterASTask config = do
             suppressBranchConditions = hideBranchConditions config
             },
           sampleSequence = sampleSolution $ enterActionSequence x,
-          showSolution = printSolution config
+          showSolution = printSolution config,
+          addText = extraText config
         }) ad
 
 defaultEnterASInstance :: EnterASInstance
@@ -329,5 +335,6 @@ defaultEnterASInstance = EnterASInstance {
   },
   drawSettings = defaultPlantUmlConfig,
   sampleSequence = ["D","E","G","B","F"],
-  showSolution = False
+  showSolution = False,
+  addText = Nothing
 }
