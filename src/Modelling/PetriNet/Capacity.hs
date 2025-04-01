@@ -11,12 +11,14 @@ module Modelling.PetriNet.Capacity (
   capacityGenerate,
   capacitySyntax,
   capacityTask,
+  checkCapacityConfigs,
   defaultCapacityInstance,
   findCapacity,
   petriNetFindCapacity,
   petriNetPickCapacity,
   parseCapacity,
   pickCapacity,
+  simpleCapacityTask,
   ) where
 
 import qualified Modelling.PetriNet.Types         as Find (
@@ -163,6 +165,19 @@ capacityGenerate config seed segment =
       where
         bc = Find.basicConfig config
         gc = Pick.graphConfig config
+
+simpleCapacityTask
+  :: (
+    MonadCache m,
+    MonadDiagrams m,
+    MonadGraphviz m,
+    MonadThrow m,
+    OutputCapable m
+    )
+  => FilePath
+  -> CapacityInstance
+  -> LangM m
+simpleCapacityTask = capacityTask
 
 capacityTask
   :: (
@@ -367,6 +382,34 @@ activatedTransitions = skolemVariable capacityPredicateName skolemName
 skolemName :: String
 skolemName = "activatedTrans"
 
+checkCapacityConfigs :: CapacityConfig -> Maybe String
+checkCapacityConfigs CapacityConfig {
+  basicConfig,
+  advConfig,
+  maxCapacity
+  }
+  = checkActivatedSourceConfig basicConfig advConfig
+  <|> checkCapacityConfig basicConfig maxCapacity
+
+checkCapacityConfig :: BasicConfig -> Int -> Maybe String
+checkCapacityConfig BasicConfig {
+    atLeastActive,
+    maxTokensPerPlace,
+    maxFlowPerEdge
+    }
+  maxCapacity
+  | maxCapacity <= 0
+  = Just "'maxCapacity' has to be positive."
+  | maxCapacity < maxFlowPerEdge
+  = Just "'maxCapacity' can not be too low for flow weights."
+  | maxCapacity < maxTokensPerPlace
+  = Just "The starting tokens can not exceed 'maxCapacity'."
+  | atLeastActive == 0
+  = Just "At least one transition has to be activated."
+  | otherwise
+  = Nothing
+
+{-
 defaultCapacityInstance :: CapacityInstance
 defaultCapacityInstance = CapacityInstance {
   drawWith = DrawSettings {
