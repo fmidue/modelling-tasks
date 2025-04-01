@@ -48,6 +48,7 @@ module Modelling.PetriNet.Types (
   PetriLike (..),
   PetriMath (..),
   PetriNode (..),
+  PetriNodeWithCapacity (..),
   PickConcurrencyConfig (..),
   PickConflictConfig (..),
   PickMistakeConfig (..),
@@ -273,8 +274,6 @@ class Show (n String) => PetriNode n where
   -}
   mapNode           :: Ord b => (a -> b) -> n a -> n b
 
-  capacityPlace     :: n a -> Int
-
   {-|
   This function acts like 'traverse' on 'Traversable'.
 
@@ -290,6 +289,10 @@ class Show (n String) => PetriNode n where
   order-preserving.
   -}
   traverseNode      :: (Applicative f, Ord b) => (a -> f b) -> n a -> f (n b)
+
+class PetriNode n => PetriNodeWithCapacity n where
+  capacityPlace :: n a -> Int
+  capacityPlace _ = error "This node type does not support capacities."
 
 {-|
 A node is part of a Petri like graph (see 'PetriLike').
@@ -333,8 +336,6 @@ instance PetriNode Node where
   traverseNode f (TransitionNode i o) =
     TransitionNode <$> traverseKeyMap f i <*> traverseKeyMap f o
 
-  capacityPlace _ = error "This node type does not support capacities."
-
 data SimpleNode a =
   SimplePlace {
   initial           :: Int,
@@ -366,7 +367,6 @@ instance PetriNode SimpleNode where
   traverseNode f (SimpleTransition o) =
     SimpleTransition <$> traverseKeyMap f o
 
-  capacityPlace _ = error "This node type does not support capacities."
 data CapacityNode a =
   CapacityPlace {
     initial  :: Int,
@@ -402,6 +402,7 @@ instance PetriNode CapacityNode where
   traverseNode f (CapacityTransition i o) =
     CapacityTransition <$> traverseKeyMap f i <*> traverseKeyMap f o
 
+instance PetriNodeWithCapacity CapacityNode where
   capacityPlace CapacityPlace {capacity} = capacity
   capacityPlace CapacityTransition {} =
     error "A CapacityTransition does not have a capacity!"
