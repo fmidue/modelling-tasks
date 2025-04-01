@@ -85,9 +85,11 @@ import Modelling.PetriNet.Types         (
   PetriLike (PetriLike, allNodes),
   SimpleNode (..),
   CapacityNode (..),
+  checkActivatedSourceConfig,
   petriScopeBitWidth,
   )
 
+import Control.Applicative              ((<|>))
 import Control.Monad.Catch              (MonadThrow)
 import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
@@ -409,7 +411,6 @@ checkCapacityConfig BasicConfig {
   | otherwise
   = Nothing
 
-{-
 defaultCapacityInstance :: CapacityInstance
 defaultCapacityInstance = CapacityInstance {
   drawWith = DrawSettings {

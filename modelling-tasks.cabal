@@ -84,6 +84,7 @@ library
       Modelling.PetriNet.MatchToMath
       Modelling.PetriNet.Parser
       Modelling.PetriNet.Types
+      Modelling.PetriNet.Capacity
       Modelling.PetriNet.Concurrency
       Modelling.PetriNet.Conflict
       Modelling.PetriNet.ConflictPlaces
@@ -103,7 +104,6 @@ library
       Modelling.CdOd.Phrasing
       Modelling.CdOd.Phrasing.English
       Modelling.CdOd.Phrasing.German
-      Modelling.PetriNet.Capacity
       Modelling.PetriNet.Reach.Draw
       Modelling.PetriNet.Reach.Roll
       Paths_modelling_tasks
