@@ -49,6 +49,7 @@ import Modelling.ActivityDiagram.PlantUMLConverter (
   )
 import Modelling.ActivityDiagram.Shuffle (shuffleAdNames)
 import Modelling.Auxiliary.Common       (getFirstInstance)
+import Modelling.Auxiliary.Output       (extra)
 
 import Control.Applicative (Alternative ((<|>)))
 import Control.Monad.Catch              (MonadThrow)
@@ -220,6 +221,9 @@ enterASTask path task = do
       english [i|expresses the execution of A followed by B (under the assumption that both are action nodes of the diagram).|]
       german [i|die Ausführung von A gefolgt von B aus (unter der Annahme, dass beides Aktionsknoten des Diagramms sind).|]
     pure ()
+
+  extra $ addText task
+  
   pure ()
 
 enterASInitial :: [String]

@@ -63,7 +63,7 @@ import Modelling.ActivityDiagram.PlantUMLConverter (
   drawAdToFile,
   )
 import Modelling.Auxiliary.Common       (getFirstInstance)
-import Modelling.Auxiliary.Output (addPretext)
+import Modelling.Auxiliary.Output (addPretext, extra)
 import Modelling.PetriNet.Types (
   Net (..),
   PetriLike (..),
@@ -236,6 +236,9 @@ an Knoten (Stellen und Transitionen), die Anzahl der Hilfsstellen und die Anzahl
       german [i|In diesem Beispiel etwa enthält das entstehende Netz insgesamt 10 Knoten, davon 2 Hilfsstellen und 3 Hilfstransitionen.|]
     pure ()
   finalNodesAdvice True
+
+  extra $ addText task
+
   pure ()
 
 findAuxiliaryPetriNodesInitial :: FindAuxiliaryPetriNodesSolution
