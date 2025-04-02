@@ -333,7 +333,7 @@ petriNetFindCapacityAlloy basicC advConfig maxCapacity
   = [i|module PetriNetCapacity
 
 #{modulePetriSignature}
-#{const modulePetriAdditions advConfig}
+#{modulePetriAdditions}
 #{moduleHelpers}
 #{modulePetriConcepts}
 #{modulePetriConstraints}

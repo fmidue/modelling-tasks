@@ -39,6 +39,7 @@ import Modelling.PetriNet.Alloy (
   modulePetriConcepts,
   modulePetriConstraints,
   modulePetriSignature,
+  signatures,
   taskInstance,
   )
 import Modelling.PetriNet.Pick (
@@ -199,6 +200,7 @@ petriNetPickMistakeAlloy basicC changeC mistakeC
   = [i|module PetriNetPickMistake
 
 #{modulePetriSignature}
+#{sigs}
 #{moduleHelpers}
 #{modulePetriConcepts}
 #{modulePetriConstraints}
@@ -211,9 +213,10 @@ pred #{mistakePredicateName} {
   #{prohibitSelfLoops mistakeC}
 }
 
-run #{mistakePredicateName} for exactly #{places basicC} Places, exactly #{transitions basicC} Transitions, #{petriScopeBitWidth basicC} Int
+run #{mistakePredicateName} for #{petriScopeBitWidth basicC} Int
 |]
   where
+    sigs = signatures "given" (places basicC) (transitions basicC)
     prohibitSelfLoops :: MistakeConfig -> String
     prohibitSelfLoops MistakeConfig{ canHaveTransitionToTransition, canHavePlaceToPlace }
       | canHaveTransitionToTransition && canHavePlaceToPlace

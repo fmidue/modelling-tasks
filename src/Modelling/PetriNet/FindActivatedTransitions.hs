@@ -303,7 +303,7 @@ petriNetActivatedTransitionsAlloy basicC changeC atMost advConfig
   = [i|module PetriNetFindActivatedTransitions
 
 #{modulePetriSignature}
-#{const modulePetriAdditions advConfig}
+#{modulePetriAdditions}
 #{moduleHelpers}
 #{modulePetriConcepts}
 #{modulePetriConstraints}
