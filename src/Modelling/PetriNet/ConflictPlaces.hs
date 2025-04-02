@@ -36,6 +36,7 @@ import Modelling.PetriNet.Find (
   checkFindTwoActive,
   drawFindWith,
   findInitialTuple,
+  prohibitHidePlaceNames,
   )
 import Modelling.PetriNet.Diagram (
   renderWith,
@@ -51,7 +52,6 @@ import Modelling.PetriNet.Types (
   Conflict,
   DrawSettings (..),
   FindConflictConfig (..),
-  GraphConfig (..),
   Net,
   PetriConflict (..),
   PetriLike (..),
@@ -217,13 +217,6 @@ checkFindConflictPlacesConfig FindConflictConfig {
   <|> checkFindTwoActive basicConfig
   <|> checkConfigForFind basicConfig changeConfig graphConfig
   <|> checkConflictConfig basicConfig conflictConfig
-
-prohibitHidePlaceNames :: GraphConfig -> Maybe String
-prohibitHidePlaceNames gc
-  | hidePlaceNames gc
-  = Just "Place names are required for this task type."
-  | otherwise
-  = Nothing
 
 defaultFindConflictPlacesInstance :: FindInstance SimplePetriNet Conflict
 defaultFindConflictPlacesInstance = FindInstance {

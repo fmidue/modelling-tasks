@@ -10,13 +10,16 @@
 
 module Modelling.PetriNet.Find (
   FindInstance (..),
-  checkFindTwoActive,
+  checkBasicConfig,
   checkConfigForFind,
+  checkFindTwoActive,
   findInitialList,
   findInitialTuple,
   findTaskInstance,
   lToFind,
+  prohibitHidePlaceNames,
   prohibitHideTransitionNames,
+  prohibitPatchworkRenderer,
   toFindEvaluation,
   toFindEvaluationList,
   toFindEvaluationTuple,
@@ -180,6 +183,13 @@ checkConfigForFind basic change graph =
   <|> checkBasicConfig basic
   <|> checkChangeConfig basic change
   <|> prohibitPatchworkRenderer graph
+
+prohibitHidePlaceNames :: GraphConfig -> Maybe String
+prohibitHidePlaceNames gc
+  | hidePlaceNames gc
+  = Just "Place names are required for this task type."
+  | otherwise
+  = Nothing
 
 prohibitHideTransitionNames :: GraphConfig -> Maybe String
 prohibitHideTransitionNames gc

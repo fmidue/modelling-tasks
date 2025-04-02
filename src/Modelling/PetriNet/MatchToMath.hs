@@ -61,6 +61,10 @@ import Modelling.PetriNet.Alloy (
   )
 import Modelling.PetriNet.Diagram       (cacheNet)
 import Modelling.PetriNet.LaTeX         (toPetriMath)
+import Modelling.PetriNet.Find (
+  prohibitHidePlaceNames,
+  prohibitHideTransitionNames,
+  )
 import Modelling.PetriNet.Parser (
   parseChange,
   parseRenamedNet,
@@ -512,21 +516,13 @@ checkMathConfig c@MathConfig {
   useDifferentGraphLayouts,
   wrongInstances
   } = checkBasicConfig basicConfig
-  <|> prohibitHideNames graphConfig
+  <|> prohibitHidePlaceNames graphConfig
+  <|> prohibitHideTransitionNames graphConfig
   <|> checkActivatedSourceConfig basicConfig advConfig
   <|> checkChangeConfig basicConfig changeConfig
   <|> checkConfig c
   <|> checkGraphLayouts useDifferentGraphLayouts wrongInstances graphConfig
   <|> prohibitPatchworkRenderer graphConfig
-
-prohibitHideNames :: GraphConfig -> Maybe String
-prohibitHideNames gc
-  | hidePlaceNames gc
-  = Just "Place names are required for this task type"
-  | hideTransitionNames gc
-  = Just "Transition names are required for this task type"
-  | otherwise
-  = Nothing
 
 checkConfig :: MathConfig -> Maybe String
 checkConfig MathConfig {
