@@ -409,8 +409,6 @@ checkCapacityConfig BasicConfig {
     maxFlowPerEdge
     }
   maxCapacity
-  | maxCapacity <= 0
-  = Just "'maxCapacity' has to be positive."
   | maxCapacity < maxFlowPerEdge
   = Just "'maxCapacity' can not be too low for flow weights."
   | maxCapacity < maxTokensPerPlace
