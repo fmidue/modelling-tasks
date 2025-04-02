@@ -1064,9 +1064,9 @@ data CapacityConfig = CapacityConfig
 
 defaultCapacityConfig :: CapacityConfig
 defaultCapacityConfig = CapacityConfig
-  { basicConfig = defaultBasicConfig { places = 2, transitions = 2, atLeastActive = 1 }
+  { basicConfig = defaultBasicConfig { places = 2, transitions = 2, atLeastActive = 1, maxTokensPerPlace = 4, tokensOverall = (2, 8)}
   , advConfig = defaultAdvConfig
-  , maxCapacity = 8
+  , maxCapacity = 4
   , graphConfig = defaultGraphConfig { hidePlaceNames = False, hideTransitionNames = False }
   , printSolution = True
   , useDifferentGraphLayouts = False

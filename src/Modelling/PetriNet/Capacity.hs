@@ -66,7 +66,11 @@ import Modelling.PetriNet.Diagram (
   renderWith,
   )
 import Modelling.PetriNet.Find (
+  checkBasicConfig,
   findTaskInstance,
+  prohibitHidePlaceNames,
+  prohibitHideTransitionNames,
+  prohibitPatchworkRenderer,
   toFindEvaluationList,
   )
 import Modelling.PetriNet.Reach.Type (
@@ -388,9 +392,14 @@ checkCapacityConfigs :: CapacityConfig -> Maybe String
 checkCapacityConfigs CapacityConfig {
   basicConfig,
   advConfig,
-  maxCapacity
+  maxCapacity,
+  graphConfig
   }
-  = checkActivatedSourceConfig basicConfig advConfig
+  = prohibitHidePlaceNames graphConfig
+  <|> prohibitHideTransitionNames graphConfig
+  <|> checkBasicConfig basicConfig
+  <|> prohibitPatchworkRenderer graphConfig
+  <|> checkActivatedSourceConfig basicConfig advConfig
   <|> checkCapacityConfig basicConfig maxCapacity
 
 checkCapacityConfig :: BasicConfig -> Int -> Maybe String
