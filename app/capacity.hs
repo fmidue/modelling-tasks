@@ -45,13 +45,15 @@ mainFind :: Int -> IO ()
 mainFind i = forceErrors $ do
   let theConfig@CapacityConfig{..} = defaultCapacityConfig
   lift $ pPrint theConfig
-  (pls, trns, maxCap) <- lift $ userInput theConfig
+  (pls, trns, maxCap, newFlow, oneMin) <- lift $ userInput theConfig
   let config = theConfig {
         basicConfig = basicConfig {
             places = pls,
             transitions = trns
             },
-        maxCapacity = maxCap
+        maxCapacity = maxCap,
+        newFlowToComplement = newFlow,
+        oneMinCapacity = oneMin
         } :: CapacityConfig
   let c = checkCapacityConfigs config
   if isNothing c
@@ -72,12 +74,21 @@ validateInput d = do
       putStrLn "Invalid input"
       validateInput d
 
-userInput :: CapacityConfig -> IO (Int, Int, Int)
-userInput CapacityConfig{basicConfig = BasicConfig{..}, maxCapacity = maxCapacity} = do
+userInput :: CapacityConfig -> IO (Int, Int, Int, Int, Int)
+userInput CapacityConfig{
+  basicConfig = BasicConfig{..},
+  maxCapacity = maxCapacity,
+  newFlowToComplement = newFlowToComplement,
+  oneMinCapacity = oneMinCapacity
+  } = do
   putStr "Number of Places: "
   pls <- validateInput places
   putStr "Number of Transitions: "
   trns <- validateInput transitions
   putStr "Highest capacity for a place: "
   maxCap <- validateInput maxCapacity
-  return (pls, trns, maxCap)
+  putStr "How many new flows are connected to complement places: "
+  newFlow <- validateInput newFlowToComplement
+  putStr "What capacity should one place have: "
+  oneMin <- validateInput oneMinCapacity
+  return (pls, trns, maxCap, newFlow, oneMin)
