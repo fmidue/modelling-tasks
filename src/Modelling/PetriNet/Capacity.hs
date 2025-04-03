@@ -467,8 +467,10 @@ checkCapacityConfig BasicConfig {
   = Just "At least one flow has to be connected to a complement place."
   | newFlowWithComplement > 2 * transitions
   = Just "'newFlowWithComplement' is set unreasonably high, given the number of transitions."
+  | oneMinCapacity <= 0
+  = Just "'oneMinCapacity' has to be positive."
   | oneMinCapacity > maxCapacity
-  = Just "'maxCapacity' has to be larger than 'oneMinCapacity'."
+  = Just "'oneMinCapacity' can not be higher than 'maxCapacity'."
   | atLeastActive == 0
   = Just "At least one transition has to be activated."
   | otherwise
