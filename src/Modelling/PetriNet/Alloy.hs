@@ -12,6 +12,7 @@ module Modelling.PetriNet.Alloy (
   compChange,
   connected,
   defaultConstraints,
+  enforceConstraints,
   isolated,
   moduleHelpers,
   modulePetriAdditions,

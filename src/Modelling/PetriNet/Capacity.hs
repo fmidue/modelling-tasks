@@ -50,7 +50,6 @@ import Modelling.Auxiliary.Output (
   hoveringInformation,
   )
 import Modelling.PetriNet.Alloy (
-  defaultConstraints,
   enforceConstraints,
   moduleHelpers,
   modulePetriAdditions,
@@ -373,7 +372,7 @@ pred sinkTransitionsCapacity[ts : set Transitions] {
 }
 
 pred #{capacityPredicateName}[#{activated} : set Transitions] {
-  #{defaultConstraints activated basicC}
+  #{defaultConstraintsAtLeastZero activated basicC}
   #{compAdvConstraintsCapacity advConfig}
 
   all t : Transitions, p : givenPlaces |
@@ -392,6 +391,10 @@ exactly #{transitions basicC} Transitions, #{petriScopeBitWidthCapacity basicC m
 |]
   where
     activated = skolemName
+    defaultConstraintsAtLeastZero :: String -> BasicConfig -> String
+    defaultConstraintsAtLeastZero activated basicC =
+      enforceConstraints True Nothing activated (basicC { atLeastActive = 0 }) ++
+      concat [ [i|\##{activated} >= #{atLeastActive basicC}|] | atLeastActive basicC > 0]
     compAdvConstraintsCapacity :: AdvConfig -> String
     compAdvConstraintsCapacity AdvConfig
                         { presenceOfSelfLoops, presenceOfSinkTransitions
