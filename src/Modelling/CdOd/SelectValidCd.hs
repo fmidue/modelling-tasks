@@ -48,7 +48,7 @@ import Modelling.Auxiliary.Output (
   checkTaskText,
   hoveringInformation,
   simplifiedInformation,
-  uniform, 
+  uniform,
   extra,
   )
 import Modelling.CdOd.CdAndChanges.Instance (

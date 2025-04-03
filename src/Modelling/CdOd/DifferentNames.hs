@@ -55,7 +55,7 @@ import Modelling.Auxiliary.Output (
   directionsAdvice,
   hoveringInformation,
   simplifiedInformation,
-  uniform, 
+  uniform,
   extra,
   )
 import Modelling.CdOd.Auxiliary.Util

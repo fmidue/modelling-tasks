@@ -69,7 +69,7 @@ import Modelling.Auxiliary.Output (
   checkTaskText,
   hoveringInformation,
   simplifiedInformation,
-  uniform, 
+  uniform,
   extra,
   )
 import Modelling.CdOd.Auxiliary.Util    (alloyInstanceToOd)

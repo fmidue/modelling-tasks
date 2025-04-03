@@ -65,7 +65,7 @@ import Modelling.Auxiliary.Common (
   oneOf,
   )
 import Modelling.Auxiliary.Output (
-  addPretext, 
+  addPretext,
   extra
   )
 import Modelling.PetriNet.Diagram (cacheNet)

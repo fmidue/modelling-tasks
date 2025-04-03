@@ -84,7 +84,7 @@ import Data.String.Interpolate          (i, iii)
 import Data.Vector.Distance (Params(..), leastChanges)
 import GHC.Generics (Generic)
 import Modelling.Auxiliary.Output (
-  addPretext, 
+  addPretext,
   extra
   )
 import System.Random.Shuffle (shuffleM)

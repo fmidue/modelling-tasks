@@ -64,7 +64,7 @@ import Modelling.ActivityDiagram.PlantUMLConverter (
   )
 import Modelling.Auxiliary.Common       (getFirstInstance)
 import Modelling.Auxiliary.Output (
-  addPretext, 
+  addPretext,
   extra
   )
 import Modelling.PetriNet.Types (
