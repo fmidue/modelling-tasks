@@ -260,9 +260,7 @@ Geben Sie Ihre Antwort als Zahl an, welche die eine valide Aktionsfolge unter de
         bedeuten, dass Folge 2 eine valide Folge von Aktionsknoten ist.
         |]
     pure ()
-
-  extra $ addText task
-  
+  extra $ addText task  
   pure ()
 
 selectASSolutionToMap
