@@ -50,7 +50,8 @@ task2023_12 = DifferentNamesConfig {
     },
   printSolution = True,
   timeout = Nothing,
-  withObviousMapping = Nothing
+  withObviousMapping = Nothing,
+  extraText = Nothing
   }
 
 {-|

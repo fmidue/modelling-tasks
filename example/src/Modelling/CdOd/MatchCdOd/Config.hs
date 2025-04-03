@@ -147,7 +147,7 @@ task2024_17 = MatchCdOdConfig {
   printSolution = True,
   timeout = Nothing,
   withNonTrivialInheritance = Just True,
-  extaText = Nothing
+  extraText = Nothing
   }
 
 {-|
