@@ -63,7 +63,10 @@ import Modelling.ActivityDiagram.PlantUMLConverter (
   drawAdToFile,
   )
 import Modelling.Auxiliary.Common       (getFirstInstance)
-import Modelling.Auxiliary.Output (addPretext, extra)
+import Modelling.Auxiliary.Output (
+  addPretext, 
+  extra
+  )
 import Modelling.PetriNet.Types (
   Net (..),
   PetriLike (..),

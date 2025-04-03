@@ -72,7 +72,10 @@ import Modelling.ActivityDiagram.PlantUMLConverter (
   drawAdToFile,
   )
 import Modelling.Auxiliary.Common (getFirstInstance, oneOf)
-import Modelling.Auxiliary.Output (addPretext, extra)
+import Modelling.Auxiliary.Output (
+  addPretext, 
+  extra
+  )
 import Modelling.PetriNet.Diagram (cacheNet)
 import Modelling.PetriNet.Types (
   DrawSettings (..),

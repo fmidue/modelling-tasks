@@ -55,7 +55,8 @@ import Modelling.Auxiliary.Output (
   directionsAdvice,
   hoveringInformation,
   simplifiedInformation,
-  uniform, extra,
+  uniform, 
+  extra,
   )
 import Modelling.CdOd.Auxiliary.Util
 import Modelling.CdOd.CD2Alloy.Transform (

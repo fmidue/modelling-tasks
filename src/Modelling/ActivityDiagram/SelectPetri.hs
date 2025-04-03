@@ -64,7 +64,10 @@ import Modelling.Auxiliary.Common (
   TaskGenerationException (NoInstanceAvailable),
   oneOf,
   )
-import Modelling.Auxiliary.Output (addPretext, extra)
+import Modelling.Auxiliary.Output (
+  addPretext, 
+  extra
+  )
 import Modelling.PetriNet.Diagram (cacheNet)
 import Modelling.PetriNet.Types (
   DrawSettings (..),

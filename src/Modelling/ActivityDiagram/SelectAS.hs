@@ -83,7 +83,10 @@ import Data.Monoid (Sum(..), getSum)
 import Data.String.Interpolate          (i, iii)
 import Data.Vector.Distance (Params(..), leastChanges)
 import GHC.Generics (Generic)
-import Modelling.Auxiliary.Output (addPretext, extra)
+import Modelling.Auxiliary.Output (
+  addPretext, 
+  extra
+  )
 import System.Random.Shuffle (shuffleM)
 
 data SelectASInstance = SelectASInstance {

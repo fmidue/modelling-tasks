@@ -72,7 +72,10 @@ import Data.Map (Map)
 import Data.Maybe (isJust, isNothing, fromJust)
 import Data.String.Interpolate (i, iii)
 import GHC.Generics (Generic)
-import Modelling.Auxiliary.Output (addPretext, extra)
+import Modelling.Auxiliary.Output (
+  addPretext, 
+  extra
+  )
 import System.Random.Shuffle (shuffleM)
 
 data MatchAdInstance = MatchAdInstance {
