@@ -94,7 +94,7 @@ checkFindConflictInstance :: (a, PetriConflict' String) -> Bool
 checkFindConflictInstance = isValidConflict . snd
 
 checkPickConflictInstance :: [(a, Maybe (PetriConflict' String))] -> Bool
-checkPickConflictInstance = f . fmap snd
+checkPickConflictInstance = f . map snd
   where
     f [Just x, Nothing] = isValidConflict x
     f _                 = False

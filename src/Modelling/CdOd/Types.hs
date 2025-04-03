@@ -1223,7 +1223,7 @@ renameObjectsWithClassesAndLinksInOd
 renameObjectsWithClassesAndLinksInOd bmClasses bmLinks ObjectDiagram {..} = do
   objects' <- traverse renameObject objects
   let bmObjects = BM.fromList
-        $ zip (fmap objectName objects) (fmap objectName objects')
+        $ zip (map objectName objects) (map objectName objects')
   links' <- traverse
     (bitraverse (`BM.lookup` bmObjects) (`BM.lookup` bmLinks))
     links

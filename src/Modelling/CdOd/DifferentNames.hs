@@ -306,7 +306,7 @@ instance Show ShowName where
   show = showName . showName'
 
 mappingShow :: [(Name, Name)] -> [(ShowName, ShowName)]
-mappingShow = fmap (bimap ShowName ShowName)
+mappingShow = map (bimap ShowName ShowName)
 
 type DifferentNamesTaskText = [SpecialOutput DifferentNamesTaskTextElement]
 

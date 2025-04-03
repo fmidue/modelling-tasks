@@ -91,7 +91,7 @@ checkFindConcurrencyInstance :: (a, Concurrent String) -> Bool
 checkFindConcurrencyInstance = isValidConcurrency . snd
 
 checkPickConcurrencyInstance :: [(a, Maybe (Concurrent String))] -> Bool
-checkPickConcurrencyInstance = f . fmap snd
+checkPickConcurrencyInstance = f . map snd
   where
     f [Just x, Nothing] = isValidConcurrency x
     f _                 = False
