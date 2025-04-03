@@ -138,7 +138,7 @@ data MatchPetriConfig = MatchPetriConfig {
   -- | Option to prevent auxiliary PetriNodes from occurring
   auxiliaryPetriNodeAbsent :: Maybe Bool,
   -- | Avoid having to add new sink transitions for representing finals
-  avoidAddingSinksForFinals :: Maybe Bool,
+  shouldAvoidAddingSinksForFinals :: Maybe Bool,
   -- | Avoid Activity Finals in concurrent flows to reduce confusion
   noActivityFinalInForkBlocks :: Maybe Bool,
   printSolution :: Bool,
@@ -160,7 +160,7 @@ defaultMatchPetriConfig =
     petriLayout = [Dot],
     petriSvgHighlighting = True,
     auxiliaryPetriNodeAbsent = Nothing,
-    avoidAddingSinksForFinals = Nothing,
+    shouldAvoidAddingSinksForFinals = Nothing,
     noActivityFinalInForkBlocks = Just True,
     printSolution = False,
     extraText = Nothing
@@ -178,7 +178,7 @@ checkMatchPetriConfig' MatchPetriConfig {
     maxInstances,
     petriLayout,
     auxiliaryPetriNodeAbsent,
-    avoidAddingSinksForFinals,
+    shouldAvoidAddingSinksForFinals,
     noActivityFinalInForkBlocks
   }
   | Config.activityFinalNodes adConfig > 1
@@ -192,9 +192,9 @@ checkMatchPetriConfig' MatchPetriConfig {
     Setting the parameter 'auxiliaryPetriNodeAbsent' to True
     prohibits having more than 0 cycles
     |]
-  | Just True <- avoidAddingSinksForFinals,
+  | Just True <- shouldAvoidAddingSinksForFinals,
     fst (actionLimits adConfig) + forkJoinPairs adConfig < 1
-    = Just "The option 'avoidAddingSinksForFinals' can only be achieved if the number of Actions, Fork Nodes and Join Nodes together is positive"
+    = Just "The option 'shouldAvoidAddingSinksForFinals' can only be achieved if the number of Actions, Fork Nodes and Join Nodes together is positive"
   | noActivityFinalInForkBlocks == Just True && Config.activityFinalNodes adConfig > 1
     = Just "Setting the parameter 'noActivityFinalInForkBlocks' to True prohibits having more than 1 'activityFinalNodes'"
   | noActivityFinalInForkBlocks == Just False && Config.activityFinalNodes adConfig == 0
@@ -211,7 +211,7 @@ matchPetriAlloy :: MatchPetriConfig -> String
 matchPetriAlloy MatchPetriConfig {
   adConfig,
   auxiliaryPetriNodeAbsent,
-  avoidAddingSinksForFinals,
+  shouldAvoidAddingSinksForFinals,
   noActivityFinalInForkBlocks
 }
   = adConfigToAlloy modules predicates adConfig
@@ -222,7 +222,7 @@ matchPetriAlloy MatchPetriConfig {
           [i|
             #{f auxiliaryPetriNodeAbsent "auxiliaryPetriNodeAbsent"}
             #{f activityFinalsExist "activityFinalsExist"}
-            #{f avoidAddingSinksForFinals "avoidAddingSinksForFinals"}
+            #{f shouldAvoidAddingSinksForFinals "avoidAddingSinksForFinals"}
             #{f noActivityFinalInForkBlocks "noActivityFinalInForkBlocks"}
           |]
     f opt s =
