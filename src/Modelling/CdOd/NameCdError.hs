@@ -69,7 +69,7 @@ import Modelling.Auxiliary.Output (
   checkTaskText,
   hoveringInformation,
   simplifiedInformation,
-  uniform,
+  uniform, extra,
   )
 import Modelling.CdOd.Auxiliary.Util    (alloyInstanceToOd)
 import Modelling.CdOd.CD2Alloy.Transform (
@@ -243,7 +243,8 @@ data NameCdErrorConfig = NameCdErrorConfig {
   printSolution               :: Bool,
   reasonsPerInstance          :: NumberOfReasons,
   timeout                     :: Maybe Int,
-  useNames                    :: Bool
+  useNames                    :: Bool,
+  extraText                   :: Maybe (Map Language String)
   } deriving (Generic, Read, Show)
 
 defaultNameCdErrorConfig :: NameCdErrorConfig
@@ -279,7 +280,8 @@ defaultNameCdErrorConfig = NameCdErrorConfig {
     preDefinedValid = length $ filter (not . isIllegal) [minBound ..]
     },
   timeout = Nothing,
-  useNames = True
+  useNames = True,
+  extraText = Nothing
   }
 
 checkNameCdErrorConfig :: NameCdErrorConfig -> Maybe String
@@ -408,7 +410,8 @@ data NameCdErrorInstance = NameCdErrorInstance {
   cdDrawSettings              :: !CdDrawSettings,
   errorReasons                :: !(Map Char (Bool, Reason)),
   showSolution                :: Bool,
-  taskText                    :: !NameCdErrorTaskText
+  taskText                    :: !NameCdErrorTaskText,
+  addText                     :: Maybe (Map Language String)
   } deriving (Eq, Generic, Read, Show)
 
 relevantRelationships
@@ -550,6 +553,7 @@ nameCdErrorTask path task = do
   toTaskText path task
   paragraph simplifiedInformation
   paragraph hoveringInformation
+  extra $ addText task
   pure ()
 
 dueTo1 :: Int
@@ -658,7 +662,8 @@ instance RandomiseLayout NameCdErrorInstance where
       classDiagram = cd,
       errorReasons = errorReasons,
       showSolution = showSolution,
-      taskText = taskText
+      taskText = taskText,
+      addText = addText
       }
 
 shuffleInstance :: MonadRandom m => NameCdErrorInstance -> m NameCdErrorInstance
@@ -679,7 +684,8 @@ shuffleInstance NameCdErrorInstance {..} = do
       },
     errorReasons = rs,
     showSolution = showSolution,
-    taskText = taskText
+    taskText = taskText,
+    addText = addText
     }
   where
     updatePriority x (priorities, ys) = case x of
@@ -709,7 +715,8 @@ renameInstance inst@NameCdErrorInstance {..} names' nonInheritances' = do
     classDiagram = cd,
     errorReasons = errorReasons,
     showSolution = showSolution,
-    taskText = taskText
+    taskText = taskText,
+    addText = addText
     }
 
 nameCdErrorGenerate
@@ -750,7 +757,8 @@ generateAndRandomise config@NameCdErrorConfig {..} = do
       $ (True, PreDefined reason)
       : map (False,) chosenReasons,
     showSolution = printSolution,
-    taskText = defaultNameCdErrorTaskText
+    taskText = defaultNameCdErrorTaskText,
+    addText = extraText
     }
   where
     relevanceFor xs n x = Annotation {
@@ -998,5 +1006,6 @@ defaultNameCdErrorInstance = NameCdErrorInstance {
     ('k', (False, PreDefined ReverseRelationships))
     ],
   showSolution = False,
-  taskText = defaultNameCdErrorTaskText
+  taskText = defaultNameCdErrorTaskText,
+  addText = Nothing
   }
