@@ -844,7 +844,7 @@ checkObjectDiagram ObjectDiagram {..}
   | otherwise
   = Nothing
   where
-    objectNames = objectName <$> objects
+    objectNames = map objectName objects
 
 minRelationships :: ClassConfig -> Int
 minRelationships ClassConfig {..} =

@@ -425,7 +425,7 @@ defaultDifferentNamesTaskText = [
   ]
 
 differentNamesInitial :: [(Name, Name)]
-differentNamesInitial = bimap Name Name <$> [("a", "x"), ("b", "y")]
+differentNamesInitial = map (bimap Name Name) [("a", "x"), ("b", "y")]
 
 differentNamesSyntax
   :: OutputCapable m
