@@ -1,11 +1,11 @@
-{-# LANGUAGE ApplicativeDo #-}
-{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE ApplicativeDo         #-}
+{-# LANGUAGE DeriveGeneric         #-}
 {-# LANGUAGE DuplicateRecordFields #-}
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE NamedFieldPuns #-}
-{-# LANGUAGE QuasiQuotes #-}
-{-# LANGUAGE RecordWildCards #-}
-{-# LANGUAGE TupleSections #-}
+{-# LANGUAGE FlexibleContexts      #-}
+{-# LANGUAGE NamedFieldPuns        #-}
+{-# LANGUAGE QuasiQuotes           #-}
+{-# LANGUAGE RecordWildCards       #-}
+{-# LANGUAGE TupleSections         #-}
 
 module Modelling.ActivityDiagram.MatchPetri (
   MatchPetriInstance(..),
@@ -24,119 +24,107 @@ module Modelling.ActivityDiagram.MatchPetri (
   defaultMatchPetriInstance
 ) where
 
-import qualified Data.Map as M (empty, fromList, keys)
+import qualified Data.Map                                    as M (empty,
+                                                                   fromList,
+                                                                   keys)
 
-import qualified Modelling.ActivityDiagram.Config as Config (
-  AdConfig (activityFinalNodes, flowFinalNodes),
-  )
-import qualified Modelling.ActivityDiagram.PetriNet as PK (label)
-import qualified Modelling.PetriNet.Types as Petri (Net (nodes))
+import qualified Modelling.ActivityDiagram.Config            as Config (AdConfig (activityFinalNodes, flowFinalNodes))
+import qualified Modelling.ActivityDiagram.PetriNet          as PK (label)
+import qualified Modelling.PetriNet.Types                    as Petri (Net (nodes))
 
-import Capabilities.Alloy               (MonadAlloy, getInstances)
-import Capabilities.Cache               (MonadCache)
-import Capabilities.Diagrams            (MonadDiagrams)
-import Capabilities.Graphviz            (MonadGraphviz)
-import Capabilities.PlantUml            (MonadPlantUml)
-import Modelling.ActivityDiagram.Alloy  (adConfigToAlloy, modulePetriNet)
-import Modelling.ActivityDiagram.Auxiliary.Util (finalNodesAdvice)
-import Modelling.ActivityDiagram.Datatype (
-  UMLActivityDiagram(..),
-  AdNode (..),
-  AdConnection (..),
-  isActionNode,
-  isActivityFinalNode,
-  isObjectNode,
-  isDecisionNode,
-  isFlowFinalNode,
-  isMergeNode,
-  isJoinNode,
-  isInitialNode,
-  isForkNode
-  )
-import Modelling.ActivityDiagram.Isomorphism (petriHasMultipleAutomorphisms)
-import Modelling.ActivityDiagram.PetriNet (
-  PetriKey (..),
-  convertToPetriNet,
-  isAuxiliaryPetriNode,
-  )
-import Modelling.ActivityDiagram.Shuffle (shufflePetri, shuffleAdNames)
-import Modelling.ActivityDiagram.Config (
-  AdConfig (actionLimits, cycles, forkJoinPairs),
-  checkAdConfig,
-  defaultAdConfig,
-  )
-import Modelling.ActivityDiagram.Instance (parseInstance)
-import Modelling.ActivityDiagram.PlantUMLConverter (
-  PlantUmlConfig (..),
-  defaultPlantUmlConfig,
-  drawAdToFile,
-  )
-import Modelling.Auxiliary.Common (getFirstInstance, oneOf)
-import Modelling.Auxiliary.Output (addPretext)
-import Modelling.PetriNet.Diagram (cacheNet)
-import Modelling.PetriNet.Types (
-  DrawSettings (..),
-  Net,
-  PetriLike (..),
-  SimpleNode (..),
-  SimplePetriLike,
-  )
+import           Capabilities.Alloy                          (MonadAlloy,
+                                                              getInstances)
+import           Capabilities.Cache                          (MonadCache)
+import           Capabilities.Diagrams                       (MonadDiagrams)
+import           Capabilities.Graphviz                       (MonadGraphviz)
+import           Capabilities.PlantUml                       (MonadPlantUml)
+import           Modelling.ActivityDiagram.Alloy             (adConfigToAlloy,
+                                                              modulePetriNet)
+import           Modelling.ActivityDiagram.Auxiliary.Util    (finalNodesAdvice)
+import           Modelling.ActivityDiagram.Config            (AdConfig (actionLimits, cycles, forkJoinPairs),
+                                                              checkAdConfig,
+                                                              defaultAdConfig)
+import           Modelling.ActivityDiagram.Datatype          (AdConnection (..),
+                                                              AdNode (..),
+                                                              UMLActivityDiagram (..),
+                                                              isActionNode,
+                                                              isActivityFinalNode,
+                                                              isDecisionNode,
+                                                              isFlowFinalNode,
+                                                              isForkNode,
+                                                              isInitialNode,
+                                                              isJoinNode,
+                                                              isMergeNode,
+                                                              isObjectNode)
+import           Modelling.ActivityDiagram.Instance          (parseInstance)
+import           Modelling.ActivityDiagram.Isomorphism       (petriHasMultipleAutomorphisms)
+import           Modelling.ActivityDiagram.PetriNet          (PetriKey (..),
+                                                              convertToPetriNet,
+                                                              isAuxiliaryPetriNode)
+import           Modelling.ActivityDiagram.PlantUMLConverter (PlantUmlConfig (..),
+                                                              defaultPlantUmlConfig,
+                                                              drawAdToFile)
+import           Modelling.ActivityDiagram.Shuffle           (shuffleAdNames,
+                                                              shufflePetri)
+import           Modelling.Auxiliary.Common                  (getFirstInstance,
+                                                              oneOf)
+import           Modelling.Auxiliary.Output                  (addPretext)
+import           Modelling.PetriNet.Diagram                  (cacheNet)
+import           Modelling.PetriNet.Types                    (DrawSettings (..),
+                                                              Net,
+                                                              PetriLike (..),
+                                                              SimpleNode (..),
+                                                              SimplePetriLike)
 
-import Control.Applicative (Alternative ((<|>)))
-import Control.Monad.Catch              (MonadThrow)
-import Control.OutputCapable.Blocks (
-  ArticleToUse (DefiniteArticle),
-  GenericOutputCapable (..),
-  LangM,
-  Rated,
-  OutputCapable,
-  ($=<<),
-  english,
-  german,
-  translate,
-  translations,
-  multipleChoice,
-  )
-import Control.Monad.Random (
-  MonadRandom,
-  RandT,
-  RandomGen,
-  evalRandT,
-  mkStdGen
-  )
-import Data.Bifunctor                   (second)
-import Data.GraphViz.Commands (GraphvizCommand(..))
-import Data.List (sort)
-import Data.Map (Map)
-import Data.Maybe (isJust, fromJust)
-import Data.String.Interpolate (i, iii)
-import Data.Tuple.Extra                 (dupe)
-import GHC.Generics (Generic)
-import System.Random.Shuffle (shuffleM)
+import           Control.Applicative                         (Alternative ((<|>)))
+import           Control.Monad.Catch                         (MonadThrow)
+import           Control.Monad.Random                        (MonadRandom,
+                                                              RandT, RandomGen,
+                                                              evalRandT,
+                                                              mkStdGen)
+import           Control.OutputCapable.Blocks                (ArticleToUse (DefiniteArticle),
+                                                              GenericOutputCapable (..),
+                                                              LangM,
+                                                              OutputCapable,
+                                                              Rated, english,
+                                                              german,
+                                                              multipleChoice,
+                                                              translate,
+                                                              translations,
+                                                              ($=<<))
+import           Data.Bifunctor                              (second)
+import           Data.GraphViz.Commands                      (GraphvizCommand (..))
+import           Data.List                                   (sort)
+import           Data.Map                                    (Map)
+import           Data.Maybe                                  (fromJust, isJust)
+import           Data.String.Interpolate                     (i, iii)
+import           Data.Tuple.Extra                            (dupe)
+import           GHC.Generics                                (Generic)
+import           System.Random.Shuffle                       (shuffleM)
 
 
 data MatchPetriInstance = MatchPetriInstance {
   activityDiagram :: UMLActivityDiagram,
-  petriNet :: SimplePetriLike PetriKey,
-  plantUMLConf :: PlantUmlConfig,
-  petriDrawConf :: DrawSettings,
-  showSolution :: Bool
+  petriNet        :: SimplePetriLike PetriKey,
+  plantUMLConf    :: PlantUmlConfig,
+  petriDrawConf   :: DrawSettings,
+  showSolution    :: Bool
 } deriving (Generic, Read, Show)
 
 data MatchPetriConfig = MatchPetriConfig {
-  adConfig :: AdConfig,
-  maxInstances :: Maybe Integer,
-  hideBranchConditions :: Bool,
-  petriLayout :: [GraphvizCommand],
+  adConfig                    :: AdConfig,
+  maxInstances                :: Maybe Integer,
+  hideBranchConditions        :: Bool,
+  petriLayout                 :: [GraphvizCommand],
   -- | Whether highlighting on hover should be enabled
-  petriSvgHighlighting :: Bool,
+  petriSvgHighlighting        :: Bool,
   -- | Option to prevent auxiliary PetriNodes from occurring
-  auxiliaryPetriNodeAbsent :: Maybe Bool,
+  auxiliaryPetriNodeAbsent    :: Maybe Bool,
   -- | Avoid having to add new sink transitions for representing finals
-  avoidAddingSinksForFinals :: Maybe Bool,
+  avoidAddingSinksForFinals   :: Maybe Bool,
   -- | Avoid Activity Finals in concurrent flows to reduce confusion
   noActivityFinalInForkBlocks :: Maybe Bool,
-  printSolution :: Bool
+  printSolution               :: Bool
 } deriving (Generic, Read, Show)
 
 pickRandomLayout :: (MonadRandom m) => MatchPetriConfig -> m GraphvizCommand
@@ -220,9 +208,9 @@ matchPetriAlloy MatchPetriConfig {
           |]
     f opt s =
           case opt of
-            Just True -> s
+            Just True  -> s
             Just False -> [i| not #{s}|]
-            Nothing -> ""
+            Nothing    -> ""
 
 mapTypesToLabels
   :: Net p n
@@ -256,15 +244,15 @@ mapTypesToLabels petri =
       M.keys $ Petri.nodes petri
 
 data MatchPetriSolution = MatchPetriSolution {
-  actionNodes :: [(String, Int)],
-  objectNodes :: [(String, Int)],
-  decisionNodes :: [Int],
-  mergeNodes :: [Int],
-  forks :: [Int],
-  joins :: [Int],
-  initialNodes :: [Int],
-  activityFinalNodes :: [Int],
-  flowFinalNodes :: [Int],
+  actionNodes         :: [(String, Int)],
+  objectNodes         :: [(String, Int)],
+  decisionNodes       :: [Int],
+  mergeNodes          :: [Int],
+  forks               :: [Int],
+  joins               :: [Int],
+  initialNodes        :: [Int],
+  activityFinalNodes  :: [Int],
+  flowFinalNodes      :: [Int],
   auxiliaryPetriNodes :: [Int]
 } deriving (Generic, Show, Eq, Read)
 
