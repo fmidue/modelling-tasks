@@ -52,7 +52,7 @@ mainFind i = forceErrors $ do
             transitions = trns
             },
         maxCapacity = maxCap,
-        newFlowToComplement = newFlow,
+        newFlowWithComplement = newFlow,
         oneMinCapacity = oneMin
         } :: CapacityConfig
   let c = checkCapacityConfigs config
@@ -78,7 +78,7 @@ userInput :: CapacityConfig -> IO (Int, Int, Int, Int, Int)
 userInput CapacityConfig{
   basicConfig = BasicConfig{..},
   maxCapacity = maxCapacity,
-  newFlowToComplement = newFlowToComplement,
+  newFlowWithComplement = newFlowWithComplement,
   oneMinCapacity = oneMinCapacity
   } = do
   putStr "Number of Places: "
@@ -88,7 +88,7 @@ userInput CapacityConfig{
   putStr "Highest capacity for a place: "
   maxCap <- validateInput maxCapacity
   putStr "How many new flows are connected to complement places: "
-  newFlow <- validateInput newFlowToComplement
+  newFlow <- validateInput newFlowWithComplement
   putStr "What capacity should one place have: "
   oneMin <- validateInput oneMinCapacity
   return (pls, trns, maxCap, newFlow, oneMin)

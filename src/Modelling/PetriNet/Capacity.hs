@@ -438,7 +438,7 @@ checkCapacityConfigs CapacityConfig {
   basicConfig,
   advConfig,
   maxCapacity,
-  newFlowToComplement,
+  newFlowWithComplement,
   oneMinCapacity,
   graphConfig
   }
@@ -447,7 +447,7 @@ checkCapacityConfigs CapacityConfig {
   <|> checkBasicConfig basicConfig
   <|> prohibitPatchworkRenderer graphConfig
   <|> checkActivatedSourceConfig basicConfig advConfig
-  <|> checkCapacityConfig basicConfig maxCapacity newFlowToComplement oneMinCapacity
+  <|> checkCapacityConfig basicConfig maxCapacity newFlowWithComplement oneMinCapacity
 
 checkCapacityConfig :: BasicConfig -> Int -> Int -> Int -> Maybe String
 checkCapacityConfig BasicConfig {
@@ -457,16 +457,16 @@ checkCapacityConfig BasicConfig {
     maxFlowPerEdge
     }
   maxCapacity
-  newFlowToComplement
+  newFlowWithComplement
   oneMinCapacity
   | maxCapacity < maxFlowPerEdge
   = Just "'maxCapacity' can not be too low for flow weights."
   | maxCapacity < maxTokensPerPlace
   = Just "The starting tokens can not exceed 'maxCapacity'."
-  | newFlowToComplement <= 0
+  | newFlowWithComplement <= 0
   = Just "At least one flow has to be connected to a complement place."
-  | newFlowToComplement > 2 * transitions
-  = Just "'newFlowToComplement' is set unreasonably high, given the number of transitions."
+  | newFlowWithComplement > 2 * transitions
+  = Just "'newFlowWithComplement' is set unreasonably high, given the number of transitions."
   | oneMinCapacity > maxCapacity
   = Just "'maxCapacity' has to be larger than 'oneMinCapacity'."
   | atLeastActive == 0
