@@ -1,6 +1,7 @@
 {-# LANGUAGE ApplicativeDo #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE DeriveFunctor #-}
@@ -49,8 +50,8 @@ import Modelling.Auxiliary.Output (
   hoveringInformation,
   )
 import Modelling.PetriNet.Alloy (
-  compAdvConstraints,
   defaultConstraints,
+  enforceConstraints,
   moduleHelpers,
   modulePetriAdditions,
   modulePetriConcepts,
@@ -357,9 +358,23 @@ fact {
   no addedTransitions
 }
 
+pred sourceTransitionsCapacity[ts : set Transitions] {
+  no Nodes.flow[ts]
+  all p : placesWithCapacity |
+  let flows = p.flow[ts] |
+  flows + p.tokens <= p.capacity
+}
+
+pred sinkTransitionsCapacity[ts : set Transitions] {
+  no ts.flow
+  all p : placesWithCapacity |
+  let flows = p.flow[ts] |
+  flows - p.tokens <= p.capacity
+}
+
 pred #{capacityPredicateName}[#{activated} : set Transitions] {
   #{defaultConstraints activated basicC}
-  #{compAdvConstraints advConfig}
+  #{compAdvConstraintsCapacity advConfig}
 
   all t : Transitions, p : givenPlaces |
     let n = minus[t.flow[p], p.flow[t]] |
@@ -377,6 +392,25 @@ exactly #{transitions basicC} Transitions, #{petriScopeBitWidthCapacity basicC m
 |]
   where
     activated = skolemName
+    compAdvConstraintsCapacity :: AdvConfig -> String
+    compAdvConstraintsCapacity AdvConfig
+                        { presenceOfSelfLoops, presenceOfSinkTransitions
+                        , presenceOfSourceTransitions
+                        } = [i|
+  #{maybe "" petriLoops presenceOfSelfLoops}
+  #{maybe "" petriSink presenceOfSinkTransitions}
+  #{maybe "" petriSource presenceOfSourceTransitions}
+    |]
+      where
+        petriLoops = \case
+          True  -> "some n : Nodes | selfLoop[n]"
+          False -> "no n : Nodes | selfLoop[n]"
+        petriSink = \case
+          True  -> "some t : Transitions | sinkTransitionsCapacity[t]"
+          False -> "no t : Transitions | sinkTransitionsCapacity[t]"
+        petriSource = \case
+          True  -> "some t : Transitions | sourceTransitionsCapacity[t]"
+          False -> "no t : Transitions | sourceTransitionsCapacity[t]"
 
 capacityPredicateName :: String
 capacityPredicateName = "showCapacity"
