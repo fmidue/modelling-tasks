@@ -49,7 +49,6 @@ import Modelling.ActivityDiagram.PlantUMLConverter (
   )
 import Modelling.ActivityDiagram.Shuffle (shuffleAdNames)
 import Modelling.Auxiliary.Common       (getFirstInstance)
-import Modelling.Auxiliary.Output       (extra)
 
 import Control.Applicative (Alternative ((<|>)))
 import Control.Monad.Catch              (MonadThrow)
@@ -76,7 +75,7 @@ import Data.Map (Map)
 import Data.Maybe                       (isNothing)
 import Data.String.Interpolate (i, iii)
 import GHC.Generics (Generic)
-import Modelling.Auxiliary.Output (addPretext)
+import Modelling.Auxiliary.Output (addPretext, extra)
 import System.Random.Shuffle (shuffleM)
 
 data EnterASInstance = EnterASInstance {
