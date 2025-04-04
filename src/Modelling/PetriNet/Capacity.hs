@@ -50,6 +50,7 @@ import Modelling.Auxiliary.Output (
   hoveringInformation,
   )
 import Modelling.PetriNet.Alloy (
+  compAdvConstraints,
   enforceConstraints,
   moduleHelpers,
   modulePetriAdditions,
@@ -375,7 +376,7 @@ pred sinkTransitionsCapacity[ts : set Transitions] {
 
 pred #{capacityPredicateName}[#{activated} : set Transitions] {
   #{defaultConstraintsAtLeastZero activated basicC}
-  #{compAdvConstraintsCapacity advConfig}
+  #{compAdvConstraints advConfig True}
 
   all t : Transitions, p : givenPlaces |
     let n = minus[t.flow[p], p.flow[t]] |
@@ -397,25 +398,6 @@ exactly #{transitions basicC} Transitions, #{petriScopeBitWidth (basicCBitWidth 
     defaultConstraintsAtLeastZero activated basicC =
       enforceConstraints True Nothing activated (basicC { atLeastActive = 0 }) ++
       concat [ [i|\##{activated} >= #{atLeastActive basicC}|] | atLeastActive basicC > 0]
-    compAdvConstraintsCapacity :: AdvConfig -> String
-    compAdvConstraintsCapacity AdvConfig
-                        { presenceOfSelfLoops, presenceOfSinkTransitions
-                        , presenceOfSourceTransitions
-                        } = [i|
-  #{maybe "" petriLoops presenceOfSelfLoops}
-  #{maybe "" petriSink presenceOfSinkTransitions}
-  #{maybe "" petriSource presenceOfSourceTransitions}
-    |]
-      where
-        petriLoops = \case
-          True  -> "some n : Nodes | selfLoop[n]"
-          False -> "no n : Nodes | selfLoop[n]"
-        petriSink = \case
-          True  -> "some t : Transitions | sinkTransitionsCapacity[t]"
-          False -> "no t : Transitions | sinkTransitionsCapacity[t]"
-        petriSource = \case
-          True  -> "some t : Transitions | sourceTransitionsCapacity[t]"
-          False -> "no t : Transitions | sourceTransitionsCapacity[t]"
 
 capacityPredicateName :: String
 capacityPredicateName = "showCapacity"

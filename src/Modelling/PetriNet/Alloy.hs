@@ -162,11 +162,11 @@ connected p = maybe "" $ \c -> (if c then "" else "not ") ++ p
 isolated :: String -> Maybe Bool -> String
 isolated p = maybe p $ \c -> if c then "" else p
 
-compAdvConstraints :: AdvConfig -> String
+compAdvConstraints :: AdvConfig -> Bool -> String
 compAdvConstraints AdvConfig
                         { presenceOfSelfLoops, presenceOfSinkTransitions
                         , presenceOfSourceTransitions
-                        } = [i|
+                        } isCapacity = [i|
   #{maybe "" petriLoops presenceOfSelfLoops}
   #{maybe "" petriSink presenceOfSinkTransitions}
   #{maybe "" petriSource presenceOfSourceTransitions}
@@ -176,11 +176,13 @@ compAdvConstraints AdvConfig
       True  -> "some n : Nodes | selfLoop[n]"
       False -> "no n : Nodes | selfLoop[n]"
     petriSink = \case
-      True  -> "some t : Transitions | sinkTransitions[t]"
-      False -> "no t : Transitions | sinkTransitions[t]"
+      True  -> "some t : Transitions | sinkTransitions" ++ addCapacity ++ "[t]"
+      False -> "no t : Transitions | sinkTransitions" ++ addCapacity ++ "[t]"
     petriSource = \case
-      True  -> "some t : Transitions | sourceTransitions[t]"
-      False -> "no t : Transitions | sourceTransitions[t]"
+      True  -> "some t : Transitions | sourceTransitions" ++ addCapacity ++ "[t]"
+      False -> "no t : Transitions | sourceTransitions" ++ addCapacity ++ "[t]"
+    addCapacity :: String
+    addCapacity = if isCapacity then "Capacity" else ""
 
 compChange :: ChangeConfig -> String
 compChange ChangeConfig

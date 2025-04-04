@@ -442,7 +442,7 @@ run #{concurrencyPredicateName} for exactly #{places basicC} Places, exactly #{t
     activatedDefault = "defaultActiveTrans"
     compConstraints = either
       (const $ defaultConstraints activatedDefault basicC)
-      compAdvConstraints
+      (\advConfig -> compAdvConstraints advConfig False)
       specific
     sourceTransitionConstraints
       | Left True <- specific = [i|
