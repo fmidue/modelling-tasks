@@ -123,6 +123,7 @@ import Modelling.PetriNet.Types         (
   PickConflictConfig (..),
   SimpleNode (..),
   SimplePetriNet,
+  basicCBitWidth,
   lConflictPlaces,
   petriScopeBitWidth,
   transitionPairShow,
@@ -506,7 +507,7 @@ pred #{conflictPredicateName}[#{p} : some Places, #{skolemSets}#{t1}, #{t2} : Tr
   #{compConstraints}
 }
 
-run #{conflictPredicateName} for exactly #{places basicC} Places, exactly #{transitions basicC} Transitions, #{petriScopeBitWidth basicC} Int
+run #{conflictPredicateName} for exactly #{places basicC} Places, exactly #{transitions basicC} Transitions, #{petriScopeBitWidth (basicCBitWidth basicC)} Int
 |]
   where
     activated        = "activatedTrans"

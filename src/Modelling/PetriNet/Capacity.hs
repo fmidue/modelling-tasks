@@ -89,7 +89,9 @@ import Modelling.PetriNet.Types         (
   PetriLike (PetriLike, allNodes),
   SimpleNode (..),
   CapacityNode (..),
+  basicCBitWidth,
   checkActivatedSourceConfig,
+  petriScopeBitWidth,
   )
 
 import Control.Applicative              ((<|>))
@@ -387,7 +389,7 @@ pred #{capacityPredicateName}[#{activated} : set Transitions] {
 }
 
 run #{capacityPredicateName} for exactly #{places basicC} givenPlaces, exactly #{places basicC} addedPlaces,
-exactly #{transitions basicC} Transitions, #{petriScopeBitWidthCapacity basicC maxCapacity} Int
+exactly #{transitions basicC} Transitions, #{petriScopeBitWidth (basicCBitWidth basicC ++ [maxCapacity])} Int
 |]
   where
     activated = skolemName
@@ -423,15 +425,6 @@ activatedTransitions = skolemVariable capacityPredicateName skolemName
 
 skolemName :: String
 skolemName = "activatedTrans"
-
-petriScopeBitWidthCapacity :: BasicConfig -> Int -> Int
-petriScopeBitWidthCapacity BasicConfig
-  { flowOverall, places, tokensOverall, transitions }
-  maxCapacity =
-  floor
-     (2 + ((logBase :: Double -> Double -> Double ) 2.0 . fromIntegral)
-       (maximum [snd flowOverall, snd tokensOverall, places, transitions, maxCapacity])
-     )
 
 checkCapacityConfigs :: CapacityConfig -> Maybe String
 checkCapacityConfigs CapacityConfig {

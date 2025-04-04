@@ -83,6 +83,7 @@ import Modelling.PetriNet.Types         (
   PetriLike (PetriLike, allNodes),
   SimpleNode (..),
   SimplePetriNet,
+  basicCBitWidth,
   checkActivatedSourceConfig,
   petriScopeBitWidth,
   transitionListShow,
@@ -316,7 +317,7 @@ pred #{activePredicateName}[#{activated} : set Transitions] {
   no t : givenTransitions | activatedDefault[t]
 }
 
-run #{activePredicateName} for exactly #{places basicC} Places, exactly #{transitions basicC} Transitions, #{petriScopeBitWidth basicC} Int
+run #{activePredicateName} for exactly #{places basicC} Places, exactly #{transitions basicC} Transitions, #{petriScopeBitWidth (basicCBitWidth basicC)} Int
 |]
   where
     activated = skolemName

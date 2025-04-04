@@ -55,6 +55,7 @@ module Modelling.PetriNet.Types (
   SimpleNode (..),
   SimplePetriLike,
   SimplePetriNet,
+  basicCBitWidth,
   checkActivatedSourceConfig,
   checkBasicConfig,
   checkChangeConfig,
@@ -1127,13 +1128,15 @@ transitionPairShow = bimap ShowTransition ShowTransition
 transitionListShow :: [Petri.Transition] -> [ShowTransition]
 transitionListShow = map ShowTransition
 
-petriScopeBitWidth :: BasicConfig -> Int
-petriScopeBitWidth BasicConfig
- { flowOverall, places, tokensOverall, transitions } =
+petriScopeBitWidth :: [Int] -> Int
+petriScopeBitWidth values =
   floor
      (2 + ((logBase :: Double -> Double -> Double) 2.0 . fromIntegral)
-       (maximum [snd flowOverall, snd tokensOverall, places, transitions])
+       (maximum values)
      )
+
+basicCBitWidth :: BasicConfig -> [Int]
+basicCBitWidth BasicConfig {places, transitions, flowOverall, tokensOverall} = [places, transitions, snd flowOverall, snd tokensOverall]
 
 checkBasicConfig :: BasicConfig -> Maybe String
 checkBasicConfig basicC@BasicConfig{
@@ -1179,7 +1182,7 @@ checkBasicConfig basicC@BasicConfig{
   = Just "The maximum 'flowOverall' is set unreasonably high, given the other parameters."
  | transitions + places > 1 + fst flowOverall
   = Just "The number of transitions and places exceeds the minimum 'flowOverall' too much to create a connected net."
- | Just maxValue <- maxBitWidth, petriScopeBitWidth basicC > maxValue
+ | Just maxValue <- maxBitWidth, petriScopeBitWidth (basicCBitWidth basicC) > maxValue
   = Just "'places', 'transitions' and the maximum 'flowOverall' and 'tokensOverall' should not be set too high."
  | otherwise
   = Nothing

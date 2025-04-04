@@ -61,6 +61,7 @@ import Modelling.PetriNet.Types         (
   PickMistakeConfig (..),
   SimpleNode (..),
   SimplePetriNet,
+  basicCBitWidth,
   petriScopeBitWidth,
   )
 
@@ -213,7 +214,7 @@ pred #{mistakePredicateName} {
   #{prohibitSelfLoops mistakeC}
 }
 
-run #{mistakePredicateName} for #{petriScopeBitWidth basicC} Int
+run #{mistakePredicateName} for #{petriScopeBitWidth (basicCBitWidth basicC)} Int
 |]
   where
     sigs = signatures "given" (places basicC) (transitions basicC)
