@@ -370,18 +370,12 @@ fact {
   no addedTransitions
 }
 
-pred sourceTransitionsCapacity[ts : set Transitions] {
-  no Nodes.flow[ts]
-  all p : placesWithCapacity |
-  let flows = p.flow[ts] |
-  flows + p.tokens <= p.capacity
+pred sinkTransitionsDefault[ts : set Transitions]{
+  no ts.defaultFlow
 }
 
-pred sinkTransitionsCapacity[ts : set Transitions] {
-  no ts.flow
-  all p : placesWithCapacity |
-  let flows = p.flow[ts] |
-  flows - p.tokens <= p.capacity
+pred sourceTransitionsDefault[ts : set Transitions]{
+  no Nodes.defaultFlow[ts]
 }
 
 pred #{capacityPredicateName}[#{activated} : set Transitions] {
