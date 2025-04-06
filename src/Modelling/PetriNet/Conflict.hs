@@ -514,7 +514,7 @@ run #{conflictPredicateName} for exactly #{places basicC} Places, exactly #{tran
     activatedDefault = "defaultActiveTrans"
     compConstraints = either
       (const $ defaultConstraints activatedDefault basicC)
-      (\advConfig -> compAdvConstraints advConfig False)
+      (`compAdvConstraints` False)
       specific
     sourceTransitionConstraints
       | Left True <- specific = [i|
