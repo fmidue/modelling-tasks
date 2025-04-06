@@ -307,23 +307,31 @@ petriNetFindCapacity :: CapacityConfig -> String
 petriNetFindCapacity CapacityConfig {
   basicConfig,
   advConfig,
-  maxCapacity
+  maxCapacity,
+  minNewArrowsWithComplement,
+  oneMinCapacity
   }
   = petriNetFindCapacityAlloy
     basicConfig
     advConfig
     maxCapacity
+    minNewArrowsWithComplement
+    oneMinCapacity
 
 petriNetPickCapacity :: CapacityConfig -> String
 petriNetPickCapacity CapacityConfig{
   basicConfig,
   advConfig,
-  maxCapacity
+  maxCapacity,
+  minNewArrowsWithComplement,
+  oneMinCapacity
   } =
   petriNetFindCapacityAlloy
     basicConfig
     advConfig
     maxCapacity
+    minNewArrowsWithComplement
+    oneMinCapacity
 
 parseCapacity :: MonadThrow m => AlloyInstance -> m (ActivatedTransitions Object)
 parseCapacity inst = do
@@ -334,8 +342,10 @@ petriNetFindCapacityAlloy
   :: BasicConfig
   -> AdvConfig
   -> Int
+  -> Maybe Int
+  -> Maybe Int
   -> String
-petriNetFindCapacityAlloy basicC advConfig maxCapacity
+petriNetFindCapacityAlloy basicC advConfig maxCapacity minNewArrowsWithComplement oneMinCapacity
   = [i|module PetriNetCapacity
 
 #{modulePetriSignature}
@@ -413,7 +423,7 @@ checkCapacityConfigs CapacityConfig {
   basicConfig,
   advConfig,
   maxCapacity,
-  newFlowWithComplement,
+  minNewArrowsWithComplement,
   oneMinCapacity,
   graphConfig
   }
@@ -422,34 +432,39 @@ checkCapacityConfigs CapacityConfig {
   <|> checkBasicConfig basicConfig
   <|> prohibitPatchworkRenderer graphConfig
   <|> checkActivatedSourceConfig basicConfig advConfig
-  <|> checkCapacityConfig basicConfig maxCapacity newFlowWithComplement oneMinCapacity
+  <|> checkCapacityConfig basicConfig maxCapacity minNewArrowsWithComplement oneMinCapacity
 
-checkCapacityConfig :: BasicConfig -> Int -> Int -> Int -> Maybe String
+checkCapacityConfig :: BasicConfig -> Int -> Maybe Int -> Maybe Int -> Maybe String
 checkCapacityConfig BasicConfig {
+    places,
     transitions,
     atLeastActive,
     maxTokensPerPlace,
     maxFlowPerEdge
     }
   maxCapacity
-  newFlowWithComplement
+  minNewArrowsWithComplement
   oneMinCapacity
   | maxCapacity < maxFlowPerEdge
   = Just "'maxCapacity' can not be too low for flow weights."
   | maxCapacity < maxTokensPerPlace
   = Just "The starting tokens can not exceed 'maxCapacity'."
-  | newFlowWithComplement <= 0
-  = Just "At least one flow has to be connected to a complement place."
-  | newFlowWithComplement > 2 * transitions
-  = Just "'newFlowWithComplement' is set unreasonably high, given the number of transitions."
-  | oneMinCapacity <= 0
-  = Just "'oneMinCapacity' has to be positive."
-  | oneMinCapacity > maxCapacity
-  = Just "'oneMinCapacity' can not be higher than 'maxCapacity'."
   | atLeastActive == 0
   = Just "At least one transition has to be activated."
   | otherwise
-  = Nothing
+  = case minNewArrowsWithComplement of
+      Just minNew
+        | minNew <= 0
+        -> Just "At least one flow has to be connected to a complement place."
+        | minNew > 2 * transitions * places
+        -> Just "'minNewArrowsWithComplement' is set unreasonably high, given the number of transitions."
+      _ -> case oneMinCapacity of
+          Just oneMin
+            | oneMin <= 0
+            -> Just "'oneMinCapacity' has to be positive."
+            | oneMin > maxCapacity
+            -> Just "'oneMinCapacity' can not be higher than 'maxCapacity'."
+          _ -> Nothing
 
 defaultCapacityInstance :: CapacityInstance
 defaultCapacityInstance = CapacityInstance {
