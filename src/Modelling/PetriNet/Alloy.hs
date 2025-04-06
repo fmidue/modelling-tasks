@@ -176,13 +176,13 @@ compAdvConstraints AdvConfig
       True  -> "some n : Nodes | selfLoop[n]"
       False -> "no n : Nodes | selfLoop[n]"
     petriSink = \case
-      True  -> "some t : Transitions | sinkTransitions" ++ addCapacity ++ "[t]"
-      False -> "no t : Transitions | sinkTransitions" ++ addCapacity ++ "[t]"
+      True  -> "some t : Transitions | sinkTransitions" ++ addDefault ++ "[t]"
+      False -> "no t : Transitions | sinkTransitions" ++ addDefault ++ "[t]"
     petriSource = \case
-      True  -> "some t : Transitions | sourceTransitions" ++ addCapacity ++ "[t]"
-      False -> "no t : Transitions | sourceTransitions" ++ addCapacity ++ "[t]"
-    addCapacity :: String
-    addCapacity = if isCapacity then "Capacity" else ""
+      True  -> "some t : Transitions | sourceTransitions" ++ addDefault ++ "[t]"
+      False -> "no t : Transitions | sourceTransitions" ++ addDefault ++ "[t]"
+    addDefault :: String
+    addDefault = if isCapacity then "Default" else ""
 
 compChange :: ChangeConfig -> String
 compChange ChangeConfig
