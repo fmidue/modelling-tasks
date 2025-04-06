@@ -55,7 +55,7 @@ module Modelling.PetriNet.Types (
   SimpleNode (..),
   SimplePetriLike,
   SimplePetriNet,
-  basicCBitWidth,
+  basicConfigBitWidthInput,
   checkActivatedSourceConfig,
   checkBasicConfig,
   checkChangeConfig,
@@ -1135,8 +1135,8 @@ petriScopeBitWidth values =
        (maximum values)
      )
 
-basicCBitWidth :: BasicConfig -> [Int]
-basicCBitWidth BasicConfig {places, transitions, flowOverall, tokensOverall} = [places, transitions, snd flowOverall, snd tokensOverall]
+basicConfigBitWidthInput :: BasicConfig -> [Int]
+basicConfigBitWidthInput BasicConfig {places, transitions, flowOverall, tokensOverall} = [places, transitions, snd flowOverall, snd tokensOverall]
 
 checkBasicConfig :: BasicConfig -> Maybe String
 checkBasicConfig basicC@BasicConfig{
@@ -1182,7 +1182,7 @@ checkBasicConfig basicC@BasicConfig{
   = Just "The maximum 'flowOverall' is set unreasonably high, given the other parameters."
  | transitions + places > 1 + fst flowOverall
   = Just "The number of transitions and places exceeds the minimum 'flowOverall' too much to create a connected net."
- | Just maxValue <- maxBitWidth, petriScopeBitWidth (basicCBitWidth basicC) > maxValue
+ | Just maxValue <- maxBitWidth, petriScopeBitWidth (basicConfigBitWidthInput basicC) > maxValue
   = Just "'places', 'transitions' and the maximum 'flowOverall' and 'tokensOverall' should not be set too high."
  | otherwise
   = Nothing

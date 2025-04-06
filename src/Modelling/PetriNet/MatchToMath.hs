@@ -84,7 +84,7 @@ import Modelling.PetriNet.Types (
   PetriNode (..),
   SimpleNode (..),
   SimplePetriLike,
-  basicCBitWidth,
+  basicConfigBitWidthInput,
   checkActivatedSourceConfig,
   checkBasicConfig,
   checkChangeConfig,
@@ -561,7 +561,7 @@ pred showNets[#{skolemSet}] {
   #{compBasicConstraints True Nothing activated basicC}
   #{compAdvConstraints advConfig False}
 }
-run showNets for exactly #{places} Places, exactly #{transitions} Transitions, #{petriScopeBitWidth (basicCBitWidth basicC)} Int
+run showNets for exactly #{places} Places, exactly #{transitions} Transitions, #{petriScopeBitWidth (basicConfigBitWidthInput basicC)} Int
 |]
   where
     (skolemSet, activated)
@@ -592,7 +592,7 @@ pred showFalseNets[#{skolemSet}]{
   #{compChange changeConfig}
 }
 
-run showFalseNets for exactly #{places basicConfig} Places, exactly #{transitions basicConfig} Transitions, #{petriScopeBitWidth (basicCBitWidth basicConfig)} Int
+run showFalseNets for exactly #{places basicConfig} Places, exactly #{transitions basicConfig} Transitions, #{petriScopeBitWidth (basicConfigBitWidthInput basicConfig)} Int
 |]
   where
     allNodes    = nodes net

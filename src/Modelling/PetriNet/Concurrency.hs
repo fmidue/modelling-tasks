@@ -106,7 +106,7 @@ import Modelling.PetriNet.Types         (
   PickConcurrencyConfig (..),
   SimpleNode (..),
   SimplePetriNet,
-  basicCBitWidth,
+  basicConfigBitWidthInput,
   petriScopeBitWidth,
   transitionPairShow,
   )
@@ -435,7 +435,7 @@ pred #{concurrencyPredicateName}[#{skolemSets}#{t1}, #{t2} : Transitions] {
   #{compConstraints}
 }
 
-run #{concurrencyPredicateName} for exactly #{places basicC} Places, exactly #{transitions basicC} Transitions, #{petriScopeBitWidth (basicCBitWidth basicC)} Int
+run #{concurrencyPredicateName} for exactly #{places basicC} Places, exactly #{transitions basicC} Transitions, #{petriScopeBitWidth (basicConfigBitWidthInput basicC)} Int
 |]
   where
     activated        = "activatedTrans"

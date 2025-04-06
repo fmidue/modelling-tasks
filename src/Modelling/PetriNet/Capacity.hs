@@ -90,7 +90,7 @@ import Modelling.PetriNet.Types         (
   PetriLike (PetriLike, allNodes),
   SimpleNode (..),
   CapacityNode (..),
-  basicCBitWidth,
+  basicConfigBitWidthInput,
   checkActivatedSourceConfig,
   petriScopeBitWidth,
   )
@@ -397,7 +397,7 @@ pred #{capacityPredicateName}[#{activated} : set Transitions] {
 }
 
 run #{capacityPredicateName} for exactly #{places basicC} givenPlaces, exactly #{places basicC} addedPlaces,
-exactly #{transitions basicC} Transitions, #{petriScopeBitWidth (basicCBitWidth basicC ++ [maxCapacity])} Int
+exactly #{transitions basicC} Transitions, #{petriScopeBitWidth (basicConfigBitWidthInput basicC ++ [maxCapacity])} Int
 |]
   where
     activated = skolemName
