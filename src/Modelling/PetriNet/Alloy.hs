@@ -173,14 +173,14 @@ compAdvConstraints underDefault AdvConfig
 |]
   where
     petriLoops = \case
-      True  -> "some n :" ++ addGiven ++ "Nodes | selfLoop[n]"
-      False -> "no n :" ++ addGiven ++ "Nodes | selfLoop[n]"
+      True  -> "some n : " ++ addGiven ++ "Nodes | selfLoop[n]"
+      False -> "no n : " ++ addGiven ++ "Nodes | selfLoop[n]"
     petriSink = \case
-      True  -> "some t :" ++ addGiven ++ "Transitions | sinkTransitions" ++ addDefault ++ "[t]"
-      False -> "no t :" ++ addGiven ++ "Transitions | sinkTransitions" ++ addDefault ++ "[t]"
+      True  -> "some t : " ++ addGiven ++ "Transitions | sinkTransitions" ++ addDefault ++ "[t]"
+      False -> "no t : " ++ addGiven ++ "Transitions | sinkTransitions" ++ addDefault ++ "[t]"
     petriSource = \case
-      True  -> "some t :" ++ addGiven ++ "Transitions | sourceTransitions" ++ addDefault ++ "[t]"
-      False -> "no t :" ++ addGiven ++ "Transitions | sourceTransitions" ++ addDefault ++ "[t]"
+      True  -> "some t : " ++ addGiven ++ "Transitions | sourceTransitions" ++ addDefault ++ "[t]"
+      False -> "no t : " ++ addGiven ++ "Transitions | sourceTransitions" ++ addDefault ++ "[t]"
     addDefault = if underDefault then "Default" else ""
     addGiven = if underDefault then "given" else ""
 
