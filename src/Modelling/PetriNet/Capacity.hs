@@ -406,9 +406,7 @@ exactly #{transitions basicC} Transitions, #{petriScopeBitWidth (basicConfigBitW
     minNewArrowsWithComplementConstraints minNewArrows =
       case minNewArrows of
         Just minNew ->
-          "let newArrows = " ++
-          "plus[#(addedPlaces <: flowChange), #(flowChange.Int :> addedPlaces)] | " ++
-          "newArrows >= " ++ show minNew
+          "#flowChange >= " ++ show minNew
         Nothing -> ""
     oneMinCapacityConstraints :: Maybe Int -> String
     oneMinCapacityConstraints oneMinCap =
