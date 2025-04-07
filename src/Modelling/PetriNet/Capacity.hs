@@ -22,12 +22,19 @@ module Modelling.PetriNet.Capacity (
   simpleCapacityTask,
   ) where
 
+import qualified Modelling.PetriNet.Reach.Type    as Reach (
+  Place(..),
+  Transition(..),
+  )
 import qualified Modelling.PetriNet.Types         as Find (
   AlloyConfig (maxInstances, timeout),
   CapacityConfig (..),
   )
 import qualified Modelling.PetriNet.Types         as Pick (
   CapacityConfig (..),
+  )
+import qualified Modelling.PetriNet.Types         as Types (
+  NodeC(..)
   )
 import qualified Data.Map                         as M (
   empty,
@@ -84,9 +91,11 @@ import Modelling.PetriNet.Types         (
   AdvConfig (..),
   AlloyConfig (..),
   BasicConfig (..),
+  Capacity (..),
   CapacityConfig (..),
   DrawSettings (..),
   GraphConfig (..),
+  NodeC (..),
   PetriLike (PetriLike, allNodes),
   SimpleNode (..),
   CapacityNode (..),
@@ -241,7 +250,7 @@ capacitySyntax task input = do
       let t' = show $ ShowTransition t
       english $ t' ++ " is a transition of the given Petri net?"
       german $ t' ++ " ist eine Transition des gegebenen Petrinetzes?"
-    isValidTransition (Transition x) = x >= 1 && x <= numberOfTransitions task
+    isValidTransition (Reach.Transition x) = x >= 1 && x <= numberOfTransitions task
 
 capacityEvaluation
   :: (Monad m, OutputCapable m)
@@ -372,7 +381,7 @@ fact {
 
 pred #{capacityPredicateName}[#{activated} : set Transitions] {
   #{defaultConstraintsAtLeastZero activated basicC}
-  #{compAdvConstraints advConfig True}
+  #{compAdvConstraints True advConfig}
 
   all t : Transitions, p : givenPlaces |
     let n = minus[t.flow[p], p.flow[t]] |
@@ -472,7 +481,7 @@ defaultCapacityInstance = CapacityInstance {
     with1Weights = False,
     withGraphvizCommand = Circo
     },
-  toFind = ActivatedTransitions [Transition 1, Transition 2],
+  toFind = ActivatedTransitions [Reach.Transition 1, Reach.Transition 2],
   originalNet = PetriLike {
     allNodes = M.fromList [
       ("s1",CapacityPlace {initial = 0, capacity = 0, flowIn = M.empty, flowOut = M.empty}),

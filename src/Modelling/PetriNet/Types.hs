@@ -41,6 +41,7 @@ module Modelling.PetriNet.Types (
   MistakeConfig (..),
   Net (..),
   Node (..),
+  NodeC (..),
   Petri (..),
   PetriChange (..),
   PetriConflict (..),
@@ -246,8 +247,11 @@ newtype Concurrent a = Concurrent (a, a)
 newtype ActivatedTransitions a = ActivatedTransitions [a]
   deriving (Functor, Foldable, Traversable, Generic, Read, Show)
 
-newtype Capacity a b = Capacity ([(Place, String, Int)], [(a, b, Int)])
-  deriving (Functor, Foldable, Traversable, Generic, Read, Show)
+data NodeC = Place String | Transition String
+  deriving (Eq, Ord, Read, Show, Generic)
+
+newtype Capacity = Capacity ([(Place, Int)], [(NodeC, NodeC, Int)])
+  deriving (Generic, Read, Show)
 
 class Show (n String) => PetriNode n where
   initialTokens     :: n a -> Int
