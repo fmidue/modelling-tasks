@@ -138,8 +138,6 @@ import Data.String.Interpolate          (i, iii)
 import Language.Alloy.Call (
   AlloyInstance
   )
-
-import GHC.Generics                     (Generic)
 import Text.Parsec (
   char,
   optionMaybe,
@@ -160,7 +158,7 @@ data CapacityInstance = CapacityInstance {
   numberOfTransitions :: !Int,
   showSolution :: !Bool
   }
-  deriving (Generic, Read, Show)
+  deriving (Read, Show)
 
 capacityGenerate
   :: (MonadAlloy m, MonadThrow m)
@@ -478,6 +476,13 @@ exactly #{transitions basicC} Transitions, #{petriScopeBitWidth (basicConfigBitW
 |]
   where
     activated = skolemName
+    defaultConstraintsAtLeastZero :: String -> BasicConfig -> String
+    defaultConstraintsAtLeastZero activatedT basicConfig@BasicConfig { atLeastActive } =
+      enforceConstraints True Nothing activatedT (basicConfig { atLeastActive = 0 })
+      ++
+      "#" ++ activatedT ++ " >= " ++ show atLeastActive ++ "\n"
+      ++
+      "  theActivatedTransitions[" ++ activatedT ++ "]"
     minNewArrowsWithComplementConstraints :: Maybe Int -> String
     minNewArrowsWithComplementConstraints minNewArrows =
       case minNewArrows of
