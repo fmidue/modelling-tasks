@@ -312,7 +312,7 @@ petriNetActivatedTransitionsAlloy basicC changeC atMost advConfig
 pred #{activePredicateName}[#{activated} : set Transitions] {
   #{compBasicConstraints True atMost activated basicC}
   #{compChange changeC}
-  #{compAdvConstraints advConfig False}
+  #{compAdvConstraints False advConfig}
   #{activatedConstraint basicC atMost}
   no t : givenTransitions | activatedDefault[t]
 }

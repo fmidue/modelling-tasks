@@ -162,27 +162,27 @@ connected p = maybe "" $ \c -> (if c then "" else "not ") ++ p
 isolated :: String -> Maybe Bool -> String
 isolated p = maybe p $ \c -> if c then "" else p
 
-compAdvConstraints :: AdvConfig -> Bool -> String
-compAdvConstraints AdvConfig
+compAdvConstraints :: Bool -> AdvConfig -> String
+compAdvConstraints underDefault AdvConfig
                         { presenceOfSelfLoops, presenceOfSinkTransitions
                         , presenceOfSourceTransitions
-                        } isCapacity = [i|
+                        } = [i|
   #{maybe "" petriLoops presenceOfSelfLoops}
   #{maybe "" petriSink presenceOfSinkTransitions}
   #{maybe "" petriSource presenceOfSourceTransitions}
 |]
   where
     petriLoops = \case
-      True  -> "some n : Nodes | selfLoop[n]"
-      False -> "no n : Nodes | selfLoop[n]"
+      True  -> "some n :" ++ addGiven ++ "Nodes | selfLoop[n]"
+      False -> "no n :" ++ addGiven ++ "Nodes | selfLoop[n]"
     petriSink = \case
-      True  -> "some t : Transitions | sinkTransitions" ++ addDefault ++ "[t]"
-      False -> "no t : Transitions | sinkTransitions" ++ addDefault ++ "[t]"
+      True  -> "some t :" ++ addGiven ++ "Transitions | sinkTransitions" ++ addDefault ++ "[t]"
+      False -> "no t :" ++ addGiven ++ "Transitions | sinkTransitions" ++ addDefault ++ "[t]"
     petriSource = \case
-      True  -> "some t : Transitions | sourceTransitions" ++ addDefault ++ "[t]"
-      False -> "no t : Transitions | sourceTransitions" ++ addDefault ++ "[t]"
-    addDefault :: String
-    addDefault = if isCapacity then "Default" else ""
+      True  -> "some t :" ++ addGiven ++ "Transitions | sourceTransitions" ++ addDefault ++ "[t]"
+      False -> "no t :" ++ addGiven ++ "Transitions | sourceTransitions" ++ addDefault ++ "[t]"
+    addDefault = if underDefault then "Default" else ""
+    addGiven = if underDefault then "given" else ""
 
 compChange :: ChangeConfig -> String
 compChange ChangeConfig

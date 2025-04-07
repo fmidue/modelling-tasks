@@ -559,7 +559,7 @@ fact{
 
 pred showNets[#{skolemSet}] {
   #{compBasicConstraints True Nothing activated basicC}
-  #{compAdvConstraints advConfig False}
+  #{compAdvConstraints False advConfig}
 }
 run showNets for exactly #{places} Places, exactly #{transitions} Transitions, #{petriScopeBitWidth (basicConfigBitWidthInput basicC)} Int
 |]
@@ -588,7 +588,7 @@ fact{
 
 pred showFalseNets[#{skolemSet}]{
   #{compBasicConstraints True Nothing activated basicConfig}
-  #{compAdvConstraints advConfig False}
+  #{compAdvConstraints False advConfig}
   #{compChange changeConfig}
 }
 
