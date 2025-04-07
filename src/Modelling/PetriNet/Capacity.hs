@@ -18,6 +18,7 @@ module Modelling.PetriNet.Capacity (
   petriNetFindCapacity,
   petriNetPickCapacity,
   parseCapacity,
+  parseCapacityPrec,
   pickCapacity,
   simpleCapacityTask,
   ) where
@@ -83,7 +84,8 @@ import Modelling.PetriNet.Find (
   )
 import Modelling.PetriNet.Reach.Type (
   ShowTransition (ShowTransition),
-  Transition (Transition),
+  Transition,
+  parsePlacePrec,
   parseTransitionPrec,
   )
 import Modelling.PetriNet.Types         (
@@ -105,6 +107,7 @@ import Modelling.PetriNet.Types         (
   )
 
 import Control.Applicative              ((<|>))
+import Control.Monad                    (void)
 import Control.Monad.Catch              (MonadThrow)
 import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
@@ -137,6 +140,15 @@ import Language.Alloy.Call (
   )
 
 import GHC.Generics                     (Generic)
+import Text.Parsec (
+  char,
+  optionMaybe,
+  sepBy,
+  spaces,
+  )
+import Text.Parsec.Char                 (digit)
+import Text.Parsec.Combinator           (many1)
+import Text.Parsec.String               (Parser)
 
 
 data CapacityInstance = CapacityInstance {
@@ -346,6 +358,69 @@ parseCapacity :: MonadThrow m => AlloyInstance -> m (ActivatedTransitions Object
 parseCapacity inst = do
   t <- unscopedSingleSig inst activatedTransitions ""
   pure $ ActivatedTransitions (Set.toList t)
+
+parseCapacityPrec :: Int -> Parser Capacity
+parseCapacityPrec _ = do
+  spaces
+  void $ char '('
+  spaces
+  places <- parsePlacesWithInts
+  spaces
+  void $ char ','
+  spaces
+  flows <- parseFlowTriples
+  spaces
+  void $ char ')'
+  return (Capacity (places, flows))
+  where
+    parsePlacesWithInts =
+      char '[' *> parsePlaceWithInt `sepBy` (spaces *> char ',' <* spaces) <* char ']'
+
+    parsePlaceWithInt = do
+      spaces
+      void $ char '('
+      spaces
+      p <- parsePlacePrec 0
+      spaces
+      void $ char ','
+      spaces
+      n <- parseInt
+      spaces
+      void $ char ')'
+      return (p, n)
+
+    parseFlowTriples =
+      char '[' *> parseFlowTriple `sepBy` (spaces *> char ',' <* spaces) <* char ']'
+
+    parseFlowTriple = do
+      spaces
+      void $ char '('
+      spaces
+      a <- parseNodeC
+      spaces
+      void $ char ','
+      spaces
+      b <- parseNodeC
+      spaces
+      void $ char ','
+      spaces
+      n <- parseInt
+      spaces
+      void $ char ')'
+      return (a, b, n)
+
+    parseInt = read <$> many1 digit
+
+    parseNodeC :: Parser NodeC
+    parseNodeC = do
+      tag <- optionMaybe (char 'p')
+      case tag of
+        Just _  -> do
+          Reach.Place n <- parsePlacePrec 0
+          return $ Types.Place (show n)
+        Nothing -> do
+          Reach.Transition n <- parseTransitionPrec 0
+          return $ Types.Transition (show n)
 
 petriNetFindCapacityAlloy
   :: BasicConfig
