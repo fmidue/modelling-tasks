@@ -370,14 +370,6 @@ fact {
   no addedTransitions
 }
 
-pred sinkTransitionsDefault[ts : set Transitions]{
-  no ts.defaultFlow
-}
-
-pred sourceTransitionsDefault[ts : set Transitions]{
-  no Nodes.defaultFlow[ts]
-}
-
 pred #{capacityPredicateName}[#{activated} : set Transitions] {
   #{defaultConstraintsAtLeastZero activated basicC}
   #{compAdvConstraints advConfig True}

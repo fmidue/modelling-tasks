@@ -53,3 +53,13 @@ pred sinkTransitions[ts : set Transitions]{
 pred sourceTransitions[ts : set Transitions]{
   no Nodes.flow[ts]  // under assumption of valid Petri nets, could use Places instead of Nodes here
 }
+
+//check if some transitions are sink transitions under default condition
+pred sinkTransitionsDefault[ts : set givenTransitions]{
+  no ts.defaultFlow
+}
+
+//check if some transitions are sink transitions under default condition
+pred sourceTransitionsDefault[ts : set givenTransitions]{
+  no givenNodes.defaultFlow[ts]
+}
