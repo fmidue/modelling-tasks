@@ -389,6 +389,7 @@ pred #{capacityPredicateName}[#{activated} : set Transitions] {
       n > 0 implies (p.complement.flow[t] = n and no t.flow[p.complement])
       else
       no p.complement.flow[t] and no t.flow[p.complement]
+
   all p : placesWithCapacity, w : p.flow[Transitions] + Transitions.flow[p] | p.capacity >= w
 
   #{minNewArrowsWithComplementConstraints minNewArrowsWithComplement}
@@ -405,10 +406,9 @@ exactly #{transitions basicC} Transitions, #{petriScopeBitWidth (basicConfigBitW
     minNewArrowsWithComplementConstraints minNewArrows =
       case minNewArrows of
         Just minNew ->
-          "let totalFlow = " ++
-          "#({p: placesWithCapacity | some p.complement.flow[Transitions]}.complement.flow[Transitions]) + " ++
-          "#(Transitions.flow[{p: placesWithCapacity | some Transitions.flow[p.complement]}.complement]) | " ++
-          "totalFlow >= " ++ show minNew
+          "let newArrows = " ++
+          "plus[#(addedPlaces <: flowChange), #(flowChange.Int :> addedPlaces)] | " ++
+          "newArrows >= " ++ show minNew
         Nothing -> ""
     oneMinCapacityConstraints :: Maybe Int -> String
     oneMinCapacityConstraints oneMinCap =
