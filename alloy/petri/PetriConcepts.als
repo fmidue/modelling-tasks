@@ -59,7 +59,7 @@ pred sinkTransitionsDefault[ts : set givenTransitions]{
   no ts.defaultFlow
 }
 
-//check if some transitions are sink transitions under default condition
+//check if some transitions are source transitions under default condition
 pred sourceTransitionsDefault[ts : set givenTransitions]{
-  no givenNodes.defaultFlow[ts]
+  no givenPlaces.defaultFlow[ts]
 }
