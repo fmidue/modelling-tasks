@@ -545,7 +545,7 @@ instance Net PetriLike Node where
     $ ns
 
   deleteNode x (PetriLike ns) = PetriLike
-    . adjustAll (updateNode id (M.delete x)) (M.keys . flowInForNode <$> n)
+    . adjustAll (updateNode id (M.delete x)) (M.keys . flowInN <$> n)
     . adjustAll (updateNode (M.delete x) id) (M.keys . flowOutN <$> n)
     . M.delete x
     $ ns
@@ -767,25 +767,25 @@ petriLikeToPetri p = do
       = throwM RelatedNodesOfTransitionsContainTransitions
       | any (`M.member` ps) (allRelatedNodes ps)
       = throwM RelatedNodesOfPlacesContainPlaces
-      | any (any (<= 0) . flowInForNode) ts
+      | any (any (<= 0) . flowInN) ts
       = throwM FlowToATransitionIsZeroOrLess
       | any (any (<= 0) . flowOutN) ts
       = throwM FlowFromATransitionIsZeroOrLess
       | otherwise
       = pure ()
-    toChangeTuple n = (toFlowList flowInForNode n, toFlowList flowOutN n)
+    toChangeTuple n = (toFlowList flowInN n, toFlowList flowOutN n)
     toFlowList f n = M.foldrWithKey
       (\k _ xs -> fromMaybe 0 (M.lookup k $ f n) : xs)
       []
       ps
-    relatedNodes n = M.keysSet (flowInForNode n) `S.union` M.keysSet (flowOutN n)
+    relatedNodes n = M.keysSet (flowInN n) `S.union` M.keysSet (flowOutN n)
     allRelatedNodes = foldr
       (S.union . relatedNodes)
       S.empty
 
-flowInForNode :: Node a -> Map a Int
-flowInForNode (PlaceNode _ flowIn _ ) = flowIn
-flowInForNode (TransitionNode flowIn _) = flowIn
+flowInN :: Node a -> Map a Int
+flowInN (PlaceNode _ flowIn _ ) = flowIn
+flowInN (TransitionNode flowIn _) = flowIn
 
 type Marking = [Int]
 type Transition = (Marking,Marking)
