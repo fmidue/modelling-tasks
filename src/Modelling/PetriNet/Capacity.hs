@@ -435,7 +435,7 @@ petriNetFindCapacityAlloy
   -> Int
   -> (Int, Int)
   -> String
-petriNetFindCapacityAlloy basicC advConfig maxCapacity minNewArrowsWithComplement oneMinCapacity
+petriNetFindCapacityAlloy basicC advConfig maxCapacity minNewArrowsWithComplement oneMinCapacity distractors
   = [i|module PetriNetCapacity
 
 #{modulePetriSignature}
@@ -476,11 +476,12 @@ pred #{capacityPredicateName}[#{activated} : set Transitions] {
 
   #{minNewArrowsWithComplementConstraints minNewArrowsWithComplement}
   #{oneMinCapacityConstraints oneMinCapacity}
+  #{distractorsConstraints distractors}
 
 }
 
 run #{capacityPredicateName} for exactly #{places basicC} givenPlaces, exactly #{places basicC} addedPlaces,
-exactly #{transitions basicC} Transitions, #{petriScopeBitWidth (basicConfigBitWidthInput basicC ++ [maxCapacity])} Int
+exactly #{transitions basicC} Transitions, #{petriScopeBitWidth (basicConfigBitWidthInput basicC ++ [fst minNewArrowsWithComplement, maxCapacity])} Int
 |]
   where
     activated = skolemName
@@ -490,17 +491,17 @@ exactly #{transitions basicC} Transitions, #{petriScopeBitWidth (basicConfigBitW
       "#" ++ activated ++ " >= " ++ show (atLeastActive basicC) ++ "\n"
       ++
       "  theActivatedTransitions[" ++ activated ++ "]"
-    minNewArrowsWithComplementConstraints :: Maybe Int -> String
-    minNewArrowsWithComplementConstraints minNewArrows =
-      case minNewArrows of
-        Just minNew ->
-          "#flowChange >= " ++ show minNew
-        Nothing -> ""
-    oneMinCapacityConstraints :: Maybe Int -> String
+    minNewArrowsWithComplementConstraints :: (Int, Int) -> String
+    minNewArrowsWithComplementConstraints (minNewArrowsMin, minNewArrowsMax) =
+      "#flowChange >= " ++ show minNewArrowsMin ++ "\n" ++
+      "  #flowChange <= " ++ show minNewArrowsMax
+    oneMinCapacityConstraints :: Int -> String
     oneMinCapacityConstraints oneMinCap =
-      case oneMinCap of
-        Just oneMin -> [i|some p : placesWithCapacity | p.capacity >= #{oneMin}|]
-        Nothing -> ""
+      [i|some p : placesWithCapacity | p.capacity >= #{oneMinCap}|]
+    distractorsConstraints :: (Int, Int) -> String
+    distractorsConstraints (distractorsMin, distractorsMax) =
+      "let distractors = {t: givenTransitions | activatedDefault[t] and not theActivatedTransitions[t]} |" ++ "\n" ++
+      "    #" ++ "distractors >= " ++ show distractorsMin ++ " and " ++ "#" ++ "distractors <= " ++ show distractorsMax
 
 capacityPredicateName :: String
 capacityPredicateName = "showCapacity"
