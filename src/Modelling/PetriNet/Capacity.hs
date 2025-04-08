@@ -75,7 +75,6 @@ import Modelling.PetriNet.Diagram (
   renderWith,
   )
 import Modelling.PetriNet.Find (
-  checkBasicConfig,
   findTaskInstance,
   prohibitHidePlaceNames,
   prohibitHideTransitionNames,
@@ -103,6 +102,7 @@ import Modelling.PetriNet.Types         (
   CapacityNode (..),
   basicConfigBitWidthInput,
   checkActivatedSourceConfig,
+  checkBasicConfig,
   petriScopeBitWidth,
   )
 

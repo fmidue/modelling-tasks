@@ -10,7 +10,6 @@
 
 module Modelling.PetriNet.Find (
   FindInstance (..),
-  checkBasicConfig,
   checkConfigForFind,
   checkFindTwoActive,
   findInitialList,
