@@ -81,6 +81,9 @@ import Modelling.PetriNet.Find (
   prohibitPatchworkRenderer,
   toFindEvaluationList,
   )
+import Modelling.PetriNet.FindActivatedTransitions (
+  checkActivatedTransitionsConfig,
+  )
 import Modelling.PetriNet.Reach.Type (
   ShowTransition (ShowTransition),
   Transition,
@@ -521,10 +524,11 @@ checkCapacityConfigs CapacityConfig {
   }
   = prohibitHidePlaceNames graphConfig
   <|> prohibitHideTransitionNames graphConfig
-  <|> checkBasicConfig basicConfig
+  <|> checkBasicConfig [fst minNewArrowsWithComplement, maxCapacity] basicConfig
   <|> prohibitPatchworkRenderer graphConfig
   <|> checkActivatedSourceConfig basicConfig advConfig
   <|> checkCapacityConfig basicConfig maxCapacity minNewArrowsWithComplement oneMinCapacity distractors
+  <|> checkActivatedTransitionsConfig basicConfig atMostActive
 
 checkCapacityConfig :: BasicConfig -> Int -> (Int, Int) -> Int -> (Int, Int) -> Maybe String
 checkCapacityConfig BasicConfig {
@@ -537,26 +541,31 @@ checkCapacityConfig BasicConfig {
   maxCapacity
   minNewArrowsWithComplement
   oneMinCapacity
+  distractors
   | maxCapacity < maxFlowPerEdge
   = Just "'maxCapacity' can not be too low for flow weights."
   | maxCapacity < maxTokensPerPlace
   = Just "The starting tokens can not exceed 'maxCapacity'."
   | atLeastActive == 0
   = Just "At least one transition has to be activated."
+  | uncurry (>) minNewArrowsWithComplement
+  = Just "The first element of 'minNewArrowsWithComplement' has to be smaller than the second element."
+  | fst minNewArrowsWithComplement <= 0
+  = Just "At least one flow has to be connected to a complement place."
+  | snd minNewArrowsWithComplement > 2 * transitions * places
+  = Just "'minNewArrowsWithComplement' is set unreasonably high, given the number of transitions."
+  | oneMinCapacity <= 0
+  = Just "'oneMinCapacity' has to be positive."
+  | oneMinCapacity > maxCapacity
+  = Just "'oneMinCapacity' can not be higher than 'maxCapacity'."
+  | uncurry (>) distractors
+  = Just "The first element of 'distractors' has to be smaller than the second element."
+  | fst distractors < 0
+  = Just "The first element of 'distractors' has to be positive."
+  | snd distractors > transitions
+  = Just "'distractors' can not be higher than the number of transitions."
   | otherwise
-  = case minNewArrowsWithComplement of
-      Just minNew
-        | minNew <= 0
-        -> Just "At least one flow has to be connected to a complement place."
-        | minNew > 2 * transitions * places
-        -> Just "'minNewArrowsWithComplement' is set unreasonably high, given the number of transitions."
-      _ -> case oneMinCapacity of
-          Just oneMin
-            | oneMin <= 0
-            -> Just "'oneMinCapacity' has to be positive."
-            | oneMin > maxCapacity
-            -> Just "'oneMinCapacity' can not be higher than 'maxCapacity'."
-          _ -> Nothing
+  = Nothing
 
 defaultCapacityInstance :: CapacityInstance
 defaultCapacityInstance = CapacityInstance {
