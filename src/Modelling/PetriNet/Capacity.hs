@@ -453,7 +453,7 @@ fact {
 }
 
 pred #{capacityPredicateName}[#{activated} : set Transitions] {
-  #{defaultConstraintsAtLeastZero activated basicC}
+  #{defaultConstraintsAtLeastZero}
   #{compAdvConstraints True advConfig}
 
   all t : Transitions, p : givenPlaces |
@@ -476,13 +476,12 @@ exactly #{transitions basicC} Transitions, #{petriScopeBitWidth (basicConfigBitW
 |]
   where
     activated = skolemName
-    defaultConstraintsAtLeastZero :: String -> BasicConfig -> String
-    defaultConstraintsAtLeastZero activatedT basicConfig@BasicConfig { atLeastActive } =
-      enforceConstraints True Nothing undefined (basicConfig { atLeastActive = 0 })
+    defaultConstraintsAtLeastZero =
+      enforceConstraints True Nothing undefined (basicC { atLeastActive = 0 })
       ++
-      "#" ++ activatedT ++ " >= " ++ show atLeastActive ++ "\n"
+      "#" ++ activated ++ " >= " ++ show (atLeastActive basicC) ++ "\n"
       ++
-      "  theActivatedTransitions[" ++ activatedT ++ "]"
+      "  theActivatedTransitions[" ++ activated ++ "]"
     minNewArrowsWithComplementConstraints :: Maybe Int -> String
     minNewArrowsWithComplementConstraints minNewArrows =
       case minNewArrows of
