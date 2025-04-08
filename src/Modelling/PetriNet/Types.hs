@@ -1146,8 +1146,8 @@ petriScopeBitWidth values =
 basicConfigBitWidthInput :: BasicConfig -> [Int]
 basicConfigBitWidthInput BasicConfig {places, transitions, flowOverall, tokensOverall} = [places, transitions, snd flowOverall, snd tokensOverall]
 
-checkBasicConfig :: BasicConfig -> Maybe String
-checkBasicConfig basicC@BasicConfig{
+checkBasicConfig :: [Int] -> BasicConfig -> Maybe String
+checkBasicConfig values basicC@BasicConfig{
   atLeastActive,
   flowOverall,
   maxFlowPerEdge,
@@ -1190,10 +1190,15 @@ checkBasicConfig basicC@BasicConfig{
   = Just "The maximum 'flowOverall' is set unreasonably high, given the other parameters."
  | transitions + places > 1 + fst flowOverall
   = Just "The number of transitions and places exceeds the minimum 'flowOverall' too much to create a connected net."
- | Just maxValue <- maxBitWidth, petriScopeBitWidth (basicConfigBitWidthInput basicC) > maxValue
-  = Just "'places', 'transitions' and the maximum 'flowOverall' and 'tokensOverall' should not be set too high."
+ | Just maxValue <- maxBitWidth, petriScopeBitWidth (basicConfigBitWidthInput basicC ++ values) > maxValue
+  = Just ("'places', 'transitions', " ++ addStrings values ++ "and the maximum 'flowOverall' and 'tokensOverall' should not be set too high.")
  | otherwise
   = Nothing
+
+addStrings :: [Int] -> String
+addStrings [] = ""
+addStrings [x] = "'" ++ show x ++ "'"
+addStrings (x:xs) = "'" ++ show x ++ "', " ++ addStrings xs
 
 checkActivatedSourceConfig :: BasicConfig -> AdvConfig -> Maybe String
 checkActivatedSourceConfig BasicConfig{ atLeastActive } AdvConfig{ presenceOfSourceTransitions }

@@ -179,7 +179,7 @@ checkFindTwoActive BasicConfig { atLeastActive }
 checkConfigForFind :: BasicConfig -> ChangeConfig -> GraphConfig -> Maybe String
 checkConfigForFind basic change graph =
   prohibitHideTransitionNames graph
-  <|> checkBasicConfig basic
+  <|> checkBasicConfig [] basic
   <|> checkChangeConfig basic change
   <|> prohibitPatchworkRenderer graph
 

@@ -516,7 +516,7 @@ checkMathConfig c@MathConfig {
   graphConfig,
   useDifferentGraphLayouts,
   wrongInstances
-  } = checkBasicConfig basicConfig
+  } = checkBasicConfig [] basicConfig
   <|> prohibitHidePlaceNames graphConfig
   <|> prohibitHideTransitionNames graphConfig
   <|> checkActivatedSourceConfig basicConfig advConfig

@@ -191,7 +191,7 @@ checkConfigForPick
   -> GraphConfig
   -> Maybe String
 checkConfigForPick useDifferent numWrongInstances basic change graph
-  = checkBasicConfig basic
+  = checkBasicConfig [] basic
   <|> checkChangeConfig basic change
   <|> checkGraphLayouts useDifferent numWrongInstances graph
   <|> prohibitPatchworkRenderer graph
