@@ -478,7 +478,7 @@ exactly #{transitions basicC} Transitions, #{petriScopeBitWidth (basicConfigBitW
     activated = skolemName
     defaultConstraintsAtLeastZero :: String -> BasicConfig -> String
     defaultConstraintsAtLeastZero activatedT basicConfig@BasicConfig { atLeastActive } =
-      enforceConstraints True Nothing activatedT (basicConfig { atLeastActive = 0 })
+      enforceConstraints True Nothing undefined (basicConfig { atLeastActive = 0 })
       ++
       "#" ++ activatedT ++ " >= " ++ show atLeastActive ++ "\n"
       ++
