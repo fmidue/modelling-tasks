@@ -231,7 +231,7 @@ capacityTask path task = do
   paragraph $ do
     translate $ do
       english [iii|
-        Given the isolated Places . With how many tokens and how should they be connected to Transitions so that the
+        Given the isolated Places. With how many tokens and how should they be connected to Transitions so that the
         resulting Petri net without capacities is equivalent to the given Petri net with capacities?
         |]
       german [iii|
@@ -562,7 +562,7 @@ checkCapacityConfig BasicConfig {
   | uncurry (>) distractors
   = Just "The first element of 'distractors' has to be smaller than the second element."
   | fst distractors < 0
-  = Just "The first element of 'distractors' has to be positive."
+  = Just "The first element of 'distractors' can not be negative."
   | snd distractors > transitions
   = Just "'distractors' can not be higher than the number of transitions."
   | otherwise
