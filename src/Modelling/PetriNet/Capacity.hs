@@ -328,7 +328,8 @@ petriNetFindCapacity CapacityConfig {
   advConfig,
   maxCapacity,
   minNewArrowsWithComplement,
-  oneMinCapacity
+  oneMinCapacity,
+  distractors
   }
   = petriNetFindCapacityAlloy
     basicConfig
@@ -336,6 +337,7 @@ petriNetFindCapacity CapacityConfig {
     maxCapacity
     minNewArrowsWithComplement
     oneMinCapacity
+    distractors
 
 petriNetPickCapacity :: CapacityConfig -> String
 petriNetPickCapacity CapacityConfig{
@@ -343,7 +345,8 @@ petriNetPickCapacity CapacityConfig{
   advConfig,
   maxCapacity,
   minNewArrowsWithComplement,
-  oneMinCapacity
+  oneMinCapacity,
+  distractors
   } =
   petriNetFindCapacityAlloy
     basicConfig
@@ -351,6 +354,7 @@ petriNetPickCapacity CapacityConfig{
     maxCapacity
     minNewArrowsWithComplement
     oneMinCapacity
+    distractors
 
 parseCapacity :: MonadThrow m => AlloyInstance -> m (ActivatedTransitions Object)
 parseCapacity inst = do
@@ -424,8 +428,9 @@ petriNetFindCapacityAlloy
   :: BasicConfig
   -> AdvConfig
   -> Int
-  -> Maybe Int
-  -> Maybe Int
+  -> (Int, Int)
+  -> Int
+  -> (Int, Int)
   -> String
 petriNetFindCapacityAlloy basicC advConfig maxCapacity minNewArrowsWithComplement oneMinCapacity
   = [i|module PetriNetCapacity
@@ -510,6 +515,8 @@ checkCapacityConfigs CapacityConfig {
   maxCapacity,
   minNewArrowsWithComplement,
   oneMinCapacity,
+  distractors,
+  atMostActive,
   graphConfig
   }
   = prohibitHidePlaceNames graphConfig
@@ -517,9 +524,9 @@ checkCapacityConfigs CapacityConfig {
   <|> checkBasicConfig basicConfig
   <|> prohibitPatchworkRenderer graphConfig
   <|> checkActivatedSourceConfig basicConfig advConfig
-  <|> checkCapacityConfig basicConfig maxCapacity minNewArrowsWithComplement oneMinCapacity
+  <|> checkCapacityConfig basicConfig maxCapacity minNewArrowsWithComplement oneMinCapacity distractors
 
-checkCapacityConfig :: BasicConfig -> Int -> Maybe Int -> Maybe Int -> Maybe String
+checkCapacityConfig :: BasicConfig -> Int -> (Int, Int) -> Int -> (Int, Int) -> Maybe String
 checkCapacityConfig BasicConfig {
     places,
     transitions,

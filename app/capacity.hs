@@ -45,15 +45,17 @@ mainFind :: Int -> IO ()
 mainFind i = forceErrors $ do
   let theConfig@CapacityConfig{..} = defaultCapacityConfig
   lift $ pPrint theConfig
-  (pls, trns, maxCap, newFlow, oneMin) <- lift $ userInput theConfig
+  (pls, trns, maxCap, newFlowMin, newFlowMax, oneMin, distractMin, distractMax, atMostAct) <- lift $ userInput theConfig
   let config = theConfig {
         basicConfig = basicConfig {
             places = pls,
             transitions = trns
             },
         maxCapacity = maxCap,
-        minNewArrowsWithComplement = newFlow,
-        oneMinCapacity = oneMin
+        minNewArrowsWithComplement = (newFlowMin, newFlowMax),
+        oneMinCapacity = oneMin,
+        distractors = (distractMin, distractMax),
+        atMostActive = atMostAct
         } :: CapacityConfig
   let c = checkCapacityConfigs config
   if isNothing c
@@ -74,12 +76,14 @@ validateInput d = do
       putStrLn "Invalid input"
       validateInput d
 
-userInput :: CapacityConfig -> IO (Int, Int, Int, Maybe Int, Maybe Int)
+userInput :: CapacityConfig -> IO (Int, Int, Int, Int, Int, Int, Int, Int, Maybe Int)
 userInput CapacityConfig{
   basicConfig = BasicConfig{..},
   maxCapacity = maxCapacity,
-  minNewArrowsWithComplement = minNewArrowsWithComplement,
-  oneMinCapacity = oneMinCapacity
+  minNewArrowsWithComplement = (minNewFlowMin, minNewFlowMax),
+  oneMinCapacity = oneMinCapacity,
+  distractors = (distractorsMin, distractorsMax),
+  atMostActive = atMost
   } = do
   putStr "Number of Places: "
   pls <- validateInput places
@@ -88,7 +92,15 @@ userInput CapacityConfig{
   putStr "Highest capacity for a place: "
   maxCap <- validateInput maxCapacity
   putStr "How many new flows are at minimum connected to complement places: "
-  newFlow <- validateInput minNewArrowsWithComplement
+  newFlowMin <- validateInput minNewFlowMin
+  putStr "How many new flows are at maximum connected to complement places: "
+  newFlowMax <- validateInput minNewFlowMax
   putStr "What capacity should one place at least have: "
   oneMin <- validateInput oneMinCapacity
-  return (pls, trns, maxCap, newFlow, oneMin)
+  putStr "How many distractors (transitions that are activated, but not given the capacity) at minimum: "
+  distractMin <- validateInput distractorsMin
+  putStr "How many distractors (transitions that are activated, but not given the capacity) at maximum: "
+  distractMax <- validateInput distractorsMax
+  putStr "Number of active Transitions (Just Int/Nothing): "
+  atMostAct <- validateInput atMost
+  return (pls, trns, maxCap, newFlowMin, newFlowMax, oneMin, distractMin, distractMax, atMostAct)

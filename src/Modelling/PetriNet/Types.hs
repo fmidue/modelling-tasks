@@ -1061,8 +1061,10 @@ data CapacityConfig = CapacityConfig
   { basicConfig :: BasicConfig
   , advConfig :: AdvConfig
   , maxCapacity :: Int
-  , minNewArrowsWithComplement :: Maybe Int
-  , oneMinCapacity :: Maybe Int
+  , minNewArrowsWithComplement :: (Int, Int)
+  , oneMinCapacity :: Int
+  , distractors :: (Int, Int)
+  , atMostActive :: Maybe Int
   , graphConfig :: GraphConfig
   , printSolution :: Bool
   , useDifferentGraphLayouts :: Bool
@@ -1074,8 +1076,10 @@ defaultCapacityConfig = CapacityConfig
   { basicConfig = defaultBasicConfig { places = 2, transitions = 2, atLeastActive = 1, maxTokensPerPlace = 4, tokensOverall = (2, 8)}
   , advConfig = defaultAdvConfig
   , maxCapacity = 4
-  , minNewArrowsWithComplement = Just 2
-  , oneMinCapacity = Just 2
+  , minNewArrowsWithComplement = (2, 6)
+  , oneMinCapacity = 2
+  , atMostActive = Nothing
+  , distractors = (1, 2)
   , graphConfig = defaultGraphConfig { hidePlaceNames = False, hideTransitionNames = False }
   , printSolution = True
   , useDifferentGraphLayouts = False
