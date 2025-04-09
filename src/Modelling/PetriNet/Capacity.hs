@@ -575,7 +575,7 @@ checkCapacityConfig BasicConfig {
   = Just "The first element of 'distractors' can not be higher than the second element."
   | fst distractors < 0
   = Just "The first element of 'distractors' can not be negative."
-  | snd distractors > maximum [transitions, (fromMaybe 0 atMostActive)]
+  | snd distractors > max transitions (fromMaybe 0 atMostActive)
   = Just "'distractors' can not be higher than the number of transitions."
   | otherwise
   = Nothing
