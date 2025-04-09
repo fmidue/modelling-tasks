@@ -101,6 +101,6 @@ userInput CapacityConfig{
   distractMin <- validateInput distractorsMin
   putStr "How many distractors (transitions that are activated, but not given the capacity) at maximum: "
   distractMax <- validateInput distractorsMax
-  putStr "Number of active Transitions (Just Int/Nothing): "
+  putStr "Maximum number of active Transitions (Just Int/Nothing): "
   atMostAct <- validateInput atMost
   return (pls, trns, maxCap, newFlowMin, newFlowMax, oneMin, distractMin, distractMax, atMostAct)

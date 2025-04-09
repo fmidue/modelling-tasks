@@ -481,7 +481,7 @@ pred #{capacityPredicateName}[#{activated} : set Transitions] {
 }
 
 run #{capacityPredicateName} for exactly #{places basicC} givenPlaces, exactly #{places basicC} addedPlaces,
-exactly #{transitions basicC} Transitions, #{petriScopeBitWidth (basicConfigBitWidthInput basicC ++ [fst minNewArrowsWithComplement, maxCapacity])} Int
+exactly #{transitions basicC} Transitions, #{petriScopeBitWidth (basicConfigBitWidthInput basicC ++ [snd newArrowsWithComplement, maxCapacity])} Int
 |]
   where
     activated = skolemName
@@ -500,7 +500,7 @@ exactly #{transitions basicC} Transitions, #{petriScopeBitWidth (basicConfigBitW
       [i|some p : placesWithCapacity | p.capacity >= #{oneMinCap}|]
     distractorsConstraints :: (Int, Int) -> String
     distractorsConstraints (distractorsMin, distractorsMax) =
-      "let distractors = {t: givenTransitions | activatedDefault[t] and not theActivatedTransitions[t]} |" ++ "\n" ++
+      "let distractors = {t: givenTransitions | activatedDefault[t] and t not in " ++ activated ++ "} |" ++ "\n" ++
       "    #" ++ "distractors >= " ++ show distractorsMin ++ " and " ++ "#" ++ "distractors <= " ++ show distractorsMax
 
 capacityPredicateName :: String
@@ -525,7 +525,7 @@ checkCapacityConfigs CapacityConfig {
   }
   = prohibitHidePlaceNames graphConfig
   <|> prohibitHideTransitionNames graphConfig
-  <|> checkBasicConfig [fst minNewArrowsWithComplement, maxCapacity] basicConfig
+  <|> checkBasicConfig [snd newArrowsWithComplement, maxCapacity] basicConfig
   <|> prohibitPatchworkRenderer graphConfig
   <|> checkActivatedSourceConfig basicConfig advConfig
   <|> checkCapacityConfig basicConfig maxCapacity minNewArrowsWithComplement oneMinCapacity distractors
@@ -559,11 +559,11 @@ checkCapacityConfig BasicConfig {
   = Just "'oneMinCapacity' has to be positive."
   | oneMinCapacity > maxCapacity
   = Just "'oneMinCapacity' can not be higher than 'maxCapacity'."
-  | uncurry (>) distractors
-  = Just "The first element of 'distractors' has to be smaller than the second element."
+  | uncurry (>=) distractors
+  = Just "The first element of 'distractors' can not be higher than the second element."
   | fst distractors < 0
   = Just "The first element of 'distractors' can not be negative."
-  | snd distractors > transitions
+  | snd distractors > maximum [transitions, (fromMaybe 0 atMostActive)]
   = Just "'distractors' can not be higher than the number of transitions."
   | otherwise
   = Nothing

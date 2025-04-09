@@ -173,8 +173,8 @@ compAdvConstraints underDefault AdvConfig
 |]
   where
     petriLoops = \case
-      True  -> "some n : " ++ addGiven ++ "Nodes | selfLoop[n]"
-      False -> "no n : " ++ addGiven ++ "Nodes | selfLoop[n]"
+      True  -> "some n : Nodes | selfLoop[n]"
+      False -> "no n : Nodes | selfLoop[n]"
     petriSink = \case
       True  -> "some t : " ++ addGiven ++ "Transitions | sinkTransitions" ++ addDefault ++ "[t]"
       False -> "no t : " ++ addGiven ++ "Transitions | sinkTransitions" ++ addDefault ++ "[t]"
