@@ -1061,7 +1061,7 @@ data CapacityConfig = CapacityConfig
   { basicConfig :: BasicConfig
   , advConfig :: AdvConfig
   , maxCapacity :: Int
-  , minNewArrowsWithComplement :: (Int, Int)
+  , newArrowsWithComplement :: (Int, Int)
   , oneMinCapacity :: Int
   , distractors :: (Int, Int)
   , atMostActive :: Maybe Int
@@ -1076,7 +1076,7 @@ defaultCapacityConfig = CapacityConfig
   { basicConfig = defaultBasicConfig { places = 2, transitions = 2, atLeastActive = 1, maxTokensPerPlace = 4, tokensOverall = (2, 8)}
   , advConfig = defaultAdvConfig
   , maxCapacity = 4
-  , minNewArrowsWithComplement = (2, 6)
+  , newArrowsWithComplement = (2, 6)
   , oneMinCapacity = 2
   , atMostActive = Nothing
   , distractors = (1, 2)

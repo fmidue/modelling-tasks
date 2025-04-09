@@ -52,7 +52,7 @@ mainFind i = forceErrors $ do
             transitions = trns
             },
         maxCapacity = maxCap,
-        minNewArrowsWithComplement = (newFlowMin, newFlowMax),
+        newArrowsWithComplement = (newFlowMin, newFlowMax),
         oneMinCapacity = oneMin,
         distractors = (distractMin, distractMax),
         atMostActive = atMostAct
@@ -80,7 +80,7 @@ userInput :: CapacityConfig -> IO (Int, Int, Int, Int, Int, Int, Int, Int, Maybe
 userInput CapacityConfig{
   basicConfig = BasicConfig{..},
   maxCapacity = maxCapacity,
-  minNewArrowsWithComplement = (minNewFlowMin, minNewFlowMax),
+  newArrowsWithComplement = (minNewFlowMin, minNewFlowMax),
   oneMinCapacity = oneMinCapacity,
   distractors = (distractorsMin, distractorsMax),
   atMostActive = atMost

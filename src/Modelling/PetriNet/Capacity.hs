@@ -330,7 +330,7 @@ petriNetFindCapacity CapacityConfig {
   basicConfig,
   advConfig,
   maxCapacity,
-  minNewArrowsWithComplement,
+  newArrowsWithComplement,
   oneMinCapacity,
   distractors
   }
@@ -338,7 +338,7 @@ petriNetFindCapacity CapacityConfig {
     basicConfig
     advConfig
     maxCapacity
-    minNewArrowsWithComplement
+    newArrowsWithComplement
     oneMinCapacity
     distractors
 
@@ -347,7 +347,7 @@ petriNetPickCapacity CapacityConfig{
   basicConfig,
   advConfig,
   maxCapacity,
-  minNewArrowsWithComplement,
+  newArrowsWithComplement,
   oneMinCapacity,
   distractors
   } =
@@ -355,7 +355,7 @@ petriNetPickCapacity CapacityConfig{
     basicConfig
     advConfig
     maxCapacity
-    minNewArrowsWithComplement
+    newArrowsWithComplement
     oneMinCapacity
     distractors
 
@@ -474,7 +474,7 @@ pred #{capacityPredicateName}[#{activated} : set Transitions] {
 
   all p : placesWithCapacity, w : p.flow[Transitions] + Transitions.flow[p] | p.capacity >= w
 
-  #{minNewArrowsWithComplementConstraints minNewArrowsWithComplement}
+  #{newArrowsWithComplementConstraints newArrowsWithComplement}
   #{oneMinCapacityConstraints oneMinCapacity}
   #{distractorsConstraints distractors}
 
@@ -491,8 +491,8 @@ exactly #{transitions basicC} Transitions, #{petriScopeBitWidth (basicConfigBitW
       "#" ++ activated ++ " >= " ++ show (atLeastActive basicC) ++ "\n"
       ++
       "  theActivatedTransitions[" ++ activated ++ "]"
-    minNewArrowsWithComplementConstraints :: (Int, Int) -> String
-    minNewArrowsWithComplementConstraints (minNewArrowsMin, minNewArrowsMax) =
+    newArrowsWithComplementConstraints :: (Int, Int) -> String
+    newArrowsWithComplementConstraints (minNewArrowsMin, minNewArrowsMax) =
       "#flowChange >= " ++ show minNewArrowsMin ++ "\n" ++
       "  #flowChange <= " ++ show minNewArrowsMax
     oneMinCapacityConstraints :: Int -> String
@@ -517,7 +517,7 @@ checkCapacityConfigs CapacityConfig {
   basicConfig,
   advConfig,
   maxCapacity,
-  minNewArrowsWithComplement,
+  newArrowsWithComplement,
   oneMinCapacity,
   distractors,
   atMostActive,
@@ -540,7 +540,7 @@ checkCapacityConfig BasicConfig {
     maxFlowPerEdge
     }
   maxCapacity
-  minNewArrowsWithComplement
+  newArrowsWithComplement
   oneMinCapacity
   distractors
   | maxCapacity < maxFlowPerEdge
@@ -549,12 +549,12 @@ checkCapacityConfig BasicConfig {
   = Just "The starting tokens can not exceed 'maxCapacity'."
   | atLeastActive == 0
   = Just "At least one transition has to be activated."
-  | uncurry (>) minNewArrowsWithComplement
-  = Just "The first element of 'minNewArrowsWithComplement' has to be smaller than the second element."
-  | fst minNewArrowsWithComplement <= 0
-  = Just "At least one flow has to be connected to a complement place."
-  | snd minNewArrowsWithComplement > 2 * transitions * places
-  = Just "'minNewArrowsWithComplement' is set unreasonably high, given the number of transitions."
+  | uncurry (>=) newArrowsWithComplement
+  = Just "The first element of 'newArrowsWithComplement' can not be higher than the second element."
+  | fst newArrowsWithComplement < places
+  = Just "At least one flow has to be connected to each complement place."
+  | snd newArrowsWithComplement > 2 * transitions * places
+  = Just "'newArrowsWithComplement' is set unreasonably high, given the number of transitions and places."
   | oneMinCapacity <= 0
   = Just "'oneMinCapacity' has to be positive."
   | oneMinCapacity > maxCapacity
