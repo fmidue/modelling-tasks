@@ -143,6 +143,7 @@ import Control.Monad.Random             (MonadRandom, RandT, RandomGen)
 import Control.Monad.Trans              (MonadTrans(lift))
 import Data.Bimap                       (Bimap)
 import Data.GraphViz.Attributes.Complete (GraphvizCommand (..))
+import Data.List                        (intercalate)
 import Data.Map.Lazy                    (Map)
 import Data.Maybe                       (fromMaybe)
 import GHC.Generics                     (Generic)
@@ -489,6 +490,13 @@ class (PetriNode n, Show (p n String)) => Net p n where
     -> p n a
     -> p n a
 
+  updateCapacity
+    :: Ord a
+    => a
+    -> Maybe Int
+    -> p n a
+    -> p n a
+
   {-|
   Removes the flow going from the first given key to the second one..
   -}
@@ -564,6 +572,8 @@ instance Net PetriLike Node where
 
   outFlow x = maybe M.empty flowOutN . M.lookup x . allNodes
 
+  updateCapacity _ _ net = net
+
   mapNet = mapPetriLike
   traverseNet = traversePetriLike
 
@@ -599,6 +609,8 @@ instance Net PetriLike SimpleNode where
 
   outFlow x = maybe M.empty flowOutSN . M.lookup x . allNodes
 
+  updateCapacity _ _ net = net
+
   mapNet = mapPetriLike
   traverseNet = traversePetriLike
 
@@ -632,12 +644,10 @@ instance Net PetriLike CapacityNode where
     . allNodes
     $ ns
 
-
   alterFlow x f y = PetriLike
     . M.adjust (updateCapacityNode (M.insert y f)) x
     . M.adjust (updateCapacityNode (M.insert x f)) y
     . allNodes
-
 
   alterNode x mt = PetriLike . M.alter alterNode' x . allNodes
     where
@@ -645,6 +655,13 @@ instance Net PetriLike CapacityNode where
         (maybe (CapacityTransition M.empty M.empty) (\m -> CapacityPlace m 0 M.empty M.empty) mt)
 
   outFlow x = maybe M.empty flowOutCN . M.lookup x . allNodes
+
+  updateCapacity x y (PetriLike ns) =
+    PetriLike $ M.alter updateCapacity' x ns
+    where
+      updateCapacity' Nothing = Just $ CapacityPlace 0 (fromMaybe 0 y) M.empty M.empty
+      updateCapacity' (Just (CapacityPlace t _ i o)) = Just $ CapacityPlace t (fromMaybe 0 y) i o
+      updateCapacity' (Just (CapacityTransition i o)) = Just $ CapacityTransition i o
 
   mapNet = mapPetriLike
   traverseNet = traversePetriLike

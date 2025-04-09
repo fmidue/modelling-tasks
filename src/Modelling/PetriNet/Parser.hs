@@ -36,7 +36,7 @@ import qualified Data.Map.Lazy                    as Map (
 
 import Modelling.Auxiliary.Common       (Object (Object, oName, oIndex), toMap)
 import Modelling.PetriNet.Types (
-  Net (emptyNet, outFlow, alterFlow, alterNode, traverseNet),
+  Net (emptyNet, outFlow, alterFlow, alterNode, traverseNet, updateCapacity),
   Petri,
   PetriChange (..),
   PetriNode (..),
@@ -116,9 +116,14 @@ parseNet flowSetName tokenSetName inst = do
   nodes  <- singleSig inst "this" "Nodes" ""
   rawTokens <- doubleSig inst "this" "Places" tokenSetName
   let tokens = relToMap (second oIndex) rawTokens
+  rawCapacity <- doubleSig inst "this" "placesWithCapacity" "capacity"
+  let capacities = relToMap (second oIndex) rawCapacity
   flow   <- tripleSig inst "this" "Nodes" flowSetName
+
   return
     . foldrFlip (\(x, y, z) -> alterFlow x (oIndex z) y) flow
+    . foldrFlip
+      (\x -> updateCapacity x $ Map.lookup x capacities >>= Set.lookupMin) nodes
     . foldrFlip
       (\x -> alterNode x $ Map.lookup x tokens >>= Set.lookupMin)
       nodes
