@@ -1213,9 +1213,7 @@ checkBasicConfig values basicC@BasicConfig{
   = Nothing
 
 addStrings :: [Int] -> String
-addStrings [] = ""
-addStrings [x] = "'" ++ show x ++ "'"
-addStrings (x:xs) = "'" ++ show x ++ "', " ++ addStrings xs
+addStrings xs = intercalate ", " (map (\x -> "'" ++ show x ++ "'") xs)
 
 checkActivatedSourceConfig :: BasicConfig -> AdvConfig -> Maybe String
 checkActivatedSourceConfig BasicConfig{ atLeastActive } AdvConfig{ presenceOfSourceTransitions }

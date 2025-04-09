@@ -137,6 +137,7 @@ import Control.Monad.Random (
 import Control.Monad.Trans              (MonadTrans (lift))
 import Data.Foldable                    (for_)
 import Data.GraphViz.Commands           (GraphvizCommand (Circo))
+import Data.Maybe                       (fromMaybe)
 import Data.String.Interpolate          (i, iii)
 import Language.Alloy.Call (
   AlloyInstance
@@ -332,7 +333,8 @@ petriNetFindCapacity CapacityConfig {
   maxCapacity,
   newArrowsWithComplement,
   oneMinCapacity,
-  distractors
+  distractors,
+  atMostActive
   }
   = petriNetFindCapacityAlloy
     basicConfig
@@ -341,6 +343,7 @@ petriNetFindCapacity CapacityConfig {
     newArrowsWithComplement
     oneMinCapacity
     distractors
+    atMostActive
 
 petriNetPickCapacity :: CapacityConfig -> String
 petriNetPickCapacity CapacityConfig{
@@ -349,7 +352,8 @@ petriNetPickCapacity CapacityConfig{
   maxCapacity,
   newArrowsWithComplement,
   oneMinCapacity,
-  distractors
+  distractors,
+  atMostActive
   } =
   petriNetFindCapacityAlloy
     basicConfig
@@ -358,6 +362,7 @@ petriNetPickCapacity CapacityConfig{
     newArrowsWithComplement
     oneMinCapacity
     distractors
+    atMostActive
 
 parseCapacity :: MonadThrow m => AlloyInstance -> m (ActivatedTransitions Object)
 parseCapacity inst = do
@@ -434,8 +439,9 @@ petriNetFindCapacityAlloy
   -> (Int, Int)
   -> Int
   -> (Int, Int)
+  -> Maybe Int
   -> String
-petriNetFindCapacityAlloy basicC advConfig maxCapacity minNewArrowsWithComplement oneMinCapacity distractors
+petriNetFindCapacityAlloy basicC advConfig maxCapacity newArrowsWithComplement oneMinCapacity distractors atMostActive
   = [i|module PetriNetCapacity
 
 #{modulePetriSignature}
@@ -490,12 +496,17 @@ exactly #{transitions basicC} Transitions, #{petriScopeBitWidth (basicConfigBitW
       ++
       "#" ++ activated ++ " >= " ++ show (atLeastActive basicC) ++ "\n"
       ++
+      (case atMostActive of
+        Nothing -> ""
+        Just n  -> "#" ++ activated ++ " <= " ++ show n ++ "\n")
+      ++
       "  theActivatedTransitions[" ++ activated ++ "]"
     newArrowsWithComplementConstraints :: (Int, Int) -> String
     newArrowsWithComplementConstraints (minNewArrowsMin, minNewArrowsMax) =
       "#flowChange >= " ++ show minNewArrowsMin ++ "\n" ++
       "  #flowChange <= " ++ show minNewArrowsMax
     oneMinCapacityConstraints :: Int -> String
+    oneMinCapacityConstraints 1 = ""
     oneMinCapacityConstraints oneMinCap =
       [i|some p : placesWithCapacity | p.capacity >= #{oneMinCap}|]
     distractorsConstraints :: (Int, Int) -> String
@@ -528,10 +539,10 @@ checkCapacityConfigs CapacityConfig {
   <|> checkBasicConfig [snd newArrowsWithComplement, maxCapacity] basicConfig
   <|> prohibitPatchworkRenderer graphConfig
   <|> checkActivatedSourceConfig basicConfig advConfig
-  <|> checkCapacityConfig basicConfig maxCapacity minNewArrowsWithComplement oneMinCapacity distractors
+  <|> checkCapacityConfig basicConfig maxCapacity newArrowsWithComplement oneMinCapacity distractors atMostActive
   <|> checkActivatedTransitionsConfig basicConfig atMostActive
 
-checkCapacityConfig :: BasicConfig -> Int -> (Int, Int) -> Int -> (Int, Int) -> Maybe String
+checkCapacityConfig :: BasicConfig -> Int -> (Int, Int) -> Int -> (Int, Int) -> Maybe Int -> Maybe String
 checkCapacityConfig BasicConfig {
     places,
     transitions,
@@ -543,6 +554,7 @@ checkCapacityConfig BasicConfig {
   newArrowsWithComplement
   oneMinCapacity
   distractors
+  atMostActive
   | maxCapacity < maxFlowPerEdge
   = Just "'maxCapacity' can not be too low for flow weights."
   | maxCapacity < maxTokensPerPlace
