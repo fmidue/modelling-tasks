@@ -1,106 +1,108 @@
-{-# LANGUAGE ApplicativeDo #-}
-{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE ApplicativeDo    #-}
+{-# LANGUAGE DeriveGeneric    #-}
 {-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE NamedFieldPuns #-}
-{-# LANGUAGE QuasiQuotes #-}
-{-# LANGUAGE TupleSections #-}
+{-# LANGUAGE NamedFieldPuns   #-}
+{-# LANGUAGE QuasiQuotes      #-}
+{-# LANGUAGE TupleSections    #-}
 
 module Modelling.ActivityDiagram.SelectAS (
-  SelectASInstance(..),
-  SelectASConfig(..),
-  SelectASSolution(..),
-  defaultSelectASConfig,
-  checkSelectASConfig,
-  selectASAlloy,
-  checkSelectASInstance,
-  selectActionSequence,
-  selectASTask,
-  selectASSyntax,
-  selectASEvaluation,
-  selectASSolution,
-  selectAS,
-  defaultSelectASInstance
-) where
+    SelectASConfig (..)
+  , SelectASInstance (..)
+  , SelectASSolution (..)
+  , checkSelectASConfig
+  , checkSelectASInstance
+  , defaultSelectASConfig
+  , defaultSelectASInstance
+  , selectAS
+  , selectASAlloy
+  , selectASEvaluation
+  , selectASSolution
+  , selectASSyntax
+  , selectASTask
+  , selectActionSequence
+  ) where
 
-import qualified Data.Map as M (fromList, toList, keys, filter, map)
-import qualified Data.Vector as V (fromList)
-
-import Capabilities.Alloy               (MonadAlloy, getInstances)
-import Capabilities.PlantUml            (MonadPlantUml)
-import Modelling.ActivityDiagram.ActionSequences (generateActionSequence, validActionSequence)
-import Modelling.ActivityDiagram.Alloy (
-  adConfigToAlloy,
-  moduleActionSequencesRules,
-  )
-import Modelling.ActivityDiagram.Config (
-  AdConfig (..),
-  checkAdConfig,
-  defaultAdConfig,
-  )
-import Modelling.ActivityDiagram.Datatype (
-  AdConnection (..),
-  AdNode (..),
-  UMLActivityDiagram (..),
-  )
-import Modelling.ActivityDiagram.Instance (parseInstance)
-import Modelling.ActivityDiagram.PlantUMLConverter (
-  PlantUmlConfig (..),
-  defaultPlantUmlConfig,
-  drawAdToFile,
-  )
-import Modelling.ActivityDiagram.Shuffle (shuffleAdNames)
-import Modelling.Auxiliary.Common (
-  TaskGenerationException (NoInstanceAvailable),
-  )
+import Capabilities.Alloy (MonadAlloy, getInstances)
+import Capabilities.PlantUml (MonadPlantUml)
 
 import Control.Applicative (Alternative ((<|>)))
-import Control.Monad.Catch              (MonadThrow, throwM)
+import Control.Monad.Catch (MonadThrow, throwM)
 import Control.Monad.Extra (firstJustM)
-import Control.OutputCapable.Blocks (
-  ArticleToUse (DefiniteArticle),
-  GenericOutputCapable (..),
-  LangM,
-  OutputCapable,
-  ($=<<),
-  english,
-  german,
-  translate,
-  translations,
-  singleChoice,
-  singleChoiceSyntax,
+import Control.Monad.Random (MonadRandom, RandT, RandomGen, evalRandT, mkStdGen)
+import Control.OutputCapable.Blocks
+  ( ArticleToUse (DefiniteArticle)
+  , GenericOutputCapable (..)
+  , LangM
+  , OutputCapable
+  , english
+  , german
+  , singleChoice
+  , singleChoiceSyntax
+  , translate
+  , translations
+  , ($=<<)
   )
-import Control.Monad.Random (
-  MonadRandom,
-  RandT,
-  RandomGen,
-  evalRandT,
-  mkStdGen
-  )
+
 import Data.List (permutations, sortBy)
 import Data.Map (Map)
-import Data.Monoid (Sum(..), getSum)
-import Data.String.Interpolate          (i, iii)
-import Data.Vector.Distance (Params(..), leastChanges)
+import qualified Data.Map as M (filter, fromList, keys, map, toList)
+import Data.Monoid (Sum (..), getSum)
+import Data.String.Interpolate (i, iii)
+import qualified Data.Vector as V (fromList)
+import Data.Vector.Distance (Params (..), leastChanges)
+
 import GHC.Generics (Generic)
+
+import Modelling.ActivityDiagram.ActionSequences
+  ( generateActionSequence
+  , validActionSequence
+  )
+import Modelling.ActivityDiagram.Alloy
+  ( adConfigToAlloy
+  , moduleActionSequencesRules
+  )
+import Modelling.ActivityDiagram.Config
+  ( AdConfig (..)
+  , checkAdConfig
+  , defaultAdConfig
+  )
+import Modelling.ActivityDiagram.Datatype
+  ( AdConnection (..)
+  , AdNode (..)
+  , UMLActivityDiagram (..)
+  )
+import Modelling.ActivityDiagram.Instance (parseInstance)
+import Modelling.ActivityDiagram.PlantUMLConverter
+  ( PlantUmlConfig (..)
+  , defaultPlantUmlConfig
+  , drawAdToFile
+  )
+import Modelling.ActivityDiagram.Shuffle (shuffleAdNames)
+import Modelling.Auxiliary.Common
+  ( TaskGenerationException (NoInstanceAvailable)
+  )
 import Modelling.Auxiliary.Output (addPretext)
+
 import System.Random.Shuffle (shuffleM)
 
-data SelectASInstance = SelectASInstance {
-  activityDiagram :: UMLActivityDiagram,
-  actionSequences :: Map Int (Bool, [String]),
-  drawSettings :: PlantUmlConfig,
-  showSolution :: Bool
-} deriving (Generic, Show, Eq)
+data SelectASInstance = SelectASInstance
+  { activityDiagram :: UMLActivityDiagram
+  , actionSequences :: Map Int (Bool, [String])
+  , drawSettings    :: PlantUmlConfig
+  , showSolution    :: Bool
+  }
+  deriving (Eq, Generic, Show)
 
-data SelectASConfig = SelectASConfig {
-  adConfig :: AdConfig,
-  hideBranchConditions :: Bool,
-  maxInstances :: Maybe Integer,
-  objectNodeOnEveryPath :: Maybe Bool,
-  numberOfWrongAnswers :: Int,
-  answerLength :: !(Int, Int),
-  printSolution :: Bool
-} deriving (Generic, Read, Show)
+data SelectASConfig = SelectASConfig
+  { adConfig              :: AdConfig
+  , hideBranchConditions  :: Bool
+  , maxInstances          :: Maybe Integer
+  , objectNodeOnEveryPath :: Maybe Bool
+  , numberOfWrongAnswers  :: Int
+  , answerLength          :: !(Int, Int)
+  , printSolution         :: Bool
+  }
+  deriving (Generic, Read, Show)
 
 defaultSelectASConfig :: SelectASConfig
 defaultSelectASConfig = SelectASConfig {
@@ -163,9 +165,9 @@ selectASAlloy SelectASConfig {
           |]
         f opt s =
           case opt of
-            Just True -> s
+            Just True  -> s
             Just False -> [i| not #{s}|]
-            Nothing -> ""
+            Nothing    -> ""
 
 checkSelectASInstance :: SelectASInstance -> Maybe String
 checkSelectASInstance inst
@@ -189,10 +191,11 @@ checkSelectASInstanceForConfig inst SelectASConfig {
     = Nothing
   where (_, solution) = head $ M.toList $ M.map snd $ M.filter fst $ actionSequences inst
 
-data SelectASSolution = SelectASSolution {
-  correctSequence :: [String],
-  wrongSequences :: [[String]]
-} deriving (Show, Eq)
+data SelectASSolution = SelectASSolution
+  { correctSequence :: [String]
+  , wrongSequences  :: [[String]]
+  }
+  deriving (Eq, Show)
 
 selectActionSequence :: Int -> UMLActivityDiagram -> SelectASSolution
 selectActionSequence numberOfWrongSequences ad =
@@ -330,11 +333,11 @@ getSelectASTask config = do
           showSolution = printSolution config
         }
     case checkSelectASInstanceForConfig selectASInst config of
-      Just _ -> return Nothing
+      Just _  -> return Nothing
       Nothing -> return $ Just selectASInst
     ) ad
   case validInstances of
-    Just x -> return x
+    Just x  -> return x
     Nothing -> throwM NoInstanceAvailable
 
 defaultSelectASInstance :: SelectASInstance
