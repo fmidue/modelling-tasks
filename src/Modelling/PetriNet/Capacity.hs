@@ -50,6 +50,7 @@ import Capabilities.Cache               (MonadCache)
 import Capabilities.Diagrams            (MonadDiagrams)
 import Capabilities.Graphviz            (MonadGraphviz)
 import Modelling.Auxiliary.Common (
+  TaskGenerationException (NoInstanceAvailable),
   Object,
   oneOf,
   parseWith,
@@ -134,6 +135,8 @@ import Control.Monad.Random (
   evalRandT,
   mkStdGen
   )
+import Control.Monad                    (when)
+import Control.Monad.Catch              (MonadThrow (throwM))
 import Control.Monad.Trans              (MonadTrans (lift))
 import Data.Foldable                    (for_)
 import Data.GraphViz.Commands           (GraphvizCommand (Circo))
@@ -313,6 +316,8 @@ pickCapacity
 pickCapacity alloyF alloyC config segment = do
   let is = Find.maxInstances (alloyC config)
   list <- getInstances is (Find.timeout $ alloyC config) (alloyF config)
+  when (null $ drop segment list)
+    $ throwM NoInstanceAvailable
   inst <- case fromIntegral <$> is of
     Nothing -> randomInstance list
     Just n -> do
