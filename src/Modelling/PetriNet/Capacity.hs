@@ -140,7 +140,6 @@ import Control.Monad.Catch              (MonadThrow (throwM))
 import Control.Monad.Trans              (MonadTrans (lift))
 import Data.Foldable                    (for_)
 import Data.GraphViz.Commands           (GraphvizCommand (Circo))
-import Data.Maybe                       (fromMaybe)
 import Data.String.Interpolate          (i, iii)
 import Language.Alloy.Call (
   AlloyInstance
@@ -544,10 +543,10 @@ checkCapacityConfigs CapacityConfig {
   <|> checkBasicConfig [snd newArrowsWithComplement, maxCapacity] basicConfig
   <|> prohibitPatchworkRenderer graphConfig
   <|> checkActivatedSourceConfig basicConfig advConfig
-  <|> checkCapacityConfig basicConfig maxCapacity newArrowsWithComplement oneMinCapacity distractors atMostActive
+  <|> checkCapacityConfig basicConfig maxCapacity newArrowsWithComplement oneMinCapacity distractors
   <|> checkActivatedTransitionsConfig basicConfig atMostActive
 
-checkCapacityConfig :: BasicConfig -> Int -> (Int, Int) -> Int -> (Int, Int) -> Maybe Int -> Maybe String
+checkCapacityConfig :: BasicConfig -> Int -> (Int, Int) -> Int -> (Int, Int) -> Maybe String
 checkCapacityConfig BasicConfig {
     places,
     transitions,
@@ -559,7 +558,6 @@ checkCapacityConfig BasicConfig {
   newArrowsWithComplement
   oneMinCapacity
   distractors
-  atMostActive
   | maxCapacity < maxFlowPerEdge
   = Just "'maxCapacity' can not be too low for flow weights."
   | maxCapacity < maxTokensPerPlace
@@ -580,7 +578,7 @@ checkCapacityConfig BasicConfig {
   = Just "The first element of 'distractors' can not be higher than the second element."
   | fst distractors < 0
   = Just "The first element of 'distractors' can not be negative."
-  | snd distractors > max transitions (fromMaybe 0 atMostActive)
+  | snd distractors > transitions - atLeastActive
   = Just "'distractors' can not be higher than the number of transitions."
   | otherwise
   = Nothing
