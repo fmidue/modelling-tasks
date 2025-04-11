@@ -53,7 +53,6 @@ import Modelling.PetriNet.TestCommon (
   )
 import Settings                         (configDepth, needsTuning)
 
-import Control.Lens.Lens                ((??))
 import Data.Maybe                       (isNothing)
 import Test.Hspec
 
