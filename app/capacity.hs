@@ -91,9 +91,9 @@ userInput CapacityConfig{
   trns <- validateInput transitions
   putStr "Highest capacity for a place: "
   maxCap <- validateInput maxCapacity
-  putStr "How many new flows are at minimum connected to complement places: "
+  putStr "How many new arrows are at minimum connected to complement places: "
   newFlowMin <- validateInput minNewFlowMin
-  putStr "How many new flows are at maximum connected to complement places: "
+  putStr "How many new arrows are at maximum connected to complement places: "
   newFlowMax <- validateInput minNewFlowMax
   putStr "What capacity should one place at least have: "
   oneMin <- validateInput oneMinCapacity

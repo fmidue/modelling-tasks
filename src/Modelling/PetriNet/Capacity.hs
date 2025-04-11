@@ -110,8 +110,8 @@ import Modelling.PetriNet.Types         (
   )
 
 import Control.Applicative              ((<|>))
-import Control.Monad                    (void)
-import Control.Monad.Catch              (MonadThrow)
+import Control.Monad                    (void, when)
+import Control.Monad.Catch              (MonadThrow, MonadThrow (throwM))
 import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
   GenericOutputCapable (..),
@@ -134,8 +134,6 @@ import Control.Monad.Random (
   evalRandT,
   mkStdGen
   )
-import Control.Monad                    (when)
-import Control.Monad.Catch              (MonadThrow (throwM))
 import Control.Monad.Trans              (MonadTrans (lift))
 import Data.Foldable                    (for_)
 import Data.GraphViz.Commands           (GraphvizCommand (Circo))
@@ -206,7 +204,7 @@ simpleCapacityTask
     OutputCapable m
     )
   => FilePath
-  -> CapacityInstance (SimplePetriNet)
+  -> CapacityInstance SimplePetriNet
   -> LangM m
 simpleCapacityTask = capacityTask
 
@@ -306,7 +304,7 @@ combinedCapacity alloyF alloyC config segment = do
       case drop x list of
         x':_ -> return x'
         []   -> randomInstance list
-  first <- getDefaultNet inst
+  first <- getDefaultNet (Just "capacity") inst
   (second, third) <- getNet parseCapacity inst
 
   return (first, second, third)
