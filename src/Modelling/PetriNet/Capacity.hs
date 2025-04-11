@@ -155,11 +155,11 @@ import Text.Parsec.Combinator           (many1)
 import Text.Parsec.String               (Parser)
 
 
-data CapacityInstance = CapacityInstance {
+data CapacityInstance a = CapacityInstance {
   drawWith :: !DrawSettings,
   toFind :: !(ActivatedTransitions Transition),
   originalNet :: !(PetriLike CapacityNode String),
-  transformedNet :: !(PetriLike SimpleNode String),
+  transformedNet :: !a,
   numberOfPlaces :: !Int,
   numberOfTransitions :: !Int,
   showSolution :: !Bool
@@ -167,18 +167,17 @@ data CapacityInstance = CapacityInstance {
   deriving (Read, Show)
 
 capacityGenerate
-  :: (MonadAlloy m, MonadThrow m)
+  :: (MonadAlloy m, MonadThrow m, Net p n)
   => CapacityConfig
   -> Int
   -> Int
-  -> m CapacityInstance
+  -> m (CapacityInstance (p n String))
 capacityGenerate config seed segment =
   flip evalRandT (mkStdGen seed) $ do
     gl <- oneOf $ graphLayouts gc
 
-    tn <- pickCapacity petriNetPickCapacity Pick.alloyConfig config segment
+    (original, transformed, condition) <- combinedCapacity petriNetFindCapacity Find.alloyConfig config segment
 
-    (net, condition) <- findCapacity config segment
     condition' <- lift $ traverse (parseWith parseTransitionPrec) condition
     return $ CapacityInstance
       { drawWith = DrawSettings
@@ -189,8 +188,8 @@ capacityGenerate config seed segment =
           , withGraphvizCommand = gl
           }
       , toFind = condition'
-      , originalNet = tn
-      , transformedNet = net
+      , originalNet = original
+      , transformedNet = transformed
       , numberOfPlaces = places bc
       , numberOfTransitions = transitions bc
       , showSolution = Find.printSolution config
@@ -208,7 +207,7 @@ simpleCapacityTask
     OutputCapable m
     )
   => FilePath
-  -> CapacityInstance
+  -> CapacityInstance (SimplePetriNet)
   -> LangM m
 simpleCapacityTask = capacityTask
 
@@ -218,10 +217,11 @@ capacityTask
     MonadDiagrams m,
     MonadGraphviz m,
     MonadThrow m,
+    Net p n,
     OutputCapable m
     )
   => FilePath
-  -> CapacityInstance
+  -> CapacityInstance (p n String)
   -> LangM m
 capacityTask path task = do
   paragraph $ translate $ do
@@ -254,7 +254,7 @@ capacityTask path task = do
 
 capacitySyntax
   :: OutputCapable m
-  => CapacityInstance
+  => CapacityInstance net
   -> [Transition]
   -> LangM' m ()
 capacitySyntax task input = do
@@ -270,7 +270,7 @@ capacitySyntax task input = do
 
 capacityEvaluation
   :: (Monad m, OutputCapable m)
-  => CapacityInstance
+  => CapacityInstance net
   -> [Transition]
   -> Rated m
 capacityEvaluation task x = do
@@ -283,7 +283,7 @@ capacityEvaluation task x = do
     active = capacitySolution task
     withSol = showSolution task
 
-capacitySolution :: CapacityInstance -> [Transition]
+capacitySolution :: CapacityInstance net -> [Transition]
 capacitySolution task = active
   where
     ActivatedTransitions active = toFind task
@@ -308,11 +308,8 @@ pickCapacity
   -> (config -> AlloyConfig)
   -> config
   -> Int
-  -> RandT
-    g
-    m
-    (PetriLike CapacityNode String)
 pickCapacity alloyF alloyC config segment = do
+  -> RandT g m (PetriLike CapacityNode String, p n String, ActivatedTransitions String)
   let is = Find.maxInstances (alloyC config)
   list <- getInstances is (Find.timeout $ alloyC config) (alloyF config)
   when (null $ drop segment list)
