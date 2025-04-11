@@ -96,7 +96,6 @@ import Modelling.CdOd.RepairCd (
   (.&.),
   checkClassConfigAndChanges,
   illegalStructuralWeakenings,
-  legalStructuralWeakenings,
   toProperty,
   )
 import Modelling.CdOd.Types (

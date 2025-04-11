@@ -10,8 +10,6 @@ module Modelling.PetriNet.Reach.Step where
 import qualified Data.Map                         as M (
   insert,
   findWithDefault,
-  fromList,
-  toList,
   )
 import qualified Data.Set                         as S (
   difference,
@@ -35,7 +33,7 @@ import Modelling.PetriNet.Reach.Type (
 
 import Control.Applicative              (Alternative)
 import Control.Functor.Trans            (FunctorTrans (lift))
-import Control.Monad                    (guard, unless)
+import Control.Monad                    (unless)
 import Control.Monad.Catch              (MonadThrow)
 import Control.OutputCapable.Blocks (
   GenericOutputCapable (image, indent, paragraph, refuse, text),
