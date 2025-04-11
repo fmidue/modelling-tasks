@@ -7,12 +7,14 @@ module Modelling.Auxiliary.Output (
   directionsAdvice,
   extra,
   hoveringInformation,
+  reRefuseLangM,
   simplifiedInformation,
   uniform,
   ) where
 
 import qualified Data.Map                         as M (empty, insert)
 
+import Control.Applicative (Alternative)
 import Control.Monad.State (put)
 import Control.OutputCapable.Blocks     (
   GenericOutputCapable (paragraph),
@@ -22,8 +24,11 @@ import Control.OutputCapable.Blocks     (
   OutputCapable,
   english,
   german,
+  recoverWith,
+  refuse,
   translate,
   )
+import Control.OutputCapable.Blocks.Generic (($>>), ($>>=))
 import Control.OutputCapable.Blocks.Type (
   SpecialOutput,
   checkTranslations,
@@ -121,3 +126,14 @@ checkTaskText taskText
 extra :: OutputCapable m => Maybe (Map Language String) -> LangM m
 extra (Just extraMap) = paragraph $ translate $ put extraMap
 extra _ = pure ()
+
+-- This one works on LangM m instead of Rated m
+reRefuseLangM
+  :: (Alternative m, Monad m, OutputCapable m)
+  => LangM m
+  -> LangM m
+  -> LangM m
+reRefuseLangM xs ys =
+  recoverWith (pure ()) xs
+    $>>= \x -> ys
+    $>> either (refuse (pure ()) *>) pure x
