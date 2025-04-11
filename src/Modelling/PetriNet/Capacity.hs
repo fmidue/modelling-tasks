@@ -561,7 +561,7 @@ checkCapacityConfig BasicConfig {
   = Just "The starting tokens can not exceed 'maxCapacity'."
   | atLeastActive == 0
   = Just "At least one transition has to be activated."
-  | uncurry (>=) newArrowsWithComplement
+  | uncurry (>) newArrowsWithComplement
   = Just "The first element of 'newArrowsWithComplement' can not be higher than the second element."
   | fst newArrowsWithComplement < places
   = Just "At least one flow has to be connected to each complement place."
@@ -571,7 +571,7 @@ checkCapacityConfig BasicConfig {
   = Just "'oneMinCapacity' has to be positive."
   | oneMinCapacity > maxCapacity
   = Just "'oneMinCapacity' can not be higher than 'maxCapacity'."
-  | uncurry (>=) distractors
+  | uncurry (>) distractors
   = Just "The first element of 'distractors' can not be higher than the second element."
   | fst distractors < 0
   = Just "The first element of 'distractors' can not be negative."
