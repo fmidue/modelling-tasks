@@ -96,6 +96,7 @@ import Modelling.CdOd.RepairCd (
   (.&.),
   checkClassConfigAndChanges,
   illegalStructuralWeakenings,
+  legalStructuralWeakenings,
   toProperty,
   )
 import Modelling.CdOd.Types (
@@ -775,10 +776,9 @@ nameCdError
   => NameCdErrorConfig
   -> RandT g m (AnyCd, Property, [AnyRelationship String String])
 nameCdError NameCdErrorConfig {..}  = do
-  let illegalStructuralWeakenings' = illegalStructuralWeakenings allowedProperties
   structuralWeakenings <- shuffleM [ (x,y) |
-    x <- illegalStructuralWeakenings',
-    y <- illegalStructuralWeakenings'
+    x <- illegalStructuralWeakenings allowedProperties,
+    y <- legalStructuralWeakenings allowedProperties
     ]
   getInstanceWithStructuralWeakenings structuralWeakenings
   where
