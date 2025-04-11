@@ -397,7 +397,7 @@ mathToOutput f pm = paragraph $ do
       f o
       pure ()
   translate $ english ":"
-  itemizeM $ map (f . snd) $ tokenChangeMath pm
+  itemizeM $ map (f . fst) $ tokenChangeMath pm
   itemizeM $ map (f . snd) $ tokenChangeMath pm
   translate $ do
     english "Moreover, "
