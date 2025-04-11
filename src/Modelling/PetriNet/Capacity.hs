@@ -8,18 +8,16 @@
 {-# LANGUAGE DeriveGeneric #-}
 
 module Modelling.PetriNet.Capacity (
+  CapacityInstance (..),
   capacityEvaluation,
   capacityGenerate,
   capacitySyntax,
   capacityTask,
   checkCapacityConfigs,
   defaultCapacityInstance,
-  findCapacity,
   petriNetFindCapacity,
-  petriNetPickCapacity,
   parseCapacity,
   parseCapacityPrec,
-  pickCapacity,
   simpleCapacityTask,
   ) where
 
@@ -68,15 +66,14 @@ import Modelling.PetriNet.Alloy (
   modulePetriSignature,
   randomInSegment,
   skolemVariable,
-  taskInstance,
   unscopedSingleSig,
   )
 import Modelling.PetriNet.Diagram (
   getDefaultNet,
+  getNet,
   renderWith,
   )
 import Modelling.PetriNet.Find (
-  findTaskInstance,
   prohibitHidePlaceNames,
   prohibitHideTransitionNames,
   prohibitPatchworkRenderer,
@@ -100,9 +97,11 @@ import Modelling.PetriNet.Types         (
   CapacityConfig (..),
   DrawSettings (..),
   GraphConfig (..),
+  Net,
   NodeC (..),
   PetriLike (PetriLike, allNodes),
   SimpleNode (..),
+  SimplePetriNet,
   CapacityNode (..),
   basicConfigBitWidthInput,
   checkActivatedSourceConfig,
@@ -288,28 +287,14 @@ capacitySolution task = active
   where
     ActivatedTransitions active = toFind task
 
-findCapacity
-  :: (MonadAlloy m, MonadThrow m, RandomGen g)
-  => CapacityConfig
-  -> Int
-  -> RandT
-    g
-    m
-    (PetriLike SimpleNode String, ActivatedTransitions String)
-findCapacity = taskInstance
-  findTaskInstance
-  petriNetFindCapacity
-  parseCapacity
-  Find.alloyConfig
-
-pickCapacity
-  :: (MonadAlloy m, MonadThrow m, RandomGen g)
+combinedCapacity
+  :: (MonadThrow m, RandomGen g, MonadAlloy m, Net p n)
   => (config -> String)
   -> (config -> AlloyConfig)
   -> config
   -> Int
-pickCapacity alloyF alloyC config segment = do
   -> RandT g m (PetriLike CapacityNode String, p n String, ActivatedTransitions String)
+combinedCapacity alloyF alloyC config segment = do
   let is = Find.maxInstances (alloyC config)
   list <- getInstances is (Find.timeout $ alloyC config) (alloyF config)
   when (null $ drop segment list)
@@ -321,11 +306,14 @@ pickCapacity alloyF alloyC config segment = do
       case drop x list of
         x':_ -> return x'
         []   -> randomInstance list
-  getDefaultNet inst
+  first <- getDefaultNet inst
+  (second, third) <- getNet parseCapacity inst
+
+  return (first, second, third)
   where
-  randomInstance list = do
-    n <- randomInSegment segment (1 + ((length list - segment - 1) `div` 4))
-    return $ list !! n
+    randomInstance list = do
+      n <- randomInSegment segment (1 + ((length list - segment - 1) `div` 4))
+      return $ list !! n
 
 petriNetFindCapacity :: CapacityConfig -> String
 petriNetFindCapacity CapacityConfig {
@@ -338,25 +326,6 @@ petriNetFindCapacity CapacityConfig {
   atMostActive
   }
   = petriNetFindCapacityAlloy
-    basicConfig
-    advConfig
-    maxCapacity
-    newArrowsWithComplement
-    oneMinCapacity
-    distractors
-    atMostActive
-
-petriNetPickCapacity :: CapacityConfig -> String
-petriNetPickCapacity CapacityConfig{
-  basicConfig,
-  advConfig,
-  maxCapacity,
-  newArrowsWithComplement,
-  oneMinCapacity,
-  distractors,
-  atMostActive
-  } =
-  petriNetFindCapacityAlloy
     basicConfig
     advConfig
     maxCapacity
@@ -481,9 +450,12 @@ pred #{capacityPredicateName}[#{activated} : set Transitions] {
 
   all p : placesWithCapacity, w : p.flow[Transitions] + Transitions.flow[p] | p.capacity >= w
 
+  all p : addedPlaces | some p.flowChange.Int or some p.~(flowChange.Int)
+
   #{newArrowsWithComplementConstraints newArrowsWithComplement}
   #{oneMinCapacityConstraints oneMinCapacity}
   #{distractorsConstraints distractors}
+  Places.flow.Int in Transitions
 
 }
 
@@ -580,7 +552,7 @@ checkCapacityConfig BasicConfig {
   | otherwise
   = Nothing
 
-defaultCapacityInstance :: CapacityInstance
+defaultCapacityInstance :: CapacityInstance SimplePetriNet
 defaultCapacityInstance = CapacityInstance {
   drawWith = DrawSettings {
     withPlaceNames = True,
