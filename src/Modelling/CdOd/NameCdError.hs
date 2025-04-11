@@ -776,9 +776,11 @@ nameCdError
   => NameCdErrorConfig
   -> RandT g m (AnyCd, Property, [AnyRelationship String String])
 nameCdError NameCdErrorConfig {..}  = do
-  structuralWeakenings <- shuffleM $ map (,)
-    (illegalStructuralWeakenings allowedProperties)
-    <*> legalStructuralWeakenings allowedProperties
+  let illegalStructuralWeakenings' = illegalStructuralWeakenings allowedProperties
+  structuralWeakenings <- shuffleM [ (x,y) |
+    x <- illegalStructuralWeakenings',
+    y <- illegalStructuralWeakenings'
+    ]
   getInstanceWithStructuralWeakenings structuralWeakenings
   where
     getFixWith cd properties = Changes.transformGetNextFix

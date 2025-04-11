@@ -115,14 +115,20 @@ validFindConflictConfigs
   :: [(BasicConfig, ChangeConfig)]
   -> AdvConfig
   -> [FindConflictConfig]
-validFindConflictConfigs cs advancedConfig = do
-  (bc, ch) <- cs
-  FindConflictConfig bc advancedConfig ch
-    <$> validConflictConfigs bc
-    <*> pure validGraphConfig
-    <*> pure False
-    <*> [Nothing, Just True, Just False]
-    <*> pure alloyTestConfig
+validFindConflictConfigs cs advancedConfig = [
+  FindConflictConfig
+    bc
+    advancedConfig
+    ch
+    vcc
+    validGraphConfig
+    False
+    uniqueConflictPlace
+    alloyTestConfig |
+      (bc, ch) <- cs,
+      vcc <- validConflictConfigs bc,
+      uniqueConflictPlace <- [Nothing, Just True, Just False]
+  ]
 
 validConflictConfigs :: BasicConfig -> [ConflictConfig]
 validConflictConfigs bc = filter (isNothing . checkConflictConfig bc) $ do
@@ -142,16 +148,22 @@ validConflictConfigs bc = filter (isNothing . checkConflictConfig bc) $ do
 validPickConflictConfigs
   :: [(BasicConfig, ChangeConfig)]
   -> [PickConflictConfig]
-validPickConflictConfigs cs = do
-  (bc, ch) <- cs
-  PickConflictConfig bc ch
-    <$> validConflictConfigs bc
-    <*> pure validGraphConfig
-    <*> pure False
-    <*> [False, True]
-    <*> [Nothing, Just True, Just False]
-    ?? False
-    ?? alloyTestConfig
+validPickConflictConfigs cs = [
+  PickConflictConfig
+    bc
+    ch
+    vcc
+    validGraphConfig
+    False
+    prohibitSourceTransitions
+    uniqueConflictPlace
+    False
+    alloyTestConfig |
+      (bc, ch) <- cs,
+      vcc <- validConflictConfigs bc,
+      prohibitSourceTransitions <- [False, True],
+      uniqueConflictPlace <- [Nothing, Just True, Just False]
+  ]
 
 isValidConflict :: PetriConflict' String -> Bool
 isValidConflict c@(PetriConflict' (Conflict (t1, t2) ps))

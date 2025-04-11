@@ -127,13 +127,18 @@ validFindConcurrencyConfigs cs advancedConfig =
 validPickConcurrencyConfigs
   :: [(BasicConfig, ChangeConfig)]
   -> [PickConcurrencyConfig]
-validPickConcurrencyConfigs cs = uncurry PickConcurrencyConfig
-  <$> cs
-  <*> pure validGraphConfig
-  <*> pure False
-  <*> [False, True]
-  ?? False
-  ?? alloyTestConfig
+validPickConcurrencyConfigs cs = [
+  PickConcurrencyConfig
+    basic
+    change
+    validGraphConfig
+    False
+    printSolution
+    False
+    alloyTestConfig |
+      (basic,change) <- cs,
+      printSolution <- [False, True]
+    ]
 
 isValidConcurrency :: Concurrent String -> Bool
 isValidConcurrency c@(Concurrent (t1, t2))

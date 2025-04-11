@@ -167,8 +167,11 @@ validBasicAndChangeConfigs minActive low high =
     low1 = max 1 low
 
 validAdvConfigs :: [AdvConfig]
-validAdvConfigs =
-  AdvConfig <$> maybeBool <*> maybeBool <*> maybeBool
+validAdvConfigs = [ AdvConfig x y z |
+    x <- maybeBool,
+    y <- maybeBool,
+    z <- maybeBool
+    ]
 
 maybeBool :: [Maybe Bool]
 maybeBool = [Nothing, Just False, Just True]
