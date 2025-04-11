@@ -27,7 +27,7 @@ spec =
       do
         (inst:_) <- getInstances (Just 1)
            (petriNetRnd defaultBasicConfig defaultAdvConfig)
-        pl <- parseNet "flow" "tokens" inst
+        pl <- parseNet "flow" "tokens" Nothing inst
         dia <- drawNet show (pl :: SimplePetriLike Object) DrawSettings {
           withPlaceNames = True,
           withSvgHighlighting = True,

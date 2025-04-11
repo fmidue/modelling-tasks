@@ -101,7 +101,7 @@ pickTaskInstance
   -> m [(p n String, Maybe (t String))]
 pickTaskInstance parseSpecial inst = do
   special <- second Just <$> getNet parseSpecial inst
-  net   <- (,Nothing) <$> getDefaultNet inst
+  net   <- (,Nothing) <$> getDefaultNet Nothing inst
   return [special, net]
 
 pickGenerate

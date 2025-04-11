@@ -98,17 +98,18 @@ getNet
   -> m (p n String, t String)
 getNet parseSpecial inst = do
   (net, rename) <-
-    getNetWith "flow" "tokens" inst
+    getNetWith "flow" "tokens" Nothing inst
   special <- parseSpecial inst
   renamedSpecial <- traverse rename special
   return (net, renamedSpecial)
 
 getDefaultNet
   :: (MonadThrow m, Net p n)
-  => AlloyInstance
+  => Maybe String
+  -> AlloyInstance
   -> m (p n String)
-getDefaultNet inst= fst <$>
-  getNetWith "defaultFlow" "defaultTokens" inst
+getDefaultNet c inst = fst <$>
+  getNetWith "defaultFlow" "defaultTokens" c inst
 
 {-|
 Returns a Petri net like graph using 'parseNet'.
@@ -122,11 +123,13 @@ getNetWith
   -- ^ flow
   -> String
   -- ^ tokens
+  -> Maybe String
+  -- ^ capacity (optional)
   -> AlloyInstance
   -- ^ the instance to parse
   -> m (p n String, Object -> m String)
-getNetWith f t inst = do
-  pl <- parseNet f t inst
+getNetWith f t c inst = do
+  pl <- parseNet f t c inst
   let rename = simpleRenameWith pl
   pl' <- traverseNet rename pl
   return (pl', rename)
