@@ -15,6 +15,7 @@ module Modelling.PetriNet.Capacity (
   capacityTask,
   checkCapacityConfig,
   checkCapacityConfigs,
+  combinedCapacity,
   defaultCapacityInstance,
   petriNetFindCapacity,
   parseCapacityPrec,
@@ -46,7 +47,6 @@ import Capabilities.Diagrams            (MonadDiagrams)
 import Capabilities.Graphviz            (MonadGraphviz)
 import Modelling.Auxiliary.Common (
   TaskGenerationException (NoInstanceAvailable),
-  Object,
   oneOf,
   )
 import Modelling.Auxiliary.Output (
@@ -84,7 +84,6 @@ import Modelling.PetriNet.Reach.Type (
   parseTransitionPrec,
   )
 import Modelling.PetriNet.Types         (
-  ActivatedTransitions (ActivatedTransitions),
   AdvConfig (..),
   AlloyConfig (..),
   BasicConfig (..),
@@ -94,6 +93,7 @@ import Modelling.PetriNet.Types         (
   GraphConfig (..),
   Net,
   NodeC (..),
+  PetriChangeList (..),
   PetriLike (PetriLike, allNodes),
   SimpleNode (..),
   SimplePetriNet,
@@ -102,6 +102,7 @@ import Modelling.PetriNet.Types         (
   checkActivatedSourceConfig,
   checkBasicConfig,
   petriScopeBitWidth,
+  toChangeList,
   )
 
 import Control.Applicative              ((<|>))
