@@ -474,18 +474,15 @@ exactly #{transitions basicC} Transitions, #{petriScopeBitWidth (basicConfigBitW
         Just n  -> "#" ++ activated ++ " <= " ++ show n ++ "\n")
       ++
       "  theActivatedTransitions[" ++ activated ++ "]"
-    newArrowsWithComplementConstraints :: (Int, Int) -> String
     newArrowsWithComplementConstraints (minNewArrowsMin, minNewArrowsMax) =
-      "#flowChange >= " ++ show minNewArrowsMin ++ "\n" ++
-      "  #flowChange <= " ++ show minNewArrowsMax
-    oneMinCapacityConstraints :: Int -> String
+      "let newArrows = #flowChange | newArrows >= " ++ show minNewArrowsMin ++
+      " and newArrows =< " ++ show minNewArrowsMax
     oneMinCapacityConstraints 1 = ""
     oneMinCapacityConstraints oneMinCap =
       [i|some p : placesWithCapacity | p.capacity >= #{oneMinCap}|]
-    distractorsConstraints :: (Int, Int) -> String
     distractorsConstraints (distractorsMin, distractorsMax) =
-      "let distractors = {t: givenTransitions | activatedDefault[t] and t not in " ++ activated ++ "} |" ++ "\n" ++
-      "    #" ++ "distractors >= " ++ show distractorsMin ++ " and " ++ "#" ++ "distractors <= " ++ show distractorsMax
+      "let distractors = #{t : Transitions | activatedDefault[t] and t not in " ++ activated ++ "} |\n" ++
+      "    distractors >= " ++ show distractorsMin ++ " and distractors =< " ++ show distractorsMax
 
 capacityPredicateName :: String
 capacityPredicateName = "showCapacity"
