@@ -250,7 +250,7 @@ capacityTask path task = do
       german ("als Antwort würde bedeuten, dass es zwei Komplementstellen gibt - p1 mit 2 Token und p2 mit 0 Token - und t1 zeigt auf s1 mit einem Gewicht von 1, " ++
              "t2 zeigt auf s1 mit einem Gewicht von 1, und s2 ist mit t2 mit einem Gewicht von 2 verbunden.")
     translate $ do
-      english "The order of tupels within the lists does not matter here."
+      english "The order of tuples within the lists does not matter here."
       german "Die Reihenfolge der Tupel innerhalb der Listen spielt hierbei keine Rolle."
     pure ()
   paragraph hoveringInformation
@@ -273,7 +273,8 @@ capacitySyntax task (tokenChanges, flowChanges) = do
       english $ p' ++ " is a valid complement place of the resulting Petri net?"
       german $ p' ++ " ist eine gültige Komplementstelle des resultierenden Petrinetzes?"
 
-    assertFlowChanges (src, tgt, weight) = assert (((isValidComplementPlace src && isValidTransition tgt) || (isValidTransition src && isValidComplementPlace tgt)) && weight >= 0) $ translate $ do
+    assertFlowChanges (src, tgt, weight) = assert (((isValidComplementPlace src && isValidTransition tgt) ||
+                                           (isValidTransition src && isValidComplementPlace tgt)) && weight >= 0) $ translate $ do
       let t' = show (src, tgt, weight)
       english $ t' ++ " is a valid flow of the resulting Petri net?"
       german $ t' ++ " ist ein gültiger Fluss des resultierenden Petrinetzes?"
