@@ -502,9 +502,6 @@ exactly #{transitions basicC} Transitions, #{petriScopeBitWidth (basicConfigBitW
 capacityPredicateName :: String
 capacityPredicateName = "showCapacity"
 
-activatedTransitions :: String
-activatedTransitions = skolemVariable capacityPredicateName skolemName
-
 skolemName :: String
 skolemName = "activatedTrans"
 
@@ -579,25 +576,30 @@ defaultCapacityInstance = CapacityInstance {
     with1Weights = False,
     withGraphvizCommand = Circo
     },
-  toFind = ActivatedTransitions [Reach.Transition 1, Reach.Transition 2],
+toFind = ChangeList {
+  tokenChanges = [("s1", 1), ("s2", 0)]
+  , flowChanges = [("s1", "t2", 1), ("t1", "s1", 1), ("t2", "s2", 1), ("s2", "t1", 1)]
+  },
   originalNet = PetriLike {
     allNodes = M.fromList [
       ("s1",CapacityPlace {initial = 0, capacity = 0, flowIn = M.empty, flowOut = M.empty}),
       ("s2",CapacityPlace {initial = 0, capacity = 0, flowIn = M.empty, flowOut = M.empty}),
-      ("s3",CapacityPlace {initial = 1, capacity = 3, flowIn = M.fromList [("t1",2),("t2",2)], flowOut = M.empty}),
-      ("s4",CapacityPlace {initial = 2, capacity = 4, flowIn = M.empty, flowOut = M.fromList [("t1",1),("t2",2)]}),
-      ("t1",CapacityTransition {flowIn = M.fromList [("s3",2),("s4",1)], flowOut = M.fromList [("s3",2)]}),
-      ("t2",CapacityTransition {flowIn = M.fromList [("s3",2),("s4",2)], flowOut = M.fromList [("s3",2)]})
+      ("s3",CapacityPlace {initial = 1, capacity = 2, flowIn = M.fromList [("t2",1)], flowOut = M.fromList [("t1",1)]}),
+      ("s4",CapacityPlace {initial = 0, capacity = 1, flowIn = M.fromList [("t1",1)], flowOut = M.fromList [("t2",1),("t3",1)]}),
+      ("t1",CapacityTransition {flowIn = M.fromList [("s3",1)], flowOut = M.fromList [("s4",1)]}),
+      ("t2",CapacityTransition {flowIn = M.fromList [("s4",1)], flowOut = M.fromList [("s3",1)]}),
+      ("t3",CapacityTransition {flowIn = M.fromList [("s4",1)], flowOut = M.empty})
       ]
     },
   transformedNet = PetriLike {
     allNodes = M.fromList [
-      ("s1",SimplePlace {initial = 2, flowOut = M.fromList [("t1",2),("t2",2)]}),
-      ("s2",SimplePlace {initial = 2, flowOut = M.empty}),
-      ("s3",SimplePlace {initial = 1, flowOut = M.empty}),
-      ("s4",SimplePlace {initial = 2, flowOut = M.fromList [("t1",1),("t2",2)]}),
-      ("t1",SimpleTransition {flowOut = M.fromList [("s2",1),("s3",2)]}),
-      ("t2",SimpleTransition {flowOut = M.fromList [("s2",2),("s3",2)]})
+      ("s1",SimplePlace {initial = 1, flowOut = M.fromList [("t2",1)]}),
+      ("s2",SimplePlace {initial = 0, flowOut = M.fromList [("s1",1)]}),
+      ("s3",SimplePlace {initial = 1, flowOut = M.fromList [("t1",1)]}),
+      ("s4",SimplePlace {initial = 0, flowOut = M.fromList [("t2",1),("t3",1)]}),
+      ("t1",SimpleTransition {flowOut = M.fromList [("s4",1),("s1",1)]}),
+      ("t2",SimpleTransition {flowOut = M.fromList [("s3",1),("s2",1)]}),
+      ("t3",SimpleTransition {flowOut = M.fromList [("s2",1)]})
       ]
     },
   numberOfPlaces = 4,
