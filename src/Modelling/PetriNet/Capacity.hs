@@ -79,8 +79,6 @@ import Modelling.PetriNet.Parser (
   parseChange,
   )
 import Modelling.PetriNet.Reach.Type (
-  ShowTransition (ShowTransition),
-  Transition,
   parsePlacePrec,
   parseTransitionPrec,
   )
@@ -146,6 +144,7 @@ import Text.Parsec (
 import Text.Parsec.Char                 (digit)
 import Text.Parsec.Combinator           (many1)
 import Text.Parsec.String               (Parser)
+import Text.Read                        (readMaybe)
 
 
 data CapacityInstance a = CapacityInstance {
@@ -261,18 +260,34 @@ capacityTask path task = do
 capacitySyntax
   :: OutputCapable m
   => CapacityInstance net
-  -> [Transition]
+  -> ([(String, Int)], [(String, String, Int)])
   -> LangM' m ()
-capacitySyntax task input = do
-  for_ input assertTransition
+capacitySyntax task (tokenChanges, flowChanges) = do
+  for_ tokenChanges assertTokenChanges
+  for_ flowChanges  assertFlowChanges
   pure ()
   where
     assert = continueOrAbort False
-    assertTransition t = assert (isValidTransition t) $ translate $ do
-      let t' = show $ ShowTransition t
-      english $ t' ++ " is a transition of the given Petri net?"
-      german $ t' ++ " ist eine Transition des gegebenen Petrinetzes?"
-    isValidTransition (Reach.Transition x) = x >= 1 && x <= numberOfTransitions task
+
+    assertTokenChanges (p, tokens) = assert (isValidComplementPlace p && tokens >= 0) $ translate $ do
+      let p' = show (p, tokens)
+      english $ p' ++ " is a valid complement place of the resulting Petri net?"
+      german $ p' ++ " ist eine gültige Komplementstelle des resultierenden Petrinetzes?"
+
+    assertFlowChanges (src, tgt, weight) = assert (((isValidComplementPlace src && isValidTransition tgt) || (isValidTransition src && isValidComplementPlace tgt)) && weight >= 0) $ translate $ do
+      let t' = show (src, tgt, weight)
+      english $ t' ++ " is a valid flow of the resulting Petri net?"
+      german $ t' ++ " ist ein gültiger Fluss des resultierenden Petrinetzes?"
+
+    isValidComplementPlace :: String -> Bool
+    isValidComplementPlace s = case s of
+      ('s':rest) -> maybe False (\x -> x >= 1 && x <= (numberOfPlaces task `div` 2)) (readMaybe rest)
+      _          -> False
+
+    isValidTransition :: String -> Bool
+    isValidTransition s = case s of
+      ('t':rest) -> maybe False (\x -> x >= 1 && x <= numberOfTransitions task) (readMaybe rest)
+      _          -> False
 
 capacityEvaluation
   :: (Monad m, OutputCapable m)
