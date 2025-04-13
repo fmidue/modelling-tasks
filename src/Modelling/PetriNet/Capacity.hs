@@ -70,7 +70,7 @@ import Modelling.PetriNet.Find (
   prohibitHidePlaceNames,
   prohibitHideTransitionNames,
   prohibitPatchworkRenderer,
-  toFindEvaluationList,
+  toFindEvaluationTupleList,
   )
 import Modelling.PetriNet.FindActivatedTransitions (
   checkActivatedTransitionsConfig,
@@ -128,13 +128,10 @@ import Control.Monad.Random (
   evalRandT,
   mkStdGen
   )
-import Control.Monad.Trans              (MonadTrans (lift))
 import Data.Foldable                    (for_)
 import Data.GraphViz.Commands           (GraphvizCommand (Circo))
+import Data.Maybe                       (fromMaybe)
 import Data.String.Interpolate          (i, iii)
-import Language.Alloy.Call (
-  AlloyInstance
-  )
 import Text.Parsec (
   char,
   optionMaybe,
@@ -292,22 +289,20 @@ capacitySyntax task (tokenChanges, flowChanges) = do
 capacityEvaluation
   :: (Monad m, OutputCapable m)
   => CapacityInstance net
-  -> [Transition]
+  -> ([(String, Int)], [(String, String, Int)])
   -> Rated m
-capacityEvaluation task x = do
-  let what = translations $ do
-        english "are activated"
-        german "sind aktiviert"
+capacityEvaluation task (tokenChanges, _) = do
+  let whatTokens = translations $ do
+        english "are added complement places"
+        german "sind hinzugefügte Komplementstellen"
   uncurry (printSolutionAndAssert DefiniteArticle)
-    $=<< unLangM $ toFindEvaluationList what withSol active x
+    $=<< unLangM $ toFindEvaluationTupleList whatTokens withSol tokens tokenChanges
   where
-    active = capacitySolution task
+    (tokens, _) = capacitySolution task
     withSol = showSolution task
 
-capacitySolution :: CapacityInstance net -> [Transition]
-capacitySolution task = active
-  where
-    ActivatedTransitions active = toFind task
+capacitySolution :: CapacityInstance net -> ([(String, Int)], [(String, String, Int)])
+capacitySolution task = (tokenChanges $ toFind task, flowChanges $ toFind task)
 
 combinedCapacity
   :: (MonadThrow m, RandomGen g, MonadAlloy m, Net p n)

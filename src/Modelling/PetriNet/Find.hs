@@ -22,6 +22,8 @@ module Modelling.PetriNet.Find (
   toFindEvaluation,
   toFindEvaluationList,
   toFindEvaluationTuple,
+  toFindEvaluationTupleList,
+  toFindEvaluation3TupleList,
   toFindSyntax,
   ) where
 
@@ -70,8 +72,9 @@ import Control.Monad.Random (
   RandomGen,
   )
 import Control.Monad.Trans.Class        (MonadTrans (lift))
-import Data.List                        (sort)
+import Data.List                        (sort, sortBy, sortOn)
 import Data.Map                         (Map)
+import Data.Ord                         (comparing)
 import Language.Alloy.Call (
   AlloyInstance,
   )
@@ -169,6 +172,34 @@ toFindEvaluationList
   -> LangM' m (Maybe String, a)
 toFindEvaluationList what withSol =
   toFindEvaluation what withSol (\x y -> sort x == sort y) (show . transitionListShow)
+
+toFindEvaluationTupleList
+  :: (Num a, OutputCapable m)
+  => Map Language String
+  -> Bool
+  -> [(String, Int)]
+  -> [(String, Int)]
+  -> LangM' m (Maybe String, a)
+toFindEvaluationTupleList what withSol =
+  toFindEvaluation what withSol (\xs ys -> sortList xs == sortList ys) (show . tokenListShow)
+   where
+    sortList = sortBy (comparing fst)
+    tokenListShow :: [(String, Int)] -> String
+    tokenListShow = show . sortList
+
+toFindEvaluation3TupleList
+  :: (Num a, OutputCapable m)
+  => Map Language String
+  -> Bool
+  -> [(String, String, Int)]
+  -> [(String, String, Int)]
+  -> LangM' m (Maybe String, a)
+toFindEvaluation3TupleList what withSol =
+  toFindEvaluation what withSol (\xs ys -> sortFlowList xs == sortFlowList ys) (show . flowListShow)
+    where
+      sortFlowList = sortOn (\ (a, b, c) -> (a, b, c))
+      flowListShow :: [(String, String, Int)] -> String
+      flowListShow = show . sortFlowList
 
 checkFindTwoActive :: BasicConfig -> Maybe String
 checkFindTwoActive BasicConfig { atLeastActive }
