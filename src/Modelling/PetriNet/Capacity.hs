@@ -220,9 +220,9 @@ capacityTask path task = do
     english "Consider the following Petri net with capacities:"
     german "Betrachten Sie folgendes Petrinetz mit Kapazitäten:"
   image
-    $=<< renderWith path "capacity" (originalNet task) (drawWith task)
+    $=<< renderWith path "capacityTask" (originalNet task) (drawWith task)
   image
-    $=<< renderWith path "capacity" (transformedNet task) (drawWith task)
+    $=<< renderWith path "capacitySolution" (transformedNet task) (drawWith task)
   paragraph $ do
     translate $ do
       english [iii|
@@ -240,6 +240,20 @@ capacityTask path task = do
       german [iii|
         Geben Sie Ihre Antwort in Form eines Tupels an, das aus den Komplementstellen und ihren Flüssen besteht.
         #{" "}|]
+    translate $ do
+      english [i|Stating |]
+      german [i|Die Angabe von |]
+    let ts :: ([(String, Int)], [(String, String, Int)])
+        ts = ([("s1", 2), ("s2", 0)], [("t1", "s1", 1), ("t2", "s1", 1), ("s2", "t2", 2)])
+    code $ show ts
+    translate $ do
+      english ("as answer would indicate that there are two complement places - p1 with 2 tokens and p2 with 0 tokens - and t1 points to s1 with a weight of 1, " ++
+               "t2 points to s1 with a weight of 1 and s2 connects to t2 with a weight of 2.")
+      german ("als Antwort würde bedeuten, dass es zwei Komplementstellen gibt - p1 mit 2 Token und p2 mit 0 Token - und t1 zeigt auf s1 mit einem Gewicht von 1, " ++
+             "t2 zeigt auf s1 mit einem Gewicht von 1, und s2 ist mit t2 mit einem Gewicht von 2 verbunden.")
+    translate $ do
+      english "The order of tupels within the lists does not matter here."
+      german "Die Reihenfolge der Tupel innerhalb der Listen spielt hierbei keine Rolle."
     pure ()
   paragraph hoveringInformation
   pure ()
