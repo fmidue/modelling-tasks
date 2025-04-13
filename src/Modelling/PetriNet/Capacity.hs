@@ -430,8 +430,11 @@ sig placesWithCapacity extends givenPlaces
 }
 
 fact {
-  noChangesToGivenParts
   no addedTransitions
+  no givenPlaces.tokenChange
+  no givenPlaces.flowChange
+  Transitions.flowChange.Int in addedPlaces
+  addedPlaces.flowChange.Int in Transitions
 }
 
 pred #{capacityPredicateName}[#{activated} : set Transitions] {
@@ -453,7 +456,6 @@ pred #{capacityPredicateName}[#{activated} : set Transitions] {
   #{newArrowsWithComplementConstraints newArrowsWithComplement}
   #{oneMinCapacityConstraints oneMinCapacity}
   #{distractorsConstraints distractors}
-  Places.flow.Int in Transitions
 
 }
 
