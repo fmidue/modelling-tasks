@@ -44,6 +44,7 @@ module Modelling.PetriNet.Types (
   NodeC (..),
   Petri (..),
   PetriChange (..),
+  PetriChangeList (..),
   PetriConflict (..),
   PetriConflict' (..),
   PetriLike (..),
@@ -105,6 +106,7 @@ module Modelling.PetriNet.Types (
   prohibitPatchworkRenderer,
   randomDrawSettings,
   shuffleNames,
+  toChangeList,
   transformNet,
   transitionListShow,
   transitionNames,
@@ -129,6 +131,7 @@ import qualified Data.Map.Lazy                    as M (
   mapKeys,
   member,
   null,
+  toList,
   )
 import qualified Data.Set                         as S (empty, union)
 
@@ -182,6 +185,18 @@ data PetriChange a = Change {
   flowChange  :: Map a (Map a Int)
   }
   deriving (Eq, Generic, Show)
+
+data PetriChangeList a = ChangeList {
+  tokenChanges :: [(a, Int)],
+  flowChanges  :: [(a, a, Int)]
+} deriving (Eq, Show, Functor, Foldable, Traversable)
+
+toChangeList :: PetriChange a -> PetriChangeList a
+toChangeList (Change tokenMap flowMap) = ChangeList {
+    tokenChanges = M.toList tokenMap,
+    flowChanges  = [ (source, target, n) | (source, targets) <- M.toList flowMap
+                                        , (target, n) <- M.toList targets ]
+}
 
 {-|
 This function acts like 'fmap' on other 'Functor's.
@@ -1091,12 +1106,12 @@ data CapacityConfig = CapacityConfig
 defaultCapacityConfig :: CapacityConfig
 defaultCapacityConfig = CapacityConfig
   { basicConfig = defaultBasicConfig { places = 2, transitions = 2, atLeastActive = 1, maxTokensPerPlace = 4, tokensOverall = (2, 8)}
-  , advConfig = defaultAdvConfig
+  , advConfig = defaultAdvConfig { presenceOfSinkTransitions = Just True }
   , maxCapacity = 4
   , newArrowsWithComplement = (2, 6)
   , oneMinCapacity = 2
   , atMostActive = Nothing
-  , distractors = (1, 2)
+  , distractors = (0, 1)
   , graphConfig = defaultGraphConfig { hidePlaceNames = False, hideTransitionNames = False }
   , printSolution = True
   , useDifferentGraphLayouts = False

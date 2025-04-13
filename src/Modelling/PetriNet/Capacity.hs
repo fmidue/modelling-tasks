@@ -16,7 +16,6 @@ module Modelling.PetriNet.Capacity (
   checkCapacityConfigs,
   defaultCapacityInstance,
   petriNetFindCapacity,
-  parseCapacity,
   parseCapacityPrec,
   simpleCapacityTask,
   ) where
@@ -39,9 +38,6 @@ import qualified Data.Map                         as M (
   empty,
   fromList,
   )
-import qualified Data.Set                         as Set (
-  toList,
-  )
 
 import Capabilities.Alloy               (MonadAlloy, getInstances)
 import Capabilities.Cache               (MonadCache)
@@ -51,7 +47,6 @@ import Modelling.Auxiliary.Common (
   TaskGenerationException (NoInstanceAvailable),
   Object,
   oneOf,
-  parseWith,
   )
 import Modelling.Auxiliary.Output (
   hoveringInformation,
@@ -65,8 +60,6 @@ import Modelling.PetriNet.Alloy (
   modulePetriConstraints,
   modulePetriSignature,
   randomInSegment,
-  skolemVariable,
-  unscopedSingleSig,
   )
 import Modelling.PetriNet.Diagram (
   getDefaultNet,
@@ -81,6 +74,9 @@ import Modelling.PetriNet.Find (
   )
 import Modelling.PetriNet.FindActivatedTransitions (
   checkActivatedTransitionsConfig,
+  )
+import Modelling.PetriNet.Parser (
+  parseChange,
   )
 import Modelling.PetriNet.Reach.Type (
   ShowTransition (ShowTransition),
@@ -154,14 +150,14 @@ import Text.Parsec.String               (Parser)
 
 data CapacityInstance a = CapacityInstance {
   drawWith :: !DrawSettings,
-  toFind :: !(ActivatedTransitions Transition),
+  toFind :: !(PetriChangeList String),
   originalNet :: !(PetriLike CapacityNode String),
   transformedNet :: !a,
   numberOfPlaces :: !Int,
   numberOfTransitions :: !Int,
   showSolution :: !Bool
   }
-  deriving (Read, Show)
+  deriving (Show)
 
 capacityGenerate
   :: (MonadAlloy m, MonadThrow m, Net p n)
@@ -175,7 +171,6 @@ capacityGenerate config seed segment =
 
     (original, transformed, condition) <- combinedCapacity petriNetFindCapacity Find.alloyConfig config segment
 
-    condition' <- lift $ traverse (parseWith parseTransitionPrec) condition
     return $ CapacityInstance
       { drawWith = DrawSettings
           { withPlaceNames = not $ hidePlaceNames gc
@@ -184,7 +179,7 @@ capacityGenerate config seed segment =
           , with1Weights = not $ hideWeight1 gc
           , withGraphvizCommand = gl
           }
-      , toFind = condition'
+      , toFind = condition
       , originalNet = original
       , transformedNet = transformed
       , numberOfPlaces = places bc
@@ -291,7 +286,7 @@ combinedCapacity
   -> (config -> AlloyConfig)
   -> config
   -> Int
-  -> RandT g m (PetriLike CapacityNode String, p n String, ActivatedTransitions String)
+  -> RandT g m (PetriLike CapacityNode String, p n String, PetriChangeList String)
 combinedCapacity alloyF alloyC config segment = do
   let is = Find.maxInstances (alloyC config)
   list <- getInstances is (Find.timeout $ alloyC config) (alloyF config)
@@ -305,7 +300,7 @@ combinedCapacity alloyF alloyC config segment = do
         x':_ -> return x'
         []   -> randomInstance list
   first <- getDefaultNet (Just "capacity") inst
-  (second, third) <- getNet parseCapacity inst
+  (second, third) <- getNet (fmap toChangeList . parseChange) inst
 
   return (first, second, third)
   where
@@ -331,11 +326,6 @@ petriNetFindCapacity CapacityConfig {
     oneMinCapacity
     distractors
     atMostActive
-
-parseCapacity :: MonadThrow m => AlloyInstance -> m (ActivatedTransitions Object)
-parseCapacity inst = do
-  t <- unscopedSingleSig inst activatedTransitions ""
-  pure $ ActivatedTransitions (Set.toList t)
 
 parseCapacityPrec :: Int -> Parser Capacity
 parseCapacityPrec _ = do
