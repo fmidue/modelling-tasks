@@ -13,6 +13,7 @@ module Modelling.PetriNet.Capacity (
   capacityGenerate,
   capacitySyntax,
   capacityTask,
+  checkCapacityConfig,
   checkCapacityConfigs,
   defaultCapacityInstance,
   petriNetFindCapacity,
@@ -523,21 +524,23 @@ checkCapacityConfigs CapacityConfig {
   <|> checkBasicConfig [snd newArrowsWithComplement, maxCapacity] basicConfig
   <|> prohibitPatchworkRenderer graphConfig
   <|> checkActivatedSourceConfig basicConfig advConfig
-  <|> checkCapacityConfig basicConfig maxCapacity newArrowsWithComplement oneMinCapacity distractors
+  <|> checkCapacityConfig basicConfig maxCapacity newArrowsWithComplement oneMinCapacity distractors atMostActive
   <|> checkActivatedTransitionsConfig basicConfig atMostActive
 
-checkCapacityConfig :: BasicConfig -> Int -> (Int, Int) -> Int -> (Int, Int) -> Maybe String
+checkCapacityConfig :: BasicConfig -> Int -> (Int, Int) -> Int -> (Int, Int) -> Maybe Int -> Maybe String
 checkCapacityConfig BasicConfig {
     places,
     transitions,
     atLeastActive,
     maxTokensPerPlace,
-    maxFlowPerEdge
+    maxFlowPerEdge,
+    isConnected
     }
   maxCapacity
   newArrowsWithComplement
   oneMinCapacity
   distractors
+  atMostActive
   | maxCapacity < maxFlowPerEdge
   = Just "'maxCapacity' can not be too low for flow weights."
   | maxCapacity < maxTokensPerPlace
@@ -558,8 +561,12 @@ checkCapacityConfig BasicConfig {
   = Just "The first element of 'distractors' can not be higher than the second element."
   | fst distractors < 0
   = Just "The first element of 'distractors' can not be negative."
+  | fst distractors > transitions - fromMaybe transitions atMostActive
+  = Just "'distractors' can not be higher than the number of transitions."
   | snd distractors > transitions - atLeastActive
   = Just "'distractors' can not be higher than the number of transitions."
+  | isConnected /= Just True
+  = Just "The petri net must be connected."
   | otherwise
   = Nothing
 
