@@ -561,11 +561,11 @@ checkCapacityConfig BasicConfig {
   | fst distractors < 0
   = Just "The first element of 'distractors' can not be negative."
   | fst distractors > transitions - fromMaybe transitions atMostActive
-  = Just "'distractors' can not be higher than the number of transitions."
+  = Just "'fst distractors' is set unreasonably high, given atMostActive."
   | snd distractors > transitions - atLeastActive
-  = Just "'distractors' can not be higher than the number of transitions."
+  = Just "'snd distractors' is set unreasonably high, given atLeastActive."
   | isConnected /= Just True
-  = Just "The petri net must be connected."
+  = Just "The Petri net must be connected."
   | otherwise
   = Nothing
 
