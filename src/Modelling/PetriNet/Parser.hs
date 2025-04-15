@@ -11,6 +11,7 @@ module Modelling.PetriNet.Parser (
   asSingleton,
   convertPetri,
   netToGr,
+  netToGrCapacity,
   parseChange,
   parseNet,
   parseRenamedNet,
@@ -41,6 +42,8 @@ import Modelling.PetriNet.Types (
   Petri,
   PetriChange (..),
   PetriNode (..),
+  PetriNodeWithCapacity (..),
+  maybeCapacity,
   maybeInitial,
   petriLikeToPetri,
   )
@@ -275,6 +278,24 @@ netToGr petriLike = do
     convertNode k x ns = do
       ns' <- ns
       return $ (indexOf k, (k, maybeInitial x)):ns'
+    convertTransition k _ ns =
+      Map.foldrWithKey (convertEdge k) ns $ outFlow k petriLike
+    indexOf x = Map.findIndex x $ PN.nodes petriLike
+    convertEdge source target flow rs =
+      (indexOf source, indexOf target, flow) : rs
+
+netToGrCapacity
+  :: (Monad m, Net p n, Ord a, PetriNodeWithCapacity n)
+  => p n a
+  -> m (Gr (a, Maybe Int, Maybe Int) Int)
+netToGrCapacity petriLike = do
+  nodes <- Map.foldrWithKey convertNode (return []) $ PN.nodes petriLike
+  let edges = Map.foldrWithKey convertTransition [] $ PN.nodes petriLike
+  return $ mkGraph nodes edges
+  where
+    convertNode k x ns = do
+      ns' <- ns
+      return $ (indexOf k, (k, maybeInitial x, maybeCapacity x)):ns'
     convertTransition k _ ns =
       Map.foldrWithKey (convertEdge k) ns $ outFlow k petriLike
     indexOf x = Map.findIndex x $ PN.nodes petriLike

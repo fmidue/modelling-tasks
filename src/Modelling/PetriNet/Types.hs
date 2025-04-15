@@ -99,6 +99,7 @@ module Modelling.PetriNet.Types (
   lUniqueConflictPlace,
   manyRandomDrawSettings,
   mapChange,
+  maybeCapacity,
   maybeInitial,
   petriLikeToPetri,
   petriScopeBitWidth,
@@ -435,6 +436,11 @@ otherwise it returns 'Nothing'.
 maybeInitial :: PetriNode n => n a -> Maybe Int
 maybeInitial n
   | isPlaceNode n = Just $ initialTokens n
+  | otherwise     = Nothing
+
+maybeCapacity :: PetriNodeWithCapacity n => n a -> Maybe Int
+maybeCapacity n
+  | isPlaceNode n = Just $ capacityPlace n
   | otherwise     = Nothing
 
 {-|
