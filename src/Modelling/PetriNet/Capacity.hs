@@ -66,6 +66,7 @@ import Modelling.PetriNet.Diagram (
   getDefaultNet,
   getNet,
   renderWith,
+  renderWithCapacity,
   )
 import Modelling.PetriNet.Find (
   prohibitHidePlaceNames,
@@ -218,7 +219,7 @@ capacityTask path task = do
     english "Consider the following Petri net with capacities:"
     german "Betrachten Sie folgendes Petrinetz mit Kapazitäten:"
   image
-    $=<< renderWith path "capacityTask" (originalNet task) (drawWith task)
+    $=<< renderWithCapacity path "capacityTask" (originalNet task) (drawWith task)
   image
     $=<< renderWith path "capacitySolution" (transformedNet task) (drawWith task)
   paragraph $ do
@@ -299,7 +300,7 @@ capacityEvaluation task (tokenChanges, _) = do
         english "are added complement places"
         german "sind hinzugefügte Komplementstellen"
   uncurry (printSolutionAndAssert DefiniteArticle)
-    $=<< unLangM $ toFindEvaluationTupleList whatTokens withSol tokens tokenChanges
+    $=<< unLangM $ toFindEvaluation2TupleList whatTokens withSol tokens tokenChanges
   where
     (tokens, _) = capacitySolution task
     withSol = showSolution task

@@ -7,10 +7,13 @@ Provides the ability to render Petri nets.
 -}
 module Modelling.PetriNet.Diagram (
   cacheNet,
+  cacheNetCapacity,
   drawNet,
+  drawNetWithCapacity,
   getDefaultNet,
   getNet,
   renderWith,
+  renderWithCapacity,
   ) where
 
 import qualified Diagrams.TwoD.GraphViz           as GV (getGraph)
@@ -28,12 +31,14 @@ import Modelling.Auxiliary.Diagrams (
   )
 import Modelling.PetriNet.Parser (
   netToGr,
+  netToGrCapacity,
   parseNet,
   simpleRenameWith,
   )
 import Modelling.PetriNet.Types (
   DrawSettings (..),
   Net (mapNet, traverseNet),
+  PetriNodeWithCapacity (..),
   )
 
 import Control.Arrow                    (first)
@@ -56,6 +61,25 @@ cacheNet
 cacheNet path labelOf pl drawSettings@DrawSettings {..} =
   cache path ext "petri" (mapNet labelOf pl) $ \svg pl' -> do
     dia <- drawNet id pl' drawSettings
+    writeSvg svg dia
+  where
+    ext = short withPlaceNames
+      ++ short withTransitionNames
+      ++ short with1Weights
+      ++ short withSvgHighlighting
+      ++ short withGraphvizCommand
+      ++ ".svg"
+
+cacheNetCapacity
+  :: (MonadCache m, MonadDiagrams m, MonadGraphviz m, MonadThrow m, Net p n, PetriNodeWithCapacity n)
+  => String
+  -> (a -> String)
+  -> p n a
+  -> DrawSettings
+  -> m FilePath
+cacheNetCapacity path labelOf pl drawSettings@DrawSettings {..} =
+  cache path ext "petri" (mapNet labelOf pl) $ \svg pl' -> do
+    dia <- drawNetWithCapacity id pl' drawSettings
     writeSvg svg dia
   where
     ext = short withPlaceNames
@@ -90,6 +114,19 @@ drawNet labelOf pl drawSettings@DrawSettings {..} = do
   graph <- layoutGraph withGraphvizCommand gr
   preparedFont <- lin
   return $ drawGraph labelOf drawSettings preparedFont graph
+
+drawNetWithCapacity
+  :: (MonadDiagrams m, MonadGraphviz m, MonadThrow m, Net p n, Ord a, PetriNodeWithCapacity n)
+  => (a -> String)
+  -> p n a
+  -> DrawSettings
+  -> m (Diagram B)
+drawNetWithCapacity labelOf pl drawSettings@DrawSettings {..} = do
+  gr <- either (throwM . CouldNotFindNodeWithinGraph . labelOf) return
+        $ netToGrCapacity pl
+  graph <- layoutGraph withGraphvizCommand gr
+  preparedFont <- lin
+  return $ drawGraphWithCapacity labelOf drawSettings preparedFont graph
 
 getNet
   :: (MonadThrow m, Net p n, Traversable t)
@@ -176,6 +213,42 @@ drawGraph labelOf drawSettings@DrawSettings {..} preparedFont graph =
     withLabel = first labelOf
     labelOnly = labelOf . fst
 
+drawGraphWithCapacity
+  :: Ord a
+  => (a -> String)
+  -> DrawSettings
+  -> PreparedFont Double
+  -> Gr (AttributeNode (a, Maybe Int, Maybe Int)) (AttributeEdge Int)
+  -> Diagram B
+drawGraphWithCapacity labelOf drawSettings@DrawSettings {..} preparedFont graph =
+  graphEdges' # frame 1
+  where
+    (nodes, edges) = GV.getGraph graph
+    graphNodes' = M.foldlWithKey
+      (\g l p -> g
+        `atop`
+        drawNodeCapacity drawSettings preparedFont (withLabelC l) p)
+      mempty
+      nodes
+    graphEdges' = foldl
+      (\g (s, t, l, p) ->
+        let ls = labelOnly s
+            lt = labelOnly t
+        in g # drawEdge
+          (not with1Weights)
+          preparedFont
+          l
+          ls
+          lt
+          (nonEmptyPathBetween p ls lt g)
+      )
+      graphNodes'
+      edges
+
+    withLabelC (x, tokens, cap) = (labelOf x, tokens, cap)
+
+    labelOnly = labelOf . (\(x, _, _) -> x)
+
 {-|
 Nodes are either Places (having 'Just' tokens), or Transitions (having
 'Nothing').
@@ -233,6 +306,68 @@ drawNode DrawSettings {..} preparedFont (l, Just i) p
       # translate (r2 (8 * sqrt(fromIntegral (i - 1)), 0))
       # rotateBy (fromIntegral j / fromIntegral i)
 
+drawNodeCapacity
+  :: DrawSettings
+  -> PreparedFont Double
+  -> (String, Maybe Int, Maybe Int)
+  -- ^ a capacity node (the first part is used for its label) with a capacity
+  -> Point V2 Double
+  -> Diagram B
+drawNodeCapacity DrawSettings {..} preparedFont (l, Nothing, cap) p =
+  place
+    (addTransitionName $ rect 20 20 # lwL 0.5 # named l # svgClass "rect" # additionalLabel <> capacityLabel)
+    p
+  where
+    additionalLabel
+      | withSvgHighlighting = id
+      | otherwise = svgClass $ ' ' : l
+    addTransitionName
+      | not withTransitionNames = id
+      | otherwise = (center (text' preparedFont 18 l) `atop`)
+    capacityLabel = maybe mempty (drawCapacity preparedFont) cap
+
+drawNodeCapacity DrawSettings {..} preparedFont (l, Just i, cap) p
+  | i == 0 && cap == Just 0 =
+      place (foldl' atop mempty tokens) p
+  | i < 5 =
+      place (foldl' atop label (tokens ++ [emptyPlace, capacityLabel])) p
+  | otherwise =
+      place (foldl' atop label
+        [ token # translate (r2 (spacer, 0))
+        , text' preparedFont 20 (show i) # translate (r2 (-spacer,-4))
+        , emptyPlace
+        , capacityLabel
+        ]) p
+  where
+    spacer = 9
+    additionalLabel
+      | withSvgHighlighting = id
+      | otherwise = svgClass $ ' ' : l
+    emptyPlace = circle 20 # lwL 0.5 # named l # svgClass "node" # additionalLabel
+    label
+      | not withPlaceNames = mempty
+      | otherwise = center (text' preparedFont 18 l)
+        # translate (r2 (0, - (3 * spacer)))
+        # svgClass "nlabel"
+    tokenGrey = sRGB24 136 136 136
+    token = circle 4.5 # lc tokenGrey # fc tokenGrey # lwL 0 # svgClass "token"
+    tokens = [placeToken j | j <- [1..i]]
+    placeToken j = token
+      # translate (r2 (8 * sqrt (fromIntegral (i - 1)), 0))
+      # rotateBy (fromIntegral j / fromIntegral i)
+    capacityLabel = maybe mempty (drawCapacity preparedFont) cap
+
+drawCapacity
+  :: PreparedFont Double
+  -> Int
+  -> Diagram B
+drawCapacity fontC cap =
+  case cap of
+    0 -> mempty
+    _ -> text' fontC 18 (show cap)
+      # translate (r2 (0, 25))
+      # svgClass "capacity"
+
 {-|
 Edges are drawn as arcs between nodes (identified by labels).
 -}
@@ -277,3 +412,13 @@ renderWith
   -> DrawSettings
   -> m FilePath
 renderWith path task = cacheNet (path ++ task) id
+
+renderWithCapacity
+  :: (MonadCache m, MonadDiagrams m, MonadGraphviz m, MonadThrow m, Net p n, PetriNodeWithCapacity n)
+  => String
+  -> String
+  -> p n String
+  -> DrawSettings
+  -> m FilePath
+renderWithCapacity path task = cacheNetCapacity (path ++ task) id
+
