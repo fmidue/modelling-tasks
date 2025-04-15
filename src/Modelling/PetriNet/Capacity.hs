@@ -72,7 +72,7 @@ import Modelling.PetriNet.Find (
   prohibitHidePlaceNames,
   prohibitHideTransitionNames,
   prohibitPatchworkRenderer,
-  toFindEvaluationTupleList,
+  toFindEvaluation2TupleList,
   )
 import Modelling.PetriNet.FindActivatedTransitions (
   checkActivatedTransitionsConfig,
@@ -246,10 +246,10 @@ capacityTask path task = do
         ts = ([("s1", 2), ("s2", 0)], [("t1", "s1", 1), ("t2", "s1", 1), ("s2", "t2", 2)])
     code $ show ts
     translate $ do
-      english ("as answer would indicate that there are two complement places - p1 with 2 tokens and p2 with 0 tokens - and t1 points to s1 with a weight of 1, " ++
-               "t2 points to s1 with a weight of 1 and s2 connects to t2 with a weight of 2.")
-      german ("als Antwort würde bedeuten, dass es zwei Komplementstellen gibt - p1 mit 2 Token und p2 mit 0 Token - und t1 zeigt auf s1 mit einem Gewicht von 1, " ++
-             "t2 zeigt auf s1 mit einem Gewicht von 1, und s2 ist mit t2 mit einem Gewicht von 2 verbunden.")
+      english ("as answer would indicate that there are two complement places - p3 with 2 tokens and p4 with 0 tokens - and t1 points to s1 with a weight of 1, " ++
+               "t2 points to s3 with a weight of 1 and s4 connects to t2 with a weight of 2.")
+      german ("als Antwort würde bedeuten, dass es zwei Komplementstellen gibt - s3 mit 2 Token und s4 mit 0 Token - und t1 zeigt auf s3 mit einem Gewicht von 1, " ++
+             "t2 zeigt auf s3 mit einem Gewicht von 1, und s4 ist mit t2 mit einem Gewicht von 2 verbunden.")
     translate $ do
       english "The order of tuples within the lists does not matter here."
       german "Die Reihenfolge der Tupel innerhalb der Listen spielt hierbei keine Rolle."
@@ -271,18 +271,18 @@ capacitySyntax task (tokenChanges, flowChanges) = do
 
     assertTokenChanges (p, tokens) = assert (isValidComplementPlace p && tokens >= 0) $ translate $ do
       let p' = show (p, tokens)
-      english $ p' ++ " is a valid complement place of the resulting Petri net?"
-      german $ p' ++ " ist eine gültige Komplementstelle des resultierenden Petrinetzes?"
+      english $ p' ++ " is a semantically correct complement place of the Petri net?"
+      german $ p' ++ " ist eine semantisch korrekte Komplementstelle des Petrinetzes?"
 
     assertFlowChanges (src, tgt, weight) = assert (((isValidComplementPlace src && isValidTransition tgt) ||
                                            (isValidTransition src && isValidComplementPlace tgt)) && weight >= 0) $ translate $ do
       let t' = show (src, tgt, weight)
-      english $ t' ++ " is a valid flow of the resulting Petri net?"
-      german $ t' ++ " ist ein gültiger Fluss des resultierenden Petrinetzes?"
+      english $ t' ++ " is a semantically correct flow of the Petri net?"
+      german $ t' ++ " ist ein semantisch korrekter Fluss des Petrinetzes?"
 
     isValidComplementPlace :: String -> Bool
     isValidComplementPlace s = case s of
-      ('s':rest) -> maybe False (\x -> x >= 1 && x <= (numberOfPlaces task `div` 2)) (readMaybe rest)
+      ('s':rest) -> maybe False (\x -> x >= 1 && x < (numberOfPlaces task - (numberOfPlaces task `div` 2))) (readMaybe rest)
       _          -> False
 
     isValidTransition :: String -> Bool

@@ -22,7 +22,7 @@ module Modelling.PetriNet.Find (
   toFindEvaluation,
   toFindEvaluationList,
   toFindEvaluationTuple,
-  toFindEvaluationTupleList,
+  toFindEvaluation2TupleList,
   toFindEvaluation3TupleList,
   toFindSyntax,
   ) where
@@ -173,14 +173,14 @@ toFindEvaluationList
 toFindEvaluationList what withSol =
   toFindEvaluation what withSol (\x y -> sort x == sort y) (show . transitionListShow)
 
-toFindEvaluationTupleList
+toFindEvaluation2TupleList
   :: (Num a, OutputCapable m)
   => Map Language String
   -> Bool
   -> [(String, Int)]
   -> [(String, Int)]
   -> LangM' m (Maybe String, a)
-toFindEvaluationTupleList what withSol =
+toFindEvaluation2TupleList what withSol =
   toFindEvaluation what withSol (\xs ys -> sortList xs == sortList ys) (show . tokenListShow)
    where
     sortList = sortBy (comparing fst)
