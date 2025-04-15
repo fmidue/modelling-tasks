@@ -181,10 +181,9 @@ toFindEvaluation2TupleList
   -> [(String, Int)]
   -> LangM' m (Maybe String, a)
 toFindEvaluation2TupleList what withSol =
-  toFindEvaluation what withSol (\xs ys -> sortList xs == sortList ys) (show . tokenListShow)
+  toFindEvaluation what withSol (\xs ys -> sortList xs == sortList ys) tokenListShow
    where
     sortList = sortBy (comparing fst)
-    tokenListShow :: [(String, Int)] -> String
     tokenListShow = show . sortList
 
 toFindEvaluation3TupleList
@@ -195,10 +194,9 @@ toFindEvaluation3TupleList
   -> [(String, String, Int)]
   -> LangM' m (Maybe String, a)
 toFindEvaluation3TupleList what withSol =
-  toFindEvaluation what withSol (\xs ys -> sortFlowList xs == sortFlowList ys) (show . flowListShow)
+  toFindEvaluation what withSol (\xs ys -> sortFlowList xs == sortFlowList ys) flowListShow
     where
       sortFlowList = sortOn (\ (a, b, c) -> (a, b, c))
-      flowListShow :: [(String, String, Int)] -> String
       flowListShow = show . sortFlowList
 
 checkFindTwoActive :: BasicConfig -> Maybe String

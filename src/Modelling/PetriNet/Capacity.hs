@@ -100,7 +100,6 @@ import Modelling.PetriNet.Types         (
   SimplePetriNet,
   CapacityNode (..),
   basicConfigBitWidthInput,
-  checkActivatedSourceConfig,
   checkBasicConfig,
   petriScopeBitWidth,
   toChangeList,
@@ -243,7 +242,7 @@ capacityTask path task = do
       english [i|Stating |]
       german [i|Die Angabe von |]
     let ts :: ([(String, Int)], [(String, String, Int)])
-        ts = ([("s1", 2), ("s2", 0)], [("t1", "s1", 1), ("t2", "s1", 1), ("s2", "t2", 2)])
+        ts = ([("s3",2), ("s4",0)], [("t1","s3",1), ("t2","s3",1), ("s4","t2",2)])
     code $ show ts
     translate $ do
       english ("as answer would indicate that there are two complement places - p3 with 2 tokens and p4 with 0 tokens - and t1 points to s1 with a weight of 1, " ++
@@ -275,7 +274,7 @@ capacitySyntax task (tokenChanges, flowChanges) = do
       german $ p' ++ " ist eine semantisch korrekte Komplementstelle des Petrinetzes?"
 
     assertFlowChanges (src, tgt, weight) = assert (((isValidComplementPlace src && isValidTransition tgt) ||
-                                           (isValidTransition src && isValidComplementPlace tgt)) && weight >= 0) $ translate $ do
+                                           (isValidTransition src && isValidComplementPlace tgt)) && weight > 0) $ translate $ do
       let t' = show (src, tgt, weight)
       english $ t' ++ " is a semantically correct flow of the Petri net?"
       german $ t' ++ " ist ein semantisch korrekter Fluss des Petrinetzes?"
@@ -511,7 +510,6 @@ skolemName = "activatedTrans"
 checkCapacityConfigs :: CapacityConfig -> Maybe String
 checkCapacityConfigs CapacityConfig {
   basicConfig,
-  advConfig,
   maxCapacity,
   newArrowsWithComplement,
   oneMinCapacity,
@@ -523,7 +521,6 @@ checkCapacityConfigs CapacityConfig {
   <|> prohibitHideTransitionNames graphConfig
   <|> checkBasicConfig [snd newArrowsWithComplement, maxCapacity] basicConfig
   <|> prohibitPatchworkRenderer graphConfig
-  <|> checkActivatedSourceConfig basicConfig advConfig
   <|> checkCapacityConfig basicConfig maxCapacity newArrowsWithComplement oneMinCapacity distractors atMostActive
   <|> checkActivatedTransitionsConfig basicConfig atMostActive
 
