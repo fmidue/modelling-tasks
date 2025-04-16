@@ -71,7 +71,6 @@ import Modelling.Auxiliary.Common (
 import Modelling.Auxiliary.Output (
   addPretext,
   extra,
-  reRefuseLangM,
   )
 import Modelling.PetriNet.Diagram (cacheNet)
 import Modelling.PetriNet.Types (
@@ -94,6 +93,7 @@ import Control.OutputCapable.Blocks (
   ($=<<),
   english,
   german,
+  reRefuseLangM,
   translate,
   translations,
   singleChoice,
