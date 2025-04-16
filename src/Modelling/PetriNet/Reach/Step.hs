@@ -10,6 +10,8 @@ module Modelling.PetriNet.Reach.Step where
 import qualified Data.Map                         as M (
   insert,
   findWithDefault,
+  fromList,
+  toList,
   )
 import qualified Data.Set                         as S (
   difference,
@@ -91,7 +93,7 @@ levels' n =
   let f _    [] = []
       f done xs =
         let done' = S.union done $ S.fromList $ map fst xs
-            next = [ (y, t:p) | (x,p) <- xs, (t,y) <- successors n x, not $ S.member y done']
+            next = M.toList $ M.fromList [ (y, t:p) | (x,p) <- xs, (t,y) <- successors n x, not $ S.member y done']
          in xs : f done' next
   in f S.empty [(start n, [])]
 
