@@ -249,13 +249,16 @@ capacityTask path task = do
       english [i|Stating |]
       german [i|Die Angabe von |]
     let ts :: ([(String, Int)], [(String, String, Int)])
-        ts = ([("s3",2), ("s4",0)], [("t1","s3",1), ("t2","s3",1), ("s4","t2",2)])
+        ts = ([("s1",2), ("s2",0)], [("t1","s1",1), ("t2","s1",1), ("s2","t2",2)])
     code $ show ts
     translate $ do
-      english ("as answer would indicate that there are two complement places - p3 with 2 tokens and p4 with 0 tokens - and t1 points to s1 with a weight of 1, " ++
-               "t2 points to s3 with a weight of 1 and s4 connects to t2 with a weight of 2.")
-      german ("als Antwort würde bedeuten, dass es zwei Komplementstellen gibt - s3 mit 2 Token und s4 mit 0 Token - und t1 zeigt auf s3 mit einem Gewicht von 1, " ++
-             "t2 zeigt auf s3 mit einem Gewicht von 1, und s4 ist mit t2 mit einem Gewicht von 2 verbunden.")
+      english ("as answer would indicate that there are two complement places - s1 with 2 tokens and s2 with 0 tokens - and t1 points to s1 with a weight of 1, " ++
+               "t2 points to s1 with a weight of 1 and s2 connects to t2 with a weight of 2.")
+      german ("als Antwort würde bedeuten, dass es zwei Komplementstellen gibt - s1 mit 2 Token und s2 mit 0 Token - und t1 zeigt auf s1 mit einem Gewicht von 1, " ++
+             "t2 zeigt auf s1 mit einem Gewicht von 1, und s2 ist mit t2 mit einem Gewicht von 2 verbunden.")
+    translate $ do
+      english "The first complement place s1 belongs to the first shown place s3, the second complement place s2 belongs to the second shown place s4 and so on."
+      german "Die erste Komplementstelle s1 gehört zu der ersten gezeigten Stelle s3, die zweite Komplementstelle s2 gehört zu der zweiten gezeigten Stelle s4 und so weiter."
     translate $ do
       english "The order of tuples within the lists does not matter here."
       german "Die Reihenfolge der Tupel innerhalb der Listen spielt hierbei keine Rolle."
@@ -277,14 +280,14 @@ capacitySyntax task (tokenChanges, flowChanges) = do
 
     assertTokenChanges (p, tokens) = assert (isValidComplementPlace p && tokens >= 0) $ translate $ do
       let p' = show (p, tokens)
-      english $ p' ++ " is a semantically correct complement place of the Petri net?"
-      german $ p' ++ " ist eine semantisch korrekte Komplementstelle des Petrinetzes?"
+      english $ p' ++ " has a structurally correct form of a complement place?"
+      german $ p' ++ " hat eine strukturell korrekte Form einer Komplementstelle?"
 
     assertFlowChanges (src, tgt, weight) = assert (((isValidComplementPlace src && isValidTransition tgt) ||
                                            (isValidTransition src && isValidComplementPlace tgt)) && weight > 0) $ translate $ do
       let t' = show (src, tgt, weight)
-      english $ t' ++ " is a semantically correct flow of the Petri net?"
-      german $ t' ++ " ist ein semantisch korrekter Fluss des Petrinetzes?"
+      english $ t' ++ " has a structurally correct form of a flow?"
+      german $ t' ++ " hat eine strukturell korrekte Form eines Flusses?"
 
     isValidComplementPlace :: String -> Bool
     isValidComplementPlace s = case s of
