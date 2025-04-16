@@ -72,9 +72,8 @@ import Control.Monad.Random (
   RandomGen,
   )
 import Control.Monad.Trans.Class        (MonadTrans (lift))
-import Data.List                        (sort, sortBy, sortOn)
+import Data.List                        (sort)
 import Data.Map                         (Map)
-import Data.Ord                         (comparing)
 import Language.Alloy.Call (
   AlloyInstance,
   )
@@ -181,10 +180,7 @@ toFindEvaluation2TupleList
   -> [(String, Int)]
   -> LangM' m (Maybe String, a)
 toFindEvaluation2TupleList what withSol =
-  toFindEvaluation what withSol (\xs ys -> sortList xs == sortList ys) tokenListShow
-   where
-    sortList = sortBy (comparing fst)
-    tokenListShow = show . sortList
+  toFindEvaluation what withSol (\xs ys -> sort xs == sort ys) (show . sort)
 
 toFindEvaluation3TupleList
   :: (Num a, OutputCapable m)
@@ -194,10 +190,7 @@ toFindEvaluation3TupleList
   -> [(String, String, Int)]
   -> LangM' m (Maybe String, a)
 toFindEvaluation3TupleList what withSol =
-  toFindEvaluation what withSol (\xs ys -> sortFlowList xs == sortFlowList ys) flowListShow
-    where
-      sortFlowList = sortOn (\ (a, b, c) -> (a, b, c))
-      flowListShow = show . sortFlowList
+  toFindEvaluation what withSol (\xs ys -> sort xs == sort ys) (show . sort)
 
 checkFindTwoActive :: BasicConfig -> Maybe String
 checkFindTwoActive BasicConfig { atLeastActive }
