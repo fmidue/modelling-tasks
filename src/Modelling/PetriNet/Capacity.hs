@@ -16,6 +16,7 @@ module Modelling.PetriNet.Capacity (
   checkCapacityConfig,
   checkCapacityConfigs,
   combinedCapacity,
+  combinedCapacityInstance,
   defaultCapacityInstance,
   petriNetFindCapacity,
   parseCapacityPrec,
@@ -164,7 +165,7 @@ capacityGenerate config seed segment =
   flip evalRandT (mkStdGen seed) $ do
     gl <- oneOf $ graphLayouts gc
 
-    (original, transformed, condition) <- combinedCapacity petriNetFindCapacity Find.alloyConfig config segment
+    (original, transformed, condition) <- combinedCapacityInstance config segment
 
     return $ CapacityInstance
       { drawWith = DrawSettings
@@ -184,6 +185,15 @@ capacityGenerate config seed segment =
       where
         bc = Find.basicConfig config
         gc = Pick.graphConfig config
+
+combinedCapacityInstance
+  :: (MonadThrow m, RandomGen g, MonadAlloy m, Net p n)
+  => CapacityConfig
+  -> Int
+  -> RandT g m (PetriLike CapacityNode String, p n String, PetriChangeList String)
+combinedCapacityInstance = combinedCapacity
+  petriNetFindCapacity
+  Find.alloyConfig
 
 simpleCapacityTask
   :: (
