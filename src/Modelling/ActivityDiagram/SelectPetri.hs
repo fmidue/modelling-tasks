@@ -438,7 +438,7 @@ selectPetriEvaluation path task n = addPretext $ do
       let (_, correctNet) = fromJust $ find fst $ petriNets task
       unless (withPlaceNames $ petriDrawConf task) $ paragraph $ do
         translate $ do
-          english "The translated petri net (including node names) looks like this:"
+          english "The translated Petri net (including node names) looks like this:"
           german "Das aus dem Aktivitätsdiagramm übersetze Petrinetz sieht mit Knotennamen wie folgt aus:"
 
         let drawSetting = (petriDrawConf task)
@@ -449,7 +449,7 @@ selectPetriEvaluation path task n = addPretext $ do
         pure ()
 
       paragraph $ translate $ do
-        english "The mapping of the nodes from the activity diagram to nodes from the petri net is as follows:"
+        english "The mapping of the nodes from the activity diagram to nodes from the Petri net is as follows:"
         german "Die Zuordnung der Knoten aus dem Aktivitätsdiagramm zu Knoten aus dem Petrinetz sieht wie folgt aus:"
 
 
