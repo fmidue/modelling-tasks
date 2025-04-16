@@ -303,8 +303,8 @@ capacityEvaluation
   -> Rated m
 capacityEvaluation task (tokenChanges, flowChanges) = do
   let whatTokens = translations $ do
-        english "are added complement places"
-        german "sind hinzugefügte Komplementstellen"
+        english "The given tuples are added complement places?"
+        german "Die angegebenen Tupel sind hinzugefügte Komplementstellen?"
   let whatFlows = translations $ do
         english "The given tuples are added flows?"
         german "Die angegebenen Tupel sind hinzugefügte Flüsse?"

@@ -233,8 +233,8 @@ findConcurrencyEvaluation
   -> Rated m
 findConcurrencyEvaluation task x = do
   let what = translations $ do
-        english "are concurrently activated"
-        german "sind nebenläufig aktiviert"
+        english "The given transitions are concurrently activated?"
+        german "Die angegebenen Transitionen sind nebenläufig aktiviert?"
   uncurry (printSolutionAndAssert DefiniteArticle)
     $=<< unLangM $ toFindEvaluationTuple what withSol concur x
   where

@@ -144,8 +144,8 @@ toFindEvaluation what withSol isCorrect format correctValue inputValue = do
         then Just $ format correctValue
         else Nothing
   assert correct $ translate $ do
-    english $ "The given transitions " ++ localise English what ++ "?"
-    german $ "Die angegebenen Transitionen " ++ localise German what ++ "?"
+    english $ localise English what
+    german $ localise German what
   pure (maybeSolutionString, points)
   where
     assert = continueOrAbort withSol

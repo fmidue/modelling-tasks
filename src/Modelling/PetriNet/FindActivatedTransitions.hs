@@ -249,8 +249,8 @@ findActivatedTransitionsEvaluation
   -> Rated m
 findActivatedTransitionsEvaluation task x = do
   let what = translations $ do
-        english "are activated"
-        german "sind aktiviert"
+        english "The given transitions are activated?"
+        german "Die angegebenen Transitionen sind aktiviert?"
   uncurry (printSolutionAndAssert DefiniteArticle)
     $=<< unLangM $ toFindEvaluationList what withSol active x
   where

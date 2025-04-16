@@ -289,8 +289,8 @@ findConflictPlacesEvaluation task (conflict, ps) =
     base = fromIntegral $ 2 + numberOfPlaces task
     size = fromIntegral . length
     what = translations $ do
-        english "have a conflict"
-        german "haben einen Konflikt"
+        english "The given transitions have a conflict"
+        german "Die angegebenen Transitionen haben einen Konflikt"
 
 findConflictPlacesSolution :: FindInstance n (PetriConflict p t) -> ((t, t), [p])
 findConflictPlacesSolution task =
