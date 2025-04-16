@@ -566,10 +566,15 @@ getSelectPetriTask config = do
       }
   ad <- mapM (fmap snd . shuffleAdNames) randomInstances
   validInstances <- firstJustM (\x -> do
-    sol <- selectPetriNet (numberOfWrongAnswers config) (numberOfModifications config) (modifyAtMid config) x
+    sol <- selectPetriNet
+      (numberOfWrongAnswers config)
+      (numberOfModifications config)
+      (modifyAtMid config)
+      x
     p <- fmap snd $ shufflePetri $ matchingNet sol
     ps <- mapM (fmap snd . shufflePetri) $ wrongNets sol
-    petriNets <- selectPetriSolutionToMap $ SelectPetriSolution {matchingNet=p, wrongNets=ps}
+    petriNets <- selectPetriSolutionToMap
+      $ SelectPetriSolution {matchingNet=p, wrongNets=ps}
     let petriInst = SelectPetriInstance {
           activityDiagram=x,
           plantUMLConf=plantUMLConf,
