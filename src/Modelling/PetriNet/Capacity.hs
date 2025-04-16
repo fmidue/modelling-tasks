@@ -291,11 +291,11 @@ capacitySyntax task (tokenChanges, flowChanges) = do
 
     isValidComplementPlace :: String -> Bool
     isValidComplementPlace s = case s of
-      ('s':rest) -> maybe False (\x -> x >= 1 && x < (numberOfPlaces task - (numberOfPlaces task `div` 2))) (readMaybe rest)
+      ('s':rest) -> maybe False (\x -> x >= 1 && x <= (numberOfPlaces task `div` 2)) (readMaybe rest)
       _          -> False
 
     isValidTransition :: String -> Bool
-    isValidTransition s = case s of
+    isValidTransition t = case t of
       ('t':rest) -> maybe False (\x -> x >= 1 && x <= numberOfTransitions task) (readMaybe rest)
       _          -> False
 
