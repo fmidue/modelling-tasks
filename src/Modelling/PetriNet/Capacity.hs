@@ -33,9 +33,6 @@ import qualified Modelling.PetriNet.Types         as Find (
 import qualified Modelling.PetriNet.Types         as Pick (
   CapacityConfig (..),
   )
-import qualified Modelling.PetriNet.Types         as Types (
-  NodeC(..)
-  )
 import qualified Data.Map                         as M (
   empty,
   fromList,
@@ -406,16 +403,16 @@ parseCapacityPrec _ = do
 
     parseInt = read <$> many1 digit
 
-    parseNodeC :: Parser NodeC
+    parseNodeC :: Parser String
     parseNodeC = do
-      tag <- optionMaybe (char 'p')
+      tag <- optionMaybe (char 's')
       case tag of
         Just _  -> do
           Reach.Place n <- parsePlacePrec 0
-          return $ Types.Place (show n)
+          return $ show n
         Nothing -> do
           Reach.Transition n <- parseTransitionPrec 0
-          return $ Types.Transition (show n)
+          return $ show n
 
 petriNetFindCapacityAlloy
   :: BasicConfig
