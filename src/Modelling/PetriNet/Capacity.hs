@@ -71,6 +71,7 @@ import Modelling.PetriNet.Find (
   prohibitHideTransitionNames,
   prohibitPatchworkRenderer,
   toFindEvaluation2TupleList,
+  toFindEvaluation3TupleList,
   )
 import Modelling.PetriNet.FindActivatedTransitions (
   checkActivatedTransitionsConfig,
@@ -91,7 +92,6 @@ import Modelling.PetriNet.Types         (
   DrawSettings (..),
   GraphConfig (..),
   Net,
-  NodeC (..),
   PetriChangeList (..),
   PetriLike (PetriLike, allNodes),
   SimpleNode (..),
@@ -103,7 +103,7 @@ import Modelling.PetriNet.Types         (
   toChangeList,
   )
 
-import Control.Applicative              ((<|>))
+import Control.Applicative              ((<|>), liftA2)
 import Control.Monad                    (void, when)
 import Control.Monad.Catch              (MonadThrow, MonadThrow (throwM))
 import Control.OutputCapable.Blocks (
@@ -301,15 +301,24 @@ capacityEvaluation
   => CapacityInstance net
   -> ([(String, Int)], [(String, String, Int)])
   -> Rated m
-capacityEvaluation task (tokenChanges, _) = do
+capacityEvaluation task (tokenChanges, flowChanges) = do
   let whatTokens = translations $ do
         english "are added complement places"
         german "sind hinzugefügte Komplementstellen"
+  let whatFlows = translations $ do
+        english "The given tuples are added flows?"
+        german "Die angegebenen Tupel sind hinzugefügte Flüsse?"
   uncurry (printSolutionAndAssert DefiniteArticle)
-    $=<< unLangM $ toFindEvaluation2TupleList whatTokens withSol tokens tokenChanges
+    $=<< unLangM $ liftA2 combineResults
+      (toFindEvaluation2TupleList whatTokens withSol tokens tokenChanges)
+      (toFindEvaluation3TupleList whatFlows withSol flows flowChanges)
+
   where
-    (tokens, _) = capacitySolution task
+    (tokens, flows) = capacitySolution task
     withSol = showSolution task
+    combineResults (list1, points1) (list2, points2) = (combineLists list1 list2, points1 * points2)
+    combineLists :: Maybe String -> Maybe String -> Maybe String
+    combineLists = liftA2 (\string1 string2 -> string1 ++ "," ++ string2)
 
 capacitySolution :: CapacityInstance net -> ([(String, Int)], [(String, String, Int)])
 capacitySolution task = (tokenChanges $ toFind task, flowChanges $ toFind task)
