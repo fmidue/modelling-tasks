@@ -520,8 +520,8 @@ selectPetriEvaluation path task n = addPretext $ do
 
       paragraph $ do
         translate $ do
-          english "Auxiliary nodes / transitions:"
-          german "Hilfsknoten und -transitionen:"
+          english "Auxiliary places / transitions:"
+          german "Hilfsstellen und -transitionen:"
         code $ show auxiliaryPetriNodes
         pure ()
 
