@@ -1101,7 +1101,6 @@ data CapacityConfig = CapacityConfig
   , atMostActive :: Maybe Int
   , graphConfig :: GraphConfig
   , printSolution :: Bool
-  , useDifferentGraphLayouts :: Bool
   , alloyConfig :: AlloyConfig
   } deriving (Generic, Read, Show)
 
