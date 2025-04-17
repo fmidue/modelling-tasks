@@ -70,8 +70,7 @@ import Modelling.PetriNet.Find (
   prohibitHidePlaceNames,
   prohibitHideTransitionNames,
   prohibitPatchworkRenderer,
-  toFindEvaluation2TupleList,
-  toFindEvaluation3TupleList,
+  toFindEvaluationTupleList,
   )
 import Modelling.PetriNet.FindActivatedTransitions (
   checkActivatedTransitionsConfig,
@@ -313,8 +312,8 @@ capacityEvaluation task (tokenChanges, flowChanges) = do
         german "Die angegebenen Tupel sind hinzugefügte Flüsse?"
   uncurry (printSolutionAndAssert DefiniteArticle)
     $=<< unLangM $ liftA2 combineResults
-      (toFindEvaluation2TupleList whatTokens withSol tokens tokenChanges)
-      (toFindEvaluation3TupleList whatFlows withSol flows flowChanges)
+      (toFindEvaluationTupleList whatTokens withSol tokens tokenChanges)
+      (toFindEvaluationTupleList whatFlows withSol flows flowChanges)
 
   where
     (tokens, flows) = capacitySolution task
