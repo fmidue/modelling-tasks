@@ -276,7 +276,7 @@ capacitySyntax task (tokenChanges, flowChanges) = do
   for_ flowChanges  assertFlowChanges
   pure ()
   where
-    assert = continueOrAbort False
+    assert = continueOrAbort True
 
     assertTokenChanges (p, tokens) = assert (isValidComplementPlace p && tokens >= 0) $ translate $ do
       let p' = show (p, tokens)
