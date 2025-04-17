@@ -257,7 +257,8 @@ capacityTask path task = do
              "t2 zeigt auf s1 mit einem Gewicht von 1, und s2 ist mit t2 mit einem Gewicht von 2 verbunden.")
     translate $ do
       english "The first complement place s1 belongs to the first shown place s3, the second complement place s2 belongs to the second shown place s4 and so on."
-      german "Die erste Komplementstelle s1 gehört zu der ersten gezeigten Stelle s3, die zweite Komplementstelle s2 gehört zu der zweiten gezeigten Stelle s4 und so weiter."
+      german ("Die erste Komplementstelle s1 gehört zu der ersten gezeigten Stelle s3," ++
+             "die zweite Komplementstelle s2 gehört zu der zweiten gezeigten Stelle s4 und so weiter.")
     translate $ do
       english "The order of tuples within the lists does not matter here."
       german "Die Reihenfolge der Tupel innerhalb der Listen spielt hierbei keine Rolle."

@@ -1115,7 +1115,6 @@ defaultCapacityConfig = CapacityConfig
   , distractors = (0, 1)
   , graphConfig = defaultGraphConfig { hidePlaceNames = False, hideTransitionNames = False }
   , printSolution = True
-  , useDifferentGraphLayouts = False
   , alloyConfig = defaultAlloyConfig
   }
 
