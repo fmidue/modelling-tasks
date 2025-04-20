@@ -354,8 +354,8 @@ combinedCapacity alloyF alloyC config segment = do
   plSecond <- parseNet "flow" "tokens" inst
   let renameSecond = simpleRenameWith plSecond
   second <- traverseNet renameSecond plSecond
-  change <- fmap toChangeList (parseChange inst)
-  third <- traverse renameSecond change
+  change <- parseChange inst
+  third <- traverse renameSecond (toChangeList change)
 
   return (first, second, third)
   where
