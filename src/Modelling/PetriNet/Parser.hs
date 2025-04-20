@@ -17,7 +17,7 @@ module Modelling.PetriNet.Parser (
   parseChange,
   parseNet,
   parseRenamedNet,
-  simpleNameMap, simpleRename, simpleRenameWith,
+  simpleNameMap, simpleRename,
   ) where
 
 import qualified Modelling.PetriNet.Types         as PN (
@@ -91,27 +91,19 @@ convertPetri f t inst = do
 {-|
 Parse a 'Net' graph from an 'AlloyInstance' given the instances flow and
 token set names.
-And return an already renamed Petri net.
+Return an already renamed Petri net, along with the renaming map.
 -}
 parseRenamedNet
   :: (MonadThrow m, Net p n)
   => String
   -> String
   -> AlloyInstance
-  -> m (p n String)
+  -> m (p n String, Bimap Object String)
 parseRenamedNet flowSetName tokenSetName inst = do
   petriLike <- parseNet flowSetName tokenSetName inst
-  let rename = simpleRenameWith petriLike
-  traverseNet rename petriLike
-
-{-|
-Transform a given value into a 'String' by replacing it according to the
-'simpleNameMap' retrieved by the given 'Net'.
--}
-simpleRenameWith :: (MonadThrow m, Net p n, Ord a) => p n a -> a -> m String
-simpleRenameWith petriLike x = do
   let nameMap = simpleNameMap petriLike
-  BM.lookup x nameMap
+  net <- traverseNet (`BM.lookup` nameMap) petriLike
+  return (net, nameMap)
 
 {-|
 Parse a `Net' graph from an 'AlloyInstance' given the instances flow and

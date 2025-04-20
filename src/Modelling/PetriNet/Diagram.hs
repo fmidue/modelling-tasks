@@ -17,6 +17,7 @@ module Modelling.PetriNet.Diagram (
   ) where
 
 import qualified Diagrams.TwoD.GraphViz           as GV (getGraph)
+import qualified Data.Bimap                       as BM (lookup)
 import qualified Data.Map                         as M (foldlWithKey)
 
 import Capabilities.Cache               (MonadCache, cache, short)
@@ -32,13 +33,12 @@ import Modelling.Auxiliary.Diagrams (
 import Modelling.PetriNet.Parser (
   netToGr,
   netToGrCapacity,
-  parseNet,
-  simpleRenameWith,
+  parseRenamedNet,
   )
 import Modelling.PetriNet.Types (
   CapacityNode,
   DrawSettings (..),
-  Net (mapNet, traverseNet),
+  Net (mapNet),
   )
 
 import Control.Arrow                    (first)
@@ -134,21 +134,17 @@ getNet
   -> AlloyInstance
   -> m (p n String, t String)
 getNet parseSpecial inst = do
-  pl <- parseNet "flow" "tokens" inst
-  let rename = simpleRenameWith pl
-  net <- traverseNet rename pl
+  (net, nameMap) <- parseRenamedNet "flow" "tokens" inst
   special <- parseSpecial inst
-  renamedSpecial <- traverse rename special
+  renamedSpecial <- traverse (`BM.lookup` nameMap) special
   return (net, renamedSpecial)
 
 getDefaultNet
   :: (MonadThrow m, Net p n)
   => AlloyInstance
   -> m (p n String)
-getDefaultNet inst = do
-  pl <- parseNet "defaultFlow" "defaultTokens" inst
-  let rename = simpleRenameWith pl
-  traverseNet rename pl
+getDefaultNet =
+  fmap fst . parseRenamedNet "defaultFlow" "defaultTokens"
 
 {-|
 Obtain the Petri net like graph by drawing Nodes and connections between them

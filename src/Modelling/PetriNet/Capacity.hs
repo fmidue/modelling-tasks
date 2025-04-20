@@ -34,6 +34,9 @@ import qualified Modelling.PetriNet.Types         as Find (
 import qualified Modelling.PetriNet.Types         as Pick (
   CapacityConfig (..),
   )
+import qualified Data.Bimap                       as BM (
+  lookup,
+  )
 import qualified Data.Map                         as M (
   empty,
   fromList,
@@ -77,7 +80,8 @@ import Modelling.PetriNet.Parser (
   addCapacities,
   parseChange,
   parseNet,
-  simpleRenameWith,
+  parseRenamedNet,
+  simpleNameMap,
   )
 import Modelling.PetriNet.Reach.Type (
   parsePlacePrec,
@@ -348,14 +352,12 @@ combinedCapacity alloyF alloyC config segment = do
         []   -> randomInstance list
 
   plFirst <- parseNet "defaultFlow" "defaultTokens" inst >>= addCapacities inst
-  let renameFirst = simpleRenameWith plFirst
-  first <- traverseNet renameFirst plFirst
+  let nameMapFirst = simpleNameMap plFirst
+  first <- traverseNet (`BM.lookup` nameMapFirst) plFirst
 
-  plSecond <- parseNet "flow" "tokens" inst
-  let renameSecond = simpleRenameWith plSecond
-  second <- traverseNet renameSecond plSecond
+  (second, nameMapSecond) <- parseRenamedNet "flow" "tokens" inst
   change <- parseChange inst
-  third <- traverse renameSecond (toChangeList change)
+  third <- traverse (`BM.lookup` nameMapSecond) (toChangeList change)
 
   return (first, second, third)
   where
