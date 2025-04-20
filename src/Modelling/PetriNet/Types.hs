@@ -49,7 +49,6 @@ module Modelling.PetriNet.Types (
   PetriLike (..),
   PetriMath (..),
   PetriNode (..),
-  PetriNodeWithCapacity (..),
   PickConcurrencyConfig (..),
   PickConflictConfig (..),
   PickMistakeConfig (..),
@@ -308,10 +307,6 @@ class Show (n String) => PetriNode n where
   -}
   traverseNode      :: (Applicative f, Ord b) => (a -> f b) -> n a -> f (n b)
 
-class PetriNode n => PetriNodeWithCapacity n where
-  capacityPlace :: n a -> Integer
-  capacityPlace _ = error "This node type does not support capacities."
-
 {-|
 A node is part of a Petri like graph (see 'PetriLike').
 Each node stores its predecessor and successor nodes together with their weight
@@ -418,9 +413,9 @@ instance PetriNode CapacityNode where
   traverseNode f (CapacityTransition o) =
     CapacityTransition <$> traverseKeyMap f o
 
-instance PetriNodeWithCapacity CapacityNode where
-  capacityPlace CapacityPlace {capacity} = capacity
-  capacityPlace CapacityTransition {} =
+capacityPlace :: CapacityNode a -> Integer
+capacityPlace CapacityPlace {capacity} = capacity
+capacityPlace CapacityTransition {} =
     error "A CapacityTransition does not have a capacity!"
 
 {-|
@@ -432,7 +427,7 @@ maybeInitial n
   | isPlaceNode n = Just $ initialTokens n
   | otherwise     = Nothing
 
-maybeCapacity :: PetriNodeWithCapacity n => n a -> Maybe Integer
+maybeCapacity :: CapacityNode a -> Maybe Integer
 maybeCapacity n
   | isPlaceNode n = Just $ capacityPlace n
   | otherwise     = Nothing

@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE RecordWildCards #-}
 {-|
 A module for parsing Petri Alloy instances into Haskell representations defined
@@ -47,7 +48,6 @@ import Modelling.PetriNet.Types (
   PetriChange (..),
   PetriLike (..),
   PetriNode (..),
-  PetriNodeWithCapacity (..),
   maybeCapacity,
   maybeInitial,
   petriLikeToPetri,
@@ -304,8 +304,8 @@ netToGr petriLike = do
       (indexOf source, indexOf target, flow) : rs
 
 netToGrCapacity
-  :: (Monad m, Net p n, Ord a, PetriNodeWithCapacity n)
-  => p n a
+  :: (Monad m, Net p CapacityNode, Ord a)
+  => p CapacityNode a
   -> m (Gr (a, Maybe Int, Maybe Integer) Int)
 netToGrCapacity petriLike = do
   nodes <- Map.foldrWithKey convertNode (return []) $ PN.nodes petriLike

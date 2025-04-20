@@ -42,7 +42,6 @@ import Modelling.PetriNet.Types (
   DrawSettings (..),
   Net (mapNet, traverseNet),
   PetriLike,
-  PetriNodeWithCapacity (..),
   )
 
 import Control.Arrow                    (first)
@@ -75,10 +74,10 @@ cacheNet path labelOf pl drawSettings@DrawSettings {..} =
       ++ ".svg"
 
 cacheNetCapacity
-  :: (MonadCache m, MonadDiagrams m, MonadGraphviz m, MonadThrow m, Net p n, PetriNodeWithCapacity n)
+  :: (MonadCache m, MonadDiagrams m, MonadGraphviz m, MonadThrow m, Net p CapacityNode)
   => String
   -> (a -> String)
-  -> p n a
+  -> p CapacityNode a
   -> DrawSettings
   -> m FilePath
 cacheNetCapacity path labelOf pl drawSettings@DrawSettings {..} =
@@ -120,9 +119,9 @@ drawNet labelOf pl drawSettings@DrawSettings {..} = do
   return $ drawGraph labelOf drawSettings preparedFont graph
 
 drawNetWithCapacity
-  :: (MonadDiagrams m, MonadGraphviz m, MonadThrow m, Net p n, Ord a, PetriNodeWithCapacity n)
+  :: (MonadDiagrams m, MonadGraphviz m, MonadThrow m, Net p CapacityNode, Ord a)
   => (a -> String)
-  -> p n a
+  -> p CapacityNode a
   -> DrawSettings
   -> m (Diagram B)
 drawNetWithCapacity labelOf pl drawSettings@DrawSettings {..} = do
@@ -406,11 +405,10 @@ renderWith
 renderWith path task = cacheNet (path ++ task) id
 
 renderWithCapacity
-  :: (MonadCache m, MonadDiagrams m, MonadGraphviz m, MonadThrow m, Net p n, PetriNodeWithCapacity n)
+  :: (MonadCache m, MonadDiagrams m, MonadGraphviz m, MonadThrow m, Net p CapacityNode)
   => String
   -> String
-  -> p n String
+  -> p CapacityNode String
   -> DrawSettings
   -> m FilePath
 renderWithCapacity path task = cacheNetCapacity (path ++ task) id
-
