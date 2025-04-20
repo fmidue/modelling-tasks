@@ -601,13 +601,13 @@ toFind = ChangeList {
   },
   originalNet = PetriLike {
     allNodes = M.fromList [
-      ("s1",CapacityPlace {initial = 0, capacity = 0, flowIn = M.empty, flowOut = M.empty}),
-      ("s2",CapacityPlace {initial = 0, capacity = 0, flowIn = M.empty, flowOut = M.empty}),
-      ("s3",CapacityPlace {initial = 1, capacity = 2, flowIn = M.fromList [("t2",1)], flowOut = M.fromList [("t1",1)]}),
-      ("s4",CapacityPlace {initial = 0, capacity = 1, flowIn = M.fromList [("t1",1)], flowOut = M.fromList [("t2",1),("t3",1)]}),
-      ("t1",CapacityTransition {flowIn = M.fromList [("s3",1)], flowOut = M.fromList [("s4",1)]}),
-      ("t2",CapacityTransition {flowIn = M.fromList [("s4",1)], flowOut = M.fromList [("s3",1)]}),
-      ("t3",CapacityTransition {flowIn = M.fromList [("s4",1)], flowOut = M.empty})
+      ("s1",CapacityPlace {initial = 0, capacity = 0, flowOut = M.empty}),
+      ("s2",CapacityPlace {initial = 0, capacity = 0, flowOut = M.empty}),
+      ("s3",CapacityPlace {initial = 1, capacity = 2, flowOut = M.fromList [("t1",1)]}),
+      ("s4",CapacityPlace {initial = 0, capacity = 1, flowOut = M.fromList [("t2",1),("t3",1)]}),
+      ("t1",CapacityTransition {flowOut = M.fromList [("s4",1)]}),
+      ("t2",CapacityTransition {flowOut = M.fromList [("s3",1)]}),
+      ("t3",CapacityTransition {flowOut = M.empty})
       ]
     },
   transformedNet = PetriLike {

@@ -390,11 +390,9 @@ data CapacityNode a =
     initial  :: Int,
     capacity :: Int,
     -- | max allowed token number of a 'CapacityNode'
-    flowIn   :: Map a Int,
     flowOut  :: Map a Int
   } |
   CapacityTransition {
-  flowIn  :: Map a Int,
   flowOut :: Map a Int
   }
   deriving (Eq, Generic, Read, Show)
@@ -410,15 +408,15 @@ instance PetriNode CapacityNode where
   isTransitionNode CapacityTransition {} = True
   isTransitionNode _                   = False
 
-  mapNode f (CapacityPlace s c i o) =
-    CapacityPlace s c (M.mapKeys f i) (M.mapKeys f o)
-  mapNode f (CapacityTransition i o) =
-    CapacityTransition (M.mapKeys f i) (M.mapKeys f o)
+  mapNode f (CapacityPlace s c o) =
+    CapacityPlace s c (M.mapKeys f o)
+  mapNode f (CapacityTransition o) =
+    CapacityTransition (M.mapKeys f o)
 
-  traverseNode f (CapacityPlace s c i o) =
-    CapacityPlace s c <$> traverseKeyMap f i <*> traverseKeyMap f o
-  traverseNode f (CapacityTransition i o) =
-    CapacityTransition <$> traverseKeyMap f i <*> traverseKeyMap f o
+  traverseNode f (CapacityPlace s c o) =
+    CapacityPlace s c <$> traverseKeyMap f o
+  traverseNode f (CapacityTransition o) =
+    CapacityTransition <$> traverseKeyMap f o
 
 instance PetriNodeWithCapacity CapacityNode where
   capacityPlace CapacityPlace {capacity} = capacity
@@ -650,35 +648,32 @@ instance Net PetriLike CapacityNode where
   nodes = allNodes
 
   deleteFlow x y (PetriLike ns) = PetriLike
-    . M.adjust (updateCapacityNode id (M.delete y)) x
-    . M.adjust (updateCapacityNode (M.delete x) id) y
+    . M.adjust (updateCapacityNode (M.delete y)) x
     $ ns
 
   deleteNode x ns = PetriLike
-    . adjustAll (updateCapacityNode id (M.delete x)) (Just $ M.keys $ allNodes ns)
-    . adjustAll (updateCapacityNode (M.delete x) id) (Just $ M.keys $ allNodes ns)
+    . adjustAll (updateCapacityNode (M.delete x)) (Just $ M.keys $ allNodes ns)
     . M.delete x
     . allNodes
     $ ns
 
   alterFlow x f y = PetriLike
-    . M.adjust (updateCapacityNode id (M.insert y f)) x
-    . M.adjust (updateCapacityNode (M.insert x f) id) y
+    . M.adjust (updateCapacityNode (M.insert y f)) x
     . allNodes
 
   alterNode x mt = PetriLike . M.alter alterNode' x . allNodes
     where
       alterNode' = Just . fromMaybe
-        (maybe (CapacityTransition M.empty M.empty) (\m -> CapacityPlace m 0 M.empty M.empty) mt)
+        (maybe CapacityTransition (\m -> CapacityPlace m 0) mt M.empty)
 
   outFlow x = maybe M.empty flowOutCN . M.lookup x . allNodes
 
   updateCapacity x y (PetriLike ns) =
     PetriLike $ M.alter updateCapacity' x ns
     where
-      updateCapacity' Nothing = Just $ CapacityPlace 0 (fromMaybe 0 y) M.empty M.empty
-      updateCapacity' (Just (CapacityPlace t _ i o)) = Just $ CapacityPlace t (fromMaybe 0 y) i o
-      updateCapacity' (Just (CapacityTransition i o)) = Just $ CapacityTransition i o
+      updateCapacity' Nothing = Just $ CapacityPlace 0 (fromMaybe 0 y) M.empty
+      updateCapacity' (Just (CapacityPlace t _ o)) = Just $ CapacityPlace t (fromMaybe 0 y) o
+      updateCapacity' (Just (CapacityTransition o)) = Just $ CapacityTransition o
 
   mapNet = mapPetriLike
   traverseNet = traversePetriLike
@@ -687,9 +682,9 @@ flowOutCN :: CapacityNode a -> Map a Int
 flowOutCN CapacityPlace {flowOut} = flowOut
 flowOutCN CapacityTransition {flowOut} = flowOut
 
-updateCapacityNode :: (Map a Int -> Map b Int) -> (Map a Int -> Map b Int) -> CapacityNode a -> CapacityNode b
-updateCapacityNode g h (CapacityPlace t c i o)   = CapacityPlace t c (g i) (h o)
-updateCapacityNode g h (CapacityTransition i o)    = CapacityTransition (g i) (h o)
+updateCapacityNode :: (Map a Int -> Map b Int) -> CapacityNode a -> CapacityNode b
+updateCapacityNode h (CapacityPlace t c o) = CapacityPlace t c (h o)
+updateCapacityNode h (CapacityTransition o) = CapacityTransition (h o)
 
 {-|
 A 'Functor' like 'fmap' on 'PetriLike'.
