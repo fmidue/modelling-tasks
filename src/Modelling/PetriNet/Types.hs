@@ -505,13 +505,6 @@ class (PetriNode n, Show (p n String)) => Net p n where
     -> p n a
     -> p n a
 
-  updateCapacity
-    :: Ord a
-    => a
-    -> Maybe Integer
-    -> p n a
-    -> p n a
-
   {-|
   Removes the flow going from the first given key to the second one..
   -}
@@ -587,8 +580,6 @@ instance Net PetriLike Node where
 
   outFlow x = maybe M.empty flowOutN . M.lookup x . allNodes
 
-  updateCapacity _ _ net = net
-
   mapNet = mapPetriLike
   traverseNet = traversePetriLike
 
@@ -623,8 +614,6 @@ instance Net PetriLike SimpleNode where
         (maybe SimpleTransition SimplePlace mt M.empty)
 
   outFlow x = maybe M.empty flowOutSN . M.lookup x . allNodes
-
-  updateCapacity _ _ net = net
 
   mapNet = mapPetriLike
   traverseNet = traversePetriLike
@@ -667,13 +656,6 @@ instance Net PetriLike CapacityNode where
         (maybe CapacityTransition (CapacityPlace undefined) mt M.empty)
 
   outFlow x = maybe M.empty flowOutCN . M.lookup x . allNodes
-
-  updateCapacity x y (PetriLike ns) =
-    PetriLike $ M.alter updateCapacity' x ns
-    where
-      updateCapacity' Nothing = Just $ CapacityPlace (fromMaybe undefined y) 0 M.empty
-      updateCapacity' (Just (CapacityPlace _ t o)) = Just $ CapacityPlace (fromMaybe undefined y) t o
-      updateCapacity' (Just (CapacityTransition o)) = Just $ CapacityTransition o
 
   mapNet = mapPetriLike
   traverseNet = traversePetriLike

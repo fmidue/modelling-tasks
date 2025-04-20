@@ -30,17 +30,22 @@ import qualified Data.Set                         as Set (
   Set, findMin, fromList, lookupMin, null, size, toList,
   )
 import qualified Data.Map.Lazy                    as Map (
+  alter,
+  empty,
   findIndex,
   foldlWithKey',
   foldrWithKey,
   lookup,
   )
+import Data.Maybe                       (fromMaybe)
 
 import Modelling.Auxiliary.Common       (Object (Object, oName, oIndex), toMap)
 import Modelling.PetriNet.Types (
-  Net (emptyNet, outFlow, alterFlow, alterNode, traverseNet, updateCapacity),
+  CapacityNode (..),
+  Net (emptyNet, outFlow, alterFlow, alterNode, traverseNet),
   Petri,
   PetriChange (..),
+  PetriLike (..),
   PetriNode (..),
   PetriNodeWithCapacity (..),
   maybeCapacity,
@@ -135,10 +140,10 @@ parseNet flowSetName tokenSetName inst = do
     foldrFlip f = flip $ foldr f
 
 addCapacities
-  :: (MonadThrow m, Net p n)
+  :: MonadThrow m
   => AlloyInstance
-  -> p n Object
-  -> m (p n Object)
+  -> PetriLike CapacityNode Object
+  -> m (PetriLike CapacityNode Object)
 addCapacities inst net = do
   nodes <- singleSig inst "this" "Nodes" ""
 
@@ -147,6 +152,18 @@ addCapacities inst net = do
   let capacities = relToMap (second (integerFromInt . oIndex)) rawCapacity
 
   return $ foldr (\x -> updateCapacity x $ Map.lookup x capacities >>= Set.lookupMin) net nodes
+
+updateCapacity
+    :: Object
+    -> Maybe Integer
+    -> PetriLike CapacityNode Object
+    -> PetriLike CapacityNode Object
+updateCapacity x y (PetriLike ns) =
+    PetriLike $ Map.alter updateCapacity' x ns
+    where
+      updateCapacity' Nothing = Just $ CapacityPlace (fromMaybe undefined y) 0 Map.empty
+      updateCapacity' (Just (CapacityPlace _ t o)) = Just $ CapacityPlace (fromMaybe undefined y) t o
+      updateCapacity' (Just (CapacityTransition o)) = Just $ CapacityTransition o
 
 relToMap :: (Ord b, Ord c) => (a -> (b, c)) -> Set a -> Map b (Set c)
 relToMap f = toMap . Set.fromList . map f . Set.toList

@@ -38,8 +38,10 @@ import Modelling.PetriNet.Parser (
   simpleRenameWith,
   )
 import Modelling.PetriNet.Types (
+  CapacityNode,
   DrawSettings (..),
   Net (mapNet, traverseNet),
+  PetriLike,
   PetriNodeWithCapacity (..),
   )
 
@@ -153,9 +155,9 @@ getDefaultNet inst = do
   traverseNet rename pl
 
 getDefaultNetWithCapacities
-  :: (MonadThrow m, Net p n)
+  :: MonadThrow m
   => AlloyInstance
-  -> m (p n String)
+  -> m (PetriLike CapacityNode String)
 getDefaultNetWithCapacities inst = do
   pl <- parseNet "defaultFlow" "defaultTokens" inst >>= addCapacities inst
   let rename = simpleRenameWith pl
