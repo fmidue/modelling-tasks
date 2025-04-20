@@ -30,6 +30,7 @@ import Modelling.Auxiliary.Diagrams (
   trailBetween,
   )
 import Modelling.PetriNet.Parser (
+  addCapacities,
   netToGr,
   netToGrCapacity,
   parseNet,
@@ -166,7 +167,7 @@ getNetWith
   -- ^ the instance to parse
   -> m (p n String, Object -> m String)
 getNetWith f t c inst = do
-  pl <- parseNet f t c inst
+  pl <- parseNet f t inst >>= maybe return (addCapacities inst) c
   let rename = simpleRenameWith pl
   pl' <- traverseNet rename pl
   return (pl', rename)

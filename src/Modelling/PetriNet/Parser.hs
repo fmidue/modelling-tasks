@@ -8,6 +8,7 @@ of graphs which are similar to Petri nets.
 -}
 module Modelling.PetriNet.Parser (
   NoSingletonException (..),
+  addCapacities,
   asSingleton,
   convertPetri,
   netToGr,
@@ -29,7 +30,6 @@ import qualified Data.Set                         as Set (
   Set, findMin, fromList, lookupMin, null, size, toList,
   )
 import qualified Data.Map.Lazy                    as Map (
-  empty,
   findIndex,
   foldlWithKey',
   foldrWithKey,
@@ -80,7 +80,7 @@ convertPetri
   -> AlloyInstance       -- ^ the Petri net 'AlloyInstance'
   -> m Petri
 convertPetri f t inst = do
-  p <- parseNet f t Nothing inst
+  p <- parseNet f t inst
   petriLikeToPetri p
 
 {-|
@@ -95,7 +95,7 @@ parseRenamedNet
   -> AlloyInstance
   -> m (p n String)
 parseRenamedNet flowSetName tokenSetName inst = do
-  petriLike <- parseNet flowSetName tokenSetName Nothing inst
+  petriLike <- parseNet flowSetName tokenSetName inst
   let rename = simpleRenameWith petriLike
   traverseNet rename petriLike
 
@@ -116,30 +116,16 @@ parseNet
   :: (MonadThrow m, Net p n)
   => String                           -- ^ the name of the flow set
   -> String                           -- ^ the name of the token set
-  -> Maybe String                     -- ^ the optional name of the capacity set
   -> AlloyInstance                    -- ^ the Petri net 'AlloyInstance'
   -> m (p n Object)
-parseNet flowSetName tokenSetName maybeCapacitySetName inst = do
+parseNet flowSetName tokenSetName inst = do
   nodes  <- singleSig inst "this" "Nodes" ""
   rawTokens <- doubleSig inst "this" "Places" tokenSetName
   let tokens = relToMap (second oIndex) rawTokens
 
   flow   <- tripleSig inst "this" "Nodes" flowSetName
 
-  capacities <- case maybeCapacitySetName of
-    Just capacitySetName -> do
-      rawCapacity <- doubleSig inst "this" "placesWithCapacity" capacitySetName
-      return $ relToMap (second (integerFromInt . oIndex)) rawCapacity
-    Nothing -> return Map.empty
-
-  let applyCapacity net =
-        case maybeCapacitySetName of
-          Just _ -> foldrFlip
-                      (\x -> updateCapacity x $ Map.lookup x capacities >>= Set.lookupMin) nodes net
-          Nothing -> net
-
   return
-    . applyCapacity
     . foldrFlip (\(x, y, z) -> alterFlow x (oIndex z) y) flow
     . foldrFlip
       (\x -> alterNode x $ Map.lookup x tokens >>= Set.lookupMin)
@@ -147,6 +133,21 @@ parseNet flowSetName tokenSetName maybeCapacitySetName inst = do
     $ emptyNet
   where
     foldrFlip f = flip $ foldr f
+
+addCapacities
+  :: (MonadThrow m, Net p n)
+  => AlloyInstance
+  -> String
+  -> p n Object
+  -> m (p n Object)
+addCapacities inst capacitySetName net = do
+  nodes <- singleSig inst "this" "Nodes" ""
+
+  rawCapacity <- doubleSig inst "this" "placesWithCapacity" capacitySetName
+
+  let capacities = relToMap (second (integerFromInt . oIndex)) rawCapacity
+
+  return $ foldr (\x -> updateCapacity x $ Map.lookup x capacities >>= Set.lookupMin) net nodes
 
 relToMap :: (Ord b, Ord c) => (a -> (b, c)) -> Set a -> Map b (Set c)
 relToMap f = toMap . Set.fromList . map f . Set.toList
