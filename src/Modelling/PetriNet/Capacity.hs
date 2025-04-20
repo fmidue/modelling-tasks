@@ -518,7 +518,7 @@ exactly #{transitions basicC} Transitions, #{petriScopeBitWidth (basicConfigBitW
       ++
       (case atMostActive of
         Nothing -> ""
-        Just n  -> "#" ++ activated ++ " <= " ++ show n ++ "\n")
+        Just n  -> "  #" ++ activated ++ " <= " ++ show n ++ "\n")
       ++
       "  theActivatedTransitions[" ++ activated ++ "]"
     newArrowsWithComplementConstraints (minNewArrowsMin, minNewArrowsMax) =
