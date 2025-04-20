@@ -387,9 +387,9 @@ instance PetriNode SimpleNode where
 
 data CapacityNode a =
   CapacityPlace {
-    initial  :: Int,
     capacity :: Integer,
     -- | max allowed token number of a 'CapacityNode'
+    initial  :: Int,
     flowOut  :: Map a Int
   } |
   CapacityTransition {
@@ -408,13 +408,13 @@ instance PetriNode CapacityNode where
   isTransitionNode CapacityTransition {} = True
   isTransitionNode _                   = False
 
-  mapNode f (CapacityPlace s c o) =
-    CapacityPlace s c (M.mapKeys f o)
+  mapNode f (CapacityPlace c s o) =
+    CapacityPlace c s (M.mapKeys f o)
   mapNode f (CapacityTransition o) =
     CapacityTransition (M.mapKeys f o)
 
-  traverseNode f (CapacityPlace s c o) =
-    CapacityPlace s c <$> traverseKeyMap f o
+  traverseNode f (CapacityPlace c s o) =
+    CapacityPlace c s <$> traverseKeyMap f o
   traverseNode f (CapacityTransition o) =
     CapacityTransition <$> traverseKeyMap f o
 
@@ -664,15 +664,15 @@ instance Net PetriLike CapacityNode where
   alterNode x mt = PetriLike . M.alter alterNode' x . allNodes
     where
       alterNode' = Just . fromMaybe
-        (maybe CapacityTransition (\m -> CapacityPlace m 0) mt M.empty)
+        (maybe CapacityTransition (CapacityPlace 0) mt M.empty)
 
   outFlow x = maybe M.empty flowOutCN . M.lookup x . allNodes
 
   updateCapacity x y (PetriLike ns) =
     PetriLike $ M.alter updateCapacity' x ns
     where
-      updateCapacity' Nothing = Just $ CapacityPlace 0 (fromMaybe 0 y) M.empty
-      updateCapacity' (Just (CapacityPlace t _ o)) = Just $ CapacityPlace t (fromMaybe 0 y) o
+      updateCapacity' Nothing = Just $ CapacityPlace (fromMaybe 0 y) 0 M.empty
+      updateCapacity' (Just (CapacityPlace _ t o)) = Just $ CapacityPlace (fromMaybe 0 y) t o
       updateCapacity' (Just (CapacityTransition o)) = Just $ CapacityTransition o
 
   mapNet = mapPetriLike
@@ -683,7 +683,7 @@ flowOutCN CapacityPlace {flowOut} = flowOut
 flowOutCN CapacityTransition {flowOut} = flowOut
 
 updateCapacityNode :: (Map a Int -> Map b Int) -> CapacityNode a -> CapacityNode b
-updateCapacityNode h (CapacityPlace t c o) = CapacityPlace t c (h o)
+updateCapacityNode h (CapacityPlace c t o) = CapacityPlace c t (h o)
 updateCapacityNode h (CapacityTransition o) = CapacityTransition (h o)
 
 {-|
