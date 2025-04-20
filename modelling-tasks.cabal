@@ -189,6 +189,7 @@ test-suite modelling-tasks-test
       Modelling.CdOd.SelectValidCdSpec
       Modelling.Common
       Modelling.PetriNet.AlloySpec
+      Modelling.PetriNet.CapacitySpec
       Modelling.PetriNet.ConcurrencySpec
       Modelling.PetriNet.ConflictSpec
       Modelling.PetriNet.DiagramSpec
