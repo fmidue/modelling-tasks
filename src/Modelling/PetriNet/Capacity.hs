@@ -79,7 +79,7 @@ import Modelling.PetriNet.FindActivatedTransitions (
 import Modelling.PetriNet.Parser (
   addCapacities,
   parseChange,
-  parseNet,
+  parseGivenNet,
   parseRenamedNet,
   simpleNameMap,
   )
@@ -351,7 +351,7 @@ combinedCapacity alloyF alloyC config segment = do
         x':_ -> return x'
         []   -> randomInstance list
 
-  plFirst <- parseNet "defaultFlow" "defaultTokens" inst >>= addCapacities inst
+  plFirst <- parseGivenNet "defaultFlow" "defaultTokens" inst >>= addCapacities inst
   let nameMapFirst = simpleNameMap plFirst
   first <- traverseNet (`BM.lookup` nameMapFirst) plFirst
 

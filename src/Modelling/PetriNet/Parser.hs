@@ -15,6 +15,7 @@ module Modelling.PetriNet.Parser (
   netToGr,
   netToGrCapacity,
   parseChange,
+  parseGivenNet,
   parseNet,
   parseRenamedNet,
   simpleNameMap, simpleRename,
@@ -131,13 +132,38 @@ parseNet flowSetName tokenSetName inst = do
   where
     foldrFlip f = flip $ foldr f
 
+parseGivenNet
+  :: (MonadThrow m, Net p n)
+  => String                           -- ^ the name of the flow set
+  -> String                           -- ^ the name of the token set
+  -> AlloyInstance
+  -> m (p n Object)
+parseGivenNet flowSetName tokenSetName inst = do
+  givenPlaces <- singleSig inst "this" "givenPlaces" ""
+  givenTrans <- singleSig inst "this" "givenTransitions" ""
+  let nodes = Set.toList givenPlaces ++ Set.toList givenTrans
+
+  rawTokens <- doubleSig inst "this" "Places" tokenSetName
+  let tokens = relToMap (second oIndex) rawTokens
+
+  flow <- tripleSig inst "this" "Nodes" flowSetName
+
+  return
+    . foldrFlip (\(x, y, z) -> alterFlow x (oIndex z) y) flow
+    . foldrFlip
+        (\x -> alterNode x $ Map.lookup x tokens >>= Set.lookupMin)
+        nodes
+    $ emptyNet
+  where
+    foldrFlip f = flip $ foldr f
+
 addCapacities
   :: MonadThrow m
   => AlloyInstance
   -> PetriLike CapacityNode Object
   -> m (PetriLike CapacityNode Object)
 addCapacities inst net = do
-  nodes <- singleSig inst "this" "Nodes" ""
+  nodes <- singleSig inst "this" "placesWithCapacity" ""
 
   rawCapacity <- doubleSig inst "this" "placesWithCapacity" "capacity"
 
