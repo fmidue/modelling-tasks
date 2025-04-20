@@ -664,15 +664,15 @@ instance Net PetriLike CapacityNode where
   alterNode x mt = PetriLike . M.alter alterNode' x . allNodes
     where
       alterNode' = Just . fromMaybe
-        (maybe CapacityTransition (CapacityPlace 0) mt M.empty)
+        (maybe CapacityTransition (CapacityPlace undefined) mt M.empty)
 
   outFlow x = maybe M.empty flowOutCN . M.lookup x . allNodes
 
   updateCapacity x y (PetriLike ns) =
     PetriLike $ M.alter updateCapacity' x ns
     where
-      updateCapacity' Nothing = Just $ CapacityPlace (fromMaybe 0 y) 0 M.empty
-      updateCapacity' (Just (CapacityPlace _ t o)) = Just $ CapacityPlace (fromMaybe 0 y) t o
+      updateCapacity' Nothing = Just $ CapacityPlace (fromMaybe undefined y) 0 M.empty
+      updateCapacity' (Just (CapacityPlace _ t o)) = Just $ CapacityPlace (fromMaybe undefined y) t o
       updateCapacity' (Just (CapacityTransition o)) = Just $ CapacityTransition o
 
   mapNet = mapPetriLike
