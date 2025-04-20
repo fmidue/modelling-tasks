@@ -61,7 +61,7 @@ import Modelling.PetriNet.Alloy (
   randomInSegment,
   )
 import Modelling.PetriNet.Diagram (
-  getDefaultNet,
+  getDefaultNetWithCapacities,
   getNet,
   renderWith,
   renderWithCapacity,
@@ -345,7 +345,7 @@ combinedCapacity alloyF alloyC config segment = do
       case drop x list of
         x':_ -> return x'
         []   -> randomInstance list
-  first <- getDefaultNet (Just "capacity") inst
+  first <- getDefaultNetWithCapacities inst
   (second, third) <- getNet (fmap toChangeList . parseChange) inst
 
   return (first, second, third)

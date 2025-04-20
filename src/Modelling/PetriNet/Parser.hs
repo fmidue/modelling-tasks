@@ -137,13 +137,12 @@ parseNet flowSetName tokenSetName inst = do
 addCapacities
   :: (MonadThrow m, Net p n)
   => AlloyInstance
-  -> String
   -> p n Object
   -> m (p n Object)
-addCapacities inst capacitySetName net = do
+addCapacities inst net = do
   nodes <- singleSig inst "this" "Nodes" ""
 
-  rawCapacity <- doubleSig inst "this" "placesWithCapacity" capacitySetName
+  rawCapacity <- doubleSig inst "this" "placesWithCapacity" "capacity"
 
   let capacities = relToMap (second (integerFromInt . oIndex)) rawCapacity
 

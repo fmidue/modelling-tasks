@@ -11,6 +11,7 @@ module Modelling.PetriNet.Diagram (
   drawNet,
   drawNetWithCapacity,
   getDefaultNet,
+  getDefaultNetWithCapacities,
   getNet,
   renderWith,
   renderWithCapacity,
@@ -144,11 +145,19 @@ getNet parseSpecial inst = do
 
 getDefaultNet
   :: (MonadThrow m, Net p n)
-  => Maybe String
-  -> AlloyInstance
+  => AlloyInstance
   -> m (p n String)
-getDefaultNet c inst = do
-  pl <- parseNet "defaultFlow" "defaultTokens" inst >>= maybe return (addCapacities inst) c
+getDefaultNet inst = do
+  pl <- parseNet "defaultFlow" "defaultTokens" inst
+  let rename = simpleRenameWith pl
+  traverseNet rename pl
+
+getDefaultNetWithCapacities
+  :: (MonadThrow m, Net p n)
+  => AlloyInstance
+  -> m (p n String)
+getDefaultNetWithCapacities inst = do
+  pl <- parseNet "defaultFlow" "defaultTokens" inst >>= addCapacities inst
   let rename = simpleRenameWith pl
   traverseNet rename pl
 
