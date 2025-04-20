@@ -413,11 +413,6 @@ instance PetriNode CapacityNode where
   traverseNode f (CapacityTransition o) =
     CapacityTransition <$> traverseKeyMap f o
 
-capacityPlace :: CapacityNode a -> Integer
-capacityPlace CapacityPlace {capacity} = capacity
-capacityPlace CapacityTransition {} =
-    error "A CapacityTransition does not have a capacity!"
-
 {-|
 Returns 'Just' the 'initial' tokens of the given node, if it is a place 'PetriNode',
 otherwise it returns 'Nothing'.
@@ -428,9 +423,8 @@ maybeInitial n
   | otherwise     = Nothing
 
 maybeCapacity :: CapacityNode a -> Maybe Integer
-maybeCapacity n
-  | isPlaceNode n = Just $ capacityPlace n
-  | otherwise     = Nothing
+maybeCapacity CapacityPlace{capacity} = Just capacity
+maybeCapacity _ = Nothing
 
 {-|
 A specific traversal for 'Map's changing the keys rather than values.
