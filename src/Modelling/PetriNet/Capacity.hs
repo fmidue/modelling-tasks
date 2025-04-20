@@ -61,8 +61,6 @@ import Modelling.PetriNet.Alloy (
   randomInSegment,
   )
 import Modelling.PetriNet.Diagram (
-  getDefaultNetWithCapacities,
-  getNet,
   renderWith,
   renderWithCapacity,
   )
@@ -76,7 +74,10 @@ import Modelling.PetriNet.FindActivatedTransitions (
   checkActivatedTransitionsConfig,
   )
 import Modelling.PetriNet.Parser (
+  addCapacities,
   parseChange,
+  parseNet,
+  simpleRenameWith,
   )
 import Modelling.PetriNet.Reach.Type (
   parsePlacePrec,
@@ -90,7 +91,7 @@ import Modelling.PetriNet.Types         (
   CapacityConfig (..),
   DrawSettings (..),
   GraphConfig (..),
-  Net,
+  Net (traverseNet),
   PetriChangeList (..),
   PetriLike (PetriLike, allNodes),
   SimpleNode (..),
@@ -345,8 +346,16 @@ combinedCapacity alloyF alloyC config segment = do
       case drop x list of
         x':_ -> return x'
         []   -> randomInstance list
-  first <- getDefaultNetWithCapacities inst
-  (second, third) <- getNet (fmap toChangeList . parseChange) inst
+
+  plFirst <- parseNet "defaultFlow" "defaultTokens" inst >>= addCapacities inst
+  let renameFirst = simpleRenameWith plFirst
+  first <- traverseNet renameFirst plFirst
+
+  plSecond <- parseNet "flow" "tokens" inst
+  let renameSecond = simpleRenameWith plSecond
+  second <- traverseNet renameSecond plSecond
+  change <- fmap toChangeList (parseChange inst)
+  third <- traverse renameSecond change
 
   return (first, second, third)
   where

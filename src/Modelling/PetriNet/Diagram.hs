@@ -11,7 +11,6 @@ module Modelling.PetriNet.Diagram (
   drawNet,
   drawNetWithCapacity,
   getDefaultNet,
-  getDefaultNetWithCapacities,
   getNet,
   renderWith,
   renderWithCapacity,
@@ -31,7 +30,6 @@ import Modelling.Auxiliary.Diagrams (
   trailBetween,
   )
 import Modelling.PetriNet.Parser (
-  addCapacities,
   netToGr,
   netToGrCapacity,
   parseNet,
@@ -41,7 +39,6 @@ import Modelling.PetriNet.Types (
   CapacityNode,
   DrawSettings (..),
   Net (mapNet, traverseNet),
-  PetriLike,
   )
 
 import Control.Arrow                    (first)
@@ -150,15 +147,6 @@ getDefaultNet
   -> m (p n String)
 getDefaultNet inst = do
   pl <- parseNet "defaultFlow" "defaultTokens" inst
-  let rename = simpleRenameWith pl
-  traverseNet rename pl
-
-getDefaultNetWithCapacities
-  :: MonadThrow m
-  => AlloyInstance
-  -> m (PetriLike CapacityNode String)
-getDefaultNetWithCapacities inst = do
-  pl <- parseNet "defaultFlow" "defaultTokens" inst >>= addCapacities inst
   let rename = simpleRenameWith pl
   traverseNet rename pl
 
