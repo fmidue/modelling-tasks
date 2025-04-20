@@ -218,7 +218,7 @@ drawGraphWithCapacity
   => (a -> String)
   -> DrawSettings
   -> PreparedFont Double
-  -> Gr (AttributeNode (a, Maybe Int, Maybe Int)) (AttributeEdge Int)
+  -> Gr (AttributeNode (a, Maybe Int, Maybe Integer)) (AttributeEdge Int)
   -> Diagram B
 drawGraphWithCapacity labelOf drawSettings@DrawSettings {..} preparedFont graph =
   graphEdges' # frame 1
@@ -309,7 +309,7 @@ drawNode DrawSettings {..} preparedFont (l, Just i) p
 drawNodeCapacity
   :: DrawSettings
   -> PreparedFont Double
-  -> (String, Maybe Int, Maybe Int)
+  -> (String, Maybe Int, Maybe Integer)
   -- ^ a capacity node (the first part is used for its label) with a capacity
   -> Point V2 Double
   -> Diagram B
@@ -359,7 +359,7 @@ drawNodeCapacity DrawSettings {..} preparedFont (l, Just i, cap) p
 
 drawCapacity
   :: PreparedFont Double
-  -> Int
+  -> Integer
   -> Diagram B
 drawCapacity fontC cap =
   case cap of

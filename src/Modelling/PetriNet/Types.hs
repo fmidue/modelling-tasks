@@ -309,7 +309,7 @@ class Show (n String) => PetriNode n where
   traverseNode      :: (Applicative f, Ord b) => (a -> f b) -> n a -> f (n b)
 
 class PetriNode n => PetriNodeWithCapacity n where
-  capacityPlace :: n a -> Int
+  capacityPlace :: n a -> Integer
   capacityPlace _ = error "This node type does not support capacities."
 
 {-|
@@ -388,7 +388,7 @@ instance PetriNode SimpleNode where
 data CapacityNode a =
   CapacityPlace {
     initial  :: Int,
-    capacity :: Int,
+    capacity :: Integer,
     -- | max allowed token number of a 'CapacityNode'
     flowOut  :: Map a Int
   } |
@@ -432,7 +432,7 @@ maybeInitial n
   | isPlaceNode n = Just $ initialTokens n
   | otherwise     = Nothing
 
-maybeCapacity :: PetriNodeWithCapacity n => n a -> Maybe Int
+maybeCapacity :: PetriNodeWithCapacity n => n a -> Maybe Integer
 maybeCapacity n
   | isPlaceNode n = Just $ capacityPlace n
   | otherwise     = Nothing
@@ -508,7 +508,7 @@ class (PetriNode n, Show (p n String)) => Net p n where
   updateCapacity
     :: Ord a
     => a
-    -> Maybe Int
+    -> Maybe Integer
     -> p n a
     -> p n a
 

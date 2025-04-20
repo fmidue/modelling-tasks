@@ -48,6 +48,8 @@ import Modelling.PetriNet.Types (
   petriLikeToPetri,
   )
 
+import GHC.Num (integerFromInt)
+
 import Control.Arrow                    (second)
 import Control.Monad.Catch              (Exception, MonadThrow (throwM))
 import Data.Bimap                       (Bimap)
@@ -127,7 +129,7 @@ parseNet flowSetName tokenSetName maybeCapacitySetName inst = do
   capacities <- case maybeCapacitySetName of
     Just capacitySetName -> do
       rawCapacity <- doubleSig inst "this" "placesWithCapacity" capacitySetName
-      return $ relToMap (second oIndex) rawCapacity
+      return $ relToMap (second (integerFromInt . oIndex)) rawCapacity
     Nothing -> return Map.empty
 
   let applyCapacity net =
@@ -287,7 +289,7 @@ netToGr petriLike = do
 netToGrCapacity
   :: (Monad m, Net p n, Ord a, PetriNodeWithCapacity n)
   => p n a
-  -> m (Gr (a, Maybe Int, Maybe Int) Int)
+  -> m (Gr (a, Maybe Int, Maybe Integer) Int)
 netToGrCapacity petriLike = do
   nodes <- Map.foldrWithKey convertNode (return []) $ PN.nodes petriLike
   let edges = Map.foldrWithKey convertTransition [] $ PN.nodes petriLike
