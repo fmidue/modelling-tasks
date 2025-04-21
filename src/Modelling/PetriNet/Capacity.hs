@@ -157,6 +157,7 @@ data CapacityInstance = CapacityInstance {
   toFind :: !(PetriChangeList String),
   originalNet :: !(PetriLike CapacityNode String),
   transformedNet :: !(PetriLike SimpleNode String),
+  complementMap :: ![(String, String)],
   numberOfPlaces :: !Int,
   numberOfTransitions :: !Int,
   showSolution :: !Bool
@@ -173,7 +174,7 @@ capacityGenerate config seed segment =
   flip evalRandT (mkStdGen seed) $ do
     gl <- oneOf $ graphLayouts gc
 
-    (original, transformed, condition) <- combinedCapacityInstance config segment
+    (original, transformed, condition, complementMap) <- combinedCapacityInstance config segment
 
     return $ CapacityInstance
       { drawWith = DrawSettings
@@ -186,6 +187,7 @@ capacityGenerate config seed segment =
       , toFind = condition
       , originalNet = original
       , transformedNet = transformed
+      , complementMap = complementMap
       , numberOfPlaces = places bc
       , numberOfTransitions = transitions bc
       , showSolution = Find.printSolution config
@@ -198,7 +200,7 @@ combinedCapacityInstance
   :: (MonadThrow m, RandomGen g, MonadAlloy m, Net p n)
   => CapacityConfig
   -> Int
-  -> RandT g m (PetriLike CapacityNode String, p n String, PetriChangeList String)
+  -> RandT g m (PetriLike CapacityNode String, p n String, PetriChangeList String, [(String, String)])
 combinedCapacityInstance = combinedCapacity
   petriNetFindCapacity
   Find.alloyConfig
@@ -353,7 +355,7 @@ combinedCapacity
   -> (config -> AlloyConfig)
   -> config
   -> Int
-  -> RandT g m (PetriLike CapacityNode String, p n String, PetriChangeList String)
+  -> RandT g m (PetriLike CapacityNode String, p n String, PetriChangeList String, [(String, String)])
 combinedCapacity alloyF alloyC config segment = do
   let is = Find.maxInstances (alloyC config)
   list <- getInstances is (Find.timeout $ alloyC config) (alloyF config)
@@ -383,6 +385,18 @@ combinedCapacity alloyF alloyC config segment = do
     randomInstance list = do
       n <- randomInSegment segment (1 + ((length list - segment - 1) `div` 4))
       return $ list !! n
+
+generateComplementMap
+  :: Bimap Object String
+  -> [(Object, Object)]
+  -> [(String, String)]
+generateComplementMap nameMap complements =
+  mapMaybe placeTuple complements
+  where
+    placeTuple (cap, add) = do
+      capName <- BM.lookup cap nameMap
+      addName <- BM.lookup add nameMap
+      return (capName, addName)
 
 petriNetFindCapacity :: CapacityConfig -> String
 petriNetFindCapacity CapacityConfig {
@@ -651,6 +665,7 @@ toFind = ChangeList {
       ("t3",SimpleTransition {flowOut = M.fromList [("s2",1)]})
       ]
     },
+  complementMap = [("s1", "s3"), ("s2", "s4")],
   numberOfPlaces = 4,
   numberOfTransitions = 3,
   showSolution = False
