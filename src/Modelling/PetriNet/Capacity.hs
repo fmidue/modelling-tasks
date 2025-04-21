@@ -233,35 +233,48 @@ capacityTask path task = do
   paragraph $ do
     translate $ do
       english [iii|
-        Given the isolated Places. With how many tokens and how should they be connected to Transitions so that the
-        resulting Petri net without capacities is equivalent to the given Petri net with capacities?
+        Given the not yet existing complement places that belong to the original places. With how many
+        tokens should they be generated, and how should they be connected to transitions,
+        so that the resulting Petri net without capacities is equivalent to the given Petri net with capacities?
         |]
       german [iii|
-        Gegeben der isolierten Stellen. Mit wie vielen Marken und wie sollten diese mit Transitionen verbunden werden, sodass
-        das resultierende Petrinetz ohne Kapazitäten äquivalent zum gegebenen Petrinetz mit Kapazitäten ist?
+        Gegeben der noch nicht existierenden, zu den Stellen gehörenden, Komplementstellen. Mit wie vielen Marken
+        sollten sie erstellt werden und wie sollten sie mit Transitionen verbunden werden,
+        sodass das resultierende Petrinetz ohne Kapazitäten äquivalent zu dem gegebenen Petrinetz mit Kapazitäten ist?
         |]
     translate $ do
       english [iii|
-        State your answer by giving a tuple consisting of the complement places and their flows.
+        State your answer by giving a tuple consisting of:
+        the complement places with their initial number of tokens, and
+        the flows connected to the complement places (incoming and outgoing).
         #{" "}|]
       german [iii|
-        Geben Sie Ihre Antwort in Form eines Tupels an, das aus den Komplementstellen und ihren Flüssen besteht.
+        Geben Sie Ihre Antwort in Form eines Tupels an, bestehend aus:
+        den Komplementstellen mit ihrer initialen Anzahl an Marken und
+        den Flüssen, die mit Komplementstellen verbunden sind (eingehend oder ausgehend).
         #{" "}|]
     translate $ do
-      english [i|Stating |]
-      german [i|Die Angabe von |]
+      english "The used mapping between complement places and places:"
+      german "Die genutzte Zuordnung zwischen Komplementstellen und Stellen:"
+    translate $ do
+      english $ intercalate ", "
+        ["Complement place " ++ cap ++ " to place " ++ add | (cap, add) <- complementMap task]
+      german $ intercalate ", "
+        ["Komplementstelle " ++ cap ++ " zu Stelle " ++ add | (cap, add) <- complementMap task]
+    translate $ do
+      english [i|. Stating |]
+
+      german [i|. Die Angabe von |]
     let ts :: ([(String, Int)], [(String, String, Int)])
         ts = ([("s1",2), ("s2",0)], [("t1","s1",1), ("t2","s1",1), ("s2","t2",2)])
     code $ show ts
     translate $ do
-      english ("as answer would indicate that there are two complement places - s1 with 2 tokens and s2 with 0 tokens - and t1 points to s1 with a weight of 1, " ++
+      english ("as answer would indicate that there are two complement places - s1 with 2 tokens" ++
+               "and s2 with 0 tokens - and t1 points to s1 with a weight of 1, " ++
                "t2 points to s1 with a weight of 1 and s2 connects to t2 with a weight of 2.")
-      german ("als Antwort würde bedeuten, dass es zwei Komplementstellen gibt - s1 mit 2 Token und s2 mit 0 Token - und t1 zeigt auf s1 mit einem Gewicht von 1, " ++
-             "t2 zeigt auf s1 mit einem Gewicht von 1, und s2 ist mit t2 mit einem Gewicht von 2 verbunden.")
-    translate $ do
-      english "The first complement place s1 belongs to the first shown place s3, the second complement place s2 belongs to the second shown place s4 and so on."
-      german ("Die erste Komplementstelle s1 gehört zu der ersten gezeigten Stelle s3," ++
-             "die zweite Komplementstelle s2 gehört zu der zweiten gezeigten Stelle s4 und so weiter.")
+      german ("als Antwort würde bedeuten, dass es zwei Komplementstellen gibt - s1 mit 2 Token" ++
+              "und s2 mit 0 Token - und t1 zeigt auf s1 mit einem Gewicht von 1, " ++
+              "t2 zeigt auf s1 mit einem Gewicht von 1, und s2 ist mit t2 mit einem Gewicht von 2 verbunden.")
     translate $ do
       english "The order of tuples within the lists does not matter here."
       german "Die Reihenfolge der Tupel innerhalb der Listen spielt hierbei keine Rolle."
