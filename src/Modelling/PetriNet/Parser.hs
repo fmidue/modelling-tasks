@@ -12,10 +12,10 @@ module Modelling.PetriNet.Parser (
   addCapacities,
   asSingleton,
   convertPetri,
+  doubleSig,
   netToGr,
   netToGrCapacity,
   parseChange,
-  parseGivenNet,
   parseNet,
   parseRenamedNet,
   simpleNameMap, simpleRename,
@@ -42,6 +42,7 @@ import qualified Data.Map.Lazy                    as Map (
 import Data.Maybe                       (fromMaybe)
 
 import Modelling.Auxiliary.Common       (Object (Object, oName, oIndex), toMap)
+import Modelling.PetriNet.Alloy         (unscopedSingleSig)
 import Modelling.PetriNet.Types (
   CapacityNode (..),
   Net (emptyNet, outFlow, alterFlow, alterNode, traverseNet),
@@ -86,7 +87,7 @@ convertPetri
   -> AlloyInstance       -- ^ the Petri net 'AlloyInstance'
   -> m Petri
 convertPetri f t inst = do
-  p <- parseNet f t inst
+  p <- parseNet False f t inst
   petriLikeToPetri p
 
 {-|
@@ -101,23 +102,31 @@ parseRenamedNet
   -> AlloyInstance
   -> m (p n String, Bimap Object String)
 parseRenamedNet flowSetName tokenSetName inst = do
-  petriLike <- parseNet flowSetName tokenSetName inst
+  petriLike <- parseNet False flowSetName tokenSetName inst
   let nameMap = simpleNameMap petriLike
   net <- traverseNet (`BM.lookup` nameMap) petriLike
   return (net, nameMap)
 
 {-|
-Parse a `Net' graph from an 'AlloyInstance' given the instances flow and
+Parse a `Net' graph from an 'AlloyInstance', with or without givenNodes, given the instances flow and
 token set names.
 -}
 parseNet
   :: (MonadThrow m, Net p n)
-  => String                           -- ^ the name of the flow set
+  => Bool                             -- ^ whether to only parse the given nodes
+  -> String                           -- ^ the name of the flow set
   -> String                           -- ^ the name of the token set
   -> AlloyInstance                    -- ^ the Petri net 'AlloyInstance'
   -> m (p n Object)
-parseNet flowSetName tokenSetName inst = do
-  nodes  <- singleSig inst "this" "Nodes" ""
+parseNet onlyGiven flowSetName tokenSetName inst = do
+  nodes <- case onlyGiven of
+    True -> do
+      nodes <- unscopedSingleSig inst "$givenNodes" ""
+      return $ Set.toList nodes
+    False -> do
+      nodes <- singleSig inst "this" "Nodes" ""
+      return $ Set.toList nodes
+
   rawTokens <- doubleSig inst "this" "Places" tokenSetName
   let tokens = relToMap (second oIndex) rawTokens
 
@@ -128,31 +137,6 @@ parseNet flowSetName tokenSetName inst = do
     . foldrFlip
       (\x -> alterNode x $ Map.lookup x tokens >>= Set.lookupMin)
       nodes
-    $ emptyNet
-  where
-    foldrFlip f = flip $ foldr f
-
-parseGivenNet
-  :: (MonadThrow m, Net p n)
-  => String                           -- ^ the name of the flow set
-  -> String                           -- ^ the name of the token set
-  -> AlloyInstance
-  -> m (p n Object)
-parseGivenNet flowSetName tokenSetName inst = do
-  givenPlaces <- singleSig inst "this" "givenPlaces" ""
-  givenTrans <- singleSig inst "this" "givenTransitions" ""
-  let nodes = Set.toList givenPlaces ++ Set.toList givenTrans
-
-  rawTokens <- doubleSig inst "this" "Places" tokenSetName
-  let tokens = relToMap (second oIndex) rawTokens
-
-  flow <- tripleSig inst "this" "Nodes" flowSetName
-
-  return
-    . foldrFlip (\(x, y, z) -> alterFlow x (oIndex z) y) flow
-    . foldrFlip
-        (\x -> alterNode x $ Map.lookup x tokens >>= Set.lookupMin)
-        nodes
     $ emptyNet
   where
     foldrFlip f = flip $ foldr f
