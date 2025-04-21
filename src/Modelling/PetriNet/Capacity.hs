@@ -99,7 +99,6 @@ import Modelling.PetriNet.Types         (
   PetriChangeList (..),
   PetriLike (PetriLike, allNodes),
   SimpleNode (..),
-  SimplePetriNet,
   CapacityNode (..),
   basicConfigBitWidthInput,
   checkBasicConfig,
@@ -148,11 +147,11 @@ import Text.Parsec.String               (Parser)
 import Text.Read                        (readMaybe)
 
 
-data CapacityInstance a = CapacityInstance {
+data CapacityInstance = CapacityInstance {
   drawWith :: !DrawSettings,
   toFind :: !(PetriChangeList String),
   originalNet :: !(PetriLike CapacityNode String),
-  transformedNet :: !a,
+  transformedNet :: !(PetriLike SimpleNode String),
   numberOfPlaces :: !Int,
   numberOfTransitions :: !Int,
   showSolution :: !Bool
@@ -160,11 +159,11 @@ data CapacityInstance a = CapacityInstance {
   deriving (Show)
 
 capacityGenerate
-  :: (MonadAlloy m, MonadThrow m, Net p n)
+  :: (MonadAlloy m, MonadThrow m)
   => CapacityConfig
   -> Int
   -> Int
-  -> m (CapacityInstance (p n String))
+  -> m CapacityInstance
 capacityGenerate config seed segment =
   flip evalRandT (mkStdGen seed) $ do
     gl <- oneOf $ graphLayouts gc
@@ -208,7 +207,7 @@ simpleCapacityTask
     OutputCapable m
     )
   => FilePath
-  -> CapacityInstance SimplePetriNet
+  -> CapacityInstance
   -> LangM m
 simpleCapacityTask = capacityTask
 
@@ -218,11 +217,10 @@ capacityTask
     MonadDiagrams m,
     MonadGraphviz m,
     MonadThrow m,
-    Net p n,
     OutputCapable m
     )
   => FilePath
-  -> CapacityInstance (p n String)
+  -> CapacityInstance
   -> LangM m
 capacityTask path task = do
   paragraph $ translate $ do
@@ -273,7 +271,7 @@ capacityTask path task = do
 
 capacitySyntax
   :: OutputCapable m
-  => CapacityInstance net
+  => CapacityInstance
   -> ([(String, Int)], [(String, String, Int)])
   -> LangM' m ()
 capacitySyntax task (tokenChanges, flowChanges) = do
@@ -306,7 +304,7 @@ capacitySyntax task (tokenChanges, flowChanges) = do
 
 capacityEvaluation
   :: (Monad m, OutputCapable m)
-  => CapacityInstance net
+  => CapacityInstance
   -> ([(String, Int)], [(String, String, Int)])
   -> Rated m
 capacityEvaluation task (tokenChanges, flowChanges) = do
@@ -328,7 +326,7 @@ capacityEvaluation task (tokenChanges, flowChanges) = do
     combineLists :: Maybe String -> Maybe String -> Maybe String
     combineLists = liftA2 (\string1 string2 -> string1 ++ "," ++ string2)
 
-capacitySolution :: CapacityInstance net -> ([(String, Int)], [(String, String, Int)])
+capacitySolution :: CapacityInstance -> ([(String, Int)], [(String, String, Int)])
 capacitySolution task = (tokenChanges $ toFind task, flowChanges $ toFind task)
 
 combinedCapacity
@@ -597,7 +595,7 @@ checkCapacityConfig BasicConfig {
   | otherwise
   = Nothing
 
-defaultCapacityInstance :: CapacityInstance SimplePetriNet
+defaultCapacityInstance :: CapacityInstance
 defaultCapacityInstance = CapacityInstance {
   drawWith = DrawSettings {
     withPlaceNames = True,
