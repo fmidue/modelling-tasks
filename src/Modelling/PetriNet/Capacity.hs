@@ -48,6 +48,7 @@ import Capabilities.Cache               (MonadCache)
 import Capabilities.Diagrams            (MonadDiagrams)
 import Capabilities.Graphviz            (MonadGraphviz)
 import Modelling.Auxiliary.Common (
+  Object,
   TaskGenerationException (NoInstanceAvailable),
   oneOf,
   )
@@ -136,9 +137,7 @@ import Data.Bimap                       (Bimap)
 import Data.Foldable                    (for_)
 import Data.GraphViz.Commands           (GraphvizCommand (Circo))
 import Data.List (intercalate)
-import Data.Maybe                       (fromMaybe)
-import Data.Maybe (mapMaybe)
-import Modelling.Auxiliary.Common       (Object)
+import Data.Maybe                       (fromMaybe, mapMaybe)
 import Data.String.Interpolate          (i, iii)
 import Text.Parsec (
   char,
@@ -390,8 +389,7 @@ generateComplementMap
   :: Bimap Object String
   -> [(Object, Object)]
   -> [(String, String)]
-generateComplementMap nameMap complements =
-  mapMaybe placeTuple complements
+generateComplementMap nameMap = mapMaybe placeTuple
   where
     placeTuple (cap, add) = do
       capName <- BM.lookup cap nameMap
