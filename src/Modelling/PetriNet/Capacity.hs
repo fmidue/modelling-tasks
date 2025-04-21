@@ -362,15 +362,18 @@ combinedCapacity alloyF alloyC config segment = do
         x':_ -> return x'
         []   -> randomInstance list
 
-  plFirst <- parseGivenNet "defaultFlow" "defaultTokens" inst >>= addCapacities inst
-  let nameMapFirst = simpleNameMap plFirst
-  first <- traverseNet (`BM.lookup` nameMapFirst) plFirst
+  (transformed, nameMap) <- parseRenamedNet "flow" "tokens" inst
 
-  (second, nameMapSecond) <- parseRenamedNet "flow" "tokens" inst
+  plFirst <- parseNet True "defaultFlow" "defaultTokens" inst >>= addCapacities inst
+  original <- traverseNet (`BM.lookup` nameMap) plFirst
+
   change <- parseChange inst
-  third <- traverse (`BM.lookup` nameMapSecond) (toChangeList change)
+  condition <- traverse (`BM.lookup` nameMap) (toChangeList change)
 
-  return (first, second, third)
+  complements <- doubleSig inst "this" "placesWithCapacity" "complement"
+  let complementMap = generateComplementMap nameMap (Set.toList complements)
+
+  return (original, transformed, condition, complementMap)
   where
     randomInstance list = do
       n <- randomInSegment segment (1 + ((length list - segment - 1) `div` 4))
