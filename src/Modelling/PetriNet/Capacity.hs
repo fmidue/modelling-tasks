@@ -37,6 +37,7 @@ import qualified Modelling.PetriNet.Types         as Pick (
 import qualified Data.Bimap                       as BM (
   lookup,
   )
+import qualified Data.Set as Set
 import qualified Data.Map                         as M (
   empty,
   fromList,
@@ -79,9 +80,9 @@ import Modelling.PetriNet.FindActivatedTransitions (
 import Modelling.PetriNet.Parser (
   addCapacities,
   parseChange,
-  parseGivenNet,
+  parseNet,
   parseRenamedNet,
-  simpleNameMap,
+  doubleSig,
   )
 import Modelling.PetriNet.Reach.Type (
   parsePlacePrec,
@@ -131,9 +132,13 @@ import Control.Monad.Random (
   evalRandT,
   mkStdGen
   )
+import Data.Bimap                       (Bimap)
 import Data.Foldable                    (for_)
 import Data.GraphViz.Commands           (GraphvizCommand (Circo))
+import Data.List (intercalate)
 import Data.Maybe                       (fromMaybe)
+import Data.Maybe (mapMaybe)
+import Modelling.Auxiliary.Common       (Object)
 import Data.String.Interpolate          (i, iii)
 import Text.Parsec (
   char,
