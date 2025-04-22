@@ -15,14 +15,8 @@ import Modelling.PetriNet.Capacity (
   checkCapacityConfigs,
   checkCapacityConfig,
   combinedCapacityInstance,
+  findCapacityInstance,
   petriNetFindCapacity,
-  )
-import Modelling.PetriNet.Diagram (
-  getDefaultNet,
-  getNet,
-  )
-import Modelling.PetriNet.Parser (
-  parseChange,
   )
 import Modelling.PetriNet.Types (
   AdvConfig (AdvConfig),
@@ -33,7 +27,6 @@ import Modelling.PetriNet.Types (
   PetriChangeList (..),
   SimplePetriLike,
   defaultCapacityConfig,
-  toChangeList,
   )
 
 import Modelling.PetriNet.TestCommon (
@@ -47,7 +40,7 @@ import Modelling.PetriNet.TestCommon (
   validGraphConfig,
   )
 import Settings                         (configDepth)
-import Data.Maybe                       (isNothing)
+import Data.Maybe                       (fromMaybe, isNothing)
 
 import Test.Hspec
 
@@ -72,17 +65,13 @@ spec = do
     findConfigs = validAdvConfigs >>= validFindCapacityConfigs validFinds
     validFinds = validConfigsForPick 0 configDepth
 
-checkCapacityInstance :: (PetriLike CapacityNode String, a, PetriChangeList String) -> Bool
-checkCapacityInstance (_, _, change) = isValidCapacity change
+checkCapacityInstance :: (PetriLike CapacityNode String, a, PetriChangeList String, [(String, String)]) -> Bool
+checkCapacityInstance (_, _, change, _) = isValidCapacity change
 
 testCapacityConfig :: [CapacityConfig] -> Spec
 testCapacityConfig = testTaskGeneration
   petriNetFindCapacity
-  (\inst -> do
-    first <- getDefaultNet inst
-    (second, third) <- getNet (fmap toChangeList . parseChange) inst
-    return (first, second, third)
-  )
+  findCapacityInstance
   $ checkCapacityInstance @(SimplePetriLike _)
 
 validFindCapacityConfigs :: [(BasicConfig, _)] -> AdvConfig -> [CapacityConfig]
@@ -97,8 +86,8 @@ validCapacityConfig bc@BasicConfig{ places, transitions, maxFlowPerEdge, maxToke
     maxCapacity <- [max maxFlowPerEdge maxTokensPerPlace .. 5]
     newArrows <- [(a, b) | a <- [places .. 2 * transitions * places], b <- [a .. 2 * transitions * places]]
     oneMin <- [1 .. maxCapacity]
-    distractors <- [(x, y) | x <- [0 .. transitions], y <- [transitions .. transitions - atLeastActive], x <= y]
     atMost <- Nothing : [Just n | n <- [0 .. transitions]]
+    distractors <- [(x, y) | x <- [0 .. transitions - fromMaybe transitions atMost], y <- [x .. transitions - atLeastActive], x <= y]
     return (maxCapacity, newArrows, oneMin, distractors, atMost)
 
 isValidCapacity :: PetriChangeList String -> Bool
