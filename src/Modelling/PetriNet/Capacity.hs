@@ -139,7 +139,7 @@ import Data.Bimap                       (Bimap)
 import Data.Foldable                    (for_)
 import Data.GraphViz.Commands           (GraphvizCommand (Circo))
 import Data.List (intercalate)
-import Data.Maybe                       (fromMaybe, mapMaybe)
+import Data.Maybe                       (fromMaybe)
 import Data.String.Interpolate          (i, iii)
 import Text.Parsec (
   char,
@@ -381,7 +381,7 @@ combinedCapacity alloyF alloyC config segment = do
   condition <- traverse (`BM.lookup` nameMap) (toChangeList change)
 
   complements <- doubleSig inst "this" "placesWithCapacity" "complement"
-  let complementMap = generateComplementMap nameMap (Set.toList complements)
+  complementMap <- generateComplementMap nameMap (Set.toList complements)
 
   return (original, transformed, condition, complementMap)
   where
@@ -390,10 +390,11 @@ combinedCapacity alloyF alloyC config segment = do
       return $ list !! n
 
 generateComplementMap
-  :: Bimap Object String
+  :: MonadThrow m
+  => Bimap Object String
   -> [(Object, Object)]
-  -> [(String, String)]
-generateComplementMap nameMap = mapMaybe placeTuple
+  -> m [(String, String)]
+generateComplementMap nameMap = mapM placeTuple
   where
     placeTuple (cap, add) = do
       capName <- BM.lookup cap nameMap
