@@ -18,6 +18,7 @@ module Modelling.PetriNet.Capacity (
   combinedCapacity,
   combinedCapacityInstance,
   defaultCapacityInstance,
+  findCapacityInstance,
   petriNetFindCapacity,
   parseCapacityPrec,
   simpleCapacityTask,
@@ -64,7 +65,6 @@ import Modelling.PetriNet.Alloy (
   modulePetriConstraints,
   modulePetriSignature,
   randomInSegment,
-  unscopedSingleSig,
   )
 import Modelling.PetriNet.Diagram (
   renderWith,
@@ -111,7 +111,7 @@ import Modelling.PetriNet.Types         (
   )
 
 import Control.Applicative              ((<|>), liftA2)
-import Control.Monad                    (void, when)
+import Control.Monad                    (void, when, (>=>))
 import Control.Monad.Catch              (MonadThrow, MonadThrow (throwM))
 import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
@@ -151,6 +151,7 @@ import Text.Parsec.Char                 (digit)
 import Text.Parsec.Combinator           (many1)
 import Text.Parsec.String               (Parser)
 import Text.Read                        (readMaybe)
+import Language.Alloy.Call              (AlloyInstance)
 
 
 data CapacityInstance = CapacityInstance {
@@ -370,12 +371,26 @@ combinedCapacity alloyF alloyC config segment = do
         x':_ -> return x'
         []   -> randomInstance list
 
+  findCapacityInstance inst
+  where
+    randomInstance list = do
+      n <- randomInSegment segment (1 + ((length list - segment - 1) `div` 4))
+      return $ list !! n
+
+findCapacityInstance
+  :: (MonadThrow m, Net p n)
+  => AlloyInstance
+  -> RandT g m (PetriLike CapacityNode String, p n String, PetriChangeList String, [(String, String)])
+findCapacityInstance inst = do
   (transformed, nameMap) <-
     parseRenamedNet (singleSig "this" "Nodes" "") "flow" "tokens" inst
 
   original <-
-    parseNet (unscopedSingleSig "$givenNodes" "") "defaultFlow" "defaultTokens" inst
-    >>= \net -> addCapacities inst net >>= traverseNet (`BM.lookup` nameMap)
+    parseNet (\inst2 -> do
+            pl <- singleSig "this" "givenPlaces" "" inst2
+            tr <- singleSig "this" "givenTransitions" "" inst2
+            return (Set.union pl tr)) "defaultFlow" "defaultTokens" inst
+    >>= (addCapacities inst >=> traverseNet (`BM.lookup` nameMap))
 
   change <- parseChange inst
   condition <- traverse (`BM.lookup` nameMap) (toChangeList change)
@@ -384,10 +399,6 @@ combinedCapacity alloyF alloyC config segment = do
   complementMap <- generateComplementMap nameMap (Set.toList complements)
 
   return (original, transformed, condition, complementMap)
-  where
-    randomInstance list = do
-      n <- randomInSegment segment (1 + ((length list - segment - 1) `div` 4))
-      return $ list !! n
 
 generateComplementMap
   :: MonadThrow m
