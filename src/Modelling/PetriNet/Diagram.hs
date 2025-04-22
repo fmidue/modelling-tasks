@@ -34,6 +34,7 @@ import Modelling.PetriNet.Parser (
   netToGr,
   netToGrCapacity,
   parseRenamedNet,
+  singleSig,
   )
 import Modelling.PetriNet.Types (
   CapacityNode,
@@ -134,7 +135,7 @@ getNet
   -> AlloyInstance
   -> m (p n String, t String)
 getNet parseSpecial inst = do
-  (net, nameMap) <- parseRenamedNet "flow" "tokens" inst
+  (net, nameMap) <- parseRenamedNet (singleSig "this" "Nodes" "") "flow" "tokens" inst
   special <- parseSpecial inst
   renamedSpecial <- traverse (`BM.lookup` nameMap) special
   return (net, renamedSpecial)
@@ -144,7 +145,7 @@ getDefaultNet
   => AlloyInstance
   -> m (p n String)
 getDefaultNet =
-  fmap fst . parseRenamedNet "defaultFlow" "defaultTokens"
+  fmap fst . parseRenamedNet (singleSig "this" "Nodes" "") "defaultFlow" "defaultTokens"
 
 {-|
 Obtain the Petri net like graph by drawing Nodes and connections between them

@@ -64,6 +64,7 @@ import Modelling.PetriNet.Alloy (
   modulePetriConstraints,
   modulePetriSignature,
   randomInSegment,
+  unscopedSingleSig,
   )
 import Modelling.PetriNet.Diagram (
   renderWith,
@@ -84,6 +85,7 @@ import Modelling.PetriNet.Parser (
   parseNet,
   parseRenamedNet,
   doubleSig,
+  singleSig,
   )
 import Modelling.PetriNet.Reach.Type (
   parsePlacePrec,
@@ -368,10 +370,12 @@ combinedCapacity alloyF alloyC config segment = do
         x':_ -> return x'
         []   -> randomInstance list
 
-  (transformed, nameMap) <- parseRenamedNet "flow" "tokens" inst
+  (transformed, nameMap) <-
+    parseRenamedNet (singleSig "this" "Nodes" "") "flow" "tokens" inst
 
-  plFirst <- parseNet True "defaultFlow" "defaultTokens" inst >>= addCapacities inst
-  original <- traverseNet (`BM.lookup` nameMap) plFirst
+  original <-
+    parseNet (unscopedSingleSig "$givenNodes" "") "defaultFlow" "defaultTokens" inst
+    >>= \net -> addCapacities inst net >>= traverseNet (`BM.lookup` nameMap)
 
   change <- parseChange inst
   condition <- traverse (`BM.lookup` nameMap) (toChangeList change)

@@ -481,8 +481,8 @@ It throws an error instead if unexpected behaviour occurs.
 -}
 parseConcurrency :: MonadThrow m => AlloyInstance -> m (Concurrent Object)
 parseConcurrency inst = do
-  t1 <- unscopedSingleSig inst concurrencyTransition1 ""
-  t2 <- unscopedSingleSig inst concurrencyTransition2 ""
+  t1 <- unscopedSingleSig concurrencyTransition1 "" inst
+  t2 <- unscopedSingleSig concurrencyTransition2 "" inst
   Concurrent <$> ((,) <$> asSingleton t1 <*> asSingleton t2)
 
 checkFindConcurrencyConfig :: FindConcurrencyConfig -> Maybe String

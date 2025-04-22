@@ -68,6 +68,7 @@ import Modelling.PetriNet.Find (
 import Modelling.PetriNet.Parser (
   parseChange,
   parseRenamedNet,
+  singleSig,
   )
 import Modelling.PetriNet.Types (
   AdvConfig,
@@ -320,7 +321,7 @@ matchToMath ds toOutput config segment = do
     return ((net, ds), math, changes')
     else matchToMath ds toOutput config segment
   where
-    parse = fmap fst . parseRenamedNet "flow" "tokens"
+    parse = fmap fst . parseRenamedNet (singleSig "this" "Nodes" "") "flow" "tokens"
 
 firstM :: Monad m => (a -> m b) -> (a, c) -> m (b, c)
 firstM f (p, c) = (,c) <$> f p
@@ -343,7 +344,7 @@ mathInstance
   -> AlloyInstance
   -> RandT g m (String, p n String, Math)
 mathInstance config inst = do
-  petriLike <- fst <$> parseRenamedNet "flow" "tokens" inst
+  petriLike <- fst <$> parseRenamedNet (singleSig "this" "Nodes" "") "flow" "tokens" inst
   petriLike' <- fst <$> shuffleNames petriLike
   let math = toPetriMath petriLike'
   let f = renderFalse petriLike' config

@@ -291,7 +291,7 @@ petriNetFindActivatedTransitions FindActivatedTransitionsConfig {
 
 parseActivatedTransitions :: MonadThrow m => AlloyInstance -> m (ActivatedTransitions Object)
 parseActivatedTransitions inst = do
-  t <- unscopedSingleSig inst activatedTransitions ""
+  t <- unscopedSingleSig activatedTransitions "" inst
   pure $ ActivatedTransitions (Set.toList t)
 
 petriNetActivatedTransitionsAlloy

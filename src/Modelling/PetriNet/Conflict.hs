@@ -596,9 +596,9 @@ It returns an error message instead if unexpected behaviour occurs.
 -}
 parseConflict :: MonadThrow m => AlloyInstance -> m (PetriConflict' Object)
 parseConflict inst = do
-  tc1 <- unscopedSingleSig inst conflictTransition1 ""
-  tc2 <- unscopedSingleSig inst conflictTransition2 ""
-  pc  <- unscopedSingleSig inst conflictPlaces1 ""
+  tc1 <- unscopedSingleSig conflictTransition1 "" inst
+  tc2 <- unscopedSingleSig conflictTransition2 "" inst
+  pc  <- unscopedSingleSig conflictPlaces1 "" inst
   PetriConflict' . flip Conflict (Set.toList pc)
     <$> ((,) <$> asSingleton tc1 <*> asSingleton tc2)
 

@@ -248,11 +248,11 @@ randomInSegment segment segLength = do
 
 unscopedSingleSig
   :: MonadThrow m
-  => AlloyInstance
+  => String
   -> String
-  -> String
+  -> AlloyInstance
   -> m (Set Object)
-unscopedSingleSig inst st nd = do
+unscopedSingleSig st nd inst = do
   sig <- lookupSig (unscoped st) inst
   getSingleAs nd (return .: Object) sig
 

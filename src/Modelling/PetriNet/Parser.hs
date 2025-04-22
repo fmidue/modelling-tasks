@@ -18,6 +18,7 @@ module Modelling.PetriNet.Parser (
   parseChange,
   parseNet,
   parseRenamedNet,
+  singleSig,
   simpleNameMap, simpleRename,
   ) where
 
@@ -42,7 +43,6 @@ import qualified Data.Map.Lazy                    as Map (
 import Data.Maybe                       (fromMaybe)
 
 import Modelling.Auxiliary.Common       (Object (Object, oName, oIndex), toMap)
-import Modelling.PetriNet.Alloy         (unscopedSingleSig)
 import Modelling.PetriNet.Types (
   CapacityNode (..),
   Net (emptyNet, outFlow, alterFlow, alterNode, traverseNet),
@@ -87,45 +87,40 @@ convertPetri
   -> AlloyInstance       -- ^ the Petri net 'AlloyInstance'
   -> m Petri
 convertPetri f t inst = do
-  p <- parseNet False f t inst
+  p <- parseNet (singleSig "this" "Nodes" "") f t inst
   petriLikeToPetri p
 
 {-|
-Parse a 'Net' graph from an 'AlloyInstance' given the instances flow and
-token set names.
+Parse a `Net' graph from an 'AlloyInstance', using a certain node set accessor,
+and given the instance's flow and token set names.
 Return an already renamed Petri net, along with the renaming map.
 -}
 parseRenamedNet
   :: (MonadThrow m, Net p n)
-  => String
+  => (AlloyInstance -> m (Set Object))
+  -> String
   -> String
   -> AlloyInstance
   -> m (p n String, Bimap Object String)
-parseRenamedNet flowSetName tokenSetName inst = do
-  petriLike <- parseNet False flowSetName tokenSetName inst
+parseRenamedNet getNodes flowSetName tokenSetName inst = do
+  petriLike <- parseNet getNodes flowSetName tokenSetName inst
   let nameMap = simpleNameMap petriLike
   net <- traverseNet (`BM.lookup` nameMap) petriLike
   return (net, nameMap)
 
 {-|
-Parse a `Net' graph from an 'AlloyInstance', with or without givenNodes, given the instances flow and
-token set names.
+Parse a `Net' graph from an 'AlloyInstance', using a certain node set accessor,
+and given the instance's flow and token set names.
 -}
 parseNet
   :: (MonadThrow m, Net p n)
-  => Bool                             -- ^ whether to only parse the given nodes
+  => (AlloyInstance -> m (Set Object))-- ^ how to get the relevant node set
   -> String                           -- ^ the name of the flow set
   -> String                           -- ^ the name of the token set
   -> AlloyInstance                    -- ^ the Petri net 'AlloyInstance'
   -> m (p n Object)
-parseNet onlyGiven flowSetName tokenSetName inst = do
-  nodes <- case onlyGiven of
-    True -> do
-      nodes <- unscopedSingleSig inst "$givenNodes" ""
-      return $ Set.toList nodes
-    False -> do
-      nodes <- singleSig inst "this" "Nodes" ""
-      return $ Set.toList nodes
+parseNet getNodes flowSetName tokenSetName inst = do
+  nodes <- getNodes inst
 
   rawTokens <- doubleSig inst "this" "Places" tokenSetName
   let tokens = relToMap (second oIndex) rawTokens
@@ -147,7 +142,7 @@ addCapacities
   -> PetriLike CapacityNode Object
   -> m (PetriLike CapacityNode Object)
 addCapacities inst net = do
-  nodes <- singleSig inst "this" "placesWithCapacity" ""
+  nodes <- singleSig "this" "placesWithCapacity" "" inst
 
   rawCapacity <- doubleSig inst "this" "placesWithCapacity" "capacity"
 
@@ -228,12 +223,12 @@ asSingleton s
 
 singleSig
   :: MonadThrow m
-  => AlloyInstance
+  => String
   -> String
   -> String
-  -> String
+  -> AlloyInstance
   -> m (Set.Set Object)
-singleSig inst st nd rd = do
+singleSig st nd rd inst = do
   sig <- lookupSig (scoped st nd) inst
   getSingleAs rd (return .: Object) sig
 
