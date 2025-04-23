@@ -287,12 +287,12 @@ capacityTask path task = do
         ts = ([("s1",2), ("s2",0)], [("t1","s1",1), ("t2","s1",1), ("s2","t2",2)])
     code $ show ts
     translate $ do
-      english ("as answer would indicate that there are two complement places - s1 with 2 tokens" ++
+      english ("as answer would indicate that there are two complement places - s1 with 2 tokens " ++
                "and s2 with 0 tokens - and t1 points to s1 with a weight of 1, " ++
-               "t2 points to s1 with a weight of 1 and s2 connects to t2 with a weight of 2.")
-      german ("als Antwort würde bedeuten, dass es zwei Komplementstellen gibt - s1 mit 2 Token" ++
+               "t2 points to s1 with a weight of 1 and s2 connects to t2 with a weight of 2. ")
+      german ("als Antwort würde bedeuten, dass es zwei Komplementstellen gibt - s1 mit 2 Token " ++
               "und s2 mit 0 Token - und t1 zeigt auf s1 mit einem Gewicht von 1, " ++
-              "t2 zeigt auf s1 mit einem Gewicht von 1, und s2 ist mit t2 mit einem Gewicht von 2 verbunden.")
+              "t2 zeigt auf s1 mit einem Gewicht von 1, und s2 ist mit t2 mit einem Gewicht von 2 verbunden. ")
     translate $ do
       english "The order of tuples within the lists does not matter here."
       german "Die Reihenfolge der Tupel innerhalb der Listen spielt hierbei keine Rolle."
