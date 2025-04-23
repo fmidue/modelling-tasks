@@ -36,7 +36,7 @@ import Modelling.PetriNet.TestCommon (
   firstInstanceConfig,
   testTaskGeneration,
   validAdvConfigs,
-  validConfigsForPick,
+  validConfigsForFind,
   validGraphConfig,
   )
 import Settings                         (configDepth)
