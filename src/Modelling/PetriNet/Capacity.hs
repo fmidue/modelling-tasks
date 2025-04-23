@@ -664,14 +664,12 @@ defaultCapacityInstance = CapacityInstance {
     },
 toFind = ChangeList {
   tokenChanges = [("s1", 1), ("s2", 0)]
-  , flowChanges = [("s1", "t2", 1), ("t1", "s1", 1), ("t2", "s2", 1), ("s2", "t1", 1)]
+  , flowChanges = [("s1", "t2", 1), ("t1", "s1", 1), ("t2", "s2", 1), ("s2", "t1", 1), ("t3", "s2", 1)]
   },
   originalNet = PetriLike {
     allNodes = M.fromList [
-      ("s1",CapacityPlace {initial = 0, capacity = 0, flowOut = M.empty}),
-      ("s2",CapacityPlace {initial = 0, capacity = 0, flowOut = M.empty}),
       ("s3",CapacityPlace {initial = 1, capacity = 2, flowOut = M.fromList [("t1",1)]}),
-      ("s4",CapacityPlace {initial = 0, capacity = 1, flowOut = M.fromList [("t2",1),("t3",1)]}),
+      ("s4",CapacityPlace {initial = 1, capacity = 1, flowOut = M.fromList [("t2",1),("t3",1)]}),
       ("t1",CapacityTransition {flowOut = M.fromList [("s4",1)]}),
       ("t2",CapacityTransition {flowOut = M.fromList [("s3",1)]}),
       ("t3",CapacityTransition {flowOut = M.empty})
@@ -680,11 +678,11 @@ toFind = ChangeList {
   transformedNet = PetriLike {
     allNodes = M.fromList [
       ("s1",SimplePlace {initial = 1, flowOut = M.fromList [("t2",1)]}),
-      ("s2",SimplePlace {initial = 0, flowOut = M.fromList [("s1",1)]}),
+      ("s2",SimplePlace {initial = 0, flowOut = M.fromList [("t1",1)]}),
       ("s3",SimplePlace {initial = 1, flowOut = M.fromList [("t1",1)]}),
-      ("s4",SimplePlace {initial = 0, flowOut = M.fromList [("t2",1),("t3",1)]}),
-      ("t1",SimpleTransition {flowOut = M.fromList [("s4",1),("s1",1)]}),
-      ("t2",SimpleTransition {flowOut = M.fromList [("s3",1),("s2",1)]}),
+      ("s4",SimplePlace {initial = 1, flowOut = M.fromList [("t2",1),("t3",1)]}),
+      ("t1",SimpleTransition {flowOut = M.fromList [("s1",1),("s4",1)]}),
+      ("t2",SimpleTransition {flowOut = M.fromList [("s2",1),("s3",1)]}),
       ("t3",SimpleTransition {flowOut = M.fromList [("s2",1)]})
       ]
     },
