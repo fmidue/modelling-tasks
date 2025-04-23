@@ -63,7 +63,7 @@ spec = do
       validFinds
       (AdvConfig Nothing Nothing Nothing)
     findConfigs = validAdvConfigs >>= validFindCapacityConfigs validFinds
-    validFinds = validConfigsForPick 0 configDepth
+    validFinds = validConfigsForFind 0 configDepth
 
 checkCapacityInstance :: (PetriLike CapacityNode String, a, PetriChangeList String, [(String, String)]) -> Bool
 checkCapacityInstance (_, _, change, _) = isValidCapacity change
@@ -86,8 +86,8 @@ validCapacityConfig bc@BasicConfig{ places, transitions, maxFlowPerEdge, maxToke
     maxCapacity <- [max maxFlowPerEdge maxTokensPerPlace .. 5]
     newArrows <- [(a, b) | a <- [places .. 2 * transitions * places], b <- [a .. 2 * transitions * places]]
     oneMin <- [1 .. maxCapacity]
-    atMost <- Nothing : [Just n | n <- [0 .. transitions]]
-    distractors <- [(x, y) | x <- [0 .. transitions - fromMaybe transitions atMost], y <- [x .. transitions - atLeastActive], x <= y]
+    atMost <- Nothing : [Just n | n <- [atLeastActive .. transitions - 1]]
+    distractors <- [(x, y) | x <- [0 .. transitions - fromMaybe transitions atMost], y <- [x .. transitions - atLeastActive]]
     return (maxCapacity, newArrows, oneMin, distractors, atMost)
 
 isValidCapacity :: PetriChangeList String -> Bool
