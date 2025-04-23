@@ -178,6 +178,15 @@ capacityGenerate config seed segment =
 
     (original, transformed, condition, complementMap) <- combinedCapacityInstance config segment
 
+    let conditionMissing changes =
+          let missing = [ (p, 0) | n <- [1..places bc]
+                        , let p = "s" ++ show n
+                        , ("s" ++ show n) `notElem` map fst (tokenChanges changes)
+                        ]
+          in changes { tokenChanges = tokenChanges changes ++ missing }
+
+    let conditionWhole = conditionMissing condition
+
     return $ CapacityInstance
       { drawWith = DrawSettings
           { withPlaceNames = not $ hidePlaceNames gc
@@ -186,7 +195,7 @@ capacityGenerate config seed segment =
           , with1Weights = not $ hideWeight1 gc
           , withGraphvizCommand = gl
           }
-      , toFind = condition
+      , toFind = conditionWhole
       , originalNet = original
       , transformedNet = transformed
       , complementMap = complementMap
