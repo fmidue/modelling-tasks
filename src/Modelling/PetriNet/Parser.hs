@@ -11,7 +11,6 @@ module Modelling.PetriNet.Parser (
   NoSingletonException (..),
   addCapacities,
   asSingleton,
-  convertPetri,
   doubleSig,
   netToGr,
   netToGrCapacity,
@@ -76,7 +75,7 @@ import Language.Alloy.Call (
   )
 
 {-|
-Parse a `Net' graph from an 'AlloyInstance', using a certain node set accessor,
+Parse a 'Net' graph from an 'AlloyInstance', using a certain node set accessor,
 and given the instance's flow and token set names.
 Return an already renamed Petri net, along with the renaming map.
 -}
@@ -94,7 +93,7 @@ parseRenamedNet getNodes flowSetName tokenSetName inst = do
   return (net, nameMap)
 
 {-|
-Parse a `Net' graph from an 'AlloyInstance', using a certain node set accessor,
+Parse a 'Net' graph from an 'AlloyInstance', using a certain node set accessor,
 and given the instance's flow and token set names.
 -}
 parseNet
