@@ -49,7 +49,6 @@ import Capabilities.Cache               (MonadCache)
 import Capabilities.Diagrams            (MonadDiagrams)
 import Capabilities.Graphviz            (MonadGraphviz)
 import Modelling.Auxiliary.Common (
-  Object,
   TaskGenerationException (NoInstanceAvailable),
   oneOf,
   )
@@ -135,7 +134,7 @@ import Control.Monad.Random (
   evalRandT,
   mkStdGen
   )
-import Data.Bimap                       (Bimap)
+import Data.Bitraversable               (bimapM)
 import Data.Foldable                    (for_)
 import Data.GraphViz.Commands           (GraphvizCommand (Circo))
 import Data.List (intercalate)
@@ -178,14 +177,12 @@ capacityGenerate config seed segment =
 
     (original, transformed, condition, complementMap) <- combinedCapacityInstance config segment
 
-    let conditionMissing changes =
+    let addMissingToCondition changes@ChangeList{tokenChanges} =
           let missing = [ (p, 0)
                         | p <- map snd complementMap
-                        , p `notElem` map fst (tokenChanges changes)
+                        , p `notElem` map fst tokenChanges
                         ]
-          in changes { tokenChanges = tokenChanges changes ++ missing }
-
-    let conditionWhole = conditionMissing condition
+          in changes { tokenChanges = tokenChanges ++ missing }
 
     return $ CapacityInstance
       { drawWith = DrawSettings
@@ -195,7 +192,7 @@ capacityGenerate config seed segment =
           , with1Weights = not $ hideWeight1 gc
           , withGraphvizCommand = gl
           }
-      , toFind = conditionWhole
+      , toFind = addMissingToCondition condition
       , originalNet = original
       , transformedNet = transformed
       , complementMap = complementMap
@@ -404,22 +401,10 @@ findCapacityInstance inst = do
   change <- parseChange inst
   condition <- traverse (`BM.lookup` nameMap) (toChangeList change)
 
-  complements <- doubleSig inst "this" "placesWithCapacity" "complement"
-  complementMap <- generateComplementMap nameMap (Set.toList complements)
+  complements <- doubleSig "this" "placesWithCapacity" "complement" inst
+  complementMap <- mapM (bimapM (`BM.lookup` nameMap) (`BM.lookup` nameMap)) (Set.toList complements)
 
   return (original, transformed, condition, complementMap)
-
-generateComplementMap
-  :: MonadThrow m
-  => Bimap Object String
-  -> [(Object, Object)]
-  -> m [(String, String)]
-generateComplementMap nameMap = mapM placeTuple
-  where
-    placeTuple (cap, add) = do
-      capName <- BM.lookup cap nameMap
-      addName <- BM.lookup add nameMap
-      return (capName, addName)
 
 petriNetFindCapacity :: CapacityConfig -> String
 petriNetFindCapacity CapacityConfig {

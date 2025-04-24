@@ -122,10 +122,10 @@ parseNet
 parseNet getNodes flowSetName tokenSetName inst = do
   nodes <- getNodes inst
 
-  rawTokens <- doubleSig inst "this" "Places" tokenSetName
+  rawTokens <- doubleSig "this" "Places" tokenSetName inst
   let tokens = relToMap (second oIndex) rawTokens
 
-  flow   <- tripleSig inst "this" "Nodes" flowSetName
+  flow   <- tripleSig "this" "Nodes" flowSetName inst
 
   return
     . foldrFlip (\(x, y, z) -> alterFlow x (oIndex z) y) flow
@@ -144,7 +144,7 @@ addCapacities
 addCapacities inst net = do
   nodes <- singleSig "this" "placesWithCapacity" "" inst
 
-  rawCapacity <- doubleSig inst "this" "placesWithCapacity" "capacity"
+  rawCapacity <- doubleSig "this" "placesWithCapacity" "capacity" inst
 
   let capacities = relToMap (second (integerFromInt . oIndex)) rawCapacity
 
@@ -189,8 +189,8 @@ On error a 'Left' error message will be returned.
 -}
 parseChange :: MonadThrow m => AlloyInstance -> m (PetriChange Object)
 parseChange inst = do
-  flow <- tripleSig inst "this" "Nodes" "flowChange"
-  token <- doubleSig inst "this" "Places" "tokenChange"
+  flow <- tripleSig "this" "Nodes" "flowChange" inst
+  token <- doubleSig "this" "Places" "tokenChange" inst
   let tokenMap = relToMap (second oIndex) token
   tokenChange <- asSingleton `mapM` tokenMap
   let flowMap = relToMap tripleToOut flow
@@ -234,24 +234,24 @@ singleSig st nd rd inst = do
 
 doubleSig
   :: MonadThrow m
-  => AlloyInstance
+  => String
   -> String
   -> String
-  -> String
+  -> AlloyInstance
   -> m (Set.Set (Object,Object))
-doubleSig inst st nd rd = do
+doubleSig st nd rd inst = do
   sig <- lookupSig (scoped st nd) inst
   let obj = return .: Object
   getDoubleAs rd obj obj sig
 
 tripleSig
   :: MonadThrow m
-  => AlloyInstance
+  => String
   -> String
   -> String
-  -> String
+  -> AlloyInstance
   -> m (Set.Set (Object,Object,Object))
-tripleSig inst st nd rd = do
+tripleSig st nd rd inst = do
   sig <- lookupSig (scoped st nd) inst
   let obj = return .: Object
   getTripleAs rd obj obj obj sig
