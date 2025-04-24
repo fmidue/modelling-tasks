@@ -81,9 +81,9 @@ validFindCapacityConfigs cs advancedConfig = do
   return $ CapacityConfig bc advancedConfig maxCapacity newArrows oneMin distractors atMost validGraphConfig False alloyTestConfig
 
 validCapacityConfig :: BasicConfig -> [(Int, (Int, Int), Int, (Int, Int), Maybe Int)]
-validCapacityConfig bc@BasicConfig{ places, transitions, maxFlowPerEdge, maxTokensPerPlace, atLeastActive } =
+validCapacityConfig bc@BasicConfig{ places, transitions, maxTokensPerPlace, atLeastActive } =
   filter (\(maxCap, arrows, oneMinCap, distract, most) -> isNothing (checkCapacityConfig bc maxCap arrows oneMinCap distract most)) $ do
-    maxCapacity <- [max maxFlowPerEdge maxTokensPerPlace .. 5]
+    maxCapacity <- [maxTokensPerPlace ..]
     newArrows <- [(a, b) | a <- [places .. 2 * transitions * places], b <- [a .. 2 * transitions * places]]
     oneMin <- [1 .. maxCapacity]
     atMost <- Nothing : [Just n | n <- [atLeastActive .. transitions - 1]]
