@@ -76,21 +76,6 @@ import Language.Alloy.Call (
   )
 
 {-|
-Given the name of a flow set and a token set the given alloy instance is parsed
-to a 'Net' graph and a 'Petri' is returned if the instance is indeed a
-valid Petri net (after applying 'petriLikeToPetri').
--}
-convertPetri
-  :: MonadThrow m
-  => String              -- ^ the name of the flow set
-  -> String              -- ^ the name of the token set
-  -> AlloyInstance       -- ^ the Petri net 'AlloyInstance'
-  -> m Petri
-convertPetri f t inst = do
-  p <- parseNet (singleSig "this" "Nodes" "") f t inst
-  petriLikeToPetri p
-
-{-|
 Parse a `Net' graph from an 'AlloyInstance', using a certain node set accessor,
 and given the instance's flow and token set names.
 Return an already renamed Petri net, along with the renaming map.
