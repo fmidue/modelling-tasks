@@ -45,13 +45,11 @@ import Modelling.Auxiliary.Common       (Object (Object, oName, oIndex), toMap)
 import Modelling.PetriNet.Types (
   CapacityNode (..),
   Net (emptyNet, outFlow, alterFlow, alterNode, traverseNet),
-  Petri,
   PetriChange (..),
   PetriLike (..),
   PetriNode (..),
   maybeCapacity,
   maybeInitial,
-  petriLikeToPetri,
   )
 
 import GHC.Num (integerFromInt)
