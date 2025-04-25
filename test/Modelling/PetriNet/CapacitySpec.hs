@@ -83,7 +83,7 @@ validFindCapacityConfigs cs advancedConfig = do
 validCapacityConfig :: BasicConfig -> [(Int, (Int, Int), Int, (Int, Int), Maybe Int)]
 validCapacityConfig bc@BasicConfig{ places, transitions, maxTokensPerPlace, atLeastActive } =
   filter (\(maxCap, arrows, oneMinCap, distract, most) -> isNothing (checkCapacityConfig bc maxCap arrows oneMinCap distract most)) $ do
-    maxCapacity <- [maxTokensPerPlace ..]
+    maxCapacity <- [maxTokensPerPlace .. 5]
     newArrows <- [(a, b) | a <- [places .. 2 * transitions * places], b <- [a .. 2 * transitions * places]]
     oneMin <- [1 .. maxCapacity]
     atMost <- Nothing : [Just n | n <- [atLeastActive .. transitions - 1]]
