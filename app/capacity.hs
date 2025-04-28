@@ -31,40 +31,6 @@ import System.IO (
   )
 import Text.Pretty.Simple                (pPrint)
 import Text.Read                         (readMaybe)
---import Control.Monad (forM_)
-
-{-
-main :: IO ()
-main = do
-  hSetBuffering stdout NoBuffering
-  putStrLn "Generating 15 instances using defaultCapacityConfig..."
-  forM_ [0..14] mainFind
-
-mainFind :: Int -> IO ()
-mainFind i = forceErrors $ do
-  let theConfig = defaultCapacityConfig
-  lift $ pPrint theConfig
-  {-pls, trns, maxCap, newFlowMin, newFlowMax, oneMin, distractMin, distractMax, atMostAct) <- lift $ userInput theConfig
-  let config = theConfig {
-        basicConfig = basicConfig {
-            places = pls,
-            transitions = trns
-            },
-        maxCapacity = maxCap,
-        newArrowsWithComplement = (newFlowMin, newFlowMax),
-        oneMinCapacity = oneMin,
-        distractors = (distractMin, distractMax),
-        atMostActive = atMostAct
-        } :: CapacityConfig-}
-  let c = checkCapacityConfigs theConfig
-  if isNothing c
-  then do
-    t <- capacityGenerate theConfig 0 i
-    lift . (`withLang` English) $ simpleCapacityTask ("tmp/"++ show (i+1)++"/") t
-    lift $ print t
-  else
-    lift $ print c
--}
 
 main :: IO ()
 main = do
