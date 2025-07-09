@@ -138,6 +138,9 @@ tests:
       - -rtsopts
       - -with-rtsopts=-N
     dependencies:
+      - autotool-capabilities-io-instances
+      - directory
+      - filepath
       - modelling-tasks
       - QuickCheck
       - HUnit

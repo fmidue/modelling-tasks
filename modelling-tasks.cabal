@@ -199,6 +199,7 @@ test-suite modelling-tasks-test
     , SVGFonts
     , aeson
     , autotool-capabilities
+    , autotool-capabilities-io-instances
     , base
     , bifunctors
     , bimap
@@ -209,12 +210,14 @@ test-suite modelling-tasks-test
     , diagrams-graphviz
     , diagrams-lib
     , diagrams-svg
+    , directory
     , edit-distance-vector
     , either
     , exceptions
     , extra
     , fgl
     , file-embed
+    , filepath
     , graphviz
     , hgal
     , hspec
