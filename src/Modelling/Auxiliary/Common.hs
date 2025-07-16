@@ -1,14 +1,14 @@
-{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE RecordWildCards #-}
 {-# OPTIONS_GHC -Wno-orphans #-}
 module Modelling.Auxiliary.Common (
   ModellingTasksException (..),
   Object (..),
   Randomise (..),
   RandomiseLayout (..),
-  ShuffleInstance (..),
+  RandomiseNames (..),
+  ShuffleExcept (..),
   TaskGenerationException (..),
+  findFittingRandom,
   getFirstInstance,
   lensRulesL,
   lowerFirst,
@@ -16,8 +16,6 @@ module Modelling.Auxiliary.Common (
   oneOf,
   parseInt,
   parseWith,
-  shuffleEverything,
-  shuffleInstanceWith,
   skipSpaces,
   toMap,
   upperFirst,
@@ -36,13 +34,11 @@ import qualified Data.Set                         as S (
   )
 
 import Control.Exception                (Exception, SomeException)
-import Control.Monad                    ((>=>))
 import Control.Monad.Catch              (MonadThrow (throwM))
+import Control.Monad.Extra              (ifM, maybeM)
 import Control.Monad.Random (
   MonadRandom (getRandomR),
-  RandomGen,
   RandT,
-  evalRandT,
   )
 import Control.Monad.Trans.Class        (lift)
 import Data.Char (
@@ -61,7 +57,7 @@ import Control.Lens (
   lensRules,
   mappingNamer,
   )
-import GHC.Generics                     (Generic)
+import System.Random.Shuffle            (shuffleM)
 import Text.Parsec                      (parse)
 import Text.ParserCombinators.Parsec (
   Parser,
@@ -117,40 +113,9 @@ newtype ShuffleExcept g a = ShuffleExcept {
 instance MonadThrow (ShuffleExcept g) where
   throwM = ShuffleExcept . lift . throwM
 
-shuffleInstanceWith
-  :: (RandomGen g, Randomise a, RandomiseLayout a)
-  => ShuffleInstance a
-  -> g
-  -> Either SomeException a
-shuffleInstanceWith x = evalRandT (unShuffleExcept $ shuffleInstance x)
-
-shuffleEverything
-  :: (MonadRandom m, MonadThrow m, Randomise a, RandomiseLayout a)
-  => a
-  -> m a
-shuffleEverything inst = shuffleInstance $ ShuffleInstance {
-  taskInstance                = inst,
-  allowLayoutMangling         = True,
-  shuffleNames                = True
-  }
-
-data ShuffleInstance a = ShuffleInstance {
-  taskInstance                :: a,
-  allowLayoutMangling         :: Bool,
-  shuffleNames                :: Bool
-  } deriving (Eq, Generic, Read, Show)
-
-shuffleInstance
-  :: (MonadRandom m, MonadThrow m, Randomise a, RandomiseLayout a)
-  => ShuffleInstance a
-  -> m a
-shuffleInstance ShuffleInstance {..} =
-  whenM shuffleNames randomise
-  >=> whenM allowLayoutMangling randomiseLayout
-  $ taskInstance
-  where
-    whenM p x = if p then x else return
-
+{-|
+The class of types that allow some form of randomisation.
+-}
 class Randomise a where
   -- | Shuffles every component without affecting basic overall properties
   randomise :: (MonadRandom m, MonadThrow m) => a -> m a
@@ -161,6 +126,9 @@ class Randomise a where
   isRandomisable :: a -> Maybe String
   isRandomisable _ = Nothing
 
+{-|
+The class of types that allow changing its layout randomly.
+-}
 class RandomiseLayout a where
   {-
   Shuffles the structure of every component
@@ -171,6 +139,19 @@ class RandomiseLayout a where
   how the used algorithm is laying out the graph.
   -}
   randomiseLayout :: (MonadRandom m, MonadThrow m) => a -> m a
+
+{-|
+The class of types that allow swapping (some of) its components names randomly.
+-}
+class RandomiseNames a where
+  -- | Checks the randomisability of names for the given value
+  --     * returns Nothing, if it is randomisable
+  --     * returns Just the explanation why not, otherwise
+  hasRandomisableNames :: a -> Maybe String
+  hasRandomisableNames _ = Nothing
+
+  -- | Shuffles the order of names of an instance, swapping names of components
+  randomiseNames :: (MonadRandom m, MonadThrow m) => a -> m a
 
 upperToDash :: String -> String
 upperToDash [] = []
@@ -226,3 +207,37 @@ instance Exception TaskGenerationException
 getFirstInstance :: MonadThrow m => [a] -> m a
 getFirstInstance [] = throwM NoInstanceAvailable
 getFirstInstance (x:_) = pure x
+
+{-|
+Provides a list of given elements with as many entries as provided predicates
+by randomly picking given elements while ensuring as few repetitions
+of these elements as possible occur.
+
+Each predicate restricts an element in the resulting list (in order).
+That means the resulting list is as long as the predicates list.
+'Nothing' will be returned if there is no way to match all the predicates.
+
+This function will attempt to distribute evenly, i.e. if 4 different elements
+and 4 predicates are provided and no permutation fits,
+'Nothing' will be returned although the predicates might hold for
+e.g. choosing one of the elements 4 times.
+-}
+findFittingRandom
+  :: MonadRandom m
+  => [a]
+  -- ^ elements to choose from
+  -> [a -> m Bool]
+  -- ^ predicates to satisfy
+  -> m (Maybe [a])
+findFittingRandom xs predicates = do
+  xs' <- shuffleM $ concat
+    $ replicate ((length predicates - 1) `div` length xs + 1) xs
+  elementsFor predicates id xs'
+  where
+    elementsFor [] _ _ = pure (Just [])
+    elementsFor _ _ [] = pure Nothing
+    elementsFor (p : ps) prependFailed (c : cs) = do
+      let retry = elementsFor (p : ps) (prependFailed . (c:)) cs
+      ifM (p c)
+        (maybeM retry (pure . Just . (c:)) $ elementsFor ps id $ prependFailed cs)
+        retry

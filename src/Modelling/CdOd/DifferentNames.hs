@@ -45,10 +45,9 @@ import Capabilities.Cache               (MonadCache)
 import Capabilities.Diagrams            (MonadDiagrams)
 import Capabilities.Graphviz            (MonadGraphviz)
 import Modelling.Auxiliary.Common (
-  Randomise (isRandomisable, randomise),
   RandomiseLayout (randomiseLayout),
+  RandomiseNames (hasRandomisableNames, randomiseNames),
   TaskGenerationException (NoInstanceAvailable),
-  shuffleEverything,
   )
 import Modelling.Auxiliary.Output (
   addPretext,
@@ -58,12 +57,17 @@ import Modelling.Auxiliary.Output (
   uniform,
   extra,
   )
+import Modelling.Auxiliary.Shuffle.NamesAndLayout (
+  shuffleEverything,
+  )
 import Modelling.CdOd.Auxiliary.Util
 import Modelling.CdOd.CD2Alloy.Transform (
-  LinguisticReuse (None),
+  ExtendsAnd (NothingMore),
+  LinguisticReuse (ExtendsAnd),
   combineParts,
   createRunCommand,
   mergeParts,
+  overlappingLinksPredicates,
   transform,
   )
 import Modelling.CdOd.Generate          (generateCds, instanceToCd)
@@ -85,6 +89,7 @@ import Modelling.CdOd.Types (
   anonymiseObjects,
   associationNames,
   checkCdDrawSettings,
+  checkClassConfigAndObjectProperties,
   checkClassConfigWithProperties,
   checkObjectDiagram,
   checkObjectProperties,
@@ -112,7 +117,7 @@ import Modelling.Types (
   )
 
 import Control.Applicative              (Alternative ((<|>)))
-import Control.Monad.Catch              (MonadThrow, throwM)
+import Control.Monad.Catch              (MonadCatch, MonadThrow, throwM)
 import Control.Monad.Extra              (whenJust)
 import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
@@ -142,7 +147,7 @@ import Control.Monad.Random (
   mkStdGen,
   )
 import Control.Monad.Trans.Except       (runExceptT)
-import Data.Bifunctor                   (Bifunctor (bimap))
+import Data.Bifunctor                   (Bifunctor (bimap, first))
 import Data.Bimap                       (Bimap)
 import Data.Bitraversable               (bitraverse)
 import Data.Bool                        (bool)
@@ -151,6 +156,7 @@ import Data.Functor.Identity            (Identity (Identity, runIdentity))
 import Data.GraphViz                    (DirType (Forward))
 import Data.List (
   group,
+  intercalate,
   intersect,
   permutations,
   singleton,
@@ -264,6 +270,7 @@ checkDifferentNamesConfig DifferentNamesConfig {..}
       |]
   | otherwise = checkClassConfigWithProperties classConfig defaultProperties
     <|> checkObjectProperties objectProperties
+    <|> checkClassConfigAndObjectProperties classConfig objectProperties
     <|> checkOmittedDefaultMultiplicities omittedDefaultMultiplicities
   where
     different (_, Nothing) = True
@@ -306,7 +313,7 @@ instance Show ShowName where
   show = showName . showName'
 
 mappingShow :: [(Name, Name)] -> [(ShowName, ShowName)]
-mappingShow = fmap (bimap ShowName ShowName)
+mappingShow = map (bimap ShowName ShowName)
 
 type DifferentNamesTaskText = [SpecialOutput DifferentNamesTaskTextElement]
 
@@ -425,7 +432,7 @@ defaultDifferentNamesTaskText = [
   ]
 
 differentNamesInitial :: [(Name, Name)]
-differentNamesInitial = bimap Name Name <$> [("a", "x"), ("b", "y")]
+differentNamesInitial = map (bimap Name Name) [("a", "x"), ("b", "y")]
 
 differentNamesSyntax
   :: OutputCapable m
@@ -505,7 +512,7 @@ differentNamesSolution :: DifferentNamesInstance -> [(Name, Name)]
 differentNamesSolution = BM.toAscList . nameMapping . mapping
 
 differentNames
-  :: (MonadAlloy m, MonadThrow m)
+  :: (MonadAlloy m, MonadCatch m)
   => DifferentNamesConfig
   -> Int
   -> Int
@@ -538,13 +545,12 @@ using 'defaultDifferentNamesConfig'.
 defaultDifferentNamesInstance :: DifferentNamesInstance
 defaultDifferentNamesInstance = DifferentNamesInstance {
   cDiagram = ClassDiagram {
-    classNames = ["C", "A", "D", "B"],
+    classNames = ["C", "B", "D", "A"],
     relationships = [
-      Inheritance {subClass = "D", superClass = "A"},
       Composition {
-        compositionName = "a",
+        compositionName = "b",
         compositionPart = LimitedLinking {
-          linking = "C",
+          linking = "D",
           limits = (2, Nothing)
           },
         compositionWhole = LimitedLinking {
@@ -552,14 +558,18 @@ defaultDifferentNamesInstance = DifferentNamesInstance {
           limits = (0, Just 1)
           }
         },
+      Inheritance {
+        subClass = "A",
+        superClass = "C"
+        },
       Association {
-        associationName = "b",
+        associationName = "a",
         associationFrom = LimitedLinking {
-          linking = "A",
+          linking = "C",
           limits = (0, Nothing)
           },
         associationTo = LimitedLinking {
-          linking = "C",
+          linking = "D",
           limits = (0, Just 1)
           }
         },
@@ -570,7 +580,7 @@ defaultDifferentNamesInstance = DifferentNamesInstance {
           limits = (0, Just 2)
           },
         aggregationWhole = LimitedLinking {
-          linking = "D",
+          linking = "A",
           limits = (0, Just 2)
           }
         }
@@ -579,19 +589,19 @@ defaultDifferentNamesInstance = DifferentNamesInstance {
   cdDrawSettings = defaultCdDrawSettings,
   oDiagram = ObjectDiagram {
     objects = [
-      Object {isAnonymous = True, objectName = "d", objectClass = "D"},
+      Object {isAnonymous = True, objectName = "c",  objectClass = "C"},
       Object {isAnonymous = True, objectName = "c1", objectClass = "C"},
-      Object {isAnonymous = True, objectName = "c2", objectClass = "C"},
-      Object {isAnonymous = True, objectName = "b", objectClass = "B"},
+      Object {isAnonymous = True, objectName = "d",  objectClass = "D"},
+      Object {isAnonymous = True, objectName = "b",  objectClass = "B"},
       Object {isAnonymous = True, objectName = "d1", objectClass = "D"},
-      Object {isAnonymous = True, objectName = "c", objectClass = "C"}
+      Object {isAnonymous = True, objectName = "a",  objectClass = "A"}
       ],
     links = [
-      Link {linkName = "y", linkFrom = "c", linkTo = "b"},
-      Link {linkName = "x", linkFrom = "d1", linkTo = "c1"},
-      Link {linkName = "z", linkFrom = "b", linkTo = "d1"},
-      Link {linkName = "x", linkFrom = "d", linkTo = "c2"},
-      Link {linkName = "y", linkFrom = "c1", linkTo = "b"}
+      Link {linkName = "x", linkFrom = "d1", linkTo = "b"},
+      Link {linkName = "z", linkFrom = "b",  linkTo = "a"},
+      Link {linkName = "x", linkFrom = "d",  linkTo = "b"},
+      Link {linkName = "y", linkFrom = "c",  linkTo = "d1"},
+      Link {linkName = "y", linkFrom = "c1", linkTo = "d1"}
       ]
     },
   showSolution = False,
@@ -602,7 +612,7 @@ defaultDifferentNamesInstance = DifferentNamesInstance {
   }
 
 getDifferentNamesTask
-  :: (MonadAlloy m, MonadRandom m, MonadThrow m)
+  :: (MonadAlloy m, MonadCatch m, MonadRandom m)
   => m DifferentNamesInstance
   -> DifferentNamesConfig
   -> Cd
@@ -616,7 +626,9 @@ getDifferentNamesTask tryNext DifferentNamesConfig {..} cd = do
           $ drop 1 (permutations labels)
         cds'   = zip [1 :: Integer ..] cds
         partsList = map (uncurry alloyFor) cds'
-        runCmd = foldr (\(n, _) -> (++ " and (not cd" ++ show n ++ ")")) "cd0" cds'
+        runCmd = "cd0 and "
+          ++ conjunctNegationsOf (map (("cd" ++) . show . fst) cds')
+          ++ overlappingConstraints
         onlyCd0 = createRunCommand
           runCmd
           Nothing
@@ -627,7 +639,7 @@ getDifferentNamesTask tryNext DifferentNamesConfig {..} cd = do
     instances  <- getInstances
       maxInstances
       timeout
-      (combineParts partsList' ++ onlyCd0)
+      (combineParts partsList' ++ unlines overlappingPredicates ++ onlyCd0)
     instances' <- shuffleM (instances :: [AlloyInstance])
     continueWithHead instances' $ \od1 -> do
       labels' <- shuffleM labels
@@ -642,7 +654,8 @@ getDifferentNamesTask tryNext DifferentNamesConfig {..} cd = do
         (usesEveryRelationshipName objectProperties)
         isCompleteMapping
         then do
-        od1' <- either error id <$> runExceptT (alloyInstanceToOd labels od1)
+        od1' <- either error id
+          <$> runExceptT (alloyInstanceToOd Nothing labels od1)
         od1'' <- anonymiseObjects (anonymousObjectProportion objectProperties) od1'
         return $ DifferentNamesInstance {
               cDiagram  = cd1,
@@ -660,9 +673,18 @@ getDifferentNamesTask tryNext DifferentNamesConfig {..} cd = do
               }
         else tryNext
   where
+    negationOf p = [i|not (#{p})|]
+    conjunctNegationsOf = intercalate " and " . map negationOf
+    (overlappingConstraints, overlappingPredicates) =
+      case withObviousMapping of
+        Nothing -> ("", [])
+        Just True -> first (" and " ++) getOverlapping
+        Just False -> first ((" and " ++) . negationOf) getOverlapping
+    getOverlapping = first conjunctNegationsOf
+      $ unzip $ overlappingLinksPredicates $ relationships cd
     renameEdges bm = either (error . show) id . bitraverse pure (`BM.lookup` bm)
     alloyFor n cd' = transform
-      None
+      (ExtendsAnd NothingMore)
       cd'
       Nothing
       []
@@ -696,8 +718,11 @@ classNonInheritanceAndLinkNames DifferentNamesInstance {..} =
       links = linkNames oDiagram ++ additional
   in (names, nonInheritances, links)
 
-instance Randomise DifferentNamesInstance where
-  randomise inst@DifferentNamesInstance {..} = do
+instance RandomiseNames DifferentNamesInstance where
+  hasRandomisableNames DifferentNamesInstance {..} =
+    isObjectDiagramRandomisable oDiagram
+
+  randomiseNames inst@DifferentNamesInstance {..} = do
     let (names, nonInheritances, lNames) = classNonInheritanceAndLinkNames inst
         links = case linkShuffling of
           ConsecutiveLetters -> take (length lNames) (map (:[]) ['z', 'y' ..])
@@ -706,8 +731,6 @@ instance Randomise DifferentNamesInstance where
     nonInheritances' <- shuffleM nonInheritances
     links' <- shuffleM links
     renameInstance inst names' nonInheritances' links'
-  isRandomisable DifferentNamesInstance {..} =
-    isObjectDiagramRandomisable oDiagram
 
 instance RandomiseLayout DifferentNamesInstance where
   randomiseLayout DifferentNamesInstance {..} = do

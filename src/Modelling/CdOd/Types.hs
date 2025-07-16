@@ -50,6 +50,7 @@ module Modelling.CdOd.Types (
   checkCdDrawSettings,
   checkCdMutations,
   checkClassConfig,
+  checkClassConfigAndObjectProperties,
   checkClassConfigWithProperties,
   checkObjectDiagram,
   checkObjectProperties,
@@ -758,7 +759,24 @@ checkClassConfigWithProperties
       <*> snd compositionLimits
 
 checkClassConfig :: ClassConfig -> Maybe String
-checkClassConfig c@ClassConfig {..} = checkRange Just "classLimits" classLimits
+checkClassConfig c@ClassConfig {..}
+  | fst classLimits < 1
+  = Just [iii|
+    Having possibly no classes does not make any sense for this task type.
+    |]
+  | minimumMaxRelationships < fst relationshipLimits
+  = Just [iii|
+    The minimal number of classes does not even suffice for
+    the minimal number of relationships.
+    |]
+  | Just maximumMaxRelationships < snd relationshipLimits
+    || isNothing (snd relationshipLimits)
+    && Just maximumMaxRelationships < relationshipsSum c
+  = Just [iii|
+    The maximal number of classes is too low considering
+    the upper relationship bounds.
+    |]
+  | otherwise = checkRange Just "classLimits" classLimits
   <|> checkRange id "aggregationLimits" aggregationLimits
   <|> checkRange id "associationLimits" associationLimits
   <|> checkRange id "compositionLimits" compositionLimits
@@ -777,6 +795,8 @@ checkClassConfig c@ClassConfig {..} = checkRange Just "classLimits" classLimits
       must not be higher than the maximum number of relationships!
       |]
   where
+    minimumMaxRelationships = fst classLimits * (fst classLimits - 1) `div` 2
+    maximumMaxRelationships = snd classLimits * (snd classLimits - 1) `div` 2
     toMaybe True x = Just x
     toMaybe _    _ = Nothing
     isMaxHigherThanAnyIndividual = any
@@ -829,7 +849,7 @@ checkRange g what (low, h) = do
         |]
       | high < low = Just [iii|
         The upper limit (currently #{show h}; second value) for #{what}
-        has to be as high as its lower limit
+        has to be at least as high as its lower limit
         (currently #{show low}; first value)!
         |]
       | otherwise = Nothing
@@ -844,7 +864,7 @@ checkObjectDiagram ObjectDiagram {..}
   | otherwise
   = Nothing
   where
-    objectNames = objectName <$> objects
+    objectNames = map objectName objects
 
 minRelationships :: ClassConfig -> Int
 minRelationships ClassConfig {..} =
@@ -981,6 +1001,49 @@ checkObjectProperties ObjectProperties {..}
     |]
   | otherwise
   = Nothing
+
+{-|
+Configuration checks for the interplay of provided class diagram
+and object diagram configurations.
+-}
+checkClassConfigAndObjectProperties
+  :: ClassConfig
+  -> ObjectProperties
+  -> Maybe String
+checkClassConfigAndObjectProperties ClassConfig {..} ObjectProperties {..}
+  | Just False /= hasSelfLoops
+  , noNonInheritanceRelationshipPossible
+  = Just [iii|
+    Setting hasSelfLoops to anything other than Just False
+    makes no sense if it is not even possible
+    that at least one non-inheritance relationship can even appear
+    in any underlying class diagram
+    so that such a link could actually appear.
+    |]
+  | Just True <- hasSelfLoops
+  , noNonInheritanceRelationshipGuaranteed
+  = Just [iii|
+    hasSelfLoops can only be enforced if there is guaranteed
+    at least one non-inheritance relationship in each underlying class diagram
+    so that such a link can actually appear.
+    |]
+  | hasLimitedIsolatedObjects
+  , noNonInheritanceRelationshipGuaranteed
+  = Just [iii|
+    hasLimitedIsolatedObjects can only be enabled if there is guaranteed
+    at least one non-inheritance relationship in each underlying class diagram
+    so that links can actually be present between objects.
+    |]
+  | otherwise
+  = Nothing
+  where
+    nonInheritanceLimits =
+      [aggregationLimits, associationLimits, compositionLimits]
+    noNonInheritanceRelationshipGuaranteed =
+      fst relationshipLimits <= fst inheritanceLimits
+      || all ((< 1) . fst) nonInheritanceLimits
+    noNonInheritanceRelationshipPossible =
+      all ((== Just 0) . snd) nonInheritanceLimits
 
 {-|
 Defines an 'ObjectConfig' demanding at least one but at most five objects
@@ -1223,7 +1286,7 @@ renameObjectsWithClassesAndLinksInOd
 renameObjectsWithClassesAndLinksInOd bmClasses bmLinks ObjectDiagram {..} = do
   objects' <- traverse renameObject objects
   let bmObjects = BM.fromList
-        $ zip (fmap objectName objects) (fmap objectName objects')
+        $ zip (map objectName objects) (map objectName objects')
   links' <- traverse
     (bitraverse (`BM.lookup` bmObjects) (`BM.lookup` bmLinks))
     links

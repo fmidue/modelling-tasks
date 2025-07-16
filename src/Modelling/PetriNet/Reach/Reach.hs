@@ -6,6 +6,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE TupleSections #-}
 
 {-|
@@ -15,16 +16,17 @@ based on file: collection/src/Petri/Reach.hs
 -}
 module Modelling.PetriNet.Reach.Reach where
 
+import qualified Control.Monad.Trans              as Monad (lift)
 import qualified Data.Set                         as S (toList)
 
 import Capabilities.Cache               (MonadCache)
 import Capabilities.Diagrams            (MonadDiagrams)
 import Capabilities.Graphviz            (MonadGraphviz)
-import Modelling.Auxiliary.Common       (oneOf)
+import Data.Data                        (Data)
 import Modelling.Auxiliary.Output (
   hoveringInformation,
   )
-import Modelling.PetriNet.Reach.Draw    (drawToFile)
+import Modelling.PetriNet.Reach.Draw    (drawToFile, isPetriDrawable)
 import Modelling.PetriNet.Reach.Property (
   Property (Default),
   validate,
@@ -49,8 +51,8 @@ import Modelling.PetriNet.Reach.Type (
 import Control.Applicative              (Alternative)
 import Control.Functor.Trans            (FunctorTrans (lift))
 import Control.Monad                    (forM, when)
-import Control.Monad.Catch              (MonadThrow)
-import Control.Monad.Extra              (whenJust)
+import Control.Monad.Catch              (MonadCatch, MonadThrow)
+import Control.Monad.Extra              (findM, maybeM, whenJust)
 import Control.OutputCapable.Blocks (
   ArticleToUse (IndefiniteArticle),
   GenericOutputCapable (assertion, code, image, indent, paragraph, text),
@@ -69,7 +71,7 @@ import Control.OutputCapable.Blocks.Generic (
   ($>>=),
   )
 import Control.Monad.Random             (mkStdGen)
-import Control.Monad.Trans.Random       (evalRand)
+import Control.Monad.Trans.Random       (evalRandT)
 import Data.Bifunctor                   (Bifunctor (second))
 import Data.Either.Combinators          (whenRight)
 import Data.Foldable                    (traverse_)
@@ -110,10 +112,10 @@ reachTask
 reachTask path inst = do
   if showGoalNet inst
     then (,True) . Left
-    <$> lift (drawToFile True path (drawUsing inst) 0 (n { start = goal inst }))
+    <$> lift (drawToFile True path (drawUsing inst) (n { start = goal inst }))
     else pure (Right $ show $ goal inst, False)
   $>>= \(g, withoutPlaceNames) ->
-    lift (drawToFile withoutPlaceNames path (drawUsing inst) (-1) n)
+    lift (drawToFile withoutPlaceNames path (drawUsing inst) n)
   $>>= \img -> reportReachFor
     img
     (noLongerThan inst)
@@ -299,7 +301,9 @@ data ReachInstance s t = ReachInstance {
   showSolution      :: Bool,
   withLengthHint    :: Maybe Int,
   withMinLengthHint :: Maybe Int
-  } deriving (Generic, Read, Show, Typeable)
+  } deriving (Generic, Read, Show, Typeable, Data)
+
+deriving instance Data GraphvizCommand
 
 bimapReachInstance
   :: (Ord a, Ord b)
@@ -371,8 +375,12 @@ defaultReachInstance = ReachInstance {
   withMinLengthHint = Nothing
 }
 
-generateReach :: ReachConfig -> Int -> ReachInstance Place Transition
-generateReach conf seed =
+generateReach
+  :: (MonadCatch m, MonadDiagrams m, MonadGraphviz m)
+  => ReachConfig
+  -> Int
+  -> m (ReachInstance Place Transition)
+generateReach conf seed = do
   let ps = [Place 1 .. Place (numPlaces conf)]
       tries = forM [1 :: Int .. 1000] $ const $ do
         n <- netLimits vLow vHigh nLow nHigh
@@ -389,12 +397,14 @@ generateReach conf seed =
           return ((negate l, d), (n, z'))
       out = do
         xs <- tries
-        let ((l, _), pn) =  minimumBy (comparing fst) $ concat xs
+        let ((l, _), pn) = minimumBy (comparing fst) $ concat xs
         if negate l >= minTransitionLength conf
-          then (pn,) <$> oneOf (drawCommands conf)
+          then do
+            maybeM out (pure . (pn,))
+            $ findM (Monad.lift . isPetriDrawable (fst pn)) $ drawCommands conf
           else out
-      ((petri, state), cmd) = eval out
-  in ReachInstance {
+  ((petri, state), cmd) <- eval out
+  pure $ ReachInstance {
     drawUsing         = cmd,
     goal              = state,
     minLength         = minTransitionLength conf,
@@ -412,4 +422,4 @@ generateReach conf seed =
     (vLow, vHigh) = fixMaximum $ preconditionsRange conf
     (nLow, nHigh) = fixMaximum $ postconditionsRange conf
     ts = [Transition 1 .. Transition (numTransitions conf)]
-    eval f = evalRand f $ mkStdGen seed
+    eval f = evalRandT f $ mkStdGen seed

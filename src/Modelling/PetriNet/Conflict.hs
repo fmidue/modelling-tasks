@@ -52,7 +52,6 @@ import Capabilities.Diagrams            (MonadDiagrams)
 import Capabilities.Graphviz            (MonadGraphviz)
 import Modelling.Auxiliary.Common (
   Object,
-  oneOf,
   parseWith,
   upperFirst,
   )
@@ -77,7 +76,8 @@ import Modelling.PetriNet.Alloy (
   unscopedSingleSig,
   )
 import Modelling.PetriNet.Diagram (
-  renderWith,
+  cacheNet,
+  isNetDrawable,
   )
 import Modelling.PetriNet.Find (
   FindInstance (..),
@@ -116,7 +116,6 @@ import Modelling.PetriNet.Types         (
   ConflictConfig (..),
   DrawSettings (..),
   FindConflictConfig (..),
-  GraphConfig (..),
   Net,
   PetriConflict (Conflict, conflictPlaces, conflictTrans),
   PetriConflict' (PetriConflict', toPetriConflict),
@@ -124,6 +123,7 @@ import Modelling.PetriNet.Types         (
   PickConflictConfig (..),
   SimpleNode (..),
   SimplePetriNet,
+  allDrawSettings,
   lConflictPlaces,
   transitionPairShow,
   )
@@ -131,7 +131,8 @@ import Modelling.PetriNet.Types         (
 import Control.Applicative              (Alternative, (<|>))
 import Control.Lens                     ((.~), over)
 import Control.Monad                    (unless)
-import Control.Monad.Catch              (MonadThrow)
+import Control.Monad.Catch              (MonadCatch, MonadThrow)
+import Control.Monad.Extra              (findM)
 import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
   GenericOutputCapable (..),
@@ -161,6 +162,7 @@ import Control.Monad.Trans              (MonadTrans (lift))
 import Data.Bifunctor                   (Bifunctor (bimap))
 import Data.Bitraversable               (Bitraversable (bitraverse))
 import Data.Bool                        (bool)
+import Data.Data                        (Data, Typeable)
 import Data.Either                      (isLeft)
 import Data.Function                    ((&))
 import Data.Foldable                    (for_)
@@ -172,6 +174,7 @@ import Data.String.Interpolate          (i, iii)
 import Language.Alloy.Call (
   AlloyInstance
   )
+import System.Random.Shuffle            (shuffleM)
 
 simpleFindConflictTask
   :: (
@@ -188,12 +191,16 @@ simpleFindConflictTask = findConflictTask
 
 findConflictTask
   :: (
+    Data (n String),
+    Data (p n String),
     MonadCache m,
     MonadDiagrams m,
     MonadGraphviz m,
     MonadThrow m,
     Net p n,
-    OutputCapable m
+    OutputCapable m,
+    Typeable n,
+    Typeable p
     )
   => FilePath
   -> FindInstance (p n String) Conflict
@@ -202,7 +209,7 @@ findConflictTask path task = do
   paragraph $ translate $ do
     english "Consider the following Petri net:"
     german "Betrachten Sie folgendes Petrinetz:"
-  image $=<< renderWith path "conflict" (net task) (drawFindWith task)
+  image $=<< cacheNet path (net task) (drawFindWith task)
   paragraph $ translate $ do
     english "Which pair of transitions is in conflict under the initial marking?"
     german "Welches Paar von Transitionen steht unter der Startmarkierung in Konflikt?"
@@ -252,7 +259,7 @@ conflictPlacesShow
   -> ((ShowTransition, ShowTransition), [ShowPlace])
 conflictPlacesShow = bimap
   (bimap ShowTransition ShowTransition)
-  (fmap ShowPlace)
+  (map ShowPlace)
 
 findConflictPlacesEvaluation
   :: (Alternative m, Monad m, OutputCapable m)
@@ -310,12 +317,16 @@ simplePickConflictTask = pickConflictTask
 
 pickConflictTask
   :: (
+    Data (n String),
+    Data (p n String),
     MonadCache m,
     MonadDiagrams m,
     MonadGraphviz m,
     MonadThrow m,
     Net p n,
-    OutputCapable m
+    OutputCapable m,
+    Typeable n,
+    Typeable p
     )
   => FilePath
   -> PickInstance (p n String)
@@ -331,7 +342,7 @@ pickConflictTask path task = do
       Welches dieser Petrinetze hat genau ein Paar von Transitionen,
       die unter der Startmarkierung in Konflikt stehen?
       |]
-  images show snd $=<< renderPick path "conflict" task
+  images show snd $=<< renderPick path task
   paragraph $ translate $ do
     english [iii|
       State your answer by giving the number of the Petri net
@@ -369,38 +380,36 @@ pickConflictTask path task = do
   pure ()
 
 findConflictGenerate
-  :: (MonadAlloy m, MonadThrow m, Net p n)
+  :: (MonadAlloy m, MonadCatch m, MonadDiagrams m, MonadGraphviz m, Net p n)
   => FindConflictConfig
   -> Int
   -> Int
+  -- ^ Seed
   -> m (FindInstance (p n String) Conflict)
-findConflictGenerate config segment seed = flip evalRandT (mkStdGen seed) $ do
-  (d, c) <- findConflict config segment
-  gl <- oneOf $ graphLayouts gc
-  c' <- lift $ bitraverse
-    (parseWith parsePlacePrec)
-    (parseWith parseTransitionPrec)
-    $ toPetriConflict c
-  return $ FindInstance {
-    drawFindWith = DrawSettings {
-      withPlaceNames = not $ hidePlaceNames gc,
-      withSvgHighlighting = True,
-      withTransitionNames = not $ hideTransitionNames gc,
-      with1Weights = not $ hideWeight1 gc,
-      withGraphvizCommand = gl
-      },
-    toFind = over lConflictPlaces nubSort c',
-    net = d,
-    numberOfPlaces = places bc,
-    numberOfTransitions = transitions bc,
-    showSolution = Find.printSolution config
-    }
+findConflictGenerate config segment = evalRandT getInstance . mkStdGen
   where
+    getInstance = do
+      petriConflict <- findConflict config segment
+      ds <- shuffleM $ allDrawSettings $ Find.graphConfig config
+      d <- findM (lift . isNetDrawable (fst petriConflict)) ds
+      maybe getInstance (uncurry toInstance petriConflict) d
+    toInstance petri conflict drawSettings = do
+      c' <- lift $ bitraverse
+        (parseWith parsePlacePrec)
+        (parseWith parseTransitionPrec)
+        $ toPetriConflict conflict
+      return $ FindInstance {
+        drawFindWith = drawSettings,
+        toFind = over lConflictPlaces nubSort c',
+        net = petri,
+        numberOfPlaces = places bc,
+        numberOfTransitions = transitions bc,
+        showSolution = Find.printSolution config
+        }
     bc = Find.basicConfig config
-    gc = Find.graphConfig config
 
 pickConflictGenerate
-  :: (MonadAlloy m, MonadThrow m, Net p n)
+  :: (MonadAlloy m, MonadCatch m, MonadDiagrams m, MonadGraphviz m, Net p n)
   => PickConflictConfig
   -> Int
   -> Int

@@ -1,7 +1,9 @@
 module Modelling.CdOd.Generate.DifferentNames where
 
 import Capabilities.Alloy               (MonadAlloy)
-import Modelling.Auxiliary.Common       (Randomise (randomise))
+import Modelling.Auxiliary.Shuffle.NamesAndLayout (
+  shuffleEverything,
+  )
 import Modelling.CdOd.DifferentNames (
   DifferentNamesConfig (..),
   DifferentNamesInstance,
@@ -13,7 +15,7 @@ import Modelling.CdOd.Types (
   ClassConfig (..),
   )
 
-import Control.Monad.Catch              (MonadThrow)
+import Control.Monad.Catch              (MonadCatch)
 import Control.Monad.Random             (MonadRandom, evalRandT, mkStdGen)
 import System.Random.Shuffle            (shuffleM)
 
@@ -21,7 +23,7 @@ debug :: Bool
 debug = False
 
 differentNames
-  :: (MonadAlloy m, MonadThrow m)
+  :: (MonadAlloy m, MonadCatch m)
   => Int
   -> DifferentNamesConfig
   -> Int
@@ -39,7 +41,7 @@ differentNames searchSpace config segment seed = do
           config'
           searchSpace
         getDifferentNamesTask fgen config $ fromEdges names edges
-      randomise inst
+      shuffleEverything inst
     continueWithHead []    _ = fgen
     continueWithHead (x:_) f = f x
 

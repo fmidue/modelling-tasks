@@ -37,7 +37,7 @@ import Modelling.PetriNet.Find (
   findInitial,
   )
 import Modelling.PetriNet.Diagram (
-  renderWith,
+  cacheNet,
   )
 import Modelling.PetriNet.Reach.Type (
   Place (Place),
@@ -77,6 +77,7 @@ import Control.OutputCapable.Blocks (
   translate,
   )
 import Data.Bifunctor                   (Bifunctor (bimap))
+import Data.Data                        (Data, Typeable)
 import Data.Function                    ((&))
 import Data.Foldable                    (for_)
 import Data.GraphViz.Commands           (GraphvizCommand (Circo))
@@ -105,12 +106,16 @@ simpleFindConflictPlacesTask = findConflictPlacesTask
 
 findConflictPlacesTask
   :: (
+    Data (n String),
+    Data (p n String),
     MonadCache m,
     MonadDiagrams m,
     MonadGraphviz m,
     MonadThrow m,
     Net p n,
-    OutputCapable m
+    OutputCapable m,
+    Typeable n,
+    Typeable p
     )
   => FilePath
   -> FindInstance (p n String) Conflict
@@ -119,7 +124,7 @@ findConflictPlacesTask path task = do
   paragraph $ translate $ do
     english "Consider the following Petri net:"
     german "Betrachten Sie folgendes Petrinetz:"
-  image $=<< renderWith path "conflict" (net task) (drawFindWith task)
+  image $=<< cacheNet path (net task) (drawFindWith task)
   paragraph $ translate $ do
     english "Which pair of transitions is in conflict, and because of which conflict-causing place(s), under the initial marking?"
     german "Welches Paar von Transitionen steht in Konflikt, und wegen welcher konfliktverursachenden Stelle(n), unter der Startmarkierung?"
@@ -135,7 +140,7 @@ findConflictPlacesTask path task = do
     translate $ do
       let ((t1, t2), [p1, p2]) = bimap
             (bimap show show)
-            (fmap show)
+            (map show)
             ts
       english [i| as answer would indicate that transitions #{t1} and #{t2} are in conflict under the initial marking
 and that places #{p1} and #{p2} are all those common places within the preconditions

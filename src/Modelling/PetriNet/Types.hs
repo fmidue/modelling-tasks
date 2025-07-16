@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# Language DeriveTraversable #-}
 {-# Language DuplicateRecordFields #-}
@@ -47,6 +48,7 @@ module Modelling.PetriNet.Types (
   SimpleNode (..),
   SimplePetriLike,
   SimplePetriNet,
+  allDrawSettings,
   checkBasicConfig,
   checkChangeConfig,
   checkGraphLayouts,
@@ -82,12 +84,10 @@ module Modelling.PetriNet.Types (
   lTokensOverall,
   lTransitions,
   lUniqueConflictPlace,
-  manyRandomDrawSettings,
   mapChange,
   maybeInitial,
   petriLikeToPetri,
   placeNames,
-  randomDrawSettings,
   shuffleNames,
   transformNet,
   transitionNames,
@@ -115,15 +115,16 @@ import qualified Data.Map.Lazy                    as M (
   )
 import qualified Data.Set                         as S (empty, union)
 
-import Modelling.Auxiliary.Common       (lensRulesL, oneOf)
+import Modelling.Auxiliary.Common       (lensRulesL)
 import Modelling.PetriNet.Reach.Type    (Place, ShowTransition (ShowTransition))
 
 import Control.Lens                     (makeLensesWith)
 import Control.Monad                    ((<=<))
 import Control.Monad.Catch              (Exception, MonadThrow (throwM))
-import Control.Monad.Random             (MonadRandom, RandT, RandomGen)
+import Control.Monad.Random             (RandT, RandomGen)
 import Control.Monad.Trans              (MonadTrans(lift))
 import Data.Bimap                       (Bimap)
+import Data.Data                        (Data)
 import Data.GraphViz.Attributes.Complete (GraphvizCommand (..))
 import Data.Map.Lazy                    (Map)
 import Data.Maybe                       (fromMaybe)
@@ -158,8 +159,8 @@ changes.
 data PetriChange a = Change {
   -- | The token change 'Map': Mapping places to changes of their tokens.
   tokenChange :: Map a Int,
-  -- | The flow change 'Map': Mapping source places to a mapping from target
-  --   place to the flow change at the edge between source and target.
+  -- | The flow change 'Map': Mapping source nodes to a mapping from target
+  --   nodes to the flow change (if any) at the edge between source and target.
   flowChange  :: Map a (Map a Int)
   }
   deriving (Eq, Generic, Show)
@@ -213,7 +214,7 @@ instance Traversable PetriConflict' where
   traverse f = fmap PetriConflict' . bitraverse f f . toPetriConflict
 
 instance Bifunctor PetriConflict where
-  bimap f g (Conflict ts as) = Conflict (bimap g g ts) (f <$> as)
+  bimap f g (Conflict ts as) = Conflict (bimap g g ts) (map f as)
 
 instance Bifoldable PetriConflict where
   bifoldMap f g (Conflict ts as) = foldMap f as <> bifoldMap g g ts
@@ -287,7 +288,7 @@ data Node a =
   flowIn  :: Map a Int,
   flowOut :: Map a Int
   }
-  deriving (Eq, Generic, Read, Show)
+  deriving (Data, Eq, Generic, Read, Show)
 
 instance PetriNode Node where
   initialTokens PlaceNode {initial} = initial
@@ -318,7 +319,7 @@ data SimpleNode a =
   SimpleTransition {
   flowOut           :: Map a Int
   }
-  deriving (Eq, Generic, Read, Show)
+  deriving (Data, Eq, Generic, Read, Show)
 
 instance PetriNode SimpleNode where
   initialTokens SimplePlace {initial} = initial
@@ -459,7 +460,7 @@ The 'PetriLike' graph is a valid Petri net only if
 newtype PetriLike n a = PetriLike {
   -- | the 'Map' of all nodes the Petri net like graph is made of
   allNodes :: Map a (n a)
-  } deriving (Eq, Generic, Read, Show)
+  } deriving (Data, Eq, Generic, Read, Show)
 
 instance Net PetriLike Node where
   emptyNet = PetriLike M.empty
@@ -638,7 +639,7 @@ petriLikeToPetri :: (MonadThrow m, Ord a) => PetriLike Node a -> m Petri
 petriLikeToPetri p = do
   isValid
   return $ Petri {
-    initialMarking = initialTokens <$> M.elems ps,
+    initialMarking = map initialTokens $ M.elems ps,
     trans          =
       foldr ((:) . toChangeTuple) [] ts
     }
@@ -892,6 +893,10 @@ data DrawSettings = DrawSettings {
 
 type Drawable n = (n, DrawSettings)
 
+{-|
+Converts a 'GraphConfig' into 'DrawSettings' by choosing
+the provided 'GraphvizCommand'.
+-}
 drawSettingsWithCommand :: GraphConfig -> GraphvizCommand -> DrawSettings
 drawSettingsWithCommand config c = DrawSettings {
   withPlaceNames = not $ hidePlaceNames config,
@@ -902,27 +907,12 @@ drawSettingsWithCommand config c = DrawSettings {
   }
 
 {-|
-Provides a 'DrawSetting' by using 'drawSettingsWithCommand' and randomly picking
-one of the provided 'graphLayout's.
+Provides a list of all 'DrawSetting' that can be obtained by using
+'drawSettingsWithCommand' and all possible 'graphLayout's of the given config.
 -}
-randomDrawSettings :: MonadRandom m => GraphConfig -> m DrawSettings
-randomDrawSettings config =
-  drawSettingsWithCommand config <$> oneOf (graphLayouts config)
-
-{-|
-Provides a list of 'DrawSettings' with as many entries as specified by randomly
-picking while ensuring as few repetitions of provided 'graphLayout's as possible.
--}
-manyRandomDrawSettings
-  :: MonadRandom m
-  => GraphConfig
-  -- ^ providing layouts to pick from
-  -> Int
-  -- ^ how many entries to return
-  -> m [DrawSettings]
-manyRandomDrawSettings config n = map (drawSettingsWithCommand config) <$> do
-  layouts <- shuffleM $ graphLayouts config
-  shuffleM $ take n $ cycle layouts
+allDrawSettings :: GraphConfig -> [DrawSettings]
+allDrawSettings config =
+  map (drawSettingsWithCommand config) $ graphLayouts config
 
 transitionPairShow
   :: (Petri.Transition, Petri.Transition)

@@ -1,10 +1,10 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.37.0.
+-- This file has been generated from package.yaml by hpack version 0.38.1.
 --
 -- see: https://github.com/sol/hpack
 
-name:           modelling-task-legacy-apps
+name:           modelling-tasks-legacy-apps
 version:        0.0.0
 build-type:     Simple
 
@@ -41,6 +41,7 @@ executable cd2pic
     , happy
   build-depends:
       array
+    , autotool-capabilities-io-instances
     , base
     , diagrams-lib
     , graphviz
@@ -65,6 +66,8 @@ executable different-names-legacy
     , happy
   build-depends:
       MonadRandom
+    , autotool-capabilities
+    , autotool-capabilities-io-instances
     , base
     , bytestring
     , call-alloy
@@ -85,7 +88,7 @@ executable different-names-legacy
 executable instance2pic
   main-is: instance2pic.hs
   other-modules:
-      Paths_modelling_task_legacy_apps
+      Paths_modelling_tasks_legacy_apps
   hs-source-dirs:
       ./
   ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Widentities -Wredundant-constraints -Werror -Wwarn=incomplete-uni-patterns -Wwarn=orphans
@@ -95,6 +98,7 @@ executable instance2pic
   build-depends:
       MonadRandom
     , array
+    , autotool-capabilities-io-instances
     , base
     , bytestring
     , call-alloy
@@ -125,6 +129,8 @@ executable match-cd-od-legacy
     , happy
   build-depends:
       MonadRandom
+    , autotool-capabilities
+    , autotool-capabilities-io-instances
     , base
     , bytestring
     , call-alloy
