@@ -6,7 +6,9 @@ import Capabilities.Diagrams.IO         ()
 import Capabilities.Graphviz.IO         ()
 import Modelling.PetriNet.Reach.Reach (
   ReachConfig (..),
+  NetGoalConfig (..),
   ReachInstance (..),
+  NetGoalInstance (..),
   defaultReachConfig,
   generateReach,
   )
@@ -29,13 +31,15 @@ spec =
     it "abides minTransitionLength" $
       property $ \seed -> do
         let config = defaultReachConfig {
-              maxTransitionLength = 6,
-              minTransitionLength = 6
+              netGoalConf = (netGoalConf defaultReachConfig) {
+                maxTransitionLength = 6,
+                minTransitionLength = 6
+                }
               }
-            minL = minTransitionLength config
+            minL = minTransitionLength (netGoalConf config)
         inst <- generateReach config seed
-        let net = petriNet inst
-            s = goal inst
+        let net = petriNet (netGoal inst)
+            s = goal (netGoal inst)
             ts = transitions net
         net `shouldSatisfy` hasMinTransitionLength (s ==) ts minL
 
