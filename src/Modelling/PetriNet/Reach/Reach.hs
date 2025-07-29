@@ -431,7 +431,7 @@ generateNetGoal conf seed = do
 
   ((petri, state), cmd) <- eval out
 
-  return $ NetGoal {
+  pure $ NetGoal {
     drawUsing   = cmd,
     goal        = state,
     petriNet    = petri
