@@ -405,16 +405,16 @@ generateNetGoal
   => NetGoalConfig
   -> Int
   -> m (NetGoal Place Transition)
-generateNetGoal conf seed = do
-  let ps = [Place 1 .. Place (numPlaces conf)]
+generateNetGoal NetGoalConfig {..} seed = do
+  let ps = [Place 1 .. Place numPlaces]
       tries = forM [1 :: Int .. 1000] $ const $ do
         n <- netLimits vLow vHigh nLow nHigh
             ps
             ts
-            (Modelling.PetriNet.Reach.Reach.capacity conf)
+            capacity
         return $ do
           (l,zs) <-
-            take (maxTransitionLength conf + 1) $ zip [0 :: Int ..] $ levels n
+            take (maxTransitionLength + 1) $ zip [0 :: Int ..] $ levels n
           z' <- zs
           let d = sum $ do
                 p <- ps
@@ -423,10 +423,10 @@ generateNetGoal conf seed = do
       out = do
         xs <- tries
         let ((l, _), pn) = minimumBy (comparing fst) $ concat xs
-        if negate l >= minTransitionLength conf
+        if negate l >= minTransitionLength
           then do
             maybeM out (pure . (pn,))
-            $ findM (Monad.lift . isPetriDrawable (fst pn)) $ drawCommands conf
+            $ findM (Monad.lift . isPetriDrawable (fst pn)) drawCommands
           else out
 
   ((petri, state), cmd) <- eval out
@@ -438,10 +438,10 @@ generateNetGoal conf seed = do
     }
 
   where
-    fixMaximum = second (min (numPlaces conf) . fromMaybe maxBound)
-    (vLow, vHigh) = fixMaximum $ preconditionsRange conf
-    (nLow, nHigh) = fixMaximum $ postconditionsRange conf
-    ts = [Transition 1 .. Transition (numTransitions conf)]
+    fixMaximum = second (min numPlaces . fromMaybe maxBound)
+    (vLow, vHigh) = fixMaximum preconditionsRange
+    (nLow, nHigh) = fixMaximum postconditionsRange
+    ts = [Transition 1 .. Transition numTransitions]
     eval f = evalRandT f $ mkStdGen seed
 
 generateReach
@@ -449,16 +449,16 @@ generateReach
   => ReachConfig
   -> Int
   -> m (ReachInstance Place Transition)
-generateReach conf seed = do
-  netGoal <- generateNetGoal (netGoalConfig conf) seed
+generateReach ReachConfig {..} seed = do
+  netGoal <- generateNetGoal netGoalConfig seed
   pure $ ReachInstance {
     netGoal           = netGoal,
-    minLength         = minTransitionLength (netGoalConfig conf),
-    noLongerThan      = rejectLongerThan conf,
-    showGoalNet       = showTargetNet conf,
-    showSolution      = printSolution conf,
+    minLength         = minTransitionLength netGoalConfig,
+    noLongerThan      = rejectLongerThan,
+    showGoalNet       = showTargetNet,
+    showSolution      = printSolution,
     withLengthHint    =
-      if showLengthHint conf then Just $ maxTransitionLength (netGoalConfig conf) else Nothing,
+      if showLengthHint then Just $ maxTransitionLength netGoalConfig else Nothing,
     withMinLengthHint =
-      if showMinLengthHint conf then Just $ minTransitionLength (netGoalConfig conf) else Nothing
+      if showMinLengthHint then Just $ minTransitionLength netGoalConfig else Nothing
     }
