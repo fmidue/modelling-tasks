@@ -291,7 +291,7 @@ isNoLonger maybeMaxLength ts =
         ]
 
 data ReachInstance s t = ReachInstance {
-  netGoal           :: NetGoalInstance s t,
+  netGoal           :: NetGoal s t,
   minLength         :: Int,
   noLongerThan      :: Maybe Int,
   showGoalNet       :: Bool,
@@ -300,7 +300,7 @@ data ReachInstance s t = ReachInstance {
   withMinLengthHint :: Maybe Int
   } deriving (Generic, Read, Show, Typeable, Data)
 
-data NetGoalInstance s t = NetGoalInstance {
+data NetGoal s t = NetGoal {
   drawUsing         :: GraphvizCommand,
   petriNet          :: Net s t,
   goal              :: State s
@@ -313,7 +313,7 @@ bimapReachInstance
   -> ReachInstance s t
   -> ReachInstance a b
 bimapReachInstance f g ReachInstance {..} = ReachInstance {
-    netGoal           = bimapNetGoalInstance f g netGoal,
+    netGoal           = bimapNetGoal f g netGoal,
     minLength         = minLength,
     noLongerThan      = noLongerThan,
     showGoalNet       = showGoalNet,
@@ -322,13 +322,13 @@ bimapReachInstance f g ReachInstance {..} = ReachInstance {
     withMinLengthHint = withMinLengthHint
     }
 
-bimapNetGoalInstance
+bimapNetGoal
   :: (Ord a, Ord b)
   => (s -> a)
   -> (t -> b)
-  -> NetGoalInstance s t
-  -> NetGoalInstance a b
-bimapNetGoalInstance f g NetGoalInstance {..} = NetGoalInstance {
+  -> NetGoal s t
+  -> NetGoal a b
+bimapNetGoal f g NetGoal {..} = NetGoal {
     drawUsing = drawUsing,
     goal      = mapState f goal,
     petriNet  = bimapNet f g petriNet
@@ -339,13 +339,13 @@ toShowReachInstance
   -> ReachInstance ShowPlace ShowTransition
 toShowReachInstance = bimapReachInstance ShowPlace ShowTransition
 
-toShowNetGoalInstance
-  :: NetGoalInstance Place Transition
-  -> NetGoalInstance ShowPlace ShowTransition
-toShowNetGoalInstance = bimapNetGoalInstance ShowPlace ShowTransition
+toShowNetGoal
+  :: NetGoal Place Transition
+  -> NetGoal ShowPlace ShowTransition
+toShowNetGoal = bimapNetGoal ShowPlace ShowTransition
 
 data ReachConfig = ReachConfig {
-  netGoalConf         :: NetGoalConfig,
+  netGoalConfig       :: NetGoalConfig,
   printSolution       :: Bool,
   rejectLongerThan    :: Maybe Int,
   showLengthHint      :: Bool,
@@ -368,7 +368,7 @@ data NetGoalConfig = NetGoalConfig {
 
 defaultReachConfig :: ReachConfig
 defaultReachConfig = ReachConfig {
-  netGoalConf = NetGoalConfig {
+  netGoalConfig = NetGoalConfig {
     numPlaces           = 4,
     numTransitions      = 4,
     Modelling.PetriNet.Reach.Reach.capacity = Unbounded,
@@ -387,7 +387,7 @@ defaultReachConfig = ReachConfig {
 
 defaultReachInstance :: ReachInstance Place Transition
 defaultReachInstance = ReachInstance {
-  netGoal = NetGoalInstance {
+  netGoal = NetGoal {
     drawUsing         = Circo,
     petriNet          = fst example,
     goal              = snd example
@@ -404,7 +404,7 @@ generateNetGoal
   :: (MonadCatch m, MonadDiagrams m, MonadGraphviz m)
   => NetGoalConfig
   -> Int
-  -> m (NetGoalInstance Place Transition)
+  -> m (NetGoal Place Transition)
 generateNetGoal conf seed = do
   let ps = [Place 1 .. Place (numPlaces conf)]
       tries = forM [1 :: Int .. 1000] $ const $ do
@@ -431,7 +431,7 @@ generateNetGoal conf seed = do
 
   ((petri, state), cmd) <- eval out
 
-  return $ NetGoalInstance {
+  return $ NetGoal {
     drawUsing   = cmd,
     goal        = state,
     petriNet    = petri
@@ -450,15 +450,15 @@ generateReach
   -> Int
   -> m (ReachInstance Place Transition)
 generateReach conf seed = do
-  netGoal <- generateNetGoal (netGoalConf conf) seed
+  netGoal <- generateNetGoal (netGoalConfig conf) seed
   pure $ ReachInstance {
     netGoal           = netGoal,
-    minLength         = minTransitionLength (netGoalConf conf),
+    minLength         = minTransitionLength (netGoalConfig conf),
     noLongerThan      = rejectLongerThan conf,
     showGoalNet       = showTargetNet conf,
     showSolution      = printSolution conf,
     withLengthHint    =
-      if showLengthHint conf then Just $ maxTransitionLength (netGoalConf conf) else Nothing,
+      if showLengthHint conf then Just $ maxTransitionLength (netGoalConfig conf) else Nothing,
     withMinLengthHint =
-      if showMinLengthHint conf then Just $ minTransitionLength (netGoalConf conf) else Nothing
+      if showMinLengthHint conf then Just $ minTransitionLength (netGoalConfig conf) else Nothing
     }

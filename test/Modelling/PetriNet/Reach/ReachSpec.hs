@@ -8,7 +8,7 @@ import Modelling.PetriNet.Reach.Reach (
   ReachConfig (..),
   NetGoalConfig (..),
   ReachInstance (..),
-  NetGoalInstance (..),
+  NetGoal (..),
   defaultReachConfig,
   generateReach,
   )
@@ -31,12 +31,12 @@ spec =
     it "abides minTransitionLength" $
       property $ \seed -> do
         let config = defaultReachConfig {
-              netGoalConf = (netGoalConf defaultReachConfig) {
+              netGoalConfig = (netGoalConfig defaultReachConfig) {
                 maxTransitionLength = 6,
                 minTransitionLength = 6
                 }
               }
-            minL = minTransitionLength (netGoalConf config)
+            minL = minTransitionLength (netGoalConfig config)
         inst <- generateReach config seed
         let net = petriNet (netGoal inst)
             s = goal (netGoal inst)

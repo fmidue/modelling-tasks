@@ -5,13 +5,13 @@ module Modelling.PetriNet.PetriReach.Instance where
 import qualified Data.Map                         as M (fromList)
 import qualified Data.Set                         as S (fromList)
 
-import Modelling.PetriNet.Reach.Reach   (ReachInstance (..), NetGoalInstance(..))
+import Modelling.PetriNet.Reach.Reach   (ReachInstance (..), NetGoal(..))
 import Modelling.PetriNet.Reach.Type    (Capacity (..), Net (..), State (..))
 import Data.GraphViz                    (GraphvizCommand (Circo))
 
 task5 :: ReachInstance String String
 task5 = ReachInstance {
-  netGoal = NetGoalInstance {
+  netGoal = NetGoal {
     drawUsing = Circo,
     goal = State {
       unState = M.fromList

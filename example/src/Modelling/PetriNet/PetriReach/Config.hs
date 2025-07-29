@@ -11,7 +11,7 @@ points: 0.2
 -}
 task2023_27 :: ReachConfig
 task2023_27 = ReachConfig {
-  netGoalConf  = NetGoalConfig {
+  netGoalConfig  = NetGoalConfig {
     numPlaces = 4,
     numTransitions = 4,
     capacity = Unbounded,
@@ -33,7 +33,7 @@ points: 0.25
 -}
 task2023_28 :: ReachConfig
 task2023_28 = ReachConfig {
-  netGoalConf = NetGoalConfig {
+  netGoalConfig = NetGoalConfig {
     numPlaces = 6,
     numTransitions = 6,
     capacity = Unbounded,
@@ -67,7 +67,7 @@ points: 0.08
 -}
 task2024_60 :: ReachConfig
 task2024_60 = ReachConfig {
-  netGoalConf = NetGoalConfig {
+  netGoalConfig = NetGoalConfig {
     numPlaces = 4,
     numTransitions = 4,
     capacity = Unbounded,
