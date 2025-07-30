@@ -288,7 +288,7 @@ data LimitedLinking nodeName = LimitedLinking {
   linking                     :: nodeName,
   limits                      :: (Int, Maybe Int)
   }
-  deriving (Eq, Functor, Foldable, Generic, Ord, Read, Show, Traversable, Data)
+  deriving (Data, Eq, Functor, Foldable, Generic, Ord, Read, Show, Traversable)
 
 {-|
 A variation of 'LimitedLinking' that can fallback to a default limit
@@ -383,7 +383,7 @@ data Relationship className relationshipName
     subClass                  :: className,
     superClass                :: className
     }
-  deriving (Eq, Functor, Generic, Ord, Read, Show, Data)
+  deriving (Data, Eq, Functor, Generic, Ord, Read, Show)
 
 instance Bifunctor Relationship where
   bimap f g r = case r of
@@ -444,7 +444,7 @@ data InvalidRelationship className relationshipName
     invalidSubClass :: !(LimitedLinking className),
     invalidSuperClass :: !(LimitedLinking className)
     }
-  deriving (Eq, Functor, Generic, Ord, Read, Show, Data)
+  deriving (Data, Eq, Functor, Generic, Ord, Read, Show)
 
 $(deriveBifunctor ''InvalidRelationship)
 $(deriveBifoldable ''InvalidRelationship)
@@ -497,7 +497,7 @@ data Annotation annotation annotated = Annotation {
   annotated                   :: annotated,
   annotation                  :: annotation
   }
-  deriving (Eq, Foldable, Functor, Generic, Read, Show, Traversable, Data)
+  deriving (Data, Eq, Foldable, Functor, Generic, Read, Show, Traversable)
 
 $(deriveBifunctor ''Annotation)
 $(deriveBifoldable ''Annotation)
@@ -510,7 +510,7 @@ data AnnotatedClassDiagram relationshipAnnotation className relationshipName
     annotatedRelationships
       :: [Annotation relationshipAnnotation (AnyRelationship className relationshipName)]
     }
-  deriving (Eq, Generic, Read, Show, Data)
+  deriving (Data, Eq, Generic, Read, Show)
 
 instance Functor (AnnotatedClassDiagram relationshipAnnotation className) where
   fmap f AnnotatedClassDiagram {..} = AnnotatedClassDiagram {
@@ -902,7 +902,7 @@ data CdDrawSettings
     -- | When set to 'False' association arrows will be omitted
     printNavigations :: !Bool
     }
-  deriving (Eq, Generic, Read, Show, Data)
+  deriving (Data, Eq, Generic, Read, Show)
 
 defaultCdDrawSettings :: CdDrawSettings
 defaultCdDrawSettings = CdDrawSettings {
@@ -925,7 +925,7 @@ data OmittedDefaultMultiplicities
     associationOmittedDefaultMultiplicity :: !(Maybe (Int, Maybe Int)),
     compositionWholeOmittedDefaultMultiplicity :: !(Maybe (Int, Maybe Int))
     }
-  deriving (Eq, Generic, Read, Show, Data)
+  deriving (Data, Eq, Generic, Read, Show)
 
 defaultOmittedDefaultMultiplicities :: OmittedDefaultMultiplicities
 defaultOmittedDefaultMultiplicities = OmittedDefaultMultiplicities {
@@ -1141,7 +1141,7 @@ data Property =
   | SelfRelationships
   | WrongAssociationLimits
   | WrongCompositionLimits
-  deriving (Bounded, Enum, Eq, Generic, Ord, Read, Show, Data)
+  deriving (Bounded, Data, Enum, Eq, Generic, Ord, Read, Show)
 
 isIllegal :: Property -> Bool
 isIllegal x = case x of

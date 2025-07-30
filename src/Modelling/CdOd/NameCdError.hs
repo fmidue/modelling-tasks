@@ -215,7 +215,7 @@ $(deriveJSON defaultOptions {fieldLabelModifier = upperToDash} ''NameCdErrorAnsw
 data Reason
   = Custom (Map Language String)
   | PreDefined Property
-  deriving (Eq, Generic, Ord, Read, Show, Data)
+  deriving (Data, Eq, Generic, Ord, Read, Show)
 
 isCustom :: Reason -> Bool
 isCustom = \case
@@ -372,7 +372,7 @@ data NameCdErrorTaskTextElement =
   IncorrectCd |
   ReasonsList |
   RelationshipsList
-  deriving (Bounded, Enum, Eq, Generic, Ord, Read, Show, Data)
+  deriving (Bounded, Data, Enum, Eq, Generic, Ord, Read, Show)
 
 toTaskText
   :: (MonadCache m, MonadDiagrams m, MonadGraphviz m, OutputCapable m)
@@ -419,7 +419,7 @@ data NameCdErrorInstance = NameCdErrorInstance {
   showSolution                :: Bool,
   taskText                    :: !NameCdErrorTaskText,
   addText                     :: Maybe (Map Language String)
-  } deriving (Eq, Generic, Read, Show, Data)
+  } deriving (Data, Eq, Generic, Read, Show)
 
 relevantRelationships
   :: NameCdErrorInstance
@@ -442,7 +442,7 @@ data Relevance
     listingPriority           :: Int,
     referenceUsing            :: ArticleToUse
     }
-  deriving (Eq, Generic, Read, Show, Data)
+  deriving (Data, Eq, Generic, Read, Show)
 
 isRelevant :: Annotation Relevance annotated -> Bool
 isRelevant =
