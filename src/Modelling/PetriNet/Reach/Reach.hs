@@ -244,10 +244,13 @@ reachEvaluation path reach ts =
       | showSolution reach = Just $ show $ TransitionsList $ reachSolution reach
       | otherwise = Nothing
 
+netGoalSolution :: Ord s => NetGoal s t -> [t]
+netGoalSolution netGoal = reverse $ snd $ head $ concatMap
+  (filter $ (== goal netGoal) . fst)
+  $ levels' $ petriNet netGoal
+
 reachSolution :: Ord s => ReachInstance s t -> [t]
-reachSolution inst = reverse $ snd $ head $ concatMap
-  (filter $ (== goal (netGoal inst)) . fst)
-  $ levels' $ petriNet (netGoal inst)
+reachSolution inst = netGoalSolution (netGoal inst)
 
 assertReachPoints
   :: OutputCapable m
