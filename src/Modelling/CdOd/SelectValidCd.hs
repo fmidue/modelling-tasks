@@ -315,7 +315,7 @@ defaultSelectValidCdTaskText = [
   Paragraph $ singleton $ Translated $ translations $ do
     english [i|Which of these class diagram candidates are valid class diagrams?
 Please state your answer by giving a list of numbers, indicating all valid class diagrams.|]
-    german [i|Welche dieser Klassendiagrammkandidaten sind valide Klassendiagramme?
+    german [i|Welche dieser Klassendiagrammkandidaten sind gültige Klassendiagramme?
 Bitte geben Sie Ihre Antwort in Form einer Liste von Zahlen an, die alle gültigen Klassendiagramme enthält.|],
   Paragraph [
     Translated $ translations $ do
@@ -323,8 +323,8 @@ Bitte geben Sie Ihre Antwort in Form einer Liste von Zahlen an, die alle gültig
       german [i|Zum Beispiel würde|],
     Code $ uniform "[1, 2]",
     Translated $ translations $ do
-      english [i|would indicate that only class diagram candidates 1 and 2 of the given ones are valid class diagrams.|]
-      german [i|bedeuten, dass nur die Klassendiagrammkandidaten 1 und 2 der angegebenen Klassendiagrammkandidaten gültige Klassendiagramme sind.|]
+      english [i|would mean that only class diagram candidates 1 and 2 of the given ones are valid class diagrams.|]
+      german [i|bedeuten, dass nur die Klassendiagrammkandidaten 1 und 2 der gegebenen Klassendiagrammkandidaten gültige Klassendiagramme sind.|]
     ]
   ]
 
@@ -372,10 +372,10 @@ selectValidCdFeedback path drawSettings xs x cdChange =
       notCorrect
       paragraph $ translate $ do
         english [iii|
-          Class diagram #{x} is invalid.
+          Class diagram candidate #{x} is invalid.
           |]
         german [iii|
-          Klassendiagramm #{x} ist ungültig.
+          Klassendiagrammkandidat #{x} ist ungültig.
           |]
       let sufficient = byName || maybe True isInheritance (remove change)
       unless sufficient showNamedCd
@@ -397,7 +397,7 @@ selectValidCdFeedback path drawSettings xs x cdChange =
           german [iii|
             Wenn es zum Beispiel
             #{trailingCommaGerman $ phrase German}
-            nicht gäbe, wäre es gültig.
+            nicht gäbe, wäre er gültig.
             |]
       pure ()
     Right od | x `notElem` xs -> do
@@ -430,8 +430,8 @@ selectValidCdFeedback path drawSettings xs x cdChange =
       | withDir = Forward
       | otherwise = NoDir
     notCorrect = paragraph $ translate $ do
-      english [iii|Your answer to class diagram #{x} is not correct.|]
-      german [iii|Ihre Antwort zu Klassendiagramm #{x} ist nicht richtig.|]
+      english [iii|Your answer about class diagram candidate #{x} is not right.|]
+      german [iii|Ihre Antwort zu Klassendiagrammkandidat #{x} ist nicht richtig.|]
     isInheritance = \case
       Right Inheritance {} -> True
       Right {} -> False

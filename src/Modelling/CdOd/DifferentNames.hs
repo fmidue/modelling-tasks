@@ -398,7 +398,7 @@ defaultDifferentNamesTaskText :: DifferentNamesTaskText
 defaultDifferentNamesTaskText = [
   Paragraph $ singleton $ Translated $ translations $ do
     english "Consider the following (valid) class diagram:"
-    german "Betrachten Sie folgendes (valide) Klassendiagramm:",
+    german "Betrachten Sie das folgende (gültige) Klassendiagramm:",
   Special GivenCd,
   Paragraph $ singleton $ Translated $ translations $ do
     english "and the following object diagram (which conforms to it):"
@@ -462,7 +462,7 @@ differentNamesSyntax DifferentNamesInstance {..} cs = addPretext $ do
   case allMappingValues of
     (x:_):_ -> refuse $ paragraph $ translate $ do
       let y = ShowName x
-      english [i|The identifier '#{y}' appears twice within the given mappings.|]
+      english [i|The identifier '#{y}' appears twice within the provided mappings.|]
       german [i|
         Der Bezeichner '#{y}' existiert doppelt in den angegebenen Zuordnungen.
         |]
