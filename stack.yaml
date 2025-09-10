@@ -26,3 +26,5 @@ allow-newer-deps:
   - diagrams-graphviz
   - latex-svg-image
 hpack-force: true
+system-ghc: true
+install-ghc: false
