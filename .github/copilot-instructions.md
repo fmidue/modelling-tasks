@@ -7,13 +7,13 @@ Modelling Tasks is a Haskell library and application suite for generating exerci
 
 ### ⏰ NEVER CANCEL BUILDS OR TESTS
 - **Dependency builds**: 45-75 minutes (set timeout to 90+ minutes)
-- **Project builds**: 30-45 minutes (set timeout to 60+ minutes) 
+- **Project builds**: 30-45 minutes (set timeout to 60+ minutes)
 - **Test suites**: 15-30 minutes (set timeout to 45+ minutes)
 - Builds resume from cache when interrupted properly - canceling wastes progress
 
 ### 🌐 NETWORK ACCESS REQUIRED
 - **Required domains**: hackage.haskell.org, raw.githubusercontent.com, github.com
-- **Test connectivity**: `curl -I https://hackage.haskell.org/root.json` 
+- **Test connectivity**: `curl -I https://hackage.haskell.org/root.json`
 - **No offline mode**: All builds require internet for dependency downloads
 - **Restricted environments**: Will fail with `ConnectionTimeout` errors
 
@@ -34,9 +34,9 @@ This project uses Haskell Stack as its primary build tool. Three Stack configura
 - `stack-apps.yaml` -- applications configuration (includes app/, legacy-app/, example/)
 - `stack-examples.yaml` -- examples only configuration (includes example/)
 
-**CRITICAL NETWORK REQUIREMENT**: This project requires internet access to download dependencies from Hackage and GitHub. 
+**CRITICAL NETWORK REQUIREMENT**: This project requires internet access to download dependencies from Hackage and GitHub.
 
-**Network Issues**: 
+**Network Issues**:
 - **Symptoms**: `ConnectionTimeout` errors during `stack build --only-dependencies`
 - **URLs Required**: hackage.haskell.org, raw.githubusercontent.com, github.com
 - **Testing connectivity**: `ping hackage.haskell.org` and `curl -I https://hackage.haskell.org`
@@ -61,7 +61,7 @@ This project uses Haskell Stack as its primary build tool. Three Stack configura
 - `stack build` -- 15-30 minutes
 
 #### Alternative Build for Examples
-- `stack --stack-yaml=stack-examples.yaml build --only-dependencies` -- 30-45 minutes  
+- `stack --stack-yaml=stack-examples.yaml build --only-dependencies` -- 30-45 minutes
 - `stack --stack-yaml=stack-examples.yaml build` -- 15-30 minutes
 
 ### Platform-Specific Notes
@@ -85,20 +85,20 @@ Or provide as argument: `stack build --flag autotool-capabilities:alloy-use-sat4
 ### Running Applications
 The project includes multiple command-line applications in the `/app` directory:
 - `stack exec match-cd-od` -- Match class and object diagrams
-- `stack exec different-names` -- Generate different name variations 
+- `stack exec different-names` -- Generate different name variations
 - `stack exec repair-incorrect` -- Repair incorrect models
 - `stack exec check-cds` -- Check class diagrams
 - `stack exec concurrency` -- Concurrency analysis
 - `stack exec conflicts` -- Conflict analysis
 
-**Build applications first**: `stack --stack-yaml=stack-apps.yaml build` 
+**Build applications first**: `stack --stack-yaml=stack-apps.yaml build`
 
 ### Using GHCi for Interactive Development
 The repository includes a `.ghci` configuration file with pre-loaded modules and settings:
 ```haskell
 -- .ghci automatically loads:
 -- :set +s (show timing)
--- :set -XTypeApplications 
+-- :set -XTypeApplications
 -- :set -iapp/common (include path)
 -- :l app/common/Common.hs (loads Common module)
 -- Pre-imported: Control.OutputCapable.Blocks, Control.Monad.Trans.Except
@@ -127,7 +127,7 @@ pPrint defaultNameCdErrorConfig
 ## Validation and Linting
 Always run these commands before committing changes:
 
-### Linting  
+### Linting
 **HLint is NOT pre-installed**. The CI uses GitHub Actions to install and run HLint 3.5:
 - Local HLint installation: Follow [HLint installation guide](https://github.com/ndmitchell/hlint#installation)
 - Manual linting: `hlint src/ test/ app/` (after installation)
@@ -142,10 +142,10 @@ The repository includes comprehensive spell checking via GitHub Actions:
 - Runs automatically on push and pull requests
 - Configuration in `.github/actions/spelling/` directory
 
-### Code Formatting  
+### Code Formatting
 Follow `.editorconfig` standards (automatically applied by most editors):
 - 2-space indentation
-- LF line endings  
+- LF line endings
 - Trim trailing whitespace
 - 175 character line limit (160 for .als files)
 - No line length limits for YAML, Markdown, or TeX files
@@ -156,7 +156,7 @@ Follow `.editorconfig` standards (automatically applied by most editors):
 ### Key Directories
 - `src/Modelling/` -- Main library source code
   - `ActivityDiagram/` -- UML Activity Diagram tasks
-  - `CdOd/` -- Class Diagram and Object Diagram tasks  
+  - `CdOd/` -- Class Diagram and Object Diagram tasks
   - `PetriNet/` -- Petri Net tasks
   - `Auxiliary/` -- Common utilities
 - `app/` -- Command-line applications
@@ -165,7 +165,7 @@ Follow `.editorconfig` standards (automatically applied by most editors):
 - `test/` -- HSpec test suites
 - `alloy/` -- Alloy specification files (.als)
   - `alloy/ad/` -- Activity Diagram specifications
-  - `alloy/cd/` -- Class Diagram specifications  
+  - `alloy/cd/` -- Class Diagram specifications
   - `alloy/petri/` -- Petri Net specifications
 
 ### Build Configuration Files
@@ -198,7 +198,7 @@ stack --no-terminal test --stack-yaml=stack-apps.yaml --coverage \
 
 # Additional validations:
 # - HLint checking (hlint.yml)
-# - Spell checking with multiple dictionaries (spelling.yml)  
+# - Spell checking with multiple dictionaries (spelling.yml)
 # - Cabal file consistency checking (consistency.yml)
 # - Super-linter for general code quality (linter.yml)
 # - Nightly builds with latest dependencies (haskell-nightly.yml)
@@ -208,7 +208,7 @@ stack --no-terminal test --stack-yaml=stack-apps.yaml --coverage \
 ## Common Tasks and Troubleshooting
 
 ### Network Issues
-- **Symptom**: `ConnectionTimeout` errors during `stack build --only-dependencies`  
+- **Symptom**: `ConnectionTimeout` errors during `stack build --only-dependencies`
 - **Root Cause**: Firewall blocking access to hackage.haskell.org, raw.githubusercontent.com, github.com
 - **Testing**: `curl -I https://hackage.haskell.org/root.json` should return HTTP 200
 - **Solution**: Requires unrestricted internet access or internal package mirrors
@@ -220,11 +220,11 @@ stack --no-terminal test --stack-yaml=stack-apps.yaml --coverage \
 - **Alternative**: Try different stack yaml files (`stack-apps.yaml` vs `stack.yaml`)
 
 ### GHC Version Compatibility
-- **Current supported**: GHC 9.12.2 with resolver lts-21.25  
+- **Current supported**: GHC 9.12.2 with resolver lts-21.25
 - **Stack manages GHC**: Uses system GHC when `system-ghc: true` is configured
 - **Verify**: `stack ghc --version` should match expected version
 
-### Windows-Specific Issues  
+### Windows-Specific Issues
 - **Symptom**: Alloy solver failures
 - **Solution**: Use `--flag autotool-capabilities:alloy-use-sat4j` or configure in stack.yaml:
   ```yaml
@@ -241,31 +241,31 @@ stack --no-terminal test --stack-yaml=stack-apps.yaml --coverage \
 
 ### Testing Specific Tasks
 Different tasks can be tested by following the naming pattern in GHCi:
-- Replace `NameCdError` with other task names (e.g., `MatchCdOd`, `SelectAS`)  
+- Replace `NameCdError` with other task names (e.g., `MatchCdOd`, `SelectAS`)
 - Change `English` to `German` for German language versions
 - Tasks may require directory arguments (e.g., `"/tmp/"`) - check function signatures
 - Import modules based on task type: `Modelling.CdOd.NameCdError`, `Modelling.ActivityDiagram.MatchAd`
 
 ## Validation Status
 
-### ✅ Validated Commands  
+### ✅ Validated Commands
 These commands have been tested and work correctly:
 - `sudo apt-get install -y graphviz texlive-base texlive-latex-base` -- installs system deps (2-3 minutes)
 - `dot -V` -- verifies Graphviz installation (graphviz version 2.43.0)
-- `pdflatex --version` -- verifies LaTeX installation (pdfTeX 3.141592653)  
+- `pdflatex --version` -- verifies LaTeX installation (pdfTeX 3.141592653)
 - `stack --version` -- verifies Stack installation (Version 3.7.1)
 - `ghc --version` -- verifies GHC installation (GHC 9.12.2)
 - Repository structure and file access work correctly
 
 ### ⚠️  Network-Dependent Commands (Cannot Validate)
 These commands require internet access and fail in restricted environments:
-- `stack build --only-dependencies` -- fails with `ConnectionTimeout` 
+- `stack build --only-dependencies` -- fails with `ConnectionTimeout`
 - `stack test` -- requires dependency build first
 - `stack exec <app-name>` -- requires successful build first
 - GHCi task generation -- requires dependencies
 
 ### 🔧 Workarounds for Restricted Networks
-- **CI/CD**: Use unrestricted GitHub Actions environment  
+- **CI/CD**: Use unrestricted GitHub Actions environment
 - **Local development**: Configure network access or use pre-built environments
 - **Testing**: Use `ghc` directly for syntax checking individual modules
 - **Validation**: Rely on CI workflows for full build/test validation
@@ -274,7 +274,7 @@ These commands require internet access and fail in restricted environments:
 ### End-to-End Testing (Requires Network Access)
 After making changes, always validate:
 1. **System dependencies**: `dot -V && pdflatex --version`
-2. **Network connectivity**: `curl -I https://hackage.haskell.org/root.json`  
+2. **Network connectivity**: `curl -I https://hackage.haskell.org/root.json`
 3. **Build succeeds**: `stack --stack-yaml=stack-apps.yaml build` (60+ minutes)
 4. **Tests pass**: `stack --stack-yaml=stack-apps.yaml test` (30+ minutes)
 5. **App execution**: Test at least one app with `stack exec <app-name>`
@@ -284,10 +284,10 @@ After making changes, always validate:
 1. **Start GHCi**: `stack ghci --stack-yaml=stack-examples.yaml --package=autotool-capabilities-io-instances`
 2. **Generate task instance**: Follow patterns in README.md for specific tasks
 3. **Export to files**: Tasks generate LaTeX and Graphviz output in specified directories
-4. **Verify outputs**: Check that .tex, .svg, .pdf files are created correctly  
+4. **Verify outputs**: Check that .tex, .svg, .pdf files are created correctly
 5. **Test validation**: Try sample answers with task validation functions
 
-### Minimal Validation (Network-Restricted)  
+### Minimal Validation (Network-Restricted)
 When full builds aren't possible:
 1. **Syntax check**: `ghc -Wall --make -fno-code src/Modelling/Types.hs`
 2. **File structure**: Verify imports and exports align with exposed-modules
