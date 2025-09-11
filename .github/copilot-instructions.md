@@ -69,11 +69,11 @@ This project uses Haskell Stack as its primary build system. Three Stack configu
 ```yaml
 # In stack.yaml, stack-apps.yaml, or stack-examples.yaml
 flags:
-  modelling-tasks:
+  autotool-capabilities:
     alloy-use-sat4j: true
 ```
 
-Or provide as argument: `stack build --flag modelling-tasks:alloy-use-sat4j`
+Or provide as argument: `stack build --flag autotool-capabilities:alloy-use-sat4j`
 
 ### Running Tests
 - `stack test` -- **NEVER CANCEL**: Takes 15-30 minutes. Set timeout to 45+ minutes.
@@ -226,10 +226,10 @@ stack --no-terminal test --stack-yaml=stack-apps.yaml --coverage \
 
 ### Windows-Specific Issues  
 - **Symptom**: Alloy solver failures
-- **Solution**: Use `--flag modelling-tasks:alloy-use-sat4j` or configure in stack.yaml:
+- **Solution**: Use `--flag autotool-capabilities:alloy-use-sat4j` or configure in stack.yaml:
   ```yaml
   flags:
-    modelling-tasks:
+    autotool-capabilities:
       alloy-use-sat4j: true
   ```
 
