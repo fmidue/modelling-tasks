@@ -94,6 +94,17 @@ The project includes multiple command-line applications in the `/app` directory:
 **Build applications first**: `stack --stack-yaml=stack-apps.yaml build` 
 
 ### Using GHCi for Interactive Development
+The repository includes a `.ghci` configuration file with pre-loaded modules and settings:
+```haskell
+-- .ghci automatically loads:
+-- :set +s (show timing)
+-- :set -XTypeApplications 
+-- :set -iapp/common (include path)
+-- :l app/common/Common.hs (loads Common module)
+-- Pre-imported: Control.OutputCapable.Blocks, Control.Monad.Trans.Except
+-- Qualified imports: Data.Bimap as BM, Data.Map as M
+```
+
 For interactive task generation and testing:
 ```bash
 stack ghci --stack-yaml=stack-examples.yaml --package=autotool-capabilities-io-instances
@@ -123,12 +134,22 @@ Always run these commands before committing changes:
 - HLint configuration in `.hlint.yaml`: uses `--cpp-simple` flag and ignores "Redundant pure" warnings
 - **CI validation**: HLint runs automatically in GitHub Actions on push/PR
 
+### Spell Checking
+The repository includes comprehensive spell checking via GitHub Actions:
+- Uses `check-spelling/check-spelling` with multiple dictionaries
+- Includes CSS, LaTeX, software terms, Haskell, German, and English dictionaries
+- Checks both file content and file names
+- Runs automatically on push and pull requests
+- Configuration in `.github/actions/spelling/` directory
+
 ### Code Formatting  
-Follow .editorconfig standards:
+Follow `.editorconfig` standards (automatically applied by most editors):
 - 2-space indentation
 - LF line endings  
 - Trim trailing whitespace
 - 175 character line limit (160 for .als files)
+- No line length limits for YAML, Markdown, or TeX files
+- Special handling for test/unit/ files (formatting rules relaxed)
 
 ## Repository Structure
 
@@ -152,20 +173,36 @@ Follow .editorconfig standards:
 - `modelling-tasks.cabal` -- Generated Cabal file (DO NOT EDIT)
 - `stack.yaml`, `stack-apps.yaml`, `stack-examples.yaml` -- Stack configurations
 - `hie.yaml` -- Haskell IDE Engine configuration
+- `.editorconfig` -- Code formatting standards for editors
+- `.ghci` -- Default GHCi configuration with pre-loaded modules and imports
 
 ## CI/CD Pipeline
 
 ### GitHub Actions Workflows
 - `.github/workflows/haskell.yml` -- Main CI build and test
-- `.github/workflows/hlint.yml` -- Haskell linting
+- `.github/workflows/haskell-nightly.yml` -- Nightly builds with latest dependencies
+- `.github/workflows/hlint.yml` -- Haskell linting with HLint
 - `.github/workflows/linter.yml` -- Super-linter for general code quality
+- `.github/workflows/spelling.yml` -- Spell checking with multiple dictionaries
+- `.github/workflows/checks.yml` -- General consistency checks
+- `.github/workflows/consistency.yml` -- Cabal file consistency validation
+- `.github/workflows/haddock.yml` -- Generate and deploy documentation to GitHub Pages
 
 ### Build Process in CI
-The CI installs system dependencies and runs:
+The CI installs system dependencies and runs comprehensive validation:
 ```bash
+# Main build and test (haskell.yml)
 stack --no-terminal test --stack-yaml=stack-apps.yaml --coverage \
   --bench --no-run-benchmarks --haddock --no-haddock-deps \
   --test-arguments="--skip-needs-tuning --times --maximum-generated-tests=50"
+
+# Additional validations:
+# - HLint checking (hlint.yml)
+# - Spell checking with multiple dictionaries (spelling.yml)  
+# - Cabal file consistency checking (consistency.yml)
+# - Super-linter for general code quality (linter.yml)
+# - Nightly builds with latest dependencies (haskell-nightly.yml)
+# - Haddock documentation generation (haddock.yml)
 ```
 
 ## Common Tasks and Troubleshooting
