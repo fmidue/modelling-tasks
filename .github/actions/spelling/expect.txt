@@ -1,0 +1,17 @@
+autotool
+capabilities
+ghci
+haddock
+hackage
+graphviz
+texlive
+pdflatex
+pdftex
+plantuml
+minisat
+alloy
+sat4j
+hpack
+yamllint
+hlint
+filenames

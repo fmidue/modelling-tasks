@@ -28,8 +28,8 @@ Verify installations:
 - `dot -V` -- should show graphviz version 2.43.0 or later
 - `pdflatex --version` -- should show pdfTeX 3.141592653 or later
 
-### Build System Setup
-This project uses Haskell Stack as its primary build system. Three Stack configurations are available:
+### Build Tool Setup
+This project uses Haskell Stack as its primary build tool. Three Stack configurations are available:
 - `stack.yaml` -- main library configuration
 - `stack-apps.yaml` -- applications configuration (includes app/, legacy-app/, example/)
 - `stack-examples.yaml` -- examples only configuration (includes example/)
@@ -138,7 +138,7 @@ Always run these commands before committing changes:
 The repository includes comprehensive spell checking via GitHub Actions:
 - Uses `check-spelling/check-spelling` with multiple dictionaries
 - Includes CSS, LaTeX, software terms, Haskell, German, and English dictionaries
-- Checks both file content and file names
+- Checks both file content and filenames
 - Runs automatically on push and pull requests
 - Configuration in `.github/actions/spelling/` directory
 
