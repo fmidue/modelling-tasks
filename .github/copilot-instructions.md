@@ -107,7 +107,7 @@ The repository includes a `.ghci` configuration file with pre-loaded modules and
 
 For interactive task generation and testing:
 ```bash
-stack ghci --stack-yaml=stack-examples.yaml --package=autotool-capabilities-io-instances
+stack ghci --stack-yaml=stack-examples.yaml
 ```
 
 Example GHCi session for NameCdError task:
@@ -281,7 +281,7 @@ After making changes, always validate:
 6. **GHCi interaction**: Load examples and generate task instances
 
 ### Manual Testing Workflow
-1. **Start GHCi**: `stack ghci --stack-yaml=stack-examples.yaml --package=autotool-capabilities-io-instances`
+1. **Start GHCi**: `stack ghci --stack-yaml=stack-examples.yaml`
 2. **Generate task instance**: Follow patterns in README.md for specific tasks
 3. **Export to files**: Tasks generate LaTeX and Graphviz output in specified directories
 4. **Verify outputs**: Check that .tex, .svg, .pdf files are created correctly
