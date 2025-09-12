@@ -179,10 +179,10 @@ spec = do
           Object {isAnonymous = True, objectName = "c1", objectClass = "C"}
           ],
         links = [
-          Link {linkName = "x", linkFrom = "a", linkTo = "c"},
-          Link {linkName = "x", linkFrom = "a", linkTo = "c1"},
-          Link {linkName = "y", linkFrom = "c", linkTo = "a"},
-          Link {linkName = "y", linkFrom = "c1", linkTo = "a"}
+          Link {linkLabel = "x", linkFrom = "a", linkTo = "c"},
+          Link {linkLabel = "x", linkFrom = "a", linkTo = "c1"},
+          Link {linkLabel = "y", linkFrom = "c", linkTo = "a"},
+          Link {linkLabel = "y", linkFrom = "c1", linkTo = "a"}
           ]
         }
 
@@ -275,9 +275,9 @@ simpleCircleOd = ObjectDiagram {
     Object {isAnonymous = True, objectName = "c", objectClass = "C"}
     ],
   links = [
-    Link {linkName = "x", linkFrom = "a", linkTo = "b"},
-    Link {linkName = "y", linkFrom = "b", linkTo = "c"},
-    Link {linkName = "z", linkFrom = "c", linkTo = "a"}
+    Link {linkLabel = "x", linkFrom = "a", linkTo = "b"},
+    Link {linkLabel = "y", linkFrom = "b", linkTo = "c"},
+    Link {linkLabel = "z", linkFrom = "c", linkTo = "a"}
     ]
   }
 

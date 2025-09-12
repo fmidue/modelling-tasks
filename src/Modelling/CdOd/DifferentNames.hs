@@ -373,22 +373,22 @@ toTaskSpecificText path DifferentNamesInstance {..} = \case
     paragraph $ translate $ do
       english [iii|
         Please note: Links are already grouped correctly and fully,
-        i.e., all links with the same name (and only links with the same name!)
-        in the OD correspond to exactly the same relationship name in the CD.
+        i.e., all links with the same label (and only links with the same label!)
+        in the OD correspond to exactly the same relationship in the CD.
         |]
       german [iii|
         Bitte beachten Sie: Links sind bereits vollständig und korrekt gruppiert,
-        d.h., alle Links mit dem selben Namen
-        (and auch nur Links mit dem selben Namen!)
-        im OD entsprechen genau dem selben Beziehungsnamen im CD.
+        d.h., alle Links mit der selben Beschriftung
+        (and auch nur Links mit der selben Beschriftung!)
+        im OD entsprechen genau der selben Beziehung im CD.
         |]
     paragraph $ translate $ do
       english [iii|
-        Thus, no relationship or link name should occur
+        Thus, no relationship or link label should occur
         more than once in your mapping.
         |]
       german [iii|
-        Deshalb sollte kein Link- oder Beziehungsname
+        Deshalb sollte keine Linkbeschriftung oder Beziehungsname
         mehr als einmal in Ihrer Zuordnung auftreten.
         |]
     pure ()
@@ -598,11 +598,11 @@ defaultDifferentNamesInstance = DifferentNamesInstance {
       Object {isAnonymous = True, objectName = "a",  objectClass = "A"}
       ],
     links = [
-      Link {linkName = "x", linkFrom = "d1", linkTo = "b"},
-      Link {linkName = "z", linkFrom = "b",  linkTo = "a"},
-      Link {linkName = "x", linkFrom = "d",  linkTo = "b"},
-      Link {linkName = "y", linkFrom = "c",  linkTo = "d1"},
-      Link {linkName = "y", linkFrom = "c1", linkTo = "d1"}
+      Link {linkLabel = "x", linkFrom = "d1", linkTo = "b"},
+      Link {linkLabel = "z", linkFrom = "b",  linkTo = "a"},
+      Link {linkLabel = "x", linkFrom = "d",  linkTo = "b"},
+      Link {linkLabel = "y", linkFrom = "c",  linkTo = "d1"},
+      Link {linkLabel = "y", linkFrom = "c1", linkTo = "d1"}
       ]
     },
   showSolution = False,

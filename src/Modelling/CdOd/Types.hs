@@ -163,12 +163,12 @@ instance Bitraversable Object where
     <*> g objectClass
 
 {-|
-A link connects two objects and has a name.
+A link connects two objects and has a label.
 -}
 data Link objectName linkName
   = Link {
-    -- | how the link is called, indicating which relationship it belongs to
-    linkName                  :: linkName,
+    -- | how the link is labeled, indicating which relationship it belongs to
+    linkLabel                 :: linkName,
     -- | the starting point of the link
     linkFrom                  :: objectName,
     -- | the end point of the link
@@ -178,19 +178,19 @@ data Link objectName linkName
 
 instance Bifunctor Link where
   bimap f g Link {..} = Link {
-    linkName      = g linkName,
+    linkLabel     = g linkLabel,
     linkFrom      = f linkFrom,
     linkTo        = f linkTo
     }
 
 instance Bifoldable Link where
-  bifoldMap f g Link {..} = g linkName
+  bifoldMap f g Link {..} = g linkLabel
     <> f linkFrom
     <> f linkTo
 
 instance Bitraversable Link where
   bitraverse f g Link {..} = Link
-    <$> g linkName
+    <$> g linkLabel
     <*> f linkFrom
     <*> f linkTo
 
@@ -1257,7 +1257,7 @@ linkNames
   :: Ord linkName
   => ObjectDiagram objectName className linkName
   -> [linkName]
-linkNames ObjectDiagram {..} = nubOrd $ map linkName links
+linkNames ObjectDiagram {..} = nubOrd $ map linkLabel links
 
 {-|
 Given a collection of CDs use all used class and relationship names
