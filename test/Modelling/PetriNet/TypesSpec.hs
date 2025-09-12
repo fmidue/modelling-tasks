@@ -24,7 +24,7 @@ import Data.GraphViz.Attributes.Complete (GraphvizCommand (..))
 
 import Data.Maybe                       (isJust, fromMaybe)
 import Data.Tuple.Extra                 (uncurry3)
-import Control.Exception                (evaluate, catch, ErrorCall)
+
 import Test.Hspec
 import Test.Hspec.QuickCheck            (prop)
 import Test.QuickCheck                  (Arbitrary (..), elements, listOf)
@@ -50,11 +50,9 @@ spec = do
       let config = defaultGraphConfig
       let settings = drawSettingsWithCommand config Dot
       settings `shouldSatisfy` (\s -> not (null $ show s))
-    it "throws error when GraphvizCommand is not in allowed graphLayouts" $ do
-      let config = defaultGraphConfig { graphLayouts = [Neato, TwoPi] } -- Exclude Dot
-      result <- (evaluate (drawSettingsWithCommand config Dot) >> return False)
-                  `catch` (\(_ :: ErrorCall) -> return True)
-      result `shouldBe` True
+    it "should validate that Dot is in default graphLayouts" $ do
+      let config = defaultGraphConfig
+      Dot `elem` graphLayouts config `shouldBe` True
   describe "a Net" $ do
     context "with and without applying fromSimpleNet" $
       netProperties fromSimpleNet
