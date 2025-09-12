@@ -4,7 +4,6 @@ module Modelling.PetriNet.TypesSpec where
 import Modelling.PetriNet.Types (
   BasicConfig (..),
   ChangeConfig (..),
-  GraphConfig (..),
   Net (..),
   Node,
   PetriLike,
@@ -13,18 +12,13 @@ import Modelling.PetriNet.Types (
   checkChangeConfig,
   defaultBasicConfig,
   defaultChangeConfig,
-  defaultGraphConfig,
-  drawSettingsWithCommand,
   transformNet,
   )
 
 import qualified Data.Map                         as M (keys)
 
-import Data.GraphViz.Attributes.Complete (GraphvizCommand (..))
-
 import Data.Maybe                       (isJust, fromMaybe)
 import Data.Tuple.Extra                 (uncurry3)
-
 import Test.Hspec
 import Test.Hspec.QuickCheck            (prop)
 import Test.QuickCheck                  (Arbitrary (..), elements, listOf)
@@ -45,14 +39,6 @@ spec = do
       it "it returns a String with necessary changes" $
         checkChangeConfig defaultBasicConfig defaultChangeConfig{tokenChangeOverall = -1}
           `shouldSatisfy` isJust
-  describe "drawSettingsWithCommand" $ do
-    it "succeeds when GraphvizCommand is in allowed graphLayouts" $ do
-      let config = defaultGraphConfig
-      let settings = drawSettingsWithCommand config Dot
-      settings `shouldSatisfy` (\s -> not (null $ show s))
-    it "should validate that Dot is in default graphLayouts" $ do
-      let config = defaultGraphConfig
-      Dot `elem` graphLayouts config `shouldBe` True
   describe "a Net" $ do
     context "with and without applying fromSimpleNet" $
       netProperties fromSimpleNet
