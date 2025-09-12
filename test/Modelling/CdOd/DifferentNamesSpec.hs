@@ -38,7 +38,7 @@ import Modelling.CdOd.Types (
   associationNames,
   classNames,
   defaultCdDrawSettings,
-  linkNames,
+  linkLabels,
   normaliseObjectDiagram,
   )
 import Modelling.Common                 (withLang)
@@ -136,7 +136,7 @@ spec = do
             od = oDiagram inst
             names = classNames cd
             nonInheritances = associationNames cd
-            linkNs = linkNames od
+            linkNs = linkLabels od
         in (Just inst ==)
            $ renamedInstance
            >>= (\x -> renameInstance x names nonInheritances linkNs)
@@ -144,7 +144,7 @@ spec = do
       let rename xs ys = Name . fromJust . (`lookup` zip xs ys)
           origMap = map (bimap
             (rename (associationNames $ cDiagram inst) as)
-            (rename (linkNames $ oDiagram inst) ls))
+            (rename (linkLabels $ oDiagram inst) ls))
             $ BM.toList (fromNameMapping $ mapping inst)
       in (Right 1 ==)
          $ maybe (Left "instance could not be renamed") return renamedInstance

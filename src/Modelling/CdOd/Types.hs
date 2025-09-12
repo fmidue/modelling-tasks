@@ -66,7 +66,7 @@ module Modelling.CdOd.Types (
   fromClassDiagram,
   isIllegal,
   isObjectDiagramRandomisable,
-  linkNames,
+  linkLabels,
   maxFiveObjects,
   maxObjects,
   maxRelationships,
@@ -1253,11 +1253,11 @@ classNamesOd
   -> [className]
 classNamesOd ObjectDiagram {..} = nubOrd $ map objectClass objects
 
-linkNames
+linkLabels
   :: Ord linkName
   => ObjectDiagram objectName className linkName
   -> [linkName]
-linkNames ObjectDiagram {..} = nubOrd $ map linkLabel links
+linkLabels ObjectDiagram {..} = nubOrd $ map linkLabel links
 
 {-|
 Given a collection of CDs use all used class and relationship names

@@ -101,7 +101,7 @@ import Modelling.CdOd.Types (
   defaultProperties,
   fromClassDiagram,
   isObjectDiagramRandomisable,
-  linkNames,
+  linkLabels,
   relationshipName,
   renameObjectsWithClassesAndLinksInOd,
   renameClassesAndRelationships,
@@ -223,7 +223,7 @@ checkDifferentNamesInstance DifferentNamesInstance {..}
   <|> checkCdDrawSettings cdDrawSettings
   where
     associations = associationNames cDiagram
-    links = linkNames oDiagram
+    links = linkLabels oDiagram
 
 data DifferentNamesConfig
   = DifferentNamesConfig {
@@ -470,7 +470,7 @@ differentNamesSyntax DifferentNamesInstance {..} cs = addPretext $ do
     _ -> pure ()
   pure ()
   where
-    links = linkNames oDiagram
+    links = linkLabels oDiagram
     sortPair (x, y) = if x <= y then (x, y) else (y, x)
     choices = nubOrdOn sortPair cs
     associations = associationNames cDiagram
@@ -716,7 +716,7 @@ classNonInheritanceAndLinkNames DifferentNamesInstance {..} =
       additional = case linkShuffling of
         ConsecutiveLetters -> []
         WithAdditionalNames xs -> xs
-      links = linkNames oDiagram ++ additional
+      links = linkLabels oDiagram ++ additional
   in (names, nonInheritances, links)
 
 instance RandomiseNames DifferentNamesInstance where
