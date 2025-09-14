@@ -144,11 +144,26 @@ pickGenerate pick gc useDifferent withSol config segment seed
         }
     getPickInstance petriNets =
       let predicates = map (\(x,_) -> lift . isNetDrawable x) petriNets
+          numberOfGraphs = length petriNets
       in
         maybeM getInstance (toPickInstance petriNets)
         $ if useDifferent config
           then
-            findFittingRandom (allDrawSettings (gc config)) predicates
+            -- Find the largest valid n and distribute graphs evenly
+            let availableLayouts = allDrawSettings (gc config)
+                numLayouts = length availableLayouts
+                validNs = filter (\n -> numberOfGraphs `mod` n == 0) [2..numLayouts]
+            in case validNs of
+              [] -> do
+                -- Fallback to original behavior if no valid distribution exists
+                findFittingRandom availableLayouts predicates
+              _ -> do
+                let largestN = maximum validNs
+                    graphsPerLayout = numberOfGraphs `div` largestN
+                selectedLayouts <- take largestN <$> shuffleM availableLayouts
+                let replicatedLayouts = concatMap (replicate graphsPerLayout) selectedLayouts
+                shuffledLayouts <- shuffleM replicatedLayouts
+                findFittingRandom shuffledLayouts predicates
           else do
             ds <- shuffleM $ allDrawSettings (gc config)
             firstJustM (\x -> findFittingRandom [x] predicates) ds
