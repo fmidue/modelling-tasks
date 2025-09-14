@@ -9,7 +9,7 @@ import Modelling.PetriNet.Reach.Deadlock (
   generateDeadlock,
   )
 import Modelling.PetriNet.Reach.Step    (successors)
-import Modelling.PetriNet.Reach.Type    (Net (transitions))
+import Modelling.PetriNet.Reach.Type    (Net (transitions), hasIsolatedNodes)
 
 import Modelling.PetriNet.Reach.ReachSpec (
   hasMinTransitionLength,
@@ -19,8 +19,8 @@ import Test.Hspec
 import Test.QuickCheck                  (Testable (property))
 
 spec :: Spec
-spec =
-  describe "generateDeadlock" $
+spec = do
+  describe "generateDeadlock" $ do
     it "abides minTransitionLength" $
       property $ \seed -> do
         let config = defaultDeadlockConfig {
@@ -33,3 +33,13 @@ spec =
             ts = transitions net
         net `shouldSatisfy`
           hasMinTransitionLength (null . successors net) ts minL
+    
+    it "generates nets without isolated nodes" $
+      property $ \seed -> do
+        let config = defaultDeadlockConfig {
+              maxTransitionLength = 8,
+              minTransitionLength = 6
+              }
+        deadlockInstance <- generateDeadlock config seed
+        let net = petriNet deadlockInstance
+        net `shouldSatisfy` (not . hasIsolatedNodes)
