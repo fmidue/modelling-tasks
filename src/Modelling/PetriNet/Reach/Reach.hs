@@ -151,13 +151,21 @@ reportReachFor img noLonger lengthHint minLengthHint maybeGoal = do
     Nothing -> translate $ do
       english "State your answer as an (arbitrarily short or long) sequence of the following kind:"
       german "Geben Sie Ihre Lösung als (beliebig kurze oder lange) Auflistung der folgenden Art an:"
-    Just maxL -> translate $ do
-      english $ concat [
-        "State your solution as a sequence of the following kind that does not exceed ",
-        show maxL," steps:"]
-      german $ concat [
-        "Geben Sie Ihre Lösung als maximal ", show maxL,
-        "-schrittige Auflistung der folgenden Art an:"]
+    Just maxL -> case (lengthHint, minLengthHint) of
+      (Just maxSteps, Just minSteps) | maxL == maxSteps && maxSteps == minSteps -> translate $ do
+        english $ concat [
+          "State your solution as a sequence of the following kind that has exactly ",
+          show maxL," steps:"]
+        german $ concat [
+          "Geben Sie Ihre Lösung als genau ", show maxL,
+          "-schrittige Auflistung der folgenden Art an:"]
+      _ -> translate $ do
+        english $ concat [
+          "State your solution as a sequence of the following kind that does not exceed ",
+          show maxL," steps:"]
+        german $ concat [
+          "Geben Sie Ihre Lösung als maximal ", show maxL,
+          "-schrittige Auflistung der folgenden Art an:"]
   let (t1, t2, t3) = (Transition 1, Transition 2, Transition 3)
       showT = show . ShowTransition
       (st1, st2, st3) = (showT t1, showT t2, showT t3)
