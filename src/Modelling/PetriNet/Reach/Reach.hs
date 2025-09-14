@@ -175,8 +175,8 @@ reportReachFor img noLonger lengthHint minLengthHint maybeGoal = do
       ]
   case (lengthHint, minLengthHint) of
     (Just maxSteps, Just minSteps) | maxSteps == minSteps -> paragraph $ translate $ do
-      english [i|Hint: The solution contains exactly #{maxSteps} steps.|]
-      german [i|Hinweis: Die Lösung enthält genau #{maxSteps} Schritte.|]
+      english [i|Hint: The shortest solutions have exactly #{maxSteps} steps.|]
+      german [i|Hinweis: Die kürzesten Lösungen haben genau #{maxSteps} Schritte.|]
     (Just maxSteps, _) -> when (noLonger /= Just maxSteps) $ paragraph $ translate $ do
       english [i|Hint: There is a solution with not more than #{maxSteps} steps.|]
       german [i|Hinweis: Es gibt eine Lösung mit nicht mehr als #{maxSteps} Schritten.|]
