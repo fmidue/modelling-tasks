@@ -135,8 +135,8 @@ deadlockEvaluation path deadlock ts =
     whenRight eitherOutcome (\outcome ->
       yesNo (null $ successors n outcome)
       $ translate $ do
-          english "All transitions disabled in reached marking?"
-          german "Alle Transitionen deaktiviert in Zielmarkierung?"
+          english "Target marking without successors?"
+          german "Nachfolgerlose Zielmarkierung?"
       )
   $>> assertReachPoints
     aSolution
