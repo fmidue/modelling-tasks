@@ -152,14 +152,13 @@ pickGenerate pick gc useDifferent withSol config segment seed
             -- Find the largest valid n and distribute graphs evenly
             let availableLayouts = allDrawSettings (gc config)
                 numLayouts = length availableLayouts
-                validNs = filter (\n -> numberOfGraphs `mod` n == 0) [2..numLayouts]
+                validNs = filter (\n -> numberOfGraphs `mod` n == 0) [numLayouts, numLayouts - 1 .. 2]
             in case validNs of
               [] -> do
                 -- Fallback to original behavior if no valid distribution exists
                 findFittingRandom availableLayouts predicates
-              _ -> do
-                let largestN = maximum validNs
-                    graphsPerLayout = numberOfGraphs `div` largestN
+              largestN:_ -> do
+                let graphsPerLayout = numberOfGraphs `div` largestN
                 selectedLayouts <- take largestN <$> shuffleM availableLayouts
                 let replicatedLayouts = concatMap (replicate graphsPerLayout) selectedLayouts
                 shuffledLayouts <- shuffleM replicatedLayouts
