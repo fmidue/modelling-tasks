@@ -4,7 +4,6 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE TupleSections #-}
 
 {-|
@@ -97,7 +96,7 @@ deadlockTask
   -> DeadlockInstance s t
   -> LangM m
 deadlockTask path inst = do
-  lift (drawToFile True path (drawUsing inst) (petriNet inst))
+  lift (drawToFile (not $ showPlaceNames inst) path (drawUsing inst) (petriNet inst))
   $>>= \img -> reportReachFor
     img
     (noLongerThan inst)
@@ -162,6 +161,7 @@ data DeadlockInstance s t = DeadlockInstance {
   minLength         :: Int,
   noLongerThan      :: Maybe Int,
   petriNet          :: Net s t,
+  showPlaceNames    :: Bool,
   showSolution      :: Bool,
   withLengthHint    :: Maybe Int,
   withMinLengthHint :: Maybe Int
@@ -173,14 +173,15 @@ bimapDeadlockInstance
   -> (t -> b)
   -> DeadlockInstance s t
   -> DeadlockInstance a b
-bimapDeadlockInstance f g DeadlockInstance {..} = DeadlockInstance {
-    drawUsing         = drawUsing,
-    minLength         = minLength,
-    noLongerThan      = noLongerThan,
-    petriNet          = bimapNet f g petriNet,
-    showSolution      = showSolution,
-    withLengthHint    = withLengthHint,
-    withMinLengthHint = withMinLengthHint
+bimapDeadlockInstance f g inst = DeadlockInstance {
+    drawUsing         = drawUsing inst,
+    minLength         = minLength inst,
+    noLongerThan      = noLongerThan inst,
+    petriNet          = bimapNet f g (petriNet inst),
+    showPlaceNames    = showPlaceNames inst,
+    showSolution      = showSolution inst,
+    withLengthHint    = withLengthHint inst,
+    withMinLengthHint = withMinLengthHint inst
     }
 
 toShowDeadlockInstance
@@ -200,7 +201,8 @@ data DeadlockConfig = DeadlockConfig {
   printSolution       :: Bool,
   rejectLongerThan    :: Maybe Int,
   showLengthHint      :: Bool,
-  showMinLengthHint   :: Bool
+  showMinLengthHint   :: Bool,
+  showPlaceNamesInNet :: Bool
   }
   deriving (Generic, Read, Show, Typeable)
 
@@ -218,7 +220,8 @@ defaultDeadlockConfig =
   printSolution       = False,
   rejectLongerThan    = Nothing,
   showLengthHint      = True,
-  showMinLengthHint   = True
+  showMinLengthHint   = True,
+  showPlaceNamesInNet = True
   }
 
 defaultDeadlockInstance :: DeadlockInstance Place Transition
@@ -227,6 +230,7 @@ defaultDeadlockInstance = DeadlockInstance {
   minLength         = 6,
   noLongerThan      = Nothing,
   petriNet          = fst example,
+  showPlaceNames    = True,
   showSolution      = False,
   withLengthHint    = Just 9,
   withMinLengthHint = Just 6
@@ -237,18 +241,19 @@ generateDeadlock
   => DeadlockConfig
   -> Int
   -> m (DeadlockInstance Place Transition)
-generateDeadlock conf@DeadlockConfig {..} seed = do
+generateDeadlock conf seed = do
   (petri, cmd) <- tries 1000 conf seed
   pure DeadlockInstance {
     drawUsing         = cmd,
-    minLength         = minTransitionLength,
-    noLongerThan      = rejectLongerThan,
+    minLength         = minTransitionLength conf,
+    noLongerThan      = rejectLongerThan conf,
     petriNet          = petri,
-    showSolution      = printSolution,
+    showPlaceNames    = showPlaceNamesInNet conf,
+    showSolution      = printSolution conf,
     withLengthHint    =
-      if showLengthHint then Just maxTransitionLength else Nothing,
+      if showLengthHint conf then Just (maxTransitionLength conf) else Nothing,
     withMinLengthHint =
-      if showMinLengthHint then Just minTransitionLength else Nothing
+      if showMinLengthHint conf then Just (minTransitionLength conf) else Nothing
     }
 
 tries
