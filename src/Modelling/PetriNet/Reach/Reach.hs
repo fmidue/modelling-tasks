@@ -152,8 +152,8 @@ reportReachFor img noLonger lengthHint minLengthHint maybeGoal = do
       english "State your answer as an (arbitrarily short or long) sequence of the following kind:"
       german "Geben Sie Ihre Lösung als (beliebig kurze oder lange) Auflistung der folgenden Art an:"
     Just maxL -> let
-        isExactMatch = case (lengthHint, minLengthHint) of
-          (Just maxSteps, Just minSteps) -> maxSteps == minSteps
+        isExactMatch = case minLengthHint of
+          Just minSteps -> maxL == minSteps
           _ -> False
         (englishConstraint, germanConstraint) = if isExactMatch
           then ("has exactly", "genau")
