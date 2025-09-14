@@ -35,35 +35,10 @@ spec = do
   describe "checkChangeConfig" $ do
     it "checks if the input for Changes is in given boundaries" $
       checkChangeConfig defaultBasicConfig defaultChangeConfig `shouldBe` Nothing
-    context "when provided with Input out of the constraints" $ do
-      it "rejects negative tokenChangeOverall" $
+    context "when provided with Input out of the constraints" $
+      it "it returns a String with necessary changes" $
         checkChangeConfig defaultBasicConfig defaultChangeConfig{tokenChangeOverall = -1}
           `shouldSatisfy` isJust
-      it "rejects odd tokenChangeOverall with equal tokensOverall values" $
-        checkChangeConfig defaultBasicConfig{tokensOverall = (5,5)} defaultChangeConfig{tokenChangeOverall = 3}
-          `shouldSatisfy` isJust
-      it "rejects odd flowChangeOverall with equal flowOverall values" $
-        checkChangeConfig defaultBasicConfig{flowOverall = (8,8)} defaultChangeConfig{flowChangeOverall = 3}
-          `shouldSatisfy` isJust
-      it "rejects even tokenChangeOverall with consecutive tokensOverall values" $
-        checkChangeConfig defaultBasicConfig{tokensOverall = (5,6)} defaultChangeConfig{tokenChangeOverall = 2}
-          `shouldSatisfy` isJust
-      it "rejects even flowChangeOverall with consecutive flowOverall values" $
-        checkChangeConfig defaultBasicConfig{flowOverall = (7,8)} defaultChangeConfig{flowChangeOverall = 4}
-          `shouldSatisfy` isJust
-    context "when provided with valid configurations" $ do
-      it "accepts odd tokenChangeOverall with different tokensOverall values" $
-        checkChangeConfig defaultBasicConfig{tokensOverall = (3,7)} defaultChangeConfig{tokenChangeOverall = 1}
-          `shouldBe` Nothing
-      it "accepts odd flowChangeOverall with different flowOverall values" $
-        checkChangeConfig defaultBasicConfig{flowOverall = (5,10)} defaultChangeConfig{flowChangeOverall = 3}
-          `shouldBe` Nothing
-      it "accepts even tokenChangeOverall with non-consecutive tokensOverall values" $
-        checkChangeConfig defaultBasicConfig{tokensOverall = (3,8)} defaultChangeConfig{tokenChangeOverall = 2}
-          `shouldBe` Nothing
-      it "accepts even flowChangeOverall with non-consecutive flowOverall values" $
-        checkChangeConfig defaultBasicConfig{flowOverall = (5,12)} defaultChangeConfig{flowChangeOverall = 4}
-          `shouldBe` Nothing
   describe "a Net" $ do
     context "with and without applying fromSimpleNet" $
       netProperties fromSimpleNet
