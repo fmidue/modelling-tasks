@@ -70,6 +70,7 @@ import Modelling.ActivityDiagram.Shuffle (shuffleAdNames, shufflePetri)
 import Modelling.Auxiliary.Common (
   TaskGenerationException (NoInstanceAvailable),
   oneOf,
+  weightedShuffle,
   )
 import Modelling.Auxiliary.Output (
   addPretext,
