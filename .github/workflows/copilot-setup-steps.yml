@@ -46,6 +46,24 @@ jobs:
       - name: Test network connectivity
         run: curl -I https://hackage.haskell.org/root.json
 
-      # Set up Stack directory permissions if needed
-      - name: Prepare Stack environment
-        run: mkdir -p ~/.stack && chmod 755 ~/.stack
+      # Set up Haskell Stack environment
+      - name: Setup stack
+        uses: haskell-actions/setup@v2
+        with:
+          enable-stack: true
+          stack-no-global: true
+
+      # Set up HLint for code quality checking
+      - name: 'Set up HLint'
+        uses: haskell-actions/hlint-setup@v2
+        with:
+          version: 'latest'
+
+      # Install Haskell project dependencies
+      # This is the most time-consuming step but critical for the environment
+      - name: Install dependencies on unix
+        run: |
+          set -ex
+          # shellcheck disable=SC2086
+          stack --no-terminal test --stack-yaml=stack-apps.yaml --bench --only-dependencies
+          set +ex
