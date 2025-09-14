@@ -414,8 +414,8 @@ defaultDifferentNamesTaskText = [
         State your answer by giving a mapping of
         relationships in the CD to links in the OD.
         \n
-        To state that a in the CD corresponds to x in the OD and
-        b in the CD corresponds to y in the OD, write the mapping as:
+        To state that x in the CD corresponds to 1 in the OD and
+        y in the CD corresponds to 2 in the OD, write the mapping as:
         |]
       german [iii|
         Welche Beziehung im Klassendiagramm (CD)
@@ -424,8 +424,8 @@ defaultDifferentNamesTaskText = [
         Geben Sie Ihre Antwort als eine Zuordnung von
         Beziehungen im CD zu Links im OD an.
         \n
-        Um anzugeben, dass a im CD zu x im OD und b im CD
-        zu y im OD korrespondieren, schreiben Sie die Zuordnung als:
+        Um anzugeben, dass x im CD zu 1 im OD und y im CD
+        zu 2 im OD korrespondieren, schreiben Sie die Zuordnung als:
         |],
     Code . uniform . show $ mappingShow differentNamesInitial
     ],
@@ -433,7 +433,7 @@ defaultDifferentNamesTaskText = [
   ]
 
 differentNamesInitial :: [(Name, Name)]
-differentNamesInitial = map (bimap Name Name) [("a", "x"), ("b", "y")]
+differentNamesInitial = map (bimap Name Name) [("x", "1"), ("y", "2")]
 
 differentNamesSyntax
   :: OutputCapable m
@@ -549,7 +549,7 @@ defaultDifferentNamesInstance = DifferentNamesInstance {
     classNames = ["C", "B", "D", "A"],
     relationships = [
       Composition {
-        compositionName = "b",
+        compositionName = "y",
         compositionPart = LimitedLinking {
           linking = "D",
           limits = (2, Nothing)
@@ -564,7 +564,7 @@ defaultDifferentNamesInstance = DifferentNamesInstance {
         superClass = "C"
         },
       Association {
-        associationName = "a",
+        associationName = "x",
         associationFrom = LimitedLinking {
           linking = "C",
           limits = (0, Nothing)
@@ -575,7 +575,7 @@ defaultDifferentNamesInstance = DifferentNamesInstance {
           }
         },
       Aggregation {
-        aggregationName = "c",
+        aggregationName = "z",
         aggregationPart = LimitedLinking {
           linking = "B",
           limits = (0, Just 2)
@@ -598,15 +598,15 @@ defaultDifferentNamesInstance = DifferentNamesInstance {
       Object {isAnonymous = True, objectName = "a",  objectClass = "A"}
       ],
     links = [
-      Link {linkLabel = "x", linkFrom = "d1", linkTo = "b"},
-      Link {linkLabel = "z", linkFrom = "b",  linkTo = "a"},
-      Link {linkLabel = "x", linkFrom = "d",  linkTo = "b"},
-      Link {linkLabel = "y", linkFrom = "c",  linkTo = "d1"},
-      Link {linkLabel = "y", linkFrom = "c1", linkTo = "d1"}
+      Link {linkLabel = "2", linkFrom = "d1", linkTo = "b"},
+      Link {linkLabel = "3", linkFrom = "b",  linkTo = "a"},
+      Link {linkLabel = "2", linkFrom = "d",  linkTo = "b"},
+      Link {linkLabel = "1", linkFrom = "c",  linkTo = "d1"},
+      Link {linkLabel = "1", linkFrom = "c1", linkTo = "d1"}
       ]
     },
   showSolution = False,
-  mapping = toNameMapping $ BM.fromList [("a", "y"), ("b", "x"), ("c", "z")],
+  mapping = toNameMapping $ BM.fromList [("x", "1"), ("y", "2"), ("z", "3")],
   linkShuffling = ConsecutiveLetters,
   taskText = defaultDifferentNamesTaskText,
   addText = Nothing
@@ -645,7 +645,7 @@ getDifferentNamesTask tryNext DifferentNamesConfig {..} cd = do
     continueWithHead instances' $ \od1 -> do
       labels' <- shuffleM labels
       used <- usedLabels labels od1
-      let bm  = BM.fromList $ zip (map (:[]) ['a', 'b' ..]) labels'
+      let bm  = BM.fromList $ zip (map (:[]) ['x', 'y' ..]) labels'
           cd1 = renameEdges (BM.twist bm) cd
           bm' = BM.filter (const (`elem` used)) bm
           isCompleteMapping = BM.keysR bm == sort used
@@ -726,7 +726,7 @@ instance RandomiseNames DifferentNamesInstance where
   randomiseNames inst@DifferentNamesInstance {..} = do
     let (names, nonInheritances, lNames) = classNonInheritanceAndLinkNames inst
         links = case linkShuffling of
-          ConsecutiveLetters -> take (length lNames) (map (:[]) ['z', 'y' ..])
+          ConsecutiveLetters -> take (length lNames) (map show ([1..] :: [Int]))
           WithAdditionalNames _ -> lNames
     names'  <- shuffleM names
     nonInheritances' <- shuffleM nonInheritances
