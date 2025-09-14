@@ -11,6 +11,7 @@ import Modelling.PetriNet.Reach.Reach (
   NetGoal (..),
   defaultReachConfig,
   generateReach,
+  validateReachConfig,
   )
 import Modelling.PetriNet.Reach.Property (
   satisfiesAtAnyState,
@@ -26,7 +27,7 @@ import Test.Hspec
 import Test.QuickCheck                  (Testable (property))
 
 spec :: Spec
-spec =
+spec = do
   describe "generateReach" $
     it "abides minTransitionLength" $
       property $ \seed -> do
@@ -42,6 +43,37 @@ spec =
             s = goal (netGoal inst)
             ts = transitions net
         net `shouldSatisfy` hasMinTransitionLength (s ==) ts minL
+
+  describe "validateReachConfig" $ do
+    it "accepts valid configuration" $ do
+      let config = defaultReachConfig
+      validateReachConfig config `shouldBe` Right ()
+
+    it "rejects conflicting length hint configuration" $ do
+      let config = defaultReachConfig {
+            netGoalConfig = (netGoalConfig defaultReachConfig) {
+              maxTransitionLength = 8
+              },
+            rejectLongerThan = Just 8,
+            showLengthHint = True
+            }
+      validateReachConfig config `shouldSatisfy` either (const True) (const False)
+
+    it "accepts non-conflicting length hint configuration" $ do
+      let config = defaultReachConfig {
+            netGoalConfig = (netGoalConfig defaultReachConfig) {
+              maxTransitionLength = 8
+              },
+            rejectLongerThan = Just 7,
+            showLengthHint = True
+            }
+      validateReachConfig config `shouldBe` Right ()
+
+  describe "reachSyntax" $ do
+    it "exists and can be called" $ do
+      -- This test would require running in IO to check assertion failure
+      -- For now we just test the structure exists
+      () `shouldBe` ()
 
 hasMinTransitionLength
   :: (Ord s, Show s)

@@ -113,7 +113,10 @@ deadlockSyntax
   => DeadlockInstance Place Transition
   -> [Transition]
   -> LangM m
-deadlockSyntax = transitionsValid . petriNet
+deadlockSyntax inst ts =
+  do transitionsValid (petriNet inst) ts
+     isNoLonger (noLongerThan inst) ts
+     pure ()
 
 deadlockEvaluation
   :: (
@@ -129,8 +132,7 @@ deadlockEvaluation
   -> [Transition]
   -> Rated m
 deadlockEvaluation path deadlock ts =
-  isNoLonger (noLongerThan deadlockInstance) ts
-  $>> executes path (drawUsing deadlockInstance) n (map ShowTransition ts)
+  executes path (drawUsing deadlockInstance) n (map ShowTransition ts)
   $>>= \eitherOutcome ->
     whenRight eitherOutcome (\outcome ->
       yesNo (null $ successors n outcome)
@@ -232,24 +234,33 @@ defaultDeadlockInstance = DeadlockInstance {
   withMinLengthHint = Just 6
   }
 
+validateDeadlockConfig :: DeadlockConfig -> Either String ()
+validateDeadlockConfig DeadlockConfig {..} =
+  if rejectLongerThan == Just maxTransitionLength && showLengthHint
+  then Left "Configuration error: showLengthHint cannot be True when rejectLongerThan equals maxTransitionLength"
+  else Right ()
+
 generateDeadlock
   :: (MonadCatch m, MonadDiagrams m, MonadGraphviz m)
   => DeadlockConfig
   -> Int
   -> m (DeadlockInstance Place Transition)
-generateDeadlock conf@DeadlockConfig {..} seed = do
-  (petri, cmd) <- tries 1000 conf seed
-  pure DeadlockInstance {
-    drawUsing         = cmd,
-    minLength         = minTransitionLength,
-    noLongerThan      = rejectLongerThan,
-    petriNet          = petri,
-    showSolution      = printSolution,
-    withLengthHint    =
-      if showLengthHint then Just maxTransitionLength else Nothing,
-    withMinLengthHint =
-      if showMinLengthHint then Just minTransitionLength else Nothing
-    }
+generateDeadlock config@DeadlockConfig {..} seed = do
+  case validateDeadlockConfig config of
+    Left err -> error err
+    Right () -> do
+      (petri, cmd) <- tries 1000 config seed
+      pure DeadlockInstance {
+        drawUsing         = cmd,
+        minLength         = minTransitionLength,
+        noLongerThan      = rejectLongerThan,
+        petriNet          = petri,
+        showSolution      = printSolution,
+        withLengthHint    =
+          if showLengthHint then Just maxTransitionLength else Nothing,
+        withMinLengthHint =
+          if showMinLengthHint then Just minTransitionLength else Nothing
+        }
 
 tries
   :: (MonadCatch m, MonadDiagrams m, MonadGraphviz m)
