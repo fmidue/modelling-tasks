@@ -598,15 +598,15 @@ defaultDifferentNamesInstance = DifferentNamesInstance {
       Object {isAnonymous = True, objectName = "a",  objectClass = "A"}
       ],
     links = [
-      Link {linkLabel = "2", linkFrom = "d1", linkTo = "b"},
-      Link {linkLabel = "3", linkFrom = "b",  linkTo = "a"},
-      Link {linkLabel = "2", linkFrom = "d",  linkTo = "b"},
-      Link {linkLabel = "1", linkFrom = "c",  linkTo = "d1"},
-      Link {linkLabel = "1", linkFrom = "c1", linkTo = "d1"}
+      Link {linkLabel = "3", linkFrom = "d1", linkTo = "b"},
+      Link {linkLabel = "1", linkFrom = "b",  linkTo = "a"},
+      Link {linkLabel = "3", linkFrom = "d",  linkTo = "b"},
+      Link {linkLabel = "2", linkFrom = "c",  linkTo = "d1"},
+      Link {linkLabel = "2", linkFrom = "c1", linkTo = "d1"}
       ]
     },
   showSolution = False,
-  mapping = toNameMapping $ BM.fromList [("x", "1"), ("y", "2"), ("z", "3")],
+  mapping = toNameMapping $ BM.fromList [("x", "2"), ("y", "3"), ("z", "1")],
   linkShuffling = ConsecutiveLetters,
   taskText = defaultDifferentNamesTaskText,
   addText = Nothing
