@@ -30,13 +30,28 @@ spec = do
   describe "checkAdConfig" $ do
     it "checks if the basic Input is in given boundaries" $
       checkMatchPetriConfig defaultMatchPetriConfig  `shouldBe` Nothing
-    context "when provided with Input out of the constraints" $
+    context "when provided with Input out of the constraints" $ do
       it "it returns a String with necessary changes" $
         checkMatchPetriConfig defaultMatchPetriConfig {
           adConfig = defaultAdConfig {actionLimits = (0, 4), forkJoinPairs = 0},
           presenceOfSinkTransitionsForFinals = Just False
           }
             `shouldSatisfy` isJust
+      it "rejects negative countOfPetriNodesBounds values" $
+        checkMatchPetriConfig defaultMatchPetriConfig {
+          countOfPetriNodesBounds = (-1, Nothing)
+          }
+            `shouldSatisfy` isJust
+      it "rejects inverted countOfPetriNodesBounds bounds" $
+        checkMatchPetriConfig defaultMatchPetriConfig {
+          countOfPetriNodesBounds = (10, Just 5)
+          }
+            `shouldSatisfy` isJust
+      it "accepts valid countOfPetriNodesBounds bounds" $
+        checkMatchPetriConfig defaultMatchPetriConfig {
+          countOfPetriNodesBounds = (5, Just 10)
+          }
+            `shouldBe` Nothing
   describe "matchPetriAlloy" $ do
     context "when auxiliaryPetriNodeAbsent is set to Just False" $
       it "it returns an Alloy Specification from which only diagrams which contain Auxiliary PetriNodes are generated" $ do

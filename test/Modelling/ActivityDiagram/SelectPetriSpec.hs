@@ -15,7 +15,7 @@ spec =
   describe "checkSelectPetriConfig" $ do
     it "checks if the basic Input is in given boundaries" $
       checkSelectPetriConfig defaultSelectPetriConfig  `shouldBe` Nothing
-    context "when provided with Input out of the constraints" $
+    context "when provided with Input out of the constraints" $ do
       it "it returns a String with necessary changes" $
         checkSelectPetriConfig defaultSelectPetriConfig {
           adConfig = defaultAdConfig {
@@ -25,3 +25,18 @@ spec =
           presenceOfSinkTransitionsForFinals = Just False
           }
             `shouldSatisfy` isJust
+      it "rejects negative countOfPetriNodesBounds values" $
+        checkSelectPetriConfig defaultSelectPetriConfig {
+          countOfPetriNodesBounds = (-1, Nothing)
+          }
+            `shouldSatisfy` isJust
+      it "rejects inverted countOfPetriNodesBounds bounds" $
+        checkSelectPetriConfig defaultSelectPetriConfig {
+          countOfPetriNodesBounds = (10, Just 5)
+          }
+            `shouldSatisfy` isJust
+      it "accepts valid countOfPetriNodesBounds bounds" $
+        checkSelectPetriConfig defaultSelectPetriConfig {
+          countOfPetriNodesBounds = (5, Just 10)
+          }
+            `shouldBe` Nothing
