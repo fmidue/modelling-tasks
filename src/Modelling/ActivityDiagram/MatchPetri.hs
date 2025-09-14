@@ -26,7 +26,7 @@ module Modelling.ActivityDiagram.MatchPetri (
   defaultMatchPetriInstance
 ) where
 
-import qualified Data.Map as M (empty, fromList, keys, size)
+import qualified Data.Map as M (empty, fromList, keys)
 
 import qualified Modelling.ActivityDiagram.Config as Config (
   AdConfig (activityFinalNodes, flowFinalNodes),
@@ -41,7 +41,7 @@ import Capabilities.Graphviz            (MonadGraphviz)
 import Capabilities.PlantUml            (MonadPlantUml)
 import Capabilities.WriteFile           (MonadWriteFile)
 import Modelling.ActivityDiagram.Alloy  (adConfigToAlloy, modulePetriNet)
-import Modelling.ActivityDiagram.Auxiliary.Util (finalNodesAdvice)
+import Modelling.ActivityDiagram.Auxiliary.Util (finalNodesAdvice, checkCount)
 import Modelling.ActivityDiagram.Datatype (
   UMLActivityDiagram(..),
   AdNode (..),
@@ -457,13 +457,8 @@ getMatchPetriTask config = do
     $ matchPetriAlloy config
   randomInstances <- shuffleM alloyInstances >>= mapM parseInstance
   activityDiagrams <- mapM (fmap snd . shuffleAdNames) randomInstances
-  let checkCount ad =
-        let count = M.size . Petri.nodes @PetriLike @SimpleNode
-              $ convertToPetriNet ad in
-          fst (countOfPetriNodesBounds config) <= count
-          && maybe True (count <=) (snd (countOfPetriNodesBounds config))
   (ad, petri) <- getFirstInstance
-        $ filter (checkCount . fst)
+        $ filter ((`checkCount` countOfPetriNodesBounds config) . fst)
         $ filter (not . petriHasMultipleAutomorphisms . snd)
         $ map (second convertToPetriNet . dupe) activityDiagrams
   shuffledPetri <- snd <$> shufflePetri petri

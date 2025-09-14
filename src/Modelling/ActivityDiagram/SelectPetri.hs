@@ -34,12 +34,12 @@ import Capabilities.WriteFile           (MonadWriteFile)
 import qualified Data.Map as M (empty, size, fromList, toList, keys, map, filter)
 import qualified Modelling.ActivityDiagram.Datatype as Ad (AdNode(label))
 import qualified Modelling.ActivityDiagram.PetriNet as PK (PetriKey (label))
-import qualified Modelling.PetriNet.Types as Petri (Net (nodes))
 
 import Modelling.ActivityDiagram.Alloy  (adConfigToAlloy, modulePetriNet)
 import Modelling.ActivityDiagram.Auxiliary.Util (
   finalNodesAdvice,
   weightedShuffle,
+  checkCount,
   )
 import qualified Modelling.ActivityDiagram.Config as Config (
   AdConfig(activityFinalNodes,flowFinalNodes),
@@ -580,14 +580,9 @@ getSelectPetriTask config = do
         with1Weights = False,
         withGraphvizCommand = layout
       }
-      checkCount ad =
-        let count = M.size . Petri.nodes @PetriLike @SimpleNode
-              $ convertToPetriNet ad in
-          fst (countOfPetriNodesBounds config) <= count
-          && maybe True (count <=) (snd (countOfPetriNodesBounds config))
   ad <- mapM (fmap snd . shuffleAdNames) randomInstances
     >>= firstJustM (\x -> do
-      if not (checkCount x)
+      if not (checkCount x (countOfPetriNodesBounds config))
         then return Nothing
         else do
           sol <- selectPetriNet

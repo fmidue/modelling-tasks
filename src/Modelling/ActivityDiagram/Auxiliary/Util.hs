@@ -1,10 +1,15 @@
 {-# LANGUAGE ApplicativeDo #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE TypeApplications #-}
 module Modelling.ActivityDiagram.Auxiliary.Util (
   finalNodesAdvice,
-  weightedShuffle
+  weightedShuffle,
+  checkCount
   ) where
+
+import qualified Data.Map as M (size)
+import qualified Modelling.PetriNet.Types as Petri (Net (nodes))
 
 import Control.Monad.Random (
   MonadRandom,
@@ -19,6 +24,12 @@ import Control.OutputCapable.Blocks (
   german,
   paragraph,
   translate,
+  )
+import Modelling.ActivityDiagram.Datatype (UMLActivityDiagram)
+import Modelling.ActivityDiagram.PetriNet (convertToPetriNet)
+import Modelling.PetriNet.Types (
+  PetriLike,
+  SimpleNode,
   )
 
 {-|
@@ -70,3 +81,12 @@ finalNodesAdvice withFinalTransitionAdvice = do
     appendExtendedAdvice x y
       | withFinalTransitionAdvice = x ++ ' ' : y
       | otherwise = x
+
+-- | Check if the count of Petri nodes in a converted activity diagram
+-- falls within the given bounds
+checkCount :: UMLActivityDiagram -> (Int, Maybe Int) -> Bool
+checkCount ad countOfPetriNodesBounds =
+  let count = M.size . Petri.nodes @PetriLike @SimpleNode
+        $ convertToPetriNet ad in
+    fst countOfPetriNodesBounds <= count
+    && maybe True (count <=) (snd countOfPetriNodesBounds)
