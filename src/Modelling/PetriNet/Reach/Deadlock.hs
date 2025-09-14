@@ -4,6 +4,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE TupleSections #-}
 
 {-|
@@ -173,15 +174,15 @@ bimapDeadlockInstance
   -> (t -> b)
   -> DeadlockInstance s t
   -> DeadlockInstance a b
-bimapDeadlockInstance f g inst = DeadlockInstance {
-    drawUsing         = drawUsing inst,
-    minLength         = minLength inst,
-    noLongerThan      = noLongerThan inst,
-    petriNet          = bimapNet f g (petriNet inst),
-    showPlaceNames    = showPlaceNames inst,
-    showSolution      = showSolution inst,
-    withLengthHint    = withLengthHint inst,
-    withMinLengthHint = withMinLengthHint inst
+bimapDeadlockInstance f g DeadlockInstance {..} = DeadlockInstance {
+    drawUsing         = drawUsing,
+    minLength         = minLength,
+    noLongerThan      = noLongerThan,
+    petriNet          = bimapNet f g petriNet,
+    showPlaceNames    = showPlaceNames,
+    showSolution      = showSolution,
+    withLengthHint    = withLengthHint,
+    withMinLengthHint = withMinLengthHint
     }
 
 toShowDeadlockInstance
@@ -241,19 +242,19 @@ generateDeadlock
   => DeadlockConfig
   -> Int
   -> m (DeadlockInstance Place Transition)
-generateDeadlock conf seed = do
+generateDeadlock conf@DeadlockConfig {..} seed = do
   (petri, cmd) <- tries 1000 conf seed
   pure DeadlockInstance {
     drawUsing         = cmd,
-    minLength         = minTransitionLength conf,
-    noLongerThan      = rejectLongerThan conf,
+    minLength         = minTransitionLength,
+    noLongerThan      = rejectLongerThan,
     petriNet          = petri,
-    showPlaceNames    = showPlaceNamesInNet conf,
-    showSolution      = printSolution conf,
+    showPlaceNames    = showPlaceNamesInNet,
+    showSolution      = printSolution,
     withLengthHint    =
-      if showLengthHint conf then Just (maxTransitionLength conf) else Nothing,
+      if showLengthHint then Just maxTransitionLength else Nothing,
     withMinLengthHint =
-      if showMinLengthHint conf then Just (minTransitionLength conf) else Nothing
+      if showMinLengthHint then Just minTransitionLength else Nothing
     }
 
 tries

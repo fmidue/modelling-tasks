@@ -92,8 +92,8 @@ verifyReach inst = do
   validate Default n
   validate Default $ n { start = goal (netGoal inst) }
   assertion (showGoalNet inst || showPlaceNames inst) $ translate $ do
-    english "At least one of goal net or place names must be shown?"
-    german "Mindestens eines von Zielnetz oder Plätze-Namen muss angezeigt werden?"
+    english "At least one of goal net or place names must be shown."
+    german "Mindestens eines von Zielnetz oder Plätze-Namen muss angezeigt werden."
   pure ()
 
 reachTask
@@ -113,11 +113,11 @@ reachTask
   -> LangM m
 reachTask path inst = do
   if showGoalNet inst
-    then (,showPlaceNames inst) . Left
+    then Left
     <$> lift (drawToFile (not $ showPlaceNames inst) path (drawUsing (netGoal inst)) (n { start = goal (netGoal inst) }))
-    else pure (Right $ show $ goal (netGoal inst), showPlaceNames inst)
-  $>>= \(g, withPlaceNames) ->
-    lift (drawToFile (not withPlaceNames) path (drawUsing (netGoal inst)) n)
+    else pure (Right $ show $ goal (netGoal inst))
+  $>>= \g ->
+    lift (drawToFile (not $ showPlaceNames inst) path (drawUsing (netGoal inst)) n)
   $>>= \img -> reportReachFor
     img
     (noLongerThan inst)
@@ -319,15 +319,15 @@ bimapReachInstance
   -> (t -> b)
   -> ReachInstance s t
   -> ReachInstance a b
-bimapReachInstance f g inst = ReachInstance {
-    netGoal           = bimapNetGoal f g (netGoal inst),
-    minLength         = minLength inst,
-    noLongerThan      = noLongerThan inst,
-    showGoalNet       = showGoalNet inst,
-    showPlaceNames    = showPlaceNames inst,
-    showSolution      = showSolution inst,
-    withLengthHint    = withLengthHint inst,
-    withMinLengthHint = withMinLengthHint inst
+bimapReachInstance f g ReachInstance {..} = ReachInstance {
+    netGoal           = bimapNetGoal f g netGoal,
+    minLength         = minLength,
+    noLongerThan      = noLongerThan,
+    showGoalNet       = showGoalNet,
+    showPlaceNames    = showPlaceNames,
+    showSolution      = showSolution,
+    withLengthHint    = withLengthHint,
+    withMinLengthHint = withMinLengthHint
     }
 
 bimapNetGoal
@@ -460,17 +460,17 @@ generateReach
   => ReachConfig
   -> Int
   -> m (ReachInstance Place Transition)
-generateReach config seed = do
-  netGoal <- generateNetGoal (netGoalConfig config) seed
+generateReach ReachConfig {..} seed = do
+  netGoal <- generateNetGoal netGoalConfig seed
   pure $ ReachInstance {
     netGoal           = netGoal,
-    minLength         = minTransitionLength (netGoalConfig config),
-    noLongerThan      = rejectLongerThan config,
-    showGoalNet       = showTargetNet config,
-    showPlaceNames    = showPlaceNamesInNet config,
-    showSolution      = printSolution config,
+    minLength         = minTransitionLength netGoalConfig,
+    noLongerThan      = rejectLongerThan,
+    showGoalNet       = showTargetNet,
+    showPlaceNames    = showPlaceNamesInNet,
+    showSolution      = printSolution,
     withLengthHint    =
-      if showLengthHint config then Just $ maxTransitionLength (netGoalConfig config) else Nothing,
+      if showLengthHint then Just $ maxTransitionLength netGoalConfig else Nothing,
     withMinLengthHint =
-      if showMinLengthHint config then Just $ minTransitionLength (netGoalConfig config) else Nothing
+      if showMinLengthHint then Just $ minTransitionLength netGoalConfig else Nothing
     }

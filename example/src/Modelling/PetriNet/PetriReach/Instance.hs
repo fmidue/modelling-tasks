@@ -44,6 +44,7 @@ task5 = ReachInstance {
   minLength = 12,
   noLongerThan = Nothing,
   showGoalNet = True,
+  showPlaceNames = True,
   showSolution = True,
   withLengthHint = Just 12,
   withMinLengthHint = Just 12
