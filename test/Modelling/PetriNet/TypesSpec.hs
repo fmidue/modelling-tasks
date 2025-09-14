@@ -4,20 +4,16 @@ module Modelling.PetriNet.TypesSpec where
 import Modelling.PetriNet.Types (
   BasicConfig (..),
   ChangeConfig (..),
-  GraphConfig (..),
   Net (..),
   Node,
   PetriLike,
   SimplePetriNet,
   checkBasicConfig,
   checkChangeConfig,
-  checkGraphLayouts,
   defaultBasicConfig,
   defaultChangeConfig,
-  defaultGraphConfig,
   transformNet,
   )
-import Data.GraphViz.Attributes.Complete (GraphvizCommand (..))
 
 import qualified Data.Map                         as M (keys)
 
@@ -43,29 +39,6 @@ spec = do
       it "it returns a String with necessary changes" $
         checkChangeConfig defaultBasicConfig defaultChangeConfig{tokenChangeOverall = -1}
           `shouldSatisfy` isJust
-  describe "checkGraphLayouts" $ do
-    let testConfig n = defaultGraphConfig { graphLayouts = take n [Dot, Neato, TwoPi, Circo] }
-    context "when useDifferentGraphLayouts is False" $ do
-      it "accepts any valid configuration" $ do
-        checkGraphLayouts False 4 (testConfig 3) `shouldBe` Nothing
-        checkGraphLayouts False 10 (testConfig 2) `shouldBe` Nothing
-    context "when useDifferentGraphLayouts is True (new behavior)" $ do
-      it "accepts configuration when numberOfGraphs mod n == 0 for some n <= numberOfLayouts" $ do
-        -- 4 graphs, 3 layouts: 4 mod 2 == 0, and 2 <= 3, so should be valid
-        checkGraphLayouts True 4 (testConfig 3) `shouldBe` Nothing
-        -- 6 graphs, 3 layouts: 6 mod 3 == 0, and 3 <= 3, so should be valid  
-        checkGraphLayouts True 6 (testConfig 3) `shouldBe` Nothing
-        -- 8 graphs, 4 layouts: 8 mod 4 == 0, and 4 <= 4, so should be valid
-        checkGraphLayouts True 8 (testConfig 4) `shouldBe` Nothing
-        -- 9 graphs, 3 layouts: 9 mod 3 == 0, and 3 <= 3, so should be valid
-        checkGraphLayouts True 9 (testConfig 3) `shouldBe` Nothing
-      it "rejects configuration when numberOfGraphs is not divisible by any valid n" $ do
-        -- 5 graphs, 3 layouts: 5 mod 2 == 1, 5 mod 3 == 2, so no valid n
-        checkGraphLayouts True 5 (testConfig 3) `shouldSatisfy` isJust
-        -- 7 graphs, 3 layouts: 7 mod 2 == 1, 7 mod 3 == 1, so no valid n
-        checkGraphLayouts True 7 (testConfig 3) `shouldSatisfy` isJust
-      it "rejects configuration with empty graphLayouts" $
-        checkGraphLayouts True 4 defaultGraphConfig{graphLayouts = []} `shouldSatisfy` isJust
   describe "a Net" $ do
     context "with and without applying fromSimpleNet" $
       netProperties fromSimpleNet
