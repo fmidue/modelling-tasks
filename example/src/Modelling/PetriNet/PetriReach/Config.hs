@@ -25,7 +25,8 @@ task2023_27 = ReachConfig {
   rejectLongerThan = Nothing,
   showLengthHint = True,
   showMinLengthHint = True,
-  showTargetNet = True
+  showTargetNet = True,
+  showPlaceNamesInNet = True
   }
 
 {-|
