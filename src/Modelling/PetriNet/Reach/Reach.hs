@@ -173,10 +173,15 @@ reportReachFor img noLonger lengthHint minLengthHint maybeGoal = do
       st1, ", danach ", st2, ", und schließlich ", st3,
       " (in genau dieser Reihenfolge), die gesuchte Markierung erreicht wird."
       ]
-  whenJust lengthHint $ \count -> when (noLonger /= Just count) $ paragraph $ translate $ do
-    english [i|Hint: There is a solution with not more than #{count} steps.|]
-    german [i|Hinweis: Es gibt eine Lösung mit nicht mehr als #{count} Schritten.|]
-  whenJust minLengthHint $ \count -> paragraph $ translate $ do
+  case (lengthHint, minLengthHint) of
+    (Just maxSteps, Just minSteps) | maxSteps == minSteps -> paragraph $ translate $ do
+      english [i|Hint: The solution contains exactly #{maxSteps} steps.|]
+      german [i|Hinweis: Die Lösung enthält genau #{maxSteps} Schritte.|]
+    (Just maxSteps, _) -> when (noLonger /= Just maxSteps) $ paragraph $ translate $ do
+      english [i|Hint: There is a solution with not more than #{maxSteps} steps.|]
+      german [i|Hinweis: Es gibt eine Lösung mit nicht mehr als #{maxSteps} Schritten.|]
+    _ -> pure ()
+  whenJust minLengthHint $ \count -> when (lengthHint /= Just count) $ paragraph $ translate $ do
     english [i|Hint: There is no solution with less than #{count} steps.|]
     german [i|Hinweis: Es gibt keine Lösung mit weniger als #{count} Schritten.|]
   hoveringInformation
