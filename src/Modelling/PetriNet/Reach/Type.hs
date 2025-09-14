@@ -13,24 +13,14 @@ import qualified Data.Map                         as M (
   filter,
   findWithDefault,
   fromList,
-  fromListWith,
   lookup,
   mapKeys,
   toList,
   )
 import qualified Data.Set                         as S (
-  difference,
-  empty,
-  findMin,
   fromList,
   isSubsetOf,
   map,
-  null,
-  singleton,
-  size,
-  toList,
-  union,
-  unions,
   )
 
 import Modelling.Auxiliary.Common       (parseInt, skipSpaces)
@@ -204,40 +194,3 @@ hasIsolatedNodes (Net ps ts cs _ _) =
   let connectedPlaces = S.fromList $ concatMap (\(pre, _, post) -> pre ++ post) cs
       connectedTransitions = S.fromList $ map (\(_, t, _) -> t) cs
   in not (S.isSubsetOf ps connectedPlaces && S.isSubsetOf ts connectedTransitions)
-
--- | Check if the net is connected (all nodes are reachable from any node through the bipartite graph)
-isConnected :: (Ord s, Ord t) => Net s t -> Bool
-isConnected net@(Net ps ts cs _ _)
-  | S.null ps && S.null ts = True
-  | hasIsolatedNodes net = False
-  | null cs = False
-  | otherwise =
-      let
-          -- Build bipartite adjacency relations
-          -- For each transition, get connected places
-          transitionToPlaces = M.fromListWith S.union [(t, S.fromList (pre ++ post)) | (pre, t, post) <- cs]
-          -- For each place, get connected transitions
-          placeToTransitions = M.fromListWith S.union $
-                               concatMap (\(pre, t, post) -> [(p, S.singleton t) | p <- pre ++ post]) cs
-
-          -- DFS through the bipartite graph starting from any node
-          -- We alternate between places and transitions
-          (startPlace, startTransitions) = if not (S.null ps)
-                                          then (S.singleton $ S.findMin ps, S.empty)
-                                          else (S.empty, S.singleton $ S.findMin ts)
-
-          (visitedPlaces, visitedTransitions) = dfs startPlace startTransitions S.empty S.empty
-
-          dfs placeFrontier transitionFrontier visitedP visitedT
-            | S.null placeFrontier && S.null transitionFrontier = (visitedP, visitedT)
-            | otherwise =
-                let newVisitedP = S.union visitedP placeFrontier
-                    newVisitedT = S.union visitedT transitionFrontier
-                    -- From current places, find new transitions
-                    newTransitionsFromPlaces = S.unions [M.findWithDefault S.empty p placeToTransitions | p <- S.toList placeFrontier]
-                    unvisitedNewTransitions = S.difference newTransitionsFromPlaces newVisitedT
-                    -- From current transitions, find new places
-                    newPlacesFromTransitions = S.unions [M.findWithDefault S.empty t transitionToPlaces | t <- S.toList transitionFrontier]
-                    unvisitedNewPlaces = S.difference newPlacesFromTransitions newVisitedP
-                in dfs unvisitedNewPlaces unvisitedNewTransitions newVisitedP newVisitedT
-      in S.size visitedPlaces == S.size ps && S.size visitedTransitions == S.size ts
