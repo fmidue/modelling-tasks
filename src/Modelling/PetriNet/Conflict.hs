@@ -167,7 +167,7 @@ import Data.Either                      (isLeft)
 import Data.Function                    ((&))
 import Data.Foldable                    (for_)
 import Data.GraphViz.Commands           (GraphvizCommand (Circo, Fdp))
-import Data.List                        (partition)
+import Data.List                        (partition, sort)
 import Data.List.Extra                  (nubSort)
 import Data.Ratio                       ((%))
 import Data.String.Interpolate          (i, iii)
@@ -259,9 +259,9 @@ conflictPlacesShow
   -> ((ShowTransition, ShowTransition), [ShowPlace])
 conflictPlacesShow = bimap
   sortedTransitionPair
-  (map ShowPlace)
+  (map ShowPlace . sort)
   where
-    sortedTransitionPair (t1, t2) = 
+    sortedTransitionPair (t1, t2) =
       let (first, second) = if t1 <= t2 then (t1, t2) else (t2, t1)
       in bimap ShowTransition ShowTransition (first, second)
 
