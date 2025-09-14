@@ -1,5 +1,3 @@
-{-# LANGUAGE QuasiQuotes #-}
-{-# LANGUAGE RecordWildCards #-}
 -- | Common phrasing logic for CdOd tasks
 module Modelling.CdOd.Phrasing.Common (
   PhrasingStrings (..),
@@ -39,26 +37,26 @@ data PhrasingStrings = PhrasingStrings
 
 -- | English phrasing strings
 englishStrings :: (OmittedDefaultMultiplicities -> ArticleToUse -> PhrasingKind -> NonInheritancePhrasing -> AnyRelationship String String -> String) -> PhrasingStrings
-englishStrings phraseRelationFn = PhrasingStrings
+englishStrings phraseRelationFunc = PhrasingStrings
   { changeNothing = "change nothing"
   , addPrefix = "add "
   , removePrefix = "remove "
   , replacePrefix = "replace "
   , byInfix = " by "
   , postProcess = id
-  , phraseRelationFn = phraseRelationFn
+  , phraseRelationFn = phraseRelationFunc
   }
 
 -- | German phrasing strings
 germanStrings :: (OmittedDefaultMultiplicities -> ArticleToUse -> PhrasingKind -> NonInheritancePhrasing -> AnyRelationship String String -> String) -> PhrasingStrings
-germanStrings phraseRelationFn = PhrasingStrings
+germanStrings phraseRelationFunc = PhrasingStrings
   { changeNothing = "verändere nichts"
   , addPrefix = "ergänze "
   , removePrefix = "entferne "
   , replacePrefix = "ersetze "
   , byInfix = " durch "
   , postProcess = \xs -> if ',' `elem` xs then xs ++ "," else xs
-  , phraseRelationFn = phraseRelationFn
+  , phraseRelationFn = phraseRelationFunc
   }
 
 -- | Common change phrasing logic parameterized by language strings
