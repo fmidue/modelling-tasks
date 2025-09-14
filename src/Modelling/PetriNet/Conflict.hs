@@ -57,6 +57,7 @@ import Modelling.Auxiliary.Common (
   )
 import Modelling.Auxiliary.Output (
   hoveringInformation,
+  extra,
   )
 import Modelling.PetriNet.Alloy (
   compAdvConstraints,
@@ -231,6 +232,7 @@ findConflictTask path task = do
       german "Die Reihenfolge der Transitionen innerhalb des Paars spielt hierbei keine Rolle."
     pure ()
   paragraph hoveringInformation
+  extra $ (\FindInstance { addText = t } -> t) task
   pure ()
 
 findConflictSyntax
@@ -377,6 +379,7 @@ pickConflictTask path task = do
         ++ ")."
     pure ()
   paragraph hoveringInformation
+  extra $ (\PickInstance { addText = t } -> t) task
   pure ()
 
 findConflictGenerate

@@ -49,6 +49,7 @@ import Modelling.Auxiliary.Common (
   )
 import Modelling.Auxiliary.Output (
   hoveringInformation,
+  extra,
   )
 import Modelling.PetriNet.Alloy (
   compAdvConstraints,
@@ -223,6 +224,7 @@ findConcurrencyTask path task = do
         |]
     pure ()
   paragraph hoveringInformation
+  extra $ (\FindInstance { addText = t } -> t) task
   pure ()
 
 findConcurrencySyntax
@@ -327,6 +329,7 @@ pickConcurrencyTask path task = do
         ++ ")."
     pure ()
   paragraph hoveringInformation
+  extra $ (\PickInstance { addText = t } -> t) task
   pure ()
 
 findConcurrencyGenerate

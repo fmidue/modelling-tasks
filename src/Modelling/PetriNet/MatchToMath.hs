@@ -48,6 +48,7 @@ import Capabilities.Graphviz            (MonadGraphviz)
 import Modelling.Auxiliary.Common       (Object (oName), findFittingRandom)
 import Modelling.Auxiliary.Output       (
   hoveringInformation,
+  extra,
   )
 import Modelling.PetriNet.Alloy (
   compAdvConstraints,
@@ -420,6 +421,7 @@ graphToMathTask path task = do
       german [i| als Antwort würde bedeuten, dass Repräsentation 1 zur gegebenen grafischen Darstellung passt (und die anderen mathematischen Repräsentationen nicht).|]
     pure ()
   paragraph hoveringInformation
+  extra $ addText task
   pure ()
 
 mathToOutput :: OutputCapable m => (a -> LangM m) -> PetriMath a -> LangM m
@@ -480,6 +482,7 @@ mathToGraphTask path task = do
       german [i| als Antwort würde bedeuten, dass Diagramm 1 zur gegebenen mathematischen Repräsentation passt (und die anderen Diagramme nicht).|]
     pure ()
   paragraph hoveringInformation
+  extra $ addText task
   pure ()
 
 graphToMathSyntax

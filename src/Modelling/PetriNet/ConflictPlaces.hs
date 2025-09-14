@@ -23,6 +23,7 @@ import Capabilities.Diagrams            (MonadDiagrams)
 import Capabilities.Graphviz            (MonadGraphviz)
 import Modelling.Auxiliary.Output (
   hoveringInformation,
+  extra,
   )
 import Modelling.PetriNet.Conflict (
   ConflictPlaces,
@@ -155,6 +156,7 @@ The order of places within the listing of places inducing the conflict is irrele
 Die Reihenfolge von Stellen innerhalb der Auflistung der den Konflikt verursachenden Stellen spielt ebenso keine Rolle.|]
     pure ()
   paragraph hoveringInformation
+  extra $ (\FindInstance { addText = t } -> t) task
   pure ()
 
 conflictInitial :: ConflictPlaces
