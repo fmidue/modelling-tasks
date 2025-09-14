@@ -71,6 +71,7 @@ module Modelling.PetriNet.Types (
   lConflictConfig,
   lConflictPlaces,
   lConflictTrans,
+  lExtraText,
   lFlowOverall,
   lGraphConfig,
   lGraphLayouts,
@@ -124,6 +125,7 @@ import Control.Monad                    ((<=<))
 import Control.Monad.Catch              (Exception, MonadThrow (throwM))
 import Control.Monad.Random             (RandT, RandomGen)
 import Control.Monad.Trans              (MonadTrans(lift))
+import Control.OutputCapable.Blocks     (Language)
 import Data.Bimap                       (Bimap)
 import Data.Data                        (Data)
 import Data.GraphViz.Attributes.Complete (GraphvizCommand (..))
@@ -803,6 +805,7 @@ data FindConflictConfig = FindConflictConfig
   , printSolution :: Bool
   , uniqueConflictPlace :: Maybe Bool
   , alloyConfig  :: AlloyConfig
+  , extraText :: Maybe (Map Language String)
   } deriving (Generic, Read, Show)
 
 makeLensesWith lensRulesL ''FindConflictConfig
@@ -817,6 +820,7 @@ defaultFindConflictConfig = FindConflictConfig
   , printSolution = False
   , uniqueConflictPlace = Just True
   , alloyConfig  = defaultAlloyConfig
+  , extraText = Nothing
   }
 
 data PickConflictConfig = PickConflictConfig
@@ -829,6 +833,7 @@ data PickConflictConfig = PickConflictConfig
   , uniqueConflictPlace :: Maybe Bool
   , useDifferentGraphLayouts :: Bool
   , alloyConfig  :: AlloyConfig
+  , extraText :: Maybe (Map Language String)
   } deriving (Generic, Read, Show)
 
 defaultPickConflictConfig :: PickConflictConfig
@@ -842,6 +847,7 @@ defaultPickConflictConfig = PickConflictConfig
   , uniqueConflictPlace = Nothing
   , useDifferentGraphLayouts = False
   , alloyConfig  = defaultAlloyConfig
+  , extraText = Nothing
   }
 
 data FindConcurrencyConfig = FindConcurrencyConfig
@@ -851,6 +857,7 @@ data FindConcurrencyConfig = FindConcurrencyConfig
   , graphConfig :: GraphConfig
   , printSolution :: Bool
   , alloyConfig  :: AlloyConfig
+  , extraText :: Maybe (Map Language String)
   } deriving (Generic, Read, Show)
 
 defaultFindConcurrencyConfig :: FindConcurrencyConfig
@@ -861,6 +868,7 @@ defaultFindConcurrencyConfig = FindConcurrencyConfig
   , graphConfig = defaultGraphConfig { hidePlaceNames = True }
   , printSolution = False
   , alloyConfig  = defaultAlloyConfig
+  , extraText = Nothing
   }
 
 data PickConcurrencyConfig = PickConcurrencyConfig
@@ -871,6 +879,7 @@ data PickConcurrencyConfig = PickConcurrencyConfig
   , prohibitSourceTransitions :: Bool
   , useDifferentGraphLayouts :: Bool
   , alloyConfig  :: AlloyConfig
+  , extraText :: Maybe (Map Language String)
   } deriving (Generic, Read, Show)
 
 defaultPickConcurrencyConfig :: PickConcurrencyConfig
@@ -882,6 +891,7 @@ defaultPickConcurrencyConfig = PickConcurrencyConfig
   , prohibitSourceTransitions = False
   , useDifferentGraphLayouts = False
   , alloyConfig  = defaultAlloyConfig
+  , extraText = Nothing
   }
 
 data DrawSettings = DrawSettings {

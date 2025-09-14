@@ -352,7 +352,8 @@ findConcurrencyGenerate config segment = evalRandT getInstance . mkStdGen
         net = petri,
         numberOfPlaces = places bc,
         numberOfTransitions = transitions bc,
-        showSolution = Find.printSolution config
+        showSolution = Find.printSolution config,
+        addText = Find.extraText config
         }
     bc = Find.basicConfig config
 
@@ -373,11 +374,12 @@ pickConcurrencyGenerate
   -> Int
   -> Int
   -> m (PickInstance (p n String))
-pickConcurrencyGenerate = pickGenerate pickConcurrency gc ud ws
+pickConcurrencyGenerate = pickGenerate pickConcurrency gc ud ws et
   where
     gc = Pick.graphConfig
     ud = Pick.useDifferentGraphLayouts
     ws = Pick.printSolution
+    et = Pick.extraText
 
 
 pickConcurrency
@@ -568,7 +570,8 @@ defaultPickConcurrencyInstance = PickInstance {
         }
       )))
     ],
-  showSolution = False
+  showSolution = False,
+  addText = Nothing
   }
 
 defaultFindConcurrencyInstance :: FindInstance SimplePetriNet (Concurrent Transition)
@@ -594,5 +597,6 @@ defaultFindConcurrencyInstance = FindInstance {
     },
   numberOfPlaces = 4,
   numberOfTransitions = 3,
-  showSolution = False
+  showSolution = False,
+  addText = Nothing
   }

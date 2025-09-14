@@ -404,7 +404,8 @@ findConflictGenerate config segment = evalRandT getInstance . mkStdGen
         net = petri,
         numberOfPlaces = places bc,
         numberOfTransitions = transitions bc,
-        showSolution = Find.printSolution config
+        showSolution = Find.printSolution config,
+        addText = Find.extraText config
         }
     bc = Find.basicConfig config
 
@@ -414,11 +415,12 @@ pickConflictGenerate
   -> Int
   -> Int
   -> m (PickInstance (p n String))
-pickConflictGenerate = pickGenerate pickConflict gc ud ws
+pickConflictGenerate = pickGenerate pickConflict gc ud ws et
   where
     gc = Pick.graphConfig
     ud = Pick.useDifferentGraphLayouts
     ws = Pick.printSolution
+    et = Pick.extraText
 
 findConflict
   :: (MonadAlloy m, MonadThrow m, Net p n, RandomGen g)
@@ -716,7 +718,8 @@ defaultPickConflictInstance = PickInstance {
         }
       )))
     ],
-  showSolution = False
+  showSolution = False,
+  addText = Nothing
   }
 
 defaultFindConflictInstance :: FindInstance SimplePetriNet Conflict
@@ -745,5 +748,6 @@ defaultFindConflictInstance = FindInstance {
     },
   numberOfPlaces = 4,
   numberOfTransitions = 3,
-  showSolution = False
+  showSolution = False,
+  addText = Nothing
   }

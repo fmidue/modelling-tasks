@@ -254,5 +254,6 @@ defaultFindConflictPlacesInstance = FindInstance {
     },
   numberOfPlaces = 4,
   numberOfTransitions = 3,
-  showSolution = False
+  showSolution = False,
+  addText = Nothing
   }
