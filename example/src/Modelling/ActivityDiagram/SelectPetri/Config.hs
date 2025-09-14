@@ -24,7 +24,6 @@ task2023_37 = SelectPetriConfig {
     flowFinalNodes = 2,
     cycles = 1
     },
-  countOfPetriNodesBounds = (0, Nothing),
   maxInstances = Just 2000,
   hideNodeNames = False,
   hideBranchConditions = True,
@@ -56,7 +55,6 @@ task2023_38 = SelectPetriConfig {
     flowFinalNodes = 2,
     cycles = 1
     },
-  countOfPetriNodesBounds = (0, Nothing),
   maxInstances = Just 1,
   hideNodeNames = True,
   hideBranchConditions = True,
@@ -98,7 +96,6 @@ task2024_44 = SelectPetriConfig {
     flowFinalNodes = 2,
     cycles = 1
     },
-  countOfPetriNodesBounds = (0, Nothing),
   maxInstances = Just 2000,
   hideNodeNames = True,
   hideBranchConditions = True,
@@ -112,38 +109,5 @@ task2024_44 = SelectPetriConfig {
   presenceOfSinkTransitionsForFinals = Nothing,
   withActivityFinalInForkBlocks = Just False,
   printSolution = True,
-  extraText = Nothing
-  }
-
-{-|
-Example configuration demonstrating the use of countOfPetriNodesBounds parameter.
-This configuration restricts the generated Petri nets to have between 21 and 27 nodes.
--}
-exampleWithNodeBounds :: SelectPetriConfig
-exampleWithNodeBounds = SelectPetriConfig {
-  adConfig = AdConfig {
-    actionLimits = (3, 5),
-    objectNodeLimits = (2, 4),
-    maxNamedNodes = 9,
-    decisionMergePairs = 1,
-    forkJoinPairs = 1,
-    activityFinalNodes = 0,
-    flowFinalNodes = 2,
-    cycles = 1
-    },
-  countOfPetriNodesBounds = (21, Just 27),
-  maxInstances = Just 100,
-  hideNodeNames = False,
-  hideBranchConditions = False,
-  hidePetriNodeLabels = False,
-  petriLayout = [Dot],
-  petriSvgHighlighting = True,
-  numberOfWrongAnswers = 3,
-  numberOfModifications = 2,
-  modifyAtMid = True,
-  auxiliaryPetriNodeAbsent = Nothing,
-  presenceOfSinkTransitionsForFinals = Nothing,
-  withActivityFinalInForkBlocks = Just False,
-  printSolution = False,
   extraText = Nothing
   }

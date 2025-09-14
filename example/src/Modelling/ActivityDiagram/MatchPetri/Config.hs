@@ -24,7 +24,6 @@ task2023_39 = MatchPetriConfig {
     flowFinalNodes = 2,
     cycles = 1
     },
-  countOfPetriNodesBounds = (0, Nothing),
   maxInstances = Just 10000,
   hideBranchConditions = True,
   petriLayout = [Fdp],
@@ -53,7 +52,6 @@ task2023_40 = MatchPetriConfig {
     flowFinalNodes = 3,
     cycles = 3
     },
-  countOfPetriNodesBounds = (0, Nothing),
   maxInstances = Just 2000,
   hideBranchConditions = True,
   petriLayout = [Fdp],
@@ -98,7 +96,6 @@ task2024_70 = MatchPetriConfig {
     flowFinalNodes = 1,
     cycles = 0
     },
-  countOfPetriNodesBounds = (0, Nothing),
   maxInstances = Just 10000,
   hideBranchConditions = True,
   petriLayout = [Fdp],
@@ -127,40 +124,11 @@ task2024_71 = MatchPetriConfig {
     flowFinalNodes = 3,
     cycles = 3
     },
-  countOfPetriNodesBounds = (0, Nothing),
   maxInstances = Just 2000,
   hideBranchConditions = True,
   petriLayout = [Fdp],
   petriSvgHighlighting = True,
   auxiliaryPetriNodeAbsent = Just False,
-  presenceOfSinkTransitionsForFinals = Nothing,
-  withActivityFinalInForkBlocks = Just False,
-  printSolution = True,
-  extraText = Nothing
-  }
-
-{-|
-Example configuration demonstrating the use of countOfPetriNodesBounds parameter.
-This configuration restricts the generated Petri nets to have between 31 and 41 nodes.
--}
-exampleWithNodeBounds :: MatchPetriConfig
-exampleWithNodeBounds = MatchPetriConfig {
-  adConfig = AdConfig {
-    actionLimits = (4, 6),
-    objectNodeLimits = (3, 5),
-    maxNamedNodes = 11,
-    decisionMergePairs = 2,
-    forkJoinPairs = 1,
-    activityFinalNodes = 0,
-    flowFinalNodes = 2,
-    cycles = 2
-    },
-  countOfPetriNodesBounds = (31, Just 41),
-  maxInstances = Just 50,
-  hideBranchConditions = False,
-  petriLayout = [Dot],
-  petriSvgHighlighting = True,
-  auxiliaryPetriNodeAbsent = Nothing,
   presenceOfSinkTransitionsForFinals = Nothing,
   withActivityFinalInForkBlocks = Just False,
   printSolution = True,
