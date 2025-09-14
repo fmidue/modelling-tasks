@@ -1026,7 +1026,13 @@ checkGraphLayouts :: Bool -> Int -> GraphConfig -> Maybe String
 checkGraphLayouts useDifferent wrongInstances gc
   | null (graphLayouts gc)
   = Just "At least one graph layout needs to be provided."
-  | useDifferent && length (graphLayouts gc) <= wrongInstances
-  = Just "The parameter 'graphLayout' has to contain more entries than the number of 'wrongInstances' if 'useDifferentGraphLayouts' is set."
+  | useDifferent && not (hasValidLayoutDistribution wrongInstances (length $ graphLayouts gc))
+  = Just "The parameter 'graphLayout' needs to allow even distribution of graphs when 'useDifferentGraphLayouts' is set."
   | otherwise
   = Nothing
+
+-- | Check if we can distribute wrongInstances graphs among numLayouts layouts
+-- such that we use n different layouts where 1 < n <= numLayouts and wrongInstances mod n == 0
+hasValidLayoutDistribution :: Int -> Int -> Bool
+hasValidLayoutDistribution wrongInstances numLayouts =
+  any (\n -> wrongInstances `mod` n == 0) [2..numLayouts]
