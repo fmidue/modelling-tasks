@@ -1019,10 +1019,6 @@ checkChangeConfig
   = Just "If 'tokenChangeOverall' is odd, then 'tokensOverall' should not contain two equal values (configuration would be unsatisfiable)."
  | odd flowChangeOverall && fst flowOverall == snd flowOverall
   = Just "If 'flowChangeOverall' is odd, then 'flowOverall' should not contain two equal values (configuration would be unsatisfiable)."
- | even tokenChangeOverall && fst tokensOverall + 1 == snd tokensOverall
-  = Just "If 'tokenChangeOverall' is even, then 'tokensOverall' should not contain two consecutive numbers (configuration would be equivalent to equal values)."
- | even flowChangeOverall && fst flowOverall + 1 == snd flowOverall
-  = Just "If 'flowChangeOverall' is even, then 'flowOverall' should not contain two consecutive numbers (configuration would be equivalent to equal values)."
  | otherwise
   = Nothing
 
