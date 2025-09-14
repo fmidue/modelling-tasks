@@ -4,18 +4,12 @@
 {-# LANGUAGE TypeApplications #-}
 module Modelling.ActivityDiagram.Auxiliary.Util (
   finalNodesAdvice,
-  weightedShuffle,
   checkCount
   ) where
 
 import qualified Data.Map as M (size)
 import qualified Modelling.PetriNet.Types as Petri (Net (nodes))
 
-import Control.Monad.Random (
-  MonadRandom,
-  fromList,
-  )
-import Data.List (delete)
 import Data.String.Interpolate          (iii)
 import Control.OutputCapable.Blocks (
   LangM,

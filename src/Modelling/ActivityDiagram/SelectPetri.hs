@@ -38,7 +38,6 @@ import qualified Modelling.ActivityDiagram.PetriNet as PK (PetriKey (label))
 import Modelling.ActivityDiagram.Alloy  (adConfigToAlloy, modulePetriNet)
 import Modelling.ActivityDiagram.Auxiliary.Util (
   finalNodesAdvice,
-  weightedShuffle,
   checkCount,
   )
 import qualified Modelling.ActivityDiagram.Config as Config (
