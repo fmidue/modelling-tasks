@@ -11,7 +11,7 @@ import Modelling.Types (
   Change (..),
   )
 import Modelling.CdOd.Auxiliary.Util    (oneAndOther)
-import Modelling.CdOd.Phrasing.Common   (phraseChangeWith, englishStrings)
+import Modelling.CdOd.Phrasing.Common   (phraseChangeWith, PhrasingStrings (..))
 import Modelling.CdOd.Types (
   AnyRelationship,
   DefaultedLimitedLinking (..),
@@ -38,6 +38,18 @@ phraseChange
   -> Change (AnyRelationship String String)
   -> String
 phraseChange = phraseChangeWith (englishStrings phraseRelation)
+
+-- | English phrasing strings
+englishStrings :: (OmittedDefaultMultiplicities -> ArticleToUse -> PhrasingKind -> NonInheritancePhrasing -> AnyRelationship String String -> String) -> PhrasingStrings
+englishStrings phraseRelationFunc = PhrasingStrings
+  { changeNothing = "change nothing"
+  , addPrefix = "add "
+  , removePrefix = "remove "
+  , replacePrefix = "replace "
+  , byInfix = " by "
+  , postProcess = id
+  , phraseRelationFn = phraseRelationFunc
+  }
 
 consonantArticle :: ArticleToUse -> String
 consonantArticle = \case

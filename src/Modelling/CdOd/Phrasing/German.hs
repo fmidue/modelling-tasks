@@ -12,7 +12,7 @@ import Modelling.Types (
   Change (..),
   )
 import Modelling.CdOd.Auxiliary.Util    (oneAndOther)
-import Modelling.CdOd.Phrasing.Common   (phraseChangeWith, germanStrings)
+import Modelling.CdOd.Phrasing.Common   (phraseChangeWith, PhrasingStrings (..))
 import Modelling.CdOd.Types (
   AnyRelationship,
   DefaultedLimitedLinking (..),
@@ -39,6 +39,18 @@ phraseChange
   -> Change (AnyRelationship String String)
   -> String
 phraseChange = phraseChangeWith (germanStrings phraseRelation)
+
+-- | German phrasing strings
+germanStrings :: (OmittedDefaultMultiplicities -> ArticleToUse -> PhrasingKind -> NonInheritancePhrasing -> AnyRelationship String String -> String) -> PhrasingStrings
+germanStrings phraseRelationFunc = PhrasingStrings
+  { changeNothing = "verändere nichts"
+  , addPrefix = "ergänze "
+  , removePrefix = "entferne "
+  , replacePrefix = "ersetze "
+  , byInfix = " durch "
+  , postProcess = \xs -> if ',' `elem` xs then xs ++ "," else xs
+  , phraseRelationFn = phraseRelationFunc
+  }
 
 trailingComma :: String -> String
 trailingComma xs

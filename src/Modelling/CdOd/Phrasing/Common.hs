@@ -1,9 +1,7 @@
 -- | Common phrasing logic for CdOd tasks
 module Modelling.CdOd.Phrasing.Common (
   PhrasingStrings (..),
-  phraseChangeWith,
-  englishStrings,
-  germanStrings
+  phraseChangeWith
 ) where
 
 import Modelling.Types (
@@ -35,29 +33,7 @@ data PhrasingStrings = PhrasingStrings
                      -> String
   }
 
--- | English phrasing strings
-englishStrings :: (OmittedDefaultMultiplicities -> ArticleToUse -> PhrasingKind -> NonInheritancePhrasing -> AnyRelationship String String -> String) -> PhrasingStrings
-englishStrings phraseRelationFunc = PhrasingStrings
-  { changeNothing = "change nothing"
-  , addPrefix = "add "
-  , removePrefix = "remove "
-  , replacePrefix = "replace "
-  , byInfix = " by "
-  , postProcess = id
-  , phraseRelationFn = phraseRelationFunc
-  }
 
--- | German phrasing strings
-germanStrings :: (OmittedDefaultMultiplicities -> ArticleToUse -> PhrasingKind -> NonInheritancePhrasing -> AnyRelationship String String -> String) -> PhrasingStrings
-germanStrings phraseRelationFunc = PhrasingStrings
-  { changeNothing = "verändere nichts"
-  , addPrefix = "ergänze "
-  , removePrefix = "entferne "
-  , replacePrefix = "ersetze "
-  , byInfix = " durch "
-  , postProcess = \xs -> if ',' `elem` xs then xs ++ "," else xs
-  , phraseRelationFn = phraseRelationFunc
-  }
 
 -- | Common change phrasing logic parameterized by language strings
 phraseChangeWith
