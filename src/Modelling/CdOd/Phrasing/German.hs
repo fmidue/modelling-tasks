@@ -12,6 +12,7 @@ import Modelling.Types (
   Change (..),
   )
 import Modelling.CdOd.Auxiliary.Util    (oneAndOther)
+import Modelling.CdOd.Phrasing.Common   (phraseChangeWith, germanStrings)
 import Modelling.CdOd.Types (
   AnyRelationship,
   DefaultedLimitedLinking (..),
@@ -37,26 +38,7 @@ phraseChange
   -> Bool
   -> Change (AnyRelationship String String)
   -> String
-phraseChange defaultMultiplicities article byName withDir c =
-  case (add c, remove c) of
-  (Nothing, Nothing) -> "verändere nichts"
-  (Just a,  Nothing) -> "ergänze "
-    ++ trailingComma (phrasingNew a)
-  (Nothing, Just e)  -> "entferne " ++ phrasingOld e
-  (Just a,  Just e)  ->
-    "ersetze " ++ trailingComma (phrasingOld e)
-    ++ " durch " ++ phrasingNew a
-  where
-    phrasingOld = phraseRelation
-      defaultMultiplicities
-      article
-      Denoted
-      $ toPhrasing byName withDir
-    phrasingNew = phraseRelation
-      defaultMultiplicities
-      IndefiniteArticle
-      Participations
-      $ toPhrasing False withDir
+phraseChange = phraseChangeWith (germanStrings phraseRelation)
 
 trailingComma :: String -> String
 trailingComma xs

@@ -88,6 +88,7 @@ library
       Modelling.ActivityDiagram.Auxiliary.PetriValidation
       Modelling.Auxiliary.Diagrams
       Modelling.CdOd.Phrasing
+      Modelling.CdOd.Phrasing.Common
       Modelling.CdOd.Phrasing.English
       Modelling.CdOd.Phrasing.German
       Modelling.PetriNet.Reach.Roll
