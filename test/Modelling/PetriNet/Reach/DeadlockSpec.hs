@@ -7,11 +7,12 @@ import Modelling.PetriNet.Reach.Deadlock (
   DeadlockInstance (..),
   defaultDeadlockConfig,
   generateDeadlock,
-  validateDeadlockConfig,
+  checkDeadlockConfig,
   )
 import Modelling.PetriNet.Reach.Step    (successors)
 import Modelling.PetriNet.Reach.Type    (Net (transitions))
 
+import Data.Maybe                       (isJust)
 import Modelling.PetriNet.Reach.ReachSpec (
   hasMinTransitionLength,
   )
@@ -35,10 +36,10 @@ spec = do
         net `shouldSatisfy`
           hasMinTransitionLength (null . successors net) ts minL
 
-  describe "validateDeadlockConfig" $ do
+  describe "checkDeadlockConfig" $ do
     it "accepts valid configuration" $ do
       let config = defaultDeadlockConfig
-      validateDeadlockConfig config `shouldBe` Right ()
+      checkDeadlockConfig config `shouldBe` Nothing
 
     it "rejects conflicting length hint configuration" $ do
       let config = defaultDeadlockConfig {
@@ -46,7 +47,7 @@ spec = do
             rejectLongerThan = Just 8,
             showLengthHint = True
             }
-      validateDeadlockConfig config `shouldSatisfy` either (const True) (const False)
+      checkDeadlockConfig config `shouldSatisfy` isJust
 
     it "accepts non-conflicting length hint configuration" $ do
       let config = defaultDeadlockConfig {
@@ -54,10 +55,4 @@ spec = do
             rejectLongerThan = Just 7,
             showLengthHint = True
             }
-      validateDeadlockConfig config `shouldBe` Right ()
-
-  describe "deadlockSyntax" $ do
-    it "exists and can be called" $ do
-      -- This test would require running in IO to check assertion failure
-      -- For now we just test the structure exists
-      () `shouldBe` ()
+      checkDeadlockConfig config `shouldBe` Nothing

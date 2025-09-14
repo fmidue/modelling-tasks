@@ -234,33 +234,30 @@ defaultDeadlockInstance = DeadlockInstance {
   withMinLengthHint = Just 6
   }
 
-validateDeadlockConfig :: DeadlockConfig -> Either String ()
-validateDeadlockConfig DeadlockConfig {..} =
-  if rejectLongerThan == Just maxTransitionLength && showLengthHint
-  then Left "Configuration error: showLengthHint cannot be True when rejectLongerThan equals maxTransitionLength"
-  else Right ()
+checkDeadlockConfig :: DeadlockConfig -> Maybe String
+checkDeadlockConfig DeadlockConfig {..}
+  | rejectLongerThan == Just maxTransitionLength && showLengthHint
+  = Just "showLengthHint cannot be True when rejectLongerThan equals maxTransitionLength"
+  | otherwise = Nothing
 
 generateDeadlock
   :: (MonadCatch m, MonadDiagrams m, MonadGraphviz m)
   => DeadlockConfig
   -> Int
   -> m (DeadlockInstance Place Transition)
-generateDeadlock config@DeadlockConfig {..} seed = do
-  case validateDeadlockConfig config of
-    Left err -> error err
-    Right () -> do
-      (petri, cmd) <- tries 1000 config seed
-      pure DeadlockInstance {
-        drawUsing         = cmd,
-        minLength         = minTransitionLength,
-        noLongerThan      = rejectLongerThan,
-        petriNet          = petri,
-        showSolution      = printSolution,
-        withLengthHint    =
-          if showLengthHint then Just maxTransitionLength else Nothing,
-        withMinLengthHint =
-          if showMinLengthHint then Just minTransitionLength else Nothing
-        }
+generateDeadlock conf@DeadlockConfig {..} seed = do
+  (petri, cmd) <- tries 1000 conf seed
+  pure DeadlockInstance {
+    drawUsing         = cmd,
+    minLength         = minTransitionLength,
+    noLongerThan      = rejectLongerThan,
+    petriNet          = petri,
+    showSolution      = printSolution,
+    withLengthHint    =
+      if showLengthHint then Just maxTransitionLength else Nothing,
+    withMinLengthHint =
+      if showMinLengthHint then Just minTransitionLength else Nothing
+    }
 
 tries
   :: (MonadCatch m, MonadDiagrams m, MonadGraphviz m)

@@ -11,7 +11,7 @@ import Modelling.PetriNet.Reach.Reach (
   NetGoal (..),
   defaultReachConfig,
   generateReach,
-  validateReachConfig,
+  checkReachConfig,
   )
 import Modelling.PetriNet.Reach.Property (
   satisfiesAtAnyState,
@@ -22,6 +22,7 @@ import Modelling.PetriNet.Reach.Type (
   Transition (..),
   )
 
+import Data.Maybe                        (isJust)
 import Data.Set                         (Set)
 import Test.Hspec
 import Test.QuickCheck                  (Testable (property))
@@ -44,10 +45,10 @@ spec = do
             ts = transitions net
         net `shouldSatisfy` hasMinTransitionLength (s ==) ts minL
 
-  describe "validateReachConfig" $ do
+  describe "checkReachConfig" $ do
     it "accepts valid configuration" $ do
       let config = defaultReachConfig
-      validateReachConfig config `shouldBe` Right ()
+      checkReachConfig config `shouldBe` Nothing
 
     it "rejects conflicting length hint configuration" $ do
       let config = defaultReachConfig {
@@ -57,7 +58,7 @@ spec = do
             rejectLongerThan = Just 8,
             showLengthHint = True
             }
-      validateReachConfig config `shouldSatisfy` either (const True) (const False)
+      checkReachConfig config `shouldSatisfy` isJust
 
     it "accepts non-conflicting length hint configuration" $ do
       let config = defaultReachConfig {
@@ -67,13 +68,17 @@ spec = do
             rejectLongerThan = Just 7,
             showLengthHint = True
             }
-      validateReachConfig config `shouldBe` Right ()
+      checkReachConfig config `shouldBe` Nothing
 
-  describe "reachSyntax" $ do
-    it "exists and can be called" $ do
-      -- This test would require running in IO to check assertion failure
-      -- For now we just test the structure exists
-      () `shouldBe` ()
+    it "rejects the problematic task2024_60-style config" $ do
+      let problematicConfig = defaultReachConfig {
+            netGoalConfig = (netGoalConfig defaultReachConfig) {
+              maxTransitionLength = 8
+              },
+            rejectLongerThan = Just 8,
+            showLengthHint = True
+            }
+      checkReachConfig problematicConfig `shouldSatisfy` isJust
 
 hasMinTransitionLength
   :: (Ord s, Show s)

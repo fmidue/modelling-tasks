@@ -447,30 +447,27 @@ generateNetGoal NetGoalConfig {..} seed = do
     ts = [Transition 1 .. Transition numTransitions]
     eval f = evalRandT f $ mkStdGen seed
 
-validateReachConfig :: ReachConfig -> Either String ()
-validateReachConfig ReachConfig {..} =
-  if rejectLongerThan == Just (maxTransitionLength netGoalConfig) && showLengthHint
-  then Left "Configuration error: showLengthHint cannot be True when rejectLongerThan equals maxTransitionLength"
-  else Right ()
+checkReachConfig :: ReachConfig -> Maybe String
+checkReachConfig ReachConfig {..}
+  | rejectLongerThan == Just (maxTransitionLength netGoalConfig) && showLengthHint
+  = Just "showLengthHint cannot be True when rejectLongerThan equals maxTransitionLength"
+  | otherwise = Nothing
 
 generateReach
   :: (MonadCatch m, MonadDiagrams m, MonadGraphviz m)
   => ReachConfig
   -> Int
   -> m (ReachInstance Place Transition)
-generateReach config@ReachConfig {..} seed = do
-  case validateReachConfig config of
-    Left err -> error err
-    Right () -> do
-      netGoal <- generateNetGoal netGoalConfig seed
-      pure $ ReachInstance {
-        netGoal           = netGoal,
-        minLength         = minTransitionLength netGoalConfig,
-        noLongerThan      = rejectLongerThan,
-        showGoalNet       = showTargetNet,
-        showSolution      = printSolution,
-        withLengthHint    =
-          if showLengthHint then Just $ maxTransitionLength netGoalConfig else Nothing,
-        withMinLengthHint =
-          if showMinLengthHint then Just $ minTransitionLength netGoalConfig else Nothing
-        }
+generateReach ReachConfig {..} seed = do
+  netGoal <- generateNetGoal netGoalConfig seed
+  pure $ ReachInstance {
+    netGoal           = netGoal,
+    minLength         = minTransitionLength netGoalConfig,
+    noLongerThan      = rejectLongerThan,
+    showGoalNet       = showTargetNet,
+    showSolution      = printSolution,
+    withLengthHint    =
+      if showLengthHint then Just $ maxTransitionLength netGoalConfig else Nothing,
+    withMinLengthHint =
+      if showMinLengthHint then Just $ minTransitionLength netGoalConfig else Nothing
+    }
