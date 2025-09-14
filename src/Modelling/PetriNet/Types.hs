@@ -1015,9 +1015,9 @@ checkChangeConfig
   = Just "The parameter 'flowChangeOverall' is set unreasonable high, given the maximal flow overall."
  | 2 * places * transitions * maxFlowChangePerEdge < flowChangeOverall
   = Just "The parameter 'flowChangeOverall' is set unreasonably high, given the other parameters."
- | odd tokenChangeOverall && fst tokensOverall == snd tokensOverall
+ | odd tokenChangeOverall && uncurry (==) tokensOverall
   = Just "If 'tokenChangeOverall' is odd, then 'tokensOverall' should not contain two equal values (configuration would be unsatisfiable)."
- | odd flowChangeOverall && fst flowOverall == snd flowOverall
+ | odd flowChangeOverall && uncurry (==) flowOverall
   = Just "If 'flowChangeOverall' is odd, then 'flowOverall' should not contain two equal values (configuration would be unsatisfiable)."
  | otherwise
   = Nothing
