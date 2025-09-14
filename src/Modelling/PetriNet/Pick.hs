@@ -149,20 +149,23 @@ pickGenerate pick gc useDifferent withSol config segment seed
         maybeM getInstance (toPickInstance petriNets)
         $ if useDifferent config
           then
-            -- Find the largest valid n and distribute graphs evenly
+            -- Try valid divisors in descending order until one succeeds
             let availableLayouts = allDrawSettings (gc config)
                 numLayouts = length availableLayouts
                 validNs = filter (\n -> numberOfGraphs `mod` n == 0) [numLayouts, numLayouts - 1 .. 2]
-            in case validNs of
-              [] -> do
-                -- Fallback to original behavior if no valid distribution exists
-                findFittingRandom availableLayouts predicates
-              largestN:_ -> do
-                let graphsPerLayout = numberOfGraphs `div` largestN
-                selectedLayouts <- take largestN <$> shuffleM availableLayouts
-                let replicatedLayouts = concatMap (replicate graphsPerLayout) selectedLayouts
-                shuffledLayouts <- shuffleM replicatedLayouts
-                findFittingRandom shuffledLayouts predicates
+                tryDivisors [] = do
+                  -- Fallback to original behavior if no valid distribution exists
+                  findFittingRandom availableLayouts predicates
+                tryDivisors (n:ns) = do
+                  let graphsPerLayout = numberOfGraphs `div` n
+                  selectedLayouts <- take n <$> shuffleM availableLayouts
+                  let replicatedLayouts = concatMap (replicate graphsPerLayout) selectedLayouts
+                  shuffledLayouts <- shuffleM replicatedLayouts
+                  result <- findFittingRandom shuffledLayouts predicates
+                  case result of
+                    Nothing -> tryDivisors ns  -- Try next smaller divisor
+                    Just layouts -> pure (Just layouts)
+            in tryDivisors validNs
           else do
             ds <- shuffleM $ allDrawSettings (gc config)
             firstJustM (\x -> findFittingRandom [x] predicates) ds
