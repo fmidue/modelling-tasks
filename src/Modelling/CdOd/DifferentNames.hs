@@ -564,7 +564,7 @@ defaultDifferentNamesInstance = DifferentNamesInstance {
         superClass = "C"
         },
       Association {
-        associationName = "x",
+        associationName = "z",
         associationFrom = LimitedLinking {
           linking = "C",
           limits = (0, Nothing)
@@ -575,7 +575,7 @@ defaultDifferentNamesInstance = DifferentNamesInstance {
           }
         },
       Aggregation {
-        aggregationName = "z",
+        aggregationName = "x",
         aggregationPart = LimitedLinking {
           linking = "B",
           limits = (0, Just 2)
@@ -606,7 +606,7 @@ defaultDifferentNamesInstance = DifferentNamesInstance {
       ]
     },
   showSolution = False,
-  mapping = toNameMapping $ BM.fromList [("x", "2"), ("y", "3"), ("z", "1")],
+  mapping = toNameMapping $ BM.fromList [("x", "1"), ("y", "3"), ("z", "2")],
   linkShuffling = ConsecutiveLetters,
   taskText = defaultDifferentNamesTaskText,
   addText = Nothing
@@ -645,7 +645,7 @@ getDifferentNamesTask tryNext DifferentNamesConfig {..} cd = do
     continueWithHead instances' $ \od1 -> do
       labels' <- shuffleM labels
       used <- usedLabels labels od1
-      let bm  = BM.fromList $ zip (map (:[]) ['x', 'y' ..]) labels'
+      let bm  = BM.fromList $ zip (map (:[]) ['z', 'y' ..]) labels'
           cd1 = renameEdges (BM.twist bm) cd
           bm' = BM.filter (const (`elem` used)) bm
           isCompleteMapping = BM.keysR bm == sort used
