@@ -211,26 +211,26 @@ isConnected net@(Net ps ts cs _ _)
   | S.null ps && S.null ts = True
   | hasIsolatedNodes net = False
   | null cs = False
-  | otherwise = 
-      let 
+  | otherwise =
+      let
           -- Build bipartite adjacency relations
           -- For each transition, get connected places
           transitionToPlaces = M.fromListWith S.union [(t, S.fromList (pre ++ post)) | (pre, t, post) <- cs]
           -- For each place, get connected transitions
-          placeToTransitions = M.fromListWith S.union $ 
+          placeToTransitions = M.fromListWith S.union $
                                concatMap (\(pre, t, post) -> [(p, S.singleton t) | p <- pre ++ post]) cs
-          
+
           -- DFS through the bipartite graph starting from any node
           -- We alternate between places and transitions
-          (startPlace, startTransitions) = if not (S.null ps) 
+          (startPlace, startTransitions) = if not (S.null ps)
                                           then (S.singleton $ S.findMin ps, S.empty)
                                           else (S.empty, S.singleton $ S.findMin ts)
-          
+
           (visitedPlaces, visitedTransitions) = dfs startPlace startTransitions S.empty S.empty
-          
+
           dfs placeFrontier transitionFrontier visitedP visitedT
             | S.null placeFrontier && S.null transitionFrontier = (visitedP, visitedT)
-            | otherwise = 
+            | otherwise =
                 let newVisitedP = S.union visitedP placeFrontier
                     newVisitedT = S.union visitedT transitionFrontier
                     -- From current places, find new transitions

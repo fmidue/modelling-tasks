@@ -33,7 +33,7 @@ spec = do
             ts = transitions net
         net `shouldSatisfy`
           hasMinTransitionLength (null . successors net) ts minL
-    
+
     it "generates nets without isolated nodes" $
       property $ \seed -> do
         let config = defaultDeadlockConfig {
