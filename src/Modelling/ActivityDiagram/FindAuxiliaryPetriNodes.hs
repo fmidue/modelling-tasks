@@ -231,18 +231,18 @@ findAuxiliaryPetriNodesTask path task = do
     english [i|Translate the given activity diagram into a Petri net (on paper or in your head) and then state the total count of non-auxiliary nodes
 (places and transitions minus auxiliary places and auxiliary transitions), the count of auxiliary places and the count of auxiliary transitions in the net.|]
     german [i|Übersetzen Sie das gegebene Aktivitätsdiagramm in ein Petrinetz (auf dem Papier oder in Ihrem Kopf) und geben Sie dann die Gesamtanzahl
-an Nicht-Hilfs-Knoten (Stellen und Transitionen minus Hilfsstellen und Hilfstransitionen), die Anzahl der Hilfsstellen und die Anzahl der Hilfstransitionen des Netzes an.|]
+an Nicht-Hilfsknoten (Stellen und Transitionen minus Hilfsstellen und Hilfstransitionen), die Anzahl der Hilfsstellen und die Anzahl der Hilfstransitionen des Netzes an.|]
   paragraph $ do
     translate $ do
       english [i|To do this, enter your answer as in the following example:|]
       german [i|Geben Sie dazu Ihre Antwort wie im folgenden Beispiel an:|]
     code $ show findAuxiliaryPetriNodesInitial
     translate $ do
-      english [i|In this example, the resulting net contains 5 non-auxiliary nodes in total
-(i.e., 10 total nodes minus 2 auxiliary places minus 3 auxiliary transitions),
-plus 2 auxiliary places and 3 auxiliary transitions.|]
-      german [i|In diesem Beispiel etwa enthält das entstehende Netz insgesamt 5 Nicht-Hilfs-Knoten
-(d.h. 10 Knoten insgesamt minus 2 Hilfsstellen minus 3 Hilfstransitionen),
+      english [i|In this example, the resulting net contains 5 non-auxiliary nodes
+(namely, 10 total nodes minus 2 auxiliary places minus 3 auxiliary transitions), plus
+2 auxiliary places and 3 auxiliary transitions.|]
+      german [i|In diesem Beispiel etwa enthält das entstehende Netz 5 Nicht-Hilfsknoten
+(nämlich 10 Knoten insgesamt minus 2 Hilfsstellen minus 3 Hilfstransitionen),
 dazu 2 Hilfsstellen und 3 Hilfstransitionen.|]
     pure ()
   finalNodesAdvice True
