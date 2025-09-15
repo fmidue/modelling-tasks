@@ -238,8 +238,12 @@ an Nicht-Hilfs-Knoten (Stellen und Transitionen minus Hilfsstellen und Hilfstran
       german [i|Geben Sie dazu Ihre Antwort wie im folgenden Beispiel an:|]
     code $ show findAuxiliaryPetriNodesInitial
     translate $ do
-      english [i|In this example, the resulting net contains 5 non-auxiliary nodes in total (i.e., 10 total nodes minus 2 auxiliary places minus 3 auxiliary transitions), plus 2 auxiliary places and 3 auxiliary transitions.|]
-      german [i|In diesem Beispiel etwa enthält das entstehende Netz insgesamt 5 Nicht-Hilfs-Knoten (d.h. 10 Knoten insgesamt minus 2 Hilfsstellen minus 3 Hilfstransitionen), dazu 2 Hilfsstellen und 3 Hilfstransitionen.|]
+      english [i|In this example, the resulting net contains 5 non-auxiliary nodes in total
+(i.e., 10 total nodes minus 2 auxiliary places minus 3 auxiliary transitions),
+plus 2 auxiliary places and 3 auxiliary transitions.|]
+      german [i|In diesem Beispiel etwa enthält das entstehende Netz insgesamt 5 Nicht-Hilfs-Knoten
+(d.h. 10 Knoten insgesamt minus 2 Hilfsstellen minus 3 Hilfstransitionen),
+dazu 2 Hilfsstellen und 3 Hilfstransitionen.|]
     pure ()
   finalNodesAdvice True
 
