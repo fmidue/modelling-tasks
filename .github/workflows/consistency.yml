@@ -3,6 +3,9 @@ name: Check .cabal Consistency
 
 on: [push, pull_request]
 
+permissions:
+  contents: read
+
 jobs:
   check-consistency:
     runs-on: ubuntu-latest

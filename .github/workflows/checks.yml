@@ -11,6 +11,9 @@ on:
       - dev
       - master
 
+permissions:
+  contents: read
+
 jobs:
   consistency:
     runs-on: ubuntu-latest

@@ -31,7 +31,7 @@ executables:
       - digest
       - graphviz
       - modelling-tasks
-    other-modules: []
+    other-modules: [ ]
   conflicts:
     main: conflicts.hs
     source-dirs:

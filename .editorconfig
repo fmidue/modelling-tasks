@@ -8,6 +8,9 @@ indent_style = space
 indent_size = 2
 max_line_length = 175
 
+# Disable strict padding requirements for editorconfig-checker
+editorconfig-checker = false
+
 [**.als]
 max_line_length = 160
 
