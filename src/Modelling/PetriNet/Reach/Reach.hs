@@ -26,6 +26,11 @@ import Modelling.Auxiliary.Output (
   hoveringInformation,
   )
 import Modelling.PetriNet.Reach.Draw    (drawToFile, isPetriDrawable)
+import Modelling.PetriNet.Reach.Filter (
+  FilterConfig (..),
+  defaultFilterConfig,
+  filterTrivialSolutions,
+  )
 import Modelling.PetriNet.Reach.Property (
   Property (Default),
   validate,
@@ -249,8 +254,28 @@ netGoalSolution netGoal = reverse $ snd $ head $ concatMap
   (filter $ (== goal netGoal) . fst)
   $ levels' $ petriNet netGoal
 
+-- | Get a non-trivial solution for a NetGoal, filtering out trivial patterns
+netGoalSolutionFiltered :: (Eq t, Ord s) => FilterConfig -> NetGoal s t -> [t]
+netGoalSolutionFiltered filterConfig netGoal = 
+  reverse $ snd $ head $ concatMap
+    (filter $ (== goal netGoal) . fst)
+    $ filterTrivialPaths filterConfig
+    $ levels' $ petriNet netGoal
+  where
+    filterTrivialPaths :: Eq t => FilterConfig -> [[(State s, [t])]] -> [[(State s, [t])]]
+    filterTrivialPaths config = map (filter (not . isTrivialPath config))
+    
+    isTrivialPath :: Eq t => FilterConfig -> (State s, [t]) -> Bool
+    isTrivialPath config (_, path) = 
+      let reversedPath = reverse path
+      in null (filterTrivialSolutions config [reversedPath])
+
 reachSolution :: Ord s => ReachInstance s t -> [t]
 reachSolution inst = netGoalSolution (netGoal inst)
+
+-- | Get a non-trivial solution for a ReachInstance
+reachSolutionFiltered :: (Eq t, Ord s) => FilterConfig -> ReachInstance s t -> [t]
+reachSolutionFiltered filterConfig inst = netGoalSolutionFiltered filterConfig (netGoal inst)
 
 assertReachPoints
   :: OutputCapable m
@@ -353,7 +378,8 @@ data ReachConfig = ReachConfig {
   rejectLongerThan    :: Maybe Int,
   showLengthHint      :: Bool,
   showMinLengthHint   :: Bool,
-  showTargetNet       :: Bool
+  showTargetNet       :: Bool,
+  filterConfig        :: FilterConfig
   }
   deriving (Generic, Read, Show, Typeable)
 
@@ -385,7 +411,8 @@ defaultReachConfig = ReachConfig {
   rejectLongerThan    = Nothing,
   showLengthHint      = True,
   showMinLengthHint   = True,
-  showTargetNet       = True
+  showTargetNet       = True,
+  filterConfig        = defaultFilterConfig
   }
 
 defaultReachInstance :: ReachInstance Place Transition
