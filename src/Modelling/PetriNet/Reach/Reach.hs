@@ -13,7 +13,44 @@ originally from Autotool (https://gitlab.imn.htwk-leipzig.de/autotool/all0)
 based on revision: ad25a990816a162fdd13941ff889653f22d6ea0a
 based on file: collection/src/Petri/Reach.hs
 -}
-module Modelling.PetriNet.Reach.Reach where
+module Modelling.PetriNet.Reach.Reach (
+  -- * Types
+  ReachInstance(..),
+  NetGoal(..),
+  ReachConfig(..),
+  NetGoalConfig(..),
+  
+  -- * Generation
+  generateReach,
+  generateNetGoal,
+  generateNetGoalWithFilter,
+  generateNetGoalUnfiltered,
+  
+  -- * Solutions
+  netGoalSolution,
+  netGoalSolutionFiltered,
+  reachSolution,
+  reachSolutionFiltered,
+  
+  -- * Task creation
+  reachTask,
+  verifyReach,
+  
+  -- * Evaluation
+  reachEvaluation,
+  reachSyntax,
+  reachInitial,
+  
+  -- * Configuration
+  defaultReachConfig,
+  defaultReachInstance,
+  
+  -- * Utilities
+  bimapReachInstance,
+  bimapNetGoal,
+  toShowReachInstance,
+  toShowNetGoal,
+) where
 
 import qualified Control.Monad.Trans              as Monad (lift)
 import qualified Data.Set                         as S (toList)
@@ -438,6 +475,16 @@ generateNetGoal
   -> m (NetGoal Place Transition)
 generateNetGoal = generateNetGoalWithFilter defaultFilterConfig
 
+-- | Generate NetGoal without any filtering (backwards compatibility)
+generateNetGoalUnfiltered
+  :: (MonadCatch m, MonadDiagrams m, MonadGraphviz m)
+  => NetGoalConfig
+  -> Int
+  -> m (NetGoal Place Transition)
+generateNetGoalUnfiltered = generateNetGoalWithFilter noFilterConfig
+  where
+    noFilterConfig = FilterConfig False False False 3 4
+
 -- | Generate NetGoal with filtering for trivial solutions
 generateNetGoalWithFilter
   :: (MonadCatch m, MonadDiagrams m, MonadGraphviz m)
@@ -479,8 +526,9 @@ generateNetGoalWithFilter filterConfig NetGoalConfig {..} seed = do
       hasTrivialSolution :: ((Int, Int), (Net Place Transition, State Place)) -> Bool
       hasTrivialSolution (_, (n, goalState)) = 
         let netGoal = NetGoal { drawUsing = Circo, petriNet = n, goal = goalState }
-            allSolutions = getAllSolutions netGoal
-        in any (isTrivialSequence filterConfig) allSolutions
+            -- Check only the first few solutions for efficiency
+            firstFewSolutions = take 5 $ getAllSolutions netGoal
+        in any (isTrivialSequence filterConfig) firstFewSolutions
 
   ((petri, state), cmd) <- eval out
 

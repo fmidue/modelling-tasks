@@ -101,3 +101,18 @@ spec = do
       let configNoCyclic = defaultFilterConfig { filterCyclicPatterns = False }
       isTrivialSequence configNoCyclic cyclicPattern `shouldBe` False
       isTrivialSequence defaultFilterConfig cyclicPattern `shouldBe` True
+
+  describe "real-world patterns" $ do
+    it "correctly identifies the Spaceballs PIN pattern" $ do
+      let spaceballsPin = [Transition 1, Transition 2, Transition 3, Transition 4,
+                           Transition 1, Transition 2, Transition 3, Transition 4]
+      isTrivialSequence defaultFilterConfig spaceballsPin `shouldBe` True
+      
+    it "correctly identifies simple repetitive patterns" $ do
+      let simpleRepetitive = [Transition 4, Transition 4, Transition 4, Transition 4]
+      isTrivialSequence defaultFilterConfig simpleRepetitive `shouldBe` True
+      
+    it "allows legitimate complex patterns" $ do
+      let legitimatePattern = [Transition 1, Transition 3, Transition 2, Transition 4,
+                               Transition 3, Transition 1, Transition 4, Transition 2]
+      isTrivialSequence defaultFilterConfig legitimatePattern `shouldBe` False
