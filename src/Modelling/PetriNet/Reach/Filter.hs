@@ -80,22 +80,22 @@ isCyclicPattern m xs
 -- | Check if a sequence has repetitive subsequences as prefix or suffix
 -- (e.g., [t4,t4,t4,t4] at the beginning or end)
 hasRepetitiveSubsequence :: Eq a => Int -> [a] -> Bool
-hasRepetitiveSubsequence minLen xs
-  | length xs < minLen = False
-  | otherwise = hasRepetitivePrefix minLen xs || hasRepetitiveSuffix minLen xs
+hasRepetitiveSubsequence minLength xs
+  | length xs < minLength = False
+  | otherwise = hasRepetitivePrefix minLength xs || hasRepetitiveSuffix minLength xs
 
 -- | Check if sequence starts with repetitive elements
 hasRepetitivePrefix :: Eq a => Int -> [a] -> Bool
-hasRepetitivePrefix minLen xs =
-  any (\len ->
-    let prefix = take len xs
+hasRepetitivePrefix minLength xs =
+  any (\prefixLength ->
+    let prefix = take prefixLength xs
         firstElem = head xs
-    in length prefix >= minLen && all (== firstElem) prefix
-  ) [minLen..length xs]
+    in length prefix >= minLength && all (== firstElem) prefix
+  ) [minLength..length xs]
 
 -- | Check if sequence ends with repetitive elements
 hasRepetitiveSuffix :: Eq a => Int -> [a] -> Bool
-hasRepetitiveSuffix minLen xs = hasRepetitivePrefix minLen (reverse xs)
+hasRepetitiveSuffix minLength xs = hasRepetitivePrefix minLength (reverse xs)
 
 -- | Check if a sequence has grouped repeats (e.g., [t1,t1,t2,t2,t3,t3,t4,t4])
 -- This means each unique element appears in consecutive groups of the same size > 1
