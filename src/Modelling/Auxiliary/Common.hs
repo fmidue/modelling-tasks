@@ -245,22 +245,6 @@ findFittingRandom xs predicates = do
         (maybeM retry (pure . Just . (c:)) $ elementsFor ps id $ prependFailed cs)
         retry
 
-{-|
-  Shuffle a list of elements from type a based on given weights of type w,
-  where higher weight indicates a bigger probability of the element occurring
-  at a lower index of the list. The total weight of all elements must not be zero.
--}
-weightedShuffle
-  :: (MonadRandom m, Eq a, Real w)
-  => [(a,w)]
-  -> m [a]
-weightedShuffle [] = return []
-weightedShuffle xs = do
-  let rs = map (\x -> (x, toRational $ snd x)) xs
-  a <- fromList rs
-  ys <- weightedShuffle (delete a xs)
-  return (fst a : ys)
-
 -- | Find fitting random elements with sophisticated distribution logic
 -- Tries valid divisors in descending order with retry mechanism for each divisor
 findFittingRandomElements
@@ -277,9 +261,12 @@ findFittingRandomElements useDifferent availableElements predicates
       let numAvailable = length availableElements
           numRequested = length predicates
           validNs = filter (\n -> numRequested `mod` n == 0) [numAvailable, numAvailable - 1 .. 2]
-          tryDivisors [] = pure Nothing  -- No valid distribution exists
-          tryDivisors (n:ns) = 
-            let numOfChoosings = product [numAvailable - i | i <- [0..n-1]] `div` product [1..n]
+      in tryDivisors validNs
+         where
+          tryDivisors [] = findFittingRandom availableElements predicates
+          tryDivisors (n:ns) = tryDivisorWithRetries maxRetries
+            where
+                numOfChoosings = product [numAvailable - i | i <- [0..n-1]] `div` product [1..n]
                 maxRetries = min 10 (2 * numOfChoosings - 1)
                 tryDivisorWithRetries 0 = tryDivisors ns  -- Exhausted retries, try next divisor
                 tryDivisorWithRetries retries = do
@@ -288,9 +275,22 @@ findFittingRandomElements useDifferent availableElements predicates
                   case result of
                     Nothing -> tryDivisorWithRetries (retries - 1)  -- Retry with different selection
                     Just elements -> pure (Just elements)
-            in tryDivisorWithRetries maxRetries
-      in tryDivisors validNs
   | otherwise = do
-      -- Fallback to original behavior if useDifferent is False
       ds <- shuffleM availableElements
       firstJustM (\x -> findFittingRandom [x] predicates) ds
+
+{-|
+  Shuffle a list of elements from type a based on given weights of type w,
+  where higher weight indicates a bigger probability of the element occurring
+  at a lower index of the list. The total weight of all elements must not be zero.
+-}
+weightedShuffle
+  :: (MonadRandom m, Eq a, Real w)
+  => [(a,w)]
+  -> m [a]
+weightedShuffle [] = return []
+weightedShuffle xs = do
+  let rs = map (\x -> (x, toRational $ snd x)) xs
+  a <- fromList rs
+  ys <- weightedShuffle (delete a xs)
+  return (fst a : ys)
