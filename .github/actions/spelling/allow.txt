@@ -117,6 +117,7 @@ schrittige
 similars
 skolem
 snd
+spaceballs
 startuml
 subpaths
 subsubsection

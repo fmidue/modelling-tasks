@@ -65,9 +65,9 @@ isTrivialSequence config xs =
 -- The pattern is considered cyclic if it can be represented as `take n (cycle pattern)`
 -- where `length pattern <= maxCycleLength` and the sequence has at least 2 complete cycles
 isCyclicPattern :: Eq a => Int -> [a] -> Bool
-isCyclicPattern maxCycleLen xs
+isCyclicPattern m xs
   | length xs < 4 = False  -- Need at least 4 elements for a meaningful cycle
-  | otherwise = any (isCyclicWith xs) [1..min maxCycleLen (length xs `div` 2)]
+  | otherwise = any (isCyclicWith xs) [1..min m (length xs `div` 2)]
   where
     isCyclicWith :: Eq a => [a] -> Int -> Bool
     isCyclicWith seqToCheck cycleLen
