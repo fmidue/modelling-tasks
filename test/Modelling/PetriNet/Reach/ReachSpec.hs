@@ -11,6 +11,12 @@ import Modelling.PetriNet.Reach.Reach (
   NetGoal (..),
   defaultReachConfig,
   generateReach,
+  netGoalSolution,
+  )
+import Modelling.PetriNet.Reach.Filter (
+  FilterConfig (..),
+  defaultFilterConfig,
+  isTrivialSequence,
   )
 import Modelling.PetriNet.Reach.Property (
   satisfiesAtAnyState,
@@ -26,8 +32,8 @@ import Test.Hspec
 import Test.QuickCheck                  (Testable (property))
 
 spec :: Spec
-spec =
-  describe "generateReach" $
+spec = do
+  describe "generateReach" $ do
     it "abides minTransitionLength" $
       property $ \seed -> do
         let config = defaultReachConfig {
@@ -42,6 +48,32 @@ spec =
             s = goal (netGoal inst)
             ts = transitions net
         net `shouldSatisfy` hasMinTransitionLength (s ==) ts minL
+
+    it "generates non-trivial solutions when filtering is enabled" $
+      property $ \seed -> do
+        let config = defaultReachConfig {
+              netGoalConfig = (netGoalConfig defaultReachConfig) {
+                maxTransitionLength = 8,
+                minTransitionLength = 8
+                },
+              filterConfig = defaultFilterConfig
+              }
+        inst <- generateReach config seed
+        let solution = netGoalSolution (netGoal inst)
+        solution `shouldSatisfy` (not . isTrivialSequence (filterConfig config))
+
+    it "can generate solutions when filtering is disabled" $
+      property $ \seed -> do
+        let config = defaultReachConfig {
+              netGoalConfig = (netGoalConfig defaultReachConfig) {
+                maxTransitionLength = 8,
+                minTransitionLength = 8
+                },
+              filterConfig = FilterConfig False False False 3 4  -- All filtering disabled
+              }
+        inst <- generateReach config seed
+        let solution = netGoalSolution (netGoal inst)
+        length solution `shouldBe` 8
 
 hasMinTransitionLength
   :: (Ord s, Show s)

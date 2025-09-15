@@ -30,6 +30,7 @@ import Modelling.PetriNet.Reach.Filter (
   FilterConfig (..),
   defaultFilterConfig,
   filterTrivialSolutions,
+  isTrivialSequence,
   )
 import Modelling.PetriNet.Reach.Property (
   Property (Default),
@@ -435,7 +436,16 @@ generateNetGoal
   => NetGoalConfig
   -> Int
   -> m (NetGoal Place Transition)
-generateNetGoal NetGoalConfig {..} seed = do
+generateNetGoal = generateNetGoalWithFilter defaultFilterConfig
+
+-- | Generate NetGoal with filtering for trivial solutions
+generateNetGoalWithFilter
+  :: (MonadCatch m, MonadDiagrams m, MonadGraphviz m)
+  => FilterConfig
+  -> NetGoalConfig
+  -> Int
+  -> m (NetGoal Place Transition)
+generateNetGoalWithFilter filterConfig NetGoalConfig {..} seed = do
   let ps = [Place 1 .. Place numPlaces]
       tries = forM [1 :: Int .. 1000] $ const $ do
         n <- netLimits vLow vHigh nLow nHigh
@@ -452,12 +462,25 @@ generateNetGoal NetGoalConfig {..} seed = do
           return ((negate l, d), (n, z'))
       out = do
         xs <- tries
-        let ((l, _), pn) = minimumBy (comparing fst) $ concat xs
-        if negate l >= minTransitionLength
-          then do
-            maybeM out (pure . (pn,))
-            $ findM (Monad.lift . isPetriDrawable (fst pn)) drawCommands
-          else out
+        let candidates = concat xs
+        -- Filter out candidates with trivial solutions
+        let nonTrivialCandidates = filter (not . hasTrivialSolution) candidates
+        if null nonTrivialCandidates
+          then out  -- fallback to original logic if no non-trivial solutions found
+          else do
+            let ((l, _), pn) = minimumBy (comparing fst) nonTrivialCandidates
+            if negate l >= minTransitionLength
+              then do
+                maybeM out (pure . (pn,))
+                $ findM (Monad.lift . isPetriDrawable (fst pn)) drawCommands
+              else out
+      
+      -- Check if a net-goal pair has trivial solutions
+      hasTrivialSolution :: ((Int, Int), (Net Place Transition, State Place)) -> Bool
+      hasTrivialSolution (_, (n, goalState)) = 
+        let netGoal = NetGoal { drawUsing = Circo, petriNet = n, goal = goalState }
+            allSolutions = getAllSolutions netGoal
+        in any (isTrivialSequence filterConfig) allSolutions
 
   ((petri, state), cmd) <- eval out
 
@@ -473,6 +496,12 @@ generateNetGoal NetGoalConfig {..} seed = do
     (nLow, nHigh) = fixMaximum postconditionsRange
     ts = [Transition 1 .. Transition numTransitions]
     eval f = evalRandT f $ mkStdGen seed
+    
+    -- Get all solutions (not just the first one) for a given net goal
+    getAllSolutions :: NetGoal Place Transition -> [[Transition]]
+    getAllSolutions netGoal = map (reverse . snd) $ concatMap
+      (filter $ (== goal netGoal) . fst)
+      $ levels' $ petriNet netGoal
 
 generateReach
   :: (MonadCatch m, MonadDiagrams m, MonadGraphviz m)
@@ -480,7 +509,7 @@ generateReach
   -> Int
   -> m (ReachInstance Place Transition)
 generateReach ReachConfig {..} seed = do
-  netGoal <- generateNetGoal netGoalConfig seed
+  netGoal <- generateNetGoalWithFilter filterConfig netGoalConfig seed
   pure $ ReachInstance {
     netGoal           = netGoal,
     minLength         = minTransitionLength netGoalConfig,
