@@ -60,6 +60,7 @@ import Control.Lens (
   lensRules,
   mappingNamer,
   )
+import Math.Combinatorics.Exact.Binomial (choose)
 import System.Random.Shuffle            (shuffleM)
 import Text.Parsec                      (parse)
 import Text.ParserCombinators.Parsec (
@@ -264,8 +265,7 @@ findFittingRandomElements useDifferent availableElements predicates
           tryDivisors [] = findFittingRandom availableElements predicates
           tryDivisors (n:ns) = tryDivisorWithRetries maxRetries
             where
-                numOfChoosings = product [numAvailable - i | i <- [0..n-1]] `div` product [1..n]
-                maxRetries = min 10 (2 * numOfChoosings - 1)
+                maxRetries = min 10 (2 * fromIntegral (numAvailable `choose` n) - 1)
                 tryDivisorWithRetries 0 = tryDivisors ns  -- Exhausted retries, try next divisor
                 tryDivisorWithRetries retries = do
                   selectedElements <- take n <$> shuffleM availableElements
