@@ -305,9 +305,32 @@ mathToGraph config@MathConfig {..} segment seed = evalWithStdGen seed getInstanc
     getInstance = do
       (petri, math, changes) <- matchToMath config segment
       let petriNets = map fst changes
-      maybeDrawSettings <- findFittingRandom
-        (allDrawSettings graphConfig)
-        $ map (\x -> lift . isNetDrawable x) $ petri : petriNets
+          allPetriNets = petri : petriNets
+          predicates = map (\x -> lift . isNetDrawable x) allPetriNets
+          numberOfGraphs = length allPetriNets
+          availableLayouts = allDrawSettings graphConfig
+      maybeDrawSettings <- 
+        if useDifferentGraphLayouts
+        then
+          -- Try valid divisors in descending order until one succeeds
+          let numLayouts = length availableLayouts
+              validNs = filter (\n -> numberOfGraphs `mod` n == 0) [numLayouts, numLayouts - 1 .. 2]
+              maxRetries = 10 :: Int  -- Maximum retries per divisor
+              tryDivisors [] = do
+                -- Fallback to original behavior if no valid distribution exists
+                findFittingRandom availableLayouts predicates
+              tryDivisors (n:ns) = tryDivisorWithRetries maxRetries
+                where
+                  tryDivisorWithRetries 0 = tryDivisors ns  -- Exhausted retries, try next divisor
+                  tryDivisorWithRetries retries = do
+                    selectedLayouts <- take n <$> shuffleM availableLayouts
+                    result <- findFittingRandom selectedLayouts predicates
+                    case result of
+                      Nothing -> tryDivisorWithRetries (retries - 1)  -- Retry with different selection
+                      Just layouts -> pure (Just layouts)
+          in tryDivisors validNs
+        else
+          findFittingRandom availableLayouts predicates
       case maybeDrawSettings of
         Just (d : ds) ->
           matchMathInstance config math (petri, d) $ zip petriNets ds
