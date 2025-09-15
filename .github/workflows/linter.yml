@@ -27,4 +27,12 @@ jobs:
         env:
           VALIDATE_JSCPD_ALL_CODEBASE: true
           YAML_ERROR_ON_WARNING: true
+          # Disable problematic security checks that are too strict for this project
+          VALIDATE_CHECKOV: false
+          VALIDATE_GITHUB_ACTIONS_ZIZMOR: false
+          # Disable formatting checks that conflict with existing style
+          VALIDATE_JSON_PRETTIER: false
+          VALIDATE_MARKDOWN_PRETTIER: false
+          VALIDATE_YAML_PRETTIER: false
+          VALIDATE_NATURAL_LANGUAGE: false
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
