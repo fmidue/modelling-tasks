@@ -70,12 +70,12 @@ isCyclicPattern m xs
   | otherwise = any (isCyclicWith xs) [1..min m (length xs `div` 2)]
   where
     isCyclicWith :: Eq a => [a] -> Int -> Bool
-    isCyclicWith seqToCheck cycleLen
-      | cycleLen <= 0 = False
-      | length seqToCheck < cycleLen * 2 = False
+    isCyclicWith seqToCheck cycleLength
+      | cycleLength <= 0 = False
+      | length seqToCheck < cycleLength * 2 = False
       | otherwise =
-          seqToCheck == take (length seqToCheck) (cycle (take cycleLen seqToCheck))
-          && length seqToCheck >= cycleLen * 2
+          seqToCheck == take (length seqToCheck) (cycle (take cycleLength seqToCheck))
+          && length seqToCheck >= cycleLength * 2
 
 -- | Check if a sequence has repetitive subsequences as prefix or suffix
 -- (e.g., [t4,t4,t4,t4] at the beginning or end)
