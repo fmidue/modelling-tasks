@@ -32,7 +32,7 @@ import Capabilities.Diagrams            (MonadDiagrams)
 import Capabilities.Graphviz            (MonadGraphviz)
 import Modelling.Auxiliary.Common (
   Object,
-  findFittingRandomLayouts,
+  findFittingRandomElements,
   )
 import Modelling.PetriNet.Diagram (
   cacheNet,
@@ -148,7 +148,7 @@ pickGenerate pick gc useDifferent withSol config segment seed
           availableLayouts = allDrawSettings (gc config)
       in
         maybeM getInstance (toPickInstance petriNets)
-        $ findFittingRandomLayouts (useDifferent config) availableLayouts predicates numberOfGraphs
+        $ findFittingRandomElements (useDifferent config) availableLayouts predicates numberOfGraphs
 
 pickSyntax
   :: OutputCapable m

@@ -45,7 +45,7 @@ import Capabilities.Alloy               (MonadAlloy, getInstances)
 import Capabilities.Cache               (MonadCache)
 import Capabilities.Diagrams            (MonadDiagrams)
 import Capabilities.Graphviz            (MonadGraphviz)
-import Modelling.Auxiliary.Common       (Object (oName), findFittingRandomLayouts)
+import Modelling.Auxiliary.Common       (Object (oName), findFittingRandomElements)
 import Modelling.Auxiliary.Output       (
   hoveringInformation,
   )
@@ -309,7 +309,7 @@ mathToGraph config@MathConfig {..} segment seed = evalWithStdGen seed getInstanc
           predicates = map (\x -> lift . isNetDrawable x) allPetriNets
           numberOfGraphs = length allPetriNets
           availableLayouts = allDrawSettings graphConfig
-      maybeDrawSettings <- findFittingRandomLayouts useDifferentGraphLayouts availableLayouts predicates numberOfGraphs
+      maybeDrawSettings <- findFittingRandomElements useDifferentGraphLayouts availableLayouts predicates numberOfGraphs
       case maybeDrawSettings of
         Just (d : ds) ->
           matchMathInstance config math (petri, d) $ zip petriNets ds
