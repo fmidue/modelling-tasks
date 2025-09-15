@@ -157,10 +157,8 @@ pickGenerate pick gc useDifferent withSol config segment seed
                   -- Fallback to original behavior if no valid distribution exists
                   findFittingRandom availableLayouts predicates
                 tryDivisors (n:ns) = do
-                  let graphsPerLayout = numberOfGraphs `div` n
                   selectedLayouts <- take n <$> shuffleM availableLayouts
-                  let replicatedLayouts = concatMap (replicate graphsPerLayout) selectedLayouts
-                  result <- findFittingRandom replicatedLayouts predicates
+                  result <- findFittingRandom selectedLayouts predicates
                   case result of
                     Nothing -> tryDivisors ns  -- Try next smaller divisor
                     Just layouts -> pure (Just layouts)
