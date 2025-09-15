@@ -19,37 +19,41 @@ module Modelling.PetriNet.Reach.Reach (
   NetGoal(..),
   ReachConfig(..),
   NetGoalConfig(..),
-  
+
   -- * Generation
   generateReach,
   generateNetGoal,
   generateNetGoalWithFilter,
   generateNetGoalUnfiltered,
-  
+
   -- * Solutions
   netGoalSolution,
   netGoalSolutionFiltered,
   reachSolution,
   reachSolutionFiltered,
-  
+
   -- * Task creation
   reachTask,
   verifyReach,
-  
+
   -- * Evaluation
   reachEvaluation,
   reachSyntax,
   reachInitial,
-  
+
   -- * Configuration
   defaultReachConfig,
   defaultReachInstance,
-  
+
   -- * Utilities
   bimapReachInstance,
   bimapNetGoal,
   toShowReachInstance,
   toShowNetGoal,
+  assertReachPoints,
+  isNoLonger,
+  reportReachFor,
+  transitionsValid,
 ) where
 
 import qualified Control.Monad.Trans              as Monad (lift)
@@ -294,7 +298,7 @@ netGoalSolution netGoal = reverse $ snd $ head $ concatMap
 
 -- | Get a non-trivial solution for a NetGoal, filtering out trivial patterns
 netGoalSolutionFiltered :: (Eq t, Ord s) => FilterConfig -> NetGoal s t -> [t]
-netGoalSolutionFiltered filterConfig netGoal = 
+netGoalSolutionFiltered filterConfig netGoal =
   reverse $ snd $ head $ concatMap
     (filter $ (== goal netGoal) . fst)
     $ filterTrivialPaths filterConfig
@@ -302,9 +306,9 @@ netGoalSolutionFiltered filterConfig netGoal =
   where
     filterTrivialPaths :: Eq t => FilterConfig -> [[(State s, [t])]] -> [[(State s, [t])]]
     filterTrivialPaths config = map (filter (not . isTrivialPath config))
-    
+
     isTrivialPath :: Eq t => FilterConfig -> (State s, [t]) -> Bool
-    isTrivialPath config (_, path) = 
+    isTrivialPath config (_, path) =
       let reversedPath = reverse path
       in null (filterTrivialSolutions config [reversedPath])
 
@@ -521,10 +525,10 @@ generateNetGoalWithFilter filterConfig NetGoalConfig {..} seed = do
                 maybeM out (pure . (pn,))
                 $ findM (Monad.lift . isPetriDrawable (fst pn)) drawCommands
               else out
-      
+
       -- Check if a net-goal pair has trivial solutions
       hasTrivialSolution :: ((Int, Int), (Net Place Transition, State Place)) -> Bool
-      hasTrivialSolution (_, (n, goalState)) = 
+      hasTrivialSolution (_, (n, goalState)) =
         let netGoal = NetGoal { drawUsing = Circo, petriNet = n, goal = goalState }
             -- Check only the first few solutions for efficiency
             firstFewSolutions = take 5 $ getAllSolutions netGoal
@@ -544,7 +548,7 @@ generateNetGoalWithFilter filterConfig NetGoalConfig {..} seed = do
     (nLow, nHigh) = fixMaximum postconditionsRange
     ts = [Transition 1 .. Transition numTransitions]
     eval f = evalRandT f $ mkStdGen seed
-    
+
     -- Get all solutions (not just the first one) for a given net goal
     getAllSolutions :: NetGoal Place Transition -> [[Transition]]
     getAllSolutions netGoal = map (reverse . snd) $ concatMap

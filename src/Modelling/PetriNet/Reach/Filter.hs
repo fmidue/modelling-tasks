@@ -16,10 +16,10 @@ module Modelling.PetriNet.Reach.Filter (
   isCyclicPattern,
   hasRepetitiveSubsequence,
   hasGroupedRepeats,
-  
+
   -- * Filtering
   filterTrivialSolutions,
-  
+
   -- * Configuration
   FilterConfig(..),
   defaultFilterConfig,
@@ -56,7 +56,7 @@ defaultFilterConfig = FilterConfig {
 
 -- | Check if a sequence is considered trivial according to the given configuration
 isTrivialSequence :: Eq a => FilterConfig -> [a] -> Bool
-isTrivialSequence config xs = 
+isTrivialSequence config xs =
   (filterCyclicPatterns config && isCyclicPattern (maxCycleLength config) xs) ||
   (filterRepetitiveSubsequences config && hasRepetitiveSubsequence (minRepetitiveLength config) xs) ||
   (filterGroupedRepeats config && hasGroupedRepeats xs)
@@ -70,13 +70,12 @@ isCyclicPattern maxCycleLen xs
   | otherwise = any (isCyclicWith xs) [1..min maxCycleLen (length xs `div` 2)]
   where
     isCyclicWith :: Eq a => [a] -> Int -> Bool
-    isCyclicWith seqToCheck cycleLen 
+    isCyclicWith seqToCheck cycleLen
       | cycleLen <= 0 = False
-      | length seqToCheck < cycleLen * 2 = False  -- Need at least 2 complete cycles
-      | otherwise = 
-          let pattern = take cycleLen seqToCheck
-              expectedSequence = take (length seqToCheck) (cycle pattern)
-          in seqToCheck == expectedSequence && length seqToCheck >= cycleLen * 2
+      | length seqToCheck < cycleLen * 2 = False
+      | otherwise =
+          seqToCheck == take (length seqToCheck) (cycle (take cycleLen seqToCheck))
+          && length seqToCheck >= cycleLen * 2
 
 -- | Check if a sequence has repetitive subsequences as prefix or suffix
 -- (e.g., [t4,t4,t4,t4] at the beginning or end)
@@ -87,14 +86,14 @@ hasRepetitiveSubsequence minLen xs
 
 -- | Check if sequence starts with repetitive elements
 hasRepetitivePrefix :: Eq a => Int -> [a] -> Bool
-hasRepetitivePrefix minLen xs = 
-  any (\len -> 
+hasRepetitivePrefix minLen xs =
+  any (\len ->
     let prefix = take len xs
         firstElem = head xs
     in length prefix >= minLen && all (== firstElem) prefix
   ) [minLen..length xs]
 
--- | Check if sequence ends with repetitive elements  
+-- | Check if sequence ends with repetitive elements
 hasRepetitiveSuffix :: Eq a => Int -> [a] -> Bool
 hasRepetitiveSuffix minLen xs = hasRepetitivePrefix minLen (reverse xs)
 
@@ -103,7 +102,7 @@ hasRepetitiveSuffix minLen xs = hasRepetitivePrefix minLen (reverse xs)
 hasGroupedRepeats :: Eq a => [a] -> Bool
 hasGroupedRepeats xs
   | length xs < 4 = False  -- Need at least 4 elements
-  | otherwise = 
+  | otherwise =
       let groups = group xs
           groupSizes = map length groups
       in length groups >= 2 &&  -- At least 2 different groups

@@ -9,24 +9,20 @@ spec :: Spec
 spec = do
   describe "isCyclicPattern" $ do
     it "detects simple cyclic patterns" $ do
-      let pattern = [Transition 1, Transition 2, Transition 3, Transition 4]
-      isCyclicPattern 4 (pattern ++ pattern) `shouldBe` True
-      
+      isCyclicPattern 4 ([Transition 1, Transition 2, Transition 3, Transition 4] ++ [Transition 1, Transition 2, Transition 3, Transition 4]) `shouldBe` True
+
     it "detects cyclic patterns with multiple repetitions" $ do
-      let pattern = [Transition 1, Transition 2]
-      isCyclicPattern 4 (pattern ++ pattern ++ pattern ++ pattern) `shouldBe` True
-      
+      isCyclicPattern 4 ([Transition 1, Transition 2] ++ [Transition 1, Transition 2] ++ [Transition 1, Transition 2] ++ [Transition 1, Transition 2]) `shouldBe` True
+
     it "does not detect partial cycles" $ do
-      let pattern = [Transition 1, Transition 2, Transition 3, Transition 4]
-      isCyclicPattern 4 (pattern ++ [Transition 1, Transition 2]) `shouldBe` False
-      
+      isCyclicPattern 4 ([Transition 1, Transition 2, Transition 3, Transition 4] ++ [Transition 1, Transition 2]) `shouldBe` False
+
     it "does not detect single cycles" $ do
-      let pattern = [Transition 1, Transition 2, Transition 3, Transition 4]
-      isCyclicPattern 4 pattern `shouldBe` False
-      
+      isCyclicPattern 4 [Transition 1, Transition 2, Transition 3, Transition 4] `shouldBe` False
+
     it "handles empty lists" $ do
       isCyclicPattern 4 ([] :: [Transition]) `shouldBe` False
-      
+
     it "handles short lists" $ do
       isCyclicPattern 4 [Transition 1, Transition 2] `shouldBe` False
 
@@ -34,33 +30,33 @@ spec = do
     it "detects repetitive prefixes" $ do
       hasRepetitiveSubsequence 3 [Transition 1, Transition 1, Transition 1, Transition 2] `shouldBe` True
       hasRepetitiveSubsequence 4 [Transition 4, Transition 4, Transition 4, Transition 4] `shouldBe` True
-      
+
     it "detects repetitive suffixes" $ do
       hasRepetitiveSubsequence 3 [Transition 1, Transition 2, Transition 3, Transition 3, Transition 3] `shouldBe` True
-      
+
     it "does not detect short repetitions" $ do
       hasRepetitiveSubsequence 3 [Transition 1, Transition 1, Transition 2] `shouldBe` False
-      
+
     it "handles minimum length requirement" $ do
       hasRepetitiveSubsequence 5 [Transition 1, Transition 1, Transition 1] `shouldBe` False
       hasRepetitiveSubsequence 2 [Transition 1, Transition 1] `shouldBe` True
 
   describe "hasGroupedRepeats" $ do
     it "detects grouped repeats pattern" $ do
-      hasGroupedRepeats [Transition 1, Transition 1, Transition 2, Transition 2, 
+      hasGroupedRepeats [Transition 1, Transition 1, Transition 2, Transition 2,
                          Transition 3, Transition 3, Transition 4, Transition 4] `shouldBe` True
-      
+
     it "detects grouped repeats with different group sizes" $ do
-      hasGroupedRepeats [Transition 1, Transition 1, Transition 1, 
+      hasGroupedRepeats [Transition 1, Transition 1, Transition 1,
                          Transition 2, Transition 2, Transition 2] `shouldBe` True
-      
+
     it "does not detect single elements" $ do
       hasGroupedRepeats [Transition 1, Transition 2, Transition 3, Transition 4] `shouldBe` False
-      
+
     it "does not detect mixed patterns" $ do
-      hasGroupedRepeats [Transition 1, Transition 1, Transition 2, 
+      hasGroupedRepeats [Transition 1, Transition 1, Transition 2,
                          Transition 3, Transition 3, Transition 3] `shouldBe` False
-      
+
     it "handles empty and short lists" $ do
       hasGroupedRepeats ([] :: [Transition]) `shouldBe` False
       hasGroupedRepeats [Transition 1, Transition 2] `shouldBe` False
@@ -70,16 +66,16 @@ spec = do
       let spaceballsPattern = [Transition 1, Transition 2, Transition 3, Transition 4,
                                Transition 1, Transition 2, Transition 3, Transition 4]
       isTrivialSequence defaultFilterConfig spaceballsPattern `shouldBe` True
-      
+
     it "detects repetitive patterns" $ do
       let repetitivePattern = [Transition 4, Transition 4, Transition 4, Transition 4]
       isTrivialSequence defaultFilterConfig repetitivePattern `shouldBe` True
-      
+
     it "detects grouped repeats" $ do
       let groupedPattern = [Transition 1, Transition 1, Transition 2, Transition 2,
                             Transition 3, Transition 3, Transition 4, Transition 4]
       isTrivialSequence defaultFilterConfig groupedPattern `shouldBe` True
-      
+
     it "does not flag legitimate sequences" $ do
       let legitimatePattern = [Transition 1, Transition 3, Transition 2, Transition 2,
                                Transition 4, Transition 3, Transition 1, Transition 1]
@@ -107,11 +103,11 @@ spec = do
       let spaceballsPin = [Transition 1, Transition 2, Transition 3, Transition 4,
                            Transition 1, Transition 2, Transition 3, Transition 4]
       isTrivialSequence defaultFilterConfig spaceballsPin `shouldBe` True
-      
+
     it "correctly identifies simple repetitive patterns" $ do
       let simpleRepetitive = [Transition 4, Transition 4, Transition 4, Transition 4]
       isTrivialSequence defaultFilterConfig simpleRepetitive `shouldBe` True
-      
+
     it "allows legitimate complex patterns" $ do
       let legitimatePattern = [Transition 1, Transition 3, Transition 2, Transition 4,
                                Transition 3, Transition 1, Transition 4, Transition 2]
