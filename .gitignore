@@ -17,7 +17,6 @@
 .stack-work/
 artifacts/
 dist-newstyle/
-report.html
 legacy-app/Auxiliary/Lexer.hs
 legacy-app/Auxiliary/Lexer.info
 legacy-app/Auxiliary/Parser.hs
