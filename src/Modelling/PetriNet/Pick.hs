@@ -32,7 +32,6 @@ import Capabilities.Diagrams            (MonadDiagrams)
 import Capabilities.Graphviz            (MonadGraphviz)
 import Modelling.Auxiliary.Common (
   Object,
-  findFittingRandom,
   )
 import Modelling.PetriNet.Diagram (
   cacheNet,
@@ -50,6 +49,7 @@ import Modelling.PetriNet.Types         (
   checkBasicConfig,
   checkChangeConfig,
   checkGraphLayouts,
+  findFittingRandomLayouts,
   placeNames,
   transitionNames,
   )
@@ -57,7 +57,7 @@ import Modelling.PetriNet.Types         (
 import Control.Applicative              (Alternative ((<|>)))
 import Control.Arrow                    (Arrow (second))
 import Control.Monad.Catch              (MonadCatch, MonadThrow)
-import Control.Monad.Extra              (firstJustM, maybeM)
+import Control.Monad.Extra              (maybeM)
 import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
   LangM,
@@ -145,31 +145,10 @@ pickGenerate pick gc useDifferent withSol config segment seed
     getPickInstance petriNets =
       let predicates = map (\(x,_) -> lift . isNetDrawable x) petriNets
           numberOfGraphs = length petriNets
+          availableLayouts = allDrawSettings (gc config)
       in
         maybeM getInstance (toPickInstance petriNets)
-        $ let availableLayouts = allDrawSettings (gc config)
-          in if useDifferent config
-          then
-            -- Try valid divisors in descending order until one succeeds
-            let numLayouts = length availableLayouts
-                validNs = filter (\n -> numberOfGraphs `mod` n == 0) [numLayouts, numLayouts - 1 .. 2]
-                maxRetries = 10 :: Int  -- Maximum retries per divisor
-                tryDivisors [] = do
-                  -- Fallback to original behavior if no valid distribution exists
-                  findFittingRandom availableLayouts predicates
-                tryDivisors (n:ns) = tryDivisorWithRetries maxRetries
-                  where
-                    tryDivisorWithRetries 0 = tryDivisors ns  -- Exhausted retries, try next divisor
-                    tryDivisorWithRetries retries = do
-                      selectedLayouts <- take n <$> shuffleM availableLayouts
-                      result <- findFittingRandom selectedLayouts predicates
-                      case result of
-                        Nothing -> tryDivisorWithRetries (retries - 1)  -- Retry with different selection
-                        Just layouts -> pure (Just layouts)
-            in tryDivisors validNs
-          else do
-            ds <- shuffleM availableLayouts
-            firstJustM (\x -> findFittingRandom [x] predicates) ds
+        $ findFittingRandomLayouts (useDifferent config) availableLayouts predicates numberOfGraphs
 
 pickSyntax
   :: OutputCapable m
