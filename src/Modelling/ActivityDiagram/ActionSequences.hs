@@ -45,7 +45,7 @@ import Data.Maybe(mapMaybe, isJust, fromJust)
 -- | Result of analyzing an action sequence execution
 data ActionSequenceResult
   = CompleteTermination    -- ^ All tokens consumed (correct solution)
-  | PartialTermination     -- ^ Some but not all tokens consumed  
+  | PartialTermination     -- ^ Some but not all tokens consumed
   | NoTermination         -- ^ Invalid sequence or no tokens consumed
   | InvalidSequence       -- ^ Sequence cannot be executed
   deriving (Eq, Show)
@@ -144,7 +144,7 @@ analyzeActionSequenceTermination input diag =
         $ filter isNormalPetriNode $ M.keys $ allNodes petri
       input' = mapMaybe (`lookup` petriKeyMap) labels
       actions = map snd $ filter (\(l,_) -> l `elem` map snd nameMap) petriKeyMap
-  in 
+  in
     -- First check if sequence is valid (all names exist)
     if length input /= length labels
     then InvalidSequence
@@ -158,16 +158,16 @@ analyzeTerminationResult input actions petri =
       initialTokenCount = sum $ M.elems $ unState $ start net
       levels = levelsCheckAS input actions net
       finalStates = getFinalStates levels
-  in 
+  in
     case finalStates of
       [] -> InvalidSequence  -- No reachable final states
-      states -> 
+      states ->
         if zeroState `elem` states
         then CompleteTermination  -- Zero state reached
-        else 
+        else
           let tokenCounts = map (sum . M.elems . unState) states
               minTokens = minimum tokenCounts
-          in 
+          in
             if minTokens > 0 && minTokens < initialTokenCount
             then PartialTermination  -- Some but not all tokens consumed
             else NoTermination  -- No reduction in tokens or invalid
