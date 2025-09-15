@@ -28,12 +28,6 @@ jobs:
         env:
           VALIDATE_JSCPD_ALL_CODEBASE: true
           YAML_ERROR_ON_WARNING: true
-          # Re-enable checks that have been fixed
-          VALIDATE_CHECKOV: true
-          VALIDATE_JSON_PRETTIER: true
-          VALIDATE_MARKDOWN_PRETTIER: true
-          VALIDATE_YAML_PRETTIER: true
-          VALIDATE_NATURAL_LANGUAGE: true
-          # Keep disabled as requested - overly strict for this project
+          # Disable - overly strict for this project, apparently
           VALIDATE_GITHUB_ACTIONS_ZIZMOR: false
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
