@@ -261,8 +261,6 @@ findFittingRandomElements useDifferent availableElements predicates
       let numAvailable = length availableElements
           numRequested = length predicates
           validNs = filter (\n -> numRequested `mod` n == 0) [numAvailable, numAvailable - 1 .. 2]
-      in tryDivisors validNs
-         where
           tryDivisors [] = findFittingRandom availableElements predicates
           tryDivisors (n:ns) = tryDivisorWithRetries maxRetries
             where
@@ -275,6 +273,7 @@ findFittingRandomElements useDifferent availableElements predicates
                   case result of
                     Nothing -> tryDivisorWithRetries (retries - 1)  -- Retry with different selection
                     Just elements -> pure (Just elements)
+      in tryDivisors validNs
   | otherwise = do
       ds <- shuffleM availableElements
       firstJustM (\x -> findFittingRandom [x] predicates) ds
