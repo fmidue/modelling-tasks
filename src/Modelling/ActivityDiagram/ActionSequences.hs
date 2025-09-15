@@ -2,6 +2,8 @@
 module Modelling.ActivityDiagram.ActionSequences (
   validActionSequence,
   generateActionSequence,
+  analyzeActionSequenceTermination,
+  ActionSequenceResult(..)
 ) where
 
 import qualified Modelling.ActivityDiagram.Datatype as Ad (
@@ -9,7 +11,7 @@ import qualified Modelling.ActivityDiagram.Datatype as Ad (
   )
 
 import qualified Data.Set as S (fromList)
-import qualified Data.Map as M (filter, map, keys, fromList, toList)
+import qualified Data.Map as M (filter, map, keys, fromList, toList, elems)
 
 import Modelling.ActivityDiagram.Datatype (
   AdNode (..),
@@ -39,6 +41,14 @@ import Modelling.PetriNet.Reach.Step (levels', successors)
 import Control.Monad (guard)
 import Data.List (find, union)
 import Data.Maybe(mapMaybe, isJust, fromJust)
+
+-- | Result of analyzing an action sequence execution
+data ActionSequenceResult
+  = CompleteTermination    -- ^ All tokens consumed (correct solution)
+  | PartialTermination     -- ^ Some but not all tokens consumed  
+  | NoTermination         -- ^ Invalid sequence or no tokens consumed
+  | InvalidSequence       -- ^ Sequence cannot be executed
+  deriving (Eq, Show)
 
 
 fromPetriLike :: Ord a => PetriLike Node a -> Net a a
@@ -119,3 +129,50 @@ levelsCheckAS input actions n =
             notConsume = g (`notElem` actions) xs         -- Case: Next transition is not an action, therefore is processed but not removed from input
         in union (f as consume) (f (a:as) notConsume)
   in f input [(start n, [])]
+
+-- | Analyze the result of executing an action sequence
+-- Returns information about whether the sequence terminates all flows, some flows, or is invalid
+analyzeActionSequenceTermination :: [String] -> UMLActivityDiagram -> ActionSequenceResult
+analyzeActionSequenceTermination input diag =
+  let nameMap = map
+        (\n -> (name n, Ad.label n))
+        $ filter isActionNode $ nodes diag
+      labels = mapMaybe (`lookup` nameMap) input
+      petri = convertToPetriNet diag
+      petriKeyMap = map
+        (\k -> (Ad.label $ sourceNode k, k))
+        $ filter isNormalPetriNode $ M.keys $ allNodes petri
+      input' = mapMaybe (`lookup` petriKeyMap) labels
+      actions = map snd $ filter (\(l,_) -> l `elem` map snd nameMap) petriKeyMap
+  in 
+    -- First check if sequence is valid (all names exist)
+    if length input /= length labels
+    then InvalidSequence
+    else analyzeTerminationResult input' actions petri
+
+-- | Helper function to analyze the termination result of a Petri net execution
+analyzeTerminationResult :: [PetriKey] -> [PetriKey] -> PetriLike Node PetriKey -> ActionSequenceResult
+analyzeTerminationResult input actions petri =
+  let net = fromPetriLike petri
+      zeroState = State $ M.map (const 0) $ unState $ start net
+      initialTokenCount = sum $ M.elems $ unState $ start net
+      levels = levelsCheckAS input actions net
+      finalStates = getFinalStates levels
+  in 
+    case finalStates of
+      [] -> InvalidSequence  -- No reachable final states
+      states -> 
+        if zeroState `elem` states
+        then CompleteTermination  -- Zero state reached
+        else 
+          let tokenCounts = map (sum . M.elems . unState) states
+              minTokens = minimum tokenCounts
+          in 
+            if minTokens > 0 && minTokens < initialTokenCount
+            then PartialTermination  -- Some but not all tokens consumed
+            else NoTermination  -- No reduction in tokens or invalid
+
+-- | Extract final states from the levels of reachability analysis
+getFinalStates :: [[(State PetriKey, [PetriKey])]] -> [State PetriKey]
+getFinalStates [] = []
+getFinalStates levels = map fst $ last levels

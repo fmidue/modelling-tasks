@@ -25,7 +25,7 @@ module Modelling.ActivityDiagram.EnterAS (
 import Capabilities.Alloy               (MonadAlloy, getInstances)
 import Capabilities.PlantUml            (MonadPlantUml)
 import Capabilities.WriteFile           (MonadWriteFile)
-import Modelling.ActivityDiagram.ActionSequences (generateActionSequence, validActionSequence)
+import Modelling.ActivityDiagram.ActionSequences (generateActionSequence, validActionSequence, analyzeActionSequenceTermination, ActionSequenceResult(..))
 import Modelling.ActivityDiagram.Alloy (
   adConfigToAlloy,
   moduleActionSequencesRules,
@@ -255,6 +255,7 @@ enterASEvaluation
   -> Rated m
 enterASEvaluation task sub = do
   let correct = validActionSequence sub $ activityDiagram task
+      terminationResult = analyzeActionSequenceTermination sub $ activityDiagram task
       points = if correct then 1 else 0
       maybeSolutionString =
         if showSolution task
@@ -264,6 +265,33 @@ enterASEvaluation task sub = do
   yesNo correct $ translate $ do
     english "The submitted action sequence is correct?"
     german "Die eingereichte Aktionsfolge ist korrekt?"
+
+  -- Provide specific feedback for partial termination
+  case terminationResult of
+    PartialTermination -> do
+      paragraph $ translate $ do
+        english [iii|
+          Note: The submitted sequence only terminates some control flows.
+          A complete solution should terminate all flows in the diagram.
+          The submitted sequence only ends the incoming control flow but leaves other flows active.
+          |]
+        german [iii|
+          Hinweis: Die eingereichte Sequenz terminiert nur einige Kontrollflüsse.
+          Eine vollständige Lösung sollte alle Flüsse im Diagramm terminieren.
+          Die eingereichte Sequenz beendet nur den hineinlaufenden Kontrollfluss, aber lässt andere Flüsse aktiv.
+          |]
+      pure ()
+    NoTermination -> do
+      paragraph $ translate $ do
+        english "The submitted sequence does not properly terminate any control flows."
+        german "Die eingereichte Sequenz terminiert keine Kontrollflüsse ordnungsgemäß."
+      pure ()
+    InvalidSequence -> do
+      paragraph $ translate $ do
+        english "The submitted sequence contains invalid transitions or cannot be executed."
+        german "Die eingereichte Sequenz enthält ungültige Übergänge oder kann nicht ausgeführt werden."
+      pure ()
+    CompleteTermination -> pure ()  -- No additional feedback needed for correct solutions
 
   let objectNames = map name $ filter isObjectNode $ nodes $ activityDiagram task
       objectNamesInSubmission = nubOrd $ sub `intersect` objectNames
