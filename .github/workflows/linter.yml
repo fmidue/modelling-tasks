@@ -3,7 +3,7 @@ name: Super-Linter
 
 on:
   push:
-    branches: ['**']
+    branches: ["**"]
 
 jobs:
   build:
@@ -21,18 +21,19 @@ jobs:
           # Full git history is needed to get a proper
           # list of changed files within `super-linter`
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Run Linter
         uses: super-linter/super-linter@v8.1.0
         env:
           VALIDATE_JSCPD_ALL_CODEBASE: true
           YAML_ERROR_ON_WARNING: true
-          # Disable problematic security checks that are too strict for this project
-          VALIDATE_CHECKOV: false
+          # Re-enable checks that have been fixed
+          VALIDATE_CHECKOV: true
+          VALIDATE_JSON_PRETTIER: true
+          VALIDATE_MARKDOWN_PRETTIER: true
+          VALIDATE_YAML_PRETTIER: true
+          VALIDATE_NATURAL_LANGUAGE: true
+          # Keep disabled as requested - overly strict for this project
           VALIDATE_GITHUB_ACTIONS_ZIZMOR: false
-          # Disable formatting checks that conflict with existing style
-          VALIDATE_JSON_PRETTIER: false
-          VALIDATE_MARKDOWN_PRETTIER: false
-          VALIDATE_YAML_PRETTIER: false
-          VALIDATE_NATURAL_LANGUAGE: false
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -32,6 +32,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
+        with:
+          persist-credentials: false
 
       # Install essential system dependencies required by the Haskell project
       # These are needed for building diagrams and documentation
@@ -81,10 +83,10 @@ jobs:
           stack-no-global: true
 
       # Set up HLint for code quality checking
-      - name: 'Set up HLint'
+      - name: "Set up HLint"
         uses: haskell-actions/hlint-setup@v2
         with:
-          version: 'latest'
+          version: "latest"
 
       # Install Haskell project dependencies
       # This is the most time-consuming step but critical for the environment
