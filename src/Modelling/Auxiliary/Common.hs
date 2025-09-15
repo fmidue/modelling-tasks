@@ -274,23 +274,23 @@ findFittingRandomElements
   -> m (Maybe [a])
 findFittingRandomElements useDifferent availableElements predicates
   | useDifferent =
-      let numElements = length availableElements
-          numberOfElements = length predicates
-          validNs = filter (\n -> numberOfElements `mod` n == 0) [numElements, numElements - 1 .. 2]
-          maxRetries = 10 :: Int  -- Maximum retries per divisor
-          tryDivisors [] = do
-            -- Fallback to original behavior if no valid distribution exists
-            ds <- shuffleM availableElements
-            firstJustM (\x -> findFittingRandom [x] predicates) ds
-          tryDivisors (n:ns) = tryDivisorWithRetries maxRetries
-            where
-              tryDivisorWithRetries 0 = tryDivisors ns  -- Exhausted retries, try next divisor
-              tryDivisorWithRetries retries = do
-                selectedElements <- take n <$> shuffleM availableElements
-                result <- findFittingRandom selectedElements predicates
-                case result of
-                  Nothing -> tryDivisorWithRetries (retries - 1)  -- Retry with different selection
-                  Just elements -> pure (Just elements)
+      let numAvailable = length availableElements
+          numRequested = length predicates
+          validNs = filter (\n -> numRequested `mod` n == 0) [numAvailable, numAvailable - 1 .. 2]
+          tryDivisors [] = pure Nothing  -- No valid distribution exists
+          tryDivisors (n:ns) = 
+            let numOfChoosings = product [numAvailable - i | i <- [0..n-1]] `div` product [1..n]
+                maxRetries = min 10 (2 * numOfChoosings - 1)
+                tryDivisorWithRetries 0 = tryDivisors ns  -- Exhausted retries, try next divisor
+                tryDivisorWithRetries retries = do
+                  selectedElements <- take n <$> shuffleM availableElements
+                  result <- findFittingRandom selectedElements predicates
+                  case result of
+                    Nothing -> tryDivisorWithRetries (retries - 1)  -- Retry with different selection
+                    Just elements -> pure (Just elements)
+            in tryDivisorWithRetries maxRetries
       in tryDivisors validNs
   | otherwise = do
-      findFittingRandom availableElements predicates
+      -- Fallback to original behavior if useDifferent is False
+      ds <- shuffleM availableElements
+      firstJustM (\x -> findFittingRandom [x] predicates) ds
