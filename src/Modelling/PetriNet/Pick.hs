@@ -147,11 +147,11 @@ pickGenerate pick gc useDifferent withSol config segment seed
           numberOfGraphs = length petriNets
       in
         maybeM getInstance (toPickInstance petriNets)
-        $ if useDifferent config
+        $ let availableLayouts = allDrawSettings (gc config)
+          in if useDifferent config
           then
             -- Try valid divisors in descending order until one succeeds
-            let availableLayouts = allDrawSettings (gc config)
-                numLayouts = length availableLayouts
+            let numLayouts = length availableLayouts
                 validNs = filter (\n -> numberOfGraphs `mod` n == 0) [numLayouts, numLayouts - 1 .. 2]
                 tryDivisors [] = do
                   -- Fallback to original behavior if no valid distribution exists
@@ -166,7 +166,7 @@ pickGenerate pick gc useDifferent withSol config segment seed
                     Just layouts -> pure (Just layouts)
             in tryDivisors validNs
           else do
-            ds <- shuffleM $ allDrawSettings (gc config)
+            ds <- shuffleM availableLayouts
             firstJustM (\x -> findFittingRandom [x] predicates) ds
 
 pickSyntax
