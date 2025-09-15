@@ -36,7 +36,7 @@ import qualified Data.Set                         as S (
 
 import Control.Exception                (Exception, SomeException)
 import Control.Monad.Catch              (MonadThrow (throwM))
-import Control.Monad.Extra              (ifM, maybeM)
+import Control.Monad.Extra              (firstJustM, ifM, maybeM)
 import Control.Monad.Random (
   MonadRandom (getRandomR),
   RandT,
@@ -271,17 +271,17 @@ findFittingRandomElements
   -- ^ available elements
   -> [a -> m Bool]
   -- ^ predicates to satisfy
-  -> Int
-  -- ^ number of elements needed
   -> m (Maybe [a])
-findFittingRandomElements useDifferent availableElements predicates numberOfElements
+findFittingRandomElements useDifferent availableElements predicates
   | useDifferent =
       let numElements = length availableElements
+          numberOfElements = length predicates
           validNs = filter (\n -> numberOfElements `mod` n == 0) [numElements, numElements - 1 .. 2]
           maxRetries = 10 :: Int  -- Maximum retries per divisor
           tryDivisors [] = do
             -- Fallback to original behavior if no valid distribution exists
-            findFittingRandom availableElements predicates
+            ds <- shuffleM availableElements
+            firstJustM (\x -> findFittingRandom [x] predicates) ds
           tryDivisors (n:ns) = tryDivisorWithRetries maxRetries
             where
               tryDivisorWithRetries 0 = tryDivisors ns  -- Exhausted retries, try next divisor

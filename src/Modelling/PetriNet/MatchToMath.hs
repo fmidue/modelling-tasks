@@ -307,9 +307,8 @@ mathToGraph config@MathConfig {..} segment seed = evalWithStdGen seed getInstanc
       let petriNets = map fst changes
           allPetriNets = petri : petriNets
           predicates = map (\x -> lift . isNetDrawable x) allPetriNets
-          numberOfGraphs = length allPetriNets
           availableLayouts = allDrawSettings graphConfig
-      maybeDrawSettings <- findFittingRandomElements useDifferentGraphLayouts availableLayouts predicates numberOfGraphs
+      maybeDrawSettings <- findFittingRandomElements useDifferentGraphLayouts availableLayouts predicates
       case maybeDrawSettings of
         Just (d : ds) ->
           matchMathInstance config math (petri, d) $ zip petriNets ds

@@ -144,11 +144,10 @@ pickGenerate pick gc useDifferent withSol config segment seed
         }
     getPickInstance petriNets =
       let predicates = map (\(x,_) -> lift . isNetDrawable x) petriNets
-          numberOfGraphs = length petriNets
           availableLayouts = allDrawSettings (gc config)
       in
         maybeM getInstance (toPickInstance petriNets)
-        $ findFittingRandomElements (useDifferent config) availableLayouts predicates numberOfGraphs
+        $ findFittingRandomElements (useDifferent config) availableLayouts predicates
 
 pickSyntax
   :: OutputCapable m
