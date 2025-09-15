@@ -153,15 +153,19 @@ pickGenerate pick gc useDifferent withSol config segment seed
             -- Try valid divisors in descending order until one succeeds
             let numLayouts = length availableLayouts
                 validNs = filter (\n -> numberOfGraphs `mod` n == 0) [numLayouts, numLayouts - 1 .. 2]
+                maxRetries = 10 :: Int  -- Maximum retries per divisor
                 tryDivisors [] = do
                   -- Fallback to original behavior if no valid distribution exists
                   findFittingRandom availableLayouts predicates
-                tryDivisors (n:ns) = do
-                  selectedLayouts <- take n <$> shuffleM availableLayouts
-                  result <- findFittingRandom selectedLayouts predicates
-                  case result of
-                    Nothing -> tryDivisors ns  -- Try next smaller divisor
-                    Just layouts -> pure (Just layouts)
+                tryDivisors (n:ns) = tryDivisorWithRetries n maxRetries
+                  where
+                    tryDivisorWithRetries _ 0 = tryDivisors ns  -- Exhausted retries, try next divisor
+                    tryDivisorWithRetries currentN retries = do
+                      selectedLayouts <- take currentN <$> shuffleM availableLayouts
+                      result <- findFittingRandom selectedLayouts predicates
+                      case result of
+                        Nothing -> tryDivisorWithRetries currentN (retries - 1)  -- Retry with different selection
+                        Just layouts -> pure (Just layouts)
             in tryDivisors validNs
           else do
             ds <- shuffleM availableLayouts
