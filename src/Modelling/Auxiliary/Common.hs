@@ -265,7 +265,7 @@ findFittingRandomElements useDifferent availableElements predicates
           tryDivisors [] = findFittingRandom availableElements predicates
           tryDivisors (n:ns) = tryDivisorWithRetries maxRetries
             where
-                maxRetries = min (10 :: Int) (2 * (numAvailable `choose` n) - 1)
+                maxRetries = min 10 (2 * (numAvailable `choose` n) - 1)
                 tryDivisorWithRetries 0 = tryDivisors ns  -- Exhausted retries, try next divisor
                 tryDivisorWithRetries retries = do
                   selectedElements <- take n <$> shuffleM availableElements
