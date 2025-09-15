@@ -157,14 +157,14 @@ pickGenerate pick gc useDifferent withSol config segment seed
                 tryDivisors [] = do
                   -- Fallback to original behavior if no valid distribution exists
                   findFittingRandom availableLayouts predicates
-                tryDivisors (n:ns) = tryDivisorWithRetries n maxRetries
+                tryDivisors (n:ns) = tryDivisorWithRetries maxRetries
                   where
-                    tryDivisorWithRetries _ 0 = tryDivisors ns  -- Exhausted retries, try next divisor
-                    tryDivisorWithRetries currentN retries = do
-                      selectedLayouts <- take currentN <$> shuffleM availableLayouts
+                    tryDivisorWithRetries 0 = tryDivisors ns  -- Exhausted retries, try next divisor
+                    tryDivisorWithRetries retries = do
+                      selectedLayouts <- take n <$> shuffleM availableLayouts
                       result <- findFittingRandom selectedLayouts predicates
                       case result of
-                        Nothing -> tryDivisorWithRetries currentN (retries - 1)  -- Retry with different selection
+                        Nothing -> tryDivisorWithRetries (retries - 1)  -- Retry with different selection
                         Just layouts -> pure (Just layouts)
             in tryDivisors validNs
           else do
