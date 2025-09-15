@@ -266,7 +266,7 @@ weightedShuffle xs = do
 findFittingRandomElements
   :: MonadRandom m
   => Bool
-  -- ^ useDifferentElements flag  
+  -- ^ useDifferentElements flag
   -> [a]
   -- ^ available elements
   -> [a -> m Bool]
