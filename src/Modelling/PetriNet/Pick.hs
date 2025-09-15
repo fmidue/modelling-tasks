@@ -160,8 +160,7 @@ pickGenerate pick gc useDifferent withSol config segment seed
                   let graphsPerLayout = numberOfGraphs `div` n
                   selectedLayouts <- take n <$> shuffleM availableLayouts
                   let replicatedLayouts = concatMap (replicate graphsPerLayout) selectedLayouts
-                  shuffledLayouts <- shuffleM replicatedLayouts
-                  result <- findFittingRandom shuffledLayouts predicates
+                  result <- findFittingRandom replicatedLayouts predicates
                   case result of
                     Nothing -> tryDivisors ns  -- Try next smaller divisor
                     Just layouts -> pure (Just layouts)
