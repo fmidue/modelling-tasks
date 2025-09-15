@@ -32,6 +32,7 @@ import Capabilities.Diagrams            (MonadDiagrams)
 import Capabilities.Graphviz            (MonadGraphviz)
 import Modelling.Auxiliary.Common (
   Object,
+  findFittingRandomLayouts,
   )
 import Modelling.PetriNet.Diagram (
   cacheNet,
@@ -49,7 +50,6 @@ import Modelling.PetriNet.Types         (
   checkBasicConfig,
   checkChangeConfig,
   checkGraphLayouts,
-  findFittingRandomLayouts,
   placeNames,
   transitionNames,
   )

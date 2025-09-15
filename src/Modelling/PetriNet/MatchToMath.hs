@@ -45,7 +45,7 @@ import Capabilities.Alloy               (MonadAlloy, getInstances)
 import Capabilities.Cache               (MonadCache)
 import Capabilities.Diagrams            (MonadDiagrams)
 import Capabilities.Graphviz            (MonadGraphviz)
-import Modelling.Auxiliary.Common       (Object (oName))
+import Modelling.Auxiliary.Common       (Object (oName), findFittingRandomLayouts)
 import Modelling.Auxiliary.Output       (
   hoveringInformation,
   )
@@ -93,7 +93,6 @@ import Modelling.PetriNet.Types (
   defaultBasicConfig,
   defaultChangeConfig,
   defaultGraphConfig,
-  findFittingRandomLayouts,
   isPlaceNode,
   mapChange,
   shuffleNames,

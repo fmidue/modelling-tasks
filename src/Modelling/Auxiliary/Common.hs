@@ -9,6 +9,7 @@ module Modelling.Auxiliary.Common (
   ShuffleExcept (..),
   TaskGenerationException (..),
   findFittingRandom,
+  findFittingRandomLayouts,
   getFirstInstance,
   lensRulesL,
   lowerFirst,
@@ -260,3 +261,37 @@ weightedShuffle xs = do
   a <- fromList rs
   ys <- weightedShuffle (delete a xs)
   return (fst a : ys)
+
+-- | Find fitting random layouts with sophisticated distribution logic
+-- Tries valid divisors in descending order with retry mechanism for each divisor
+findFittingRandomLayouts
+  :: MonadRandom m
+  => Bool
+  -- ^ useDifferentGraphLayouts flag  
+  -> [a]
+  -- ^ available layouts
+  -> [a -> m Bool]
+  -- ^ predicates to satisfy
+  -> Int
+  -- ^ number of graphs
+  -> m (Maybe [a])
+findFittingRandomLayouts useDifferent availableLayouts predicates numberOfGraphs
+  | useDifferent =
+      let numLayouts = length availableLayouts
+          validNs = filter (\n -> numberOfGraphs `mod` n == 0) [numLayouts, numLayouts - 1 .. 2]
+          maxRetries = 10 :: Int  -- Maximum retries per divisor
+          tryDivisors [] = do
+            -- Fallback to original behavior if no valid distribution exists
+            findFittingRandom availableLayouts predicates
+          tryDivisors (n:ns) = tryDivisorWithRetries maxRetries
+            where
+              tryDivisorWithRetries 0 = tryDivisors ns  -- Exhausted retries, try next divisor
+              tryDivisorWithRetries retries = do
+                selectedLayouts <- take n <$> shuffleM availableLayouts
+                result <- findFittingRandom selectedLayouts predicates
+                case result of
+                  Nothing -> tryDivisorWithRetries (retries - 1)  -- Retry with different selection
+                  Just layouts -> pure (Just layouts)
+      in tryDivisors validNs
+  | otherwise = do
+      findFittingRandom availableLayouts predicates
