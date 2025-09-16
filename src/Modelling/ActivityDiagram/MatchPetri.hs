@@ -115,7 +115,6 @@ import Data.Bifunctor                   (second)
 import Data.GraphViz.Commands (GraphvizCommand(..))
 import Data.List (sort)
 import Data.Map (Map)
-
 import Data.String.Interpolate (i, iii)
 import Data.Tuple.Extra                 (dupe)
 import GHC.Generics (Generic)
