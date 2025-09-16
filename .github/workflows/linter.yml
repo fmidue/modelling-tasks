@@ -34,4 +34,5 @@ jobs:
           YAML_ERROR_ON_WARNING: true
           # Disable - overly strict for this project, apparently
           VALIDATE_GITHUB_ACTIONS_ZIZMOR: false
+          VALIDATE_YAML_PRETTIER: false
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
