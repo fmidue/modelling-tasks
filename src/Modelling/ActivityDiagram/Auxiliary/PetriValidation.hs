@@ -51,21 +51,21 @@ validatePetriConfig
   -> Maybe String
 validatePetriConfig adConfig countOfPetriNodesBounds maxInstances petriLayout auxiliaryPetriNodeAbsent presenceOfSinkTransitionsForFinals withActivityFinalInForkBlocks =
   validateBasePetriConfig adConfig countOfPetriNodesBounds maxInstances presenceOfSinkTransitionsForFinals
-  <|> validatePetriConfigSpecific adConfig auxiliaryPetriNodeAbsent withActivityFinalInForkBlocks petriLayout
+  <|> validatePetriConfigSpecific
   where
-    validatePetriConfigSpecific config auxAbsent withFinals layout
-      | auxAbsent == Just True && Config.cycles config > 0
+    validatePetriConfigSpecific
+      | auxiliaryPetriNodeAbsent == Just True && Config.cycles adConfig > 0
       = Just [iii|
         Setting the parameter 'auxiliaryPetriNodeAbsent' to True
         prohibits having more than 0 cycles
         |]
-      | withFinals == Just False && Config.activityFinalNodes config > 1
+      | withActivityFinalInForkBlocks == Just False && Config.activityFinalNodes adConfig > 1
         = Just "Setting the parameter 'withActivityFinalInForkBlocks' to False prohibits having more than 1 'activityFinalNodes'"
-      | withFinals == Just True && Config.activityFinalNodes config == 0
+      | withActivityFinalInForkBlocks == Just True && Config.activityFinalNodes adConfig == 0
         = Just "Setting the parameter 'withActivityFinalInForkBlocks' to True implies that there are 'activityFinalNodes'"
-      | null layout
+      | null petriLayout
         = Just "The parameter 'petriLayout' can not be the empty list"
-      | any (`notElem` [Dot, Neato, TwoPi, Circo, Fdp]) layout
+      | any (`notElem` [Dot, Neato, TwoPi, Circo, Fdp]) petriLayout
         = Just "The parameter 'petriLayout' can only contain the options Dot, Neato, TwoPi, Circo and Fdp"
       | otherwise
         = Nothing
