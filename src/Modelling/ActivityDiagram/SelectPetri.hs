@@ -40,14 +40,6 @@ import Modelling.ActivityDiagram.Alloy  (adConfigToAlloy, modulePetriNet)
 import Modelling.ActivityDiagram.Auxiliary.Util (
   finalNodesAdvice,
   )
-import Modelling.PetriNet.Types (
-  checkPetriNodeCount,
-  DrawSettings (..),
-  Net (mapNet),
-  PetriLike (..),
-  SimpleNode (..),
-  SimplePetriLike,
-  )
 import qualified Modelling.ActivityDiagram.Config as Config (
   AdConfig(activityFinalNodes,flowFinalNodes),
   )
@@ -84,6 +76,14 @@ import Modelling.Auxiliary.Output (
   extra,
   )
 import Modelling.PetriNet.Diagram (cacheNet)
+import Modelling.PetriNet.Types (
+  checkPetriNodeCount,
+  DrawSettings (..),
+  Net (mapNet),
+  PetriLike (..),
+  SimpleNode (..),
+  SimplePetriLike,
+  )
 
 import Control.Applicative (Alternative ((<|>)))
 import Control.Monad (unless, when)

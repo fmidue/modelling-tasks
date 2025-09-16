@@ -41,15 +41,6 @@ import Modelling.ActivityDiagram.Alloy (
   modulePetriNet,
   )
 import Modelling.ActivityDiagram.Auxiliary.Util (finalNodesAdvice)
-import Modelling.PetriNet.Types (
-  checkPetriNodeCount,
-  Net (..),
-  PetriLike (..),
-  PetriNode (..),
-  SimpleNode,
-  isPlaceNode,
-  isTransitionNode,
-  )
 import Modelling.ActivityDiagram.Datatype (
   AdConnection (..),
   AdNode (..),
@@ -76,6 +67,15 @@ import Modelling.Auxiliary.Common       (getFirstInstance)
 import Modelling.Auxiliary.Output (
   addPretext,
   extra
+  )
+import Modelling.PetriNet.Types (
+  checkPetriNodeCount,
+  Net (..),
+  PetriLike (..),
+  PetriNode (..),
+  SimpleNode,
+  isPlaceNode,
+  isTransitionNode,
   )
 
 import Control.Applicative (Alternative ((<|>)))
