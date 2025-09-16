@@ -17,6 +17,7 @@ module Modelling.ActivityDiagram.SelectPetri (
   checkPetriInstance,
   selectPetriAlloy,
   selectPetriNet,
+  selectPetriNetWithMatchingNet,
   selectPetriTask,
   selectPetriSyntax,
   selectPetriEvaluation,
@@ -283,6 +284,17 @@ selectPetriNet
   -> m SelectPetriSolution
 selectPetriNet numberOfWrongNets numberOfModifications modifyAtMid ad = do
   let matchingNet = convertToPetriNet ad
+  selectPetriNetWithMatchingNet numberOfWrongNets numberOfModifications modifyAtMid ad matchingNet
+
+selectPetriNetWithMatchingNet
+  :: (MonadRandom m)
+  => Int
+  -> Int
+  -> Bool
+  -> UMLActivityDiagram
+  -> SimplePetriLike PetriKey
+  -> m SelectPetriSolution
+selectPetriNetWithMatchingNet numberOfWrongNets numberOfModifications modifyAtMid ad matchingNet = do
   wrongNets <- loopM (\xs -> do
       modAd <- modifyAd ad numberOfModifications modifyAtMid
       let petri = convertToPetriNet modAd
@@ -582,14 +594,16 @@ getSelectPetriTask config = do
       }
   ad <- mapM (fmap snd . shuffleAdNames) randomInstances
     >>= firstJustM (\x -> do
-      if not (checkPetriNodeCount (countOfPetriNodesBounds config) (convertToPetriNet @PetriLike @SimpleNode x))
+      let petriNet = convertToPetriNet @PetriLike @SimpleNode x
+      if not (checkPetriNodeCount (countOfPetriNodesBounds config) petriNet)
         then return Nothing
         else do
-          sol <- selectPetriNet
+          sol <- selectPetriNetWithMatchingNet
             (numberOfWrongAnswers config)
             (numberOfModifications config)
             (modifyAtMid config)
             x
+            petriNet
           p <- fmap snd $ shufflePetri $ matchingNet sol
           ps <- mapM (fmap snd . shufflePetri) $ wrongNets sol
           petriNets <- selectPetriSolutionToMap
