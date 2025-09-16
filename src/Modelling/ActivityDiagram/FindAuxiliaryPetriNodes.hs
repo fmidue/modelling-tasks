@@ -309,7 +309,7 @@ getFindAuxiliaryPetriNodesTask config@FindAuxiliaryPetriNodesConfig {..} = do
     $ findAuxiliaryPetriNodesAlloy config
   randomInstances <- shuffleM alloyInstances >>= mapM parseInstance
   ad <- mapM (fmap snd . shuffleAdNames) randomInstances
-    >>= getFirstInstance . map fst . filter (checkPetriNodeCount countOfPetriNodesBounds . snd) . map (\x -> (x, convertToPetriNet @PetriLike @SimpleNode x))
+    >>= getFirstInstance . filter (checkPetriNodeCount countOfPetriNodesBounds . convertToPetriNet @PetriLike @SimpleNode)
   return $ FindAuxiliaryPetriNodesInstance {
     activityDiagram = ad,
     plantUMLConf =
