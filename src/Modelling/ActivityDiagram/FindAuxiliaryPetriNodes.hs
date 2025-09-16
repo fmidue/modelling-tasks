@@ -40,7 +40,16 @@ import Modelling.ActivityDiagram.Alloy (
   adConfigToAlloy,
   modulePetriNet,
   )
-import Modelling.ActivityDiagram.Auxiliary.Util (finalNodesAdvice, checkCount)
+import Modelling.ActivityDiagram.Auxiliary.Util (finalNodesAdvice)
+import Modelling.PetriNet.Types (
+  checkPetriNodeCount,
+  Net (..),
+  PetriLike (..),
+  PetriNode (..),
+  SimpleNode,
+  isPlaceNode,
+  isTransitionNode,
+  )
 import Modelling.ActivityDiagram.Datatype (
   AdConnection (..),
   AdNode (..),
@@ -67,14 +76,6 @@ import Modelling.Auxiliary.Common       (getFirstInstance)
 import Modelling.Auxiliary.Output (
   addPretext,
   extra
-  )
-import Modelling.PetriNet.Types (
-  Net (..),
-  PetriLike (..),
-  PetriNode (..),
-  SimpleNode,
-  isPlaceNode,
-  isTransitionNode,
   )
 
 import Control.Applicative (Alternative ((<|>)))
@@ -308,7 +309,7 @@ getFindAuxiliaryPetriNodesTask config@FindAuxiliaryPetriNodesConfig {..} = do
     $ findAuxiliaryPetriNodesAlloy config
   randomInstances <- shuffleM alloyInstances >>= mapM parseInstance
   ad <- mapM (fmap snd . shuffleAdNames) randomInstances
-    >>= getFirstInstance . filter (checkCount countOfPetriNodesBounds)
+    >>= getFirstInstance . map fst . filter (checkPetriNodeCount countOfPetriNodesBounds . snd) . map (\x -> (x, convertToPetriNet @PetriLike @SimpleNode x))
   return $ FindAuxiliaryPetriNodesInstance {
     activityDiagram = ad,
     plantUMLConf =

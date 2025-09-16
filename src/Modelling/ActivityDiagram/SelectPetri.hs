@@ -6,6 +6,7 @@
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE TupleSections #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE TypeApplications #-}
 
 module Modelling.ActivityDiagram.SelectPetri (
   SelectPetriInstance(..),
@@ -37,7 +38,14 @@ import qualified Modelling.ActivityDiagram.PetriNet as PK (PetriKey (label))
 import Modelling.ActivityDiagram.Alloy  (adConfigToAlloy, modulePetriNet)
 import Modelling.ActivityDiagram.Auxiliary.Util (
   finalNodesAdvice,
-  checkCount,
+  )
+import Modelling.PetriNet.Types (
+  checkPetriNodeCount,
+  DrawSettings (..),
+  Net (mapNet),
+  PetriLike (..),
+  SimpleNode (..),
+  SimplePetriLike,
   )
 import qualified Modelling.ActivityDiagram.Config as Config (
   AdConfig(activityFinalNodes,flowFinalNodes),
@@ -75,13 +83,6 @@ import Modelling.Auxiliary.Output (
   extra,
   )
 import Modelling.PetriNet.Diagram (cacheNet)
-import Modelling.PetriNet.Types (
-  DrawSettings (..),
-  Net (mapNet),
-  PetriLike (..),
-  SimpleNode (..),
-  SimplePetriLike,
-  )
 
 import Control.Applicative (Alternative ((<|>)))
 import Control.Monad (unless, when)
@@ -581,7 +582,7 @@ getSelectPetriTask config = do
       }
   ad <- mapM (fmap snd . shuffleAdNames) randomInstances
     >>= firstJustM (\x -> do
-      if not (checkCount (countOfPetriNodesBounds config) x)
+      if not (checkPetriNodeCount (countOfPetriNodesBounds config) (convertToPetriNet @PetriLike @SimpleNode x))
         then return Nothing
         else do
           sol <- selectPetriNet
