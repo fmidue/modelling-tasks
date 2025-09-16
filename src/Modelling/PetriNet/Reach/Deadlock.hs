@@ -45,6 +45,7 @@ import Modelling.PetriNet.Reach.Type (
   TransitionsList (TransitionsList),
   bimapNet,
   example,
+  hasIsolatedNodes,
   )
 
 import Control.Applicative              (Alternative)
@@ -138,7 +139,7 @@ deadlockEvaluation path deadlock ts =
       yesNo (null $ successors n outcome)
       $ translate $ do
           english "All transitions disabled in reached marking?"
-          german "Alle Transitionen deaktiviert in Zielmarkierung?"
+          german "Alle Transitionen deaktiviert in erreichter Markierung?"
       )
   $>> assertReachPoints
     aSolution
@@ -286,6 +287,8 @@ try conf = do
       ts
       (Modelling.PetriNet.Reach.Deadlock.capacity conf)
   return $ do
+    -- Filter out nets with isolated nodes
+    guard $ not $ hasIsolatedNodes n
     let (no,yeah) = span (null . snd)
           $ take (maxTransitionLength conf + 1)
           $ zip [0 :: Int ..]

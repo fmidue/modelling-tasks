@@ -1,16 +1,15 @@
 {-# LANGUAGE ApplicativeDo #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE TypeApplications #-}
 module Modelling.ActivityDiagram.Auxiliary.Util (
   finalNodesAdvice,
-  weightedShuffle
+  checkCount
   ) where
 
-import Control.Monad.Random (
-  MonadRandom,
-  fromList,
-  )
-import Data.List (delete)
+import qualified Data.Map as M (size)
+import qualified Modelling.PetriNet.Types as Petri (Net (nodes))
+
 import Data.String.Interpolate          (iii)
 import Control.OutputCapable.Blocks (
   LangM,
@@ -20,22 +19,12 @@ import Control.OutputCapable.Blocks (
   paragraph,
   translate,
   )
-
-{-|
-  Shuffle a list of elements from type a based on given weights of type w,
-  where higher weight indicates a bigger probability of the element occurring
-  at a lower index of the list. The total weight of all elements must not be zero.
--}
-weightedShuffle
-  :: (MonadRandom m, Eq a, Real w)
-  => [(a,w)]
-  -> m [a]
-weightedShuffle [] = return []
-weightedShuffle xs = do
-  let rs = map (\x -> (x, toRational $ snd x)) xs
-  a <- fromList rs
-  ys <- weightedShuffle (delete a xs)
-  return (fst a : ys)
+import Modelling.ActivityDiagram.Datatype (UMLActivityDiagram)
+import Modelling.ActivityDiagram.PetriNet (convertToPetriNet)
+import Modelling.PetriNet.Types (
+  PetriLike,
+  SimpleNode,
+  )
 
 finalNodesAdvice :: OutputCapable m => Bool -> LangM m
 finalNodesAdvice withFinalTransitionAdvice = do
@@ -70,3 +59,12 @@ finalNodesAdvice withFinalTransitionAdvice = do
     appendExtendedAdvice x y
       | withFinalTransitionAdvice = x ++ ' ' : y
       | otherwise = x
+
+-- | Check if the count of Petri nodes in a converted activity diagram
+-- falls within the given bounds
+checkCount :: (Int, Maybe Int) -> UMLActivityDiagram -> Bool
+checkCount countOfPetriNodesBounds ad =
+  let count = M.size . Petri.nodes @PetriLike @SimpleNode
+              $ convertToPetriNet ad
+  in fst countOfPetriNodesBounds <= count
+     && maybe True (count <=) (snd countOfPetriNodesBounds)
