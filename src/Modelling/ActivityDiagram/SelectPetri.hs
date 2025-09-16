@@ -6,7 +6,6 @@
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE TupleSections #-}
 {-# LANGUAGE RecordWildCards #-}
-{-# LANGUAGE TypeApplications #-}
 
 module Modelling.ActivityDiagram.SelectPetri (
   SelectPetriInstance(..),
@@ -582,7 +581,7 @@ getSelectPetriTask config = do
       }
   ad <- mapM (fmap snd . shuffleAdNames) randomInstances
     >>= firstJustM (\x -> do
-      if not (checkCount x (countOfPetriNodesBounds config))
+      if not (checkCount (countOfPetriNodesBounds config) x)
         then return Nothing
         else do
           sol <- selectPetriNet

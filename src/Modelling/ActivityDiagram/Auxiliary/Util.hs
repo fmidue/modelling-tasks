@@ -62,9 +62,9 @@ finalNodesAdvice withFinalTransitionAdvice = do
 
 -- | Check if the count of Petri nodes in a converted activity diagram
 -- falls within the given bounds
-checkCount :: UMLActivityDiagram -> (Int, Maybe Int) -> Bool
-checkCount ad countOfPetriNodesBounds =
+checkCount :: (Int, Maybe Int) -> UMLActivityDiagram -> Bool
+checkCount countOfPetriNodesBounds ad =
   let count = M.size . Petri.nodes @PetriLike @SimpleNode
-        $ convertToPetriNet ad in
-    fst countOfPetriNodesBounds <= count
-    && maybe True (count <=) (snd countOfPetriNodesBounds)
+              $ convertToPetriNet ad
+  in fst countOfPetriNodesBounds <= count
+     && maybe True (count <=) (snd countOfPetriNodesBounds)

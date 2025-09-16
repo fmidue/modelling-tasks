@@ -6,7 +6,6 @@
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE TupleSections #-}
-{-# LANGUAGE TypeApplications #-}
 
 module Modelling.ActivityDiagram.MatchPetri (
   MatchPetriInstance(..),
@@ -458,7 +457,7 @@ getMatchPetriTask config = do
   randomInstances <- shuffleM alloyInstances >>= mapM parseInstance
   activityDiagrams <- mapM (fmap snd . shuffleAdNames) randomInstances
   (ad, petri) <- getFirstInstance
-        $ filter ((`checkCount` countOfPetriNodesBounds config) . fst)
+        $ filter (checkCount (countOfPetriNodesBounds config) . fst)
         $ filter (not . petriHasMultipleAutomorphisms . snd)
         $ map (second convertToPetriNet . dupe) activityDiagrams
   shuffledPetri <- snd <$> shufflePetri petri
