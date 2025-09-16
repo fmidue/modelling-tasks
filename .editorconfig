@@ -8,10 +8,14 @@ indent_style = space
 indent_size = 2
 max_line_length = 175
 
-[**.als]
+[*.als]
+indent_size = unset
 max_line_length = 160
 
 [*.hs]
+indent_size = unset
+
+[*.md]
 indent_size = unset
 
 [test/unit/**]
