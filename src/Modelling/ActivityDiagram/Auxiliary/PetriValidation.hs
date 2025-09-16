@@ -16,13 +16,14 @@ import Data.String.Interpolate (iii)
 -- | Common validation logic for configurations that share Petri-related parameters
 validatePetriConfig
   :: Config.AdConfig
+  -> (Int, Maybe Int)  -- countOfPetriNodesBounds
   -> Maybe Integer  -- maxInstances
   -> [GraphvizCommand]  -- petriLayout
   -> Maybe Bool  -- auxiliaryPetriNodeAbsent
   -> Maybe Bool  -- presenceOfSinkTransitionsForFinals
   -> Maybe Bool  -- withActivityFinalInForkBlocks
   -> Maybe String
-validatePetriConfig adConfig maxInstances petriLayout auxiliaryPetriNodeAbsent presenceOfSinkTransitionsForFinals withActivityFinalInForkBlocks
+validatePetriConfig adConfig countOfPetriNodesBounds maxInstances petriLayout auxiliaryPetriNodeAbsent presenceOfSinkTransitionsForFinals withActivityFinalInForkBlocks
   | Config.activityFinalNodes adConfig > 1
   = Just "There is at most one 'activityFinalNode' allowed."
   | Config.activityFinalNodes adConfig >= 1 && Config.flowFinalNodes adConfig >= 1

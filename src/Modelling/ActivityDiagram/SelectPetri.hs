@@ -206,7 +206,7 @@ checkSelectPetriConfig' SelectPetriConfig {
     presenceOfSinkTransitionsForFinals,
     withActivityFinalInForkBlocks
   } = validateSelectPetriSpecific numberOfWrongAnswers numberOfModifications
-    <|> validatePetriConfig adConfig maxInstances petriLayout auxiliaryPetriNodeAbsent presenceOfSinkTransitionsForFinals withActivityFinalInForkBlocks
+    <|> validatePetriConfig adConfig countOfPetriNodesBounds maxInstances petriLayout auxiliaryPetriNodeAbsent presenceOfSinkTransitionsForFinals withActivityFinalInForkBlocks
 
 selectPetriAlloy :: SelectPetriConfig -> String
 selectPetriAlloy SelectPetriConfig {
