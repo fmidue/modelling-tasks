@@ -592,8 +592,8 @@ getSelectPetriTask config = do
         withGraphvizCommand = layout
       }
   ad <- mapM (fmap snd . shuffleAdNames) randomInstances
-    >>= firstJustM (\x -> do
-      let petriNet = convertToPetriNet @PetriLike @SimpleNode x
+    >>= firstJustM (\ad -> do
+      let petriNet = convertToPetriNet @PetriLike @SimpleNode ad
       if not (checkPetriNodeCount (countOfPetriNodesBounds config) petriNet)
         then return Nothing
         else do
@@ -601,14 +601,14 @@ getSelectPetriTask config = do
             (numberOfWrongAnswers config)
             (numberOfModifications config)
             (modifyAtMid config)
-            x
+            ad
             petriNet
           p <- fmap snd $ shufflePetri $ matchingNet sol
           ps <- mapM (fmap snd . shufflePetri) $ wrongNets sol
           petriNets <- selectPetriSolutionToMap
             $ SelectPetriSolution {matchingNet=p, wrongNets=ps}
           let petriInst = SelectPetriInstance {
-                activityDiagram=x,
+                activityDiagram=ad,
                 plantUMLConf=plantUMLConf,
                 petriDrawConf=petriDrawConf,
                 petriNets = petriNets,
