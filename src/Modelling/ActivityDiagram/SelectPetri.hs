@@ -282,9 +282,8 @@ selectPetriNet
   -> Bool
   -> UMLActivityDiagram
   -> m SelectPetriSolution
-selectPetriNet numberOfWrongNets numberOfModifications modifyAtMid ad = do
-  let matchingNet = convertToPetriNet ad
-  selectPetriNetWithMatchingNet numberOfWrongNets numberOfModifications modifyAtMid ad matchingNet
+selectPetriNet numberOfWrongNets numberOfModifications modifyAtMid ad =
+  selectPetriNetWithMatchingNet numberOfWrongNets numberOfModifications modifyAtMid ad (convertToPetriNet ad)
 
 selectPetriNetWithMatchingNet
   :: (MonadRandom m)
