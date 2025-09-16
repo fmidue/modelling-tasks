@@ -151,11 +151,13 @@ reportReachFor img noLonger lengthHint minLengthHint maybeGoal = do
     Nothing -> translate $ do
       english "State your answer as an (arbitrarily short or long) sequence of the following kind:"
       german "Geben Sie Ihre Lösung als (beliebig kurze oder lange) Auflistung der folgenden Art an:"
-    Just maxL -> let
+    Just maxL ->
+      let
         isExactMatch = case minLengthHint of
           Just minSteps -> maxL == minSteps
           _ -> False
-        (englishConstraint, germanConstraint) = if isExactMatch
+        (englishConstraint, germanConstraint) =
+          if isExactMatch
           then ("has exactly", "genau")
           else ("does not exceed", "maximal")
       in translate $ do
