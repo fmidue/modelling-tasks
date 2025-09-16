@@ -100,7 +100,7 @@ import Control.Monad.Random (
   mkStdGen
   )
 import Data.Map (Map)
-import Data.String.Interpolate ( i )
+import Data.String.Interpolate (i, iii)
 import GHC.Generics (Generic)
 import System.Random.Shuffle (shuffleM)
 
