@@ -37,7 +37,6 @@ import qualified Modelling.ActivityDiagram.PetriNet as PK (PetriKey (label))
 import Modelling.ActivityDiagram.Alloy  (adConfigToAlloy, modulePetriNet)
 import Modelling.ActivityDiagram.Auxiliary.PetriValidation (
   validatePetriConfig,
-  validateSelectPetriSpecific,
   )
 import Modelling.ActivityDiagram.Auxiliary.Util (
   finalNodesAdvice,
@@ -207,6 +206,19 @@ checkSelectPetriConfig' SelectPetriConfig {
     withActivityFinalInForkBlocks
   } = validateSelectPetriSpecific numberOfWrongAnswers numberOfModifications
     <|> validatePetriConfig adConfig countOfPetriNodesBounds maxInstances petriLayout auxiliaryPetriNodeAbsent presenceOfSinkTransitionsForFinals withActivityFinalInForkBlocks
+
+-- | Additional validation specific to SelectPetri configurations
+validateSelectPetriSpecific
+  :: Int  -- numberOfWrongAnswers
+  -> Int  -- numberOfModifications
+  -> Maybe String
+validateSelectPetriSpecific numberOfWrongAnswers numberOfModifications
+  | numberOfWrongAnswers < 1
+    = Just "The parameter 'numberOfWrongAnswers' must be set to a positive value"
+  | numberOfModifications < 1
+    = Just "The parameter 'numberOfModifications' must be set to a positive value"
+  | otherwise
+    = Nothing
 
 selectPetriAlloy :: SelectPetriConfig -> String
 selectPetriAlloy SelectPetriConfig {

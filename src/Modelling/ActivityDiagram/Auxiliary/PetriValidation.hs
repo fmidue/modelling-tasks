@@ -2,7 +2,6 @@
 -- | Common validation logic for ActivityDiagram Petri-based tasks
 module Modelling.ActivityDiagram.Auxiliary.PetriValidation (
   validatePetriConfig,
-  validateSelectPetriSpecific,
   validateBasePetriConfig
 ) where
 
@@ -69,16 +68,3 @@ validatePetriConfig adConfig countOfPetriNodesBounds maxInstances petriLayout au
         = Just "The parameter 'petriLayout' can only contain the options Dot, Neato, TwoPi, Circo and Fdp"
       | otherwise
         = Nothing
-
--- | Additional validation specific to SelectPetri configurations
-validateSelectPetriSpecific
-  :: Int  -- numberOfWrongAnswers
-  -> Int  -- numberOfModifications
-  -> Maybe String
-validateSelectPetriSpecific numberOfWrongAnswers numberOfModifications
-  | numberOfWrongAnswers < 1
-    = Just "The parameter 'numberOfWrongAnswers' must be set to a positive value"
-  | numberOfModifications < 1
-    = Just "The parameter 'numberOfModifications' must be set to a positive value"
-  | otherwise
-    = Nothing
