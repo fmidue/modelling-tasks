@@ -38,6 +38,33 @@ calculateMinimumPetriNodes adConfig =
     
   in initialNodes + minActionNodes + minObjectNodes + finalNodes + forkJoinNodes + decisionMergeNodes
 
+-- | Calculate maximum number of Petri net nodes based on AdConfig values
+calculateMaximumPetriNodes :: Config.AdConfig -> Int
+calculateMaximumPetriNodes adConfig =
+  let
+    -- At least one initial node (always 1 place)
+    initialNodes = 1
+    
+    -- Maximum action nodes (each action becomes a transition, plus places before/after)
+    maxActionNodes = snd (Config.actionLimits adConfig)
+    
+    -- Maximum object nodes (each becomes a place)
+    maxObjectNodes = snd (Config.objectNodeLimits adConfig)
+    
+    -- Final nodes (each becomes a place)
+    finalNodes = Config.activityFinalNodes adConfig + Config.flowFinalNodes adConfig
+    
+    -- Fork/Join pairs (each pair adds auxiliary nodes: roughly 2 nodes per pair)
+    forkJoinNodes = Config.forkJoinPairs adConfig * 2
+    
+    -- Decision/Merge pairs (each pair adds auxiliary nodes: roughly 2 nodes per pair)  
+    decisionMergeNodes = Config.decisionMergePairs adConfig * 2
+    
+    -- Cycles can add additional auxiliary nodes (rough estimate: 1 per cycle)
+    cycleNodes = Config.cycles adConfig
+    
+  in initialNodes + maxActionNodes + maxObjectNodes + finalNodes + forkJoinNodes + decisionMergeNodes + cycleNodes
+
 -- | Base validation logic common to multiple Petri-based configurations
 validateBasePetriConfig
   :: Config.AdConfig
@@ -64,6 +91,12 @@ validateBasePetriConfig adConfig countOfPetriNodesBounds maxInstances presenceOf
       The minimum value of 'countOfPetriNodesBounds' (${fst countOfPetriNodesBounds}) is too small. 
       Based on the AdConfig values, the minimum number of Petri net nodes should be at least ${calculateMinimumPetriNodes adConfig}.
       This is calculated from: 1 initial node + ${fst (Config.actionLimits adConfig)} minimum action nodes + ${fst (Config.objectNodeLimits adConfig)} minimum object nodes + ${Config.activityFinalNodes adConfig + Config.flowFinalNodes adConfig} final nodes + ${Config.forkJoinPairs adConfig * 2} fork/join auxiliary nodes + ${Config.decisionMergePairs adConfig * 2} decision/merge auxiliary nodes.
+      |]
+  | Just high <- snd countOfPetriNodesBounds, high > 0 && high > calculateMaximumPetriNodes adConfig
+    = Just [iii|
+      The maximum value of 'countOfPetriNodesBounds' (${high}) is too large. 
+      Based on the AdConfig values, the maximum number of Petri net nodes should be at most ${calculateMaximumPetriNodes adConfig}.
+      This is calculated from: 1 initial node + ${snd (Config.actionLimits adConfig)} maximum action nodes + ${snd (Config.objectNodeLimits adConfig)} maximum object nodes + ${Config.activityFinalNodes adConfig + Config.flowFinalNodes adConfig} final nodes + ${Config.forkJoinPairs adConfig * 2} fork/join auxiliary nodes + ${Config.decisionMergePairs adConfig * 2} decision/merge auxiliary nodes + ${Config.cycles adConfig} cycle auxiliary nodes.
       |]
   | otherwise
     = Nothing
