@@ -30,7 +30,8 @@ module Modelling.PetriNet.Conflict (
   simplePickConflictTask,
   ) where
 
-import qualified Modelling.PetriNet.Find          as F (showSolution)
+import qualified Modelling.PetriNet.Find          as Find (FindInstance (..), showSolution)
+import qualified Modelling.PetriNet.Pick          as Pick (PickInstance (..))
 import qualified Modelling.PetriNet.Types         as Find (
   FindConflictConfig (..),
   )
@@ -57,6 +58,7 @@ import Modelling.Auxiliary.Common (
   )
 import Modelling.Auxiliary.Output (
   hoveringInformation,
+  extra,
   )
 import Modelling.PetriNet.Alloy (
   compAdvConstraints,
@@ -167,7 +169,7 @@ import Data.Either                      (isLeft)
 import Data.Function                    ((&))
 import Data.Foldable                    (for_)
 import Data.GraphViz.Commands           (GraphvizCommand (Circo, Fdp))
-import Data.List                        (partition)
+import Data.List                        (partition, sort)
 import Data.List.Extra                  (nubSort)
 import Data.Ratio                       ((%))
 import Data.String.Interpolate          (i, iii)
@@ -231,6 +233,7 @@ findConflictTask path task = do
       german "Die Reihenfolge der Transitionen innerhalb des Paars spielt hierbei keine Rolle."
     pure ()
   paragraph hoveringInformation
+  extra $ Find.addText task
   pure ()
 
 findConflictSyntax
@@ -258,8 +261,12 @@ conflictPlacesShow
   :: ConflictPlaces
   -> ((ShowTransition, ShowTransition), [ShowPlace])
 conflictPlacesShow = bimap
-  (bimap ShowTransition ShowTransition)
-  (map ShowPlace)
+  sortedTransitionPair
+  (map ShowPlace . sort)
+  where
+    sortedTransitionPair (t1, t2) =
+      let (first, second) = if t1 <= t2 then (t1, t2) else (t2, t1)
+      in bimap ShowTransition ShowTransition (first, second)
 
 findConflictPlacesEvaluation
   :: (Alternative m, Monad m, OutputCapable m)
@@ -289,7 +296,7 @@ findConflictPlacesEvaluation task (conflict, ps) =
     fixSolution
       | null inducing = id
       | otherwise    = const $ show $ conflictPlacesShow (conf, inducing)
-    withSol = F.showSolution task
+    withSol = Find.showSolution task
     ps' = nubSort ps
     (correct, wrong') = partition (`elem` inducing) ps
     base = fromIntegral $ 2 + numberOfPlaces task
@@ -377,6 +384,7 @@ pickConflictTask path task = do
         ++ ")."
     pure ()
   paragraph hoveringInformation
+  extra $ Pick.addText task
   pure ()
 
 findConflictGenerate
@@ -404,7 +412,8 @@ findConflictGenerate config segment = evalRandT getInstance . mkStdGen
         net = petri,
         numberOfPlaces = places bc,
         numberOfTransitions = transitions bc,
-        showSolution = Find.printSolution config
+        showSolution = Find.printSolution config,
+        addText = Find.extraText config
         }
     bc = Find.basicConfig config
 
@@ -414,11 +423,12 @@ pickConflictGenerate
   -> Int
   -> Int
   -> m (PickInstance (p n String))
-pickConflictGenerate = pickGenerate pickConflict gc ud ws
+pickConflictGenerate = pickGenerate pickConflict gc ud ws et
   where
     gc = Pick.graphConfig
     ud = Pick.useDifferentGraphLayouts
     ws = Pick.printSolution
+    et = Pick.extraText
 
 findConflict
   :: (MonadAlloy m, MonadThrow m, Net p n, RandomGen g)
@@ -716,7 +726,8 @@ defaultPickConflictInstance = PickInstance {
         }
       )))
     ],
-  showSolution = False
+  showSolution = False,
+  addText = Nothing
   }
 
 defaultFindConflictInstance :: FindInstance SimplePetriNet Conflict
@@ -745,5 +756,6 @@ defaultFindConflictInstance = FindInstance {
     },
   numberOfPlaces = 4,
   numberOfTransitions = 3,
-  showSolution = False
+  showSolution = False,
+  addText = Nothing
   }
