@@ -19,7 +19,7 @@ spec =
       it "validates a sequence ending at Activity Final" $
         validActionSequence ["A"] testDiagramSimpleActivityFinal `shouldBe` True
     context "fork diagram with Activity Final" $ do
-      it "validates sequence ['A','B'] that reaches Activity Final" $
+      it "validates sequence ['A','B'] that reaches Activity Final and terminates all flows" $
         validActionSequence ["A","B"] testDiagramForkActivityFinal `shouldBe` True
       it "rejects incomplete sequence ['A'] that doesn't reach termination" $
         validActionSequence ["A"] testDiagramForkActivityFinal `shouldBe` False  
