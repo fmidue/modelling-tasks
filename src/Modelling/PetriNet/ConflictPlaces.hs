@@ -37,6 +37,7 @@ import Modelling.PetriNet.Find (
   drawFindWith,
   findInitial,
   )
+import qualified Modelling.PetriNet.Find          as Find (FindInstance (..))
 import Modelling.PetriNet.Diagram (
   cacheNet,
   )
@@ -156,7 +157,7 @@ The order of places within the listing of places inducing the conflict is irrele
 Die Reihenfolge von Stellen innerhalb der Auflistung der den Konflikt verursachenden Stellen spielt ebenso keine Rolle.|]
     pure ()
   paragraph hoveringInformation
-  extra $ (\FindInstance { addText = t } -> t) task
+  extra $ Find.addText task
   pure ()
 
 conflictInitial :: ConflictPlaces

@@ -31,6 +31,8 @@ module Modelling.PetriNet.Conflict (
   ) where
 
 import qualified Modelling.PetriNet.Find          as F (showSolution)
+import qualified Modelling.PetriNet.Find          as Find (FindInstance (..))
+import qualified Modelling.PetriNet.Pick          as Pick (PickInstance (..))
 import qualified Modelling.PetriNet.Types         as Find (
   FindConflictConfig (..),
   )
@@ -232,7 +234,7 @@ findConflictTask path task = do
       german "Die Reihenfolge der Transitionen innerhalb des Paars spielt hierbei keine Rolle."
     pure ()
   paragraph hoveringInformation
-  extra $ (\FindInstance { addText = t } -> t) task
+  extra $ Find.addText task
   pure ()
 
 findConflictSyntax
@@ -379,7 +381,7 @@ pickConflictTask path task = do
         ++ ")."
     pure ()
   paragraph hoveringInformation
-  extra $ (\PickInstance { addText = t } -> t) task
+  extra $ Pick.addText task
   pure ()
 
 findConflictGenerate

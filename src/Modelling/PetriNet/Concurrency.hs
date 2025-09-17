@@ -27,6 +27,8 @@ module Modelling.PetriNet.Concurrency (
   ) where
 
 import qualified Modelling.PetriNet.Find          as F (showSolution)
+import qualified Modelling.PetriNet.Find          as Find (FindInstance (..))
+import qualified Modelling.PetriNet.Pick          as Pick (PickInstance (..))
 import qualified Modelling.PetriNet.Types         as Find (
   FindConcurrencyConfig (..),
   )
@@ -224,7 +226,7 @@ findConcurrencyTask path task = do
         |]
     pure ()
   paragraph hoveringInformation
-  extra $ (\FindInstance { addText = t } -> t) task
+  extra $ Find.addText task
   pure ()
 
 findConcurrencySyntax
@@ -329,7 +331,7 @@ pickConcurrencyTask path task = do
         ++ ")."
     pure ()
   paragraph hoveringInformation
-  extra $ (\PickInstance { addText = t } -> t) task
+  extra $ Pick.addText task
   pure ()
 
 findConcurrencyGenerate
