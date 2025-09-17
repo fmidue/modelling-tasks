@@ -13,13 +13,12 @@ import Data.GraphViz.Commands (GraphvizCommand)
 -- | Check that a range (low, high) is valid
 checkRange
   :: (Num n, Ord n, Show b, Show n)
-  => (b -> Maybe n)  -- ^ Function to extract upper bound
-  -> String          -- ^ Description of what is being checked
-  -> (n, b)          -- ^ (lower bound, upper bound)
+  => String          -- ^ Description of what is being checked
+  -> (n, Maybe n)          -- ^ (lower bound, upper bound)
   -> Maybe String
-checkRange g what (low, h)
+checkRange what (low, h)
   | low < 0 = Just $ "The lower limit for " ++ what ++ " has to be at least 0!"
-  | otherwise = case g h of
+  | otherwise = case h of
       Nothing -> Nothing  -- No upper bound specified, only check lower bound
       Just high ->
         if high < low
@@ -78,8 +77,8 @@ checkBasicPetriConfig
   showLengthHint =
     checkPetriNetSizes numPlaces numTransitions
     <|> checkTransitionLengths minTransitionLength maxTransitionLength
-    <|> checkRange id "preconditionsRange" preconditionsRange
-    <|> checkRange id "postconditionsRange" postconditionsRange
+    <|> checkRange "preconditionsRange" preconditionsRange
+    <|> checkRange "postconditionsRange" postconditionsRange
     <|> checkRejectLongerThanConsistency rejectLongerThan minTransitionLength maxTransitionLength showLengthHint
     <|> checkDrawCommands drawCommands
   where
