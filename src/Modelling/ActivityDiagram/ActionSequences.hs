@@ -81,14 +81,19 @@ isActivityFinalPetriNode pk =
 generateActionSequence' :: UMLActivityDiagram -> [Int] -> [PetriKey]
 generateActionSequence' diag activityFinalLabels =
   let petri = fromPetriLike $ convertToPetriNet diag
-      zeroState = State $ M.map (const 0) $ unState $ start petri
+      -- Use all places in the network to create the zero state for consistency
+      allPlaces = S.toList $ places petri
+      zeroState = State $ M.fromList [(p, 0) | p <- allPlaces]
       sequences = fromJust $ find (isJust . lookup zeroState) $ levelsAS petri activityFinalLabels
   in reverse $ fromJust $ lookup zeroState sequences
 
 -- Modified version of levels' that handles Activity Final nodes
 levelsAS :: Ord s => Net s PetriKey -> [Int] -> [[(State s, [PetriKey])]]
 levelsAS n activityFinalLabels =
-  let -- Check if a transition corresponds to Activity Final
+  let -- Create zero state using all places in the network for consistency
+      allPlaces = S.toList $ places n
+      zeroState = State $ M.fromList [(p, 0) | p <- allPlaces]
+      -- Check if a transition corresponds to Activity Final
       isActivityFinalTransition t = case t of
         AuxiliaryPetriNode nodeLabel -> nodeLabel `elem` activityFinalLabels
         _ -> False
@@ -98,10 +103,8 @@ levelsAS n activityFinalLabels =
             next = M.toList $ M.fromList [ (finalState, t:p) |
                 (x,p) <- xs,
                 (t,y) <- successors n x,
-                -- If this is an Activity Final transition, create zero state with same structure as target
-                let finalState = if isActivityFinalTransition t
-                                then State $ M.map (const 0) $ unState y
-                                else y,
+                -- If this is an Activity Final transition, use consistent zero state
+                let finalState = if isActivityFinalTransition t then zeroState else y,
                 not $ S.member finalState done'
               ]
          in xs : f done' next
