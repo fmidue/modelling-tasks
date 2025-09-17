@@ -71,6 +71,7 @@ import Modelling.PetriNet.Reach.Filter (
   FilterConfig (..),
   defaultFilterConfig,
   filterTrivialSolutions,
+  isTrivialSequence,
   )
 import Modelling.PetriNet.Reach.Property (
   Property (Default),
@@ -547,9 +548,19 @@ generateNetGoalWithFilter
   -> NetGoalConfig
   -> Int
   -> m (NetGoal Place Transition)
-generateNetGoalWithFilter _filterConfig = generateNetGoalUnfiltered
-  -- Note: Filtering is applied at solution time via netGoalSolutionFiltered
-  -- and reachSolutionFiltered functions to avoid infinite loops during generation
+generateNetGoalWithFilter filterConfig config seed = do
+  -- Try up to 5 times to generate a net with non-trivial solutions
+  attemptGeneration filterConfig config seed 5
+  where
+    attemptGeneration :: (MonadCatch m, MonadDiagrams m, MonadGraphviz m)
+                      => FilterConfig -> NetGoalConfig -> Int -> Int -> m (NetGoal Place Transition)
+    attemptGeneration _ cfg s 0 = generateNetGoalUnfiltered cfg s  -- fallback to unfiltered
+    attemptGeneration filterConf cfg s attemptsLeft = do
+      netGoal <- generateNetGoalUnfiltered cfg s
+      let solution = netGoalSolution netGoal
+      if isTrivialSequence filterConf solution
+        then attemptGeneration filterConf cfg (s + 1) (attemptsLeft - 1)  -- try again with different seed
+        else return netGoal  -- found non-trivial solution
 
 generateReach
   :: (MonadCatch m, MonadDiagrams m, MonadGraphviz m)
