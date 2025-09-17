@@ -78,6 +78,7 @@ library:
   exposed-modules:
     - Modelling.ActivityDiagram.ActionSequences
     - Modelling.ActivityDiagram.Alloy
+    - Modelling.ActivityDiagram.Auxiliary.PetriValidation
     - Modelling.ActivityDiagram.Auxiliary.Util
     - Modelling.ActivityDiagram.Auxiliary.Parser
     - Modelling.ActivityDiagram.Config
