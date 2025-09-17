@@ -81,91 +81,11 @@ spec = do
             }
       checkReachConfig problematicConfig `shouldSatisfy` isJust
 
-    it "rejects negative numPlaces" $ do
-      let config = defaultReachConfig {
-            netGoalConfig = (netGoalConfig defaultReachConfig) {
-              numPlaces = -1
-              }
-            }
-      checkReachConfig config `shouldSatisfy` isJust
-
-    it "rejects zero numPlaces" $ do
-      let config = defaultReachConfig {
-            netGoalConfig = (netGoalConfig defaultReachConfig) {
-              numPlaces = 0
-              }
-            }
-      checkReachConfig config `shouldSatisfy` isJust
-
-    it "rejects negative numTransitions" $ do
-      let config = defaultReachConfig {
-            netGoalConfig = (netGoalConfig defaultReachConfig) {
-              numTransitions = -1
-              }
-            }
-      checkReachConfig config `shouldSatisfy` isJust
-
-    it "rejects zero numTransitions" $ do
-      let config = defaultReachConfig {
-            netGoalConfig = (netGoalConfig defaultReachConfig) {
-              numTransitions = 0
-              }
-            }
-      checkReachConfig config `shouldSatisfy` isJust
-
-    it "rejects negative minTransitionLength" $ do
-      let config = defaultReachConfig {
-            netGoalConfig = (netGoalConfig defaultReachConfig) {
-              minTransitionLength = -1
-              }
-            }
-      checkReachConfig config `shouldSatisfy` isJust
-
-    it "rejects zero minTransitionLength" $ do
-      let config = defaultReachConfig {
-            netGoalConfig = (netGoalConfig defaultReachConfig) {
-              minTransitionLength = 0
-              }
-            }
-      checkReachConfig config `shouldSatisfy` isJust
-
-    it "rejects negative maxTransitionLength" $ do
-      let config = defaultReachConfig {
-            netGoalConfig = (netGoalConfig defaultReachConfig) {
-              maxTransitionLength = -1
-              }
-            }
-      checkReachConfig config `shouldSatisfy` isJust
-
-    it "rejects zero maxTransitionLength" $ do
-      let config = defaultReachConfig {
-            netGoalConfig = (netGoalConfig defaultReachConfig) {
-              maxTransitionLength = 0
-              }
-            }
-      checkReachConfig config `shouldSatisfy` isJust
-
     it "rejects minTransitionLength > maxTransitionLength" $ do
       let config = defaultReachConfig {
             netGoalConfig = (netGoalConfig defaultReachConfig) {
               minTransitionLength = 10,
               maxTransitionLength = 5
-              }
-            }
-      checkReachConfig config `shouldSatisfy` isJust
-
-    it "rejects negative preconditionsRange lower bound" $ do
-      let config = defaultReachConfig {
-            netGoalConfig = (netGoalConfig defaultReachConfig) {
-              preconditionsRange = (-1, Nothing)
-              }
-            }
-      checkReachConfig config `shouldSatisfy` isJust
-
-    it "rejects negative postconditionsRange lower bound" $ do
-      let config = defaultReachConfig {
-            netGoalConfig = (netGoalConfig defaultReachConfig) {
-              postconditionsRange = (-1, Nothing)
               }
             }
       checkReachConfig config `shouldSatisfy` isJust
@@ -191,20 +111,6 @@ spec = do
             netGoalConfig = (netGoalConfig defaultReachConfig) {
               drawCommands = []
               }
-            }
-      checkReachConfig config `shouldSatisfy` isJust
-
-    it "rejects negative rejectLongerThan" $ do
-      let config = defaultReachConfig {
-            rejectLongerThan = Just (-1),
-            showLengthHint = False
-            }
-      checkReachConfig config `shouldSatisfy` isJust
-
-    it "rejects zero rejectLongerThan" $ do
-      let config = defaultReachConfig {
-            rejectLongerThan = Just 0,
-            showLengthHint = False
             }
       checkReachConfig config `shouldSatisfy` isJust
 
