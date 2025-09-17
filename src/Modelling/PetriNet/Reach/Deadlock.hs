@@ -240,14 +240,14 @@ defaultDeadlockInstance = DeadlockInstance {
 
 checkDeadlockConfig :: DeadlockConfig -> Maybe String
 checkDeadlockConfig DeadlockConfig {..} =
-  checkBasicPetriConfig 
-    numPlaces 
-    numTransitions 
-    minTransitionLength 
-    maxTransitionLength 
-    preconditionsRange 
-    postconditionsRange 
-    drawCommands 
+  checkBasicPetriConfig
+    numPlaces
+    numTransitions
+    minTransitionLength
+    maxTransitionLength
+    preconditionsRange
+    postconditionsRange
+    drawCommands
     rejectLongerThan
   <|> checkLengthHintConsistency
   where

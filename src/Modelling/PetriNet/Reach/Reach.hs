@@ -469,7 +469,7 @@ generateNetGoal NetGoalConfig {..} seed = do
 
 checkReachConfig :: ReachConfig -> Maybe String
 checkReachConfig ReachConfig {..} =
-  checkBasicPetriConfig 
+  checkBasicPetriConfig
     (numPlaces netGoalConfig)
     (numTransitions netGoalConfig)
     (minTransitionLength netGoalConfig)

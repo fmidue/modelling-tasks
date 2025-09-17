@@ -118,14 +118,14 @@ spec = do
       checkDeadlockConfig config `shouldSatisfy` isJust
 
     it "rejects negative rejectLongerThan" $ do
-      let config = defaultDeadlockConfig { 
+      let config = defaultDeadlockConfig {
             rejectLongerThan = Just (-1),
             showLengthHint = False
             }
       checkDeadlockConfig config `shouldSatisfy` isJust
 
     it "rejects zero rejectLongerThan" $ do
-      let config = defaultDeadlockConfig { 
+      let config = defaultDeadlockConfig {
             rejectLongerThan = Just 0,
             showLengthHint = False
             }

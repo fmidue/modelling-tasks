@@ -23,7 +23,7 @@ checkRange g what (low, h) = do
   where
     assert high
       | low < 0 = Just $ "The lower limit for " ++ what ++ " has to be at least 0!"
-      | high < low = Just $ 
+      | high < low = Just $
         "The upper limit (currently " ++ show h ++ "; second value) for " ++ what ++
         " has to be at least as high as its lower limit (currently " ++ show low ++ "; first value)!"
       | otherwise = Nothing
@@ -56,9 +56,9 @@ checkRejectLongerThanConsistency rejectLongerThan minTransitionLength _maxTransi
     Nothing -> Nothing
 
 -- | Check basic Petri net configuration including sizes, lengths, ranges and draw commands
-checkBasicPetriConfig 
+checkBasicPetriConfig
   :: Int                      -- ^ numPlaces
-  -> Int                      -- ^ numTransitions  
+  -> Int                      -- ^ numTransitions
   -> Int                      -- ^ minTransitionLength
   -> Int                      -- ^ maxTransitionLength
   -> (Int, Maybe Int)         -- ^ preconditionsRange
@@ -66,14 +66,14 @@ checkBasicPetriConfig
   -> [GraphvizCommand]        -- ^ drawCommands
   -> Maybe Int                -- ^ rejectLongerThan
   -> Maybe String
-checkBasicPetriConfig 
-  numPlaces 
-  numTransitions 
-  minTransitionLength 
-  maxTransitionLength 
-  preconditionsRange 
-  postconditionsRange 
-  drawCommands 
+checkBasicPetriConfig
+  numPlaces
+  numTransitions
+  minTransitionLength
+  maxTransitionLength
+  preconditionsRange
+  postconditionsRange
+  drawCommands
   rejectLongerThan =
     checkPetriNetSizes numPlaces numTransitions
     <|> checkTransitionLengths minTransitionLength maxTransitionLength

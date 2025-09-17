@@ -195,14 +195,14 @@ spec = do
       checkReachConfig config `shouldSatisfy` isJust
 
     it "rejects negative rejectLongerThan" $ do
-      let config = defaultReachConfig { 
+      let config = defaultReachConfig {
             rejectLongerThan = Just (-1),
             showLengthHint = False
             }
       checkReachConfig config `shouldSatisfy` isJust
 
     it "rejects zero rejectLongerThan" $ do
-      let config = defaultReachConfig { 
+      let config = defaultReachConfig {
             rejectLongerThan = Just 0,
             showLengthHint = False
             }
