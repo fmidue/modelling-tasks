@@ -2,13 +2,14 @@
 module Modelling.ActivityDiagram.ActionSequences (
   validActionSequence,
   generateActionSequence,
+  isActivityFinalPetriNode,
 ) where
 
 import qualified Modelling.ActivityDiagram.Datatype as Ad (
   AdNode (label),
   )
 
-import qualified Data.Set as S (fromList, union, member, empty)
+import qualified Data.Set as S (fromList, union, member, empty, toList)
 import qualified Data.Map as M (filter, map, keys, fromList, toList)
 
 import Modelling.ActivityDiagram.Datatype (
@@ -79,14 +80,16 @@ isActivityFinalPetriNode pk =
 generateActionSequence' :: UMLActivityDiagram -> [PetriKey]
 generateActionSequence' diag =
   let petri = fromPetriLike $ convertToPetriNet diag
-      zeroState = State $ M.map (const 0) $ unState $ start petri
+      allPlaces = S.toList $ places petri
+      zeroState = State $ M.fromList [(p, 0) | p <- allPlaces]
       sequences = fromJust $ find (isJust . lookup zeroState) $ levelsAS petri
   in reverse $ fromJust $ lookup zeroState sequences
 
 -- Modified version of levels' that handles Activity Final nodes
 levelsAS :: Ord s => Net s PetriKey -> [[(State s, [PetriKey])]]
 levelsAS n =
-  let zeroState = State $ M.map (const 0) $ unState $ start n
+  let allPlaces = S.toList $ places n
+      zeroState = State $ M.fromList [(p, 0) | p <- allPlaces]
       f _ [] = []
       f done xs =
         let done' = S.fromList (map fst xs) `S.union` done
@@ -122,13 +125,15 @@ validActionSequence'
   -> Bool
 validActionSequence' input actions petri =
   let net = fromPetriLike petri
-      zeroState = State $ M.map (const 0) $ unState $ start net
+      allPlaces = S.toList $ places net
+      zeroState = State $ M.fromList [(p, 0) | p <- allPlaces]
   in any (isJust . lookup zeroState) (levelsCheckAS input actions net)
 
 
 levelsCheckAS :: [PetriKey] -> [PetriKey] -> Net PetriKey PetriKey-> [[(State PetriKey, [PetriKey])]]
 levelsCheckAS input actions n =
-  let zeroState = State $ M.map (const 0) $ unState $ start n
+  let allPlaces = S.toList $ places n
+      zeroState = State $ M.fromList [(p, 0) | p <- allPlaces]
       g h xs = M.toList $
         M.fromList $ do
           (x, p) <- xs

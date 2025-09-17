@@ -143,7 +143,6 @@ test-suite modelling-tasks-test
   main-is: Main.hs
   other-modules:
       Modelling.ActivityDiagram.ActionSequencesActivityFinalSpec
-      Modelling.ActivityDiagram.ActionSequencesDebugSpec
       Modelling.ActivityDiagram.ActionSequencesSpec
       Modelling.ActivityDiagram.AlloySpec
       Modelling.ActivityDiagram.Auxiliary.ParserSpec
