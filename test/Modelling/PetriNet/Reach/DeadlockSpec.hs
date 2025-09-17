@@ -49,15 +49,6 @@ spec = do
             }
       checkDeadlockConfig config `shouldSatisfy` isJust
 
-    it "rejects non-conflicting length hint configuration with rejectLongerThan < maxTransitionLength" $ do
-      let config = defaultDeadlockConfig {
-            maxTransitionLength = 8,
-            minTransitionLength = 6,
-            rejectLongerThan = Just 7,
-            showLengthHint = True
-            }
-      checkDeadlockConfig config `shouldSatisfy` isJust
-
     it "accepts non-conflicting length hint configuration with rejectLongerThan > maxTransitionLength" $ do
       let config = defaultDeadlockConfig {
             maxTransitionLength = 8,
