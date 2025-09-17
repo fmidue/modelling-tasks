@@ -12,7 +12,7 @@ import qualified Modelling.ActivityDiagram.Config as Config (
 import Control.Applicative (Alternative ((<|>)))
 import Data.GraphViz.Commands (GraphvizCommand(..))
 import Data.Maybe (isJust, fromJust)
-import Data.String.Interpolate (i)
+import Data.String.Interpolate (iii)
 
 -- | Calculate minimum number of Petri net nodes based on AdConfig values
 calculateMinimumPetriNodes :: Config.AdConfig -> Int
@@ -85,7 +85,7 @@ validateBasePetriConfig adConfig countOfPetriNodesBounds maxInstances presenceOf
     fst (Config.actionLimits adConfig) + Config.forkJoinPairs adConfig < 1
     = Just "The option 'presenceOfSinkTransitionsForFinals = Just False' can only be achieved if the number of Actions, Fork Nodes and Join Nodes together is positive"
   | fst countOfPetriNodesBounds > 0 && fst countOfPetriNodesBounds < calculateMinimumPetriNodes adConfig
-    = Just [i|
+    = Just [iii|
       The minimum value of 'countOfPetriNodesBounds' (#{fst countOfPetriNodesBounds}) is too small.
       Based on the AdConfig values, the minimum number of Petri net nodes should be at least #{calculateMinimumPetriNodes adConfig}.
       This is calculated from: 1 initial node + #{fst (Config.actionLimits adConfig)} minimum action nodes +
@@ -95,7 +95,7 @@ validateBasePetriConfig adConfig countOfPetriNodesBounds maxInstances presenceOf
       #{Config.decisionMergePairs adConfig * 2} decision/merge auxiliary nodes.
       |]
   | Just high <- snd countOfPetriNodesBounds, high > 0 && high < calculateMaximumPetriNodes adConfig
-    = Just [i|
+    = Just [iii|
       The maximum value of 'countOfPetriNodesBounds' (#{high}) is too small.
       Based on the AdConfig values, the actually achievable number of Petri net nodes can be up to #{calculateMaximumPetriNodes adConfig}.
       This means the upper bound should be at least #{calculateMaximumPetriNodes adConfig} to allow for all possible configurations.
@@ -126,7 +126,7 @@ validatePetriConfig
   where
     validatePetriConfigSpecific
       | auxiliaryPetriNodeAbsent == Just True && Config.cycles adConfig > 0
-      = Just [i|
+      = Just [iii|
         Setting the parameter 'auxiliaryPetriNodeAbsent' to True
         prohibits having more than 0 cycles
         |]
