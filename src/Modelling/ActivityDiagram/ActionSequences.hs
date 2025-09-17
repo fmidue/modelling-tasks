@@ -99,7 +99,7 @@ levelsAS n activityFinalLabels =
                 (x,p) <- xs,
                 (t,y) <- successors n x,
                 -- If this is an Activity Final transition, create zero state with same structure as target
-                let finalState = if isActivityFinalTransition t 
+                let finalState = if isActivityFinalTransition t
                                 then State $ M.map (const 0) $ unState y
                                 else y,
                 not $ S.member finalState done'
@@ -151,7 +151,7 @@ levelsCheckAS input actions n activityFinalLabels =
           guard $ h t
           -- If this is an Activity Final transition, immediately go to zero state
           -- Use the same structure as the target state but with all tokens set to 0
-          let finalState = if isActivityFinalTransition t 
+          let finalState = if isActivityFinalTransition t
                           then State $ M.map (const 0) $ unState y
                           else y
           return (finalState, t : p)
