@@ -19,6 +19,7 @@ module Modelling.PetriNet.Reach.Reach (
   NetGoal(..),
   ReachConfig(..),
   NetGoalConfig(..),
+  checkReachConfig,
 
   -- * Generation
   generateReach,
@@ -125,12 +126,12 @@ import Data.Foldable                    (traverse_)
 import Data.GraphViz                    (GraphvizCommand (..))
 import Data.List                        (minimumBy)
 import Data.List.Extra                  (nubSort)
+import Data.Maybe                       (fromMaybe)
+import Data.Ord                         (comparing)
 import Data.Ratio                       ((%))
 import Data.String.Interpolate          (i)
 import Data.Typeable                    (Typeable)
 import GHC.Generics                     (Generic)
-import Data.Maybe                       (fromMaybe)
-import Data.Ord                         (comparing)
 
 verifyReach :: (Ord a, Ord t, OutputCapable m, Show a, Show t)
   => ReachInstance a t
