@@ -53,6 +53,7 @@ module Modelling.PetriNet.Types (
   checkBasicConfig,
   checkChangeConfig,
   checkGraphLayouts,
+  checkPetriNodeCount,
   defaultAdvConfig,
   defaultAlloyConfig,
   defaultBasicConfig,
@@ -113,6 +114,7 @@ import qualified Data.Map.Lazy                    as M (
   mapKeys,
   member,
   null,
+  size,
   )
 import qualified Data.Set                         as S (empty, union)
 
@@ -1039,3 +1041,10 @@ checkGraphLayouts useDifferent wrongInstances gc
 hasValidLayoutDistribution :: Int -> Int -> Bool
 hasValidLayoutDistribution numberOfGraphs numLayouts =
   any (\n -> numberOfGraphs `mod` n == 0) [2..numLayouts]
+
+-- | Check if the count of nodes in a Petri net falls within the given bounds
+checkPetriNodeCount :: (Net p n, Ord a) => (Int, Maybe Int) -> p n a -> Bool
+checkPetriNodeCount countOfPetriNodesBounds petri =
+  let count = M.size $ nodes petri
+  in fst countOfPetriNodesBounds <= count
+     && maybe True (count <=) (snd countOfPetriNodesBounds)
