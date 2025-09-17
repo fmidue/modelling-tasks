@@ -299,7 +299,8 @@ getFindAuxiliaryPetriNodesTask config@FindAuxiliaryPetriNodesConfig {..} = do
     $ findAuxiliaryPetriNodesAlloy config
   randomInstances <- shuffleM alloyInstances >>= mapM parseInstance
   (ad, matchingNet) <- mapM (fmap snd . shuffleAdNames) randomInstances
-    >>= getFirstInstance . filter (checkPetriNodeCount countOfPetriNodesBounds . snd) . map (\x -> (x, convertToPetriNet @PetriLike @SimpleNode x))
+    >>= getFirstInstance . filter (checkPetriNodeCount countOfPetriNodesBounds . snd)
+                         . map (\x -> (x, convertToPetriNet @PetriLike @SimpleNode x))
   return $ FindAuxiliaryPetriNodesInstance {
     activityDiagram = ad,
     matchingNet = matchingNet,
