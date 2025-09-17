@@ -56,7 +56,7 @@ module Modelling.PetriNet.Reach.Reach (
   transitionsValid,
 ) where
 
-import qualified Control.Monad.Trans              as Monad (lift)
+
 import qualified Data.Set                         as S (toList)
 
 import Capabilities.Cache               (MonadCache)
@@ -66,19 +66,18 @@ import Data.Data                        (Data)
 import Modelling.Auxiliary.Output (
   hoveringInformation,
   )
-import Modelling.PetriNet.Reach.Draw    (drawToFile, isPetriDrawable)
+import Modelling.PetriNet.Reach.Draw    (drawToFile)
 import Modelling.PetriNet.Reach.Filter (
   FilterConfig (..),
   defaultFilterConfig,
   filterTrivialSolutions,
-  isTrivialSequence,
   )
 import Modelling.PetriNet.Reach.Property (
   Property (Default),
   validate,
   )
-import Modelling.PetriNet.Reach.Roll    (netLimits)
-import Modelling.PetriNet.Reach.Step    (executes, levels, levels')
+
+import Modelling.PetriNet.Reach.Step    (executes, levels')
 import Modelling.PetriNet.Reach.Type (
   Capacity (Unbounded),
   Net (start, transitions),
@@ -91,14 +90,13 @@ import Modelling.PetriNet.Reach.Type (
   bimapNet,
   example,
   mapState,
-  mark,
   )
 
 import Control.Applicative              (Alternative)
 import Control.Functor.Trans            (FunctorTrans (lift))
-import Control.Monad                    (forM, when)
+import Control.Monad                    (when)
 import Control.Monad.Catch              (MonadCatch, MonadThrow)
-import Control.Monad.Extra              (findM, maybeM, whenJust)
+import Control.Monad.Extra              (whenJust)
 import Control.OutputCapable.Blocks (
   ArticleToUse (IndefiniteArticle),
   GenericOutputCapable (assertion, code, image, indent, paragraph, text),
@@ -116,16 +114,16 @@ import Control.OutputCapable.Blocks.Generic (
   ($>>),
   ($>>=),
   )
-import Control.Monad.Random             (mkStdGen)
-import Control.Monad.Trans.Random       (evalRandT)
-import Data.Bifunctor                   (Bifunctor (second))
+
+
+
 import Data.Either.Combinators          (whenRight)
 import Data.Foldable                    (traverse_)
 import Data.GraphViz                    (GraphvizCommand (..))
-import Data.List                        (minimumBy)
+
 import Data.List.Extra                  (nubSort)
-import Data.Maybe                       (fromMaybe)
-import Data.Ord                         (comparing)
+
+
 import Data.Ratio                       ((%))
 import Data.String.Interpolate          (i)
 import Data.Typeable                    (Typeable)
@@ -496,64 +494,9 @@ generateNetGoalWithFilter
   -> NetGoalConfig
   -> Int
   -> m (NetGoal Place Transition)
-generateNetGoalWithFilter filterConfig NetGoalConfig {..} seed = do
-  let ps = [Place 1 .. Place numPlaces]
-      tries = forM [1 :: Int .. 1000] $ const $ do
-        n <- netLimits vLow vHigh nLow nHigh
-            ps
-            ts
-            capacity
-        return $ do
-          (l,zs) <-
-            take (maxTransitionLength + 1) $ zip [0 :: Int ..] $ levels n
-          z' <- zs
-          let d = sum $ do
-                p <- ps
-                return $ abs (mark (start n) p - mark z' p)
-          return ((negate l, d), (n, z'))
-      out = do
-        xs <- tries
-        let candidates = concat xs
-        -- Filter out candidates with trivial solutions
-        let nonTrivialCandidates = filter (not . hasTrivialSolution) candidates
-        if null nonTrivialCandidates
-          then out  -- fallback to original logic if no non-trivial solutions found
-          else do
-            let ((l, _), pn) = minimumBy (comparing fst) nonTrivialCandidates
-            if negate l >= minTransitionLength
-              then do
-                maybeM out (pure . (pn,))
-                $ findM (Monad.lift . isPetriDrawable (fst pn)) drawCommands
-              else out
-
-      -- Check if a net-goal pair has trivial solutions
-      hasTrivialSolution :: ((Int, Int), (Net Place Transition, State Place)) -> Bool
-      hasTrivialSolution (_, (n, goalState)) =
-        let netGoal = NetGoal { drawUsing = Circo, petriNet = n, goal = goalState }
-            -- Check only the first few solutions for efficiency
-            firstFewSolutions = take 5 $ getAllSolutions netGoal
-        in any (isTrivialSequence filterConfig) firstFewSolutions
-
-  ((petri, state), cmd) <- eval out
-
-  pure $ NetGoal {
-    drawUsing   = cmd,
-    goal        = state,
-    petriNet    = petri
-    }
-
-  where
-    fixMaximum = second (min numPlaces . fromMaybe maxBound)
-    (vLow, vHigh) = fixMaximum preconditionsRange
-    (nLow, nHigh) = fixMaximum postconditionsRange
-    ts = [Transition 1 .. Transition numTransitions]
-    eval f = evalRandT f $ mkStdGen seed
-
-    -- Get all solutions (not just the first one) for a given net goal
-    getAllSolutions :: NetGoal Place Transition -> [[Transition]]
-    getAllSolutions netGoal = map (reverse . snd) $ concatMap
-      (filter $ (== goal netGoal) . fst)
-      $ levels' $ petriNet netGoal
+generateNetGoalWithFilter _filterConfig = generateNetGoalUnfiltered
+  -- For now, use unfiltered generation to avoid infinite loops
+  -- Filtering will be applied at solution time instead
 
 generateReach
   :: (MonadCatch m, MonadDiagrams m, MonadGraphviz m)
