@@ -221,7 +221,8 @@ spec = do
     it "accepts rejectLongerThan = minTransitionLength" $ do
       let config = defaultReachConfig {
             netGoalConfig = (netGoalConfig defaultReachConfig) {
-              minTransitionLength = 10
+              minTransitionLength = 10,
+              maxTransitionLength = 10
               },
             rejectLongerThan = Just 10,
             showLengthHint = False
