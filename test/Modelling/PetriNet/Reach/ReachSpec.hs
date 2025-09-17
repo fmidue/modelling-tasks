@@ -11,6 +11,7 @@ import Modelling.PetriNet.Reach.Reach (
   NetGoal (..),
   defaultReachConfig,
   generateReach,
+  checkReachConfig,
   netGoalSolution,
   )
 import Modelling.PetriNet.Reach.Filter (
@@ -27,6 +28,7 @@ import Modelling.PetriNet.Reach.Type (
   Transition (..),
   )
 
+import Data.Maybe                        (isJust)
 import Data.Set                         (Set)
 import Test.Hspec
 import Test.QuickCheck                  (Testable (property))
@@ -74,6 +76,41 @@ spec = do
         inst <- generateReach config seed
         let solution = netGoalSolution (netGoal inst)
         length solution `shouldBe` 8
+
+  describe "checkReachConfig" $ do
+    it "accepts valid configuration" $ do
+      let config = defaultReachConfig
+      checkReachConfig config `shouldBe` Nothing
+
+    it "rejects conflicting length hint configuration" $ do
+      let config = defaultReachConfig {
+            netGoalConfig = (netGoalConfig defaultReachConfig) {
+              maxTransitionLength = 8
+              },
+            rejectLongerThan = Just 8,
+            showLengthHint = True
+            }
+      checkReachConfig config `shouldSatisfy` isJust
+
+    it "accepts non-conflicting length hint configuration" $ do
+      let config = defaultReachConfig {
+            netGoalConfig = (netGoalConfig defaultReachConfig) {
+              maxTransitionLength = 8
+              },
+            rejectLongerThan = Just 7,
+            showLengthHint = True
+            }
+      checkReachConfig config `shouldBe` Nothing
+
+    it "rejects the problematic task2024_60-style config" $ do
+      let problematicConfig = defaultReachConfig {
+            netGoalConfig = (netGoalConfig defaultReachConfig) {
+              maxTransitionLength = 8
+              },
+            rejectLongerThan = Just 8,
+            showLengthHint = True
+            }
+      checkReachConfig problematicConfig `shouldSatisfy` isJust
 
 hasMinTransitionLength
   :: (Ord s, Show s)

@@ -234,7 +234,7 @@ reportReachFor img noLonger lengthHint minLengthHint maybeGoal = do
     (Just maxSteps, Just minSteps) | maxSteps == minSteps -> paragraph $ translate $ do
       english [i|Hint: The shortest solutions have exactly #{maxSteps} steps.|]
       german [i|Hinweis: Die kürzesten Lösungen haben genau #{maxSteps} Schritte.|]
-    (Just maxSteps, _) -> when (noLonger /= Just maxSteps) $ paragraph $ translate $ do
+    (Just maxSteps, _) -> paragraph $ translate $ do
       english [i|Hint: There is a solution with not more than #{maxSteps} steps.|]
       german [i|Hinweis: Es gibt eine Lösung mit nicht mehr als #{maxSteps} Schritten.|]
     _ -> pure ()
@@ -561,6 +561,12 @@ generateNetGoalWithFilter filterConfig config seed = do
       if isTrivialSequence filterConf solution
         then attemptGeneration filterConf cfg (s + 1) (attemptsLeft - 1)  -- try again with different seed
         else return netGoal  -- found non-trivial solution
+
+checkReachConfig :: ReachConfig -> Maybe String
+checkReachConfig ReachConfig {..}
+  | rejectLongerThan == Just (maxTransitionLength netGoalConfig) && showLengthHint
+  = Just "showLengthHint cannot be True when rejectLongerThan equals maxTransitionLength"
+  | otherwise = Nothing
 
 generateReach
   :: (MonadCatch m, MonadDiagrams m, MonadGraphviz m)
