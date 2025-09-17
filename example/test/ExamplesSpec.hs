@@ -210,7 +210,6 @@ import qualified Modelling.PetriNet.PetriReach.Config as ReachConfig (
   )
 
 import Test.Hspec
-import Data.Maybe (isJust)
 
 spec :: Spec
 spec =
@@ -263,9 +262,9 @@ spec =
       it "task28" $
         checkReachConfig ReachConfig.task2023_28 `shouldBe` Nothing
       it "task29" $
-        checkDeadlockConfig DeadlockConfig.task2023_29 `shouldSatisfy` isJust
+        checkDeadlockConfig DeadlockConfig.task2023_29 `shouldBe` Nothing
       it "task30" $
-        checkDeadlockConfig DeadlockConfig.task2023_30 `shouldSatisfy` isJust
+        checkDeadlockConfig DeadlockConfig.task2023_30 `shouldBe` Nothing
       it "task31" $
         checkMatchAdConfig task2023_31 `shouldBe` Nothing
       it "task32" $
@@ -341,9 +340,9 @@ spec =
       it "task26" $
         checkReachConfig ReachConfig.task2024_26 `shouldBe` Nothing
       it "task27" $
-        checkDeadlockConfig DeadlockConfig.task2024_27 `shouldSatisfy` isJust
+        checkDeadlockConfig DeadlockConfig.task2024_27 `shouldBe` Nothing
       it "task28" $
-        checkDeadlockConfig DeadlockConfig.task2024_28 `shouldSatisfy` isJust
+        checkDeadlockConfig DeadlockConfig.task2024_28 `shouldBe` Nothing
       it "task29" $
         checkPickConcurrencyConfig task2024_29 `shouldBe` Nothing
       it "task30" $
@@ -404,9 +403,9 @@ spec =
       it "task59" $
         checkMatchCdOdConfig task2024_59 `shouldBe` Nothing
       it "task60" $
-        checkReachConfig ReachConfig.task2024_60 `shouldSatisfy` isJust
+        checkReachConfig ReachConfig.task2024_60 `shouldBe` Nothing
       it "task61" $
-        checkDeadlockConfig DeadlockConfig.task2024_61 `shouldSatisfy` isJust
+        checkDeadlockConfig DeadlockConfig.task2024_61 `shouldBe` Nothing
       it "task62" $
         checkFindConcurrencyConfig task2024_62 `shouldBe` Nothing
       it "task63" $
