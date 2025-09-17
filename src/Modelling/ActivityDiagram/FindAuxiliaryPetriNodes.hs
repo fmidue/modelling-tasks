@@ -314,7 +314,7 @@ getFindAuxiliaryPetriNodesTask config@FindAuxiliaryPetriNodesConfig {..} = do
   }
 
 defaultFindAuxiliaryPetriNodesInstance :: FindAuxiliaryPetriNodesInstance
-defaultFindAuxiliaryPetriNodesInstance = 
+defaultFindAuxiliaryPetriNodesInstance =
   let ad = UMLActivityDiagram {
     nodes = [
       AdActionNode {label = 1, name = "A"},
