@@ -9,7 +9,7 @@ import qualified Modelling.ActivityDiagram.Datatype as Ad (
   AdNode (label),
   )
 
-import qualified Data.Set as S (fromList, union, member, empty)
+import qualified Data.Set as S (fromList, union, member, empty, toList)
 import qualified Data.Map as M (filter, map, keys, fromList, toList)
 
 import Modelling.ActivityDiagram.Datatype (
@@ -133,13 +133,18 @@ validActionSequence'
   -> Bool
 validActionSequence' input actions petri activityFinalLabels =
   let net = fromPetriLike petri
-      zeroState = State $ M.map (const 0) $ unState $ start net
+      -- Use all places in the network to create the zero state, not just the start state
+      allPlaces = S.toList $ places net
+      zeroState = State $ M.fromList [(p, 0) | p <- allPlaces]
   in any (isJust . lookup zeroState) (levelsCheckAS input actions net activityFinalLabels)
 
 
 levelsCheckAS :: [PetriKey] -> [PetriKey] -> Net PetriKey PetriKey -> [Int] -> [[(State PetriKey, [PetriKey])]]
 levelsCheckAS input actions n activityFinalLabels =
-  let -- Check if a transition corresponds to Activity Final by checking if it's an auxiliary node
+  let -- Create zero state using all places in the network for consistency
+      allPlaces = S.toList $ places n
+      zeroState = State $ M.fromList [(p, 0) | p <- allPlaces]
+      -- Check if a transition corresponds to Activity Final by checking if it's an auxiliary node
       -- with a label that matches an Activity Final node from the original diagram
       isActivityFinalTransition t = case t of
         AuxiliaryPetriNode nodeLabel -> nodeLabel `elem` activityFinalLabels
@@ -150,10 +155,7 @@ levelsCheckAS input actions n activityFinalLabels =
           (t, y) <- successors n x
           guard $ h t
           -- If this is an Activity Final transition, immediately go to zero state
-          -- Use the same structure as the target state but with all tokens set to 0
-          let finalState = if isActivityFinalTransition t
-                          then State $ M.map (const 0) $ unState y
-                          else y
+          let finalState = if isActivityFinalTransition t then zeroState else y
           return (finalState, t : p)
       f _ [] = []
       f [] xs =
