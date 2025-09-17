@@ -48,11 +48,14 @@ import Modelling.PetriNet.Reach.Type (
   mark,
   )
 
-import Control.Applicative              (Alternative)
+import Control.Applicative              (Alternative ((<|>)))
 import Control.Functor.Trans            (FunctorTrans (lift))
 import Control.Monad                    (forM, guard, when)
 import Control.Monad.Catch              (MonadCatch, MonadThrow)
 import Control.Monad.Extra              (findM, maybeM, whenJust)
+import Modelling.PetriNet.Reach.ConfigValidation (
+  checkBasicPetriConfig,
+  )
 import Control.OutputCapable.Blocks (
   ArticleToUse (IndefiniteArticle),
   GenericOutputCapable (assertion, code, image, indent, paragraph, text),
@@ -465,10 +468,22 @@ generateNetGoal NetGoalConfig {..} seed = do
     eval f = evalRandT f $ mkStdGen seed
 
 checkReachConfig :: ReachConfig -> Maybe String
-checkReachConfig ReachConfig {..}
-  | rejectLongerThan == Just (maxTransitionLength netGoalConfig) && showLengthHint
-  = Just "showLengthHint cannot be True when rejectLongerThan equals maxTransitionLength"
-  | otherwise = Nothing
+checkReachConfig ReachConfig {..} =
+  checkBasicPetriConfig 
+    (numPlaces netGoalConfig)
+    (numTransitions netGoalConfig)
+    (minTransitionLength netGoalConfig)
+    (maxTransitionLength netGoalConfig)
+    (preconditionsRange netGoalConfig)
+    (postconditionsRange netGoalConfig)
+    (drawCommands netGoalConfig)
+    rejectLongerThan
+  <|> checkLengthHintConsistency
+  where
+    checkLengthHintConsistency
+      | rejectLongerThan == Just (maxTransitionLength netGoalConfig) && showLengthHint
+      = Just "showLengthHint cannot be True when rejectLongerThan equals maxTransitionLength"
+      | otherwise = Nothing
 
 generateReach
   :: (MonadCatch m, MonadDiagrams m, MonadGraphviz m)
