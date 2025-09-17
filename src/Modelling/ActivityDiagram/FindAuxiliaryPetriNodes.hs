@@ -52,6 +52,7 @@ import Modelling.ActivityDiagram.Datatype (
 import Modelling.ActivityDiagram.PetriNet (
   PetriKey(..),
   convertToPetriNet,
+  convertToSimple,
   isAuxiliaryPetriNode,
   )
 import Modelling.ActivityDiagram.Shuffle (shuffleAdNames)
@@ -77,6 +78,7 @@ import Modelling.PetriNet.Types (
   PetriLike (..),
   PetriNode (..),
   SimpleNode,
+  SimplePetriLike,
   isPlaceNode,
   isTransitionNode,
   )
@@ -110,6 +112,7 @@ import System.Random.Shuffle (shuffleM)
 
 data FindAuxiliaryPetriNodesInstance = FindAuxiliaryPetriNodesInstance {
   activityDiagram :: UMLActivityDiagram,
+  matchingNet :: SimplePetriLike PetriKey,
   plantUMLConf :: PlantUmlConfig,
   showSolution :: Bool,
   addText :: Maybe (Map Language String)
@@ -186,8 +189,7 @@ findAuxiliaryPetriNodesSolution
   :: FindAuxiliaryPetriNodesInstance
   -> FindAuxiliaryPetriNodesSolution
 findAuxiliaryPetriNodesSolution task =
-  findAuxiliaryPetriNodesSolution' @PetriLike @SimpleNode
-  $ convertToPetriNet $ activityDiagram task
+  findAuxiliaryPetriNodesSolution' $ matchingNet task
 
 findAuxiliaryPetriNodesSolution'
   :: Net p n
@@ -298,8 +300,10 @@ getFindAuxiliaryPetriNodesTask config@FindAuxiliaryPetriNodesConfig {..} = do
   randomInstances <- shuffleM alloyInstances >>= mapM parseInstance
   ad <- mapM (fmap snd . shuffleAdNames) randomInstances
     >>= getFirstInstance . filter (checkPetriNodeCount countOfPetriNodesBounds . convertToPetriNet @PetriLike @SimpleNode)
+  let matchingNet = convertToSimple ad
   return $ FindAuxiliaryPetriNodesInstance {
     activityDiagram = ad,
+    matchingNet = matchingNet,
     plantUMLConf =
       PlantUmlConfig {
         suppressNodeNames = hideNodeNames,
@@ -310,8 +314,8 @@ getFindAuxiliaryPetriNodesTask config@FindAuxiliaryPetriNodesConfig {..} = do
   }
 
 defaultFindAuxiliaryPetriNodesInstance :: FindAuxiliaryPetriNodesInstance
-defaultFindAuxiliaryPetriNodesInstance = FindAuxiliaryPetriNodesInstance {
-  activityDiagram = UMLActivityDiagram {
+defaultFindAuxiliaryPetriNodesInstance = 
+  let ad = UMLActivityDiagram {
     nodes = [
       AdActionNode {label = 1, name = "A"},
       AdActionNode {label = 2, name = "B"},
@@ -352,8 +356,11 @@ defaultFindAuxiliaryPetriNodesInstance = FindAuxiliaryPetriNodesInstance {
       AdConnection {from = 14, to = 12, guard = ""},
       AdConnection {from = 17, to = 13, guard = ""}
     ]
-  },
-  plantUMLConf = defaultPlantUmlConfig,
-  showSolution = False,
-  addText = Nothing
-}
+  }
+  in FindAuxiliaryPetriNodesInstance {
+    activityDiagram = ad,
+    matchingNet = convertToSimple ad,
+    plantUMLConf = defaultPlantUmlConfig,
+    showSolution = False,
+    addText = Nothing
+  }
