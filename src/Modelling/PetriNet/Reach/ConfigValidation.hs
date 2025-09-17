@@ -12,9 +12,9 @@ import Data.GraphViz.Commands (GraphvizCommand)
 
 -- | Check that a range (low, high) is valid
 checkRange
-  :: (Num n, Ord n, Show b, Show n)
+  :: (Num n, Ord n, Show n)
   => String          -- ^ Description of what is being checked
-  -> (n, Maybe n)          -- ^ (lower bound, upper bound)
+  -> (n, Maybe n)    -- ^ (lower bound, upper bound)
   -> Maybe String
 checkRange what (low, h)
   | low < 0 = Just $ "The lower limit for " ++ what ++ " has to be at least 0!"
