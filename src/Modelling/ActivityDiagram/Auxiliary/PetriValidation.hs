@@ -48,7 +48,14 @@ validatePetriConfig
   -> Maybe Bool  -- presenceOfSinkTransitionsForFinals
   -> Maybe Bool  -- withActivityFinalInForkBlocks
   -> Maybe String
-validatePetriConfig adConfig countOfPetriNodesBounds maxInstances petriLayout auxiliaryPetriNodeAbsent presenceOfSinkTransitionsForFinals withActivityFinalInForkBlocks =
+validatePetriConfig
+  adConfig
+  countOfPetriNodesBounds
+  maxInstances
+  petriLayout
+  auxiliaryPetriNodeAbsent
+  presenceOfSinkTransitionsForFinals
+  withActivityFinalInForkBlocks =
   validateBasePetriConfig adConfig countOfPetriNodesBounds maxInstances presenceOfSinkTransitionsForFinals
   <|> validatePetriConfigSpecific
   where

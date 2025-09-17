@@ -38,18 +38,18 @@ phraseChange
   -> Bool
   -> Change (AnyRelationship String String)
   -> String
-phraseChange = phraseChangeWith (germanStrings phraseRelation)
+phraseChange = phraseChangeWith germanStrings
 
 -- | German phrasing strings
-germanStrings :: (OmittedDefaultMultiplicities -> ArticleToUse -> PhrasingKind -> NonInheritancePhrasing -> AnyRelationship String String -> String) -> PhrasingStrings
-germanStrings phraseRelationFunc = PhrasingStrings
+germanStrings :: PhrasingStrings
+germanStrings = PhrasingStrings
   { changeNothing = "verändere nichts"
   , addPrefix = "ergänze "
   , removePrefix = "entferne "
   , replacePrefix = "ersetze "
   , byInfix = " durch "
   , postProcess = \xs -> if ',' `elem` xs then xs ++ "," else xs
-  , phraseRelationFn = phraseRelationFunc
+  , phraseRelationWith = phraseRelation
   }
 
 trailingComma :: String -> String

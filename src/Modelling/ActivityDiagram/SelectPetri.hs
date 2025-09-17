@@ -205,7 +205,14 @@ checkSelectPetriConfig' SelectPetriConfig {
     presenceOfSinkTransitionsForFinals,
     withActivityFinalInForkBlocks
   } = validateSelectPetriSpecific numberOfWrongAnswers numberOfModifications
-    <|> validatePetriConfig adConfig countOfPetriNodesBounds maxInstances petriLayout auxiliaryPetriNodeAbsent presenceOfSinkTransitionsForFinals withActivityFinalInForkBlocks
+    <|> validatePetriConfig
+          adConfig
+          countOfPetriNodesBounds
+          maxInstances
+          petriLayout
+          auxiliaryPetriNodeAbsent
+          presenceOfSinkTransitionsForFinals
+          withActivityFinalInForkBlocks
 
 -- | Additional validation specific to SelectPetri configurations
 validateSelectPetriSpecific

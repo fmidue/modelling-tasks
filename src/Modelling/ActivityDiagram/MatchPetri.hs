@@ -187,7 +187,14 @@ checkMatchPetriConfig' MatchPetriConfig {
     auxiliaryPetriNodeAbsent,
     presenceOfSinkTransitionsForFinals,
     withActivityFinalInForkBlocks
-  } = validatePetriConfig adConfig countOfPetriNodesBounds maxInstances petriLayout auxiliaryPetriNodeAbsent presenceOfSinkTransitionsForFinals withActivityFinalInForkBlocks
+  } = validatePetriConfig
+        adConfig
+        countOfPetriNodesBounds
+        maxInstances
+        petriLayout
+        auxiliaryPetriNodeAbsent
+        presenceOfSinkTransitionsForFinals
+        withActivityFinalInForkBlocks
 
 matchPetriAlloy :: MatchPetriConfig -> String
 matchPetriAlloy MatchPetriConfig {

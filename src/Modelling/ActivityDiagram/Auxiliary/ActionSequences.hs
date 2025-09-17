@@ -15,7 +15,7 @@ import Data.String.Interpolate (i)
 -- | Common Alloy generation logic for ActionSequences tasks
 actionSequencesAlloy
   :: AdConfig
-  -> Maybe Bool  -- objectNodeOnEveryPath
+  -> Maybe Bool  -- ^ Whether object nodes should appear on every path
   -> String
 actionSequencesAlloy adConfig objectNodeOnEveryPath
   = adConfigToAlloy modules predicates adConfig

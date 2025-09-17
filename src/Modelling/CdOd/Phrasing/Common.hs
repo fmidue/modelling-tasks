@@ -24,8 +24,8 @@ data PhrasingStrings = PhrasingStrings
   , removePrefix :: String
   , replacePrefix :: String
   , byInfix :: String
-  , postProcess :: String -> String  -- For things like trailing commas
-  , phraseRelationFn :: OmittedDefaultMultiplicities
+  , postProcess :: String -> String  -- ^ Post-processing function for things like trailing commas
+  , phraseRelationWith :: OmittedDefaultMultiplicities
                      -> ArticleToUse
                      -> PhrasingKind
                      -> NonInheritancePhrasing
@@ -53,12 +53,12 @@ phraseChangeWith strings defaultMultiplicities article byName withDir c =
     replacePrefix strings ++ postProcess strings (phrasingOld e2)
     ++ byInfix strings ++ phrasingNew e1
   where
-    phrasingOld = phraseRelationFn strings
+    phrasingOld = phraseRelationWith strings
       defaultMultiplicities
       article
       Denoted
       $ toPhrasing byName withDir
-    phrasingNew = phraseRelationFn strings
+    phrasingNew = phraseRelationWith strings
       defaultMultiplicities
       IndefiniteArticle
       Participations

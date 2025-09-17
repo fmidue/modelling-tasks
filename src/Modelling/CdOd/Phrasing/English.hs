@@ -37,18 +37,18 @@ phraseChange
   -> Bool
   -> Change (AnyRelationship String String)
   -> String
-phraseChange = phraseChangeWith (englishStrings phraseRelation)
+phraseChange = phraseChangeWith englishStrings
 
 -- | English phrasing strings
-englishStrings :: (OmittedDefaultMultiplicities -> ArticleToUse -> PhrasingKind -> NonInheritancePhrasing -> AnyRelationship String String -> String) -> PhrasingStrings
-englishStrings phraseRelationFunc = PhrasingStrings
+englishStrings :: PhrasingStrings
+englishStrings = PhrasingStrings
   { changeNothing = "change nothing"
   , addPrefix = "add "
   , removePrefix = "remove "
   , replacePrefix = "replace "
   , byInfix = " by "
   , postProcess = id
-  , phraseRelationFn = phraseRelationFunc
+  , phraseRelationWith = phraseRelation
   }
 
 consonantArticle :: ArticleToUse -> String
