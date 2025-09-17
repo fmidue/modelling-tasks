@@ -8,13 +8,14 @@ import qualified Modelling.ActivityDiagram.Datatype as Ad (
   AdNode (label),
   )
 
-import qualified Data.Set as S (fromList)
+import qualified Data.Set as S (fromList, union, member, empty)
 import qualified Data.Map as M (filter, map, keys, fromList, toList)
 
 import Modelling.ActivityDiagram.Datatype (
   AdNode (..),
   UMLActivityDiagram (..),
-  isActionNode
+  isActionNode,
+  isActivityFinalNode
   )
 
 import Modelling.ActivityDiagram.PetriNet (
@@ -34,7 +35,7 @@ import Modelling.PetriNet.Reach.Type (
   Net(..)
   )
 
-import Modelling.PetriNet.Reach.Step (levels', successors)
+import Modelling.PetriNet.Reach.Step (successors)
 
 import Control.Monad (guard)
 import Data.List (find, union)
@@ -67,13 +68,36 @@ isNormalPetriNode pk =
     NormalPetriNode {} -> True
     _ -> False
 
+-- Check if a PetriKey corresponds to an Activity Final node
+isActivityFinalPetriNode :: PetriKey -> Bool
+isActivityFinalPetriNode pk =
+  case pk of
+    FinalPetriNode _ srcNode -> isActivityFinalNode srcNode
+    _ -> False
+
 --Generate at one sequence of transitions to each final node
 generateActionSequence' :: UMLActivityDiagram -> [PetriKey]
 generateActionSequence' diag =
   let petri = fromPetriLike $ convertToPetriNet diag
       zeroState = State $ M.map (const 0) $ unState $ start petri
-      sequences = fromJust $ find (isJust . lookup zeroState) $ levels' petri
+      sequences = fromJust $ find (isJust . lookup zeroState) $ levelsAS petri
   in reverse $ fromJust $ lookup zeroState sequences
+
+-- Modified version of levels' that handles Activity Final nodes
+levelsAS :: Ord s => Net s PetriKey -> [[(State s, [PetriKey])]]
+levelsAS n =
+  let zeroState = State $ M.map (const 0) $ unState $ start n
+      f _ [] = []
+      f done xs =
+        let done' = S.fromList (map fst xs) `S.union` done
+            next = M.toList $ M.fromList [ (finalState, t:p) |
+                (x,p) <- xs,
+                (t,y) <- successors n x,
+                let finalState = if isActivityFinalPetriNode t then zeroState else y,
+                not $ S.member finalState done'
+              ]
+         in xs : f done' next
+  in f S.empty [(start n, [])]
 
 
 validActionSequence :: [String] -> UMLActivityDiagram -> Bool
@@ -104,12 +128,15 @@ validActionSequence' input actions petri =
 
 levelsCheckAS :: [PetriKey] -> [PetriKey] -> Net PetriKey PetriKey-> [[(State PetriKey, [PetriKey])]]
 levelsCheckAS input actions n =
-  let g h xs = M.toList $
+  let zeroState = State $ M.map (const 0) $ unState $ start n
+      g h xs = M.toList $
         M.fromList $ do
           (x, p) <- xs
           (t, y) <- successors n x
           guard $ h t
-          return (y, t : p)
+          -- If this is an Activity Final transition, immediately go to zero state
+          let finalState = if isActivityFinalPetriNode t then zeroState else y
+          return (finalState, t : p)
       f _ [] = []
       f [] xs =
         let next = g (`notElem` actions) xs               -- No further actions should be processed if no input is left
