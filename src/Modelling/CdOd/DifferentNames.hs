@@ -184,7 +184,7 @@ import Language.Alloy.Call (
 import System.Random.Shuffle            (shuffleM)
 
 data ShufflingOption a =
-    ConsecutiveLetters
+    ConsecutiveNumbers
   | WithAdditionalNames [a]
   deriving (Eq, Generic, Foldable, Functor, Read, Show, Traversable)
 
@@ -607,7 +607,7 @@ defaultDifferentNamesInstance = DifferentNamesInstance {
     },
   showSolution = False,
   mapping = toNameMapping $ BM.fromList [("x", "1"), ("y", "3"), ("z", "2")],
-  linkShuffling = ConsecutiveLetters,
+  linkShuffling = ConsecutiveNumbers,
   taskText = defaultDifferentNamesTaskText,
   addText = Nothing
   }
@@ -668,7 +668,7 @@ getDifferentNamesTask tryNext DifferentNamesConfig {..} cd = do
               oDiagram  = od1'',
               showSolution = printSolution,
               mapping   = toNameMapping bm',
-              linkShuffling = ConsecutiveLetters,
+              linkShuffling = ConsecutiveNumbers,
               taskText = defaultDifferentNamesTaskText,
               addText = extraText
               }
@@ -714,7 +714,7 @@ classNonInheritanceAndLinkNames DifferentNamesInstance {..} =
   let names = classNames cDiagram
       nonInheritances = associationNames cDiagram
       additional = case linkShuffling of
-        ConsecutiveLetters -> []
+        ConsecutiveNumbers -> []
         WithAdditionalNames xs -> xs
       links = linkLabels oDiagram ++ additional
   in (names, nonInheritances, links)
@@ -726,7 +726,7 @@ instance RandomiseNames DifferentNamesInstance where
   randomiseNames inst@DifferentNamesInstance {..} = do
     let (names, nonInheritances, lNames) = classNonInheritanceAndLinkNames inst
         links = case linkShuffling of
-          ConsecutiveLetters -> take (length lNames) (map show ([1..] :: [Int]))
+          ConsecutiveNumbers -> take (length lNames) (map show ([1..] :: [Int]))
           WithAdditionalNames _ -> lNames
     names'  <- shuffleM names
     nonInheritances' <- shuffleM nonInheritances

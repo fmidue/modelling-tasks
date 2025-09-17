@@ -337,7 +337,7 @@ evaluateDifferentNames coins cs cs' = flip withLang English $ do
           },
         showSolution = True,
         mapping = toNameMapping $ BM.fromList cs,
-        linkShuffling = ConsecutiveLetters,
+        linkShuffling = ConsecutiveNumbers,
         taskText = defaultDifferentNamesTaskText,
         addText = Nothing
         }
