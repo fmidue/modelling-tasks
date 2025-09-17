@@ -38,7 +38,6 @@ checkPetriNetSizes numPlaces numTransitions
 checkTransitionLengths :: Int -> Int -> Maybe String
 checkTransitionLengths minTransitionLength maxTransitionLength
   | minTransitionLength <= 0 = Just "minTransitionLength must be positive"
-  | maxTransitionLength <= 0 = Just "maxTransitionLength must be positive"
   | minTransitionLength > maxTransitionLength = Just $
     "minTransitionLength (" ++ show minTransitionLength ++ ") cannot be greater than maxTransitionLength (" ++ show maxTransitionLength ++ ")"
   | otherwise = Nothing
