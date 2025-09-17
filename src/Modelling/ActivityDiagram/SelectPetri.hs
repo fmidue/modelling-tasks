@@ -286,8 +286,8 @@ selectPetriNet numberOfWrongNets numberOfModifications modifyAtMid countOfPetriN
   wrongNets <- loopM (\xs -> do
       modAd <- modifyAd ad numberOfModifications modifyAtMid
       let petri = convertToPetriNet modAd
-      if any (isPetriIsomorphic petri) (matchingNet:xs)
-         || not (checkCount countOfPetriNodesBounds modAd)
+      if not (checkCount countOfPetriNodesBounds modAd)
+         || any (isPetriIsomorphic petri) (matchingNet:xs)
         then return $ Left xs
       else
         if length (petri:xs) < numberOfWrongNets
