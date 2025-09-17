@@ -40,7 +40,10 @@ import Modelling.ActivityDiagram.Alloy (
   adConfigToAlloy,
   modulePetriNet,
   )
-import Modelling.ActivityDiagram.Auxiliary.Util (finalNodesAdvice, checkCount)
+import Modelling.ActivityDiagram.Auxiliary.PetriValidation (
+  validateBasePetriConfig,
+  )
+import Modelling.ActivityDiagram.Auxiliary.Util (finalNodesAdvice)
 import Modelling.ActivityDiagram.Datatype (
   AdConnection (..),
   AdNode (..),
@@ -49,6 +52,7 @@ import Modelling.ActivityDiagram.Datatype (
 import Modelling.ActivityDiagram.PetriNet (
   PetriKey(..),
   convertToPetriNet,
+  convertToSimple,
   isAuxiliaryPetriNode,
   )
 import Modelling.ActivityDiagram.Shuffle (shuffleAdNames)
@@ -69,10 +73,12 @@ import Modelling.Auxiliary.Output (
   extra
   )
 import Modelling.PetriNet.Types (
+  checkPetriNodeCount,
   Net (..),
   PetriLike (..),
   PetriNode (..),
   SimpleNode,
+  SimplePetriLike,
   isPlaceNode,
   isTransitionNode,
   )
@@ -106,6 +112,7 @@ import System.Random.Shuffle (shuffleM)
 
 data FindAuxiliaryPetriNodesInstance = FindAuxiliaryPetriNodesInstance {
   activityDiagram :: UMLActivityDiagram,
+  matchingNet :: SimplePetriLike PetriKey,
   plantUMLConf :: PlantUmlConfig,
   showSolution :: Bool,
   addText :: Maybe (Map Language String)
@@ -149,22 +156,7 @@ findAuxiliaryPetriNodesConfig' FindAuxiliaryPetriNodesConfig {
     countOfPetriNodesBounds,
     maxInstances,
     presenceOfSinkTransitionsForFinals
-  }
-  | activityFinalNodes adConfig > 1
-  = Just "There is at most one 'activityFinalNode' allowed."
-  | activityFinalNodes adConfig >= 1 && flowFinalNodes adConfig >= 1
-  = Just "There is no 'flowFinalNode' allowed if there is an 'activityFinalNode'."
-  | fst countOfPetriNodesBounds < 0
-  = Just "'countOfPetriNodesBounds' must not contain negative values"
-  | Just high <- snd countOfPetriNodesBounds, fst countOfPetriNodesBounds > high
-  = Just "the second value of 'countOfPetriNodesBounds' must not be smaller than its first value"
-  | Just instances <- maxInstances, instances < 1
-    = Just "The parameter 'maxInstances' must either be set to a positive value or to Nothing"
-  | Just False <- presenceOfSinkTransitionsForFinals,
-    fst (actionLimits adConfig) + forkJoinPairs adConfig < 1
-    = Just "The option 'presenceOfSinkTransitionsForFinals = Just False' can only be achieved if the number of Actions, Fork Nodes and Join Nodes together is positive"
-  | otherwise
-    = Nothing
+  } = validateBasePetriConfig adConfig countOfPetriNodesBounds maxInstances presenceOfSinkTransitionsForFinals
 
 findAuxiliaryPetriNodesAlloy :: FindAuxiliaryPetriNodesConfig -> String
 findAuxiliaryPetriNodesAlloy FindAuxiliaryPetriNodesConfig {
@@ -197,8 +189,7 @@ findAuxiliaryPetriNodesSolution
   :: FindAuxiliaryPetriNodesInstance
   -> FindAuxiliaryPetriNodesSolution
 findAuxiliaryPetriNodesSolution task =
-  findAuxiliaryPetriNodesSolution' @PetriLike @SimpleNode
-  $ convertToPetriNet $ activityDiagram task
+  findAuxiliaryPetriNodesSolution' $ matchingNet task
 
 findAuxiliaryPetriNodesSolution'
   :: Net p n
@@ -307,10 +298,12 @@ getFindAuxiliaryPetriNodesTask config@FindAuxiliaryPetriNodesConfig {..} = do
     Nothing
     $ findAuxiliaryPetriNodesAlloy config
   randomInstances <- shuffleM alloyInstances >>= mapM parseInstance
-  ad <- mapM (fmap snd . shuffleAdNames) randomInstances
-    >>= getFirstInstance . filter (checkCount countOfPetriNodesBounds)
+  (ad, matchingNet) <- mapM (fmap snd . shuffleAdNames) randomInstances
+    >>= getFirstInstance . filter (checkPetriNodeCount countOfPetriNodesBounds . snd)
+                         . map (\x -> (x, convertToPetriNet @PetriLike @SimpleNode x))
   return $ FindAuxiliaryPetriNodesInstance {
     activityDiagram = ad,
+    matchingNet = matchingNet,
     plantUMLConf =
       PlantUmlConfig {
         suppressNodeNames = hideNodeNames,
@@ -321,8 +314,8 @@ getFindAuxiliaryPetriNodesTask config@FindAuxiliaryPetriNodesConfig {..} = do
   }
 
 defaultFindAuxiliaryPetriNodesInstance :: FindAuxiliaryPetriNodesInstance
-defaultFindAuxiliaryPetriNodesInstance = FindAuxiliaryPetriNodesInstance {
-  activityDiagram = UMLActivityDiagram {
+defaultFindAuxiliaryPetriNodesInstance =
+  let ad = UMLActivityDiagram {
     nodes = [
       AdActionNode {label = 1, name = "A"},
       AdActionNode {label = 2, name = "B"},
@@ -363,8 +356,11 @@ defaultFindAuxiliaryPetriNodesInstance = FindAuxiliaryPetriNodesInstance {
       AdConnection {from = 14, to = 12, guard = ""},
       AdConnection {from = 17, to = 13, guard = ""}
     ]
-  },
-  plantUMLConf = defaultPlantUmlConfig,
-  showSolution = False,
-  addText = Nothing
-}
+  }
+  in FindAuxiliaryPetriNodesInstance {
+    activityDiagram = ad,
+    matchingNet = convertToSimple ad,
+    plantUMLConf = defaultPlantUmlConfig,
+    showSolution = False,
+    addText = Nothing
+  }
