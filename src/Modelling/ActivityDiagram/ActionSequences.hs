@@ -9,7 +9,7 @@ import qualified Modelling.ActivityDiagram.Datatype as Ad (
   AdNode (label),
   )
 
-import qualified Data.Set as S (fromList, union, member, empty, toList)
+import qualified Data.Set as S (fromList, union, member, empty)
 import qualified Data.Map as M (filter, map, keys, fromList, toList)
 
 import Modelling.ActivityDiagram.Datatype (
@@ -81,19 +81,17 @@ isActivityFinalPetriNode pk =
 generateActionSequence' :: UMLActivityDiagram -> [Int] -> [PetriKey]
 generateActionSequence' diag activityFinalLabels =
   let petri = fromPetriLike $ convertToPetriNet diag
-      allPlaces = S.toList $ places petri
-      zeroState = State $ M.fromList [(p, 0) | p <- allPlaces]
+      zeroState = State $ M.map (const 0) $ unState $ start petri
       sequences = fromJust $ find (isJust . lookup zeroState) $ levelsAS petri activityFinalLabels
   in reverse $ fromJust $ lookup zeroState sequences
 
 -- Modified version of levels' that handles Activity Final nodes
 levelsAS :: Ord s => Net s PetriKey -> [Int] -> [[(State s, [PetriKey])]]
 levelsAS n activityFinalLabels =
-  let allPlaces = S.toList $ places n
-      zeroState = State $ M.fromList [(p, 0) | p <- allPlaces]
+  let zeroState = State $ M.map (const 0) $ unState $ start n
       -- Check if a transition corresponds to Activity Final
       isActivityFinalTransition t = case t of
-        AuxiliaryPetriNode lbl -> lbl `elem` activityFinalLabels
+        AuxiliaryPetriNode nodeLabel -> nodeLabel `elem` activityFinalLabels
         _ -> False
       f _ [] = []
       f done xs =
@@ -133,19 +131,17 @@ validActionSequence'
   -> Bool
 validActionSequence' input actions petri activityFinalLabels =
   let net = fromPetriLike petri
-      allPlaces = S.toList $ places net
-      zeroState = State $ M.fromList [(p, 0) | p <- allPlaces]
+      zeroState = State $ M.map (const 0) $ unState $ start net
   in any (isJust . lookup zeroState) (levelsCheckAS input actions net activityFinalLabels)
 
 
 levelsCheckAS :: [PetriKey] -> [PetriKey] -> Net PetriKey PetriKey -> [Int] -> [[(State PetriKey, [PetriKey])]]
 levelsCheckAS input actions n activityFinalLabels =
-  let allPlaces = S.toList $ places n
-      zeroState = State $ M.fromList [(p, 0) | p <- allPlaces]
+  let zeroState = State $ M.map (const 0) $ unState $ start n
       -- Check if a transition corresponds to Activity Final by checking if it's an auxiliary node
       -- with a label that matches an Activity Final node from the original diagram
       isActivityFinalTransition t = case t of
-        AuxiliaryPetriNode lbl -> lbl `elem` activityFinalLabels
+        AuxiliaryPetriNode nodeLabel -> nodeLabel `elem` activityFinalLabels
         _ -> False
       g h xs = M.toList $
         M.fromList $ do
