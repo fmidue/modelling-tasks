@@ -51,7 +51,7 @@ import Modelling.PetriNet.Reach.Type (
   hasIsolatedNodes,
   )
 
-import Control.Applicative              (Alternative ((<|>)))
+import Control.Applicative              (Alternative)
 import Control.OutputCapable.Blocks (
   LangM,
   OutputCapable,
@@ -249,12 +249,7 @@ checkDeadlockConfig DeadlockConfig {..} =
     postconditionsRange
     drawCommands
     rejectLongerThan
-  <|> checkLengthHintConsistency
-  where
-    checkLengthHintConsistency
-      | rejectLongerThan == Just maxTransitionLength && showLengthHint
-      = Just "showLengthHint cannot be True when rejectLongerThan equals maxTransitionLength"
-      | otherwise = Nothing
+    showLengthHint
 
 generateDeadlock
   :: (MonadCatch m, MonadDiagrams m, MonadGraphviz m)

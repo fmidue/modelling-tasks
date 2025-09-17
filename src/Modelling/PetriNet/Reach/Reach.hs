@@ -48,7 +48,7 @@ import Modelling.PetriNet.Reach.Type (
   mark,
   )
 
-import Control.Applicative              (Alternative ((<|>)))
+import Control.Applicative              (Alternative)
 import Control.Functor.Trans            (FunctorTrans (lift))
 import Control.Monad                    (forM, guard, when)
 import Control.Monad.Catch              (MonadCatch, MonadThrow)
@@ -478,12 +478,7 @@ checkReachConfig ReachConfig {..} =
     (postconditionsRange netGoalConfig)
     (drawCommands netGoalConfig)
     rejectLongerThan
-  <|> checkLengthHintConsistency
-  where
-    checkLengthHintConsistency
-      | rejectLongerThan == Just (maxTransitionLength netGoalConfig) && showLengthHint
-      = Just "showLengthHint cannot be True when rejectLongerThan equals maxTransitionLength"
-      | otherwise = Nothing
+    showLengthHint
 
 generateReach
   :: (MonadCatch m, MonadDiagrams m, MonadGraphviz m)

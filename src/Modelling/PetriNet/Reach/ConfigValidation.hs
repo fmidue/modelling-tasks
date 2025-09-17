@@ -44,13 +44,14 @@ checkTransitionLengths minTransitionLength maxTransitionLength
   | otherwise = Nothing
 
 -- | Check consistency between rejectLongerThan and other length parameters
-checkRejectLongerThanConsistency :: Maybe Int -> Int -> Int -> Maybe String
-checkRejectLongerThanConsistency rejectLongerThan minTransitionLength _maxTransitionLength =
+checkRejectLongerThanConsistency :: Maybe Int -> Int -> Int -> Bool -> Maybe String
+checkRejectLongerThanConsistency rejectLongerThan minTransitionLength maxTransitionLength showLengthHint =
   case rejectLongerThan of
     Just rejectLength
       | rejectLength <= 0 -> Just "rejectLongerThan must be positive when specified"
       | rejectLength < minTransitionLength -> Just $
         "rejectLongerThan (" ++ show rejectLength ++ ") cannot be less than minTransitionLength (" ++ show minTransitionLength ++ ")"
+      | rejectLength == maxTransitionLength && showLengthHint -> Just "showLengthHint cannot be True when rejectLongerThan equals maxTransitionLength"
       | otherwise -> Nothing
     Nothing -> Nothing
 
@@ -64,6 +65,7 @@ checkBasicPetriConfig
   -> (Int, Maybe Int)         -- ^ postconditionsRange
   -> [GraphvizCommand]        -- ^ drawCommands
   -> Maybe Int                -- ^ rejectLongerThan
+  -> Bool                     -- ^ showLengthHint
   -> Maybe String
 checkBasicPetriConfig
   numPlaces
@@ -73,12 +75,13 @@ checkBasicPetriConfig
   preconditionsRange
   postconditionsRange
   drawCommands
-  rejectLongerThan =
+  rejectLongerThan
+  showLengthHint =
     checkPetriNetSizes numPlaces numTransitions
     <|> checkTransitionLengths minTransitionLength maxTransitionLength
     <|> checkRange id "preconditionsRange" preconditionsRange
     <|> checkRange id "postconditionsRange" postconditionsRange
-    <|> checkRejectLongerThanConsistency rejectLongerThan minTransitionLength maxTransitionLength
+    <|> checkRejectLongerThanConsistency rejectLongerThan minTransitionLength maxTransitionLength showLengthHint
     <|> checkDrawCommands drawCommands
   where
     checkDrawCommands [] = Just "drawCommands cannot be empty"
