@@ -56,7 +56,6 @@ module Modelling.PetriNet.Reach.Reach (
   transitionsValid,
 ) where
 
-
 import qualified Control.Monad.Trans              as Monad (lift)
 import qualified Data.Set                         as S (toList)
 
@@ -77,7 +76,6 @@ import Modelling.PetriNet.Reach.Property (
   Property (Default),
   validate,
   )
-
 import Modelling.PetriNet.Reach.Roll    (netLimits)
 import Modelling.PetriNet.Reach.Step    (executes, levels, levels')
 import Modelling.PetriNet.Reach.Type (
@@ -91,13 +89,14 @@ import Modelling.PetriNet.Reach.Type (
   TransitionsList (TransitionsList),
   bimapNet,
   example,
+  hasIsolatedNodes,
   mapState,
   mark,
   )
 
 import Control.Applicative              (Alternative)
 import Control.Functor.Trans            (FunctorTrans (lift))
-import Control.Monad                    (forM, when)
+import Control.Monad                    (forM, guard, when)
 import Control.Monad.Catch              (MonadCatch, MonadThrow)
 import Control.Monad.Extra              (findM, maybeM, whenJust)
 import Control.OutputCapable.Blocks (
@@ -117,26 +116,18 @@ import Control.OutputCapable.Blocks.Generic (
   ($>>),
   ($>>=),
   )
-
-
-
 import Control.Monad.Random             (mkStdGen)
 import Control.Monad.Trans.Random       (evalRandT)
 import Data.Bifunctor                   (Bifunctor (second))
 import Data.Either.Combinators          (whenRight)
 import Data.Foldable                    (traverse_)
 import Data.GraphViz                    (GraphvizCommand (..))
-
 import Data.List                        (minimumBy)
 import Data.List.Extra                  (nubSort)
-
-
 import Data.Ratio                       ((%))
 import Data.String.Interpolate          (i)
 import Data.Typeable                    (Typeable)
 import GHC.Generics                     (Generic)
-
--- Additional imports for generateNetGoalUnfiltered
 import Data.Maybe                       (fromMaybe)
 import Data.Ord                         (comparing)
 
@@ -516,6 +507,8 @@ generateNetGoalUnfiltered NetGoalConfig {..} seed = do
             ts
             capacity
         return $ do
+          -- Filter out nets with isolated nodes
+          guard $ not $ hasIsolatedNodes n
           (l,zs) <-
             take (maxTransitionLength + 1) $ zip [0 :: Int ..] $ levels n
           z' <- zs
