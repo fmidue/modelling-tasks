@@ -41,7 +41,7 @@ import Capabilities.Graphviz            (MonadGraphviz)
 import Capabilities.PlantUml            (MonadPlantUml)
 import Capabilities.WriteFile           (MonadWriteFile)
 import Modelling.ActivityDiagram.Alloy  (adConfigToAlloy, modulePetriNet)
-import Modelling.ActivityDiagram.Auxiliary.Util (finalNodesAdvice, checkCount)
+import Modelling.ActivityDiagram.Auxiliary.Util (finalNodesAdvice)
 import Modelling.ActivityDiagram.Datatype (
   UMLActivityDiagram(..),
   AdNode (..),
@@ -81,6 +81,7 @@ import Modelling.Auxiliary.Output (
   )
 import Modelling.PetriNet.Diagram (cacheNet)
 import Modelling.PetriNet.Types (
+  checkPetriNodeCount,
   DrawSettings (..),
   Net (mapNet),
   PetriLike (..),
@@ -435,8 +436,8 @@ getMatchPetriTask config = do
   randomInstances <- shuffleM alloyInstances >>= mapM parseInstance
   activityDiagrams <- mapM (fmap snd . shuffleAdNames) randomInstances
   (ad, petri) <- getFirstInstance
-        $ filter (checkCount (countOfPetriNodesBounds config) . fst)
         $ filter (not . petriHasMultipleAutomorphisms . snd)
+        $ filter (checkPetriNodeCount (countOfPetriNodesBounds config) . snd)
         $ map (second convertToPetriNet . dupe) activityDiagrams
   shuffledPetri <- snd <$> shufflePetri petri
   layout <- pickRandomLayout config
