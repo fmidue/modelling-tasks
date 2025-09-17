@@ -45,6 +45,7 @@ import Modelling.PetriNet.Reach.Type (
   TransitionsList (TransitionsList),
   bimapNet,
   example,
+  hasIsolatedNodes,
   )
 
 import Control.Applicative              (Alternative)
@@ -113,7 +114,10 @@ deadlockSyntax
   => DeadlockInstance Place Transition
   -> [Transition]
   -> LangM m
-deadlockSyntax = transitionsValid . petriNet
+deadlockSyntax inst ts =
+  do transitionsValid (petriNet inst) ts
+     isNoLonger (noLongerThan inst) ts
+     pure ()
 
 deadlockEvaluation
   :: (
@@ -129,8 +133,7 @@ deadlockEvaluation
   -> [Transition]
   -> Rated m
 deadlockEvaluation path deadlock ts =
-  isNoLonger (noLongerThan deadlockInstance) ts
-  $>> executes path (drawUsing deadlockInstance) n (map ShowTransition ts)
+  executes path (drawUsing deadlockInstance) n (map ShowTransition ts)
   $>>= \eitherOutcome ->
     whenRight eitherOutcome (\outcome ->
       yesNo (null $ successors n outcome)
@@ -237,6 +240,12 @@ defaultDeadlockInstance = DeadlockInstance {
   withMinLengthHint = Just 6
   }
 
+checkDeadlockConfig :: DeadlockConfig -> Maybe String
+checkDeadlockConfig DeadlockConfig {..}
+  | rejectLongerThan == Just maxTransitionLength && showLengthHint
+  = Just "showLengthHint cannot be True when rejectLongerThan equals maxTransitionLength"
+  | otherwise = Nothing
+
 generateDeadlock
   :: (MonadCatch m, MonadDiagrams m, MonadGraphviz m)
   => DeadlockConfig
@@ -284,6 +293,8 @@ try conf = do
       ts
       (Modelling.PetriNet.Reach.Deadlock.capacity conf)
   return $ do
+    -- Filter out nets with isolated nodes
+    guard $ not $ hasIsolatedNodes n
     let (no,yeah) = span (null . snd)
           $ take (maxTransitionLength conf + 1)
           $ zip [0 :: Int ..]
