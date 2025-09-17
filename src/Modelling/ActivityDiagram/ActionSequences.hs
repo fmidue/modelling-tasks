@@ -88,8 +88,7 @@ generateActionSequence' diag activityFinalLabels =
 -- Modified version of levels' that handles Activity Final nodes
 levelsAS :: Ord s => Net s PetriKey -> [Int] -> [[(State s, [PetriKey])]]
 levelsAS n activityFinalLabels =
-  let zeroState = State $ M.map (const 0) $ unState $ start n
-      -- Check if a transition corresponds to Activity Final
+  let -- Check if a transition corresponds to Activity Final
       isActivityFinalTransition t = case t of
         AuxiliaryPetriNode nodeLabel -> nodeLabel `elem` activityFinalLabels
         _ -> False
@@ -99,7 +98,10 @@ levelsAS n activityFinalLabels =
             next = M.toList $ M.fromList [ (finalState, t:p) |
                 (x,p) <- xs,
                 (t,y) <- successors n x,
-                let finalState = if isActivityFinalTransition t then zeroState else y,
+                -- If this is an Activity Final transition, create zero state with same structure as target
+                let finalState = if isActivityFinalTransition t 
+                                then State $ M.map (const 0) $ unState y
+                                else y,
                 not $ S.member finalState done'
               ]
          in xs : f done' next
@@ -137,8 +139,7 @@ validActionSequence' input actions petri activityFinalLabels =
 
 levelsCheckAS :: [PetriKey] -> [PetriKey] -> Net PetriKey PetriKey -> [Int] -> [[(State PetriKey, [PetriKey])]]
 levelsCheckAS input actions n activityFinalLabels =
-  let zeroState = State $ M.map (const 0) $ unState $ start n
-      -- Check if a transition corresponds to Activity Final by checking if it's an auxiliary node
+  let -- Check if a transition corresponds to Activity Final by checking if it's an auxiliary node
       -- with a label that matches an Activity Final node from the original diagram
       isActivityFinalTransition t = case t of
         AuxiliaryPetriNode nodeLabel -> nodeLabel `elem` activityFinalLabels
@@ -149,7 +150,10 @@ levelsCheckAS input actions n activityFinalLabels =
           (t, y) <- successors n x
           guard $ h t
           -- If this is an Activity Final transition, immediately go to zero state
-          let finalState = if isActivityFinalTransition t then zeroState else y
+          -- Use the same structure as the target state but with all tokens set to 0
+          let finalState = if isActivityFinalTransition t 
+                          then State $ M.map (const 0) $ unState y
+                          else y
           return (finalState, t : p)
       f _ [] = []
       f [] xs =
