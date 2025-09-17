@@ -188,8 +188,29 @@ import Modelling.PetriNet.PetriPickConflict.Config (
   task2024_30,
   task2024_31,
   )
+import Modelling.PetriNet.Reach.Deadlock (
+  checkDeadlockConfig,
+  )
+import qualified Modelling.PetriNet.PetriDeadlock.Config as DeadlockConfig (
+  task2023_29,
+  task2023_30,
+  task2024_27,
+  task2024_28,
+  task2024_61,
+  )
+import Modelling.PetriNet.Reach.Reach (
+  checkReachConfig,
+  )
+import qualified Modelling.PetriNet.PetriReach.Config as ReachConfig (
+  task2023_27,
+  task2023_28,
+  task2024_25,
+  task2024_26,
+  task2024_60,
+  )
 
 import Test.Hspec
+import Data.Maybe (isJust)
 
 spec :: Spec
 spec =
@@ -237,6 +258,14 @@ spec =
         checkDifferentNamesConfig task2023_25 `shouldBe` Nothing
       it "task26" $
         checkFindConflictPlacesConfig task2023_26 `shouldBe` Nothing
+      it "task27" $
+        checkReachConfig ReachConfig.task2023_27 `shouldBe` Nothing
+      it "task28" $
+        checkReachConfig ReachConfig.task2023_28 `shouldBe` Nothing
+      it "task29" $
+        checkDeadlockConfig DeadlockConfig.task2023_29 `shouldSatisfy` isJust
+      it "task30" $
+        checkDeadlockConfig DeadlockConfig.task2023_30 `shouldSatisfy` isJust
       it "task31" $
         checkMatchAdConfig task2023_31 `shouldBe` Nothing
       it "task32" $
@@ -307,6 +336,14 @@ spec =
         checkMathConfig task2024_23 `shouldBe` Nothing
       it "task24" $
         checkMathConfig task2024_24 `shouldBe` Nothing
+      it "task25" $
+        checkReachConfig ReachConfig.task2024_25 `shouldBe` Nothing
+      it "task26" $
+        checkReachConfig ReachConfig.task2024_26 `shouldBe` Nothing
+      it "task27" $
+        checkDeadlockConfig DeadlockConfig.task2024_27 `shouldSatisfy` isJust
+      it "task28" $
+        checkDeadlockConfig DeadlockConfig.task2024_28 `shouldSatisfy` isJust
       it "task29" $
         checkPickConcurrencyConfig task2024_29 `shouldBe` Nothing
       it "task30" $
@@ -366,6 +403,10 @@ spec =
         checkMatchCdOdConfig task2024_58 `shouldBe` Nothing
       it "task59" $
         checkMatchCdOdConfig task2024_59 `shouldBe` Nothing
+      it "task60" $
+        checkReachConfig ReachConfig.task2024_60 `shouldSatisfy` isJust
+      it "task61" $
+        checkDeadlockConfig DeadlockConfig.task2024_61 `shouldSatisfy` isJust
       it "task62" $
         checkFindConcurrencyConfig task2024_62 `shouldBe` Nothing
       it "task63" $
