@@ -39,36 +39,29 @@ calculateMinimumPetriNodes adConfig =
   in initialNodes + minActionNodes + minObjectNodes + finalNodes + forkJoinNodes + decisionMergeNodes
 
 -- | Calculate maximum number of Petri net nodes based on AdConfig values
--- This is a conservative upper bound estimate for validation purposes
 calculateMaximumPetriNodes :: Config.AdConfig -> Int
 calculateMaximumPetriNodes adConfig =
   let
     -- At least one initial node (always 1 place)
     initialNodes = 1
 
-    -- Maximum action nodes (each action becomes a transition, plus places before/after)
-    -- In practice, each action can create additional auxiliary places/transitions
-    maxActionNodes = snd (Config.actionLimits adConfig) * 3  -- More generous estimate
+    -- Maximum action nodes
+    maxActionNodes = snd (Config.actionLimits adConfig)
 
-    -- Maximum object nodes (each becomes a place)
+    -- Maximum object nodes
     maxObjectNodes = snd (Config.objectNodeLimits adConfig)
 
     -- Final nodes (each becomes a place)
     finalNodes = Config.activityFinalNodes adConfig + Config.flowFinalNodes adConfig
 
-    -- Fork/Join pairs (each pair adds auxiliary nodes: conservative estimate 4 per pair)
-    forkJoinNodes = Config.forkJoinPairs adConfig * 4
+    -- Standard nodes (excluding auxiliary nodes)
+    standardNodes = initialNodes + maxActionNodes + maxObjectNodes + finalNodes
 
-    -- Decision/Merge pairs (each pair adds auxiliary nodes: conservative estimate 4 per pair)
-    decisionMergeNodes = Config.decisionMergePairs adConfig * 4
+    -- Auxiliary nodes from Fork/Join pairs, Decision/Merge pairs, and Cycles
+    -- Heuristic: about as many auxiliary nodes as standard nodes
+    auxiliaryNodes = standardNodes
 
-    -- Cycles can add additional auxiliary nodes (conservative estimate: 3 per cycle)
-    cycleNodes = Config.cycles adConfig * 3
-
-    -- Additional buffer for complex conversions
-    conversionBuffer = 5
-
-  in initialNodes + maxActionNodes + maxObjectNodes + finalNodes + forkJoinNodes + decisionMergeNodes + cycleNodes + conversionBuffer
+  in standardNodes + auxiliaryNodes
 
 -- | Base validation logic common to multiple Petri-based configurations
 validateBasePetriConfig
@@ -101,16 +94,11 @@ validateBasePetriConfig adConfig countOfPetriNodesBounds maxInstances presenceOf
       #{Config.forkJoinPairs adConfig * 2} fork/join auxiliary nodes +
       #{Config.decisionMergePairs adConfig * 2} decision/merge auxiliary nodes.
       |]
-  | Just high <- snd countOfPetriNodesBounds, high > 0 && high > calculateMaximumPetriNodes adConfig
+  | Just high <- snd countOfPetriNodesBounds, high > 0 && high < calculateMaximumPetriNodes adConfig
     = Just [i|
-      The maximum value of 'countOfPetriNodesBounds' (#{high}) is too large.
-      Based on the AdConfig values, the maximum number of Petri net nodes should be at most #{calculateMaximumPetriNodes adConfig}.
-      This is a conservative estimate calculated from: 1 initial node + #{snd (Config.actionLimits adConfig) * 3} action-related nodes +
-      #{snd (Config.objectNodeLimits adConfig)} object nodes +
-      #{Config.activityFinalNodes adConfig + Config.flowFinalNodes adConfig} final nodes +
-      #{Config.forkJoinPairs adConfig * 4} fork/join auxiliary nodes +
-      #{Config.decisionMergePairs adConfig * 4} decision/merge auxiliary nodes +
-      #{Config.cycles adConfig * 3} cycle auxiliary nodes + 5 conversion buffer.
+      The maximum value of 'countOfPetriNodesBounds' (#{high}) is too small.
+      Based on the AdConfig values, the actually achievable number of Petri net nodes can be up to #{calculateMaximumPetriNodes adConfig}.
+      This means the upper bound should be at least #{calculateMaximumPetriNodes adConfig} to allow for all possible configurations.
       |]
   | otherwise
     = Nothing
