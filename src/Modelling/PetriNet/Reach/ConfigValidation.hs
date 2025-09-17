@@ -47,8 +47,6 @@ checkRejectLongerThanConsistency rejectLongerThan minTransitionLength maxTransit
   case rejectLongerThan of
     Just rejectLength
       | rejectLength <= 0 -> Just "rejectLongerThan must be positive when specified"
-      | rejectLength < minTransitionLength -> Just $
-        "rejectLongerThan (" ++ show rejectLength ++ ") cannot be less than minTransitionLength (" ++ show minTransitionLength ++ ")"
       | rejectLength < maxTransitionLength -> Just $
         "rejectLongerThan (" ++ show rejectLength ++ ") cannot be less than maxTransitionLength (" ++ show maxTransitionLength ++ ")"
       | rejectLength == maxTransitionLength && showLengthHint -> Just "showLengthHint cannot be True when rejectLongerThan equals maxTransitionLength"
