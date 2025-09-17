@@ -118,6 +118,7 @@ library
     , diagrams-svg
     , edit-distance-vector
     , either
+    , exact-combinatorics
     , exceptions
     , extra
     , fgl
@@ -210,6 +211,7 @@ test-suite modelling-tasks-test
     , directory
     , edit-distance-vector
     , either
+    , exact-combinatorics
     , exceptions
     , extra
     , fgl
