@@ -25,6 +25,7 @@ import qualified Data.Map as M (fromList, keys)
 
 import Capabilities.Alloy               (MonadAlloy, getInstances)
 import Capabilities.PlantUml            (MonadPlantUml)
+import Capabilities.WriteFile           (MonadWriteFile)
 import Modelling.ActivityDiagram.Alloy  (adConfigToAlloy)
 import Modelling.ActivityDiagram.Config (
   AdConfig (..),
@@ -89,7 +90,7 @@ data MatchAdConfig = MatchAdConfig {
   adConfig :: AdConfig,
   maxInstances :: Maybe Integer,
   hideBranchConditions :: Bool,
-  noActivityFinalInForkBlocks :: Maybe Bool,
+  withActivityFinalInForkBlocks :: !(Maybe Bool),
   printSolution :: Bool,
   extraText :: Maybe (Map Language String)
 } deriving (Generic, Read, Show)
@@ -99,7 +100,7 @@ defaultMatchAdConfig = MatchAdConfig {
   adConfig = defaultAdConfig,
   maxInstances = Just 50,
   hideBranchConditions = False,
-  noActivityFinalInForkBlocks = Just False,
+  withActivityFinalInForkBlocks = Just True,
   printSolution = False,
   extraText = Nothing
 }
@@ -113,29 +114,29 @@ checkMatchAdConfig' :: MatchAdConfig -> Maybe String
 checkMatchAdConfig' MatchAdConfig {
     adConfig,
     maxInstances,
-    noActivityFinalInForkBlocks
+    withActivityFinalInForkBlocks
   }
   | isJust maxInstances && fromJust maxInstances < 1
     = Just "The parameter 'maxInstances' must either be set to a positive value or to Nothing"
-  | noActivityFinalInForkBlocks == Just True && activityFinalNodes adConfig > 1
-    = Just "Setting the parameter 'noActivityFinalInForkBlocks' to 'Just True' prohibits having more than 1 Activity Final Node"
-  | noActivityFinalInForkBlocks == Just False && activityFinalNodes adConfig < 1
-    = Just "Setting the parameter 'noActivityFinalInForkBlocks' to 'Just False' requires having at least 1 Activity Final Node"
-  | isNothing noActivityFinalInForkBlocks && activityFinalNodes adConfig < 1
-    = Just "Having no Activity Final Node means setting the parameter 'noActivityFinalInForkBlocks' to Nothing makes no sense."
+  | withActivityFinalInForkBlocks == Just False && activityFinalNodes adConfig > 1
+    = Just "Setting the parameter 'withActivityFinalInForkBlocks' to 'Just False' prohibits having more than 1 Activity Final Node"
+  | withActivityFinalInForkBlocks == Just True && activityFinalNodes adConfig < 1
+    = Just "Setting the parameter 'withActivityFinalInForkBlocks' to 'Just True' requires having at least 1 Activity Final Node"
+  | isNothing withActivityFinalInForkBlocks && activityFinalNodes adConfig < 1
+    = Just "Having no Activity Final Node means setting the parameter 'withActivityFinalInForkBlocks' to Nothing makes no sense."
   | otherwise
     = Nothing
 
 matchAdAlloy :: MatchAdConfig -> String
 matchAdAlloy MatchAdConfig {
     adConfig,
-    noActivityFinalInForkBlocks
+    withActivityFinalInForkBlocks
   }
   = adConfigToAlloy "" predicates adConfig
   where
     predicates =
       [i|
-        #{f noActivityFinalInForkBlocks "noActivityFinalInForkBlocks"}
+        #{f (not <$> withActivityFinalInForkBlocks) "noActivityFinalInForkBlocks"}
       |]
     f opt s =
       case opt of
@@ -171,7 +172,7 @@ matchAdSolution task =
     }
 
 matchAdTask
-  :: (MonadPlantUml m, OutputCapable m)
+  :: (MonadPlantUml m, MonadWriteFile m, OutputCapable m)
   => FilePath
   -> MatchAdInstance
   -> LangM m

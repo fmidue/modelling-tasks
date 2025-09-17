@@ -3,6 +3,7 @@ import qualified Data.ByteString.Char8            as BS (pack)
 
 import Capabilities.Diagrams.IO         ()
 import Capabilities.Graphviz.IO         ()
+import Capabilities.WriteFile.IO        ()
 import Modelling.CdOd.Output            (drawOdFromInstance)
 
 import Control.Monad (void)
@@ -23,7 +24,7 @@ main = do
    [xs] -> getContents >>= drawOd (read xs) "output"
    [xs, file] -> readFile file >>= drawOd (read xs) file
    [xs, file, format]
-     | fmap toUpper format == "SVG" -> readFile file >>= drawOd (read xs) file
+     | map toUpper format == "SVG" -> readFile file >>= drawOd (read xs) file
      | otherwise -> error $ "format " ++ format
          ++ "is not supported, only SVG is supported"
    _ -> error "zu viele Parameter"
@@ -33,6 +34,7 @@ drawOd possibleLinks file contents = flip evalRandT (mkStdGen 0) $ do
   i <- parseInstance $ BS.pack contents
   output <- drawOdFromInstance
     i
+    Nothing
     possibleLinks
     (Just $ 1 % 3)
     NoDir

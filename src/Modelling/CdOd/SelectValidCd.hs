@@ -41,7 +41,7 @@ import Modelling.Auxiliary.Common (
   ModellingTasksException (NeverHappens),
   Randomise (randomise),
   RandomiseLayout (randomiseLayout),
-  shuffleEverything,
+  RandomiseNames (randomiseNames),
   )
 import Modelling.Auxiliary.Output (
   addPretext,
@@ -51,6 +51,7 @@ import Modelling.Auxiliary.Output (
   uniform,
   extra,
   )
+import Modelling.Auxiliary.Shuffle.All  (shuffleEverything)
 import Modelling.CdOd.CdAndChanges.Instance (
   AnnotatedChangeAndCd (..),
   )
@@ -61,10 +62,11 @@ import Modelling.CdOd.Phrasing (
 import Modelling.CdOd.RepairCd (
   InValidOption (..),
   RelationshipChangeWithArticle,
+  WeakeningKind (..),
   checkClassConfigAndChanges,
+  generateSetOfCds,
   mapInValidOption,
   mapInValidOptionM,
-  repairIncorrect,
   )
 import Modelling.CdOd.Output            (cacheCd, cacheOd)
 import Modelling.CdOd.Types (
@@ -90,12 +92,14 @@ import Modelling.CdOd.Types (
   anyAssociationNames,
   anyRelationshipName,
   checkCdConstraints,
+  checkCdDrawProperties,
   checkCdDrawSettings,
   checkCdMutations,
+  checkClassConfigAndObjectProperties,
   checkObjectProperties,
   defaultCdConstraints,
   defaultCdDrawSettings,
-  linkNames,
+  linkLabels,
   shuffleAnyClassAndConnectionOrder,
   renameClassesAndRelationships,
   renameObjectsWithClassesAndLinksInOd,
@@ -106,7 +110,7 @@ import Modelling.Types                  (Change (..))
 import Control.Applicative              (Alternative ((<|>)))
 import Control.Functor.Trans            (FunctorTrans (lift))
 import Control.Monad                    ((>=>), unless, void, when)
-import Control.Monad.Catch              (MonadThrow (throwM))
+import Control.Monad.Catch              (MonadCatch, MonadThrow (throwM))
 import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
   GenericOutputCapable (..),
@@ -150,6 +154,8 @@ data SelectValidCdConfig
     allowedProperties :: AllowedProperties,
     -- | the preferred article to use when referring to relationships
     articleToUse      :: ArticlePreference,
+    -- | influences the validity of the base class diagram (see 'WeakeningKind')
+    basePropertiesOfBaseCdOn :: !WeakeningKind,
     cdConstraints :: CdConstraints,
     classConfig      :: ClassConfig,
     drawSettings     :: !CdDrawSettings,
@@ -173,6 +179,7 @@ defaultSelectValidCdConfig
       reverseInheritances = True
       },
     articleToUse = UseDefiniteArticleWherePossible,
+    basePropertiesOfBaseCdOn = AnyStructuralWeakening,
     cdConstraints = defaultCdConstraints,
     classConfig = ClassConfig {
         classLimits        = (4, 4),
@@ -188,7 +195,7 @@ defaultSelectValidCdConfig
       anonymousObjectProportion = 0 % 1,
       completelyInhabited = Just True,
       hasLimitedIsolatedObjects = False,
-      hasSelfLoops = Nothing,
+      hasSelfLoops = Just False,
       usesEveryRelationshipName = Just True
       },
     printExtendedFeedback = True,
@@ -217,6 +224,8 @@ checkSelectValidCdConfig SelectValidCdConfig {..}
   <|> checkCdMutations allowedCdMutations
   <|> checkCdDrawSettings drawSettings
   <|> checkObjectProperties objectProperties
+  <|> checkClassConfigAndObjectProperties classConfig objectProperties
+  <|> checkCdDrawProperties drawSettings allowedProperties
 
 type CdChange = InValidOption
   AnyCd
@@ -308,7 +317,7 @@ defaultSelectValidCdTaskText = [
   Paragraph $ singleton $ Translated $ translations $ do
     english [i|Which of these class diagram candidates are valid class diagrams?
 Please state your answer by giving a list of numbers, indicating all valid class diagrams.|]
-    german [i|Welche dieser Klassendiagrammkandidaten sind valide Klassendiagramme?
+    german [i|Welche dieser Klassendiagrammkandidaten sind gültige Klassendiagramme?
 Bitte geben Sie Ihre Antwort in Form einer Liste von Zahlen an, die alle gültigen Klassendiagramme enthält.|],
   Paragraph [
     Translated $ translations $ do
@@ -316,8 +325,8 @@ Bitte geben Sie Ihre Antwort in Form einer Liste von Zahlen an, die alle gültig
       german [i|Zum Beispiel würde|],
     Code $ uniform "[1, 2]",
     Translated $ translations $ do
-      english [i|would indicate that only class diagram candidates 1 and 2 of the given ones are valid class diagrams.|]
-      german [i|bedeuten, dass nur die Klassendiagrammkandidaten 1 und 2 der angegebenen Klassendiagrammkandidaten gültige Klassendiagramme sind.|]
+      english [i|would mean that only class diagram candidates 1 and 2 of the given ones are valid class diagrams.|]
+      german [i|bedeuten, dass nur die Klassendiagrammkandidaten 1 und 2 der gegebenen Klassendiagrammkandidaten gültige Klassendiagramme sind.|]
     ]
   ]
 
@@ -365,10 +374,10 @@ selectValidCdFeedback path drawSettings xs x cdChange =
       notCorrect
       paragraph $ translate $ do
         english [iii|
-          Class diagram #{x} is invalid.
+          Class diagram candidate #{x} is invalid.
           |]
         german [iii|
-          Klassendiagramm #{x} ist ungültig.
+          Klassendiagrammkandidat #{x} ist ungültig.
           |]
       let sufficient = byName || maybe True isInheritance (remove change)
       unless sufficient showNamedCd
@@ -390,7 +399,7 @@ selectValidCdFeedback path drawSettings xs x cdChange =
           german [iii|
             Wenn es zum Beispiel
             #{trailingCommaGerman $ phrase German}
-            nicht gäbe, wäre es gültig.
+            nicht gäbe, wäre er gültig.
             |]
       pure ()
     Right od | x `notElem` xs -> do
@@ -423,8 +432,8 @@ selectValidCdFeedback path drawSettings xs x cdChange =
       | withDir = Forward
       | otherwise = NoDir
     notCorrect = paragraph $ translate $ do
-      english [iii|Your answer to class diagram #{x} is not correct.|]
-      german [iii|Ihre Antwort zu Klassendiagramm #{x} ist nicht richtig.|]
+      english [iii|Your answer about class diagram candidate #{x} is not right.|]
+      german [iii|Ihre Antwort zu Klassendiagrammkandidat #{x} ist nicht richtig.|]
     isInheritance = \case
       Right Inheritance {} -> True
       Right {} -> False
@@ -448,13 +457,14 @@ selectValidCdSolution =
   M.keys . M.filter id . fmap (isRight . hint) . classDiagrams
 
 selectValidCd
-  :: (MonadAlloy m, MonadThrow m)
+  :: (MonadAlloy m, MonadCatch m)
   => SelectValidCdConfig
   -> Int
   -> Int
   -> m SelectValidCdInstance
 selectValidCd SelectValidCdConfig {..} segment seed = flip evalRandT g $ do
-  (_, chs)  <- repairIncorrect
+  (_, chs)  <- generateSetOfCds
+    basePropertiesOfBaseCdOn
     allowedProperties
     classConfig
     cdConstraints
@@ -479,12 +489,14 @@ selectValidCd SelectValidCdConfig {..} segment seed = flip evalRandT g $ do
       | otherwise            = return
 
 instance Randomise SelectValidCdInstance where
-  randomise inst = do
+  randomise = shuffleInstance
+
+instance RandomiseNames SelectValidCdInstance where
+  randomiseNames inst = do
     let (names, nonInheritances) = classAndNonInheritanceNames inst
     names' <- shuffleM names
     nonInheritances' <- shuffleM nonInheritances
     renameInstance inst names' nonInheritances'
-      >>= shuffleInstance
 
 instance RandomiseLayout SelectValidCdInstance where
   randomiseLayout SelectValidCdInstance {..} = do
@@ -562,7 +574,7 @@ classAndNonInheritanceNames inst =
       nonInheritances = nubOrd $ concatMap (anyAssociationNames . option) cds
         ++ mapMaybe (add . annotated >=> anyRelationshipName) improves
         ++ mapMaybe (remove . annotated >=> anyRelationshipName) improves
-        ++ concatMap linkNames evidences
+        ++ concatMap linkLabels evidences
   in (names, nonInheritances)
 
 renameInstance
@@ -604,79 +616,84 @@ defaultSelectValidCdInstance = SelectValidCdInstance {
     },
   classDiagrams = M.fromList [
     (1, InValidOption {
-      hint = Left (Annotation {
-        annotated = Change {
-          add = Nothing,
-          remove = Just (Right Inheritance {
-            subClass = "D",
-            superClass = "C"
-            })
-          },
-        annotation = DefiniteArticle
-        }),
+      hint = Right ObjectDiagram {
+        objects = [
+          Object {isAnonymous = False, objectName = "a", objectClass = "A"},
+          Object {isAnonymous = False, objectName = "c", objectClass = "C"},
+          Object {isAnonymous = False, objectName = "d", objectClass = "D"},
+          Object {isAnonymous = False, objectName = "b", objectClass = "B"}
+          ],
+        links = []
+        },
       option = AnyClassDiagram {
         anyClassNames = ["B", "C", "D", "A"],
         anyRelationships = [
-          Right Inheritance {subClass = "D", superClass = "C"},
-          Right Inheritance {subClass = "C", superClass = "D"},
-          Right Inheritance {subClass = "B", superClass = "D"},
-          Right Inheritance {subClass = "A", superClass = "B"}
+          Right Inheritance {subClass = "D", superClass = "A"},
+          Right Inheritance {subClass = "A", superClass = "C"},
+          Right Inheritance {subClass = "B", superClass = "D"}
           ]
         }
       }),
     (2, InValidOption {
-      hint = Right ObjectDiagram {
-        objects = [
-          Object {isAnonymous = False, objectName = "b", objectClass = "B"},
-          Object {isAnonymous = False, objectName = "c", objectClass = "C"},
-          Object {isAnonymous = False, objectName = "d", objectClass = "D"},
-          Object {isAnonymous = False, objectName = "a", objectClass = "A"}
-          ],
-        links = []
-        },
-      option = AnyClassDiagram {
-        anyClassNames = ["B", "A", "D", "C"],
-        anyRelationships = [
-          Right Inheritance {subClass = "C", superClass = "D"},
-          Right Inheritance {subClass = "A", superClass = "B"}
-          ]
-        }
-      }),
-    (3, InValidOption {
-      hint = Left (Annotation {
+      hint = Left Annotation {
         annotated = Change {
           add = Nothing,
           remove = Just (Right Inheritance {
-            subClass = "C",
+            subClass = "A",
             superClass = "D"
             })
           },
         annotation = DefiniteArticle
-        }),
+        },
       option = AnyClassDiagram {
-        anyClassNames = ["B", "D", "C", "A"],
+        anyClassNames = ["A", "B", "D", "C"],
         anyRelationships = [
-          Right Inheritance {subClass = "B", superClass = "A"},
-          Right Inheritance {subClass = "C", superClass = "D"},
-          Right Inheritance {subClass = "D", superClass = "C"}
+          Right Inheritance {subClass = "A", superClass = "D"},
+          Right Inheritance {subClass = "C", superClass = "A"},
+          Right Inheritance {subClass = "D", superClass = "A"},
+          Right Inheritance {subClass = "B", superClass = "D"}
+          ]
+        }
+      }),
+    (3, InValidOption {
+      hint = Left Annotation {
+        annotated = Change {
+          add = Nothing,
+          remove = Just (Right Inheritance {
+            subClass = "B",
+            superClass = "D"
+            })
+          },
+        annotation = DefiniteArticle
+        },
+      option = AnyClassDiagram {
+        anyClassNames = ["A", "C", "D", "B"],
+        anyRelationships = [
+          Right Inheritance {subClass = "C", superClass = "A"},
+          Right Inheritance {subClass = "B", superClass = "D"},
+          Right Inheritance {subClass = "D", superClass = "A"},
+          Right Inheritance {subClass = "A", superClass = "B"}
           ]
         }
       }),
     (4, InValidOption {
-      hint = Right ObjectDiagram {
-        objects = [
-          Object {isAnonymous = False, objectName = "a", objectClass = "A"},
-          Object {isAnonymous = False, objectName = "d", objectClass = "D"},
-          Object {isAnonymous = False, objectName = "b", objectClass = "B"},
-          Object {isAnonymous = False, objectName = "c", objectClass = "C"}
-          ],
-        links = []
+      hint = Left Annotation {
+        annotated = Change {
+          add = Nothing,
+          remove = Just (Right Inheritance {
+            subClass = "A",
+            superClass = "C"
+            })
+          },
+        annotation = DefiniteArticle
         },
       option = AnyClassDiagram {
-        anyClassNames = ["D", "C", "B", "A"],
+        anyClassNames = ["B", "A", "C", "D"],
         anyRelationships = [
-          Right Inheritance {subClass = "A", superClass = "B"},
-          Right Inheritance {subClass = "D", superClass = "C"}
+          Right Inheritance {subClass = "D", superClass = "A"},
+          Right Inheritance {subClass = "B", superClass = "D"},
+          Right Inheritance {subClass = "A", superClass = "C"},
+          Right Inheritance {subClass = "C", superClass = "A"}
           ]
         }
       })

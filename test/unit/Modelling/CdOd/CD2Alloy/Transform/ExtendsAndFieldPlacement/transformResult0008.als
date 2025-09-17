@@ -38,7 +38,7 @@ fact SomeSelfLoops {
 // Classes
 sig A extends B {}
 sig B {
-  x : set C
+  x : set C,
   y : set D
 } {
   #x =< 1
@@ -58,6 +58,7 @@ pred cd1 {
 
   // Contents
 
+  // Associations
 
   // Compositions
   all o : B + C + D | plus[#o.x, #o.y] =< 1

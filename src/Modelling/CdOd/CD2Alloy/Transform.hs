@@ -54,6 +54,7 @@ module Modelling.CdOd.CD2Alloy.Transform (
   combineParts,
   createRunCommand,
   mergeParts,
+  overlappingLinksPredicates,
   transform,
   ) where
 
@@ -72,7 +73,7 @@ import Modelling.CdOd.Types (
 import Data.Bifunctor                   (first)
 import Data.Foldable                    (Foldable (toList), find)
 import Data.Function                    ((&))
-import Data.List                        ((\\), intercalate, union)
+import Data.List                        ((\\), delete, intercalate, union)
 import Data.List.NonEmpty               (NonEmpty ((:|)))
 import Data.List.Extra                  (nubOrd)
 import Data.Maybe (
@@ -447,11 +448,13 @@ classSigs linguisticReuse relationships = map classSig
         $ maybe "" ((" extends " ++) . superClass)
         $ find (hasSuperClass name) relationships
     fromTos = mapMaybe nameFromTo relationships
-    fields className = linesWrappedInOrBraces $
+    fields className = linesWrappedInOrBraces $ commaSeparated $
       [ [iii|#{name} : set #{linking to}|]
       | (name, from, to) <- fromTos
       , linking from == className
       ]
+    commaSeparated (x:xs@(_:_)) = (x ++ ",") : commaSeparated xs
+    commaSeparated xs = xs
     spaced [] = []
     spaced xs = ' ':xs
     fieldConstraints className = linesWrappedInBraces $ filter (not . null) $
@@ -543,6 +546,7 @@ pred cd#{index} {
 #{objects}
   // Contents
 #{unlines nonExistingRelationships}
+  // Associations
 #{nonInheritanceConstraints linguisticReuse relationships}
   // Compositions
 #{compositions}
@@ -568,6 +572,49 @@ pred cd#{index} {
         _ -> Nothing
       -- Figure 2.2, Rule 4, corrected, simplified
 
+{-|
+Generates a predicate for each non-inheritance relationship - relationship name
+combination (except its actual)
+this can be used to prevent or force overlapping links
+(i.e. that could match to two relationships)
+in order to steer difficulty.
+
+The function returns a list of both, the predicates names
+as well as the predicates themselves.
+-}
+overlappingLinksPredicates
+  :: [Relationship String String]
+  -> [(String, String)]
+overlappingLinksPredicates relationships =
+  concat $ mapMaybe allPredicatesFor relationships
+  where
+    relationshipNames = mapMaybe relationshipName relationships
+    allPredicatesFor = \case
+      Inheritance {} -> Nothing
+      Aggregation {aggregationName, ..} -> Just $ predicatesFor
+        aggregationName
+        $ \name -> Aggregation {aggregationName = name, ..}
+      Association {associationName, ..} -> Just $ predicatesFor
+        associationName
+        $ \name -> Association {associationName = name, ..}
+      Composition {compositionName, ..} -> Just $ predicatesFor
+        compositionName
+        $ \name -> Composition {compositionName = name, ..}
+    predicatesFor originalName relationshipNamed = map
+      (\usedAs -> relationshipPredicate
+        ("only_" ++ originalName ++ "_as_" ++ usedAs)
+        $ relationshipNamed usedAs)
+      $ delete originalName relationshipNames
+    relationshipPredicate
+      :: String
+      -> Relationship String String
+      -> (String, String)
+    relationshipPredicate predicateName relationship = (predicateName, [__i|
+      pred #{predicateName} {
+      #{nonInheritanceConstraints (ExtendsAnd NothingMore) [relationship]}}
+      |])
+
+
 nonInheritanceConstraints
   :: LinguisticReuse
   -> [Relationship String String]
@@ -577,14 +624,13 @@ nonInheritanceConstraints linguisticReuse relationships
   = ""
   | otherwise
   = [__i|
-      // Associations
     #{unlines objectAttributes}
     |]
   where
     objectAttributes = concatMap
       (maybe [] (uncurry3 associationFromTo) . nameFromTo)
       relationships
-    associationFromTo name from to = [
+    associationFromTo name from to = filter (not . null) [
       makeNonInheritance (toList subsFrom) name (toList subsTo),
       makeNonInheritanceLimits (++ ('.' : name)) subsFrom (limits to),
       makeNonInheritanceLimits ((name ++) . ('.' :)) subsTo (limits from)
@@ -619,8 +665,8 @@ makeNonInheritance
   -> String
   -> [String]
   -> String
-makeNonInheritance fromSet name toSet = [i|
-  #{name} in #{alloySetOfParens fromSet} -> #{alloySetOfParens toSet}|]
+makeNonInheritance fromSet name toSet =
+  [i|  #{name} in #{alloySetOfParens fromSet} -> #{alloySetOfParens toSet}|]
   -- alternative to @ObjectFieldNames@ predicate inlined and simplified
 
 {-|

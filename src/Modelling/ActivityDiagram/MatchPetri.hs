@@ -13,6 +13,7 @@ module Modelling.ActivityDiagram.MatchPetri (
   MatchPetriSolution(..),
   defaultMatchPetriConfig,
   checkMatchPetriConfig,
+  mapTypesToLabels,
   matchPetriAlloy,
   matchPetriSolution,
   extractAuxiliaryPetriNodes,
@@ -29,6 +30,7 @@ import qualified Data.Map as M (empty, fromList, keys)
 import qualified Modelling.ActivityDiagram.Config as Config (
   AdConfig (activityFinalNodes, flowFinalNodes),
   )
+import Modelling.ActivityDiagram.Auxiliary.PetriValidation (validatePetriConfig)
 import qualified Modelling.ActivityDiagram.PetriNet as PK (label)
 import qualified Modelling.PetriNet.Types as Petri (Net (nodes))
 
@@ -37,6 +39,7 @@ import Capabilities.Cache               (MonadCache)
 import Capabilities.Diagrams            (MonadDiagrams)
 import Capabilities.Graphviz            (MonadGraphviz)
 import Capabilities.PlantUml            (MonadPlantUml)
+import Capabilities.WriteFile           (MonadWriteFile)
 import Modelling.ActivityDiagram.Alloy  (adConfigToAlloy, modulePetriNet)
 import Modelling.ActivityDiagram.Auxiliary.Util (finalNodesAdvice)
 import Modelling.ActivityDiagram.Datatype (
@@ -61,7 +64,7 @@ import Modelling.ActivityDiagram.PetriNet (
   )
 import Modelling.ActivityDiagram.Shuffle (shufflePetri, shuffleAdNames)
 import Modelling.ActivityDiagram.Config (
-  AdConfig (actionLimits, cycles, forkJoinPairs),
+  AdConfig,
   checkAdConfig,
   defaultAdConfig,
   )
@@ -78,8 +81,9 @@ import Modelling.Auxiliary.Output (
   )
 import Modelling.PetriNet.Diagram (cacheNet)
 import Modelling.PetriNet.Types (
+  checkPetriNodeCount,
   DrawSettings (..),
-  Net,
+  Net (mapNet),
   PetriLike (..),
   SimpleNode (..),
   SimplePetriLike,
@@ -113,7 +117,6 @@ import Data.Containers.ListUtils (nubOrd)
 import Data.GraphViz.Commands (GraphvizCommand(..))
 import Data.List (intersect, sort)
 import Data.Map (Map)
-import Data.Maybe (isJust, fromJust)
 import Data.String.Interpolate (i, iii)
 import Data.Tuple.Extra                 (dupe)
 import GHC.Generics (Generic)
@@ -131,6 +134,9 @@ data MatchPetriInstance = MatchPetriInstance {
 
 data MatchPetriConfig = MatchPetriConfig {
   adConfig :: AdConfig,
+  -- | generate only activity diagrams with a corresponding Petri net
+  -- having a total count of nodes within the given bounds
+  countOfPetriNodesBounds :: !(Int, Maybe Int),
   maxInstances :: Maybe Integer,
   hideBranchConditions :: Bool,
   petriLayout :: [GraphvizCommand],
@@ -138,10 +144,10 @@ data MatchPetriConfig = MatchPetriConfig {
   petriSvgHighlighting :: Bool,
   -- | Option to prevent auxiliary PetriNodes from occurring
   auxiliaryPetriNodeAbsent :: Maybe Bool,
-  -- | Avoid having to add new sink transitions for representing finals
-  avoidAddingSinksForFinals :: Maybe Bool,
+  -- | Force presence or absence of new sink transitions for representing finals
+  presenceOfSinkTransitionsForFinals :: Maybe Bool,
   -- | Avoid Activity Finals in concurrent flows to reduce confusion
-  noActivityFinalInForkBlocks :: Maybe Bool,
+  withActivityFinalInForkBlocks :: !(Maybe Bool),
   printSolution :: Bool,
   extraText :: Maybe (Map Language String)
 } deriving (Generic, Read, Show)
@@ -156,13 +162,14 @@ defaultMatchPetriConfig =
       Config.activityFinalNodes = 0,
       Config.flowFinalNodes = 2
       },
+    countOfPetriNodesBounds = (0, Nothing),
     maxInstances = Just 25,
     hideBranchConditions = False,
     petriLayout = [Dot],
     petriSvgHighlighting = True,
     auxiliaryPetriNodeAbsent = Nothing,
-    avoidAddingSinksForFinals = Nothing,
-    noActivityFinalInForkBlocks = Just True,
+    presenceOfSinkTransitionsForFinals = Nothing,
+    withActivityFinalInForkBlocks = Just False,
     printSolution = False,
     extraText = Nothing
   }
@@ -176,44 +183,27 @@ checkMatchPetriConfig conf =
 checkMatchPetriConfig' :: MatchPetriConfig -> Maybe String
 checkMatchPetriConfig' MatchPetriConfig {
     adConfig,
+    countOfPetriNodesBounds,
     maxInstances,
     petriLayout,
     auxiliaryPetriNodeAbsent,
-    avoidAddingSinksForFinals,
-    noActivityFinalInForkBlocks
-  }
-  | Config.activityFinalNodes adConfig > 1
-  = Just "There is at most one 'activityFinalNode' allowed."
-  | Config.activityFinalNodes adConfig >= 1 && Config.flowFinalNodes adConfig >= 1
-  = Just "There is no 'flowFinalNode' allowed if there is an 'activityFinalNode'."
-  | isJust maxInstances && fromJust maxInstances < 1
-    = Just "The parameter 'maxInstances' must either be set to a positive value or to Nothing"
-  | auxiliaryPetriNodeAbsent == Just True && cycles adConfig > 0
-  = Just [iii|
-    Setting the parameter 'auxiliaryPetriNodeAbsent' to True
-    prohibits having more than 0 cycles
-    |]
-  | Just True <- avoidAddingSinksForFinals,
-    fst (actionLimits adConfig) + forkJoinPairs adConfig < 1
-    = Just "The option 'avoidAddingSinksForFinals' can only be achieved if the number of Actions, Fork Nodes and Join Nodes together is positive"
-  | noActivityFinalInForkBlocks == Just True && Config.activityFinalNodes adConfig > 1
-    = Just "Setting the parameter 'noActivityFinalInForkBlocks' to True prohibits having more than 1 'activityFinalNodes'"
-  | noActivityFinalInForkBlocks == Just False && Config.activityFinalNodes adConfig == 0
-    = Just "Setting the parameter 'noActivityFinalInForkBlocks' to False implies that there are 'activityFinalNodes'"
-  | null petriLayout
-    = Just "The parameter 'petriLayout' can not be the empty list"
-  | any (`notElem` [Dot, Neato, TwoPi, Circo, Fdp]) petriLayout
-    = Just "The parameter 'petriLayout' can only contain the options Dot, Neato, TwoPi, Circo and Fdp"
-  | otherwise
-    = Nothing
-
+    presenceOfSinkTransitionsForFinals,
+    withActivityFinalInForkBlocks
+  } = validatePetriConfig
+        adConfig
+        countOfPetriNodesBounds
+        maxInstances
+        petriLayout
+        auxiliaryPetriNodeAbsent
+        presenceOfSinkTransitionsForFinals
+        withActivityFinalInForkBlocks
 
 matchPetriAlloy :: MatchPetriConfig -> String
 matchPetriAlloy MatchPetriConfig {
   adConfig,
   auxiliaryPetriNodeAbsent,
-  avoidAddingSinksForFinals,
-  noActivityFinalInForkBlocks
+  presenceOfSinkTransitionsForFinals,
+  withActivityFinalInForkBlocks
 }
   = adConfigToAlloy modules predicates adConfig
   where
@@ -223,8 +213,8 @@ matchPetriAlloy MatchPetriConfig {
           [i|
             #{f auxiliaryPetriNodeAbsent "auxiliaryPetriNodeAbsent"}
             #{f activityFinalsExist "activityFinalsExist"}
-            #{f avoidAddingSinksForFinals "avoidAddingSinksForFinals"}
-            #{f noActivityFinalInForkBlocks "noActivityFinalInForkBlocks"}
+            #{f (not <$> presenceOfSinkTransitionsForFinals) "avoidAddingSinksForFinals"}
+            #{f (not <$> withActivityFinalInForkBlocks) "noActivityFinalInForkBlocks"}
           |]
     f opt s =
           case opt of
@@ -323,6 +313,7 @@ matchPetriTask
     MonadGraphviz m,
     MonadPlantUml m,
     MonadThrow m,
+    MonadWriteFile m,
     OutputCapable m
     )
   => FilePath
@@ -337,7 +328,7 @@ matchPetriTask path task = do
     english "Consider the following Petri net as translation of this activity diagram:"
     german "Betrachten Sie folgendes Petrinetz als Übersetzung dieses Aktivitätsdiagramms:"
   let drawSetting = petriDrawConf task
-  image $=<< cacheNet path (show . PK.label) (petriNet task) drawSetting
+  image $=<< cacheNet path (mapNet (show . PK.label) $ petriNet task) drawSetting
   paragraph $ translate $ do
     english [iii|
       State each matching of action node and Petri net node,
@@ -492,6 +483,7 @@ getMatchPetriTask config = do
   activityDiagrams <- mapM (fmap snd . shuffleAdNames) randomInstances
   (ad, petri) <- getFirstInstance
         $ filter (not . petriHasMultipleAutomorphisms . snd)
+        $ filter (checkPetriNodeCount (countOfPetriNodesBounds config) . snd)
         $ map (second convertToPetriNet . dupe) activityDiagrams
   shuffledPetri <- snd <$> shufflePetri petri
   layout <- pickRandomLayout config

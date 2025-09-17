@@ -53,7 +53,6 @@ import Modelling.PetriNet.TestCommon (
   )
 import Settings                         (configDepth, needsTuning)
 
-import Control.Lens.Lens                ((??))
 import Data.Maybe                       (isNothing)
 import Test.Hspec
 
@@ -94,7 +93,7 @@ checkFindConflictInstance :: (a, PetriConflict' String) -> Bool
 checkFindConflictInstance = isValidConflict . snd
 
 checkPickConflictInstance :: [(a, Maybe (PetriConflict' String))] -> Bool
-checkPickConflictInstance = f . fmap snd
+checkPickConflictInstance = f . map snd
   where
     f [Just x, Nothing] = isValidConflict x
     f _                 = False
@@ -115,14 +114,21 @@ validFindConflictConfigs
   :: [(BasicConfig, ChangeConfig)]
   -> AdvConfig
   -> [FindConflictConfig]
-validFindConflictConfigs cs advancedConfig = do
-  (bc, ch) <- cs
-  FindConflictConfig bc advancedConfig ch
-    <$> validConflictConfigs bc
-    <*> pure validGraphConfig
-    <*> pure False
-    <*> [Nothing, Just True, Just False]
-    <*> pure alloyTestConfig
+validFindConflictConfigs cs advancedConfig = [
+  FindConflictConfig
+    bc
+    advancedConfig
+    ch
+    validConflictConfig
+    validGraphConfig
+    False
+    uniqueConflictPlace
+    alloyTestConfig
+    Nothing |
+      (bc, ch) <- cs,
+      validConflictConfig <- validConflictConfigs bc,
+      uniqueConflictPlace <- [Nothing, Just True, Just False]
+  ]
 
 validConflictConfigs :: BasicConfig -> [ConflictConfig]
 validConflictConfigs bc = filter (isNothing . checkConflictConfig bc) $ do
@@ -142,16 +148,23 @@ validConflictConfigs bc = filter (isNothing . checkConflictConfig bc) $ do
 validPickConflictConfigs
   :: [(BasicConfig, ChangeConfig)]
   -> [PickConflictConfig]
-validPickConflictConfigs cs = do
-  (bc, ch) <- cs
-  PickConflictConfig bc ch
-    <$> validConflictConfigs bc
-    <*> pure validGraphConfig
-    <*> pure False
-    <*> [False, True]
-    <*> [Nothing, Just True, Just False]
-    ?? False
-    ?? alloyTestConfig
+validPickConflictConfigs cs = [
+  PickConflictConfig
+    bc
+    ch
+    validConflictConfig
+    validGraphConfig
+    False
+    prohibitSourceTransitions
+    uniqueConflictPlace
+    False
+    alloyTestConfig
+    Nothing |
+      (bc, ch) <- cs,
+      validConflictConfig <- validConflictConfigs bc,
+      prohibitSourceTransitions <- [False, True],
+      uniqueConflictPlace <- [Nothing, Just True, Just False]
+  ]
 
 isValidConflict :: PetriConflict' String -> Bool
 isValidConflict c@(PetriConflict' (Conflict (t1, t2) ps))

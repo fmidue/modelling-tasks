@@ -24,6 +24,7 @@ task2023_37 = SelectPetriConfig {
     flowFinalNodes = 2,
     cycles = 1
     },
+  countOfPetriNodesBounds = (0, Nothing),
   maxInstances = Just 2000,
   hideNodeNames = False,
   hideBranchConditions = True,
@@ -34,8 +35,8 @@ task2023_37 = SelectPetriConfig {
   numberOfModifications = 3,
   modifyAtMid = True,
   auxiliaryPetriNodeAbsent = Nothing,
-  avoidAddingSinksForFinals = Nothing,
-  noActivityFinalInForkBlocks = Just True,
+  presenceOfSinkTransitionsForFinals = Nothing,
+  withActivityFinalInForkBlocks = Just False,
   printSolution = True,
   extraText = Nothing
   }
@@ -55,6 +56,7 @@ task2023_38 = SelectPetriConfig {
     flowFinalNodes = 2,
     cycles = 1
     },
+  countOfPetriNodesBounds = (0, Nothing),
   maxInstances = Just 1,
   hideNodeNames = True,
   hideBranchConditions = True,
@@ -65,8 +67,8 @@ task2023_38 = SelectPetriConfig {
   numberOfModifications = 3,
   modifyAtMid = True,
   auxiliaryPetriNodeAbsent = Nothing,
-  avoidAddingSinksForFinals = Nothing,
-  noActivityFinalInForkBlocks = Just True,
+  presenceOfSinkTransitionsForFinals = Nothing,
+  withActivityFinalInForkBlocks = Just False,
   printSolution = True,
   extraText = Nothing
   }
@@ -96,6 +98,7 @@ task2024_44 = SelectPetriConfig {
     flowFinalNodes = 2,
     cycles = 1
     },
+  countOfPetriNodesBounds = (0, Nothing),
   maxInstances = Just 2000,
   hideNodeNames = True,
   hideBranchConditions = True,
@@ -106,8 +109,8 @@ task2024_44 = SelectPetriConfig {
   numberOfModifications = 3,
   modifyAtMid = True,
   auxiliaryPetriNodeAbsent = Nothing,
-  avoidAddingSinksForFinals = Nothing,
-  noActivityFinalInForkBlocks = Just True,
+  presenceOfSinkTransitionsForFinals = Nothing,
+  withActivityFinalInForkBlocks = Just False,
   printSolution = True,
   extraText = Nothing
   }

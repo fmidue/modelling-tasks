@@ -24,13 +24,14 @@ task2023_39 = MatchPetriConfig {
     flowFinalNodes = 2,
     cycles = 1
     },
+  countOfPetriNodesBounds = (0, Nothing),
   maxInstances = Just 10000,
   hideBranchConditions = True,
   petriLayout = [Fdp],
   petriSvgHighlighting = True,
   auxiliaryPetriNodeAbsent = Nothing,
-  avoidAddingSinksForFinals = Nothing,
-  noActivityFinalInForkBlocks = Nothing,
+  presenceOfSinkTransitionsForFinals = Nothing,
+  withActivityFinalInForkBlocks = Nothing,
   printSolution = True,
   extraText = Nothing
   }
@@ -52,13 +53,14 @@ task2023_40 = MatchPetriConfig {
     flowFinalNodes = 3,
     cycles = 3
     },
+  countOfPetriNodesBounds = (0, Nothing),
   maxInstances = Just 2000,
   hideBranchConditions = True,
   petriLayout = [Fdp],
   petriSvgHighlighting = True,
   auxiliaryPetriNodeAbsent = Nothing,
-  avoidAddingSinksForFinals = Nothing,
-  noActivityFinalInForkBlocks = Nothing,
+  presenceOfSinkTransitionsForFinals = Nothing,
+  withActivityFinalInForkBlocks = Nothing,
   printSolution = True,
   extraText = Nothing
   }
@@ -96,13 +98,14 @@ task2024_70 = MatchPetriConfig {
     flowFinalNodes = 1,
     cycles = 0
     },
+  countOfPetriNodesBounds = (0, Nothing),
   maxInstances = Just 10000,
   hideBranchConditions = True,
   petriLayout = [Fdp],
   petriSvgHighlighting = True,
   auxiliaryPetriNodeAbsent = Just True,
-  avoidAddingSinksForFinals = Just False,
-  noActivityFinalInForkBlocks = Just True,
+  presenceOfSinkTransitionsForFinals = Just True,
+  withActivityFinalInForkBlocks = Just False,
   printSolution = True,
   extraText = Nothing
   }
@@ -124,13 +127,14 @@ task2024_71 = MatchPetriConfig {
     flowFinalNodes = 3,
     cycles = 3
     },
+  countOfPetriNodesBounds = (0, Nothing),
   maxInstances = Just 2000,
   hideBranchConditions = True,
   petriLayout = [Fdp],
   petriSvgHighlighting = True,
   auxiliaryPetriNodeAbsent = Just False,
-  avoidAddingSinksForFinals = Nothing,
-  noActivityFinalInForkBlocks = Just True,
+  presenceOfSinkTransitionsForFinals = Nothing,
+  withActivityFinalInForkBlocks = Just False,
   printSolution = True,
   extraText = Nothing
   }

@@ -5,8 +5,15 @@ import Modelling.CdOd.CdAndChanges.Instance (
   fromInstance,
   )
 
+import qualified Data.ByteString.Char8            as BS (
+  pack,
+  readFile,
+  writeFile,
+  unpack
+  )
 import Capabilities.Diagrams.IO         ()
 import Capabilities.Graphviz.IO         ()
+import Capabilities.WriteFile.IO        ()
 import Modelling.CdOd.Output            (drawCd, drawOdFromInstance)
 import Modelling.CdOd.Types             (defaultCdDrawSettings)
 import Modelling.Common                 (withUnitTestsUsingPath)
@@ -14,7 +21,6 @@ import Modelling.Common                 (withUnitTestsUsingPath)
 import Control.Monad                    (void)
 import Control.Monad.Except             (runExceptT)
 import Control.Monad.Random             (evalRandT)
-import Data.ByteString.Char8            (pack)
 import Data.GraphViz                    (DirType (Forward))
 import Test.Hspec                       (Spec)
 import Test.Similarity                  (Deviation (..), shouldReturnSimilar)
@@ -25,9 +31,9 @@ import Language.Alloy.Debug             (parseInstance)
 spec :: Spec
 spec = do
   withUnitTestsUsingPath "drawCd" (draws "class") dir "svg"
-    $ \file -> shouldReturnSimilar' (Just file) . drawCdInstance
+    $ \file -> shouldReturnSimilar' (Just file) . fmap BS.unpack . drawCdInstance
   withUnitTestsUsingPath "drawOd" (draws "object") dir "svg"
-    $ \file -> shouldReturnSimilar' (Just file) . drawOdInstance
+    $ \file -> shouldReturnSimilar' (Just file) . fmap BS.unpack . drawOdInstance
   where
     shouldReturnSimilar' f = shouldReturnSimilar
       f
@@ -36,14 +42,22 @@ spec = do
     draws what = "draws roughly the expected " ++ what ++ " diagram"
     dir = "test/unit/Modelling/CdOd/Output"
     drawCdInstance alloy = withTempFile $ \file -> do
-      Right alloyInstance <- runExceptT $ parseInstance (pack alloy)
+      Right alloyInstance <- runExceptT $ parseInstance (BS.pack alloy)
       Right cd <- return $ instanceClassDiagram <$> fromInstance alloyInstance
-      void $ drawCd defaultCdDrawSettings mempty cd file
-      readFile file
+      renderedCd <- drawCd defaultCdDrawSettings mempty cd
+      BS.writeFile file renderedCd
+      BS.readFile file
     drawOdInstance alloy = withTempFile $ \file -> do
-      Right alloyInstance <- runExceptT $ parseInstance (pack alloy)
+      Right alloyInstance <- runExceptT $ parseInstance (BS.pack alloy)
       let possibleLinks = map (: []) ['w'..'y']
       void $ flip evalRandT
         (mkStdGen 0)
-        $ drawOdFromInstance alloyInstance possibleLinks (Just 1) Forward True file
-      readFile file
+        $ drawOdFromInstance
+          alloyInstance
+          Nothing
+          possibleLinks
+          (Just 1)
+          Forward
+          True
+          file
+      BS.readFile file

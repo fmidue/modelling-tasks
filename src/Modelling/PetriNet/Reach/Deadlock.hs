@@ -14,14 +14,14 @@ based on file: collection/src/Petri/Deadlock.hs
 -}
 module Modelling.PetriNet.Reach.Deadlock where
 
+import qualified Control.Monad.Trans              as Monad (lift)
 import qualified Data.Map                         as M (fromList)
 import qualified Data.Set                         as S (fromList, toList)
 
 import Capabilities.Cache               (MonadCache)
 import Capabilities.Diagrams            (MonadDiagrams)
 import Capabilities.Graphviz            (MonadGraphviz)
-import Modelling.Auxiliary.Common       (oneOf)
-import Modelling.PetriNet.Reach.Draw    (drawToFile)
+import Modelling.PetriNet.Reach.Draw    (drawToFile, isPetriDrawable)
 import Modelling.PetriNet.Reach.Property (
   Property (Default),
   validate,
@@ -45,6 +45,7 @@ import Modelling.PetriNet.Reach.Type (
   TransitionsList (TransitionsList),
   bimapNet,
   example,
+  hasIsolatedNodes,
   )
 
 import Control.Applicative              (Alternative)
@@ -65,8 +66,9 @@ import Data.Bifunctor                   (Bifunctor (second))
 import Data.Either.Combinators          (whenRight)
 import Control.Functor.Trans            (FunctorTrans (lift))
 import Control.Monad                    (guard, replicateM)
-import Control.Monad.Catch              (MonadThrow)
-import Control.Monad.Random             (MonadRandom, evalRand, mkStdGen)
+import Control.Monad.Catch              (MonadCatch, MonadThrow)
+import Control.Monad.Extra              (findM, maybeM)
+import Control.Monad.Random             (MonadRandom, evalRandT, mkStdGen)
 import Data.GraphViz                    (GraphvizCommand (..))
 import Data.List                        (maximumBy)
 import Data.Maybe                       (fromMaybe)
@@ -96,7 +98,7 @@ deadlockTask
   -> DeadlockInstance s t
   -> LangM m
 deadlockTask path inst = do
-  lift (drawToFile True path (drawUsing inst) 0 (petriNet inst))
+  lift (drawToFile True path (drawUsing inst) (petriNet inst))
   $>>= \img -> reportReachFor
     img
     (noLongerThan inst)
@@ -112,7 +114,10 @@ deadlockSyntax
   => DeadlockInstance Place Transition
   -> [Transition]
   -> LangM m
-deadlockSyntax = transitionsValid . petriNet
+deadlockSyntax inst ts =
+  do transitionsValid (petriNet inst) ts
+     isNoLonger (noLongerThan inst) ts
+     pure ()
 
 deadlockEvaluation
   :: (
@@ -128,14 +133,13 @@ deadlockEvaluation
   -> [Transition]
   -> Rated m
 deadlockEvaluation path deadlock ts =
-  isNoLonger (noLongerThan deadlockInstance) ts
-  $>> executes path (drawUsing deadlockInstance) n (map ShowTransition ts)
+  executes path (drawUsing deadlockInstance) n (map ShowTransition ts)
   $>>= \eitherOutcome ->
     whenRight eitherOutcome (\outcome ->
       yesNo (null $ successors n outcome)
       $ translate $ do
           english "All transitions disabled in reached marking?"
-          german "Alle Transitionen deaktiviert in Zielmarkierung?"
+          german "Alle Transitionen deaktiviert in erreichter Markierung?"
       )
   $>> assertReachPoints
     aSolution
@@ -231,30 +235,47 @@ defaultDeadlockInstance = DeadlockInstance {
   withMinLengthHint = Just 6
   }
 
-generateDeadlock :: DeadlockConfig -> Int -> DeadlockInstance Place Transition
-generateDeadlock conf@DeadlockConfig {..} seed = DeadlockInstance {
-  drawUsing         = cmd,
-  minLength         = minTransitionLength,
-  noLongerThan      = rejectLongerThan,
-  petriNet          = petri,
-  showSolution      = printSolution,
-  withLengthHint    =
-    if showLengthHint then Just maxTransitionLength else Nothing,
-  withMinLengthHint =
-    if showMinLengthHint then Just minTransitionLength else Nothing
-  }
-  where
-    (petri, cmd) = tries 1000 conf seed
+checkDeadlockConfig :: DeadlockConfig -> Maybe String
+checkDeadlockConfig DeadlockConfig {..}
+  | rejectLongerThan == Just maxTransitionLength && showLengthHint
+  = Just "showLengthHint cannot be True when rejectLongerThan equals maxTransitionLength"
+  | otherwise = Nothing
 
-tries :: Int -> DeadlockConfig -> Int -> (Net Place Transition, GraphvizCommand)
+generateDeadlock
+  :: (MonadCatch m, MonadDiagrams m, MonadGraphviz m)
+  => DeadlockConfig
+  -> Int
+  -> m (DeadlockInstance Place Transition)
+generateDeadlock conf@DeadlockConfig {..} seed = do
+  (petri, cmd) <- tries 1000 conf seed
+  pure DeadlockInstance {
+    drawUsing         = cmd,
+    minLength         = minTransitionLength,
+    noLongerThan      = rejectLongerThan,
+    petriNet          = petri,
+    showSolution      = printSolution,
+    withLengthHint    =
+      if showLengthHint then Just maxTransitionLength else Nothing,
+    withMinLengthHint =
+      if showMinLengthHint then Just minTransitionLength else Nothing
+    }
+
+tries
+  :: (MonadCatch m, MonadDiagrams m, MonadGraphviz m)
+  => Int
+  -> DeadlockConfig
+  -> Int
+  -> m (Net Place Transition, GraphvizCommand)
 tries n conf seed = eval out
   where
-    eval f = evalRand f $ mkStdGen seed
+    eval f = evalRandT f $ mkStdGen seed
     out = do
       xs <- replicateM n $ try conf
       let (l, pn) = maximumBy (comparing fst) $ concat xs
       if l >= minTransitionLength conf
-        then (pn,) <$> oneOf (drawCommands conf)
+        then
+          maybeM out (pure . (pn,))
+          $ findM (Monad.lift . isPetriDrawable pn) $ drawCommands conf
         else out
 
 try :: MonadRandom m => DeadlockConfig -> m [(Int, Net Place Transition)]
@@ -266,6 +287,8 @@ try conf = do
       ts
       (Modelling.PetriNet.Reach.Deadlock.capacity conf)
   return $ do
+    -- Filter out nets with isolated nodes
+    guard $ not $ hasIsolatedNodes n
     let (no,yeah) = span (null . snd)
           $ take (maxTransitionLength conf + 1)
           $ zip [0 :: Int ..]

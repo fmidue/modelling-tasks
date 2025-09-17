@@ -21,13 +21,14 @@ HXT
 Hspec
 Leftrightarrow
 Lexer
-Linkname
+Linkbeschriftung
 Modellierung
 Multiplizitäten
 NTree
 Nachbereich
 Neato
 NOINLINE
+OVERLAPPABLE
 Perim
 Petrinetz
 Petrinetze
@@ -37,6 +38,7 @@ Programmierparadigmen
 QDiagram
 Rightarrow
 Sfdp
+Standalone
 Transitionsfolge
 UML
 Verzweigungs
@@ -46,6 +48,7 @@ WColor
 XNode
 apps
 automorphisms
+autotool
 basicstyle
 bigskip
 bigvee

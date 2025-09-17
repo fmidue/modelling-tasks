@@ -5,6 +5,7 @@ import Capabilities.Cache.IO            ()
 import Capabilities.Diagrams.IO         ()
 import Capabilities.Graphviz.IO         ()
 import Capabilities.PlantUml.IO         ()
+import Capabilities.WriteFile.IO        ()
 import Modelling.ActivityDiagram.SelectPetri (
   defaultSelectPetriConfig,
   selectPetri,
@@ -29,6 +30,6 @@ main = do
       selectPetriTask path task `withLang` English
       sub <- read <$> getLine
       selectPetriSyntax task sub `withLang` English
-      _ <- selectPetriEvaluation task sub `withLang` English
+      _ <- selectPetriEvaluation path task sub `withLang` English
       return ()
     _ -> error "usage: three parameters required: FilePath (Output Folder) Segment (Int) Seed (Int)"
