@@ -242,21 +242,21 @@ generateSequencesWithDuplication correctSequence ad =
       | action <- take 2 actions  -- Limit to avoid too many sequences
       , action `elem` correctSequence
       ]
-    
+
     -- Generate sequences by duplicating actions at various positions
     generateWithDuplication :: [String] -> Int -> [[String]]
     generateWithDuplication actions numDuplicates =
-      [ insertDuplicates actionSeq action numDuplicates 
+      [ insertDuplicates actionSeq action numDuplicates
       | actionSeq <- take 3 (permutations correctSequence)  -- Limit permutations
       , action <- take 2 actions  -- Limit actions to process
       , action `elem` actionSeq  -- Only duplicate actions that exist in correct sequence
       ]
-    
+
     -- Insert duplicates of an action at valid positions in the sequence
     insertDuplicates :: [String] -> String -> Int -> [String]
     insertDuplicates actionSeq action numDups =
       let positions = [idx | (idx, x) <- zip [0..] actionSeq, x == action]
-      in if null positions 
+      in if null positions
          then actionSeq
          else let pos = head positions
               in take (pos + 1) actionSeq ++ replicate numDups action ++ drop (pos + 1) actionSeq

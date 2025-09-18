@@ -7,7 +7,7 @@ import Modelling.ActivityDiagram.Config (
   defaultAdConfig,
   )
 import Modelling.ActivityDiagram.Datatype (
-  AdNode(..), 
+  AdNode(..),
   UMLActivityDiagram(..)
   )
 import Test.Hspec (Spec, describe, it, context, shouldBe, shouldSatisfy)
@@ -46,13 +46,13 @@ spec = do
           ],
           connections = []
         }
-    
+
     context "without action duplication requirement" $
       it "generates wrong sequences without duplicates" $ do
         let result = selectActionSequence 3 Nothing testDiagram
             hasNoDuplicates xs = length xs == length (nub xs)
         all hasNoDuplicates (wrongSequences result) `shouldBe` True
-    
+
     context "with action duplication requirement" $
       it "generates sequences with duplicated actions" $ do
         let result = selectActionSequence 5 (Just True) testDiagram
