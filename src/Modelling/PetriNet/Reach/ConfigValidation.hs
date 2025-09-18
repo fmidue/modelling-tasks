@@ -42,14 +42,14 @@ checkTransitionLengths minTransitionLength maxTransitionLength
   | otherwise = Nothing
 
 -- | Check consistency between rejectLongerThan and other length parameters
-checkRejectLongerThanConsistency :: Maybe Int -> Int -> Int -> Bool -> Maybe String
-checkRejectLongerThanConsistency rejectLongerThan minTransitionLength maxTransitionLength showLengthHint =
+checkRejectLongerThanConsistency :: Maybe Int -> Int -> Bool -> Maybe String
+checkRejectLongerThanConsistency rejectLongerThan maxTransitionLength showLengthHint =
   case rejectLongerThan of
     Just rejectLength
       | rejectLength <= 0 -> Just "rejectLongerThan must be positive when specified"
       | rejectLength < maxTransitionLength -> Just $
         "rejectLongerThan (" ++ show rejectLength ++ ") cannot be less than maxTransitionLength (" ++ show maxTransitionLength ++ ")"
-      | rejectLength == maxTransitionLength && showLengthHint -> Just "showLengthHint cannot be True when rejectLongerThan equals maxTransitionLength"
+      | rejectLength == maxTransitionLength && showLengthHint -> Just "showLengthHint == True does not make sense when rejectLongerThan equals maxTransitionLength"
       | otherwise -> Nothing
     Nothing -> Nothing
 
@@ -79,7 +79,7 @@ checkBasicPetriConfig
     <|> checkTransitionLengths minTransitionLength maxTransitionLength
     <|> checkRange "preconditionsRange" preconditionsRange
     <|> checkRange "postconditionsRange" postconditionsRange
-    <|> checkRejectLongerThanConsistency rejectLongerThan minTransitionLength maxTransitionLength showLengthHint
+    <|> checkRejectLongerThanConsistency rejectLongerThan maxTransitionLength showLengthHint
     <|> checkDrawCommands drawCommands
   where
     checkDrawCommands [] = Just "drawCommands cannot be empty"
