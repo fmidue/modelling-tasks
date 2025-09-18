@@ -96,11 +96,14 @@ import Modelling.PetriNet.Reach.Type (
   mark,
   )
 
-import Control.Applicative              (Alternative)
+import Control.Applicative              (Alternative, (<|>))
 import Control.Functor.Trans            (FunctorTrans (lift))
 import Control.Monad                    (forM, guard, when)
 import Control.Monad.Catch              (MonadCatch, MonadThrow)
 import Control.Monad.Extra              (findM, maybeM, whenJust)
+import Modelling.PetriNet.Reach.ConfigValidation (
+  checkBasicPetriConfig,
+  )
 import Control.OutputCapable.Blocks (
   ArticleToUse (IndefiniteArticle),
   GenericOutputCapable (assertion, code, image, indent, paragraph, text),
@@ -140,6 +143,9 @@ verifyReach inst = do
   let n = petriNet (netGoal inst)
   validate Default n
   validate Default $ n { start = goal (netGoal inst) }
+  assertion (showGoalNet inst || showPlaceNames inst) $ translate $ do
+    english "At least one of goal net or place names must be shown."
+    german "Mindestens eines von Zielnetz oder Plätze-Namen muss angezeigt werden."
   pure ()
 
 reachTask
@@ -159,29 +165,32 @@ reachTask
   -> LangM m
 reachTask path inst = do
   if showGoalNet inst
-    then (,True) . Left
-    <$> lift (drawToFile True path (drawUsing (netGoal inst)) (n { start = goal (netGoal inst) }))
-    else pure (Right $ show $ goal (netGoal inst), False)
-  $>>= \(g, withoutPlaceNames) ->
-    lift (drawToFile withoutPlaceNames path (drawUsing (netGoal inst)) n)
+    then Left
+    <$> lift (drawFileWithSettings (n { start = goal (netGoal inst) }))
+    else pure (Right $ show $ goal (netGoal inst))
+  $>>= \g ->
+    lift (drawFileWithSettings n)
   $>>= \img -> reportReachFor
     img
     (noLongerThan inst)
     (withLengthHint inst)
+    (minLength inst)
     (withMinLengthHint inst)
     (Just g)
   where
     n = petriNet (netGoal inst)
+    drawFileWithSettings = drawToFile (not $ showPlaceNames inst) path (drawUsing (netGoal inst))
 
 reportReachFor
   :: OutputCapable m
   => FilePath
   -> Maybe Int
   -> Maybe Int
-  -> Maybe Int
+  -> Int
+  -> Bool
   -> Maybe (Either FilePath String)
   -> LangM m
-reportReachFor img noLonger lengthHint minLengthHint maybeGoal = do
+reportReachFor img noLonger lengthHint minLength showMinLengthHint maybeGoal = do
   paragraph $ translate $ do
     english "For the Petri net"
     german "Gesucht ist für das Petrinetz"
@@ -202,9 +211,7 @@ reportReachFor img noLonger lengthHint minLengthHint maybeGoal = do
       german "Geben Sie Ihre Lösung als (beliebig kurze oder lange) Auflistung der folgenden Art an:"
     Just maxL ->
       let
-        isExactMatch = case minLengthHint of
-          Just minSteps -> maxL == minSteps
-          _ -> False
+        isExactMatch = showMinLengthHint && maxL == minLength
         (englishConstraint, germanConstraint) =
           if isExactMatch
           then ("has exactly", "genau")
@@ -231,17 +238,17 @@ reportReachFor img noLonger lengthHint minLengthHint maybeGoal = do
       st1, ", danach ", st2, ", und schließlich ", st3,
       " (in genau dieser Reihenfolge), die gesuchte Markierung erreicht wird."
       ]
-  case (lengthHint, minLengthHint) of
-    (Just maxSteps, Just minSteps) | maxSteps == minSteps -> paragraph $ translate $ do
+  case lengthHint of
+    Just maxSteps | showMinLengthHint && maxSteps == minLength -> paragraph $ translate $ do
       english [i|Hint: The shortest solutions have exactly #{maxSteps} steps.|]
       german [i|Hinweis: Die kürzesten Lösungen haben genau #{maxSteps} Schritte.|]
-    (Just maxSteps, _) -> paragraph $ translate $ do
+    Just maxSteps -> paragraph $ translate $ do
       english [i|Hint: There is a solution with not more than #{maxSteps} steps.|]
       german [i|Hinweis: Es gibt eine Lösung mit nicht mehr als #{maxSteps} Schritten.|]
-    _ -> pure ()
-  whenJust minLengthHint $ \count -> when (lengthHint /= Just count) $ paragraph $ translate $ do
-    english [i|Hint: There is no solution with less than #{count} steps.|]
-    german [i|Hinweis: Es gibt keine Lösung mit weniger als #{count} Schritten.|]
+    Nothing -> pure ()
+  when (showMinLengthHint && lengthHint /= Just minLength) $ paragraph $ translate $ do
+    english [i|Hint: There is no solution with less than #{minLength} steps.|]
+    german [i|Hinweis: Es gibt keine Lösung mit weniger als #{minLength} Schritten.|]
   hoveringInformation
   pure ()
 
@@ -381,9 +388,10 @@ data ReachInstance s t = ReachInstance {
   minLength         :: Int,
   noLongerThan      :: Maybe Int,
   showGoalNet       :: Bool,
+  showPlaceNames    :: Bool,
   showSolution      :: Bool,
   withLengthHint    :: Maybe Int,
-  withMinLengthHint :: Maybe Int
+  withMinLengthHint :: Bool
   } deriving (Generic, Read, Show, Typeable, Data)
 
 data NetGoal s t = NetGoal {
@@ -403,6 +411,7 @@ bimapReachInstance f g ReachInstance {..} = ReachInstance {
     minLength         = minLength,
     noLongerThan      = noLongerThan,
     showGoalNet       = showGoalNet,
+    showPlaceNames    = showPlaceNames,
     showSolution      = showSolution,
     withLengthHint    = withLengthHint,
     withMinLengthHint = withMinLengthHint
@@ -437,6 +446,7 @@ data ReachConfig = ReachConfig {
   showLengthHint      :: Bool,
   showMinLengthHint   :: Bool,
   showTargetNet       :: Bool,
+  showPlaceNamesInNet :: Bool,
   filterConfig        :: FilterConfig
   }
   deriving (Generic, Read, Show, Typeable)
@@ -470,6 +480,7 @@ defaultReachConfig = ReachConfig {
   showLengthHint      = True,
   showMinLengthHint   = True,
   showTargetNet       = True,
+  showPlaceNamesInNet = False,
   filterConfig        = defaultFilterConfig
   }
 
@@ -483,9 +494,10 @@ defaultReachInstance = ReachInstance {
   minLength         = 12,
   noLongerThan      = Nothing,
   showGoalNet       = True,
+  showPlaceNames    = False,
   showSolution      = False,
   withLengthHint    = Just 12,
-  withMinLengthHint = Nothing
+  withMinLengthHint = False
 }
 
 generateNetGoal
@@ -564,10 +576,21 @@ generateNetGoalWithFilter filterConfig config seed = do
         else return netGoal  -- found non-trivial solution
 
 checkReachConfig :: ReachConfig -> Maybe String
-checkReachConfig ReachConfig {..}
-  | rejectLongerThan == Just (maxTransitionLength netGoalConfig) && showLengthHint
-  = Just "showLengthHint cannot be True when rejectLongerThan equals maxTransitionLength"
-  | otherwise = Nothing
+checkReachConfig ReachConfig {..} =
+  checkBasicPetriConfig
+    (numPlaces netGoalConfig)
+    (numTransitions netGoalConfig)
+    (capacity netGoalConfig)
+    (minTransitionLength netGoalConfig)
+    (maxTransitionLength netGoalConfig)
+    (preconditionsRange netGoalConfig)
+    (postconditionsRange netGoalConfig)
+    (drawCommands netGoalConfig)
+    rejectLongerThan
+    showLengthHint
+  <|> if showTargetNet || showPlaceNamesInNet
+      then Nothing
+      else Just "At least one of showTargetNet or showPlaceNamesInNet must be True"
 
 generateReach
   :: (MonadCatch m, MonadDiagrams m, MonadGraphviz m)
@@ -581,9 +604,9 @@ generateReach ReachConfig {..} seed = do
     minLength         = minTransitionLength netGoalConfig,
     noLongerThan      = rejectLongerThan,
     showGoalNet       = showTargetNet,
+    showPlaceNames    = showPlaceNamesInNet,
     showSolution      = printSolution,
     withLengthHint    =
       if showLengthHint then Just $ maxTransitionLength netGoalConfig else Nothing,
-    withMinLengthHint =
-      if showMinLengthHint then Just $ minTransitionLength netGoalConfig else Nothing
+    withMinLengthHint = showMinLengthHint
     }

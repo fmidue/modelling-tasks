@@ -27,6 +27,7 @@ task2023_27 = ReachConfig {
   showLengthHint = True,
   showMinLengthHint = True,
   showTargetNet = True,
+  showPlaceNamesInNet = False,
   filterConfig = defaultFilterConfig
   }
 
@@ -50,6 +51,7 @@ task2023_28 = ReachConfig {
   showLengthHint = True,
   showMinLengthHint = True,
   showTargetNet = True,
+  showPlaceNamesInNet = False,
   filterConfig = defaultFilterConfig
   }
 
@@ -82,9 +84,10 @@ task2024_60 = ReachConfig {
     },
   printSolution = True,
   rejectLongerThan = Just 8,
-  showLengthHint = True,
+  showLengthHint = False,
   showMinLengthHint = True,
   showTargetNet = True,
+  showPlaceNamesInNet = False,
   filterConfig = defaultFilterConfig
   }
 
@@ -110,6 +113,7 @@ taskWithStrictFiltering = ReachConfig {
   showLengthHint = True,
   showMinLengthHint = True,
   showTargetNet = True,
+  showPlaceNamesInNet = True,
   filterConfig = FilterConfig {
     filterCyclicPatterns = True,         -- Reject [t1,t2,t3,t4,t1,t2,t3,t4]
     filterRepetitiveSubsequences = True, -- Reject [t4,t4,t4,t4,...]
@@ -140,6 +144,7 @@ taskWithoutFiltering = ReachConfig {
   showLengthHint = True,
   showMinLengthHint = True,
   showTargetNet = True,
+  showPlaceNamesInNet = True,
   filterConfig = FilterConfig {
     filterCyclicPatterns = False,
     filterRepetitiveSubsequences = False,
