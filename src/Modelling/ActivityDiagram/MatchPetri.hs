@@ -270,18 +270,19 @@ matchPetriSolution :: MatchPetriInstance -> MatchPetriSolution
 matchPetriSolution task = mapTypesToLabels $ petriNet task
 
 petriSolutionPairwiseDisjunct :: MatchPetriSolution -> Bool
-petriSolutionPairwiseDisjunct MatchPetriSolution{..} = and [ null (xs `intersect` ys) | xs <- allLists, ys <- allLists, xs /= ys ]
-  where allLists =
-          [ map snd actionNodes
-          , map snd objectNodes
-          , decisionNodes
-          , mergeNodes
-          , forks
-          , joins
-          , initialNodes
-          , activityFinalNodes
-          , flowFinalNodes
-          , auxiliaryPetriNodes]
+petriSolutionPairwiseDisjunct MatchPetriSolution{..} =
+  and [ null (xs `intersect` ys) | xs <- allLists, ys <- allLists, xs /= ys ] && length allLists == length (nubOrd allLists)
+    where allLists =
+            [ map snd actionNodes
+            , map snd objectNodes
+            , decisionNodes
+            , mergeNodes
+            , forks
+            , joins
+            , initialNodes
+            , activityFinalNodes
+            , flowFinalNodes
+            , auxiliaryPetriNodes]
 
 petriSolutionContainsPetriNodes :: MatchPetriSolution -> [PetriKey] -> Bool
 petriSolutionContainsPetriNodes MatchPetriSolution{..} = all ((`elem` solutionKeys) . petriKeyToIndex)
