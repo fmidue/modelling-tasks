@@ -20,7 +20,6 @@ module Modelling.ActivityDiagram.FindAuxiliaryPetriNodes (
   findAuxiliaryPetriNodesEvaluation,
   findAuxiliaryPetriNodesInitial,
   findAuxiliaryPetriNodesSolution,
-  findAuxiliaryPetriNodesSyntax,
   findAuxiliaryPetriNodesTask,
 ) where
 
@@ -249,16 +248,6 @@ findAuxiliaryPetriNodesInitial = FindAuxiliaryPetriNodesSolution {
   countOfAuxiliaryPlaces = 2,
   countOfAuxiliaryTransitions = 3
 }
-
-findAuxiliaryPetriNodesSyntax
-  :: OutputCapable m
-  => FindAuxiliaryPetriNodesInstance
-  -> FindAuxiliaryPetriNodesSolution
-  -> LangM m
-findAuxiliaryPetriNodesSyntax _ FindAuxiliaryPetriNodesSolution {..} = addPretext $ do
-  assertion (countOfAuxiliaryPlaces + countOfAuxiliaryTransitions < countOfPetriNodes) $ translate $ do
-    english "Petri net does not only consist of auxiliary places and transitions?"
-    german "Petrinetz besteht nicht nur aus Hilfsstellen und -transitionen?"
 
 findAuxiliaryPetriNodesEvaluation
   :: OutputCapable m
