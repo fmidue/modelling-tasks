@@ -255,7 +255,7 @@ generateSequencesWithDuplication correctSequence ad =
     -- Insert duplicates of an action at valid positions in the sequence
     insertDuplicates :: [String] -> String -> Int -> [String]
     insertDuplicates actionSeq action numDups =
-      let positions = [i | (i, x) <- zip [0..] actionSeq, x == action]
+      let positions = [j | (j, x) <- zip [0..] actionSeq, x == action]
       in if null positions
          then actionSeq
          else let pos = head positions
