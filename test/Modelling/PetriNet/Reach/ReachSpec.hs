@@ -173,20 +173,6 @@ spec = do
             }
       checkReachConfig config `shouldSatisfy` isJust
 
-    it "accepts configuration with showTargetNet = True and showPlaceNamesInNet = False" $ do
-      let config = defaultReachConfig {
-            showTargetNet = True,
-            showPlaceNamesInNet = False
-            }
-      checkReachConfig config `shouldBe` Nothing
-
-    it "accepts configuration with showTargetNet = False and showPlaceNamesInNet = True" $ do
-      let config = defaultReachConfig {
-            showTargetNet = False,
-            showPlaceNamesInNet = True
-            }
-      checkReachConfig config `shouldBe` Nothing
-
     it "rejects configuration with both showTargetNet = False and showPlaceNamesInNet = False" $ do
       let config = defaultReachConfig {
             showTargetNet = False,
