@@ -39,6 +39,7 @@ import Modelling.ActivityDiagram.Datatype (
   AdConnection (..),
   AdNode (..),
   UMLActivityDiagram (..),
+  isActionNode,
   )
 import Modelling.ActivityDiagram.Instance (parseInstance)
 import Modelling.ActivityDiagram.PlantUMLConverter (
@@ -103,6 +104,7 @@ data SelectASConfig = SelectASConfig {
   numberOfWrongAnswers :: Int,
   answerLength :: !(Int, Int),
   printSolution :: Bool,
+  requireActionDuplication :: Maybe Bool,
   extraText :: Maybe (Map Language String)
 } deriving (Generic, Read, Show)
 
@@ -121,6 +123,7 @@ defaultSelectASConfig = SelectASConfig {
   numberOfWrongAnswers = 2,
   answerLength = (5, 8),
   printSolution = False,
+  requireActionDuplication = Nothing,
   extraText = Nothing
 }
 
@@ -135,7 +138,8 @@ checkSelectASConfig' SelectASConfig {
     maxInstances,
     objectNodeOnEveryPath,
     numberOfWrongAnswers,
-    answerLength
+    answerLength,
+    requireActionDuplication
   }
   | Just instances <- maxInstances, instances < 1
     = Just "The parameter 'maxInstances' must either be set to a positive value or to Nothing"
@@ -150,6 +154,8 @@ checkSelectASConfig' SelectASConfig {
     The second value of parameter 'answerLength' should be greater or equal to
     its first value.
     |]
+  | requireActionDuplication == Just True && cycles adConfig == 0
+    = Just "Setting the parameter 'requireActionDuplication' to True requires at least 1 cycle in the diagram"
   | otherwise
     = Nothing
 
@@ -186,14 +192,16 @@ data SelectASSolution = SelectASSolution {
   wrongSequences :: [[String]]
 } deriving (Show, Eq)
 
-selectActionSequence :: Int -> UMLActivityDiagram -> SelectASSolution
-selectActionSequence numberOfWrongSequences ad =
+selectActionSequence :: Int -> Maybe Bool -> UMLActivityDiagram -> SelectASSolution
+selectActionSequence numberOfWrongSequences requireActionDuplication ad =
   let correctSequence = generateActionSequence ad
       wrongSequences =
         take numberOfWrongSequences $
         sortBy (compareDistToCorrect correctSequence) $
         filter (not . (`validActionSequence` ad)) $
-        permutations correctSequence
+        case requireActionDuplication of
+          Just True -> generateSequencesWithDuplication correctSequence ad
+          _ -> permutations correctSequence
   in SelectASSolution {correctSequence=correctSequence, wrongSequences=wrongSequences}
 
 asEditDistParams :: [String] -> Params String (String, Int, String) (Sum Int)
@@ -214,6 +222,44 @@ compareDistToCorrect correctSequence xs ys =
       getSum
       $ fst
       $ leastChanges (asEditDistParams correctSequence) (V.fromList correctSequence) (V.fromList zs)
+
+-- | Generate sequences with potential action duplication for cycles
+generateSequencesWithDuplication :: [String] -> UMLActivityDiagram -> [[String]]
+generateSequencesWithDuplication correctSequence ad =
+  let availableActions = map name $ filter isActionNode $ nodes ad
+      -- Generate sequences with guaranteed duplications first
+      duplicatedSequences = concatMap (generateGuaranteedDuplication availableActions) [1..2]
+      -- Generate sequences by inserting duplicated actions from cycles
+      moreDuplicatedSequences = concatMap (generateWithDuplication availableActions) [1..2]
+      -- Also include regular permutations for variety
+      permutedSequences = permutations correctSequence
+  in duplicatedSequences ++ moreDuplicatedSequences ++ permutedSequences
+  where
+    -- Generate sequences that are guaranteed to have duplications
+    generateGuaranteedDuplication :: [String] -> Int -> [[String]]
+    generateGuaranteedDuplication actions numDuplicates =
+      [ correctSequence ++ replicate numDuplicates action
+      | action <- take 2 actions  -- Limit to avoid too many sequences
+      , action `elem` correctSequence
+      ]
+    
+    -- Generate sequences by duplicating actions at various positions
+    generateWithDuplication :: [String] -> Int -> [[String]]
+    generateWithDuplication actions numDuplicates =
+      [ insertDuplicates actionSeq action numDuplicates 
+      | actionSeq <- take 3 (permutations correctSequence)  -- Limit permutations
+      , action <- take 2 actions  -- Limit actions to process
+      , action `elem` actionSeq  -- Only duplicate actions that exist in correct sequence
+      ]
+    
+    -- Insert duplicates of an action at valid positions in the sequence
+    insertDuplicates :: [String] -> String -> Int -> [String]
+    insertDuplicates actionSeq action numDups =
+      let positions = [idx | (idx, x) <- zip [0..] actionSeq, x == action]
+      in if null positions 
+         then actionSeq
+         else let pos = head positions
+              in take (pos + 1) actionSeq ++ replicate numDups action ++ drop (pos + 1) actionSeq
 
 selectASTask
   :: (MonadPlantUml m, MonadWriteFile m, OutputCapable m)
@@ -313,7 +359,7 @@ getSelectASTask config = do
   randomInstances <- shuffleM instances >>= mapM parseInstance
   ad <- mapM (fmap snd . shuffleAdNames) randomInstances
   validInstances <- firstJustM (\x -> do
-    actionSequences <- selectASSolutionToMap $ selectActionSequence (numberOfWrongAnswers config) x
+    actionSequences <- selectASSolutionToMap $ selectActionSequence (numberOfWrongAnswers config) (requireActionDuplication config) x
     let selectASInst = SelectASInstance {
           activityDiagram=x,
           actionSequences = actionSequences,
