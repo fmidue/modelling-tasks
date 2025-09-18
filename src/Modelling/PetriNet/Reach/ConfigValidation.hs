@@ -46,7 +46,7 @@ checkTransitionLengths minTransitionLength maxTransitionLength
 -- | Check that capacity is set to Unbounded
 checkCapacity :: Capacity s -> Maybe String
 checkCapacity Unbounded = Nothing
-checkCapacity _ = Just "capacity must be set to Unbounded"
+checkCapacity _ = Just "Other choices for 'capacity' than 'Unbounded' are not currently supported for this task type."
 
 -- | Check consistency between rejectLongerThan and other length parameters
 checkRejectLongerThanConsistency :: Maybe Int -> Int -> Bool -> Maybe String
