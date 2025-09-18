@@ -24,7 +24,7 @@ task2023_39 = MatchPetriConfig {
     flowFinalNodes = 2,
     cycles = 1
     },
-  countOfPetriNodesBounds = (22, Just 29),
+  countOfPetriNodesBounds = (22, Just 30),
   maxInstances = Just 10000,
   hideBranchConditions = True,
   petriLayout = [Fdp],
@@ -53,7 +53,7 @@ task2023_40 = MatchPetriConfig {
     flowFinalNodes = 3,
     cycles = 3
     },
-  countOfPetriNodesBounds = (28, Just 33),
+  countOfPetriNodesBounds = (28, Just 34),
   maxInstances = Just 2000,
   hideBranchConditions = True,
   petriLayout = [Fdp],
