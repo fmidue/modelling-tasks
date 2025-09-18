@@ -31,11 +31,10 @@ module Modelling.CdOd.DifferentNames (
 import qualified Data.Bimap                       as BM (
   filter,
   fromList,
-  keysR,
+  keys,
   lookup,
   lookupR,
   toAscList,
-  twist,
   )
 import qualified Data.Map                         as M (
   fromAscList,
@@ -159,6 +158,7 @@ import Data.List (
   group,
   intercalate,
   intersect,
+  partition,
   permutations,
   singleton,
   sort,
@@ -549,7 +549,7 @@ defaultDifferentNamesInstance = DifferentNamesInstance {
     classNames = ["C", "B", "D", "A"],
     relationships = [
       Composition {
-        compositionName = "y",
+        compositionName = "x",
         compositionPart = LimitedLinking {
           linking = "D",
           limits = (2, Nothing)
@@ -564,7 +564,7 @@ defaultDifferentNamesInstance = DifferentNamesInstance {
         superClass = "C"
         },
       Association {
-        associationName = "z",
+        associationName = "y",
         associationFrom = LimitedLinking {
           linking = "C",
           limits = (0, Nothing)
@@ -575,7 +575,7 @@ defaultDifferentNamesInstance = DifferentNamesInstance {
           }
         },
       Aggregation {
-        aggregationName = "x",
+        aggregationName = "z",
         aggregationPart = LimitedLinking {
           linking = "B",
           limits = (0, Just 2)
@@ -598,15 +598,15 @@ defaultDifferentNamesInstance = DifferentNamesInstance {
       Object {isAnonymous = True, objectName = "a",  objectClass = "A"}
       ],
     links = [
-      Link {linkLabel = "3", linkFrom = "d1", linkTo = "b"},
+      Link {linkLabel = "2", linkFrom = "d1", linkTo = "b"},
       Link {linkLabel = "1", linkFrom = "b",  linkTo = "a"},
-      Link {linkLabel = "3", linkFrom = "d",  linkTo = "b"},
-      Link {linkLabel = "2", linkFrom = "c",  linkTo = "d1"},
-      Link {linkLabel = "2", linkFrom = "c1", linkTo = "d1"}
+      Link {linkLabel = "2", linkFrom = "d",  linkTo = "b"},
+      Link {linkLabel = "3", linkFrom = "c",  linkTo = "d1"},
+      Link {linkLabel = "3", linkFrom = "c1", linkTo = "d1"}
       ]
     },
   showSolution = False,
-  mapping = toNameMapping $ BM.fromList [("x", "1"), ("y", "3"), ("z", "2")],
+  mapping = toNameMapping $ BM.fromList [("x", "2"), ("y", "3"), ("z", "1")],
   linkShuffling = ConsecutiveNumbers,
   taskText = defaultDifferentNamesTaskText,
   addText = Nothing
@@ -630,10 +630,11 @@ getDifferentNamesTask tryNext DifferentNamesConfig {..} cd = do
         runCmd = "cd0 and "
           ++ conjunctNegationsOf (map (("cd" ++) . show . fst) cds')
           ++ overlappingConstraints
+        names = classNames cd
         onlyCd0 = createRunCommand
           runCmd
           Nothing
-          (length $ classNames cd)
+          (length names)
           objectConfig
           (concatMap relationships cds)
         partsList' = foldr mergeParts parts0 partsList
@@ -645,21 +646,24 @@ getDifferentNamesTask tryNext DifferentNamesConfig {..} cd = do
     continueWithHead instances' $ \od1 -> do
       labels' <- shuffleM labels
       used <- usedLabels labels od1
-      let bm  = BM.fromList $ zip (map (:[]) ['z', 'y' ..]) labels'
-          cd1 = renameEdges (BM.twist bm) cd
-          bm' = BM.filter (const (`elem` used)) bm
-          isCompleteMapping = BM.keysR bm == sort used
+      let usedFirst = uncurry (++) $ partition (`elem` used) labels'
+          bm  = BM.fromList $ zip usedFirst (map show [1 :: Int ..])
+          bm' = BM.filter (const . (`elem` used)) bm
+          isCompleteMapping = BM.keys bm == sort used
       if maybe
         (const True)
         (bool not id)
         (usesEveryRelationshipName objectProperties)
         isCompleteMapping
         then do
+        let keepClassNames = BM.fromList $ zip names names
+            renameOd = renameObjectsWithClassesAndLinksInOd keepClassNames bm
         od1' <- either error id
           <$> runExceptT (alloyInstanceToOd Nothing labels od1)
-        od1'' <- anonymiseObjects (anonymousObjectProportion objectProperties) od1'
+        od1'' <- renameOd od1'
+          >>= anonymiseObjects (anonymousObjectProportion objectProperties)
         return $ DifferentNamesInstance {
-              cDiagram  = cd1,
+              cDiagram  = cd,
               cdDrawSettings = CdDrawSettings {
                 omittedDefaults = omittedDefaultMultiplicities,
                 printNames = True,
@@ -723,14 +727,11 @@ instance RandomiseNames DifferentNamesInstance where
   hasRandomisableNames DifferentNamesInstance {..} =
     isObjectDiagramRandomisable oDiagram
 
-  randomiseNames inst@DifferentNamesInstance {..} = do
+  randomiseNames inst = do
     let (names, nonInheritances, lNames) = classNonInheritanceAndLinkNames inst
-        links = case linkShuffling of
-          ConsecutiveNumbers -> take (length lNames) (map show ([1..] :: [Int]))
-          WithAdditionalNames _ -> lNames
     names'  <- shuffleM names
     nonInheritances' <- shuffleM nonInheritances
-    links' <- shuffleM links
+    links' <- shuffleM lNames
     renameInstance inst names' nonInheritances' links'
 
 instance RandomiseLayout DifferentNamesInstance where
