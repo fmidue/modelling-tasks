@@ -118,10 +118,10 @@ reachTask
 reachTask path inst = do
   if showGoalNet inst
     then Left
-    <$> lift (drawToFile (not $ showPlaceNames inst) path (drawUsing (netGoal inst)) (n { start = goal (netGoal inst) }))
+    <$> lift (drawFileWithSettings (n { start = goal (netGoal inst) }))
     else pure (Right $ show $ goal (netGoal inst))
   $>>= \g ->
-    lift (drawToFile (not $ showPlaceNames inst) path (drawUsing (netGoal inst)) n)
+    lift (drawFileWithSettings n)
   $>>= \img -> reportReachFor
     img
     (noLongerThan inst)
@@ -131,6 +131,7 @@ reachTask path inst = do
     (Just g)
   where
     n = petriNet (netGoal inst)
+    drawFileWithSettings = drawToFile (not $ showPlaceNames inst) path (drawUsing (netGoal inst))
 
 reportReachFor
   :: OutputCapable m
@@ -410,7 +411,7 @@ defaultReachConfig = ReachConfig {
   showLengthHint      = True,
   showMinLengthHint   = True,
   showTargetNet       = True,
-  showPlaceNamesInNet = True
+  showPlaceNamesInNet = False
   }
 
 defaultReachInstance :: ReachInstance Place Transition
@@ -423,7 +424,7 @@ defaultReachInstance = ReachInstance {
   minLength         = 12,
   noLongerThan      = Nothing,
   showGoalNet       = True,
-  showPlaceNames    = True,
+  showPlaceNames    = False,
   showSolution      = False,
   withLengthHint    = Just 12,
   withMinLengthHint = False

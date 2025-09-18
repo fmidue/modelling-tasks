@@ -229,7 +229,7 @@ defaultDeadlockConfig =
   rejectLongerThan    = Nothing,
   showLengthHint      = True,
   showMinLengthHint   = True,
-  showPlaceNamesInNet = True
+  showPlaceNamesInNet = False
   }
 
 defaultDeadlockInstance :: DeadlockInstance Place Transition
@@ -238,7 +238,7 @@ defaultDeadlockInstance = DeadlockInstance {
   minLength         = 6,
   noLongerThan      = Nothing,
   petriNet          = fst example,
-  showPlaceNames    = True,
+  showPlaceNames    = False,
   showSolution      = False,
   withLengthHint    = Just 9,
   withMinLengthHint = True

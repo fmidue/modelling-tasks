@@ -26,7 +26,7 @@ task2023_27 = ReachConfig {
   showLengthHint = True,
   showMinLengthHint = True,
   showTargetNet = True,
-  showPlaceNamesInNet = True
+  showPlaceNamesInNet = False
   }
 
 {-|
@@ -49,7 +49,7 @@ task2023_28 = ReachConfig {
   showLengthHint = True,
   showMinLengthHint = True,
   showTargetNet = True,
-  showPlaceNamesInNet = True
+  showPlaceNamesInNet = False
   }
 
 {-|
@@ -84,5 +84,5 @@ task2024_60 = ReachConfig {
   showLengthHint = False,
   showMinLengthHint = True,
   showTargetNet = True,
-  showPlaceNamesInNet = True
+  showPlaceNamesInNet = False
   }
