@@ -20,9 +20,12 @@ import Modelling.PetriNet.Reach.Type (
   Net (transitions),
   State,
   Transition (..),
+  Capacity(..),
+  Place(..),
   )
 
 import Data.Maybe                        (isJust)
+import qualified Data.Map                 as M
 import Data.Set                         (Set)
 import Test.Hspec
 import Test.QuickCheck                  (Testable (property))
@@ -143,6 +146,30 @@ spec = do
               },
             rejectLongerThan = Just 8,
             showLengthHint = False
+            }
+      checkReachConfig config `shouldSatisfy` isJust
+
+    it "accepts Unbounded capacity" $ do
+      let config = defaultReachConfig {
+            netGoalConfig = (netGoalConfig defaultReachConfig) {
+              capacity = Unbounded
+              }
+            }
+      checkReachConfig config `shouldBe` Nothing
+
+    it "rejects AllBounded capacity" $ do
+      let config = defaultReachConfig {
+            netGoalConfig = (netGoalConfig defaultReachConfig) {
+              capacity = AllBounded 5
+              }
+            }
+      checkReachConfig config `shouldSatisfy` isJust
+
+    it "rejects Bounded capacity" $ do
+      let config = defaultReachConfig {
+            netGoalConfig = (netGoalConfig defaultReachConfig) {
+              capacity = Bounded (M.fromList [(Place 1, 3), (Place 2, 5)])
+              }
             }
       checkReachConfig config `shouldSatisfy` isJust
 

@@ -10,9 +10,10 @@ import Modelling.PetriNet.Reach.Deadlock (
   checkDeadlockConfig,
   )
 import Modelling.PetriNet.Reach.Step    (successors)
-import Modelling.PetriNet.Reach.Type    (Net (transitions))
+import Modelling.PetriNet.Reach.Type    (Net (transitions), Capacity(..), Place(..))
 
 import Data.Maybe                       (isJust)
+import qualified Data.Map                 as M
 import Modelling.PetriNet.Reach.ReachSpec (
   hasMinTransitionLength,
   )
@@ -99,5 +100,23 @@ spec = do
             minTransitionLength = 5,
             rejectLongerThan = Just 8,
             showLengthHint = False
+            }
+      checkDeadlockConfig config `shouldSatisfy` isJust
+
+    it "accepts Unbounded capacity" $ do
+      let config = defaultDeadlockConfig {
+            capacity = Unbounded
+            }
+      checkDeadlockConfig config `shouldBe` Nothing
+
+    it "rejects AllBounded capacity" $ do
+      let config = defaultDeadlockConfig {
+            capacity = AllBounded 5
+            }
+      checkDeadlockConfig config `shouldSatisfy` isJust
+
+    it "rejects Bounded capacity" $ do
+      let config = defaultDeadlockConfig {
+            capacity = Bounded (M.fromList [(Place 1, 3), (Place 2, 5)])
             }
       checkDeadlockConfig config `shouldSatisfy` isJust

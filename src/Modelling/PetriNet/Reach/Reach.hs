@@ -472,6 +472,7 @@ checkReachConfig ReachConfig {..} =
   checkBasicPetriConfig
     (numPlaces netGoalConfig)
     (numTransitions netGoalConfig)
+    (capacity netGoalConfig)
     (minTransitionLength netGoalConfig)
     (maxTransitionLength netGoalConfig)
     (preconditionsRange netGoalConfig)

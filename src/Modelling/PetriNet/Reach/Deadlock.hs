@@ -243,6 +243,7 @@ checkDeadlockConfig DeadlockConfig {..} =
   checkBasicPetriConfig
     numPlaces
     numTransitions
+    capacity
     minTransitionLength
     maxTransitionLength
     preconditionsRange

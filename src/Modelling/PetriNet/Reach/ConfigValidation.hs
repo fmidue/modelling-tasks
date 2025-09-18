@@ -4,11 +4,13 @@ module Modelling.PetriNet.Reach.ConfigValidation (
   checkRange,
   checkPetriNetSizes,
   checkTransitionLengths,
-  checkRejectLongerThanConsistency
+  checkRejectLongerThanConsistency,
+  checkCapacity
 ) where
 
 import Control.Applicative (Alternative ((<|>)))
 import Data.GraphViz.Commands (GraphvizCommand)
+import Modelling.PetriNet.Reach.Type (Capacity(..))
 
 -- | Check that a range (low, high) is valid
 checkRange
@@ -41,6 +43,11 @@ checkTransitionLengths minTransitionLength maxTransitionLength
     "minTransitionLength (" ++ show minTransitionLength ++ ") cannot be greater than maxTransitionLength (" ++ show maxTransitionLength ++ ")"
   | otherwise = Nothing
 
+-- | Check that capacity is set to Unbounded
+checkCapacity :: Capacity s -> Maybe String
+checkCapacity Unbounded = Nothing
+checkCapacity _ = Just "capacity must be set to Unbounded"
+
 -- | Check consistency between rejectLongerThan and other length parameters
 checkRejectLongerThanConsistency :: Maybe Int -> Int -> Bool -> Maybe String
 checkRejectLongerThanConsistency rejectLongerThan maxTransitionLength showLengthHint =
@@ -53,10 +60,11 @@ checkRejectLongerThanConsistency rejectLongerThan maxTransitionLength showLength
       | otherwise -> Nothing
     Nothing -> Nothing
 
--- | Check basic Petri net configuration including sizes, lengths, ranges and draw commands
+-- | Check basic Petri net configuration including sizes, lengths, ranges, capacity and draw commands
 checkBasicPetriConfig
   :: Int                      -- ^ numPlaces
   -> Int                      -- ^ numTransitions
+  -> Capacity s               -- ^ capacity
   -> Int                      -- ^ minTransitionLength
   -> Int                      -- ^ maxTransitionLength
   -> (Int, Maybe Int)         -- ^ preconditionsRange
@@ -68,6 +76,7 @@ checkBasicPetriConfig
 checkBasicPetriConfig
   numPlaces
   numTransitions
+  capacity
   minTransitionLength
   maxTransitionLength
   preconditionsRange
@@ -76,6 +85,7 @@ checkBasicPetriConfig
   rejectLongerThan
   showLengthHint =
     checkPetriNetSizes numPlaces numTransitions
+    <|> checkCapacity capacity
     <|> checkTransitionLengths minTransitionLength maxTransitionLength
     <|> checkRange "preconditionsRange" preconditionsRange
     <|> checkRange "postconditionsRange" postconditionsRange
