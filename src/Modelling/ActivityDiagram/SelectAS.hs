@@ -194,7 +194,10 @@ data SelectASSolution = SelectASSolution {
 
 selectActionSequence :: Int -> Maybe Bool -> UMLActivityDiagram -> SelectASSolution
 selectActionSequence numberOfWrongSequences requireActionDuplication ad =
-  let correctSequence = generateActionSequence ad
+  let baseCorrectSequence = generateActionSequence ad
+      correctSequence = case requireActionDuplication of
+        Just True -> generateCorrectSequenceWithDuplication baseCorrectSequence ad
+        _ -> baseCorrectSequence
       wrongSequences =
         take numberOfWrongSequences $
         sortBy (compareDistToCorrect correctSequence) $
@@ -222,6 +225,29 @@ compareDistToCorrect correctSequence xs ys =
       getSum
       $ fst
       $ leastChanges (asEditDistParams correctSequence) (V.fromList correctSequence) (V.fromList zs)
+
+-- | Generate a correct sequence with action duplication when cycles exist
+generateCorrectSequenceWithDuplication :: [String] -> UMLActivityDiagram -> [String]
+generateCorrectSequenceWithDuplication baseSequence ad =
+  let availableActions = map name $ filter isActionNode $ nodes ad
+      -- Try to find a longer valid sequence that includes action duplication
+      candidateSequences = 
+        [ extendedSeq 
+        | action <- availableActions
+        , action `elem` baseSequence  -- Only duplicate actions that exist
+        , pos <- [0..length baseSequence - 1]
+        , let extendedSeq = insertActionAt pos action baseSequence
+        , validActionSequence extendedSeq ad  -- Must be valid
+        ]
+  in case candidateSequences of
+       (validExtended:_) -> validExtended  -- Return first valid extended sequence
+       [] -> baseSequence  -- Fall back to base sequence if no valid extension found
+  where
+    -- Insert an action at a specific position in the sequence
+    insertActionAt :: Int -> String -> [String] -> [String]
+    insertActionAt pos action actionSeq = 
+      let (before, after) = splitAt pos actionSeq
+      in before ++ [action] ++ after
 
 -- | Generate sequences with potential action duplication for cycles
 generateSequencesWithDuplication :: [String] -> UMLActivityDiagram -> [[String]]
