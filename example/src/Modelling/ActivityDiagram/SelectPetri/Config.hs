@@ -98,7 +98,7 @@ task2024_44 = SelectPetriConfig {
     flowFinalNodes = 2,
     cycles = 1
     },
-  countOfPetriNodesBounds = (17, Just 19),
+  countOfPetriNodesBounds = (17, Just 20),
   maxInstances = Just 2000,
   hideNodeNames = True,
   hideBranchConditions = True,
