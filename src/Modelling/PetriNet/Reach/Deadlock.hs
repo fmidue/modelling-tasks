@@ -26,6 +26,9 @@ import Modelling.PetriNet.Reach.Property (
   Property (Default),
   validate,
   )
+import Modelling.PetriNet.Reach.ConfigValidation (
+  checkBasicPetriConfig,
+  )
 import Modelling.PetriNet.Reach.Reach   (
   assertReachPoints,
   isNoLonger,
@@ -103,6 +106,7 @@ deadlockTask path inst = do
     img
     (noLongerThan inst)
     (withLengthHint inst)
+    (minLength inst)
     (withMinLengthHint inst)
     Nothing
 
@@ -168,7 +172,7 @@ data DeadlockInstance s t = DeadlockInstance {
   showPlaceNames    :: Bool,
   showSolution      :: Bool,
   withLengthHint    :: Maybe Int,
-  withMinLengthHint :: Maybe Int
+  withMinLengthHint :: Bool
   } deriving (Generic, Read, Show, Typeable)
 
 bimapDeadlockInstance
@@ -237,14 +241,22 @@ defaultDeadlockInstance = DeadlockInstance {
   showPlaceNames    = True,
   showSolution      = False,
   withLengthHint    = Just 9,
-  withMinLengthHint = Just 6
+  withMinLengthHint = True
   }
 
 checkDeadlockConfig :: DeadlockConfig -> Maybe String
-checkDeadlockConfig DeadlockConfig {..}
-  | rejectLongerThan == Just maxTransitionLength && showLengthHint
-  = Just "showLengthHint cannot be True when rejectLongerThan equals maxTransitionLength"
-  | otherwise = Nothing
+checkDeadlockConfig DeadlockConfig {..} =
+  checkBasicPetriConfig
+    numPlaces
+    numTransitions
+    capacity
+    minTransitionLength
+    maxTransitionLength
+    preconditionsRange
+    postconditionsRange
+    drawCommands
+    rejectLongerThan
+    showLengthHint
 
 generateDeadlock
   :: (MonadCatch m, MonadDiagrams m, MonadGraphviz m)
@@ -262,8 +274,7 @@ generateDeadlock conf@DeadlockConfig {..} seed = do
     showSolution      = printSolution,
     withLengthHint    =
       if showLengthHint then Just maxTransitionLength else Nothing,
-    withMinLengthHint =
-      if showMinLengthHint then Just minTransitionLength else Nothing
+    withMinLengthHint = showMinLengthHint
     }
 
 tries
