@@ -48,7 +48,7 @@ import Modelling.PetriNet.Reach.Type (
   mark,
   )
 
-import Control.Applicative              (Alternative)
+import Control.Applicative              (Alternative, (<|>))
 import Control.Functor.Trans            (FunctorTrans (lift))
 import Control.Monad                    (forM, guard, when)
 import Control.Monad.Catch              (MonadCatch, MonadThrow)
@@ -489,6 +489,9 @@ checkReachConfig ReachConfig {..} =
     (drawCommands netGoalConfig)
     rejectLongerThan
     showLengthHint
+  <|> if showTargetNet || showPlaceNamesInNet
+      then Nothing
+      else Just "At least one of showTargetNet or showPlaceNamesInNet must be True"
 
 generateReach
   :: (MonadCatch m, MonadDiagrams m, MonadGraphviz m)
