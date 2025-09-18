@@ -231,8 +231,8 @@ generateCorrectSequenceWithDuplication :: [String] -> UMLActivityDiagram -> [Str
 generateCorrectSequenceWithDuplication baseSequence ad =
   let availableActions = map name $ filter isActionNode $ nodes ad
       -- Try to find a longer valid sequence that includes action duplication
-      candidateSequences = 
-        [ extendedSeq 
+      candidateSequences =
+        [ extendedSeq
         | action <- availableActions
         , action `elem` baseSequence  -- Only duplicate actions that exist
         , pos <- [0..length baseSequence - 1]
@@ -245,7 +245,7 @@ generateCorrectSequenceWithDuplication baseSequence ad =
   where
     -- Insert an action at a specific position in the sequence
     insertActionAt :: Int -> String -> [String] -> [String]
-    insertActionAt pos action actionSeq = 
+    insertActionAt pos action actionSeq =
       let (before, after) = splitAt pos actionSeq
       in before ++ [action] ++ after
 
