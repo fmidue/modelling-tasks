@@ -322,7 +322,7 @@ netGoalSolution netGoal = reverse $ snd $ head $ concatMap
 -- | Get multiple solutions for a NetGoal to check for trivial permutations
 -- This implementation finds a few alternative paths to balance permutation checking with performance
 netGoalAllSolutions :: Ord s => NetGoal s t -> [[t]]
-netGoalAllSolutions netGoal = 
+netGoalAllSolutions netGoal =
   let goalState = goal netGoal
       -- Get the standard solution first
       standardSolution = netGoalSolution netGoal
