@@ -58,7 +58,7 @@ module Modelling.PetriNet.Reach.Reach (
 ) where
 
 import qualified Control.Monad.Trans              as Monad (lift)
-import qualified Data.Set                         as S (toList)
+import qualified Data.Set                         as S (fromList, member, toList, union, empty)
 
 import Capabilities.Cache               (MonadCache)
 import Capabilities.Diagrams            (MonadDiagrams)
@@ -79,7 +79,7 @@ import Modelling.PetriNet.Reach.Property (
   validate,
   )
 import Modelling.PetriNet.Reach.Roll    (netLimits)
-import Modelling.PetriNet.Reach.Step    (executes, levels, levels')
+import Modelling.PetriNet.Reach.Step    (executes, levels, levels', successors)
 import Modelling.PetriNet.Reach.Type (
   Capacity (Unbounded),
   Net (start, transitions),
@@ -320,12 +320,32 @@ netGoalSolution netGoal = reverse $ snd $ head $ concatMap
   $ levels' $ petriNet netGoal
 
 -- | Get multiple solutions for a NetGoal to check for trivial permutations
--- This implementation limits the search to avoid exponential explosion
+-- This implementation finds a few alternative paths to balance permutation checking with performance
 netGoalAllSolutions :: Ord s => NetGoal s t -> [[t]]
 netGoalAllSolutions netGoal = 
-  -- For now, just return the single solution to avoid performance issues
-  -- TODO: Implement efficient multi-solution detection
-  [netGoalSolution netGoal]
+  let goalState = goal netGoal
+      -- Get the standard solution first
+      standardSolution = netGoalSolution netGoal
+      -- Try to find a few more alternative paths (limit to 3 total)
+      alternativePaths = take 2 $ drop 1 $ concatMap (filter $ (== goalState) . fst) $ levelsWithFewAlternatives $ petriNet netGoal
+      allSolutions = standardSolution : map (reverse . snd) alternativePaths
+  in allSolutions
+
+-- | Find a few alternative paths without exponential explosion
+levelsWithFewAlternatives :: Ord s => Net s t -> [[(State s, [t])]]
+levelsWithFewAlternatives n =
+  let f _    [] = []
+      f _    xs | length xs > 20 = []  -- Hard limit to prevent explosion
+      f done xs =
+        let done' = S.union done $ S.fromList $ map fst xs
+            -- Very conservative: keep at most 2 paths per state
+            next = take 15 [ (y, t:p) |
+                (x,p) <- xs,
+                (t,y) <- successors n x,
+                not $ S.member y done'
+              ]
+         in xs : f done' next
+  in f S.empty [(start n, [])]
 
 
 -- | Get a non-trivial solution for a NetGoal, filtering out trivial patterns
