@@ -86,12 +86,12 @@ hasRepetitiveSubsequence minLength xs
 
 -- | Check if sequence starts with repetitive elements
 hasRepetitivePrefix :: Eq a => Int -> [a] -> Bool
-hasRepetitivePrefix minLength xs =
-  any (\prefixLength ->
-    let prefix = take prefixLength xs
-        firstElem = head xs
-    in length prefix >= minLength && all (== firstElem) prefix
-  ) [minLength..length xs]
+hasRepetitivePrefix minLength xs
+  | length xs < minLength = False
+  | otherwise =
+      let prefix = take minLength xs
+          firstElem = head xs
+      in all (== firstElem) prefix
 
 -- | Check if sequence ends with repetitive elements
 hasRepetitiveSuffix :: Eq a => Int -> [a] -> Bool

@@ -29,9 +29,9 @@ module Modelling.PetriNet.Reach.Reach (
 
   -- * Solutions
   netGoalSolution,
+  netGoalAllSolutions,
   netGoalSolutionFiltered,
   reachSolution,
-  reachSolutionFiltered,
 
   -- * Task creation
   reachTask,
@@ -58,7 +58,7 @@ module Modelling.PetriNet.Reach.Reach (
 ) where
 
 import qualified Control.Monad.Trans              as Monad (lift)
-import qualified Data.Set                         as S (toList)
+import qualified Data.Set                         as S (fromList, member, toList, union, empty)
 
 import Capabilities.Cache               (MonadCache)
 import Capabilities.Diagrams            (MonadDiagrams)
@@ -79,7 +79,7 @@ import Modelling.PetriNet.Reach.Property (
   validate,
   )
 import Modelling.PetriNet.Reach.Roll    (netLimits)
-import Modelling.PetriNet.Reach.Step    (executes, levels, levels')
+import Modelling.PetriNet.Reach.Step    (executes, levels, levels', successors)
 import Modelling.PetriNet.Reach.Type (
   Capacity (Unbounded),
   Net (start, transitions),
@@ -319,6 +319,27 @@ netGoalSolution netGoal = reverse $ snd $ head $ concatMap
   (filter $ (== goal netGoal) . fst)
   $ levels' $ petriNet netGoal
 
+-- | Get all solutions for a NetGoal (all transition sequences that reach the goal)
+-- This version preserves all paths by not removing duplicates when multiple sequences reach the same state
+netGoalAllSolutions :: Ord s => NetGoal s t -> [[t]]
+netGoalAllSolutions netGoal = map (reverse . snd) $ concatMap
+  (filter $ (== goal netGoal) . fst)
+  $ levelsWithAllPaths $ petriNet netGoal
+
+-- | Like levels' but preserves all paths to each state (doesn't remove duplicates)
+levelsWithAllPaths :: Ord s => Net s t -> [[(State s, [t])]]
+levelsWithAllPaths n =
+  let f _    [] = []
+      f done xs =
+        let done' = S.union done $ S.fromList $ map fst xs
+            next = [ (y, t:p) |
+                (x,p) <- xs,
+                (t,y) <- successors n x,
+                not $ S.member y done'
+              ]
+         in xs : f done' next
+  in f S.empty [(start n, [])]
+
 -- | Get a non-trivial solution for a NetGoal, filtering out trivial patterns
 netGoalSolutionFiltered :: (Eq t, Ord s) => FilterConfig -> NetGoal s t -> [t]
 netGoalSolutionFiltered filterConfig netGoal =
@@ -337,10 +358,6 @@ netGoalSolutionFiltered filterConfig netGoal =
 
 reachSolution :: Ord s => ReachInstance s t -> [t]
 reachSolution inst = netGoalSolution (netGoal inst)
-
--- | Get a non-trivial solution for a ReachInstance
-reachSolutionFiltered :: (Eq t, Ord s) => FilterConfig -> ReachInstance s t -> [t]
-reachSolutionFiltered filterConfig inst = netGoalSolutionFiltered filterConfig (netGoal inst)
 
 assertReachPoints
   :: OutputCapable m
@@ -570,10 +587,11 @@ generateNetGoalWithFilter filterConfig config seed = do
     attemptGeneration _ cfg s 0 = generateNetGoalUnfiltered cfg s  -- fallback to unfiltered
     attemptGeneration filterConf cfg s attemptsLeft = do
       netGoal <- generateNetGoalUnfiltered cfg s
-      let solution = netGoalSolution netGoal
-      if isTrivialSequence filterConf solution
+      let allSolutions = netGoalAllSolutions netGoal
+      -- Check if ANY solution is trivial - if so, reject this netGoal
+      if any (isTrivialSequence filterConf) allSolutions
         then attemptGeneration filterConf cfg (s + 1) (attemptsLeft - 1)  -- try again with different seed
-        else return netGoal  -- found non-trivial solution
+        else return netGoal  -- found netGoal where no solution is trivial
 
 checkReachConfig :: ReachConfig -> Maybe String
 checkReachConfig ReachConfig {..} =
