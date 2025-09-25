@@ -117,7 +117,7 @@ import Modelling.Types (
 
 import Control.Applicative              (Alternative ((<|>)))
 import Control.Monad.Catch              (MonadCatch, MonadThrow, throwM)
-import Control.Monad.Extra              (whenJust)
+import Control.Monad.Extra              (when, whenJust)
 import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
   GenericOutputCapable (..),
@@ -137,8 +137,10 @@ import Control.OutputCapable.Blocks.Generic.Type (
   GenericOutput (Code, Paragraph, Special, Translated),
   )
 import Control.OutputCapable.Blocks.Type (
+  Output,
   SpecialOutput,
   specialToOutputCapable,
+  toOutputCapable,
   )
 import Control.Monad.Random (
   MonadRandom,
@@ -194,6 +196,7 @@ data DifferentNamesInstance = DifferentNamesInstance {
     mapping  :: NameMapping,
     linkShuffling :: ShufflingOption String,
     taskText :: !DifferentNamesTaskText,
+    inputHelp :: Bool,
     addText :: Maybe (Map Language String)
   } deriving (Eq, Generic, Read, Show)
 
@@ -236,6 +239,7 @@ data DifferentNamesConfig
     -- | Obvious means here that each individual relationship to link mapping
     -- can be made without considering other relationships.
     withObviousMapping :: !(Maybe Bool),
+    printInputHelp   :: Bool,
     extraText :: Maybe (Map Language String)
   } deriving (Generic, Read, Show)
 
@@ -302,6 +306,7 @@ defaultDifferentNamesConfig = DifferentNamesConfig {
     withObviousMapping = Nothing,
     maxInstances     = Just 200,
     timeout          = Nothing,
+    printInputHelp   = True,
     extraText        = Nothing
   }
 
@@ -346,6 +351,8 @@ toTaskText
   -> LangM m
 toTaskText path task = do
   specialToOutputCapable (toTaskSpecificText path task) (taskText task)
+  when (inputHelp task) $
+    toOutputCapable [inputHintText]
   extra $ addText task
   pure ()
 
@@ -402,12 +409,23 @@ defaultDifferentNamesTaskText = [
     english "and the following object diagram (which conforms to it):"
     german "und das folgende (dazu passende) Objektdiagramm:",
   Special GivenOd,
+  Paragraph $ singleton $ Translated $ translations $ do
+    english [iii|
+      Which relationship in the class diagram (CD) corresponds
+      to which of the links in the object diagram (OD)?
+      |]
+    german [iii|
+      Welche Beziehung im Klassendiagramm (CD)
+      entspricht welchen Links im Objektdiagramm (OD)?
+      |],
+  Special MappingAdvice
+  ]
+
+inputHintText :: Output
+inputHintText =
   Paragraph [
     Translated $ translations $ do
       english [iii|
-        Which relationship in the class diagram (CD) corresponds
-        to which of the links in the object diagram (OD)?
-        \n
         State your answer by giving a mapping of
         relationships in the CD to links in the OD.
         \n
@@ -415,9 +433,6 @@ defaultDifferentNamesTaskText = [
         b in the CD corresponds to y in the OD, write the mapping as:
         |]
       german [iii|
-        Welche Beziehung im Klassendiagramm (CD)
-        entspricht welchen Links im Objektdiagramm (OD)?
-        \n
         Geben Sie Ihre Antwort als eine Zuordnung von
         Beziehungen im CD zu Links im OD an.
         \n
@@ -425,9 +440,7 @@ defaultDifferentNamesTaskText = [
         zu y im OD korrespondieren, schreiben Sie die Zuordnung als:
         |],
     Code . uniform . show $ mappingShow differentNamesInitial
-    ],
-  Special MappingAdvice
-  ]
+    ]
 
 differentNamesInitial :: [(Name, Name)]
 differentNamesInitial = map (bimap Name Name) [("a", "x"), ("b", "y")]
@@ -606,6 +619,7 @@ defaultDifferentNamesInstance = DifferentNamesInstance {
   mapping = toNameMapping $ BM.fromList [("a", "y"), ("b", "x"), ("c", "z")],
   linkShuffling = ConsecutiveLetters,
   taskText = defaultDifferentNamesTaskText,
+  inputHelp = True,
   addText = Nothing
   }
 
@@ -667,6 +681,7 @@ getDifferentNamesTask tryNext DifferentNamesConfig {..} cd = do
               mapping   = toNameMapping bm',
               linkShuffling = ConsecutiveLetters,
               taskText = defaultDifferentNamesTaskText,
+              inputHelp = printInputHelp,
               addText = extraText
               }
         else tryNext
@@ -742,6 +757,7 @@ instance RandomiseLayout DifferentNamesInstance where
       mapping = mapping,
       linkShuffling = linkShuffling,
       taskText = taskText,
+      inputHelp = inputHelp,
       addText = addText
       }
 
@@ -777,5 +793,6 @@ renameInstance inst@DifferentNamesInstance {..} names' nonInheritances' linkNs' 
     mapping   = toNameMapping bm',
     linkShuffling = shuffling,
     taskText = taskText,
+    inputHelp = inputHelp,
     addText = addText
     }
