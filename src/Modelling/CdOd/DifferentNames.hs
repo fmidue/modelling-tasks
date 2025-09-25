@@ -117,7 +117,7 @@ import Modelling.Types (
 
 import Control.Applicative              (Alternative ((<|>)))
 import Control.Monad.Catch              (MonadCatch, MonadThrow, throwM)
-import Control.Monad.Extra              (whenJust)
+import Control.Monad.Extra              (when, whenJust)
 import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
   GenericOutputCapable (..),
@@ -137,8 +137,10 @@ import Control.OutputCapable.Blocks.Generic.Type (
   GenericOutput (Code, Paragraph, Special, Translated),
   )
 import Control.OutputCapable.Blocks.Type (
+  Output,
   SpecialOutput,
   specialToOutputCapable,
+  toOutputCapable,
   )
 import Control.Monad.Random (
   MonadRandom,
@@ -323,11 +325,12 @@ data DifferentNamesTaskTextElement
 
 differentNamesTask
   :: (MonadCache m, MonadDiagrams m, MonadGraphviz m, MonadThrow m, OutputCapable m)
-  => FilePath
+  => Bool
+  -> FilePath
   -> DifferentNamesInstance
   -> LangM m
-differentNamesTask path task = do
-  toTaskText path task
+differentNamesTask inputHelp path task = do
+  toTaskText inputHelp path task
   paragraph simplifiedInformation
   paragraph directionsAdvice
   paragraph hoveringInformation
@@ -341,11 +344,14 @@ toTaskText
     MonadThrow m,
     OutputCapable m
     )
-  => FilePath
+  => Bool
+  -> FilePath
   -> DifferentNamesInstance
   -> LangM m
-toTaskText path task = do
+toTaskText inputHelp path task = do
   specialToOutputCapable (toTaskSpecificText path task) (taskText task)
+  when inputHelp $
+    toOutputCapable [inputHintText]
   extra $ addText task
   pure ()
 
@@ -402,12 +408,23 @@ defaultDifferentNamesTaskText = [
     english "and the following object diagram (which conforms to it):"
     german "und das folgende (dazu passende) Objektdiagramm:",
   Special GivenOd,
+  Paragraph $ singleton $ Translated $ translations $ do
+    english [iii|
+      Which relationship in the class diagram (CD) corresponds
+      to which of the links in the object diagram (OD)?
+      |]
+    german [iii|
+      Welche Beziehung im Klassendiagramm (CD)
+      entspricht welchen Links im Objektdiagramm (OD)?
+      |],
+  Special MappingAdvice
+  ]
+
+inputHintText :: Output
+inputHintText =
   Paragraph [
     Translated $ translations $ do
       english [iii|
-        Which relationship in the class diagram (CD) corresponds
-        to which of the links in the object diagram (OD)?
-        \n
         State your answer by giving a mapping of
         relationships in the CD to links in the OD.
         \n
@@ -415,9 +432,6 @@ defaultDifferentNamesTaskText = [
         b in the CD corresponds to y in the OD, write the mapping as:
         |]
       german [iii|
-        Welche Beziehung im Klassendiagramm (CD)
-        entspricht welchen Links im Objektdiagramm (OD)?
-        \n
         Geben Sie Ihre Antwort als eine Zuordnung von
         Beziehungen im CD zu Links im OD an.
         \n
@@ -425,9 +439,7 @@ defaultDifferentNamesTaskText = [
         zu y im OD korrespondieren, schreiben Sie die Zuordnung als:
         |],
     Code . uniform . show $ mappingShow differentNamesInitial
-    ],
-  Special MappingAdvice
-  ]
+    ]
 
 differentNamesInitial :: [(Name, Name)]
 differentNamesInitial = map (bimap Name Name) [("a", "x"), ("b", "y")]
