@@ -23,18 +23,19 @@ module Modelling.CdOd.DifferentNames (
   differentNamesSyntax,
   differentNamesTask,
   getDifferentNamesTask,
+  mappingAdvice,
   mappingShow,
   renameInstance,
+  toTaskSpecificText,
   ) where
 
 import qualified Data.Bimap                       as BM (
   filter,
   fromList,
-  keysR,
+  keys,
   lookup,
   lookupR,
   toAscList,
-  twist,
   )
 import qualified Data.Map                         as M (
   fromAscList,
@@ -89,6 +90,7 @@ import Modelling.CdOd.Types (
   anonymiseObjects,
   associationNames,
   checkCdDrawSettings,
+  checkClassConfigAndObjectProperties,
   checkClassConfigWithProperties,
   checkObjectDiagram,
   checkObjectProperties,
@@ -99,7 +101,7 @@ import Modelling.CdOd.Types (
   defaultProperties,
   fromClassDiagram,
   isObjectDiagramRandomisable,
-  linkNames,
+  linkLabels,
   relationshipName,
   renameObjectsWithClassesAndLinksInOd,
   renameClassesAndRelationships,
@@ -159,6 +161,7 @@ import Data.List (
   group,
   intercalate,
   intersect,
+  partition,
   permutations,
   singleton,
   sort,
@@ -184,7 +187,7 @@ import Language.Alloy.Call (
 import System.Random.Shuffle            (shuffleM)
 
 data ShufflingOption a =
-    ConsecutiveLetters
+    ConsecutiveNumbers
   | WithAdditionalNames [a]
   deriving (Eq, Generic, Foldable, Functor, Read, Show, Traversable)
 
@@ -224,7 +227,7 @@ checkDifferentNamesInstance DifferentNamesInstance {..}
   <|> checkCdDrawSettings cdDrawSettings
   where
     associations = associationNames cDiagram
-    links = linkNames oDiagram
+    links = linkLabels oDiagram
 
 data DifferentNamesConfig
   = DifferentNamesConfig {
@@ -273,6 +276,7 @@ checkDifferentNamesConfig DifferentNamesConfig {..}
       |]
   | otherwise = checkClassConfigWithProperties classConfig defaultProperties
     <|> checkObjectProperties objectProperties
+    <|> checkClassConfigAndObjectProperties classConfig objectProperties
     <|> checkOmittedDefaultMultiplicities omittedDefaultMultiplicities
   where
     different (_, Nothing) = True
@@ -356,6 +360,31 @@ toTaskText path task = do
   extra $ addText task
   pure ()
 
+mappingAdvice :: OutputCapable m => LangM m
+mappingAdvice = do
+  paragraph $ translate $ do
+    english [iii|
+      Please note: Links are already grouped correctly and fully,
+      i.e., all links with the same label (and only links with the same label!)
+      in the OD correspond to exactly the same relationship in the CD.
+      |]
+    german [iii|
+      Bitte beachten Sie: Links sind bereits vollständig und korrekt gruppiert,
+      d.h., alle Links mit der selben Beschriftung
+      (and auch nur Links mit der selben Beschriftung!)
+      im OD entsprechen genau der selben Beziehung im CD.
+      |]
+  paragraph $ translate $ do
+    english [iii|
+      Thus, no link label or relationship name should occur
+      more than once in your mapping.
+      |]
+    german [iii|
+      Deshalb sollte keine Linkbeschriftung oder Beziehungsname
+      mehr als einmal in Ihrer Zuordnung auftreten.
+      |]
+  pure ()
+
 toTaskSpecificText
   :: (
     MonadCache m,
@@ -373,29 +402,7 @@ toTaskSpecificText path DifferentNamesInstance {..} = \case
     paragraph $ image $=<< cacheCd cdDrawSettings mempty cd path
   GivenOd -> paragraph $ image $=<<
     cacheOd oDiagram Forward True path
-  MappingAdvice -> do
-    paragraph $ translate $ do
-      english [iii|
-        Please note: Links are already grouped correctly and fully,
-        i.e., all links with the same name (and only links with the same name!)
-        in the OD correspond to exactly the same relationship name in the CD.
-        |]
-      german [iii|
-        Bitte beachten Sie: Links sind bereits vollständig und korrekt gruppiert,
-        d.h., alle Links mit dem selben Namen
-        (and auch nur Links mit dem selben Namen!)
-        im OD entsprechen genau dem selben Beziehungsnamen im CD.
-        |]
-    paragraph $ translate $ do
-      english [iii|
-        Thus, no relationship or link name should occur
-        more than once in your mapping.
-        |]
-      german [iii|
-        Deshalb sollte kein Link- oder Beziehungsname
-        mehr als einmal in Ihrer Zuordnung auftreten.
-        |]
-    pure ()
+  MappingAdvice -> mappingAdvice
   where
     cd = fromClassDiagram cDiagram
 
@@ -403,7 +410,7 @@ defaultDifferentNamesTaskText :: DifferentNamesTaskText
 defaultDifferentNamesTaskText = [
   Paragraph $ singleton $ Translated $ translations $ do
     english "Consider the following (valid) class diagram:"
-    german "Betrachten Sie folgendes (valide) Klassendiagramm:",
+    german "Betrachten Sie das folgende (gültige) Klassendiagramm:",
   Special GivenCd,
   Paragraph $ singleton $ Translated $ translations $ do
     english "and the following object diagram (which conforms to it):"
@@ -429,21 +436,21 @@ inputHintText =
         State your answer by giving a mapping of
         relationships in the CD to links in the OD.
         \n
-        To state that a in the CD corresponds to x in the OD and
-        b in the CD corresponds to y in the OD, write the mapping as:
+        To state that x in the CD corresponds to 1 in the OD and
+        y in the CD corresponds to 2 in the OD, write the mapping as:
         |]
       german [iii|
         Geben Sie Ihre Antwort als eine Zuordnung von
         Beziehungen im CD zu Links im OD an.
         \n
-        Um anzugeben, dass a im CD zu x im OD und b im CD
-        zu y im OD korrespondieren, schreiben Sie die Zuordnung als:
+        Um anzugeben, dass x im CD zu 1 im OD und y im CD
+        zu 2 im OD korrespondieren, schreiben Sie die Zuordnung als:
         |],
     Code . uniform . show $ mappingShow differentNamesInitial
     ]
 
 differentNamesInitial :: [(Name, Name)]
-differentNamesInitial = map (bimap Name Name) [("a", "x"), ("b", "y")]
+differentNamesInitial = map (bimap Name Name) [("x", "1"), ("y", "2")]
 
 differentNamesSyntax
   :: OutputCapable m
@@ -473,14 +480,14 @@ differentNamesSyntax DifferentNamesInstance {..} cs = addPretext $ do
   case allMappingValues of
     (x:_):_ -> refuse $ paragraph $ translate $ do
       let y = ShowName x
-      english [i|The identifier '#{y}' appears twice within the given mappings.|]
+      english [i|The identifier '#{y}' appears twice within the provided mappings.|]
       german [i|
         Der Bezeichner '#{y}' existiert doppelt in den angegebenen Zuordnungen.
         |]
     _ -> pure ()
   pure ()
   where
-    links = linkNames oDiagram
+    links = linkLabels oDiagram
     sortPair (x, y) = if x <= y then (x, y) else (y, x)
     choices = nubOrdOn sortPair cs
     associations = associationNames cDiagram
@@ -559,7 +566,7 @@ defaultDifferentNamesInstance = DifferentNamesInstance {
     classNames = ["C", "B", "D", "A"],
     relationships = [
       Composition {
-        compositionName = "b",
+        compositionName = "x",
         compositionPart = LimitedLinking {
           linking = "D",
           limits = (2, Nothing)
@@ -574,7 +581,7 @@ defaultDifferentNamesInstance = DifferentNamesInstance {
         superClass = "C"
         },
       Association {
-        associationName = "a",
+        associationName = "y",
         associationFrom = LimitedLinking {
           linking = "C",
           limits = (0, Nothing)
@@ -585,7 +592,7 @@ defaultDifferentNamesInstance = DifferentNamesInstance {
           }
         },
       Aggregation {
-        aggregationName = "c",
+        aggregationName = "z",
         aggregationPart = LimitedLinking {
           linking = "B",
           limits = (0, Just 2)
@@ -608,16 +615,16 @@ defaultDifferentNamesInstance = DifferentNamesInstance {
       Object {isAnonymous = True, objectName = "a",  objectClass = "A"}
       ],
     links = [
-      Link {linkName = "x", linkFrom = "d1", linkTo = "b"},
-      Link {linkName = "z", linkFrom = "b",  linkTo = "a"},
-      Link {linkName = "x", linkFrom = "d",  linkTo = "b"},
-      Link {linkName = "y", linkFrom = "c",  linkTo = "d1"},
-      Link {linkName = "y", linkFrom = "c1", linkTo = "d1"}
+      Link {linkLabel = "2", linkFrom = "d1", linkTo = "b"},
+      Link {linkLabel = "1", linkFrom = "b",  linkTo = "a"},
+      Link {linkLabel = "2", linkFrom = "d",  linkTo = "b"},
+      Link {linkLabel = "3", linkFrom = "c",  linkTo = "d1"},
+      Link {linkLabel = "3", linkFrom = "c1", linkTo = "d1"}
       ]
     },
   showSolution = False,
-  mapping = toNameMapping $ BM.fromList [("a", "y"), ("b", "x"), ("c", "z")],
-  linkShuffling = ConsecutiveLetters,
+  mapping = toNameMapping $ BM.fromList [("x", "2"), ("y", "3"), ("z", "1")],
+  linkShuffling = ConsecutiveNumbers,
   taskText = defaultDifferentNamesTaskText,
   inputHelp = True,
   addText = Nothing
@@ -641,10 +648,11 @@ getDifferentNamesTask tryNext DifferentNamesConfig {..} cd = do
         runCmd = "cd0 and "
           ++ conjunctNegationsOf (map (("cd" ++) . show . fst) cds')
           ++ overlappingConstraints
+        names = classNames cd
         onlyCd0 = createRunCommand
           runCmd
           Nothing
-          (length $ classNames cd)
+          (length names)
           objectConfig
           (concatMap relationships cds)
         partsList' = foldr mergeParts parts0 partsList
@@ -656,21 +664,24 @@ getDifferentNamesTask tryNext DifferentNamesConfig {..} cd = do
     continueWithHead instances' $ \od1 -> do
       labels' <- shuffleM labels
       used <- usedLabels labels od1
-      let bm  = BM.fromList $ zip (map (:[]) ['a', 'b' ..]) labels'
-          cd1 = renameEdges (BM.twist bm) cd
-          bm' = BM.filter (const (`elem` used)) bm
-          isCompleteMapping = BM.keysR bm == sort used
+      let usedFirst = uncurry (++) $ partition (`elem` used) labels'
+          bm  = BM.fromList $ zip usedFirst (map show [1 :: Int ..])
+          bm' = BM.filter (const . (`elem` used)) bm
+          isCompleteMapping = BM.keys bm == sort used
       if maybe
         (const True)
         (bool not id)
         (usesEveryRelationshipName objectProperties)
         isCompleteMapping
         then do
+        let keepClassNames = BM.fromList $ zip names names
+            renameOd = renameObjectsWithClassesAndLinksInOd keepClassNames bm
         od1' <- either error id
           <$> runExceptT (alloyInstanceToOd Nothing labels od1)
-        od1'' <- anonymiseObjects (anonymousObjectProportion objectProperties) od1'
+        od1'' <- renameOd od1'
+          >>= anonymiseObjects (anonymousObjectProportion objectProperties)
         return $ DifferentNamesInstance {
-              cDiagram  = cd1,
+              cDiagram  = cd,
               cdDrawSettings = CdDrawSettings {
                 omittedDefaults = omittedDefaultMultiplicities,
                 printNames = True,
@@ -679,7 +690,7 @@ getDifferentNamesTask tryNext DifferentNamesConfig {..} cd = do
               oDiagram  = od1'',
               showSolution = printSolution,
               mapping   = toNameMapping bm',
-              linkShuffling = ConsecutiveLetters,
+              linkShuffling = ConsecutiveNumbers,
               taskText = defaultDifferentNamesTaskText,
               inputHelp = printInputHelp,
               addText = extraText
@@ -726,23 +737,20 @@ classNonInheritanceAndLinkNames DifferentNamesInstance {..} =
   let names = classNames cDiagram
       nonInheritances = associationNames cDiagram
       additional = case linkShuffling of
-        ConsecutiveLetters -> []
+        ConsecutiveNumbers -> []
         WithAdditionalNames xs -> xs
-      links = linkNames oDiagram ++ additional
+      links = linkLabels oDiagram ++ additional
   in (names, nonInheritances, links)
 
 instance RandomiseNames DifferentNamesInstance where
   hasRandomisableNames DifferentNamesInstance {..} =
     isObjectDiagramRandomisable oDiagram
 
-  randomiseNames inst@DifferentNamesInstance {..} = do
+  randomiseNames inst = do
     let (names, nonInheritances, lNames) = classNonInheritanceAndLinkNames inst
-        links = case linkShuffling of
-          ConsecutiveLetters -> take (length lNames) (map (:[]) ['z', 'y' ..])
-          WithAdditionalNames _ -> lNames
     names'  <- shuffleM names
     nonInheritances' <- shuffleM nonInheritances
-    links' <- shuffleM links
+    links' <- shuffleM lNames
     renameInstance inst names' nonInheritances' links'
 
 instance RandomiseLayout DifferentNamesInstance where

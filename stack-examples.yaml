@@ -5,15 +5,16 @@ packages:
   - example
 flags:
   modelling-tasks:
-    alloy-use-sat4j: false
     quick-testing: true
+  autotool-capabilities:
+    alloy-use-sat4j: false
 extra-deps:
   - git: https://github.com/fmidue/output-blocks.git
-    commit: e97c5f06a17c5b99f0bed2a733bfbf974304adf3
+    commit: af1ac8d1f62cb9f739919de1e9bc7989a2c61c95
     subdirs:
       - output-blocks
   - git: https://github.com/fmidue/autotool-capabilities.git
-    commit: fa712df18cba66ce45acfbd3c2a5fbf7ba756dbb
+    commit: ab7bff15b0666c49c8854671468232c9755659b8
     subdirs:
       - autotool-capabilities
       - autotool-capabilities-io-instances

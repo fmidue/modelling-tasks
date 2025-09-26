@@ -1,6 +1,7 @@
 {-# LANGUAGE ApplicativeDo #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE TypeApplications #-}
 
 {-|
 Provides the ability to render Petri nets.
@@ -10,13 +11,14 @@ module Modelling.PetriNet.Diagram (
   drawNet,
   getDefaultNet,
   getNet,
+  isNetDrawable,
   ) where
 
 import qualified Diagrams.TwoD.GraphViz           as GV (getGraph)
 import qualified Data.Map                         as M (foldlWithKey, lookupMin)
 
 import Capabilities.Cache               (MonadCache, cache, short)
-import Capabilities.Diagrams            (MonadDiagrams (lin, writeSvg))
+import Capabilities.Diagrams            (MonadDiagrams (lin, renderDiagram))
 import Capabilities.Graphviz            (MonadGraphviz (layoutGraph))
 import Modelling.Auxiliary.Common       (Object)
 import Modelling.Auxiliary.Diagrams (
@@ -35,9 +37,15 @@ import Modelling.PetriNet.Types (
   Net (traverseNet, nodes),
   )
 
-import Control.Monad.Catch              (MonadThrow (throwM), Exception)
+import Control.Monad.Catch (
+  Exception,
+  MonadCatch,
+  MonadThrow (throwM),
+  handle,
+  )
 import Data.Graph.Inductive             (Gr)
 import Data.GraphViz                    (AttributeNode, AttributeEdge)
+import Data.GraphViz.Exception          (GraphvizException)
 import Data.List                        (foldl')
 import Data.Data (
   Data,
@@ -75,9 +83,9 @@ cacheNet
   -- ^ how to draw the graph
   -> m FilePath
 cacheNet path pl drawSettings@DrawSettings {..} =
-  cache path ext prefix pl $ \svg pl' -> do
+  cache path ext prefix pl $ \pl' -> do
     dia <- drawNet pl' drawSettings
-    writeSvg svg dia
+    renderDiagram dia
   where
     prefix =
       "petri-"
@@ -118,6 +126,23 @@ drawNet pl drawSettings@DrawSettings {..} = do
   graph <- layoutGraph withGraphvizCommand gr
   preparedFont <- lin
   return $ drawGraph drawSettings preparedFont graph
+
+{-|
+Attempts to draw the net.
+As Graphviz might fail to layout the net,
+this function indicates such failure by returning 'False' if that is the case
+or 'True' in case of success.
+-}
+isNetDrawable
+  :: (MonadCatch m, MonadDiagrams m, MonadGraphviz m, Net p n)
+  => p n String
+  -- ^ the net to attempt to draw
+  -> DrawSettings
+  -- ^ settings to use
+  -> m Bool
+isNetDrawable pl =
+  handle (const (pure False) . id @GraphvizException)
+  . (>> pure True) . drawNet pl
 
 getNet
   :: (MonadThrow m, Net p n, Traversable t)
