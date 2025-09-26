@@ -53,6 +53,7 @@ import Modelling.Auxiliary.Common (
 import Modelling.Auxiliary.Output (
   addPretext,
   directionsAdvice,
+  extra,
   hoveringInformation,
   simplifiedInformation,
   uniform,
@@ -120,7 +121,7 @@ import Modelling.Types (
 
 import Control.Applicative              (Alternative ((<|>)))
 import Control.Exception                (Exception)
-import Control.Monad                    ((<=<))
+import Control.Monad                    ((<=<), when)
 import Control.Monad.Catch              (MonadCatch, MonadThrow, throwM)
 #if __GLASGOW_HASKELL__ < 808
 import Control.Monad.Fail               (MonadFail)
@@ -143,8 +144,10 @@ import Control.OutputCapable.Blocks.Generic.Type (
   GenericOutput (Code, Paragraph, Special, Translated),
   )
 import Control.OutputCapable.Blocks.Type (
+  Output,
   SpecialOutput,
   specialToOutputCapable,
+  toOutputCapable,
   )
 import Control.Monad.Random (
   MonadRandom,
@@ -281,11 +284,12 @@ matchCdOdTask
     MonadThrow m,
     OutputCapable m
     )
-  => FilePath
+  => Bool
+  -> FilePath
   -> MatchCdOdInstance
   -> LangM m
-matchCdOdTask path task = do
-  toTaskText path task
+matchCdOdTask inputHelp path task = do
+  toTaskText inputHelp path task
   paragraph simplifiedInformation
   paragraph directionsAdvice
   paragraph hoveringInformation
@@ -299,11 +303,16 @@ toTaskText
     MonadThrow m,
     OutputCapable m
     )
-  => FilePath
+  => Bool
+  -> FilePath
   -> MatchCdOdInstance
   -> LangM m
-toTaskText path task =
+toTaskText inputHelp path task = do
   specialToOutputCapable (toTaskSpecificText path task) (taskText task)
+  when inputHelp $
+    toOutputCapable inputHelpText
+  extra $ addText task
+  pure ()
 
 toTaskSpecificText
   :: (
@@ -344,7 +353,11 @@ defaultMatchCdOdTaskText = [
       Ein Objektdiagramm kann zu keinem,
       einem oder beiden Klassendiagrammen passen.
       |],
-  Special GivenOds,
+  Special GivenOds
+  ]
+
+inputHelpText :: [Output]
+inputHelpText = [
   Paragraph [
     Translated $ translations $ do
       english [iii|
