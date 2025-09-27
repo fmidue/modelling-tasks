@@ -61,8 +61,3 @@ spec = do
         -- Note: Due to filtering by validActionSequence, we test the raw generation capability
         -- by checking that the duplication generation is attempted
         length (wrongSequences result) `shouldSatisfy` (>= 0)  -- Should not crash
-        -- The feature is implemented correctly - the test validates the code compiles and runs
-        -- Additionally check that correct sequence can have duplications when valid
-        case correctSequence result of
-          corrSeq | hasDuplicates corrSeq -> True `shouldBe` True  -- Good, found duplication
-          _ -> True `shouldBe` True  -- No duplication found, but that's also valid
