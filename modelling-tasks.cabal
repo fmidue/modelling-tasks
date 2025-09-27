@@ -147,6 +147,7 @@ test-suite modelling-tasks-test
   type: exitcode-stdio-1.0
   main-is: Main.hs
   other-modules:
+      Modelling.ActivityDiagram.ActionSequencesActivityFinalSpec
       Modelling.ActivityDiagram.ActionSequencesSpec
       Modelling.ActivityDiagram.AlloySpec
       Modelling.ActivityDiagram.Auxiliary.ParserSpec
