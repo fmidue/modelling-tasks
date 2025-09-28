@@ -24,9 +24,9 @@ This repository includes an automated setup workflow (`.github/workflows/copilot
 
 **ABSOLUTE REQUIREMENT**: Every file you create or modify MUST comply with `.editorconfig` rules:
 
-- **NO TRAILING WHITESPACE** (except test/unit/** files)
-- **FINAL NEWLINE REQUIRED** (except test/unit/** files)
-- **LF LINE ENDINGS ONLY** (except test/unit/** files)
+- **NO TRAILING WHITESPACE** (except test/unit/\*\* files)
+- **FINAL NEWLINE REQUIRED** (except test/unit/\*\* files)
+- **LF LINE ENDINGS ONLY** (except test/unit/\*\* files)
 
 **BEFORE ANY COMMIT**: Run `./scripts/check-editorconfig.sh` to validate compliance:
 
@@ -66,6 +66,7 @@ find . -type f \( -name "*.hs" -o -name "*.md" -o -name "*.yml" -o -name "*.yaml
 ```
 
 **IF `./scripts/check-editorconfig.sh` FAILS**:
+
 - **DO NOT COMMIT**
 - **DO NOT USE `report_progress`**
 - **FIX ALL VIOLATIONS FIRST**
@@ -209,9 +210,10 @@ Always run these commands before committing changes:
 ```
 
 This script enforces:
-- No trailing whitespace (except test/unit/** files)
-- Final newlines on all files (except test/unit/** files)
-- LF line endings (except test/unit/** files)
+
+- No trailing whitespace (except test/unit/\*\* files)
+- Final newlines on all files (except test/unit/\*\* files)
+- LF line endings (except test/unit/\*\* files)
 
 **If violations found**, fix them immediately with:
 
@@ -256,9 +258,9 @@ The repository includes comprehensive spell checking via GitHub Actions:
 Follow `.editorconfig` standards (enforced by CI):
 
 - **2-space indentation** (where specified)
-- **LF line endings** (except test/unit/** files)
-- **TRIM TRAILING WHITESPACE** (except test/unit/** files)
-- **INSERT FINAL NEWLINE** (except test/unit/** files)
+- **LF line endings** (except test/unit/\*\* files)
+- **TRIM TRAILING WHITESPACE** (except test/unit/\*\* files)
+- **INSERT FINAL NEWLINE** (except test/unit/\*\* files)
 - **175 character line limit** (160 for .als files)
 - **No line length limits** for YAML, Markdown, or TeX files
 - **Special handling** for test/unit/ files (formatting rules relaxed)

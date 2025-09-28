@@ -11,90 +11,91 @@ violations_found=0
 
 # Function to check if a file path matches a pattern
 matches_pattern() {
-    local file="$1"
-    local pattern="$2"
+  local file="$1"
+  local pattern="$2"
 
-    # Convert glob pattern to regex
-    # This is a simplified conversion for the patterns we use
-    case "$pattern" in
-        "*.als") [[ "$file" =~ \.als$ ]] ;;
-        "*.hs") [[ "$file" =~ \.hs$ ]] ;;
-        "*.md") [[ "$file" =~ \.md$ ]] ;;
-        "test/unit/**") [[ "$file" =~ ^test/unit/ ]] ;;
-        "example/**") [[ "$file" =~ ^example/ ]] ;;
-        "**.{yml,yaml,md,tex,cabal}") [[ "$file" =~ \.(yml|yaml|md|tex|cabal)$ ]] ;;
-        "*") return 0 ;;
-    esac
+  # Convert glob pattern to regex
+  # This is a simplified conversion for the patterns we use
+  case "$pattern" in
+  "*.als") [[ "$file" =~ \.als$ ]] ;;
+  "*.hs") [[ "$file" =~ \.hs$ ]] ;;
+  "*.md") [[ "$file" =~ \.md$ ]] ;;
+  "test/unit/**") [[ "$file" =~ ^test/unit/ ]] ;;
+  "example/**") [[ "$file" =~ ^example/ ]] ;;
+  "**.{yml,yaml,md,tex,cabal}") [[ "$file" =~ \.(yml|yaml|md|tex|cabal)$ ]] ;;
+  "*") return 0 ;;
+  esac
 }
 
 # Function to get .editorconfig setting for a file
 get_editorconfig_setting() {
-    local file="$1"
-    local setting="$2"
-    local default_value="$3"
+  local file="$1"
+  local setting="$2"
 
-    # Default values for all files
-    case "$setting" in
-        "trim_trailing_whitespace")
-            # trim_trailing_whitespace is NOT unset for test/unit/** in .editorconfig
-            echo "true"
-            ;;
-        "insert_final_newline")
-            if matches_pattern "$file" "test/unit/**"; then
-                echo "unset"
-            else
-                echo "true"
-            fi
-            ;;
-        "end_of_line")
-            if matches_pattern "$file" "test/unit/**"; then
-                echo "unset"
-            else
-                echo "lf"
-            fi
-            ;;
-    esac
+  # Default values for all files
+  case "$setting" in
+  "trim_trailing_whitespace")
+    # trim_trailing_whitespace is NOT unset for test/unit/** in .editorconfig
+    echo "true"
+    ;;
+  "insert_final_newline")
+    if matches_pattern "$file" "test/unit/**"; then
+      echo "unset"
+    else
+      echo "true"
+    fi
+    ;;
+  "end_of_line")
+    if matches_pattern "$file" "test/unit/**"; then
+      echo "unset"
+    else
+      echo "lf"
+    fi
+    ;;
+  esac
 }
 
 # Check all relevant files
 while IFS= read -r -d '' file; do
-    # Skip if file doesn't exist (could be deleted)
-    [ -f "$file" ] || continue
+  # Skip if file doesn't exist (could be deleted)
+  [ -f "$file" ] || continue
 
-    # Skip empty files for newline checks
-    [ -s "$file" ] || continue
+  # Skip empty files for newline checks
+  [ -s "$file" ] || continue
 
-    echo "Checking: $file"
+  echo "Checking: $file"
 
-    # Check trailing whitespace
-    trim_setting=$(get_editorconfig_setting "$file" "trim_trailing_whitespace")
-    if [ "$trim_setting" = "true" ]; then
-        if grep -q '[[:space:]]$' "$file"; then
-            echo "ERROR: Found trailing whitespace in $file"
-            grep -n '[[:space:]]$' "$file" | head -5
-            violations_found=$((violations_found + 1))
-        fi
+  # Check trailing whitespace
+  trim_setting=$(get_editorconfig_setting "$file" "trim_trailing_whitespace")
+  if [ "$trim_setting" = "true" ]; then
+    if grep -q '[[:space:]]$' "$file"; then
+      echo "ERROR: Found trailing whitespace in $file"
+      grep -n '[[:space:]]$' "$file" | head -5
+      violations_found=$((violations_found + 1))
     fi
+  fi
 
-    # Check final newline
-    newline_setting=$(get_editorconfig_setting "$file" "insert_final_newline")
-    if [ "$newline_setting" = "true" ]; then
-        if [ "$(tail -c1 "$file" | wc -l)" -eq 0 ]; then
-            echo "ERROR: Missing final newline in $file"
-            violations_found=$((violations_found + 1))
-        fi
+  # Check final newline
+  newline_setting=$(get_editorconfig_setting "$file" "insert_final_newline")
+  if [ "$newline_setting" = "true" ]; then
+    if [ "$(tail -c1 "$file" | wc -l)" -eq 0 ]; then
+      echo "ERROR: Missing final newline in $file"
+      violations_found=$((violations_found + 1))
     fi
+  fi
 
-    # Check line endings (only for files that should have LF)
-    eol_setting=$(get_editorconfig_setting "$file" "end_of_line")
-    if [ "$eol_setting" = "lf" ]; then
-        if grep -q $'\r' "$file"; then
-            echo "ERROR: Found CRLF line endings in $file (should be LF)"
-            violations_found=$((violations_found + 1))
-        fi
+  # Check line endings (only for files that should have LF)
+  eol_setting=$(get_editorconfig_setting "$file" "end_of_line")
+  if [ "$eol_setting" = "lf" ]; then
+    if grep -q $'\r' "$file"; then
+      echo "ERROR: Found CRLF line endings in $file (should be LF)"
+      violations_found=$((violations_found + 1))
     fi
+  fi
 
-done < <(find . -type f \( -name "*.hs" -o -name "*.md" -o -name "*.yml" -o -name "*.yaml" -o -name "*.cabal" -o -name "*.sh" -o -name "*.als" -o -name "*.tex" \) -not -path "./.git/*" -not -path "./.stack-work/*" -print0)
+done < <(find . -type f \( -name "*.hs" -o -name "*.md" -o -name "*.yml" -o -name "*.yaml" \
+    -o -name "*.cabal" -o -name "*.sh" -o -name "*.als" -o -name "*.tex" \) \
+    -not -path "./.git/*" -not -path "./.stack-work/*" -print0)
 
 if [ $violations_found -gt 0 ]; then
     echo ""
