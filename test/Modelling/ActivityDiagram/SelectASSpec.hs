@@ -8,6 +8,7 @@ import Modelling.ActivityDiagram.Config (
   )
 import Modelling.ActivityDiagram.Datatype (
   AdNode(..),
+  AdConnection(..),
   UMLActivityDiagram(..)
   )
 import Test.Hspec (Spec, describe, it, context, shouldBe, shouldSatisfy)
@@ -40,11 +41,24 @@ spec = do
   describe "selectActionSequence" $ do
     let testDiagram = UMLActivityDiagram {
           nodes = [
+            AdInitialNode {label = 0},
             AdActionNode {label = 1, name = "A"},
             AdActionNode {label = 2, name = "B"},
-            AdActionNode {label = 3, name = "C"}
+            AdActionNode {label = 3, name = "C"},
+            AdDecisionNode {label = 4},
+            AdMergeNode {label = 5},
+            AdFlowFinalNode {label = 6}
           ],
-          connections = []
+          connections = [
+            AdConnection {from = 0, to = 1, guard = ""},    -- Initial -> A
+            AdConnection {from = 1, to = 4, guard = ""},    -- A -> Decision
+            AdConnection {from = 4, to = 2, guard = "x"},   -- Decision -> B (condition x)
+            AdConnection {from = 4, to = 5, guard = "y"},   -- Decision -> Merge (condition y)
+            AdConnection {from = 2, to = 3, guard = ""},    -- B -> C
+            AdConnection {from = 3, to = 5, guard = ""},    -- C -> Merge
+            AdConnection {from = 5, to = 1, guard = ""},    -- Merge -> A (creates cycle)
+            AdConnection {from = 5, to = 6, guard = ""}     -- Merge -> Final
+          ]
         }
 
     context "without action duplication requirement" $

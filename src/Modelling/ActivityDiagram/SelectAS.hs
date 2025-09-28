@@ -230,15 +230,42 @@ compareDistToCorrect correctSequence xs ys =
 generateCorrectSequenceWithDuplication :: [String] -> UMLActivityDiagram -> [String]
 generateCorrectSequenceWithDuplication baseSequence ad =
   let availableActions = map name $ filter isActionNode $ nodes ad
-      -- Try to find a longer valid sequence that includes action duplication
+      -- Try multiple strategies for duplication: single actions and subsequences
       candidateSequences =
+        singleActionDuplicates ++ subsequenceDuplicates ++ cyclicExtensions
+
+      -- Strategy 1: Duplicate single actions at various positions
+      singleActionDuplicates =
         [ extendedSeq
         | action <- availableActions
         , action `elem` baseSequence  -- Only duplicate actions that exist
-        , pos <- [0..length baseSequence - 1]
+        , pos <- [0..length baseSequence]  -- Insert at any position including end
         , let extendedSeq = insertActionAt pos action baseSequence
         , validActionSequence extendedSeq ad  -- Must be valid
         ]
+
+      -- Strategy 2: Duplicate subsequences of the base sequence
+      subsequenceDuplicates =
+        [ baseSequence ++ subseq
+        | len <- [2, 3]  -- Try subsequences of length 2 and 3
+        , len <= length baseSequence
+        , start <- [0..length baseSequence - len]
+        , let subseq = take len $ drop start baseSequence
+        , validActionSequence (baseSequence ++ subseq) ad
+        ]
+
+      -- Strategy 3: Try inserting subsequences at different positions
+      cyclicExtensions =
+        [ insertSubsequenceAt pos subseq baseSequence
+        | len <- [2]  -- Try subsequences of length 2
+        , len <= length baseSequence
+        , start <- [0..length baseSequence - len]
+        , let subseq = take len $ drop start baseSequence
+        , pos <- [0..length baseSequence]
+        , let extended = insertSubsequenceAt pos subseq baseSequence
+        , validActionSequence extended ad
+        ]
+
   in case candidateSequences of
        (validExtended:_) -> validExtended  -- Return first valid extended sequence
        [] -> baseSequence  -- Fall back to base sequence if no valid extension found
@@ -248,6 +275,12 @@ generateCorrectSequenceWithDuplication baseSequence ad =
     insertActionAt pos action actionSeq =
       let (before, after) = splitAt pos actionSeq
       in before ++ [action] ++ after
+
+    -- Insert a subsequence at a specific position in the sequence
+    insertSubsequenceAt :: Int -> [String] -> [String] -> [String]
+    insertSubsequenceAt pos subseq actionSeq =
+      let (before, after) = splitAt pos actionSeq
+      in before ++ subseq ++ after
 
 -- | Generate sequences with potential action duplication for cycles
 generateSequencesWithDuplication :: [String] -> UMLActivityDiagram -> [[String]]
