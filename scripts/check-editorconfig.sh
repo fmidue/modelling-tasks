@@ -17,11 +17,12 @@ while IFS= read -r -d '' file; do
   # Skip empty files for newline checks
   [ -s "$file" ] || continue
 
-  echo "Checking: $file"
+  # echo "Checking: $file"
 
   # Check for trailing whitespace (spaces or tabs at end of lines)
   matches=$(grep -n '[[:space:]]$' "$file" || true)
   if [ -n "$matches" ]; then
+    echo ""
     echo "ERROR: Found trailing whitespace in $file"
     echo "$matches" | head -5
     violations_found=$((violations_found + 1))
@@ -31,6 +32,7 @@ while IFS= read -r -d '' file; do
   if [[ ! "$file" =~ ^\.?/?test/unit/ ]]; then
     last_byte=$(tail -c1 "$file" | od -An -t u1 | tr -d '[:space:]')
     if [ "$last_byte" != "10" ]; then
+      echo ""
       echo "ERROR: Missing final newline in $file"
       violations_found=$((violations_found + 1))
     fi
@@ -42,7 +44,7 @@ done < <(find . -type f \( -name "*.hs" -o -name "*.md" -o -name "*.yml" -o -nam
 
 if [ $violations_found -gt 0 ]; then
   echo ""
-  echo "❌ Found $violations_found .editorconfig violation(s)"
+  echo "❌ Found .editorconfig violation(s) in $violations_found files"
   echo "Please fix these issues before committing:"
   echo "- Remove trailing whitespace from files"
   echo "- Add final newlines to files (except test/unit/** files)"
