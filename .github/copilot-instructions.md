@@ -20,6 +20,58 @@ This repository includes an automated setup workflow (`.github/workflows/copilot
 
 ## 🚨 CRITICAL WARNINGS
 
+### 🔴 NEVER COMMIT FILES THAT VIOLATE .EDITORCONFIG
+
+**ABSOLUTE REQUIREMENT**: Every file you create or modify MUST comply with `.editorconfig` rules:
+
+- **NO TRAILING WHITESPACE** (except test/unit/** files)
+- **FINAL NEWLINE REQUIRED** (except test/unit/** files)
+- **LF LINE ENDINGS ONLY** (except test/unit/** files)
+
+**BEFORE ANY COMMIT**: Run `./scripts/check-editorconfig.sh` to validate compliance:
+
+```bash
+./scripts/check-editorconfig.sh
+```
+
+**If violations found**: Use these commands to fix them immediately:
+
+```bash
+# Remove trailing whitespace from ALL files
+find . -type f \( -name "*.hs" -o -name "*.md" -o -name "*.yml" -o -name "*.yaml" -o -name "*.cabal" -o -name "*.sh" -o -name "*.als" \) -not -path "./.git/*" -not -path "./.stack-work/*" -not -path "./test/unit/*" -exec sed -i 's/[[:space:]]*$//' {} \;
+
+# Add final newlines to files that need them
+find . -type f \( -name "*.hs" -o -name "*.md" -o -name "*.yml" -o -name "*.yaml" -o -name "*.cabal" -o -name "*.sh" -o -name "*.als" \) -not -path "./.git/*" -not -path "./.stack-work/*" -not -path "./test/unit/*" -exec sh -c 'if [ -s "$1" ] && [ "$(tail -c1 "$1" | wc -l)" -eq 0 ]; then echo >> "$1"; fi' _ {} \;
+```
+
+**CI ENFORCEMENT**: The `.github/workflows/checks.yml` workflow will FAIL if any .editorconfig violations exist.
+
+## 💻 MANDATORY PRE-COMMIT VALIDATION
+
+**BEFORE EVERY COMMIT AND BEFORE USING `report_progress`**:
+
+```bash
+# Step 1: ALWAYS run editorconfig validation (MANDATORY)
+./scripts/check-editorconfig.sh
+
+# Step 2: If violations found, fix them immediately:
+# For individual files:
+sed -i 's/[[:space:]]*$//' filename  # Remove trailing whitespace
+echo >> filename                     # Add final newline
+
+# For all files (bulk fix):
+find . -type f \( -name "*.hs" -o -name "*.md" -o -name "*.yml" -o -name "*.yaml" -o -name "*.cabal" -o -name "*.sh" -o -name "*.als" \) -not -path "./.git/*" -not -path "./.stack-work/*" -not -path "./test/unit/*" -exec sed -i 's/[[:space:]]*$//' {} \;
+find . -type f \( -name "*.hs" -o -name "*.md" -o -name "*.yml" -o -name "*.yaml" -o -name "*.cabal" -o -name "*.sh" -o -name "*.als" \) -not -path "./.git/*" -not -path "./.stack-work/*" -not -path "./test/unit/*" -exec sh -c 'if [ -s "$1" ] && [ "$(tail -c1 "$1" | wc -l)" -eq 0 ]; then echo >> "$1"; fi' _ {} \;
+
+# Step 3: Run editorconfig validation again to confirm fixes
+./scripts/check-editorconfig.sh
+```
+
+**IF `./scripts/check-editorconfig.sh` FAILS**:
+- **DO NOT COMMIT**
+- **DO NOT USE `report_progress`**
+- **FIX ALL VIOLATIONS FIRST**
+
 ### NEVER COMMIT FILES THAT CONTAIN TRAILING WHITESPACE
 
 ### ⏰ NEVER CANCEL BUILDS OR TESTS
@@ -152,6 +204,33 @@ runLangMReport (return ()) (>>) (nameCdErrorTask "/tmp/" inst) >>= \(Just (), x)
 
 Always run these commands before committing changes:
 
+### EditorConfig Compliance (MANDATORY)
+
+**ALWAYS run this first before any commit**:
+
+```bash
+./scripts/check-editorconfig.sh
+```
+
+This script enforces:
+- No trailing whitespace (except test/unit/** files)
+- Final newlines on all files (except test/unit/** files)
+- LF line endings (except test/unit/** files)
+
+**If violations found**, fix them immediately with:
+
+```bash
+# Remove trailing whitespace from specific file:
+sed -i 's/[[:space:]]*$//' filename
+
+# Add final newline to specific file:
+echo >> filename
+
+# Bulk fix all violations (excluding test/unit/**):
+find . -type f \( -name "*.hs" -o -name "*.md" -o -name "*.yml" -o -name "*.yaml" -o -name "*.cabal" -o -name "*.sh" -o -name "*.als" \) -not -path "./.git/*" -not -path "./.stack-work/*" -not -path "./test/unit/*" -exec sed -i 's/[[:space:]]*$//' {} \;
+find . -type f \( -name "*.hs" -o -name "*.md" -o -name "*.yml" -o -name "*.yaml" -o -name "*.cabal" -o -name "*.sh" -o -name "*.als" \) -not -path "./.git/*" -not -path "./.stack-work/*" -not -path "./test/unit/*" -exec sh -c 'if [ -s "$1" ] && [ "$(tail -c1 "$1" | wc -l)" -eq 0 ]; then echo >> "$1"; fi' _ {} \;
+```
+
 ### Linting
 
 **Running HLint**:
@@ -171,14 +250,32 @@ The repository includes comprehensive spell checking via GitHub Actions:
 
 ### Code Formatting
 
-Follow `.editorconfig` standards:
+**MANDATORY .editorconfig compliance**:
 
-- 2-space indentation
-- LF line endings
-- Trim trailing whitespace
-- 175 character line limit (160 for .als files)
-- No line length limits for YAML, Markdown, or TeX files
-- Special handling for test/unit/ files (formatting rules relaxed)
+```bash
+# ALWAYS run before committing:
+./scripts/check-editorconfig.sh
+```
+
+Follow `.editorconfig` standards (enforced by CI):
+
+- **2-space indentation** (where specified)
+- **LF line endings** (except test/unit/** files)
+- **TRIM TRAILING WHITESPACE** (except test/unit/** files)
+- **INSERT FINAL NEWLINE** (except test/unit/** files)
+- **175 character line limit** (160 for .als files)
+- **No line length limits** for YAML, Markdown, or TeX files
+- **Special handling** for test/unit/ files (formatting rules relaxed)
+
+**Quick fix commands for violations**:
+
+```bash
+# Remove trailing whitespace:
+sed -i 's/[[:space:]]*$//' filename
+
+# Add final newline:
+echo >> filename
+```
 
 ## Repository Structure
 
@@ -233,12 +330,13 @@ stack --no-terminal test --stack-yaml=stack-apps.yaml --coverage \
 
 # Additional validations:
 # - HLint checking (hlint.yml)
+# - .editorconfig compliance checking (checks.yml)
 # - Spell checking with multiple dictionaries (spelling.yml)
 # - Cabal file consistency checking (consistency.yml)
 # - Super-linter for general code quality (linter.yml)
 # - Nightly builds with latest dependencies (haskell-nightly.yml)
 # - Haddock documentation generation (haddock.yml)
-# - Adherence to .editorconfig settings
+# - Runaway IO usage checking (checks.yml)
 ```
 
 ## Common Tasks and Troubleshooting
@@ -327,10 +425,10 @@ After making changes, always validate:
 
 1. **Build succeeds**: `stack --stack-yaml=stack-apps.yaml build` (dependencies pre-installed in Copilot)
 2. **HLint does not complain**: `hlint src/ test/ app/`
-3. **Tests pass**: `stack --stack-yaml=stack-apps.yaml test` (30+ minutes)
-4. **App execution**: Test at least one app with `stack exec <app-name>`
-5. **GHCi interaction**: Load examples and generate task instances
-6. **No whitespace errors**: Check/trim trailing whitespace
+3. **.editorconfig compliance**: `./scripts/check-editorconfig.sh` **MUST PASS**
+4. **Tests pass**: `stack --stack-yaml=stack-apps.yaml test` (30+ minutes)
+5. **App execution**: Test at least one app with `stack exec <app-name>`
+6. **GHCi interaction**: Load examples and generate task instances
 
 ### Manual Testing Workflow
 
@@ -344,9 +442,10 @@ After making changes, always validate:
 
 When full builds aren't possible:
 
-1. **Syntax check**: `ghc -Wall --make -fno-code src/Modelling/Types.hs`
-2. **File structure**: Verify imports and exports align with exposed-modules
-3. **Configuration**: Check stack.yaml resolver and dependencies are consistent
-4. **Static analysis**: Use any available Haskell linting tools, in particular `hlint src/ test/ app/`
+1. **EditorConfig compliance**: `./scripts/check-editorconfig.sh` **MUST PASS**
+2. **Syntax check**: `ghc -Wall --make -fno-code src/Modelling/Types.hs`
+3. **File structure**: Verify imports and exports align with exposed-modules
+4. **Configuration**: Check stack.yaml resolver and dependencies are consistent
+5. **Static analysis**: Use any available Haskell linting tools, in particular `hlint src/ test/ app/`
 
 **CRITICAL**: NEVER CANCEL builds, tests, or long-running operations. Allow 60+ minutes for builds and 30+ minutes for tests. Plan accordingly and set appropriate timeouts.
