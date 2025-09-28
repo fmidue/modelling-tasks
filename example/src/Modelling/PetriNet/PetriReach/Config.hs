@@ -25,7 +25,8 @@ task2023_27 = ReachConfig {
   rejectLongerThan = Nothing,
   showLengthHint = True,
   showMinLengthHint = True,
-  showTargetNet = True
+  showTargetNet = True,
+  showPlaceNamesInNet = False
   }
 
 {-|
@@ -47,7 +48,8 @@ task2023_28 = ReachConfig {
   rejectLongerThan = Nothing,
   showLengthHint = True,
   showMinLengthHint = True,
-  showTargetNet = True
+  showTargetNet = True,
+  showPlaceNamesInNet = False
   }
 
 {-|
@@ -79,7 +81,8 @@ task2024_60 = ReachConfig {
     },
   printSolution = True,
   rejectLongerThan = Just 8,
-  showLengthHint = True,
+  showLengthHint = False,
   showMinLengthHint = True,
-  showTargetNet = True
+  showTargetNet = True,
+  showPlaceNamesInNet = False
   }
