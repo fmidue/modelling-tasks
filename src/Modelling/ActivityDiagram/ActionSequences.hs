@@ -97,7 +97,7 @@ levelsAS n actionsLeadingToActivityFinals =
       -- Check if a transition corresponds to Activity Final
       isActivityFinalTransition t = case t of
         -- For normal petri nodes, check if the action leads to Activity Final
-        NormalPetriNode {sourceNode = adNode} -> 
+        NormalPetriNode {sourceNode = adNode} ->
           isActionNode adNode && Ad.label adNode `elem` actionsLeadingToActivityFinals
         -- For final petri nodes, check if it's an Activity Final
         FinalPetriNode {sourceNode = adNode} -> isActivityFinalNode adNode
