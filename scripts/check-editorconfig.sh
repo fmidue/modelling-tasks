@@ -20,16 +20,20 @@ while IFS= read -r -d '' file; do
   echo "Checking: $file"
 
   # Check for trailing whitespace (spaces or tabs at end of lines)
-  if grep -q '[[:space:]]$' "$file"; then
+  matches=$(grep -n '[[:space:]]$' "$file" || true)
+  if [ -n "$matches" ]; then
     echo "ERROR: Found trailing whitespace in $file"
-    grep -n '[[:space:]]$' "$file" | head -5
+    echo "$matches" | head -5
     violations_found=$((violations_found + 1))
   fi
 
   # Check for missing final newline (except test/unit/** files per .editorconfig)
-  if [[ ! "$file" =~ ^\.?/?test/unit/ ]] && [ "$(tail -c1 "$file" | wc -l)" -eq 0 ]; then
-    echo "ERROR: Missing final newline in $file"
-    violations_found=$((violations_found + 1))
+  if [[ ! "$file" =~ ^\.?/?test/unit/ ]]; then
+    last_byte=$(tail -c1 "$file" | od -An -t u1 | tr -d '[:space:]')
+    if [ "$last_byte" != "10" ]; then
+      echo "ERROR: Missing final newline in $file"
+      violations_found=$((violations_found + 1))
+    fi
   fi
 
 done < <(find . -type f \( -name "*.hs" -o -name "*.md" -o -name "*.yml" -o -name "*.yaml" \
