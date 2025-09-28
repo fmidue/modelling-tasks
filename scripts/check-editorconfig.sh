@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# CI checker for .editorconfig compliance
+# Checker script for .editorconfig compliance, meant for usage by Copilot.
 # Ensures that files comply with .editorconfig settings
 
 set -e
