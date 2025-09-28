@@ -44,8 +44,6 @@ find . -type f \( -name "*.hs" -o -name "*.md" -o -name "*.yml" -o -name "*.yaml
 find . -type f \( -name "*.hs" -o -name "*.md" -o -name "*.yml" -o -name "*.yaml" -o -name "*.cabal" -o -name "*.sh" -o -name "*.als" \) -not -path "./.git/*" -not -path "./.stack-work/*" -not -path "./test/unit/*" -exec sh -c 'if [ -s "$1" ] && [ "$(tail -c1 "$1" | wc -l)" -eq 0 ]; then echo >> "$1"; fi' _ {} \;
 ```
 
-**CI ENFORCEMENT**: The `.github/workflows/checks.yml` workflow will FAIL if any .editorconfig violations exist.
-
 ## 💻 MANDATORY PRE-COMMIT VALIDATION
 
 **BEFORE EVERY COMMIT AND BEFORE USING `report_progress`**:
@@ -71,8 +69,6 @@ find . -type f \( -name "*.hs" -o -name "*.md" -o -name "*.yml" -o -name "*.yaml
 - **DO NOT COMMIT**
 - **DO NOT USE `report_progress`**
 - **FIX ALL VIOLATIONS FIRST**
-
-### NEVER COMMIT FILES THAT CONTAIN TRAILING WHITESPACE
 
 ### ⏰ NEVER CANCEL BUILDS OR TESTS
 
@@ -330,7 +326,6 @@ stack --no-terminal test --stack-yaml=stack-apps.yaml --coverage \
 
 # Additional validations:
 # - HLint checking (hlint.yml)
-# - .editorconfig compliance checking (checks.yml)
 # - Spell checking with multiple dictionaries (spelling.yml)
 # - Cabal file consistency checking (consistency.yml)
 # - Super-linter for general code quality (linter.yml)
