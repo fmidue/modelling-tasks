@@ -70,8 +70,4 @@ spec = do
     context "with action duplication requirement" $
       it "generates sequences with duplicated actions" $ do
         let result = selectActionSequence 5 (Just True) testDiagram
-            hasDuplicates xs = length xs /= length (nub xs)
-        -- Check that sequences are being generated with duplication logic
-        -- Note: Due to filtering by validActionSequence, we test the raw generation capability
-        -- by checking that the duplication generation is attempted
         length (wrongSequences result) `shouldSatisfy` (>= 0)  -- Should not crash
