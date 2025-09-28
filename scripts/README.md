@@ -28,11 +28,6 @@ Ensures that:
 - **Line endings**: Checks for CRLF vs LF line endings
 - **File patterns**: Applies different rules based on `.editorconfig` patterns
 
-### Integration
-
-This checker is integrated into the CI pipeline via
-`.github/workflows/checks.yml` and runs on every push and pull request.
-
 ### Exit codes
 
 - 0: All files comply with .editorconfig
