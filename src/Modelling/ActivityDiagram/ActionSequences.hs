@@ -2,8 +2,6 @@
 module Modelling.ActivityDiagram.ActionSequences (
   validActionSequence,
   generateActionSequence,
-  generateActionSequenceWithRepetition,
-  generateActionSequencesWithCycles',
 ) where
 
 import qualified Modelling.ActivityDiagram.Datatype as Ad (
@@ -21,8 +19,7 @@ import Modelling.ActivityDiagram.Datatype (
 
 import Modelling.ActivityDiagram.PetriNet (
   PetriKey(..),
-  convertToPetriNet,
-  sourceNode
+  convertToPetriNet
   )
 
 import Modelling.PetriNet.Types (
@@ -40,7 +37,7 @@ import Modelling.PetriNet.Reach.Type (
 import Modelling.PetriNet.Reach.Step (levels', successors)
 
 import Control.Monad (guard)
-import Data.List (find, union, nub)
+import Data.List (find, union)
 import Data.Maybe(mapMaybe, isJust, fromJust)
 
 
@@ -122,46 +119,3 @@ levelsCheckAS input actions n =
             notConsume = g (`notElem` actions) xs         -- Case: Next transition is not an action, therefore is processed but not removed from input
         in union (f as consume) (f (a:as) notConsume)
   in f input [(start n, [])]
-
-
--- Generate action sequences that may include repetition through cycles
-generateActionSequenceWithRepetition :: UMLActivityDiagram -> [String]
-generateActionSequenceWithRepetition diag =
-  let originalSeq = generateActionSequence diag
-      -- Try to find a sequence with repetition by looking for valid extensions
-      extendedSeqs = findSequencesWithRepetition diag originalSeq
-  in if null extendedSeqs
-     then originalSeq  -- Fallback to regular generation
-     else head extendedSeqs
-
--- Find sequences with repetition by trying to extend and modify the base sequence
-findSequencesWithRepetition :: UMLActivityDiagram -> [String] -> [[String]]
-findSequencesWithRepetition diag baseSeq =
-  let actionNames = map name $ filter isActionNode $ nodes diag
-      -- Strategy 1: Add actions to the end
-      endExtensions = [ baseSeq ++ [action] | action <- actionNames ]
-      -- Strategy 2: Add actions in the middle
-      middleInsertions = [ take i baseSeq ++ [action] ++ drop i baseSeq
-                          | i <- [1..length baseSeq - 1], action <- actionNames ]
-      -- Strategy 3: Duplicate parts of the sequence
-      duplications = [ baseSeq ++ take 2 baseSeq ]
-      -- Strategy 4: Try inserting an action multiple times
-      multipleInsertions = [ insertMultiple action baseSeq | action <- actionNames ]
-      allCandidates = concat [endExtensions, middleInsertions, duplications, multipleInsertions]
-      validWithRepetition = filter (\seqCandidate ->
-        length seqCandidate /= length (nub seqCandidate) &&
-        validActionSequence seqCandidate diag) allCandidates
-  in validWithRepetition
-
--- Helper function to insert an action multiple times in a sequence
-insertMultiple :: String -> [String] -> [String]
-insertMultiple action baseSeq =
-  if length baseSeq < 2 then baseSeq
-  else take 2 baseSeq ++ [action] ++ drop 2 baseSeq ++ [action]
-
--- For now, use a simpler approach for generateActionSequencesWithCycles'
-generateActionSequencesWithCycles' :: UMLActivityDiagram -> [[String]]
-generateActionSequencesWithCycles' diag =
-  let baseSeq = generateActionSequence diag
-      withRep = findSequencesWithRepetition diag baseSeq
-  in if null withRep then [baseSeq] else withRep

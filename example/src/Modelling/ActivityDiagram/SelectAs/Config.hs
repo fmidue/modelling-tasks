@@ -27,6 +27,7 @@ task2023_33 = SelectASConfig {
   numberOfWrongAnswers = 6,
   answerLength = (10, 10),
   printSolution = True,
+  requireActionDuplication = Nothing,
   extraText = Nothing
   }
 
@@ -53,6 +54,7 @@ task2023_34 = SelectASConfig {
   numberOfWrongAnswers = 9,
   answerLength = (9, 9),
   printSolution = True,
+  requireActionDuplication = Nothing,
   extraText = Nothing
   }
 
