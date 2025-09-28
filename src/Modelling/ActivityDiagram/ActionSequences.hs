@@ -96,7 +96,7 @@ levelsAS n actionsLeadingToActivityFinals =
       zeroState = State $ M.fromList [(p, 0) | p <- allPlaces]
       -- Check if a transition corresponds to Activity Final
       isActivityFinalTransition t = case t of
-        -- For normal petri nodes, check if the action leads to Activity Final  
+        -- For normal petri nodes, check if the action leads to Activity Final
         NormalPetriNode {sourceNode = adNode} -> 
           isActionNode adNode && Ad.label adNode `elem` actionsLeadingToActivityFinals
         -- For final petri nodes, check if it's an Activity Final
@@ -133,15 +133,15 @@ validActionSequence input diag =
   in length input == length labels && validActionSequence' input' actions petri actionsLeadingToActivityFinals
 
 
--- Get Action nodes that are immediately followed by Activity Final nodes 
+-- Get Action nodes that are immediately followed by Activity Final nodes
 getActionsLeadingToActivityFinals :: UMLActivityDiagram -> [Int]
 getActionsLeadingToActivityFinals (UMLActivityDiagram adNodes adConnections) =
   let activityFinalLabels = map Ad.label $ filter isActivityFinalNode adNodes
       -- Find action nodes that directly connect to Activity Final nodes
-      directConnections = [(from conn, to conn) | conn <- adConnections, 
+      directConnections = [(from conn, to conn) | conn <- adConnections,
                           to conn `elem` activityFinalLabels]
       actionNodeLabels = map Ad.label $ filter isActionNode adNodes
-      actionsDirectlyToActivityFinals = [fromLabel | (fromLabel, _) <- directConnections, 
+      actionsDirectlyToActivityFinals = [fromLabel | (fromLabel, _) <- directConnections,
                                         fromLabel `elem` actionNodeLabels]
   in actionsDirectlyToActivityFinals
 
@@ -167,7 +167,7 @@ levelsCheckAS input actions n actionsLeadingToActivityFinals =
       -- Check if a transition corresponds to Activity Final by checking action nodes or FinalPetriNode
       isActivityFinalTransition t = case t of
         -- For normal petri nodes, check if the action leads to Activity Final
-        NormalPetriNode {sourceNode = adNode} -> 
+        NormalPetriNode {sourceNode = adNode} ->
           isActionNode adNode && Ad.label adNode `elem` actionsLeadingToActivityFinals
         -- For final petri nodes, check if it's an Activity Final
         FinalPetriNode {sourceNode = adNode} -> isActivityFinalNode adNode
