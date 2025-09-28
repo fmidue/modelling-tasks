@@ -28,7 +28,7 @@ import qualified Data.Vector as V (fromList)
 import Capabilities.Alloy               (MonadAlloy, getInstances)
 import Capabilities.PlantUml            (MonadPlantUml)
 import Capabilities.WriteFile           (MonadWriteFile)
-import Modelling.ActivityDiagram.ActionSequences (generateActionSequence, validActionSequence)
+import Modelling.ActivityDiagram.ActionSequences (generateActionSequence, validActionSequence, generateActionSequenceWithRepetition)
 import Modelling.ActivityDiagram.Auxiliary.ActionSequences (actionSequencesAlloy)
 import Modelling.ActivityDiagram.Config (
   AdConfig (..),
@@ -103,7 +103,8 @@ data SelectASConfig = SelectASConfig {
   numberOfWrongAnswers :: Int,
   answerLength :: !(Int, Int),
   printSolution :: Bool,
-  extraText :: Maybe (Map Language String)
+  extraText :: Maybe (Map Language String),
+  requireActionRepetition :: Maybe Bool
 } deriving (Generic, Read, Show)
 
 defaultSelectASConfig :: SelectASConfig
@@ -121,7 +122,8 @@ defaultSelectASConfig = SelectASConfig {
   numberOfWrongAnswers = 2,
   answerLength = (5, 8),
   printSolution = False,
-  extraText = Nothing
+  extraText = Nothing,
+  requireActionRepetition = Nothing
 }
 
 checkSelectASConfig :: SelectASConfig -> Maybe String
@@ -135,7 +137,8 @@ checkSelectASConfig' SelectASConfig {
     maxInstances,
     objectNodeOnEveryPath,
     numberOfWrongAnswers,
-    answerLength
+    answerLength,
+    requireActionRepetition
   }
   | Just instances <- maxInstances, instances < 1
     = Just "The parameter 'maxInstances' must either be set to a positive value or to Nothing"
@@ -150,6 +153,8 @@ checkSelectASConfig' SelectASConfig {
     The second value of parameter 'answerLength' should be greater or equal to
     its first value.
     |]
+  | requireActionRepetition == Just True && cycles adConfig < 1
+  = Just "Setting the parameter 'requireActionRepetition' to True requires at least one cycle in the activity diagram"
   | otherwise
     = Nothing
 
@@ -189,6 +194,16 @@ data SelectASSolution = SelectASSolution {
 selectActionSequence :: Int -> UMLActivityDiagram -> SelectASSolution
 selectActionSequence numberOfWrongSequences ad =
   let correctSequence = generateActionSequence ad
+      wrongSequences =
+        take numberOfWrongSequences $
+        sortBy (compareDistToCorrect correctSequence) $
+        filter (not . (`validActionSequence` ad)) $
+        permutations correctSequence
+  in SelectASSolution {correctSequence=correctSequence, wrongSequences=wrongSequences}
+
+selectActionSequenceWithRepetition :: Int -> UMLActivityDiagram -> SelectASSolution
+selectActionSequenceWithRepetition numberOfWrongSequences ad =
+  let correctSequence = generateActionSequenceWithRepetition ad
       wrongSequences =
         take numberOfWrongSequences $
         sortBy (compareDistToCorrect correctSequence) $
@@ -313,7 +328,10 @@ getSelectASTask config = do
   randomInstances <- shuffleM instances >>= mapM parseInstance
   ad <- mapM (fmap snd . shuffleAdNames) randomInstances
   validInstances <- firstJustM (\x -> do
-    actionSequences <- selectASSolutionToMap $ selectActionSequence (numberOfWrongAnswers config) x
+    actionSequences <- selectASSolutionToMap $
+      case requireActionRepetition config of
+        Just True -> selectActionSequenceWithRepetition (numberOfWrongAnswers config) x
+        _ -> selectActionSequence (numberOfWrongAnswers config) x
     let selectASInst = SelectASInstance {
           activityDiagram=x,
           actionSequences = actionSequences,

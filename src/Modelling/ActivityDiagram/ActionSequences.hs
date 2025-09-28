@@ -2,6 +2,7 @@
 module Modelling.ActivityDiagram.ActionSequences (
   validActionSequence,
   generateActionSequence,
+  generateActionSequenceWithRepetition,
 ) where
 
 import qualified Modelling.ActivityDiagram.Datatype as Ad (
@@ -37,7 +38,7 @@ import Modelling.PetriNet.Reach.Type (
 import Modelling.PetriNet.Reach.Step (levels', successors)
 
 import Control.Monad (guard)
-import Data.List (find, union)
+import Data.List (find, union, nub)
 import Data.Maybe(mapMaybe, isJust, fromJust)
 
 
@@ -119,3 +120,33 @@ levelsCheckAS input actions n =
             notConsume = g (`notElem` actions) xs         -- Case: Next transition is not an action, therefore is processed but not removed from input
         in union (f as consume) (f (a:as) notConsume)
   in f input [(start n, [])]
+
+
+-- Generate action sequences that may include repetition through cycles
+generateActionSequenceWithRepetition :: UMLActivityDiagram -> [String]
+generateActionSequenceWithRepetition diag =
+  let actionSeqs = generateActionSequencesWithCycles' diag
+      seqsWithRep = filter hasRepetition actionSeqs
+  in if null seqsWithRep
+     then generateActionSequence diag  -- Fallback to regular generation
+     else head seqsWithRep
+  where
+    hasRepetition xs = length xs /= length (nub xs)
+
+-- Generate multiple sequences including cycles by exploring deeper paths
+generateActionSequencesWithCycles' :: UMLActivityDiagram -> [[String]]
+generateActionSequencesWithCycles' diag =
+  let petri = fromPetriLike $ convertToPetriNet diag
+      zeroState = State $ M.map (const 0) $ unState $ start petri
+      actions = map
+        (\n -> (Ad.label n, name n))
+        $ filter isActionNode $ nodes diag
+      -- Generate longer sequences by iterating through more levels
+      longerSeqs = take 10 $ levels' petri  -- Take first 10 levels for exploration
+      extractSequence levelSeqs =
+        case lookup zeroState levelSeqs of
+          Nothing -> []
+          Just seqTrace -> let tSeqLabels = map (Ad.label . sourceNode) $ reverse (filter isNormalPetriNode seqTrace)
+                           in mapMaybe (`lookup` actions) tSeqLabels
+      sequences = map extractSequence longerSeqs
+  in filter (not . null) sequences
