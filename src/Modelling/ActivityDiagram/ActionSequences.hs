@@ -54,8 +54,8 @@ getTransitionsToActivityFinals (UMLActivityDiagram adNodes adConnections) petri 
       sourceLabels = map from connectionsToActivityFinals
       -- Find the corresponding PetriNet transitions
       petriKeys = M.keys $ allNodes petri
-      transitionsToActivityFinals = [key | key <- petriKeys, 
-                                           case key of 
+      transitionsToActivityFinals = [key | key <- petriKeys,
+                                           case key of
                                              NormalPetriNode {sourceNode = srcNode} -> Ad.label srcNode `elem` sourceLabels
                                              _ -> False]
   in transitionsToActivityFinals
@@ -102,12 +102,12 @@ levelsAS activityFinals n =
   let f _ [] = []
       f done xs =
         let done' = S.union done $ S.fromList $ map fst xs
-            next = M.toList $ M.fromList [ (if t `elem` activityFinals 
+            next = M.toList $ M.fromList [ (if t `elem` activityFinals
                                               then State $ M.map (const 0) $ unState $ start n  -- Activity Final -> zero state
                                               else y, t:p) |
                 (x,p) <- xs,
                 (t,y) <- successors n x,
-                not $ S.member (if t `elem` activityFinals 
+                not $ S.member (if t `elem` activityFinals
                                   then State $ M.map (const 0) $ unState $ start n
                                   else y) done'
               ]

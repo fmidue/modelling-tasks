@@ -11,7 +11,7 @@ import Modelling.ActivityDiagram.Datatype (
 import Test.Hspec(Spec, context, describe, it, shouldBe)
 
 spec :: Spec
-spec = 
+spec =
   describe "Activity Final node behavior" $ do
     context "simple linear sequence with Activity Final" $ do
       it "generates a correct sequence ending with Activity Final" $
@@ -20,7 +20,7 @@ spec =
         validActionSequence ["A", "B"] simpleActivityFinalDiagram `shouldBe` True
       it "rejects incomplete sequence not reaching Activity Final" $
         validActionSequence ["A"] simpleActivityFinalDiagram `shouldBe` False
-        
+
     context "fork with Activity Final on one branch" $ do
       it "generates sequence leading to Activity Final (terminates all flows)" $
         generateActionSequence forkWithActivityFinalDiagram `shouldBe` ["A", "B"]
@@ -32,13 +32,13 @@ spec =
         validActionSequence ["A", "B", "C"] forkWithActivityFinalDiagram `shouldBe` False
       it "accepts sequence executing C then B (Activity Final terminates all flows even if one branch already terminated)" $
         validActionSequence ["A", "C", "B"] forkWithActivityFinalDiagram `shouldBe` True
-        
+
     context "fork with Flow Final on one branch" $ do
-      it "generates some sequence that terminates all flows properly" $ 
+      it "generates some sequence that terminates all flows properly" $
         let generated = generateActionSequence forkWithFlowFinalDiagram
         in validActionSequence generated forkWithFlowFinalDiagram `shouldBe` True
       it "accepts sequence that executes both branches when only Flow Final present" $
-        validActionSequence ["A", "B", "C"] forkWithFlowFinalDiagram `shouldBe` True  
+        validActionSequence ["A", "B", "C"] forkWithFlowFinalDiagram `shouldBe` True
       it "accepts sequence that executes both branches in different order" $
         validActionSequence ["A", "C", "B"] forkWithFlowFinalDiagram `shouldBe` True
       it "rejects sequence that doesn't execute both branches" $
@@ -46,24 +46,24 @@ spec =
       it "rejects sequence that doesn't execute both branches (other branch)" $
         validActionSequence ["A", "C"] forkWithFlowFinalDiagram `shouldBe` False
 
--- Simple diagram: Initial -> A -> B -> Activity Final        
+-- Simple diagram: Initial -> A -> B -> Activity Final
 simpleActivityFinalDiagram :: UMLActivityDiagram
 simpleActivityFinalDiagram = UMLActivityDiagram
-  { nodes = 
+  { nodes =
     [ AdInitialNode { label = 1 }
     , AdActionNode { label = 2, name = "A" }
-    , AdActionNode { label = 3, name = "B" }  
+    , AdActionNode { label = 3, name = "B" }
     , AdActivityFinalNode { label = 4 }
     ]
   , connections =
     [ AdConnection { from = 1, to = 2, guard = "" }
-    , AdConnection { from = 2, to = 3, guard = "" }  
+    , AdConnection { from = 2, to = 3, guard = "" }
     , AdConnection { from = 3, to = 4, guard = "" }
     ]
   }
 
--- Fork diagram: Initial -> A -> Fork -> (B -> Activity Final, C -> Flow Final)  
-forkWithActivityFinalDiagram :: UMLActivityDiagram  
+-- Fork diagram: Initial -> A -> Fork -> (B -> Activity Final, C -> Flow Final)
+forkWithActivityFinalDiagram :: UMLActivityDiagram
 forkWithActivityFinalDiagram = UMLActivityDiagram
   { nodes =
     [ AdInitialNode { label = 1 }
@@ -85,7 +85,7 @@ forkWithActivityFinalDiagram = UMLActivityDiagram
   }
 
 -- Fork diagram: Initial -> A -> Fork -> (B -> Flow Final, C -> Flow Final)
-forkWithFlowFinalDiagram :: UMLActivityDiagram  
+forkWithFlowFinalDiagram :: UMLActivityDiagram
 forkWithFlowFinalDiagram = UMLActivityDiagram
   { nodes =
     [ AdInitialNode { label = 1 }
