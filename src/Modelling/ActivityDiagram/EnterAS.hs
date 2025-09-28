@@ -25,7 +25,7 @@ module Modelling.ActivityDiagram.EnterAS (
 import Capabilities.Alloy               (MonadAlloy, getInstances)
 import Capabilities.PlantUml            (MonadPlantUml)
 import Capabilities.WriteFile           (MonadWriteFile)
-import Modelling.ActivityDiagram.ActionSequences (generateActionSequence, validActionSequence)
+import Modelling.ActivityDiagram.ActionSequences (generateActionSequence, validActionSequence, isPartiallyTerminating)
 import Modelling.ActivityDiagram.Auxiliary.ActionSequences (actionSequencesAlloy)
 import Modelling.ActivityDiagram.Config (
   AdConfig (..),
@@ -49,7 +49,7 @@ import Modelling.ActivityDiagram.Shuffle (shuffleAdNames)
 import Modelling.Auxiliary.Common       (getFirstInstance)
 
 import Control.Applicative (Alternative ((<|>)))
-import Control.Monad (unless)
+import Control.Monad (unless, when)
 import Control.Monad.Catch              (MonadThrow)
 import Control.OutputCapable.Blocks (
   ArticleToUse (IndefiniteArticle),
@@ -239,6 +239,7 @@ enterASEvaluation
   -> Rated m
 enterASEvaluation task sub = do
   let correct = validActionSequence sub $ activityDiagram task
+      partiallyCorrect = isPartiallyTerminating sub $ activityDiagram task
       points = if correct then 1 else 0
       maybeSolutionString =
         if showSolution task
@@ -248,6 +249,12 @@ enterASEvaluation task sub = do
   yesNo correct $ translate $ do
     english "The submitted action sequence is correct?"
     german "Die eingereichte Aktionsfolge ist korrekt?"
+
+  -- Provide specific feedback for partial termination
+  when partiallyCorrect $ do
+    translate $ do
+      english "Your action sequence can be executed but only terminates some of the control flows. Note that only the incoming control flow to the reached flow final node is terminated, while other flows may remain active."
+      german "Ihre Aktionsfolge kann ausgeführt werden, terminiert aber nur einige der Kontrollflüsse. Beachten Sie, dass nur der einlaufende Kontrollfluss zum erreichten Flussende terminiert wird, während andere Flüsse aktiv bleiben können."
 
   let objectNames = map name $ filter isObjectNode $ nodes $ activityDiagram task
       objectNamesInSubmission = nubOrd $ sub `intersect` objectNames

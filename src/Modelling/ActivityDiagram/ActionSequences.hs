@@ -2,6 +2,7 @@
 module Modelling.ActivityDiagram.ActionSequences (
   validActionSequence,
   generateActionSequence,
+  isPartiallyTerminating,
 ) where
 
 import qualified Modelling.ActivityDiagram.Datatype as Ad (
@@ -89,6 +90,35 @@ validActionSequence input diag =
       input' = mapMaybe (`lookup` petriKeyMap) labels
       actions = map snd $ filter (\(l,_) -> l `elem` map snd nameMap) petriKeyMap
   in length input == length labels && validActionSequence' input' actions petri
+
+-- | Check if the sequence is executable but only partially terminates flows
+isPartiallyTerminating :: [String] -> UMLActivityDiagram -> Bool
+isPartiallyTerminating input diag =
+  let nameMap = map
+        (\n -> (name n, Ad.label n))
+        $ filter isActionNode $ nodes diag
+      labels = mapMaybe (`lookup` nameMap) input
+      petri = convertToPetriNet diag
+      petriKeyMap = map
+        (\k -> (Ad.label $ sourceNode k, k))
+        $ filter isNormalPetriNode $ M.keys $ allNodes petri
+      input' = mapMaybe (`lookup` petriKeyMap) labels
+      actions = map snd $ filter (\(l,_) -> l `elem` map snd nameMap) petriKeyMap
+  in length input == length labels &&
+     not (validActionSequence' input' actions petri) &&
+     canExecuteSequence input' actions (fromPetriLike petri)
+
+-- | Check if the sequence can be fully executed (regardless of final state)
+canExecuteSequence :: [PetriKey] -> [PetriKey] -> Net PetriKey PetriKey -> Bool
+canExecuteSequence [] _ _ = True -- Empty sequence is always executable
+canExecuteSequence input _actions n =
+  canExecuteFrom (start n) input
+  where
+    canExecuteFrom _ [] = True
+    canExecuteFrom state (action:rest) =
+      any (\(_, newState) -> canExecuteFrom newState rest) $
+      filter (\(t, _) -> t == action) $
+      successors n state
 
 
 validActionSequence'
