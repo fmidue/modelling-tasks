@@ -94,25 +94,25 @@ while IFS= read -r -d '' file; do
   fi
 
 done < <(find . -type f \( -name "*.hs" -o -name "*.md" -o -name "*.yml" -o -name "*.yaml" \
-    -o -name "*.cabal" -o -name "*.sh" -o -name "*.als" -o -name "*.tex" \) \
-    -not -path "./.git/*" -not -path "./.stack-work/*" -print0)
+  -o -name "*.cabal" -o -name "*.sh" -o -name "*.als" -o -name "*.tex" \) \
+  -not -path "./.git/*" -not -path "./.stack-work/*" -print0)
 
 if [ $violations_found -gt 0 ]; then
-    echo ""
-    echo "❌ Found $violations_found .editorconfig violation(s)"
-    echo "Please fix these issues before committing:"
-    echo "- Remove trailing whitespace from files"
-    echo "- Add final newlines to files (except test/unit/** files)"
-    echo "- Ensure LF line endings (except test/unit/** files)"
-    echo ""
-    echo "You can use these commands to fix issues:"
-    echo "  # Remove trailing whitespace:"
-    echo "  sed -i 's/[[:space:]]*$//' filename"
-    echo "  # Add final newline:"
-    echo "  echo >> filename"
-    exit 1
+  echo ""
+  echo "❌ Found $violations_found .editorconfig violation(s)"
+  echo "Please fix these issues before committing:"
+  echo "- Remove trailing whitespace from files"
+  echo "- Add final newlines to files (except test/unit/** files)"
+  echo "- Ensure LF line endings (except test/unit/** files)"
+  echo ""
+  echo "You can use these commands to fix issues:"
+  echo "  # Remove trailing whitespace:"
+  echo "  sed -i 's/[[:space:]]*$//' filename"
+  echo "  # Add final newline:"
+  echo "  echo >> filename"
+  exit 1
 else
-    echo ""
-    echo "✅ All files comply with .editorconfig settings"
-    exit 0
+  echo ""
+  echo "✅ All files comply with .editorconfig settings"
+  exit 0
 fi

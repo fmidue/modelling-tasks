@@ -37,7 +37,7 @@ Ensures that:
 
 This script checks for runaway IO usage in the library code (src/ folder).
 
-### Purpose
+### IO Checker Overview
 
 After issue #242 introduced capabilities for various IO computations, this
 checker ensures that:
