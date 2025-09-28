@@ -42,7 +42,7 @@ sed -i 's/[[:space:]]*$//' filename  # Remove trailing whitespace
 echo >> filename                     # Add final newline
 ```
 
-Then run editorconfig validation again to confirm fixes:
+Then run EditorConfig validation again to confirm fixes:
 
 ```bash
 ./scripts/check-editorconfig.sh
