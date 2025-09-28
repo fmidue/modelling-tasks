@@ -2,7 +2,7 @@
 module Modelling.ActivityDiagram.ActionSequences (
   validActionSequence,
   generateActionSequence,
-  isPartiallyTerminating,
+  isExecutableButIncomplete
 ) where
 
 import qualified Modelling.ActivityDiagram.Datatype as Ad (
@@ -91,9 +91,11 @@ validActionSequence input diag =
       actions = map snd $ filter (\(l,_) -> l `elem` map snd nameMap) petriKeyMap
   in length input == length labels && validActionSequence' input' actions petri
 
--- | Check if the sequence is executable but only partially terminates flows
-isPartiallyTerminating :: [String] -> UMLActivityDiagram -> Bool
-isPartiallyTerminating input diag =
+-- | Check if an action sequence is executable but does not terminate all flows
+-- This detects the case where a sequence can be executed but doesn't reach the zero state
+-- (i.e., doesn't consume all tokens, leaving some flows active)
+isExecutableButIncomplete :: [String] -> UMLActivityDiagram -> Bool
+isExecutableButIncomplete input diag =
   let nameMap = map
         (\n -> (name n, Ad.label n))
         $ filter isActionNode $ nodes diag
@@ -105,21 +107,21 @@ isPartiallyTerminating input diag =
       input' = mapMaybe (`lookup` petriKeyMap) labels
       actions = map snd $ filter (\(l,_) -> l `elem` map snd nameMap) petriKeyMap
   in length input == length labels &&
-     not (validActionSequence' input' actions petri) &&
-     canExecuteSequence input' actions (fromPetriLike petri)
+     isExecutableButIncomplete' input' actions petri
 
--- | Check if the sequence can be fully executed (regardless of final state)
-canExecuteSequence :: [PetriKey] -> [PetriKey] -> Net PetriKey PetriKey -> Bool
-canExecuteSequence [] _ _ = True -- Empty sequence is always executable
-canExecuteSequence input _actions n =
-  canExecuteFrom (start n) input
-  where
-    canExecuteFrom _ [] = True
-    canExecuteFrom state (action:rest) =
-      any (\(_, newState) -> canExecuteFrom newState rest) $
-      filter (\(t, _) -> t == action) $
-      successors n state
-
+-- | Helper function to check if sequence is executable but incomplete
+isExecutableButIncomplete'
+  :: [PetriKey]
+  -> [PetriKey]
+  -> PetriLike Node PetriKey
+  -> Bool
+isExecutableButIncomplete' input actions petri =
+  let net = fromPetriLike petri
+      zeroState = State $ M.map (const 0) $ unState $ start net
+      levels = levelsCheckAS input actions net
+      hasReachableStates = not $ all null levels
+      reachesZeroState = any (isJust . lookup zeroState) levels
+  in hasReachableStates && not reachesZeroState
 
 validActionSequence'
   :: [PetriKey]

@@ -25,7 +25,7 @@ module Modelling.ActivityDiagram.EnterAS (
 import Capabilities.Alloy               (MonadAlloy, getInstances)
 import Capabilities.PlantUml            (MonadPlantUml)
 import Capabilities.WriteFile           (MonadWriteFile)
-import Modelling.ActivityDiagram.ActionSequences (generateActionSequence, validActionSequence, isPartiallyTerminating)
+import Modelling.ActivityDiagram.ActionSequences (generateActionSequence, validActionSequence, isExecutableButIncomplete)
 import Modelling.ActivityDiagram.Auxiliary.ActionSequences (actionSequencesAlloy)
 import Modelling.ActivityDiagram.Config (
   AdConfig (..),
@@ -239,7 +239,6 @@ enterASEvaluation
   -> Rated m
 enterASEvaluation task sub = do
   let correct = validActionSequence sub $ activityDiagram task
-      partiallyCorrect = isPartiallyTerminating sub $ activityDiagram task
       points = if correct then 1 else 0
       maybeSolutionString =
         if showSolution task
@@ -250,11 +249,24 @@ enterASEvaluation task sub = do
     english "The submitted action sequence is correct?"
     german "Die eingereichte Aktionsfolge ist korrekt?"
 
-  -- Provide specific feedback for partial termination
-  when partiallyCorrect $ do
-    translate $ do
-      english "Your action sequence can be executed but only terminates some of the control flows. Note that only the incoming control flow to the reached flow final node is terminated, while other flows may remain active."
-      german "Ihre Aktionsfolge kann ausgeführt werden, terminiert aber nur einige der Kontrollflüsse. Beachten Sie, dass nur der einlaufende Kontrollfluss zum erreichten Flussende terminiert wird, während andere Flüsse aktiv bleiben können."
+  -- Provide specific feedback for sequences that are executable but don't terminate all flows
+  unless correct $ do
+    let isIncomplete = isExecutableButIncomplete sub $ activityDiagram task
+    when isIncomplete $ do
+      paragraph $ translate $ do
+        german [iii|
+          Die eingereichte Sequenz terminiert nur einige Kontrollflüsse.
+          Eine vollständige Lösung sollte alle Flüsse im Diagramm terminieren.
+          Die eingereichte Sequenz beendet nur den hineinlaufenden Kontrollfluss,
+          aber lässt andere Flüsse aktiv.
+          |]
+        english [iii|
+          The submitted sequence only terminates some control flows.
+          A complete solution should terminate all flows in the diagram.
+          The submitted sequence only ends the incoming control flow
+          but leaves other flows active.
+          |]
+      pure ()
 
   let objectNames = map name $ filter isObjectNode $ nodes $ activityDiagram task
       objectNamesInSubmission = nubOrd $ sub `intersect` objectNames
