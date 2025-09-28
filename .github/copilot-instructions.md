@@ -37,31 +37,14 @@ This repository includes an automated setup workflow (`.github/workflows/copilot
 **If violations found**: Use these commands to fix them immediately:
 
 ```bash
-# Remove trailing whitespace from ALL files
-find . -type f \( -name "*.hs" -o -name "*.md" -o -name "*.yml" -o -name "*.yaml" -o -name "*.cabal" -o -name "*.sh" -o -name "*.als" \) -not -path "./.git/*" -not -path "./.stack-work/*" -not -path "./test/unit/*" -exec sed -i 's/[[:space:]]*$//' {} \;
-
-# Add final newlines to files that need them
-find . -type f \( -name "*.hs" -o -name "*.md" -o -name "*.yml" -o -name "*.yaml" -o -name "*.cabal" -o -name "*.sh" -o -name "*.als" \) -not -path "./.git/*" -not -path "./.stack-work/*" -not -path "./test/unit/*" -exec sh -c 'if [ -s "$1" ] && [ "$(tail -c1 "$1" | wc -l)" -eq 0 ]; then echo >> "$1"; fi' _ {} \;
-```
-
-## 💻 MANDATORY PRE-COMMIT VALIDATION
-
-**BEFORE EVERY COMMIT AND BEFORE USING `report_progress`**:
-
-```bash
-# Step 1: ALWAYS run editorconfig validation (MANDATORY)
-./scripts/check-editorconfig.sh
-
-# Step 2: If violations found, fix them immediately:
 # For individual files:
 sed -i 's/[[:space:]]*$//' filename  # Remove trailing whitespace
 echo >> filename                     # Add final newline
+```
 
-# For all files (bulk fix):
-find . -type f \( -name "*.hs" -o -name "*.md" -o -name "*.yml" -o -name "*.yaml" -o -name "*.cabal" -o -name "*.sh" -o -name "*.als" \) -not -path "./.git/*" -not -path "./.stack-work/*" -not -path "./test/unit/*" -exec sed -i 's/[[:space:]]*$//' {} \;
-find . -type f \( -name "*.hs" -o -name "*.md" -o -name "*.yml" -o -name "*.yaml" -o -name "*.cabal" -o -name "*.sh" -o -name "*.als" \) -not -path "./.git/*" -not -path "./.stack-work/*" -not -path "./test/unit/*" -exec sh -c 'if [ -s "$1" ] && [ "$(tail -c1 "$1" | wc -l)" -eq 0 ]; then echo >> "$1"; fi' _ {} \;
+Then run editorconfig validation again to confirm fixes:
 
-# Step 3: Run editorconfig validation again to confirm fixes
+```bash
 ./scripts/check-editorconfig.sh
 ```
 
@@ -223,10 +206,6 @@ sed -i 's/[[:space:]]*$//' filename
 
 # Add final newline to specific file:
 echo >> filename
-
-# Bulk fix all violations (excluding test/unit/**):
-find . -type f \( -name "*.hs" -o -name "*.md" -o -name "*.yml" -o -name "*.yaml" -o -name "*.cabal" -o -name "*.sh" -o -name "*.als" \) -not -path "./.git/*" -not -path "./.stack-work/*" -not -path "./test/unit/*" -exec sed -i 's/[[:space:]]*$//' {} \;
-find . -type f \( -name "*.hs" -o -name "*.md" -o -name "*.yml" -o -name "*.yaml" -o -name "*.cabal" -o -name "*.sh" -o -name "*.als" \) -not -path "./.git/*" -not -path "./.stack-work/*" -not -path "./test/unit/*" -exec sh -c 'if [ -s "$1" ] && [ "$(tail -c1 "$1" | wc -l)" -eq 0 ]; then echo >> "$1"; fi' _ {} \;
 ```
 
 ### Linting
