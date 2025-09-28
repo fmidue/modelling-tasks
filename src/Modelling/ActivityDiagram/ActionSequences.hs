@@ -117,11 +117,14 @@ isExecutableButIncomplete'
   -> Bool
 isExecutableButIncomplete' input actions petri =
   let net = fromPetriLike petri
+      initialState = start net
       zeroState = State $ M.map (const 0) $ unState $ start net
       levels = levelsCheckAS input actions net
       hasReachableStates = not $ all null levels
       reachesZeroState = any (isJust . lookup zeroState) levels
-  in hasReachableStates && not reachesZeroState
+      -- Check if tokens have been consumed: find states that are different from initial state
+      tokensConsumed = any (any (\(state, _) -> state /= initialState)) levels
+  in hasReachableStates && not reachesZeroState && tokensConsumed
 
 validActionSequence'
   :: [PetriKey]
