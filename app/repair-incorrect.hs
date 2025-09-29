@@ -27,7 +27,7 @@ main = do
     then do
     task <- repairCd defaultRepairCdConfig s seed
     print task
-    repairCdTask "repair" task `withLang` English
+    repairCdTask True "repair" task `withLang` English
     else do
     inst <- selectValidCd defaultSelectValidCdConfig s seed
     print inst
