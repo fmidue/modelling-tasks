@@ -384,9 +384,9 @@ toTaskText
   -> FilePath
   -> NameCdErrorInstance
   -> LangM m
-toTaskText inputHelp path task = do
+toTaskText showInputHelp path task = do
   specialToOutputCapable (toTaskSpecificText path task) (taskText task)
-  when inputHelp $
+  when showInputHelp $
     toOutputCapable inputHelpText
   pure ()
 
@@ -569,8 +569,8 @@ nameCdErrorTask
   -> FilePath
   -> NameCdErrorInstance
   -> LangM m
-nameCdErrorTask inputHelp path task = do
-  toTaskText inputHelp path task
+nameCdErrorTask showInputHelp path task = do
+  toTaskText showInputHelp path task
   paragraph simplifiedInformation
   paragraph hoveringInformation
   extra $ addText task

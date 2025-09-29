@@ -333,8 +333,8 @@ differentNamesTask
   -> FilePath
   -> DifferentNamesInstance
   -> LangM m
-differentNamesTask inputHelp path task = do
-  toTaskText inputHelp path task
+differentNamesTask showInputHelp path task = do
+  toTaskText showInputHelp path task
   paragraph simplifiedInformation
   paragraph directionsAdvice
   paragraph hoveringInformation
@@ -352,10 +352,10 @@ toTaskText
   -> FilePath
   -> DifferentNamesInstance
   -> LangM m
-toTaskText inputHelp path task = do
+toTaskText showInputHelp path task = do
   specialToOutputCapable (toTaskSpecificText path task) (taskText task)
-  when inputHelp $
-    toOutputCapable [inputHintText]
+  when showInputHelp $
+    toOutputCapable [inputHelpText]
   extra $ addText task
   pure ()
 
@@ -427,8 +427,8 @@ defaultDifferentNamesTaskText = [
   Special MappingAdvice
   ]
 
-inputHintText :: Output
-inputHintText =
+inputHelpText :: Output
+inputHelpText =
   Paragraph [
     Translated $ translations $ do
       english [iii|

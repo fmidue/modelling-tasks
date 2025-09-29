@@ -290,8 +290,8 @@ matchCdOdTask
   -> FilePath
   -> MatchCdOdInstance
   -> LangM m
-matchCdOdTask inputHelp path task = do
-  toTaskText inputHelp path task
+matchCdOdTask showInputHelp path task = do
+  toTaskText showInputHelp path task
   paragraph simplifiedInformation
   paragraph directionsAdvice
   paragraph hoveringInformation
@@ -309,9 +309,9 @@ toTaskText
   -> FilePath
   -> MatchCdOdInstance
   -> LangM m
-toTaskText inputHelp path task = do
+toTaskText showInputHelp path task = do
   specialToOutputCapable (toTaskSpecificText path task) (taskText task)
-  when inputHelp $
+  when showInputHelp $
     toOutputCapable inputHelpText
   extra $ addText task
   pure ()
