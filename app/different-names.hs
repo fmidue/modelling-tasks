@@ -22,4 +22,4 @@ main = do
   i <- either error id
      <$> runExceptT (differentNames defaultDifferentNamesConfig s seed)
   print i
-  differentNamesTask "output" i `withLang` English
+  differentNamesTask True "output" i `withLang` English

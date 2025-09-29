@@ -51,7 +51,6 @@ task2023_12 = DifferentNamesConfig {
   printSolution = True,
   timeout = Nothing,
   withObviousMapping = Nothing,
-  printInputHelp = True,
   extraText = Nothing
   }
 
@@ -92,7 +91,6 @@ task2023_13 = DifferentNamesConfig {
   printSolution = True,
   timeout = Nothing,
   withObviousMapping = Nothing,
-  printInputHelp = True,
   extraText = Nothing
   }
 
@@ -133,7 +131,6 @@ task2023_25 = DifferentNamesConfig {
   printSolution = True,
   timeout = Nothing,
   withObviousMapping = Nothing,
-  printInputHelp = True,
   extraText = Nothing
   }
 
@@ -174,7 +171,6 @@ task2024_15 = DifferentNamesConfig {
   printSolution = True,
   timeout = Nothing,
   withObviousMapping = Nothing,
-  printInputHelp = True,
   extraText = Nothing
   }
 
@@ -215,7 +211,6 @@ task2024_16 = DifferentNamesConfig {
   printSolution = True,
   timeout = Nothing,
   withObviousMapping = Nothing,
-  printInputHelp = True,
   extraText = Nothing
   }
 
@@ -256,6 +251,5 @@ task2024_56 = DifferentNamesConfig {
   printSolution = True,
   timeout = Nothing,
   withObviousMapping = Nothing,
-  printInputHelp = True,
   extraText = Nothing
   }
