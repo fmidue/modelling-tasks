@@ -131,8 +131,10 @@ import Control.OutputCapable.Blocks.Generic.Type (
   GenericOutput (Code, Paragraph, Special, Translated),
   )
 import Control.OutputCapable.Blocks.Type (
+  Output,
   SpecialOutput,
   specialToOutputCapable,
+  toOutputCapable,
   )
 import Control.Monad.Random             (evalRandT, mkStdGen)
 import Control.Monad.Random.Class       (MonadRandom)
@@ -271,22 +273,26 @@ data SelectValidCdTaskTextElement
 
 selectValidCdTask
   :: (MonadCache m, MonadDiagrams m, MonadGraphviz m, OutputCapable m)
-  => FilePath
+  => Bool
+  -> FilePath
   -> SelectValidCdInstance
   -> LangM m
-selectValidCdTask path task = do
-  toTaskText path task
+selectValidCdTask showInputHelp path task = do
+  toTaskText showInputHelp path task
   paragraph simplifiedInformation
   paragraph hoveringInformation
   pure ()
 
 toTaskText
   :: (MonadCache m, MonadDiagrams m, MonadGraphviz m, OutputCapable m)
-  => FilePath
+  => Bool
+  -> FilePath
   -> SelectValidCdInstance
   -> LangM m
-toTaskText path task = do
+toTaskText showInputHelp path task = do
   specialToOutputCapable (toTaskSpecificText path task) (taskText task)
+  when showInputHelp $
+    toOutputCapable inputHelpText
   extra $ addText task
   pure ()
 
@@ -315,14 +321,18 @@ defaultSelectValidCdTaskText = [
     german [i|Betrachten Sie die folgenden Klassendiagrammkandidaten:|],
   Special CdCandidates,
   Paragraph $ singleton $ Translated $ translations $ do
-    english [i|Which of these class diagram candidates are valid class diagrams?
-Please state your answer by giving a list of numbers, indicating all valid class diagrams.|]
-    german [i|Welche dieser Klassendiagrammkandidaten sind gültige Klassendiagramme?
-Bitte geben Sie Ihre Antwort in Form einer Liste von Zahlen an, die alle gültigen Klassendiagramme enthält.|],
+    english [i|Please state your answer by giving a list of numbers, indicating all valid class diagrams.|]
+    german [i|Welche dieser Klassendiagrammkandidaten sind gültige Klassendiagramme?|]
+  ]
+
+inputHelpText :: [Output]
+inputHelpText = [
   Paragraph [
     Translated $ translations $ do
-      english [i|For example,|]
-      german [i|Zum Beispiel würde|],
+      english [i|Please state your answer by giving a list of numbers, indicating all valid class diagrams.
+For example,|]
+      german [i|Bitte geben Sie Ihre Antwort in Form einer Liste von Zahlen an, die alle gültigen Klassendiagramme enthält.
+Zum Beispiel würde|],
     Code $ uniform "[1, 2]",
     Translated $ translations $ do
       english [i|would mean that only class diagram candidates 1 and 2 of the given ones are valid class diagrams.|]

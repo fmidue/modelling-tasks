@@ -31,4 +31,4 @@ main = do
     else do
     inst <- selectValidCd defaultSelectValidCdConfig s seed
     print inst
-    selectValidCdTask "select" inst `withLang` English
+    selectValidCdTask True "select" inst `withLang` English
