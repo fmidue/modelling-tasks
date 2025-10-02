@@ -67,6 +67,7 @@ import Modelling.Auxiliary.Common (
   upperToDash,
   )
 import Modelling.Auxiliary.Output (
+  ExtraText(..),
   addPretext,
   checkTaskText,
   hoveringInformation,
@@ -251,7 +252,7 @@ data NameCdErrorConfig = NameCdErrorConfig {
   reasonsPerInstance          :: NumberOfReasons,
   timeout                     :: Maybe Int,
   useNames                    :: Bool,
-  extraText                   :: Maybe (Map Language String)
+  extraText                   :: ExtraText
   } deriving (Generic, Read, Show)
 
 defaultNameCdErrorConfig :: NameCdErrorConfig
@@ -288,7 +289,7 @@ defaultNameCdErrorConfig = NameCdErrorConfig {
     },
   timeout = Nothing,
   useNames = True,
-  extraText = Nothing
+  extraText = NoExtraText
   }
 
 checkNameCdErrorConfig :: NameCdErrorConfig -> Maybe String
@@ -420,7 +421,7 @@ data NameCdErrorInstance = NameCdErrorInstance {
   errorReasons                :: !(Map Char (Bool, Reason)),
   showSolution                :: Bool,
   taskText                    :: !NameCdErrorTaskText,
-  addText                     :: Maybe (Map Language String)
+  addText                     :: ExtraText
   } deriving (Data, Eq, Generic, Read, Show)
 
 relevantRelationships
@@ -1070,5 +1071,5 @@ defaultNameCdErrorInstance = NameCdErrorInstance {
     ],
   showSolution = False,
   taskText = defaultNameCdErrorTaskText,
-  addText = Nothing
+  addText = NoExtraText
   }

@@ -2,6 +2,7 @@
 
 module Modelling.CdOd.DifferentNames.Config where
 
+import Modelling.Auxiliary.Output       (ExtraText(..))
 import Modelling.CdOd.DifferentNames (
   DifferentNamesConfig (..),
   )
@@ -51,7 +52,7 @@ task2023_12 = DifferentNamesConfig {
   printSolution = True,
   timeout = Nothing,
   withObviousMapping = Nothing,
-  extraText = Nothing
+  extraText = NoExtraText
   }
 
 {-|
@@ -91,7 +92,7 @@ task2023_13 = DifferentNamesConfig {
   printSolution = True,
   timeout = Nothing,
   withObviousMapping = Nothing,
-  extraText = Nothing
+  extraText = NoExtraText
   }
 
 {-|
@@ -131,7 +132,7 @@ task2023_25 = DifferentNamesConfig {
   printSolution = True,
   timeout = Nothing,
   withObviousMapping = Nothing,
-  extraText = Nothing
+  extraText = NoExtraText
   }
 
 {-|
@@ -171,7 +172,7 @@ task2024_15 = DifferentNamesConfig {
   printSolution = True,
   timeout = Nothing,
   withObviousMapping = Nothing,
-  extraText = Nothing
+  extraText = NoExtraText
   }
 
 {-|
@@ -211,7 +212,7 @@ task2024_16 = DifferentNamesConfig {
   printSolution = True,
   timeout = Nothing,
   withObviousMapping = Nothing,
-  extraText = Nothing
+  extraText = NoExtraText
   }
 
 {-|
@@ -251,5 +252,5 @@ task2024_56 = DifferentNamesConfig {
   printSolution = True,
   timeout = Nothing,
   withObviousMapping = Nothing,
-  extraText = Nothing
+  extraText = NoExtraText
   }

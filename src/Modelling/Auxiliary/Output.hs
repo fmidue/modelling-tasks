@@ -1,7 +1,9 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE DeriveDataTypeable #-}
 -- | This module provides common skeletons for printing tasks
 module Modelling.Auxiliary.Output (
+  ExtraText(..),
   addPretext,
   checkTaskText,
   directionsAdvice,
@@ -11,18 +13,19 @@ module Modelling.Auxiliary.Output (
   uniform,
   ) where
 
-import qualified Data.Map                         as M (empty, insert)
+import qualified Data.Map                         as M (empty, insert, fromList)
 
 import Control.Monad.State (put)
 import Control.OutputCapable.Blocks     (
   GenericOutputCapable (paragraph),
-  Language,
+  Language(..),
   LangM,
   LangM',
   OutputCapable,
   english,
   german,
   translate,
+  collapsed,
   )
 import Control.OutputCapable.Blocks.Type (
   SpecialOutput,
@@ -31,6 +34,7 @@ import Control.OutputCapable.Blocks.Type (
 import Data.List                        ((\\), singleton)
 import Data.Map                         (Map)
 import Data.String.Interpolate          (iii)
+import Data.Data (Data)
 
 hoveringInformation :: OutputCapable m => LangM m
 hoveringInformation = translate $ do
@@ -113,6 +117,17 @@ checkTaskText taskText
     usedElements = concatMap (concatMap singleton) taskText
     allElements = [minBound ..]
 
-extra :: OutputCapable m => Maybe (Map Language String) -> LangM m
-extra (Just extraMap) = paragraph $ translate $ put extraMap
-extra _ = pure ()
+data ExtraText
+  = NoExtraText
+  | Static (Map Language String)
+  | Collapsible Bool (Map Language String)
+  deriving (Data, Eq, Read, Show)
+
+extra :: OutputCapable m => ExtraText -> LangM m
+extra NoExtraText = pure ()
+extra (Static textMap) = paragraph $ translate $ put textMap
+extra (Collapsible defaultState textMap) =
+  collapsed
+    defaultState
+    (put $ M.fromList [(English, "Additional information"), (German, "Zusätzliche Informationen")])
+    (translate $ put textMap)

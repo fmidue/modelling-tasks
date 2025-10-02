@@ -58,7 +58,6 @@ import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
   GenericOutputCapable (..),
   LangM,
-  Language,
   OutputCapable,
   ($=<<),
   english,
@@ -82,6 +81,7 @@ import Data.String.Interpolate          (i, iii)
 import Data.Vector.Distance (Params(..), leastChanges)
 import GHC.Generics (Generic)
 import Modelling.Auxiliary.Output (
+  ExtraText(..),
   addPretext,
   extra
   )
@@ -92,7 +92,7 @@ data SelectASInstance = SelectASInstance {
   actionSequences :: Map Int (Bool, [String]),
   drawSettings :: PlantUmlConfig,
   showSolution :: Bool,
-  addText :: Maybe (Map Language String)
+  addText :: ExtraText
 } deriving (Eq, Generic, Read, Show)
 
 data SelectASConfig = SelectASConfig {
@@ -103,7 +103,7 @@ data SelectASConfig = SelectASConfig {
   numberOfWrongAnswers :: Int,
   answerLength :: !(Int, Int),
   printSolution :: Bool,
-  extraText :: Maybe (Map Language String)
+  extraText :: ExtraText
 } deriving (Generic, Read, Show)
 
 defaultSelectASConfig :: SelectASConfig
@@ -121,7 +121,7 @@ defaultSelectASConfig = SelectASConfig {
   numberOfWrongAnswers = 2,
   answerLength = (5, 8),
   printSolution = False,
-  extraText = Nothing
+  extraText = NoExtraText
 }
 
 checkSelectASConfig :: SelectASConfig -> Maybe String
@@ -378,5 +378,5 @@ defaultSelectASInstance = SelectASInstance {
     ],
   drawSettings = defaultPlantUmlConfig,
   showSolution = False,
-  addText = Nothing
+  addText = NoExtraText
 }

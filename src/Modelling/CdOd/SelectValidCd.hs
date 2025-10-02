@@ -44,6 +44,7 @@ import Modelling.Auxiliary.Common (
   RandomiseNames (randomiseNames),
   )
 import Modelling.Auxiliary.Output (
+  ExtraText(..),
   addPretext,
   checkTaskText,
   hoveringInformation,
@@ -167,7 +168,7 @@ data SelectValidCdConfig
     printSolution    :: Bool,
     shuffleEachCd    :: Bool,
     timeout          :: Maybe Int,
-    extraText        :: Maybe (Map Language String)
+    extraText        :: ExtraText
   } deriving (Generic, Read, Show)
 
 defaultSelectValidCdConfig :: SelectValidCdConfig
@@ -202,7 +203,7 @@ defaultSelectValidCdConfig
     printSolution    = True,
     shuffleEachCd    = False,
     timeout          = Nothing,
-    extraText        = Nothing
+    extraText        = NoExtraText
   }
 
 checkSelectValidCdConfig :: SelectValidCdConfig -> Maybe String
@@ -241,7 +242,7 @@ data SelectValidCdInstance
     showExtendedFeedback :: Bool,
     showSolution    :: !Bool,
     taskText        :: !SelectValidCdTaskText,
-    addText         :: Maybe (Map Language String)
+    addText         :: ExtraText
   } deriving (Eq, Generic, Read, Show)
 
 checkSelectValidCdInstance :: SelectValidCdInstance -> Maybe String
@@ -701,5 +702,5 @@ defaultSelectValidCdInstance = SelectValidCdInstance {
   showExtendedFeedback = True,
   showSolution = True,
   taskText = defaultSelectValidCdTaskText,
-  addText = Nothing
+  addText = NoExtraText
   }
