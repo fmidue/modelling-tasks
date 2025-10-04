@@ -110,6 +110,8 @@ isExecutableButIncomplete input diag =
      isExecutableButIncomplete' input' actions petri
 
 -- | Helper function to check if sequence is executable but incomplete
+-- Checks if the sequence terminates at least one flow (reaches a FinalPetriNode)
+-- but doesn't terminate all flows (doesn't reach zero state)
 isExecutableButIncomplete'
   :: [PetriKey]
   -> [PetriKey]
@@ -117,14 +119,18 @@ isExecutableButIncomplete'
   -> Bool
 isExecutableButIncomplete' input actions petri =
   let net = fromPetriLike petri
-      initialState = start net
       zeroState = State $ M.map (const 0) $ unState $ start net
       levels = levelsCheckAS input actions net
       hasReachableStates = not $ all null levels
       reachesZeroState = any (isJust . lookup zeroState) levels
-      -- Check if tokens have been consumed: find states that are different from initial state
-      tokensConsumed = any (any (\(state, _) -> state /= initialState)) levels
-  in hasReachableStates && not reachesZeroState && tokensConsumed
+      -- Check if any FinalPetriNode transition was fired (meaning a flow was terminated)
+      finalNodeReached = any (any (\(_, path) -> any isFinalPetriNode path)) levels
+  in hasReachableStates && not reachesZeroState && finalNodeReached
+
+-- | Check if a PetriKey represents a final node transition
+isFinalPetriNode :: PetriKey -> Bool
+isFinalPetriNode (FinalPetriNode {}) = True
+isFinalPetriNode _ = False
 
 validActionSequence'
   :: [PetriKey]

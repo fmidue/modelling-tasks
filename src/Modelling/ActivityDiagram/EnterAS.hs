@@ -249,22 +249,22 @@ enterASEvaluation task sub = do
     english "The submitted action sequence is correct?"
     german "Die eingereichte Aktionsfolge ist korrekt?"
 
-  -- Provide specific feedback for sequences that are executable but don't terminate all flows
+  -- Provide specific feedback for sequences that terminate some but not all flows
   unless correct $ do
     let isIncomplete = isExecutableButIncomplete sub $ activityDiagram task
     when isIncomplete $ do
       paragraph $ translate $ do
         german [iii|
-          Die eingereichte Sequenz terminiert nur einige Kontrollflüsse.
-          Eine vollständige Lösung sollte alle Flüsse im Diagramm terminieren.
-          Die eingereichte Sequenz beendet nur den hineinlaufenden Kontrollfluss,
-          aber lässt andere Flüsse aktiv.
+          Die eingereichte Sequenz erreicht ein Flussende, aber terminiert nicht alle Flüsse.
+          Beachten Sie, dass das Erreichen eines Flussendes nur den hineinlaufenden Kontrollfluss beendet,
+          während andere Flüsse (z.B. von einem Fork-Knoten) weiterhin aktiv bleiben können.
+          Eine vollständige Lösung muss alle im Diagramm vorhandenen Flüsse terminieren.
           |]
         english [iii|
-          The submitted sequence only terminates some control flows.
-          A complete solution should terminate all flows in the diagram.
-          The submitted sequence only ends the incoming control flow
-          but leaves other flows active.
+          The submitted sequence reaches a flow final node but does not terminate all flows.
+          Note that reaching a flow final node only terminates the incoming control flow,
+          while other flows (e.g., from a fork node) may remain active.
+          A complete solution must terminate all flows present in the diagram.
           |]
       pure ()
 
