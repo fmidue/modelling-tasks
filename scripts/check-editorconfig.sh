@@ -11,10 +11,7 @@ violations_found=0
 
 # Check all relevant text files
 while IFS= read -r -d '' file; do
-  # Skip if file doesn't exist (could be deleted)
-  [ -f "$file" ] || continue
-
-  # Skip empty files for newline checks
+  # Skip empty files (safe to ignore for these checks)
   [ -s "$file" ] || continue
 
   # echo "Checking: $file"
@@ -57,6 +54,6 @@ if [ $violations_found -gt 0 ]; then
   exit 1
 else
   echo ""
-  echo "✅ All files comply with .editorconfig settings"
+  echo "✅ All files comply with the .editorconfig settings relevant here."
   exit 0
 fi
