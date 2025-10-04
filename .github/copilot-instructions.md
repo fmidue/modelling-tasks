@@ -2,7 +2,7 @@
 
 Modelling Tasks is a Haskell library and application suite for generating exercise tasks for modelling lecture contents. It covers UML Activity Diagrams, Class Diagrams, Object Diagrams, and Petri nets.
 
-**Always reference these instructions first and fallback to search or Bash commands only when you encounter unexpected information that does not match the info here.**
+**Always reference these instructions first and fall back to search or Bash commands only when you encounter unexpected information that does not match the info here.**
 
 ## 🤖 Automated Copilot Setup
 
@@ -24,9 +24,8 @@ This repository includes an automated setup workflow (`.github/workflows/copilot
 
 **ABSOLUTE REQUIREMENT**: Every file you create or modify MUST comply with `.editorconfig` rules:
 
-- **NO TRAILING WHITESPACE** (except test/unit/\*\* files)
+- **NO TRAILING WHITESPACE**
 - **FINAL NEWLINE REQUIRED** (except test/unit/\*\* files)
-- **LF LINE ENDINGS ONLY** (except test/unit/\*\* files)
 
 **BEFORE ANY COMMIT**: Run `./scripts/check-editorconfig.sh` to validate compliance:
 
@@ -194,9 +193,8 @@ Always run these commands before committing changes:
 
 This script enforces:
 
-- No trailing whitespace (except test/unit/\*\* files)
+- No trailing whitespace
 - Final newlines on all files (except test/unit/\*\* files)
-- LF line endings (except test/unit/\*\* files)
 
 **If violations found**, fix them immediately with:
 
@@ -333,7 +331,7 @@ stack --no-terminal test --stack-yaml=stack-apps.yaml --coverage \
 
 ### GHC Version Compatibility
 
-- **Current supported**: GHC 9.12.2 with resolver lts-21.25
+- **Currently supported**: GHC 9.12.2 with resolver lts-21.25
 - **Stack manages GHC**: Uses system GHC when `system-ghc: true` is configured
 - **Verify**: `stack ghc --version` should match expected version
 
