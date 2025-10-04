@@ -277,40 +277,6 @@ echo >> filename
 - `.editorconfig` -- Code formatting standards for editors
 - `.ghci` -- Default GHCi configuration with preloaded modules and imports
 
-## CI/CD Pipeline
-
-### GitHub Actions Workflows
-
-- `.github/workflows/copilot-setup-steps.yml` -- Automated Copilot environment setup
-- `.github/workflows/haskell.yml` -- Main CI build and test
-- `.github/workflows/haskell-nightly.yml` -- Nightly builds with latest dependencies
-- `.github/workflows/hlint.yml` -- Haskell linting with HLint
-- `.github/workflows/linter.yml` -- Super-linter for general code quality
-- `.github/workflows/spelling.yml` -- Spell checking with multiple dictionaries
-- `.github/workflows/checks.yml` -- General consistency checks
-- `.github/workflows/consistency.yml` -- Cabal file consistency validation
-- `.github/workflows/haddock.yml` -- Generate and deploy documentation to GitHub Pages
-
-### Build Process in CI
-
-The CI installs system dependencies and runs comprehensive validation:
-
-```bash
-# Main build and test (haskell.yml)
-stack --no-terminal test --stack-yaml=stack-apps.yaml --coverage \
-  --bench --no-run-benchmarks --haddock --no-haddock-deps \
-  --test-arguments="--skip-needs-tuning --times --maximum-generated-tests=50"
-
-# Additional validations:
-# - HLint checking (hlint.yml)
-# - Spell checking with multiple dictionaries (spelling.yml)
-# - Cabal file consistency checking (consistency.yml)
-# - Super-linter for general code quality (linter.yml)
-# - Nightly builds with latest dependencies (haskell-nightly.yml)
-# - Haddock documentation generation (haddock.yml)
-# - Runaway IO usage checking (checks.yml)
-```
-
 ## Validation and Testing
 
 ### End-to-End Validation
