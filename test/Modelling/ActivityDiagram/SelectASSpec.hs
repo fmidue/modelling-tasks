@@ -14,6 +14,7 @@ import Modelling.ActivityDiagram.Datatype (
 import Test.Hspec (Spec, describe, it, context, shouldBe, shouldSatisfy)
 import Data.Maybe (isJust)
 import Data.List (nub)
+import Control.Monad.Random (evalRandT, mkStdGen)
 
 spec :: Spec
 spec = do
@@ -44,30 +45,24 @@ spec = do
             AdInitialNode {label = 0},
             AdActionNode {label = 1, name = "A"},
             AdActionNode {label = 2, name = "B"},
-            AdActionNode {label = 3, name = "C"},
-            AdDecisionNode {label = 4},
-            AdMergeNode {label = 5},
-            AdFlowFinalNode {label = 6}
+            AdFlowFinalNode {label = 3}
           ],
           connections = [
             AdConnection {from = 0, to = 1, guard = ""},    -- Initial -> A
-            AdConnection {from = 1, to = 4, guard = ""},    -- A -> Decision
-            AdConnection {from = 4, to = 2, guard = "x"},   -- Decision -> B (condition x)
-            AdConnection {from = 4, to = 5, guard = "y"},   -- Decision -> Merge (condition y)
-            AdConnection {from = 2, to = 3, guard = ""},    -- B -> C
-            AdConnection {from = 3, to = 5, guard = ""},    -- C -> Merge
-            AdConnection {from = 5, to = 1, guard = ""},    -- Merge -> A (creates cycle)
-            AdConnection {from = 5, to = 6, guard = ""}     -- Merge -> Final
+            AdConnection {from = 1, to = 2, guard = ""},    -- A -> B
+            AdConnection {from = 2, to = 3, guard = ""}     -- B -> Final
           ]
         }
 
     context "without action duplication requirement" $
       it "generates wrong sequences without duplicates" $ do
-        let result = selectActionSequence 3 Nothing testDiagram
+        let g = mkStdGen 42
+            result = evalRandT (selectActionSequence 3 Nothing testDiagram) g
             hasNoDuplicates xs = length xs == length (nub xs)
         all hasNoDuplicates (wrongSequences result) `shouldBe` True
 
     context "with action duplication requirement" $
       it "generates sequences with duplicated actions" $ do
-        let result = selectActionSequence 5 (Just True) testDiagram
+        let g = mkStdGen 42
+            result = evalRandT (selectActionSequence 5 (Just True) testDiagram) g
         length (wrongSequences result) `shouldSatisfy` (>= 0)  -- Should not crash

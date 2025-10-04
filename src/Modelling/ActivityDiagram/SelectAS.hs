@@ -192,20 +192,20 @@ data SelectASSolution = SelectASSolution {
   wrongSequences :: [[String]]
 } deriving (Show, Eq)
 
-selectActionSequence :: Int -> Maybe Bool -> UMLActivityDiagram -> SelectASSolution
-selectActionSequence numberOfWrongSequences requireActionDuplication ad =
+selectActionSequence :: (MonadRandom m) => Int -> Maybe Bool -> UMLActivityDiagram -> m SelectASSolution
+selectActionSequence numberOfWrongSequences requireActionDuplication ad = do
   let baseCorrectSequence = generateActionSequence ad
-      correctSequence = case requireActionDuplication of
-        Just True -> generateCorrectSequenceWithDuplication baseCorrectSequence ad
-        _ -> baseCorrectSequence
-      wrongSequences =
+  correctSequence <- case requireActionDuplication of
+    Just True -> generateCorrectSequenceWithDuplication baseCorrectSequence ad
+    _ -> return baseCorrectSequence
+  let wrongSequences =
         take numberOfWrongSequences $
         sortBy (compareDistToCorrect correctSequence) $
         filter (not . (`validActionSequence` ad)) $
         case requireActionDuplication of
           Just True -> generateSequencesWithDuplication correctSequence ad
           _ -> permutations correctSequence
-  in SelectASSolution {correctSequence=correctSequence, wrongSequences=wrongSequences}
+  return SelectASSolution {correctSequence=correctSequence, wrongSequences=wrongSequences}
 
 asEditDistParams :: [String] -> Params String (String, Int, String) (Sum Int)
 asEditDistParams xs = Params
@@ -227,60 +227,61 @@ compareDistToCorrect correctSequence xs ys =
       $ leastChanges (asEditDistParams correctSequence) (V.fromList correctSequence) (V.fromList zs)
 
 -- | Generate a correct sequence with action duplication when cycles exist
-generateCorrectSequenceWithDuplication :: [String] -> UMLActivityDiagram -> [String]
-generateCorrectSequenceWithDuplication baseSequence ad =
+generateCorrectSequenceWithDuplication :: (MonadRandom m) => [String] -> UMLActivityDiagram -> m [String]
+generateCorrectSequenceWithDuplication baseSequence ad = do
   let availableActions = map name $ filter isActionNode $ nodes ad
       -- Try multiple strategies for duplication: single actions and subsequences
-      candidateSequences =
-        singleActionDuplicates ++ subsequenceDuplicates ++ cyclicExtensions
-
-      -- Strategy 1: Duplicate single actions at various positions
       singleActionDuplicates =
         [ extendedSeq
         | action <- availableActions
         , action `elem` baseSequence  -- Only duplicate actions that exist
-        , pos <- [0..length baseSequence]  -- Insert at any position including end
-        , let extendedSeq = insertActionAt pos action baseSequence
+        , position <- [0..length baseSequence]  -- Insert at any position including end
+        , let extendedSeq = insertActionAt position action baseSequence
         , validActionSequence extendedSeq ad  -- Must be valid
         ]
 
       -- Strategy 2: Duplicate subsequences of the base sequence
       subsequenceDuplicates =
-        [ baseSequence ++ subseq
-        | len <- [2, 3]  -- Try subsequences of length 2 and 3
-        , len <= length baseSequence
-        , start <- [0..length baseSequence - len]
-        , let subseq = take len $ drop start baseSequence
-        , validActionSequence (baseSequence ++ subseq) ad
+        [ baseSequence ++ subsequence
+        | sequenceLength <- [2, 3]  -- Try subsequences of length 2 and 3
+        , sequenceLength <= length baseSequence
+        , startIndex <- [0..length baseSequence - sequenceLength]
+        , let subsequence = take sequenceLength $ drop startIndex baseSequence
+        , validActionSequence (baseSequence ++ subsequence) ad
         ]
 
       -- Strategy 3: Try inserting subsequences at different positions
       cyclicExtensions =
-        [ insertSubsequenceAt pos subseq baseSequence
-        | len <- [2]  -- Try subsequences of length 2
-        , len <= length baseSequence
-        , start <- [0..length baseSequence - len]
-        , let subseq = take len $ drop start baseSequence
-        , pos <- [0..length baseSequence]
-        , let extended = insertSubsequenceAt pos subseq baseSequence
+        [ insertSubsequenceAt position subsequence baseSequence
+        | sequenceLength <- [2]  -- Try subsequences of length 2
+        , sequenceLength <= length baseSequence
+        , startIndex <- [0..length baseSequence - sequenceLength]
+        , let subsequence = take sequenceLength $ drop startIndex baseSequence
+        , position <- [0..length baseSequence]
+        , let extended = insertSubsequenceAt position subsequence baseSequence
         , validActionSequence extended ad
         ]
 
-  in case candidateSequences of
-       (validExtended:_) -> validExtended  -- Return first valid extended sequence
-       [] -> baseSequence  -- Fall back to base sequence if no valid extension found
+      candidateSequences = singleActionDuplicates ++ subsequenceDuplicates ++ cyclicExtensions
+
+  -- Add randomness: shuffle candidates and pick one randomly
+  case candidateSequences of
+    [] -> return baseSequence  -- Fall back to base sequence if no valid extension found
+    candidates -> do
+      shuffledCandidates <- shuffleM candidates
+      return $ head shuffledCandidates  -- Return a random valid extended sequence
   where
     -- Insert an action at a specific position in the sequence
     insertActionAt :: Int -> String -> [String] -> [String]
-    insertActionAt pos action actionSeq =
-      let (before, after) = splitAt pos actionSeq
+    insertActionAt position action actionSeq =
+      let (before, after) = splitAt position actionSeq
       in before ++ [action] ++ after
 
     -- Insert a subsequence at a specific position in the sequence
     insertSubsequenceAt :: Int -> [String] -> [String] -> [String]
-    insertSubsequenceAt pos subseq actionSeq =
-      let (before, after) = splitAt pos actionSeq
-      in before ++ subseq ++ after
+    insertSubsequenceAt position subsequence actionSeq =
+      let (before, after) = splitAt position actionSeq
+      in before ++ subsequence ++ after
 
 -- | Generate sequences with potential action duplication for cycles
 generateSequencesWithDuplication :: [String] -> UMLActivityDiagram -> [[String]]
