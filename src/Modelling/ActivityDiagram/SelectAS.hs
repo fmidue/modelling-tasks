@@ -419,7 +419,8 @@ getSelectASTask config = do
   randomInstances <- shuffleM instances >>= mapM parseInstance
   ad <- mapM (fmap snd . shuffleAdNames) randomInstances
   validInstances <- firstJustM (\x -> do
-    actionSequences <- selectASSolutionToMap $ selectActionSequence (numberOfWrongAnswers config) (requireActionDuplication config) x
+    solution <- selectActionSequence (numberOfWrongAnswers config) (requireActionDuplication config) x
+    actionSequences <- selectASSolutionToMap solution
     let selectASInst = SelectASInstance {
           activityDiagram=x,
           actionSequences = actionSequences,

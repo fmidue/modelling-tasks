@@ -15,6 +15,7 @@ import Test.Hspec (Spec, describe, it, context, shouldBe, shouldSatisfy)
 import Data.Maybe (isJust)
 import Data.List (nub)
 import Control.Monad.Random (evalRandT, mkStdGen)
+import Data.Functor.Identity (runIdentity)
 
 spec :: Spec
 spec = do
@@ -57,12 +58,12 @@ spec = do
     context "without action duplication requirement" $
       it "generates wrong sequences without duplicates" $ do
         let g = mkStdGen 42
-            result = evalRandT (selectActionSequence 3 Nothing testDiagram) g
+            result = runIdentity $ evalRandT (selectActionSequence 3 Nothing testDiagram) g
             hasNoDuplicates xs = length xs == length (nub xs)
         all hasNoDuplicates (wrongSequences result) `shouldBe` True
 
     context "with action duplication requirement" $
       it "generates sequences with duplicated actions" $ do
         let g = mkStdGen 42
-            result = evalRandT (selectActionSequence 5 (Just True) testDiagram) g
+            result = runIdentity $ evalRandT (selectActionSequence 5 (Just True) testDiagram) g
         length (wrongSequences result) `shouldSatisfy` (>= 0)  -- Should not crash
