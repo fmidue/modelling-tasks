@@ -2,7 +2,6 @@
 module Modelling.ActivityDiagram.ActionSequences (
   validActionSequence,
   generateActionSequence,
-  isActivityFinalPetriNode,
 ) where
 
 import qualified Modelling.ActivityDiagram.Datatype as Ad (
@@ -15,6 +14,7 @@ import qualified Data.Map as M (filter, map, keys, fromList, toList)
 import Modelling.ActivityDiagram.Datatype (
   AdNode (..),
   UMLActivityDiagram (..),
+  AdConnection (..),
   isActionNode,
   isActivityFinalNode
   )
@@ -38,7 +38,7 @@ import Modelling.PetriNet.Reach.Type (
 
 import Modelling.PetriNet.Reach.Step (successors)
 
-import Control.Monad (guard)
+import qualified Control.Monad as Monad (guard)
 import Data.List (find, union)
 import Data.Maybe(mapMaybe, isJust, fromJust)
 
@@ -56,8 +56,8 @@ fromPetriLike petri =
 --Generate one valid action sequence to each of the final nodes
 generateActionSequence :: UMLActivityDiagram -> [String]
 generateActionSequence diag =
-  let activityFinalLabels = map Ad.label $ filter isActivityFinalNode $ nodes diag
-      tSeq = generateActionSequence' diag activityFinalLabels
+  let actionsLeadingToActivityFinals = getActionsLeadingToActivityFinals diag
+      tSeq = generateActionSequence' diag actionsLeadingToActivityFinals
       tSeqLabels = map (Ad.label . sourceNode) $ filter isNormalPetriNode tSeq
       actions = map
         (\n -> (Ad.label n, name n))
@@ -70,32 +70,41 @@ isNormalPetriNode pk =
     NormalPetriNode {} -> True
     _ -> False
 
--- Check if a PetriKey corresponds to an Activity Final node
-isActivityFinalPetriNode :: PetriKey -> Bool
-isActivityFinalPetriNode pk =
-  case pk of
-    FinalPetriNode _ srcNode -> isActivityFinalNode srcNode
-    _ -> False
+-- Get Action nodes that are immediately followed by Activity Final nodes
+getActionsLeadingToActivityFinals :: UMLActivityDiagram -> [Int]
+getActionsLeadingToActivityFinals (UMLActivityDiagram adNodes adConnections) =
+  let activityFinalLabels = map Ad.label $ filter isActivityFinalNode adNodes
+      -- Find action nodes that directly connect to Activity Final nodes
+      directConnections = [(from conn, to conn) | conn <- adConnections,
+                          to conn `elem` activityFinalLabels]
+      actionNodeLabels = map Ad.label $ filter isActionNode adNodes
+      actionsDirectlyToActivityFinals = [fromLabel | (fromLabel, _) <- directConnections,
+                                        fromLabel `elem` actionNodeLabels]
+  in actionsDirectlyToActivityFinals
 
 --Generate at one sequence of transitions to each final node
 generateActionSequence' :: UMLActivityDiagram -> [Int] -> [PetriKey]
-generateActionSequence' diag activityFinalLabels =
+generateActionSequence' diag actionsLeadingToActivityFinals =
   let petri = fromPetriLike $ convertToPetriNet diag
       -- Use all places in the network to create the zero state for consistency
       allPlaces = S.toList $ places petri
       zeroState = State $ M.fromList [(p, 0) | p <- allPlaces]
-      sequences = fromJust $ find (isJust . lookup zeroState) $ levelsAS petri activityFinalLabels
+      sequences = fromJust $ find (isJust . lookup zeroState) $ levelsAS petri actionsLeadingToActivityFinals
   in reverse $ fromJust $ lookup zeroState sequences
 
 -- Modified version of levels' that handles Activity Final nodes
 levelsAS :: Ord s => Net s PetriKey -> [Int] -> [[(State s, [PetriKey])]]
-levelsAS n activityFinalLabels =
+levelsAS n actionsLeadingToActivityFinals =
   let -- Create zero state using all places in the network for consistency
       allPlaces = S.toList $ places n
       zeroState = State $ M.fromList [(p, 0) | p <- allPlaces]
       -- Check if a transition corresponds to Activity Final
       isActivityFinalTransition t = case t of
-        AuxiliaryPetriNode nodeLabel -> nodeLabel `elem` activityFinalLabels
+        -- For normal petri nodes, check if the action leads to Activity Final
+        NormalPetriNode {sourceNode = adNode} ->
+          isActionNode adNode && Ad.label adNode `elem` actionsLeadingToActivityFinals
+        -- For final petri nodes, check if it's an Activity Final
+        FinalPetriNode {sourceNode = adNode} -> isActivityFinalNode adNode
         _ -> False
       f _ [] = []
       f done xs =
@@ -123,40 +132,43 @@ validActionSequence input diag =
         $ filter isNormalPetriNode $ M.keys $ allNodes petri
       input' = mapMaybe (`lookup` petriKeyMap) labels
       actions = map snd $ filter (\(l,_) -> l `elem` map snd nameMap) petriKeyMap
-      -- Get Activity Final node labels from original diagram
-      activityFinalLabels = map Ad.label $ filter isActivityFinalNode $ nodes diag
-  in length input == length labels && validActionSequence' input' actions petri activityFinalLabels
+      -- Get Action nodes that lead directly to Activity Final nodes
+      actionsLeadingToActivityFinals = getActionsLeadingToActivityFinals diag
+  in length input == length labels && validActionSequence' input' actions petri actionsLeadingToActivityFinals
 
 
 validActionSequence'
   :: [PetriKey]
   -> [PetriKey]
   -> PetriLike Node PetriKey
-  -> [Int]  -- Activity Final node labels
+  -> [Int]  -- Action node labels that lead to Activity Finals
   -> Bool
-validActionSequence' input actions petri activityFinalLabels =
+validActionSequence' input actions petri actionsLeadingToActivityFinals =
   let net = fromPetriLike petri
       -- Use all places in the network to create the zero state, not just the start state
       allPlaces = S.toList $ places net
       zeroState = State $ M.fromList [(p, 0) | p <- allPlaces]
-  in any (isJust . lookup zeroState) (levelsCheckAS input actions net activityFinalLabels)
+  in any (isJust . lookup zeroState) (levelsCheckAS input actions net actionsLeadingToActivityFinals)
 
 
 levelsCheckAS :: [PetriKey] -> [PetriKey] -> Net PetriKey PetriKey -> [Int] -> [[(State PetriKey, [PetriKey])]]
-levelsCheckAS input actions n activityFinalLabels =
+levelsCheckAS input actions n actionsLeadingToActivityFinals =
   let -- Create zero state using all places in the network for consistency
       allPlaces = S.toList $ places n
       zeroState = State $ M.fromList [(p, 0) | p <- allPlaces]
-      -- Check if a transition corresponds to Activity Final by checking if it's an auxiliary node
-      -- with a label that matches an Activity Final node from the original diagram
+      -- Check if a transition corresponds to Activity Final
       isActivityFinalTransition t = case t of
-        AuxiliaryPetriNode nodeLabel -> nodeLabel `elem` activityFinalLabels
+        -- For normal petri nodes, check if the action leads to Activity Final
+        NormalPetriNode {sourceNode = adNode} ->
+          isActionNode adNode && Ad.label adNode `elem` actionsLeadingToActivityFinals
+        -- For final petri nodes, check if it's an Activity Final
+        FinalPetriNode {sourceNode = adNode} -> isActivityFinalNode adNode
         _ -> False
       g h xs = M.toList $
         M.fromList $ do
           (x, p) <- xs
           (t, y) <- successors n x
-          guard $ h t
+          Monad.guard $ h t
           -- If this is an Activity Final transition, immediately go to zero state
           let finalState = if isActivityFinalTransition t then zeroState else y
           return (finalState, t : p)
