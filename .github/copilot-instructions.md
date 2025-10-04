@@ -233,7 +233,7 @@ The repository includes comprehensive spell checking via GitHub Actions:
 - **Use full, descriptive names**: Instead of `len`, use `length` or `theLength`; instead of `subseq`, use `subsequence`
 - **CamelCase for clarity**: Use camelCase to combine words clearly (e.g., `theLength`, `currentIndex`, `temporaryValue`)
 - **Prefer clarity over brevity**: `numberOfElements` is better than `numElems` or `nElems`
-- **Spell-check friendly**: All names should pass spell checking with standard dictionaries or be obvious compound words
+- **Spell check friendly**: All names should pass spell checking with standard dictionaries or be obvious compound words
 
 **Examples of good naming**:
 
@@ -267,7 +267,8 @@ num :: Int              -- Use: number, numberOfItems
 
 **Exceptions**:
 
-- Standard Haskell library functions and types (e.g., `xs`, `x`, single-letter type variables)
+- Standard Haskell library functions and types (e.g., `putStrLn`, `Seq`)
+- Standard Haskell conventions (e.g., `xs`, `x`, single-letter type variables)
 - Loop variables in very short, localized contexts (e.g., `i`, `j`, `k` in list comprehensions)
 - Widely accepted mathematical notation in domain-specific contexts (e.g., `n` for count in mathematical functions)
 - Standard abbreviations from the problem domain (e.g., `cd` for "class diagram", `od` for "object diagram" when these are established terms in the codebase)
