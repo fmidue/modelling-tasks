@@ -54,7 +54,7 @@ main = forceErrors $ do
   lift $ if switch
     then do
     inst <- mathToGraph config 0 i
-    mathToGraphTask "fromMath-" inst `withLang` English
+    mathToGraphTask True "fromMath-" inst `withLang` English
     print inst
     else do
     inst <- graphToMath config 0 i
