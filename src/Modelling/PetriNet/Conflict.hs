@@ -133,7 +133,7 @@ import Modelling.PetriNet.Types         (
 
 import Control.Applicative              (Alternative, (<|>))
 import Control.Lens                     ((.~), over)
-import Control.Monad                    (unless)
+import Control.Monad                    (when, unless)
 import Control.Monad.Catch              (MonadCatch, MonadThrow)
 import Control.Monad.Extra              (findM)
 import Control.OutputCapable.Blocks (
@@ -187,7 +187,8 @@ simpleFindConflictTask
     MonadThrow m,
     OutputCapable m
     )
-  => FilePath
+  => Bool
+  -> FilePath
   -> FindInstance SimplePetriNet Conflict
   -> LangM m
 simpleFindConflictTask = findConflictTask
@@ -205,10 +206,11 @@ findConflictTask
     Typeable n,
     Typeable p
     )
-  => FilePath
+  => Bool
+  -> FilePath
   -> FindInstance (p n String) Conflict
   -> LangM m
-findConflictTask path task = do
+findConflictTask showInputHelp path task = do
   paragraph $ translate $ do
     english "Consider the following Petri net:"
     german "Betrachten Sie folgendes Petrinetz:"
@@ -216,7 +218,7 @@ findConflictTask path task = do
   paragraph $ translate $ do
     english "Which pair of transitions is in conflict under the initial marking?"
     german "Welches Paar von Transitionen steht unter der Startmarkierung in Konflikt?"
-  paragraph $ do
+  when showInputHelp $ paragraph $ do
     translate $ do
       english "State your answer by giving a pair of conflicting transitions. "
       german "Geben Sie Ihre Antwort durch Angabe eines Paars von in Konflikt stehenden Transitionen an. "

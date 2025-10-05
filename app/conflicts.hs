@@ -70,7 +70,7 @@ mainFind i = forceErrors $ do
     if isNothing c
     then do
       t <- findConflictGenerate config 0 i
-      simpleFindConflictTask "" t `withLang` English
+      simpleFindConflictTask True "" t `withLang` English
       print t
     else print c
 
