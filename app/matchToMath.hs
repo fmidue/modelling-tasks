@@ -58,7 +58,7 @@ main = forceErrors $ do
     print inst
     else do
     inst <- graphToMath config 0 i
-    graphToMathTask "toMathh-" inst `withLang` English
+    graphToMathTask True "toMathh-" inst `withLang` English
     print inst
 
 userInput :: IO (Int,Int,Int,Int,String)
