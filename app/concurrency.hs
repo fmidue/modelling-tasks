@@ -93,7 +93,7 @@ mainPick i = forceErrors $ do
     if isNothing c
     then do
       t <- pickConcurrencyGenerate config 0 i
-      (`withLang` English) $ simplePickConcurrencyTask "" t
+      (`withLang` English) $ simplePickConcurrencyTask True "" t
       print t
     else print c
 
