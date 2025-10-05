@@ -115,6 +115,7 @@ import Modelling.PetriNet.Types         (
   )
 
 import Control.Applicative              (Alternative ((<|>)))
+import Control.Monad                    (when)
 import Control.Monad.Catch              (MonadCatch, MonadThrow)
 import Control.Monad.Extra              (findM)
 import Control.OutputCapable.Blocks (
@@ -157,7 +158,8 @@ simpleFindConcurrencyTask
     MonadThrow m,
     OutputCapable m
     )
-  => FilePath
+  => Bool
+  -> FilePath
   -> FindInstance SimplePetriNet (Concurrent Transition)
   -> LangM m
 simpleFindConcurrencyTask = findConcurrencyTask
@@ -175,10 +177,11 @@ findConcurrencyTask
     Typeable n,
     Typeable p
     )
-  => FilePath
+  => Bool
+  -> FilePath
   -> FindInstance (p n String) (Concurrent Transition)
   -> LangM m
-findConcurrencyTask path task = do
+findConcurrencyTask showInputHelp path task = do
   paragraph $ translate $ do
     english "Consider the following Petri net:"
     german "Betrachten Sie folgendes Petrinetz:"
@@ -193,7 +196,7 @@ findConcurrencyTask path task = do
       Welches Paar von Transitionen ist unter der Startmarkierung
       nebenläufig aktiviert?
       |]
-  paragraph $ do
+  when showInputHelp $ paragraph $ do
     translate $ do
       english [iii|
         State your answer by giving a pair

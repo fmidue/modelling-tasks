@@ -69,7 +69,7 @@ mainFind i = forceErrors $ do
     if isNothing c
     then do
       t <- findConcurrencyGenerate config 0 i
-      simpleFindConcurrencyTask "" t `withLang` English
+      simpleFindConcurrencyTask True "" t `withLang` English
       print t
     else
       print c
