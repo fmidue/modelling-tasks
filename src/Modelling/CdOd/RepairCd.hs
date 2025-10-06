@@ -162,8 +162,10 @@ import Control.OutputCapable.Blocks.Generic.Type (
   GenericOutput (Code, Paragraph, Special, Translated),
   )
 import Control.OutputCapable.Blocks.Type (
+  Output,
   SpecialOutput,
   specialToOutputCapable,
+  toOutputCapable,
   )
 import Control.Monad.Random (
   MonadRandom,
@@ -340,7 +342,11 @@ defaultRepairCdTaskText = [
   Paragraph $ singleton $ Translated $ translations $ do
     english [i|Which of the following changes would each repair the class diagram?|]
     german [i|Welche der folgenden Änderungen würden jeweils das Klassendiagramm reparieren?|],
-  Special PotentialFixes,
+  Special PotentialFixes
+  ]
+
+inputHelpText :: [Output]
+inputHelpText = [
   Paragraph $ singleton $ Translated $ translations $ do
     english [i|Please state your answer by giving a list of numbers, indicating all changes each resulting in a valid class diagram.|]
     german [i|Bitte geben Sie Ihre Antwort als Liste aller Zahlen an, deren Änderungen jeweils in einem gültigen Klassendiagramm resultieren.|],
@@ -357,11 +363,12 @@ defaultRepairCdTaskText = [
 
 repairCdTask
   :: (MonadCache m, MonadDiagrams m, MonadGraphviz m, OutputCapable m)
-  => FilePath
+  => Bool
+  -> FilePath
   -> RepairCdInstance
   -> LangM m
-repairCdTask path task = do
-  toTaskText path task
+repairCdTask showInputHelp path task = do
+  toTaskText showInputHelp path task
   paragraph simplifiedInformation
   paragraph hoveringInformation
   extra $ addText task
@@ -441,11 +448,15 @@ data RepairCdTaskTextElement
 
 toTaskText
   :: (MonadCache m, MonadDiagrams m, MonadGraphviz m, OutputCapable m)
-  => FilePath
+  => Bool
+  -> FilePath
   -> RepairCdInstance
   -> LangM m
-toTaskText path task =
+toTaskText showInputHelp path task = do
   specialToOutputCapable (toTaskSpecificText path task) (taskText task)
+  when showInputHelp $
+    toOutputCapable inputHelpText
+  pure ()
 
 toTaskSpecificText
   :: (MonadCache m, MonadDiagrams m, MonadGraphviz m, OutputCapable m)

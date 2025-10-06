@@ -63,4 +63,4 @@ main = do
   putStrLn $ "Segment: " ++ show s
   task <- matchCdOd 10 config s seed
   print task
-  matchCdOdTask "" task `withLang` English
+  matchCdOdTask True "" task `withLang` English
