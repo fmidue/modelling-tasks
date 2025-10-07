@@ -246,7 +246,6 @@ generateCorrectSequenceWithDuplication baseSequence ad = do
       subsequenceDuplicates =
         [ baseSequence ++ subsequence
         | sequenceLength <- [2..maxSubsequenceLength]  -- Try all subsequence lengths
-        , sequenceLength <= length baseSequence
         , startIndex <- [0..length baseSequence - sequenceLength]
         , let subsequence = take sequenceLength $ drop startIndex baseSequence
         , validActionSequence (baseSequence ++ subsequence) ad
