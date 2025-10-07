@@ -13,7 +13,7 @@ module Modelling.Auxiliary.Output (
   uniform,
   ) where
 
-import qualified Data.Map                         as M (empty, insert, fromList)
+import qualified Data.Map                         as M (empty, insert)
 
 import Control.Monad.State (put)
 import Control.OutputCapable.Blocks     (
@@ -120,14 +120,14 @@ checkTaskText taskText
 data ExtraText
   = NoExtraText
   | Static (Map Language String)
-  | Collapsible Bool (Map Language String)
+  | Collapsible Bool (Map Language String) (Map Language String)
   deriving (Data, Eq, Read, Show)
 
 extra :: OutputCapable m => ExtraText -> LangM m
 extra NoExtraText = pure ()
 extra (Static textMap) = paragraph $ translate $ put textMap
-extra (Collapsible defaultState textMap) =
+extra (Collapsible defaultState titleText contentText) =
   collapsed
     defaultState
-    (put $ M.fromList [(English, "Additional information"), (German, "Zusätzliche Informationen")])
-    (translate $ put textMap)
+    (put titleText)
+    (translate $ put contentText)
