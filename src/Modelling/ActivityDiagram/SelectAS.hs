@@ -230,6 +230,7 @@ compareDistToCorrect correctSequence xs ys =
 generateCorrectSequenceWithDuplication :: (MonadRandom m) => [String] -> UMLActivityDiagram -> m [String]
 generateCorrectSequenceWithDuplication baseSequence ad = do
   let availableActions = map name $ filter isActionNode $ nodes ad
+      maxSubsequenceLength = length baseSequence  -- Try up to full length for cycles of any size
       -- Try multiple strategies for duplication: single actions and subsequences
       singleActionDuplicates =
         [ extendedSeq
@@ -241,9 +242,10 @@ generateCorrectSequenceWithDuplication baseSequence ad = do
         ]
 
       -- Strategy 2: Duplicate subsequences of the base sequence
+      -- Try all subsequence lengths from 2 up to the full sequence length to handle cycles of any size
       subsequenceDuplicates =
         [ baseSequence ++ subsequence
-        | sequenceLength <- [2, 3]  -- Try subsequences of length 2 and 3
+        | sequenceLength <- [2..maxSubsequenceLength]  -- Try all subsequence lengths
         , sequenceLength <= length baseSequence
         , startIndex <- [0..length baseSequence - sequenceLength]
         , let subsequence = take sequenceLength $ drop startIndex baseSequence
@@ -253,7 +255,7 @@ generateCorrectSequenceWithDuplication baseSequence ad = do
       -- Strategy 3: Try inserting subsequences at different positions
       cyclicExtensions =
         [ insertSubsequenceAt position subsequence baseSequence
-        | sequenceLength <- [2]  -- Try subsequences of length 2
+        | sequenceLength <- [2..min 4 maxSubsequenceLength]  -- Try lengths 2-4 for insertions
         , sequenceLength <= length baseSequence
         , startIndex <- [0..length baseSequence - sequenceLength]
         , let subsequence = take sequenceLength $ drop startIndex baseSequence
