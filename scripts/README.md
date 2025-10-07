@@ -6,29 +6,20 @@ This directory contains validation scripts for the repository.
 
 This script validates that all files in the repository comply with `.editorconfig` settings.
 
-### Purpose
+### EditorConfig Checker Purpose
 
 Ensures that:
 
-1. No files have trailing whitespace (except test/unit/\*\* files)
-2. All files end with a final newline (except test/unit/\*\* files)
-3. Files use LF line endings (except test/unit/\*\* files)
-4. Follows the `.editorconfig` rules defined in the repository
+1. No files have trailing whitespace
+2. All non-empty files end with a final newline (except test/unit/\*\* files)
 
-### Usage
+### EditorConfig Checker Usage
 
 ```bash
 ./scripts/check-editorconfig.sh
 ```
 
-### What it checks
-
-- **Trailing whitespace**: Looks for lines ending with spaces or tabs
-- **Final newlines**: Ensures non-empty files end with a newline character
-- **Line endings**: Checks for CRLF vs LF line endings
-- **File patterns**: Applies different rules based on `.editorconfig` patterns
-
-### Exit codes
+### EditorConfig Checker Exit codes
 
 - 0: All files comply with .editorconfig
 - 1: Violations found (fails CI)
@@ -37,7 +28,7 @@ Ensures that:
 
 This script checks for runaway IO usage in the library code (src/ folder).
 
-### IO Checker Overview
+### IO Checker Purpose
 
 After issue #242 introduced capabilities for various IO computations, this
 checker ensures that:
@@ -72,7 +63,7 @@ checker ensures that:
 - MonadRandom functions like `shuffleM`
 - Comments containing IO patterns
 
-### Integration
+### IO Checker Integration
 
 This checker is integrated into the CI pipeline via
 `.github/workflows/checks.yml` and runs on every push and pull request.
