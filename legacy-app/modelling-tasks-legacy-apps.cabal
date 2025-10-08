@@ -16,7 +16,7 @@ executable cd2alloy
   hs-source-dirs:
       ./
       parser
-  ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Widentities -Wredundant-constraints -Werror -Wwarn=incomplete-uni-patterns -Wwarn=orphans -Wwarn=x-partial
+  ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Widentities -Wredundant-constraints -Werror -Wwarn=incomplete-uni-patterns -Wwarn=orphans -Wwarn=unrecognised-warning-flags -Wwarn=x-partial
   build-tools:
       alex
     , happy
@@ -36,7 +36,7 @@ executable cd2pic
   hs-source-dirs:
       ./
       parser
-  ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Widentities -Wredundant-constraints -Werror -Wwarn=incomplete-uni-patterns -Wwarn=orphans -Wwarn=x-partial
+  ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Widentities -Wredundant-constraints -Werror -Wwarn=incomplete-uni-patterns -Wwarn=orphans -Wwarn=unrecognised-warning-flags -Wwarn=x-partial
   build-tools:
       alex
     , happy
@@ -62,7 +62,7 @@ executable different-names-legacy
       ./
       ../app/common
       generate
-  ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Widentities -Wredundant-constraints -Werror -Wwarn=incomplete-uni-patterns -Wwarn=orphans -Wwarn=x-partial
+  ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Widentities -Wredundant-constraints -Werror -Wwarn=incomplete-uni-patterns -Wwarn=orphans -Wwarn=unrecognised-warning-flags -Wwarn=x-partial
   build-tools:
       alex
     , happy
@@ -93,7 +93,7 @@ executable instance2pic
       Paths_modelling_tasks_legacy_apps
   hs-source-dirs:
       ./
-  ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Widentities -Wredundant-constraints -Werror -Wwarn=incomplete-uni-patterns -Wwarn=orphans -Wwarn=x-partial
+  ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Widentities -Wredundant-constraints -Werror -Wwarn=incomplete-uni-patterns -Wwarn=orphans -Wwarn=unrecognised-warning-flags -Wwarn=x-partial
   build-tools:
       alex
     , happy
@@ -125,7 +125,7 @@ executable match-cd-od-legacy
       ./
       ../app/common
       generate
-  ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Widentities -Wredundant-constraints -Werror -Wwarn=incomplete-uni-patterns -Wwarn=orphans -Wwarn=x-partial
+  ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Widentities -Wredundant-constraints -Werror -Wwarn=incomplete-uni-patterns -Wwarn=orphans -Wwarn=unrecognised-warning-flags -Wwarn=x-partial
   build-tools:
       alex
     , happy

@@ -12,7 +12,7 @@ executable check-cds
   main-is: check-cds.hs
   hs-source-dirs:
       ./
-  ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Widentities -Wredundant-constraints -Werror -Wwarn=incomplete-uni-patterns -Wwarn=orphans -Wwarn=x-partial
+  ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Widentities -Wredundant-constraints -Werror -Wwarn=incomplete-uni-patterns -Wwarn=orphans -Wwarn=unrecognised-warning-flags -Wwarn=x-partial
   build-tools:
       alex
     , happy
@@ -39,7 +39,7 @@ executable concurrency
   hs-source-dirs:
       ./
       common
-  ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Widentities -Wredundant-constraints -Werror -Wwarn=incomplete-uni-patterns -Wwarn=orphans -Wwarn=x-partial
+  ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Widentities -Wredundant-constraints -Werror -Wwarn=incomplete-uni-patterns -Wwarn=orphans -Wwarn=unrecognised-warning-flags -Wwarn=x-partial
   build-tools:
       alex
     , happy
@@ -66,7 +66,7 @@ executable conflicts
   hs-source-dirs:
       ./
       common
-  ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Widentities -Wredundant-constraints -Werror -Wwarn=incomplete-uni-patterns -Wwarn=orphans -Wwarn=x-partial
+  ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Widentities -Wredundant-constraints -Werror -Wwarn=incomplete-uni-patterns -Wwarn=orphans -Wwarn=unrecognised-warning-flags -Wwarn=x-partial
   build-tools:
       alex
     , happy
@@ -94,7 +94,7 @@ executable different-names
   hs-source-dirs:
       ./
       common
-  ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Widentities -Wredundant-constraints -Werror -Wwarn=incomplete-uni-patterns -Wwarn=orphans -Wwarn=x-partial
+  ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Widentities -Wredundant-constraints -Werror -Wwarn=incomplete-uni-patterns -Wwarn=orphans -Wwarn=unrecognised-warning-flags -Wwarn=x-partial
   build-tools:
       alex
     , happy
@@ -120,7 +120,7 @@ executable enterASTaskDemo
   hs-source-dirs:
       ./
       common
-  ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Widentities -Wredundant-constraints -Werror -Wwarn=incomplete-uni-patterns -Wwarn=orphans -Wwarn=x-partial
+  ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Widentities -Wredundant-constraints -Werror -Wwarn=incomplete-uni-patterns -Wwarn=orphans -Wwarn=unrecognised-warning-flags -Wwarn=x-partial
   build-tools:
       alex
     , happy
@@ -143,7 +143,7 @@ executable evalIsomorphic
       Paths_modelling_tasks_apps
   hs-source-dirs:
       ./
-  ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Widentities -Wredundant-constraints -Werror -Wwarn=incomplete-uni-patterns -Wwarn=orphans -Wwarn=x-partial
+  ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Widentities -Wredundant-constraints -Werror -Wwarn=incomplete-uni-patterns -Wwarn=orphans -Wwarn=unrecognised-warning-flags -Wwarn=x-partial
   build-tools:
       alex
     , happy
@@ -170,7 +170,7 @@ executable evalTimeToGenerate
       Paths_modelling_tasks_apps
   hs-source-dirs:
       ./
-  ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Widentities -Wredundant-constraints -Werror -Wwarn=incomplete-uni-patterns -Wwarn=orphans -Wwarn=x-partial
+  ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Widentities -Wredundant-constraints -Werror -Wwarn=incomplete-uni-patterns -Wwarn=orphans -Wwarn=unrecognised-warning-flags -Wwarn=x-partial
   build-tools:
       alex
     , happy
@@ -196,7 +196,7 @@ executable findAuxiliaryPetriNodesTaskDemo
   hs-source-dirs:
       ./
       common
-  ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Widentities -Wredundant-constraints -Werror -Wwarn=incomplete-uni-patterns -Wwarn=orphans -Wwarn=x-partial
+  ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Widentities -Wredundant-constraints -Werror -Wwarn=incomplete-uni-patterns -Wwarn=orphans -Wwarn=unrecognised-warning-flags -Wwarn=x-partial
   build-tools:
       alex
     , happy
@@ -221,7 +221,7 @@ executable match-cd-od
   hs-source-dirs:
       ./
       common
-  ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Widentities -Wredundant-constraints -Werror -Wwarn=incomplete-uni-patterns -Wwarn=orphans -Wwarn=x-partial
+  ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Widentities -Wredundant-constraints -Werror -Wwarn=incomplete-uni-patterns -Wwarn=orphans -Wwarn=unrecognised-warning-flags -Wwarn=x-partial
   build-tools:
       alex
     , happy
@@ -247,7 +247,7 @@ executable matchAdTaskDemo
   hs-source-dirs:
       ./
       common
-  ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Widentities -Wredundant-constraints -Werror -Wwarn=incomplete-uni-patterns -Wwarn=orphans -Wwarn=x-partial
+  ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Widentities -Wredundant-constraints -Werror -Wwarn=incomplete-uni-patterns -Wwarn=orphans -Wwarn=unrecognised-warning-flags -Wwarn=x-partial
   build-tools:
       alex
     , happy
@@ -271,7 +271,7 @@ executable matchPetriTaskDemo
   hs-source-dirs:
       ./
       common
-  ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Widentities -Wredundant-constraints -Werror -Wwarn=incomplete-uni-patterns -Wwarn=orphans -Wwarn=x-partial
+  ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Widentities -Wredundant-constraints -Werror -Wwarn=incomplete-uni-patterns -Wwarn=orphans -Wwarn=unrecognised-warning-flags -Wwarn=x-partial
   build-tools:
       alex
     , happy
@@ -295,7 +295,7 @@ executable matchToMath
   hs-source-dirs:
       ./
       common
-  ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Widentities -Wredundant-constraints -Werror -Wwarn=incomplete-uni-patterns -Wwarn=orphans -Wwarn=x-partial
+  ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Widentities -Wredundant-constraints -Werror -Wwarn=incomplete-uni-patterns -Wwarn=orphans -Wwarn=unrecognised-warning-flags -Wwarn=x-partial
   build-tools:
       alex
     , happy
@@ -323,7 +323,7 @@ executable repair-incorrect
   hs-source-dirs:
       ./
       common
-  ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Widentities -Wredundant-constraints -Werror -Wwarn=incomplete-uni-patterns -Wwarn=orphans -Wwarn=x-partial
+  ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Widentities -Wredundant-constraints -Werror -Wwarn=incomplete-uni-patterns -Wwarn=orphans -Wwarn=unrecognised-warning-flags -Wwarn=x-partial
   build-tools:
       alex
     , happy
@@ -349,7 +349,7 @@ executable selectASTaskDemo
   hs-source-dirs:
       ./
       common
-  ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Widentities -Wredundant-constraints -Werror -Wwarn=incomplete-uni-patterns -Wwarn=orphans -Wwarn=x-partial
+  ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Widentities -Wredundant-constraints -Werror -Wwarn=incomplete-uni-patterns -Wwarn=orphans -Wwarn=unrecognised-warning-flags -Wwarn=x-partial
   build-tools:
       alex
     , happy
@@ -373,7 +373,7 @@ executable selectPetriTaskDemo
   hs-source-dirs:
       ./
       common
-  ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Widentities -Wredundant-constraints -Werror -Wwarn=incomplete-uni-patterns -Wwarn=orphans -Wwarn=x-partial
+  ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Widentities -Wredundant-constraints -Werror -Wwarn=incomplete-uni-patterns -Wwarn=orphans -Wwarn=unrecognised-warning-flags -Wwarn=x-partial
   build-tools:
       alex
     , happy
