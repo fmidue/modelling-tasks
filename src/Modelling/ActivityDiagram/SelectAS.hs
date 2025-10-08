@@ -236,7 +236,7 @@ generateCorrectSequenceWithDuplication baseSequence ad = do
         [ extendedSeq
         | action <- availableActions
         , action `elem` baseSequence  -- Only duplicate actions that exist
-        , position <- [0..length baseSequence]  -- Insert at any position including end
+        , position <- [0..maxSubsequenceLength]  -- Insert at any position including end
         , let extendedSeq = insertActionAt position action baseSequence
         , validActionSequence extendedSeq ad  -- Must be valid
         ]
@@ -246,7 +246,7 @@ generateCorrectSequenceWithDuplication baseSequence ad = do
       subsequenceDuplicates =
         [ baseSequence ++ subsequence
         | sequenceLength <- [2..maxSubsequenceLength]  -- Try all subsequence lengths
-        , startIndex <- [0..length baseSequence - sequenceLength]
+        , startIndex <- [0..maxSubsequenceLength - sequenceLength]
         , let subsequence = take sequenceLength $ drop startIndex baseSequence
         , validActionSequence (baseSequence ++ subsequence) ad
         ]
@@ -255,10 +255,9 @@ generateCorrectSequenceWithDuplication baseSequence ad = do
       cyclicExtensions =
         [ insertSubsequenceAt position subsequence baseSequence
         | sequenceLength <- [2..min 4 maxSubsequenceLength]  -- Try lengths 2-4 for insertions
-        , sequenceLength <= length baseSequence
-        , startIndex <- [0..length baseSequence - sequenceLength]
+        , startIndex <- [0..maxSubsequenceLength - sequenceLength]
         , let subsequence = take sequenceLength $ drop startIndex baseSequence
-        , position <- [0..length baseSequence]
+        , position <- [0..maxSubsequenceLength]
         , let extended = insertSubsequenceAt position subsequence baseSequence
         , validActionSequence extended ad
         ]
