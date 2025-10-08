@@ -229,13 +229,11 @@ compareDistToCorrect correctSequence xs ys =
 -- | Generate a correct sequence with action duplication when cycles exist
 generateCorrectSequenceWithDuplication :: (MonadRandom m) => [String] -> UMLActivityDiagram -> m [String]
 generateCorrectSequenceWithDuplication baseSequence ad = do
-  let availableActions = map name $ filter isActionNode $ nodes ad
-      maxSubsequenceLength = length baseSequence  -- Try up to full length for cycles of any size
+  let maxSubsequenceLength = length baseSequence  -- Try up to full length for cycles of any size
       -- Try multiple strategies for duplication: single actions and subsequences
       singleActionDuplicates =
         [ extendedSeq
-        | action <- availableActions
-        , action `elem` baseSequence  -- Only duplicate actions that exist
+        | action <- baseSequence  -- Draw directly from baseSequence since it's the valid subset
         , position <- [0..maxSubsequenceLength]  -- Insert at any position including end
         , let extendedSeq = insertActionAt position action baseSequence
         , validActionSequence extendedSeq ad  -- Must be valid
