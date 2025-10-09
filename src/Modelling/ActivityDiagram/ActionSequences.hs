@@ -3,6 +3,7 @@ module Modelling.ActivityDiagram.ActionSequences (
   validActionSequence,
   validActionSequenceWithPetri,
   generateActionSequence,
+  generateActionSequenceWithPetri,
   terminatesSomeButNotAllFlowsWithPetri
 ) where
 
@@ -56,7 +57,13 @@ fromPetriLike petri =
 --Generate one valid action sequence to each of the final nodes
 generateActionSequence :: UMLActivityDiagram -> [String]
 generateActionSequence diag =
-  let tSeq = generateActionSequence' diag
+  generateActionSequenceWithPetri diag (convertToPetriNet diag)
+
+-- | Generate one valid action sequence, using a pre-computed Petri net.
+-- This version avoids re-computing the Petri net conversion
+generateActionSequenceWithPetri :: UMLActivityDiagram -> PetriLike Node PetriKey -> [String]
+generateActionSequenceWithPetri diag petri =
+  let tSeq = generateActionSequence' petri
       tSeqLabels = map (Ad.label . sourceNode) $ filter isNormalPetriNode tSeq
       actions = map
         (\n -> (Ad.label n, name n))
@@ -70,9 +77,9 @@ isNormalPetriNode pk =
     _ -> False
 
 --Generate at one sequence of transitions to each final node
-generateActionSequence' :: UMLActivityDiagram -> [PetriKey]
-generateActionSequence' diag =
-  let petri = fromPetriLike $ convertToPetriNet diag
+generateActionSequence' :: PetriLike Node PetriKey -> [PetriKey]
+generateActionSequence' petriLike =
+  let petri = fromPetriLike petriLike
       zeroState = State $ M.map (const 0) $ unState $ start petri
       sequences = fromJust $ find (isJust . lookup zeroState) $ levels' petri
   in reverse $ fromJust $ lookup zeroState sequences

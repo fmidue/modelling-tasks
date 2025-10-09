@@ -28,7 +28,7 @@ import qualified Data.Vector as V (fromList)
 import Capabilities.Alloy               (MonadAlloy, getInstances)
 import Capabilities.PlantUml            (MonadPlantUml)
 import Capabilities.WriteFile           (MonadWriteFile)
-import Modelling.ActivityDiagram.ActionSequences (generateActionSequence, validActionSequenceWithPetri)
+import Modelling.ActivityDiagram.ActionSequences (generateActionSequenceWithPetri, validActionSequenceWithPetri)
 import Modelling.ActivityDiagram.Auxiliary.ActionSequences (actionSequencesAlloy)
 import Modelling.ActivityDiagram.PetriNet (convertToPetriNet)
 import Modelling.ActivityDiagram.Config (
@@ -189,8 +189,8 @@ data SelectASSolution = SelectASSolution {
 
 selectActionSequence :: Int -> UMLActivityDiagram -> SelectASSolution
 selectActionSequence numberOfWrongSequences ad =
-  let correctSequence = generateActionSequence ad
-      petri = convertToPetriNet ad
+  let petri = convertToPetriNet ad
+      correctSequence = generateActionSequenceWithPetri ad petri
       wrongSequences =
         take numberOfWrongSequences $
         sortBy (compareDistToCorrect correctSequence) $
