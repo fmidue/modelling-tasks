@@ -30,7 +30,7 @@ import Capabilities.PlantUml            (MonadPlantUml)
 import Capabilities.WriteFile           (MonadWriteFile)
 import Modelling.ActivityDiagram.ActionSequences (generateActionSequenceWithPetri, validActionSequenceWithPetri)
 import Modelling.ActivityDiagram.Auxiliary.ActionSequences (actionSequencesAlloy)
-import Modelling.ActivityDiagram.PetriNet (convertToPetriNet)
+import Modelling.ActivityDiagram.PetriNet (PetriKey, convertToPetriNet)
 import Modelling.ActivityDiagram.Config (
   AdConfig (..),
   checkAdConfig,
@@ -49,6 +49,7 @@ import Modelling.ActivityDiagram.PlantUMLConverter (
   drawAdToFile,
   )
 import Modelling.ActivityDiagram.Shuffle (shuffleAdNames)
+import Modelling.PetriNet.Types (PetriLike, Node)
 import Modelling.Auxiliary.Common (
   TaskGenerationException (NoInstanceAvailable),
   )
@@ -229,7 +230,7 @@ compareDistToCorrect correctSequence xs ys =
       $ leastChanges (asEditDistParams correctSequence) (V.fromList correctSequence) (V.fromList zs)
 
 -- | Generate a correct sequence with action duplication when cycles exist
-generateCorrectSequenceWithDuplication :: (MonadRandom m) => [String] -> UMLActivityDiagram -> m [String]
+generateCorrectSequenceWithDuplication :: (MonadRandom m) => [String] -> UMLActivityDiagram -> PetriLike Node PetriKey -> m [String]
 generateCorrectSequenceWithDuplication baseSequence ad petri = do
   let maxSubsequenceLength = length baseSequence  -- Try up to full length for cycles of any size
       -- Try multiple strategies for duplication: single actions and subsequences
@@ -248,7 +249,7 @@ generateCorrectSequenceWithDuplication baseSequence ad petri = do
         | sequenceLength <- [2..maxSubsequenceLength]  -- Try all subsequence lengths
         , startIndex <- [0..maxSubsequenceLength - sequenceLength]
         , let subsequence = take sequenceLength $ drop startIndex baseSequence
-        , validActionSequence (baseSequence ++ subsequence) ad
+        , validActionSequenceWithPetri (baseSequence ++ subsequence) ad petri
         ]
 
       -- Strategy 3: Try inserting subsequences at different positions
@@ -259,7 +260,7 @@ generateCorrectSequenceWithDuplication baseSequence ad petri = do
         , let subsequence = take sequenceLength $ drop startIndex baseSequence
         , position <- [0..maxSubsequenceLength]
         , let extended = insertSubsequenceAt position subsequence baseSequence
-        , validActionSequence extended ad
+        , validActionSequenceWithPetri extended ad petri
         ]
 
       candidateSequences = singleActionDuplicates ++ subsequenceDuplicates ++ cyclicExtensions
