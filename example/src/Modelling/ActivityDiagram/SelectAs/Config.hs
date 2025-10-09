@@ -3,6 +3,7 @@
 module Modelling.ActivityDiagram.SelectAs.Config where
 import Modelling.ActivityDiagram.Config (AdConfig(..))
 import Modelling.ActivityDiagram.SelectAS (SelectASConfig(..))
+import Modelling.Auxiliary.Output       (ExtraText(..))
 
 {-|
 points: 0.15
@@ -28,7 +29,7 @@ task2023_33 = SelectASConfig {
   answerLength = (10, 10),
   printSolution = True,
   attemptActionDuplication = False,
-  extraText = Nothing
+  extraText = NoExtraText
   }
 
 {-|
@@ -55,7 +56,7 @@ task2023_34 = SelectASConfig {
   answerLength = (9, 9),
   printSolution = True,
   attemptActionDuplication = False,
-  extraText = Nothing
+  extraText = NoExtraText
   }
 
 {-|

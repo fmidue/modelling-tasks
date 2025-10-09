@@ -2,6 +2,7 @@
 
 module Modelling.CdOd.RepairCd.Config where
 
+import Modelling.Auxiliary.Output       (ExtraText(..))
 import Modelling.CdOd.RepairCd (
   RepairCdConfig (..),
   )
@@ -78,7 +79,7 @@ task2023_07 = RepairCdConfig {
   printSolution = True,
   timeout = Nothing,
   useNames = True,
-  extraText = Nothing
+  extraText = NoExtraText
   }
 
 {-|
@@ -139,7 +140,7 @@ task2023_08 = RepairCdConfig {
   printSolution = True,
   timeout = Nothing,
   useNames = False,
-  extraText = Nothing
+  extraText = NoExtraText
   }
 
 {-|
@@ -199,7 +200,7 @@ task2024_12 = RepairCdConfig {
   printSolution = True,
   timeout = Nothing,
   useNames = True,
-  extraText = Nothing
+  extraText = NoExtraText
   }
 
 {-|
@@ -258,7 +259,7 @@ task2024_13 = RepairCdConfig {
   printSolution = True,
   timeout = Nothing,
   useNames = False,
-  extraText = Nothing
+  extraText = NoExtraText
   }
 
 {-|
@@ -318,5 +319,5 @@ task2024_55 = RepairCdConfig {
   printSolution = True,
   timeout = Nothing,
   useNames = True,
-  extraText = Nothing
+  extraText = NoExtraText
   }

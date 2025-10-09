@@ -23,6 +23,7 @@ import qualified Data.Bimap                       as BM (lookup)
 
 import Modelling.Auxiliary.Common       (Object)
 import Modelling.Auxiliary.Output (
+  ExtraText,
   addPretext,
   )
 import Modelling.PetriNet.Diagram (
@@ -75,7 +76,7 @@ data FindInstance n a = FindInstance {
   numberOfPlaces :: !Int,
   numberOfTransitions :: !Int,
   showSolution :: !Bool,
-  addText :: !(Maybe (Map Language String))
+  addText :: !ExtraText
   }
   deriving (Functor, Generic, Read, Show)
 

@@ -51,6 +51,7 @@ import Modelling.Auxiliary.Common (
   TaskGenerationException (NoInstanceAvailable),
   )
 import Modelling.Auxiliary.Output (
+  ExtraText(..),
   addPretext,
   directionsAdvice,
   hoveringInformation,
@@ -124,7 +125,6 @@ import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
   GenericOutputCapable (..),
   LangM,
-  Language,
   OutputCapable,
   Rated,
   ($=<<),
@@ -166,7 +166,6 @@ import Data.List (
   singleton,
   sort,
   )
-import Data.Map (Map)
 import Data.Maybe (
   catMaybes,
   isJust,
@@ -199,7 +198,7 @@ data DifferentNamesInstance = DifferentNamesInstance {
     mapping  :: NameMapping,
     linkShuffling :: ShufflingOption String,
     taskText :: !DifferentNamesTaskText,
-    addText :: Maybe (Map Language String)
+    addText :: ExtraText
   } deriving (Eq, Generic, Read, Show)
 
 checkDifferentNamesInstance :: DifferentNamesInstance -> Maybe String
@@ -241,7 +240,7 @@ data DifferentNamesConfig
     -- | Obvious means here that each individual relationship to link mapping
     -- can be made without considering other relationships.
     withObviousMapping :: !(Maybe Bool),
-    extraText :: Maybe (Map Language String)
+    extraText :: ExtraText
   } deriving (Generic, Read, Show)
 
 checkDifferentNamesConfig :: DifferentNamesConfig -> Maybe String
@@ -308,7 +307,7 @@ defaultDifferentNamesConfig = DifferentNamesConfig {
     withObviousMapping = Nothing,
     maxInstances     = Just 200,
     timeout          = Nothing,
-    extraText        = Nothing
+    extraText        = NoExtraText
   }
 
 newtype ShowName = ShowName { showName' :: Name }
@@ -625,7 +624,7 @@ defaultDifferentNamesInstance = DifferentNamesInstance {
   mapping = toNameMapping $ BM.fromList [("x", "2"), ("y", "3"), ("z", "1")],
   linkShuffling = ConsecutiveNumbers,
   taskText = defaultDifferentNamesTaskText,
-  addText = Nothing
+  addText = NoExtraText
   }
 
 getDifferentNamesTask

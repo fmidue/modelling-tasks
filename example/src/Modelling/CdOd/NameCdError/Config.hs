@@ -2,6 +2,7 @@
 
 module Modelling.CdOd.NameCdError.Config where
 
+import Modelling.Auxiliary.Output       (ExtraText(..))
 import Modelling.CdOd.NameCdError (
   NameCdErrorConfig (..),
   NumberOfReasons (..),
@@ -89,7 +90,7 @@ task2023_09 = NameCdErrorConfig {
     },
   timeout = Nothing,
   useNames = True,
-  extraText = Nothing
+  extraText = NoExtraText
   }
 
 {-|
@@ -161,7 +162,7 @@ task2023_10 = NameCdErrorConfig {
     },
   timeout = Nothing,
   useNames = True,
-  extraText = Nothing
+  extraText = NoExtraText
   }
 
 {-|
@@ -233,7 +234,7 @@ task2024_10 = NameCdErrorConfig {
     },
   timeout = Nothing,
   useNames = True,
-  extraText = Nothing
+  extraText = NoExtraText
   }
 
 {-|
@@ -305,7 +306,7 @@ task2024_11 = NameCdErrorConfig {
     },
   timeout = Nothing,
   useNames = False,
-  extraText = Nothing
+  extraText = NoExtraText
   }
 
 {-|
@@ -377,5 +378,5 @@ task2024_54 = NameCdErrorConfig {
     },
   timeout = Nothing,
   useNames = True,
-  extraText = Nothing
+  extraText = NoExtraText
   }

@@ -2,6 +2,7 @@
 {-# LANGUAGE TypeApplications #-}
 module Modelling.PetriNet.ConflictSpec where
 
+import Modelling.Auxiliary.Output (ExtraText(..))
 import qualified Modelling.PetriNet.Types         as Find (
   FindConflictConfig (alloyConfig),
   )
@@ -124,7 +125,7 @@ validFindConflictConfigs cs advancedConfig = [
     False
     uniqueConflictPlace
     alloyTestConfig
-    Nothing |
+    NoExtraText |
       (bc, ch) <- cs,
       validConflictConfig <- validConflictConfigs bc,
       uniqueConflictPlace <- [Nothing, Just True, Just False]
@@ -159,7 +160,7 @@ validPickConflictConfigs cs = [
     uniqueConflictPlace
     False
     alloyTestConfig
-    Nothing |
+    NoExtraText |
       (bc, ch) <- cs,
       validConflictConfig <- validConflictConfigs bc,
       prohibitSourceTransitions <- [False, True],
