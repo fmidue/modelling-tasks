@@ -83,7 +83,7 @@ validActionSequence input diag =
   let petri = convertToPetriNet diag
   in validActionSequenceWithPetri input diag petri
 
--- | Check if an action sequence is valid, using a pre-computed Petri net
+-- | Check if an action sequence is valid, using a pre-computed Petri net.
 -- This version avoids re-computing the Petri net conversion
 validActionSequenceWithPetri :: [String] -> UMLActivityDiagram -> PetriLike Node PetriKey -> Bool
 validActionSequenceWithPetri input diag petri =
@@ -98,16 +98,9 @@ validActionSequenceWithPetri input diag petri =
       actions = map snd $ filter (\(l,_) -> l `elem` map snd nameMap) petriKeyMap
   in length input == length labels && validActionSequence' input' actions petri
 
--- | Check if an action sequence is executable but does not terminate all flows
+-- | Check if an action sequence terminates some but not all flows, using a pre-computed Petri net.
 -- This detects the case where a sequence terminates at least one flow
--- but doesn't reach the zero state (i.e., doesn't consume all tokens, leaving some flows active)
-terminatesSomeButNotAllFlows :: [String] -> UMLActivityDiagram -> Bool
-terminatesSomeButNotAllFlows input diag =
-  let petri = convertToPetriNet diag
-  in terminatesSomeButNotAllFlowsWithPetri input diag petri
-
--- | Check if an action sequence terminates some but not all flows, using a pre-computed Petri net
--- This version avoids re-computing the Petri net conversion
+-- but doesn't reach the zero state (i.e., doesn't consume all tokens, leaving some flows active).
 terminatesSomeButNotAllFlowsWithPetri :: [String] -> UMLActivityDiagram -> PetriLike Node PetriKey -> Bool
 terminatesSomeButNotAllFlowsWithPetri input diag petri =
   let nameMap = map
