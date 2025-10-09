@@ -21,4 +21,4 @@ main = do
   putStrLn $ "Segment: " ++ show s
   i <- differentNames 10 defaultDifferentNamesConfig s seed
   print i
-  differentNamesTask "output" i `withLang` English
+  differentNamesTask True "output" i `withLang` English

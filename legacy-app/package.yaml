@@ -12,6 +12,8 @@ ghc-options:
   - -Werror
   - -Wwarn=incomplete-uni-patterns
   - -Wwarn=orphans
+  - -Wwarn=unrecognised-warning-flags
+  - -Wwarn=x-partial
 dependencies:
   - base
   - bytestring

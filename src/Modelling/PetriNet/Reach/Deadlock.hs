@@ -1,5 +1,9 @@
 {-# LANGUAGE ApplicativeDo #-}
+{-# LANGUAGE CPP #-}
+#if !MIN_VERSION_base(4,18,0)
 {-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE DerivingStrategies #-}
+#endif
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
@@ -76,7 +80,9 @@ import Data.GraphViz                    (GraphvizCommand (..))
 import Data.List                        (maximumBy)
 import Data.Maybe                       (fromMaybe)
 import Data.Ord                         (comparing)
+#if !MIN_VERSION_base(4,18,0)
 import Data.Typeable                    (Typeable)
+#endif
 import GHC.Generics                     (Generic)
 
 verifyDeadlock
@@ -173,7 +179,10 @@ data DeadlockInstance s t = DeadlockInstance {
   showSolution      :: Bool,
   withLengthHint    :: Maybe Int,
   withMinLengthHint :: Bool
-  } deriving (Generic, Read, Show, Typeable)
+  } deriving (Generic, Read, Show)
+#if !MIN_VERSION_base(4,18,0)
+  deriving Typeable
+#endif
 
 bimapDeadlockInstance
   :: (Ord a, Ord b)
@@ -212,7 +221,10 @@ data DeadlockConfig = DeadlockConfig {
   showMinLengthHint   :: Bool,
   showPlaceNamesInNet :: Bool
   }
-  deriving (Generic, Read, Show, Typeable)
+  deriving (Generic, Read, Show)
+#if !MIN_VERSION_base(4,18,0)
+  deriving Typeable
+#endif
 
 defaultDeadlockConfig :: DeadlockConfig
 defaultDeadlockConfig =

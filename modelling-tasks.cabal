@@ -110,7 +110,7 @@ library
     , bifunctors
     , bimap
     , bytestring
-    , call-alloy >=0.6.0.2 && <0.7
+    , call-alloy >=0.6.0.3 && <0.7
     , composition
     , containers
     , diagrams-graphviz
@@ -202,7 +202,7 @@ test-suite modelling-tasks-test
     , bifunctors
     , bimap
     , bytestring
-    , call-alloy >=0.6.0.2 && <0.7
+    , call-alloy >=0.6.0.3 && <0.7
     , composition
     , containers
     , diagrams-graphviz
