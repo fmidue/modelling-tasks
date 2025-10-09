@@ -28,16 +28,16 @@ spec = do
           adConfig = defaultAdConfig {objectNodeLimits = (0, 1)},
           objectNodeOnEveryPath = Just True
         } `shouldSatisfy` isJust
-    context "when requireActionDuplication is enabled" $ do
+    context "when attemptActionDuplication is enabled" $ do
       it "requires cycles to be present" $
         checkSelectASConfig defaultSelectASConfig {
           adConfig = defaultAdConfig {cycles = 0},
-          requireActionDuplication = Just True
+          attemptActionDuplication = True
         } `shouldSatisfy` isJust
-      it "allows requireActionDuplication with cycles" $
+      it "allows attemptActionDuplication with cycles" $
         checkSelectASConfig defaultSelectASConfig {
           adConfig = defaultAdConfig {cycles = 1},
-          requireActionDuplication = Just True
+          attemptActionDuplication = True
         } `shouldBe` Nothing
 
   describe "selectActionSequence" $ do
@@ -55,15 +55,15 @@ spec = do
           ]
         }
 
-    context "without action duplication requirement" $
+    context "without action duplication attempt" $
       it "generates wrong sequences without duplicates" $ do
         let g = mkStdGen 42
-            result = runIdentity $ evalRandT (selectActionSequence 3 Nothing testDiagram) g
+            result = runIdentity $ evalRandT (selectActionSequence 3 False testDiagram) g
             hasNoDuplicates xs = length xs == length (nub xs)
         all hasNoDuplicates (wrongSequences result) `shouldBe` True
 
-    context "with action duplication requirement" $
+    context "with action duplication attempt" $
       it "generates sequences with duplicated actions" $ do
         let g = mkStdGen 42
-            result = runIdentity $ evalRandT (selectActionSequence 5 (Just True) testDiagram) g
+            result = runIdentity $ evalRandT (selectActionSequence 5 True testDiagram) g
         length (wrongSequences result) `shouldSatisfy` (>= 0)  -- Should not crash

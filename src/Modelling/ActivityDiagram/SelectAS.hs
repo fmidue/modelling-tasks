@@ -104,7 +104,7 @@ data SelectASConfig = SelectASConfig {
   numberOfWrongAnswers :: Int,
   answerLength :: !(Int, Int),
   printSolution :: Bool,
-  requireActionDuplication :: Maybe Bool,
+  attemptActionDuplication :: Bool,
   extraText :: Maybe (Map Language String)
 } deriving (Generic, Read, Show)
 
@@ -123,7 +123,7 @@ defaultSelectASConfig = SelectASConfig {
   numberOfWrongAnswers = 2,
   answerLength = (5, 8),
   printSolution = False,
-  requireActionDuplication = Nothing,
+  attemptActionDuplication = False,
   extraText = Nothing
 }
 
@@ -139,7 +139,7 @@ checkSelectASConfig' SelectASConfig {
     objectNodeOnEveryPath,
     numberOfWrongAnswers,
     answerLength,
-    requireActionDuplication
+    attemptActionDuplication
   }
   | Just instances <- maxInstances, instances < 1
     = Just "The parameter 'maxInstances' must either be set to a positive value or to Nothing"
@@ -154,8 +154,8 @@ checkSelectASConfig' SelectASConfig {
     The second value of parameter 'answerLength' should be greater or equal to
     its first value.
     |]
-  | requireActionDuplication == Just True && cycles adConfig == 0
-    = Just "Setting the parameter 'requireActionDuplication' to True requires at least 1 cycle in the diagram"
+  | attemptActionDuplication && cycles adConfig == 0
+    = Just "Setting the parameter 'attemptActionDuplication' to True requires at least 1 cycle in the diagram"
   | otherwise
     = Nothing
 
@@ -192,19 +192,19 @@ data SelectASSolution = SelectASSolution {
   wrongSequences :: [[String]]
 } deriving (Show, Eq)
 
-selectActionSequence :: (MonadRandom m) => Int -> Maybe Bool -> UMLActivityDiagram -> m SelectASSolution
-selectActionSequence numberOfWrongSequences requireActionDuplication ad = do
+selectActionSequence :: (MonadRandom m) => Int -> Bool -> UMLActivityDiagram -> m SelectASSolution
+selectActionSequence numberOfWrongSequences attemptActionDuplication ad = do
   let baseCorrectSequence = generateActionSequence ad
-  correctSequence <- case requireActionDuplication of
-    Just True -> generateCorrectSequenceWithDuplication baseCorrectSequence ad
-    _ -> return baseCorrectSequence
+  correctSequence <- if attemptActionDuplication
+    then generateCorrectSequenceWithDuplication baseCorrectSequence ad
+    else return baseCorrectSequence
   let wrongSequences =
         take numberOfWrongSequences $
         sortBy (compareDistToCorrect correctSequence) $
         filter (not . (`validActionSequence` ad)) $
-        case requireActionDuplication of
-          Just True -> generateSequencesWithDuplication correctSequence ad
-          _ -> permutations correctSequence
+        if attemptActionDuplication
+          then generateSequencesWithDuplication correctSequence ad
+          else permutations correctSequence
   return SelectASSolution {correctSequence=correctSequence, wrongSequences=wrongSequences}
 
 asEditDistParams :: [String] -> Params String (String, Int, String) (Sum Int)
@@ -417,7 +417,7 @@ getSelectASTask config = do
   randomInstances <- shuffleM instances >>= mapM parseInstance
   ad <- mapM (fmap snd . shuffleAdNames) randomInstances
   validInstances <- firstJustM (\x -> do
-    solution <- selectActionSequence (numberOfWrongAnswers config) (requireActionDuplication config) x
+    solution <- selectActionSequence (numberOfWrongAnswers config) (attemptActionDuplication config) x
     actionSequences <- selectASSolutionToMap solution
     let selectASInst = SelectASInstance {
           activityDiagram=x,
