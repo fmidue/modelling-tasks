@@ -37,36 +37,36 @@ import Data.String.Interpolate          (iii)
 import Data.Data (Data)
 
 hoveringInformation :: OutputCapable m => LangM m
-hoveringInformation = translate $ do
+hoveringInformation = collapsed True (put $ uniform "Note") $ translate $ do
   english [iii|
-    Please note: When hovering over or clicking on edges / nodes or their
+    When hovering over or clicking on edges / nodes or their
     labels, the respective components that belong together are highlighted.
     |]
   german [iii|
-    Bitte beachten Sie: Beim Bewegen über oder Klicken auf
+    Beim Bewegen über oder Klicken auf
     Kanten / Knoten bzw. ihre Beschriftungen
     werden die jeweils zusammengehörenden Komponenten hervorgehoben.
     |]
 
 directionsAdvice :: OutputCapable m => LangM m
-directionsAdvice = translate $ do
+directionsAdvice = collapsed True (put $ uniform "Note") $ translate $ do
   english [iii|
     As navigation directions are used,
-    please note that aggregations and compositions are only navigable
+    aggregations and compositions are only navigable
     from the "part" toward the "whole",
     i.e., they are not navigable in the opposite direction!
     |]
   german [iii|
-    Da Navigationsrichtungen verwendet werden, beachten Sie bitte,
-    dass Aggregationen und Kompositionen
-    nur vom "Teil" zum "Ganzen" navigierbar sind,
+    Da Navigationsrichtungen verwendet werden,
+    sind Aggregationen und Kompositionen
+    nur vom "Teil" zum "Ganzen" navigierbar,
     d.h., sie sind nicht in der entgegengesetzten Richtung navigierbar!
     |]
 
 simplifiedInformation :: OutputCapable m => LangM m
-simplifiedInformation = translate $ do
+simplifiedInformation = collapsed True (put $ uniform "Note") $ translate $ do
   english [iii|
-    Please note: Classes are represented simplified here.
+    Classes are represented simplified here.
     #{endLine}
     That means they consist of a single box containing only the class name
     but no sections for attributes or methods.
@@ -75,7 +75,7 @@ simplifiedInformation = translate $ do
     as valid classes.
     |]
   german [iii|
-    Bitte beachten Sie: Klassen werden hier vereinfacht dargestellt.
+    Klassen werden hier vereinfacht dargestellt.
     #{endLine}
     Das heißt, sie bestehen aus einer einfachen Box,
     die nur den Klassennamen enthält,

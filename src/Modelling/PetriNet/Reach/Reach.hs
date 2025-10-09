@@ -28,6 +28,7 @@ import Capabilities.Graphviz            (MonadGraphviz)
 import Data.Data                        (Data)
 import Modelling.Auxiliary.Output (
   hoveringInformation,
+  uniform,
   )
 import Modelling.PetriNet.Reach.Draw    (drawToFile, isPetriDrawable)
 import Modelling.PetriNet.Reach.Property (
@@ -57,6 +58,7 @@ import Control.Functor.Trans            (FunctorTrans (lift))
 import Control.Monad                    (forM, guard, when)
 import Control.Monad.Catch              (MonadCatch, MonadThrow)
 import Control.Monad.Extra              (findM, maybeM, whenJust)
+import Control.Monad.State              (put)
 import Modelling.PetriNet.Reach.ConfigValidation (
   checkBasicPetriConfig,
   )
@@ -67,6 +69,7 @@ import Control.OutputCapable.Blocks (
   MinimumThreshold (MinimumThreshold),
   OutputCapable,
   Rated,
+  collapsed,
   english,
   german,
   printSolutionAndAssertMinimum,
@@ -197,16 +200,16 @@ reportReachFor img noLonger lengthHint minLength showMinLengthHint maybeGoal = d
       " (in genau dieser Reihenfolge), die gesuchte Markierung erreicht wird."
       ]
   case lengthHint of
-    Just maxSteps | showMinLengthHint && maxSteps == minLength -> paragraph $ translate $ do
-      english [i|Hint: The shortest solutions have exactly #{maxSteps} steps.|]
-      german [i|Hinweis: Die kürzesten Lösungen haben genau #{maxSteps} Schritte.|]
-    Just maxSteps -> paragraph $ translate $ do
-      english [i|Hint: There is a solution with not more than #{maxSteps} steps.|]
-      german [i|Hinweis: Es gibt eine Lösung mit nicht mehr als #{maxSteps} Schritten.|]
+    Just maxSteps | showMinLengthHint && maxSteps == minLength -> collapsed True (put $ uniform "Hint") $ translate $ do
+      english [i|The shortest solutions have exactly #{maxSteps} steps.|]
+      german [i|Die kürzesten Lösungen haben genau #{maxSteps} Schritte.|]
+    Just maxSteps -> collapsed True (put $ uniform "Hint") $ translate $ do
+      english [i|There is a solution with not more than #{maxSteps} steps.|]
+      german [i|Es gibt eine Lösung mit nicht mehr als #{maxSteps} Schritten.|]
     Nothing -> pure ()
-  when (showMinLengthHint && lengthHint /= Just minLength) $ paragraph $ translate $ do
-    english [i|Hint: There is no solution with less than #{minLength} steps.|]
-    german [i|Hinweis: Es gibt keine Lösung mit weniger als #{minLength} Schritten.|]
+  when (showMinLengthHint && lengthHint /= Just minLength) $ collapsed True (put $ uniform "Hint") $ translate $ do
+    english [i|There is no solution with less than #{minLength} steps.|]
+    german [i|Es gibt keine Lösung mit weniger als #{minLength} Schritten.|]
   hoveringInformation
   pure ()
 
