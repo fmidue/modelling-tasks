@@ -1,4 +1,5 @@
 {-# LANGUAGE ApplicativeDo #-}
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE TypeApplications #-}
@@ -43,10 +44,12 @@ import Control.Monad.Catch (
   MonadThrow (throwM),
   handle,
   )
+#if !MIN_VERSION_base(4,19,0)
+import Data.Foldable                    (Foldable (foldl'))
+#endif
 import Data.Graph.Inductive             (Gr)
 import Data.GraphViz                    (AttributeNode, AttributeEdge)
 import Data.GraphViz.Exception          (GraphvizException)
-import Data.List                        (foldl')
 import Data.Data (
   Data,
   Typeable,
