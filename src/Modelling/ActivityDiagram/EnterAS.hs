@@ -25,7 +25,11 @@ module Modelling.ActivityDiagram.EnterAS (
 import Capabilities.Alloy               (MonadAlloy, getInstances)
 import Capabilities.PlantUml            (MonadPlantUml)
 import Capabilities.WriteFile           (MonadWriteFile)
-import Modelling.ActivityDiagram.ActionSequences (generateActionSequence, validActionSequence, isExecutableButIncomplete)
+import Modelling.ActivityDiagram.ActionSequences (
+  generateActionSequence,
+  validActionSequenceWithPetri,
+  terminatesSomeButNotAllFlowsWithPetri,
+  )
 import Modelling.ActivityDiagram.Auxiliary.ActionSequences (actionSequencesAlloy)
 import Modelling.ActivityDiagram.Config (
   AdConfig (..),
@@ -40,6 +44,10 @@ import Modelling.ActivityDiagram.Datatype (
   isObjectNode,
   )
 import Modelling.ActivityDiagram.Instance (parseInstance)
+import Modelling.ActivityDiagram.PetriNet (
+  PetriKey,
+  convertToPetriNet,
+  )
 import Modelling.ActivityDiagram.PlantUMLConverter (
   PlantUmlConfig (..),
   defaultPlantUmlConfig,
@@ -47,6 +55,7 @@ import Modelling.ActivityDiagram.PlantUMLConverter (
   )
 import Modelling.ActivityDiagram.Shuffle (shuffleAdNames)
 import Modelling.Auxiliary.Common       (getFirstInstance)
+import Modelling.PetriNet.Types         (Node, PetriLike)
 
 import Control.Applicative (Alternative ((<|>)))
 import Control.Monad (unless, when)
@@ -84,6 +93,7 @@ import System.Random.Shuffle (shuffleM)
 
 data EnterASInstance = EnterASInstance {
   activityDiagram :: UMLActivityDiagram,
+  petriNet :: PetriLike Node PetriKey,
   drawSettings :: PlantUmlConfig,
   sampleSequence :: [String],
   showSolution :: Bool,
@@ -237,7 +247,7 @@ enterASEvaluation
   -> [String]
   -> Rated m
 enterASEvaluation task sub = do
-  let correct = validActionSequence sub $ activityDiagram task
+  let correct = validActionSequenceWithPetri sub (activityDiagram task) (petriNet task)
       points = if correct then 1 else 0
       maybeSolutionString =
         if showSolution task
@@ -250,7 +260,7 @@ enterASEvaluation task sub = do
 
   -- Provide specific feedback for sequences that terminate some but not all flows
   unless correct $ do
-    let isIncomplete = isExecutableButIncomplete sub $ activityDiagram task
+    let isIncomplete = terminatesSomeButNotAllFlowsWithPetri sub (activityDiagram task) (petriNet task)
     when isIncomplete $ do
       paragraph $ translate $ do
         german [iii|
@@ -309,8 +319,10 @@ getEnterASTask config = do
   ad <- mapM (fmap snd . shuffleAdNames) randomInstances
   getFirstInstance
         $ filter (isNothing . (`checkEnterASInstanceForConfig` config))
-        $ map (\x -> EnterASInstance {
+        $ map (\x -> let petri = convertToPetriNet x
+                     in EnterASInstance {
           activityDiagram=x,
+          petriNet=petri,
           drawSettings = defaultPlantUmlConfig {
             suppressBranchConditions = hideBranchConditions config
             },
@@ -322,6 +334,46 @@ getEnterASTask config = do
 defaultEnterASInstance :: EnterASInstance
 defaultEnterASInstance = EnterASInstance {
   activityDiagram = UMLActivityDiagram {
+    nodes = [
+      AdActionNode {label = 1, name = "A"},
+      AdActionNode {label = 2, name = "E"},
+      AdActionNode {label = 3, name = "F"},
+      AdActionNode {label = 4, name = "G"},
+      AdActionNode {label = 5, name = "D"},
+      AdActionNode {label = 6, name = "B"},
+      AdObjectNode {label = 7, name = "C"},
+      AdDecisionNode {label = 8},
+      AdDecisionNode {label = 9},
+      AdMergeNode {label = 10},
+      AdMergeNode {label = 11},
+      AdForkNode {label = 12},
+      AdJoinNode {label = 13},
+      AdFlowFinalNode {label = 14},
+      AdFlowFinalNode {label = 15},
+      AdInitialNode {label = 16}
+    ],
+    connections = [
+      AdConnection {from = 1, to = 10, guard = ""},
+      AdConnection {from = 2, to = 13, guard = ""},
+      AdConnection {from = 3, to = 10, guard = ""},
+      AdConnection {from = 4, to = 8, guard = ""},
+      AdConnection {from = 5, to = 12, guard = ""},
+      AdConnection {from = 6, to = 9, guard = ""},
+      AdConnection {from = 7, to = 5, guard = ""},
+      AdConnection {from = 8, to = 11, guard = "a"},
+      AdConnection {from = 8, to = 13, guard = "b"},
+      AdConnection {from = 9, to = 1, guard = "a"},
+      AdConnection {from = 9, to = 3, guard = "b"},
+      AdConnection {from = 10, to = 15, guard = ""},
+      AdConnection {from = 11, to = 4, guard = ""},
+      AdConnection {from = 12, to = 2, guard = ""},
+      AdConnection {from = 12, to = 6, guard = ""},
+      AdConnection {from = 12, to = 11, guard = ""},
+      AdConnection {from = 13, to = 14, guard = ""},
+      AdConnection {from = 16, to = 7, guard = ""}
+    ]
+  },
+  petriNet = convertToPetriNet $ UMLActivityDiagram {
     nodes = [
       AdActionNode {label = 1, name = "A"},
       AdActionNode {label = 2, name = "E"},
