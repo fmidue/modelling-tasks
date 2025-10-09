@@ -25,7 +25,7 @@ module Modelling.ActivityDiagram.EnterAS (
 import Capabilities.Alloy               (MonadAlloy, getInstances)
 import Capabilities.PlantUml            (MonadPlantUml)
 import Capabilities.WriteFile           (MonadWriteFile)
-import Modelling.ActivityDiagram.ActionSequences (generateActionSequence, validActionSequence)
+import Modelling.ActivityDiagram.ActionSequences (generateActionSequence, validActionSequence, isExecutableButIncomplete)
 import Modelling.ActivityDiagram.Auxiliary.ActionSequences (actionSequencesAlloy)
 import Modelling.ActivityDiagram.Config (
   AdConfig (..),
@@ -49,7 +49,7 @@ import Modelling.ActivityDiagram.Shuffle (shuffleAdNames)
 import Modelling.Auxiliary.Common       (getFirstInstance)
 
 import Control.Applicative (Alternative ((<|>)))
-import Control.Monad (unless)
+import Control.Monad (unless, when)
 import Control.Monad.Catch              (MonadThrow)
 import Control.OutputCapable.Blocks (
   ArticleToUse (IndefiniteArticle),
@@ -248,6 +248,25 @@ enterASEvaluation task sub = do
   yesNo correct $ translate $ do
     english "The submitted action sequence is correct?"
     german "Die eingereichte Aktionsfolge ist korrekt?"
+
+  -- Provide specific feedback for sequences that terminate some but not all flows
+  unless correct $ do
+    let isIncomplete = isExecutableButIncomplete sub $ activityDiagram task
+    when isIncomplete $ do
+      paragraph $ translate $ do
+        german [iii|
+          Die eingereichte Sequenz erreicht ein Flussende, aber terminiert nicht alle Flüsse.
+          Beachten Sie, dass das Erreichen eines Flussendes nur den hineinlaufenden Kontrollfluss beendet,
+          während andere Flüsse (z.B. von einem Fork-Knoten) weiterhin aktiv bleiben können.
+          Eine vollständige Lösung muss alle im Diagramm vorhandenen Flüsse terminieren.
+          |]
+        english [iii|
+          The submitted sequence reaches a flow final node but does not terminate all flows.
+          Note that reaching a flow final node only terminates the incoming control flow,
+          while other flows (e.g., from a fork node) may remain active.
+          A complete solution must terminate all flows present in the diagram.
+          |]
+      pure ()
 
   let objectNames = map name $ filter isObjectNode $ nodes $ activityDiagram task
       objectNamesInSubmission = nubOrd $ sub `intersect` objectNames
