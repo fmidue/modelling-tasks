@@ -112,25 +112,13 @@ terminatesSomeButNotAllFlowsWithPetri input diag petri =
         $ filter isNormalPetriNode $ M.keys $ allNodes petri
       input' = mapMaybe (`lookup` petriKeyMap) labels
       actions = map snd $ filter (\(l,_) -> l `elem` map snd nameMap) petriKeyMap
-  in length input == length labels &&
-     terminatesSomeButNotAllFlows' input' actions petri
-
--- | Helper function to check if sequence terminates some but not all flows
--- Checks if the sequence terminates at least one flow (reaches a FinalPetriNode)
--- but doesn't terminate all flows (doesn't reach zero state)
-terminatesSomeButNotAllFlows'
-  :: [PetriKey]
-  -> [PetriKey]
-  -> PetriLike Node PetriKey
-  -> Bool
-terminatesSomeButNotAllFlows' input actions petri =
-  let net = fromPetriLike petri
+      net = fromPetriLike petri
       zeroState = State $ M.map (const 0) $ unState $ start net
-      levels = levelsCheckAS input actions net
+      levels = levelsCheckAS input' actions net
       reachesZeroState = any (isJust . lookup zeroState) levels
       -- Check if any FinalPetriNode transition was fired (meaning a flow was terminated)
       finalNodeReached = any (any (\(_, path) -> any isFinalPetriNode path)) levels
-  in not reachesZeroState && finalNodeReached
+  in length input == length labels && not reachesZeroState && finalNodeReached
 
 -- | Check if a PetriKey represents a final node transition
 isFinalPetriNode :: PetriKey -> Bool
