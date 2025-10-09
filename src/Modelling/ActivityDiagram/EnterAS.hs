@@ -332,8 +332,9 @@ getEnterASTask config = do
         }) ad
 
 defaultEnterASInstance :: EnterASInstance
-defaultEnterASInstance = EnterASInstance {
-  activityDiagram = UMLActivityDiagram {
+defaultEnterASInstance =
+ let
+  ad = UMLActivityDiagram {
     nodes = [
       AdActionNode {label = 1, name = "A"},
       AdActionNode {label = 2, name = "E"},
@@ -372,47 +373,11 @@ defaultEnterASInstance = EnterASInstance {
       AdConnection {from = 13, to = 14, guard = ""},
       AdConnection {from = 16, to = 7, guard = ""}
     ]
-  },
-  petriNet = convertToPetriNet $ UMLActivityDiagram {
-    nodes = [
-      AdActionNode {label = 1, name = "A"},
-      AdActionNode {label = 2, name = "E"},
-      AdActionNode {label = 3, name = "F"},
-      AdActionNode {label = 4, name = "G"},
-      AdActionNode {label = 5, name = "D"},
-      AdActionNode {label = 6, name = "B"},
-      AdObjectNode {label = 7, name = "C"},
-      AdDecisionNode {label = 8},
-      AdDecisionNode {label = 9},
-      AdMergeNode {label = 10},
-      AdMergeNode {label = 11},
-      AdForkNode {label = 12},
-      AdJoinNode {label = 13},
-      AdFlowFinalNode {label = 14},
-      AdFlowFinalNode {label = 15},
-      AdInitialNode {label = 16}
-    ],
-    connections = [
-      AdConnection {from = 1, to = 10, guard = ""},
-      AdConnection {from = 2, to = 13, guard = ""},
-      AdConnection {from = 3, to = 10, guard = ""},
-      AdConnection {from = 4, to = 8, guard = ""},
-      AdConnection {from = 5, to = 12, guard = ""},
-      AdConnection {from = 6, to = 9, guard = ""},
-      AdConnection {from = 7, to = 5, guard = ""},
-      AdConnection {from = 8, to = 11, guard = "a"},
-      AdConnection {from = 8, to = 13, guard = "b"},
-      AdConnection {from = 9, to = 1, guard = "a"},
-      AdConnection {from = 9, to = 3, guard = "b"},
-      AdConnection {from = 10, to = 15, guard = ""},
-      AdConnection {from = 11, to = 4, guard = ""},
-      AdConnection {from = 12, to = 2, guard = ""},
-      AdConnection {from = 12, to = 6, guard = ""},
-      AdConnection {from = 12, to = 11, guard = ""},
-      AdConnection {from = 13, to = 14, guard = ""},
-      AdConnection {from = 16, to = 7, guard = ""}
-    ]
-  },
+  }
+ in
+  EnterASInstance {
+  activityDiagram = ad,
+  petriNet = convertToPetriNet ad,
   drawSettings = defaultPlantUmlConfig,
   sampleSequence = ["D","E","G","B","F"],
   showSolution = False,
