@@ -117,10 +117,15 @@ checkTaskText taskText
     usedElements = concatMap (concatMap singleton) taskText
     allElements = [minBound ..]
 
+-- | Configuration options for additional text
 data ExtraText
-  = NoExtraText
-  | Static (Map Language String)
-  | Collapsible Bool (Map Language String) (Map Language String)
+  = NoExtraText              -- ^ Provide no additional text.
+  | Static                   -- ^ Provide additional text that is always shown.
+      (Map Language String)  -- ^ The text do be displayed.
+  | Collapsible              -- ^ Provide additional text that can be collapsed.
+      Bool                   -- ^ The default collapse status of the text.
+      (Map Language String)  -- ^ The summary of the text to be shown.
+      (Map Language String)  -- ^ The text to be shown when not collapsed.
   deriving (Data, Eq, Read, Show)
 
 extra :: OutputCapable m => ExtraText -> LangM m
