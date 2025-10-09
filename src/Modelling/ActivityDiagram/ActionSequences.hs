@@ -3,10 +3,7 @@ module Modelling.ActivityDiagram.ActionSequences (
   validActionSequence,
   validActionSequenceWithPetri,
   generateActionSequence,
-  terminatesSomeButNotAllFlows,
-  terminatesSomeButNotAllFlowsWithPetri,
-  -- Deprecated: use terminatesSomeButNotAllFlows
-  isExecutableButIncomplete
+  terminatesSomeButNotAllFlowsWithPetri
 ) where
 
 import qualified Modelling.ActivityDiagram.Datatype as Ad (
@@ -124,11 +121,6 @@ terminatesSomeButNotAllFlowsWithPetri input diag petri =
       actions = map snd $ filter (\(l,_) -> l `elem` map snd nameMap) petriKeyMap
   in length input == length labels &&
      terminatesSomeButNotAllFlows' input' actions petri
-
--- | Deprecated: Use terminatesSomeButNotAllFlows instead
-{-# DEPRECATED isExecutableButIncomplete "Use terminatesSomeButNotAllFlows instead" #-}
-isExecutableButIncomplete :: [String] -> UMLActivityDiagram -> Bool
-isExecutableButIncomplete = terminatesSomeButNotAllFlows
 
 -- | Helper function to check if sequence terminates some but not all flows
 -- Checks if the sequence terminates at least one flow (reaches a FinalPetriNode)
