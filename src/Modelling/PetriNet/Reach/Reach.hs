@@ -217,10 +217,14 @@ reportReachFor img noLonger lengthHint minLength showMinLengthHint maybeGoal = d
         (Just h, Nothing) -> [h]
         (Nothing, Just h) -> [h]
         (Just h1, Just h2) -> [h1, h2]
-  unless (null hints) $ collapsed True (put $ translations $ do
-    english "Hints on solution length"
-    german "Hinweise zur Lösungslänge"
-    ) $ sequenceA_ hints
+      titleText = if length hints > 1
+        then translations $ do
+          english "Hints on solution length"
+          german "Hinweise zur Lösungslänge"
+        else translations $ do
+          english "Hint on solution length"
+          german "Hinweis zur Lösungslänge"
+  unless (null hints) $ collapsed True (put titleText) $ sequenceA_ hints
   hoveringInformation
   pure ()
 
