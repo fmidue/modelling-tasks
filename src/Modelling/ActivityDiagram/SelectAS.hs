@@ -28,8 +28,9 @@ import qualified Data.Vector as V (fromList)
 import Capabilities.Alloy               (MonadAlloy, getInstances)
 import Capabilities.PlantUml            (MonadPlantUml)
 import Capabilities.WriteFile           (MonadWriteFile)
-import Modelling.ActivityDiagram.ActionSequences (generateActionSequence, validActionSequence)
+import Modelling.ActivityDiagram.ActionSequences (generateActionSequenceWithPetri, validActionSequenceWithPetri)
 import Modelling.ActivityDiagram.Auxiliary.ActionSequences (actionSequencesAlloy)
+import Modelling.ActivityDiagram.PetriNet (convertToPetriNet)
 import Modelling.ActivityDiagram.Config (
   AdConfig (..),
   checkAdConfig,
@@ -194,14 +195,15 @@ data SelectASSolution = SelectASSolution {
 
 selectActionSequence :: (MonadRandom m) => Int -> Bool -> UMLActivityDiagram -> m SelectASSolution
 selectActionSequence numberOfWrongSequences attemptActionDuplication ad = do
-  let baseCorrectSequence = generateActionSequence ad
+  let petri = convertToPetriNet ad
+      baseCorrectSequence = generateActionSequenceWithPetri ad petri
   correctSequence <- if attemptActionDuplication
-    then generateCorrectSequenceWithDuplication baseCorrectSequence ad
+    then generateCorrectSequenceWithDuplication baseCorrectSequence ad petri
     else return baseCorrectSequence
   let wrongSequences =
         take numberOfWrongSequences $
         sortBy (compareDistToCorrect correctSequence) $
-        filter (not . (`validActionSequence` ad)) $
+        filter (not . (\actionSeq -> validActionSequenceWithPetri actionSeq ad petri)) $
         if attemptActionDuplication
           then generateSequencesWithDuplication correctSequence ad
           else permutations correctSequence
@@ -228,7 +230,7 @@ compareDistToCorrect correctSequence xs ys =
 
 -- | Generate a correct sequence with action duplication when cycles exist
 generateCorrectSequenceWithDuplication :: (MonadRandom m) => [String] -> UMLActivityDiagram -> m [String]
-generateCorrectSequenceWithDuplication baseSequence ad = do
+generateCorrectSequenceWithDuplication baseSequence ad petri = do
   let maxSubsequenceLength = length baseSequence  -- Try up to full length for cycles of any size
       -- Try multiple strategies for duplication: single actions and subsequences
       singleActionDuplicates =
@@ -236,7 +238,7 @@ generateCorrectSequenceWithDuplication baseSequence ad = do
         | action <- baseSequence  -- Draw directly from baseSequence since it's the valid subset
         , position <- [0..maxSubsequenceLength]  -- Insert at any position including end
         , let extendedSeq = insertActionAt position action baseSequence
-        , validActionSequence extendedSeq ad  -- Must be valid
+        , validActionSequenceWithPetri extendedSeq ad petri  -- Must be valid
         ]
 
       -- Strategy 2: Duplicate subsequences of the base sequence

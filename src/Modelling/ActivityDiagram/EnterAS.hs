@@ -25,7 +25,11 @@ module Modelling.ActivityDiagram.EnterAS (
 import Capabilities.Alloy               (MonadAlloy, getInstances)
 import Capabilities.PlantUml            (MonadPlantUml)
 import Capabilities.WriteFile           (MonadWriteFile)
-import Modelling.ActivityDiagram.ActionSequences (generateActionSequence, validActionSequence, isExecutableButIncomplete)
+import Modelling.ActivityDiagram.ActionSequences (
+  generateActionSequenceWithPetri,
+  validActionSequenceWithPetri,
+  terminatesSomeButNotAllFlowsWithPetri,
+  )
 import Modelling.ActivityDiagram.Auxiliary.ActionSequences (actionSequencesAlloy)
 import Modelling.ActivityDiagram.Config (
   AdConfig (..),
@@ -40,6 +44,10 @@ import Modelling.ActivityDiagram.Datatype (
   isObjectNode,
   )
 import Modelling.ActivityDiagram.Instance (parseInstance)
+import Modelling.ActivityDiagram.PetriNet (
+  PetriKey,
+  convertToPetriNet,
+  )
 import Modelling.ActivityDiagram.PlantUMLConverter (
   PlantUmlConfig (..),
   defaultPlantUmlConfig,
@@ -47,6 +55,7 @@ import Modelling.ActivityDiagram.PlantUMLConverter (
   )
 import Modelling.ActivityDiagram.Shuffle (shuffleAdNames)
 import Modelling.Auxiliary.Common       (getFirstInstance)
+import Modelling.PetriNet.Types         (Node, PetriLike)
 
 import Control.Applicative (Alternative ((<|>)))
 import Control.Monad (unless, when)
@@ -84,6 +93,7 @@ import System.Random.Shuffle (shuffleM)
 
 data EnterASInstance = EnterASInstance {
   activityDiagram :: UMLActivityDiagram,
+  petriNet :: PetriLike Node PetriKey,
   drawSettings :: PlantUmlConfig,
   sampleSequence :: [String],
   showSolution :: Bool,
@@ -178,9 +188,9 @@ newtype EnterASSolution = EnterASSolution {
   sampleSolution :: [String]
 } deriving (Show, Eq)
 
-enterActionSequence :: UMLActivityDiagram -> EnterASSolution
-enterActionSequence ad =
-  EnterASSolution {sampleSolution=generateActionSequence ad}
+enterActionSequence :: UMLActivityDiagram -> PetriLike Node PetriKey -> EnterASSolution
+enterActionSequence ad petri =
+  EnterASSolution {sampleSolution=generateActionSequenceWithPetri ad petri}
 
 enterASTask
   :: (MonadPlantUml m, MonadWriteFile m, OutputCapable m)
@@ -237,7 +247,7 @@ enterASEvaluation
   -> [String]
   -> Rated m
 enterASEvaluation task sub = do
-  let correct = validActionSequence sub $ activityDiagram task
+  let correct = validActionSequenceWithPetri sub (activityDiagram task) (petriNet task)
       points = if correct then 1 else 0
       maybeSolutionString =
         if showSolution task
@@ -250,7 +260,7 @@ enterASEvaluation task sub = do
 
   -- Provide specific feedback for sequences that terminate some but not all flows
   unless correct $ do
-    let isIncomplete = isExecutableButIncomplete sub $ activityDiagram task
+    let isIncomplete = terminatesSomeButNotAllFlowsWithPetri sub (activityDiagram task) (petriNet task)
     when isIncomplete $ do
       paragraph $ translate $ do
         german [iii|
@@ -309,19 +319,22 @@ getEnterASTask config = do
   ad <- mapM (fmap snd . shuffleAdNames) randomInstances
   getFirstInstance
         $ filter (isNothing . (`checkEnterASInstanceForConfig` config))
-        $ map (\x -> EnterASInstance {
+        $ map (\x -> let petri = convertToPetriNet x
+                     in EnterASInstance {
           activityDiagram=x,
+          petriNet=petri,
           drawSettings = defaultPlantUmlConfig {
             suppressBranchConditions = hideBranchConditions config
             },
-          sampleSequence = sampleSolution $ enterActionSequence x,
+          sampleSequence = sampleSolution $ enterActionSequence x petri,
           showSolution = printSolution config,
           addText = extraText config
         }) ad
 
 defaultEnterASInstance :: EnterASInstance
-defaultEnterASInstance = EnterASInstance {
-  activityDiagram = UMLActivityDiagram {
+defaultEnterASInstance =
+ let
+  ad = UMLActivityDiagram {
     nodes = [
       AdActionNode {label = 1, name = "A"},
       AdActionNode {label = 2, name = "E"},
@@ -360,7 +373,11 @@ defaultEnterASInstance = EnterASInstance {
       AdConnection {from = 13, to = 14, guard = ""},
       AdConnection {from = 16, to = 7, guard = ""}
     ]
-  },
+  }
+ in
+  EnterASInstance {
+  activityDiagram = ad,
+  petriNet = convertToPetriNet ad,
   drawSettings = defaultPlantUmlConfig,
   sampleSequence = ["D","E","G","B","F"],
   showSolution = False,
