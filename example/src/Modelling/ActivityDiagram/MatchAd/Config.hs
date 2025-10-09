@@ -4,6 +4,7 @@ module Modelling.ActivityDiagram.MatchAd.Config where
 
 import Modelling.ActivityDiagram.Config (AdConfig(..))
 import Modelling.ActivityDiagram.MatchAd (MatchAdConfig(..))
+import Modelling.Auxiliary.Output       (ExtraText(..))
 
 {-|
 points: 0.15
@@ -24,7 +25,7 @@ task2023_31 = MatchAdConfig {
   hideBranchConditions = False,
   withActivityFinalInForkBlocks = Just True,
   printSolution = True,
-  extraText = Nothing
+  extraText = NoExtraText
   }
 
 {-|
@@ -46,7 +47,7 @@ task2023_32 = MatchAdConfig {
   hideBranchConditions = True,
   withActivityFinalInForkBlocks = Just False,
   printSolution = True,
-  extraText = Nothing
+  extraText = NoExtraText
   }
 
 {-|

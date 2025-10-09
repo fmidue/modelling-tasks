@@ -75,6 +75,7 @@ import Modelling.Auxiliary.Common (
   weightedShuffle,
   )
 import Modelling.Auxiliary.Output (
+  ExtraText(..),
   addPretext,
   extra,
   )
@@ -96,7 +97,6 @@ import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
   GenericOutputCapable (..),
   LangM,
-  Language,
   OutputCapable,
   ($=<<),
   english,
@@ -136,7 +136,7 @@ data SelectPetriInstance = SelectPetriInstance {
   petriDrawConf :: DrawSettings,
   petriNets :: Map Int (Bool, SimplePetriLike PetriKey),
   showSolution :: Bool,
-  addText :: Maybe (Map Language String)
+  addText :: ExtraText
 } deriving (Generic, Show)
 
 data SelectPetriConfig = SelectPetriConfig {
@@ -161,7 +161,7 @@ data SelectPetriConfig = SelectPetriConfig {
   -- | Avoid Activity Finals in concurrent flows to reduce confusion
   withActivityFinalInForkBlocks :: !(Maybe Bool),
   printSolution :: Bool,
-  extraText :: Maybe (Map Language String)
+  extraText :: ExtraText
 } deriving (Generic, Show)
 
 pickRandomLayout :: (MonadRandom m) => SelectPetriConfig -> m GraphvizCommand
@@ -187,7 +187,7 @@ defaultSelectPetriConfig = SelectPetriConfig {
   presenceOfSinkTransitionsForFinals = Nothing,
   withActivityFinalInForkBlocks = Just False,
   printSolution = False,
-  extraText = Nothing
+  extraText = NoExtraText
 }
 
 checkSelectPetriConfig :: SelectPetriConfig -> Maybe String
@@ -914,5 +914,5 @@ defaultSelectPetriInstance =  SelectPetriInstance {
     ]
   }))],
   showSolution = False,
-  addText = Nothing
+  addText = NoExtraText
 }

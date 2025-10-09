@@ -22,6 +22,7 @@ import Capabilities.Cache               (MonadCache)
 import Capabilities.Diagrams            (MonadDiagrams)
 import Capabilities.Graphviz            (MonadGraphviz)
 import Modelling.Auxiliary.Output (
+  ExtraText(..),
   hoveringInformation,
   extra,
   )
@@ -257,5 +258,5 @@ defaultFindConflictPlacesInstance = FindInstance {
   numberOfPlaces = 4,
   numberOfTransitions = 3,
   showSolution = False,
-  addText = Nothing
+  addText = NoExtraText
   }

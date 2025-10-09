@@ -62,6 +62,7 @@ import Modelling.Auxiliary.Common (
   TaskGenerationException (NoInstanceAvailable),
   )
 import Modelling.Auxiliary.Output (
+  ExtraText(..),
   addPretext,
   checkTaskText,
   hoveringInformation,
@@ -256,7 +257,7 @@ data RepairCdConfig
     printSolution    :: Bool,
     timeout          :: Maybe Int,
     useNames         :: Bool,
-    extraText        :: Maybe (Map Language String)
+    extraText        :: ExtraText
   } deriving (Generic, Read, Show)
 
 defaultRepairCdConfig :: RepairCdConfig
@@ -290,7 +291,7 @@ defaultRepairCdConfig
     printSolution    = True,
     timeout          = Nothing,
     useNames         = True,
-    extraText        = Nothing
+    extraText        = NoExtraText
   }
 
 checkRepairCdConfig :: RepairCdConfig -> Maybe String
@@ -489,7 +490,7 @@ data RepairCdInstance
     showExtendedFeedback :: Bool,
     showSolution   :: !Bool,
     taskText       :: !RepairCdTaskText,
-    addText        :: Maybe (Map Language String)
+    addText        :: ExtraText
   } deriving (Eq, Generic, Read, Show)
 
 checkRepairCdInstance :: RepairCdInstance -> Maybe String
@@ -834,7 +835,7 @@ defaultRepairCdInstance = RepairCdInstance {
   showExtendedFeedback = True,
   showSolution = True,
   taskText = defaultRepairCdTaskText,
-  addText = Nothing
+  addText = NoExtraText
   }
 
 type StructuralWeakeningSet = WeakeningSet StructuralWeakening

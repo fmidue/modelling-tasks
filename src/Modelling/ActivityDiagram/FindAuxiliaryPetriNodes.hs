@@ -69,6 +69,7 @@ import Modelling.ActivityDiagram.PlantUMLConverter (
   )
 import Modelling.Auxiliary.Common       (getFirstInstance)
 import Modelling.Auxiliary.Output (
+  ExtraText(..),
   addPretext,
   extra
   )
@@ -89,7 +90,6 @@ import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
   GenericOutputCapable (..),
   LangM,
-  Language,
   OutputCapable,
   Rated,
   ($=<<),
@@ -115,7 +115,7 @@ data FindAuxiliaryPetriNodesInstance = FindAuxiliaryPetriNodesInstance {
   matchingNet :: SimplePetriLike PetriKey,
   plantUMLConf :: PlantUmlConfig,
   showSolution :: Bool,
-  addText :: Maybe (Map Language String)
+  addText :: ExtraText
 } deriving (Generic, Read, Show)
 
 data FindAuxiliaryPetriNodesConfig = FindAuxiliaryPetriNodesConfig {
@@ -129,7 +129,7 @@ data FindAuxiliaryPetriNodesConfig = FindAuxiliaryPetriNodesConfig {
   -- | Force presence or absence of new sink transitions for representing finals
   presenceOfSinkTransitionsForFinals :: Maybe Bool,
   printSolution :: Bool,
-  extraText :: Maybe (Map Language String)
+  extraText :: ExtraText
 } deriving (Generic, Read, Show)
 
 defaultFindAuxiliaryPetriNodesConfig :: FindAuxiliaryPetriNodesConfig
@@ -142,7 +142,7 @@ defaultFindAuxiliaryPetriNodesConfig =
     hideBranchConditions = False,
     presenceOfSinkTransitionsForFinals = Nothing,
     printSolution = False,
-    extraText = Nothing
+    extraText = NoExtraText
   }
 
 checkFindAuxiliaryPetriNodesConfig :: FindAuxiliaryPetriNodesConfig -> Maybe String
@@ -362,5 +362,5 @@ defaultFindAuxiliaryPetriNodesInstance =
     matchingNet = convertToSimple ad,
     plantUMLConf = defaultPlantUmlConfig,
     showSolution = False,
-    addText = Nothing
+    addText = NoExtraText
   }

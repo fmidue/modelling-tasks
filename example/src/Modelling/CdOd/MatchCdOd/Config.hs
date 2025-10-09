@@ -2,6 +2,7 @@
 
 module Modelling.CdOd.MatchCdOd.Config where
 
+import Modelling.Auxiliary.Output       (ExtraText(..))
 import Modelling.CdOd.MatchCdOd (
   MatchCdOdConfig (..),
   )
@@ -59,7 +60,7 @@ task2023_14 = MatchCdOdConfig {
   printSolution = True,
   timeout = Nothing,
   withNonTrivialInheritance = Just True,
-  extraText = Nothing
+  extraText = NoExtraText
   }
 
 {-|
@@ -105,7 +106,7 @@ task2023_15 = MatchCdOdConfig {
   printSolution = True,
   timeout = Nothing,
   withNonTrivialInheritance = Just True,
-  extraText = Nothing
+  extraText = NoExtraText
   }
 
 {-|
@@ -147,7 +148,7 @@ task2024_17 = MatchCdOdConfig {
   printSolution = True,
   timeout = Nothing,
   withNonTrivialInheritance = Just True,
-  extraText = Nothing
+  extraText = NoExtraText
   }
 
 {-|
@@ -189,7 +190,7 @@ task2024_18 = MatchCdOdConfig {
   printSolution = True,
   timeout = Nothing,
   withNonTrivialInheritance = Just True,
-  extraText = Nothing
+  extraText = NoExtraText
   }
 
 {-|
@@ -231,7 +232,7 @@ task2024_19 = MatchCdOdConfig {
   printSolution = True,
   timeout = Nothing,
   withNonTrivialInheritance = Just True,
-  extraText = Nothing
+  extraText = NoExtraText
   }
 
 {-|
@@ -273,7 +274,7 @@ task2024_20 = MatchCdOdConfig {
   printSolution = True,
   timeout = Nothing,
   withNonTrivialInheritance = Just True,
-  extraText = Nothing
+  extraText = NoExtraText
   }
 
 {-|
@@ -315,7 +316,7 @@ task2024_57 = MatchCdOdConfig {
   printSolution = True,
   timeout = Nothing,
   withNonTrivialInheritance = Just False,
-  extraText = Nothing
+  extraText = NoExtraText
   }
 
 {-|
@@ -357,7 +358,7 @@ task2024_58 = MatchCdOdConfig {
   printSolution = True,
   timeout = Nothing,
   withNonTrivialInheritance = Just True,
-  extraText = Nothing
+  extraText = NoExtraText
   }
 
 {-|
@@ -399,5 +400,5 @@ task2024_59 = MatchCdOdConfig {
   printSolution = True,
   timeout = Nothing,
   withNonTrivialInheritance = Just False,
-  extraText = Nothing
+  extraText = NoExtraText
   }

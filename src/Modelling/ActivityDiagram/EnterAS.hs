@@ -55,7 +55,6 @@ import Control.OutputCapable.Blocks (
   ArticleToUse (IndefiniteArticle),
   GenericOutputCapable (..),
   LangM,
-  Language,
   Rated,
   OutputCapable,
   ($=<<),
@@ -73,11 +72,11 @@ import Control.Monad.Random (
   )
 import Data.List (intercalate, intersect)
 import Data.List.Extra (nubOrd)
-import Data.Map (Map)
 import Data.Maybe                       (isNothing)
 import Data.String.Interpolate (i, iii)
 import GHC.Generics (Generic)
 import Modelling.Auxiliary.Output (
+  ExtraText(..),
   addPretext,
   extra
   )
@@ -88,7 +87,7 @@ data EnterASInstance = EnterASInstance {
   drawSettings :: PlantUmlConfig,
   sampleSequence :: [String],
   showSolution :: Bool,
-  addText :: Maybe (Map Language String)
+  addText :: ExtraText
 } deriving (Eq, Generic, Read, Show)
 
 data EnterASConfig = EnterASConfig {
@@ -98,7 +97,7 @@ data EnterASConfig = EnterASConfig {
   objectNodeOnEveryPath :: Maybe Bool,
   answerLength :: !(Int, Int),
   printSolution :: Bool,
-  extraText :: Maybe (Map Language String)
+  extraText :: ExtraText
 } deriving (Generic, Read, Show)
 
 defaultEnterASConfig :: EnterASConfig
@@ -115,7 +114,7 @@ defaultEnterASConfig = EnterASConfig {
   objectNodeOnEveryPath = Just True,
   answerLength = (5, 8),
   printSolution = False,
-  extraText = Nothing
+  extraText = NoExtraText
 }
 
 checkEnterASConfig :: EnterASConfig -> Maybe String
@@ -365,5 +364,5 @@ defaultEnterASInstance = EnterASInstance {
   drawSettings = defaultPlantUmlConfig,
   sampleSequence = ["D","E","G","B","F"],
   showSolution = False,
-  addText = Nothing
+  addText = NoExtraText
 }

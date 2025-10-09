@@ -51,6 +51,7 @@ import Modelling.Auxiliary.Common (
   RandomiseNames (hasRandomisableNames, randomiseNames),
   )
 import Modelling.Auxiliary.Output (
+  ExtraText(..),
   addPretext,
   directionsAdvice,
   extra,
@@ -131,7 +132,6 @@ import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
   GenericOutputCapable (..),
   LangM,
-  Language,
   OutputCapable,
   Rated,
   ($=<<),
@@ -180,7 +180,7 @@ data MatchCdOdInstance
     instances      :: Map Char ([Int], Od),
     showSolution   :: !Bool,
     taskText       :: !MatchCdOdTaskText,
-    addText        :: Maybe (Map Language String)
+    addText        :: ExtraText
   } deriving (Eq, Generic, Read, Show)
 
 data MatchCdOdConfig
@@ -194,7 +194,7 @@ data MatchCdOdConfig
     printSolution    :: Bool,
     timeout          :: Maybe Int,
     withNonTrivialInheritance :: Maybe Bool,
-    extraText        :: Maybe (Map Language String)
+    extraText        :: ExtraText
   } deriving (Generic, Read, Show)
 
 defaultMatchCdOdConfig :: MatchCdOdConfig
@@ -226,7 +226,7 @@ defaultMatchCdOdConfig
     printSolution    = False,
     timeout          = Nothing,
     withNonTrivialInheritance = Just True,
-    extraText        = Nothing
+    extraText        = NoExtraText
   }
 
 toMatching :: Map Char [Int] -> Map (Int, Char) Bool
@@ -671,7 +671,7 @@ defaultMatchCdOdInstance = MatchCdOdInstance {
     ],
   showSolution = False,
   taskText = defaultMatchCdOdTaskText,
-  addText = Nothing
+  addText = NoExtraText
   }
 
 classAndNonInheritanceNames :: MatchCdOdInstance -> ([String], [String])
