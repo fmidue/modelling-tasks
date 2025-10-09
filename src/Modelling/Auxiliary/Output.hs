@@ -25,6 +25,7 @@ import Control.OutputCapable.Blocks     (
   english,
   german,
   translate,
+  translations,
   collapsed,
   )
 import Control.OutputCapable.Blocks.Type (
@@ -37,7 +38,10 @@ import Data.String.Interpolate          (iii)
 import Data.Data (Data)
 
 hoveringInformation :: OutputCapable m => LangM m
-hoveringInformation = collapsed True (put $ uniform "Note") $ translate $ do
+hoveringInformation = collapsed True (put $ translations $ do
+  english "Note on hovering"
+  german "Hinweis zum Hovern"
+  ) $ translate $ do
   english [iii|
     When hovering over or clicking on edges / nodes or their
     labels, the respective components that belong together are highlighted.
@@ -49,7 +53,10 @@ hoveringInformation = collapsed True (put $ uniform "Note") $ translate $ do
     |]
 
 directionsAdvice :: OutputCapable m => LangM m
-directionsAdvice = collapsed True (put $ uniform "Note") $ translate $ do
+directionsAdvice = collapsed True (put $ translations $ do
+  english "Note on navigation directions"
+  german "Hinweis zu Navigationsrichtungen"
+  ) $ translate $ do
   english [iii|
     As navigation directions are used,
     aggregations and compositions are only navigable
@@ -64,7 +71,10 @@ directionsAdvice = collapsed True (put $ uniform "Note") $ translate $ do
     |]
 
 simplifiedInformation :: OutputCapable m => LangM m
-simplifiedInformation = collapsed True (put $ uniform "Note") $ translate $ do
+simplifiedInformation = collapsed True (put $ translations $ do
+  english "Note on simplified representation"
+  german "Hinweis zur vereinfachten Darstellung"
+  ) $ translate $ do
   english [iii|
     Classes are represented simplified here.
     #{endLine}

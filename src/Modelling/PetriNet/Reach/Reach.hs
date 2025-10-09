@@ -28,7 +28,6 @@ import Capabilities.Graphviz            (MonadGraphviz)
 import Data.Data                        (Data)
 import Modelling.Auxiliary.Output (
   hoveringInformation,
-  uniform,
   )
 import Modelling.PetriNet.Reach.Draw    (drawToFile, isPetriDrawable)
 import Modelling.PetriNet.Reach.Property (
@@ -74,6 +73,7 @@ import Control.OutputCapable.Blocks (
   german,
   printSolutionAndAssertMinimum,
   translate,
+  translations,
   yesNo,
   )
 import Control.OutputCapable.Blocks.Generic (
@@ -200,14 +200,23 @@ reportReachFor img noLonger lengthHint minLength showMinLengthHint maybeGoal = d
       " (in genau dieser Reihenfolge), die gesuchte Markierung erreicht wird."
       ]
   case lengthHint of
-    Just maxSteps | showMinLengthHint && maxSteps == minLength -> collapsed True (put $ uniform "Hint") $ translate $ do
+    Just maxSteps | showMinLengthHint && maxSteps == minLength -> collapsed True (put $ translations $ do
+      english "Hint on solution length"
+      german "Hinweis zur Lösungslänge"
+      ) $ translate $ do
       english [i|The shortest solutions have exactly #{maxSteps} steps.|]
       german [i|Die kürzesten Lösungen haben genau #{maxSteps} Schritte.|]
-    Just maxSteps -> collapsed True (put $ uniform "Hint") $ translate $ do
+    Just maxSteps -> collapsed True (put $ translations $ do
+      english "Hint on solution length"
+      german "Hinweis zur Lösungslänge"
+      ) $ translate $ do
       english [i|There is a solution with not more than #{maxSteps} steps.|]
       german [i|Es gibt eine Lösung mit nicht mehr als #{maxSteps} Schritten.|]
     Nothing -> pure ()
-  when (showMinLengthHint && lengthHint /= Just minLength) $ collapsed True (put $ uniform "Hint") $ translate $ do
+  when (showMinLengthHint && lengthHint /= Just minLength) $ collapsed True (put $ translations $ do
+    english "Hint on minimum length"
+    german "Hinweis zur Mindestlänge"
+    ) $ translate $ do
     english [i|There is no solution with less than #{minLength} steps.|]
     german [i|Es gibt keine Lösung mit weniger als #{minLength} Schritten.|]
   hoveringInformation
