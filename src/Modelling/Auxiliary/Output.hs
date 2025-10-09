@@ -40,7 +40,7 @@ import Data.Data (Data)
 hoveringInformation :: OutputCapable m => LangM m
 hoveringInformation = collapsed True (put $ translations $ do
   english "Note on hovering"
-  german "Hinweis zum Hovern"
+  german "Anmerkung zum Hovern"
   ) $ translate $ do
   english [iii|
     When hovering over or clicking on edges / nodes or their
@@ -55,25 +55,23 @@ hoveringInformation = collapsed True (put $ translations $ do
 directionsAdvice :: OutputCapable m => LangM m
 directionsAdvice = collapsed True (put $ translations $ do
   english "Note on navigation directions"
-  german "Hinweis zu Navigationsrichtungen"
+  german "Anmerkung zu Navigationsrichtungen"
   ) $ translate $ do
   english [iii|
-    As navigation directions are used,
-    aggregations and compositions are only navigable
+    Aggregations and compositions are only navigable
     from the "part" toward the "whole",
     i.e., they are not navigable in the opposite direction!
     |]
   german [iii|
-    Da Navigationsrichtungen verwendet werden,
-    sind Aggregationen und Kompositionen
-    nur vom "Teil" zum "Ganzen" navigierbar,
+    Aggregationen und Kompositionen
+    sind nur vom "Teil" zum "Ganzen" navigierbar,
     d.h., sie sind nicht in der entgegengesetzten Richtung navigierbar!
     |]
 
 simplifiedInformation :: OutputCapable m => LangM m
 simplifiedInformation = collapsed True (put $ translations $ do
-  english "Note on simplified representation"
-  german "Hinweis zur vereinfachten Darstellung"
+  english "Note on class representation"
+  german "Anmerkung zur Klassendarstellung"
   ) $ translate $ do
   english [iii|
     Classes are represented simplified here.
