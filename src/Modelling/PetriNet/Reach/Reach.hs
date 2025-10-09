@@ -86,7 +86,7 @@ import Data.Bifunctor                   (Bifunctor (second))
 import Data.Either.Combinators          (whenRight)
 import Data.Foldable                    (sequenceA_, traverse_)
 import Data.GraphViz                    (GraphvizCommand (..))
-import Data.List                        (minimumBy)
+import Data.List                        (minimumBy, singleton)
 import Data.List.Extra                  (nubSort)
 import Data.Maybe                       (fromMaybe)
 import Data.Ord                         (comparing)
@@ -200,23 +200,19 @@ reportReachFor img noLonger lengthHint minLength showMinLengthHint maybeGoal = d
       " (in genau dieser Reihenfolge), die gesuchte Markierung erreicht wird."
       ]
   let maxStepsHint = case lengthHint of
-        Just maxSteps | showMinLengthHint && maxSteps == minLength -> Just $ paragraph $ translate $ do
+        Just maxSteps | showMinLengthHint && maxSteps == minLength -> singleton $ paragraph $ translate $ do
           english [i|The shortest solutions have exactly #{maxSteps} steps.|]
           german [i|Die kürzesten Lösungen haben genau #{maxSteps} Schritte.|]
-        Just maxSteps -> Just $ paragraph $ translate $ do
+        Just maxSteps -> singleton $ paragraph $ translate $ do
           english [i|There is a solution with not more than #{maxSteps} steps.|]
           german [i|Es gibt eine Lösung mit nicht mehr als #{maxSteps} Schritten.|]
-        Nothing -> Nothing
+        Nothing -> []
       minStepsHint = if showMinLengthHint && lengthHint /= Just minLength
-        then Just $ paragraph $ translate $ do
+        then singleton $ paragraph $ translate $ do
           english [i|There is no solution with less than #{minLength} steps.|]
           german [i|Es gibt keine Lösung mit weniger als #{minLength} Schritten.|]
-        else Nothing
-      hints = case (maxStepsHint, minStepsHint) of
-        (Nothing, Nothing) -> []
-        (Just h, Nothing) -> [h]
-        (Nothing, Just h) -> [h]
-        (Just h1, Just h2) -> [h1, h2]
+        else []
+      hints = maxStepsHint ++ minStepsHint
       titleText = if length hints > 1
         then translations $ do
           english "Hints on solution length"
