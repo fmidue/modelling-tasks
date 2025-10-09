@@ -13,7 +13,6 @@ module Modelling.ActivityDiagram.SelectAS (
   checkSelectASConfig,
   selectASAlloy,
   checkSelectASInstance,
-  checkSelectASInstanceForConfig,
   selectActionSequence,
   selectASTask,
   selectASSyntax,
