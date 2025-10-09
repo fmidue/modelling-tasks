@@ -363,7 +363,7 @@ toTaskText showInputHelp path task = do
 mappingAdvice :: OutputCapable m => LangM m
 mappingAdvice = collapsed True (put $ translations $ do
   english "Note on link grouping"
-  german "Hinweis zur Link-Gruppierung"
+  german "Anmerkung zur Link-Gruppierung"
   ) $ do
   paragraph $ translate $ do
     english [iii|
