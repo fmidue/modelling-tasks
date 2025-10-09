@@ -1,8 +1,9 @@
 {-# LANGUAGE DuplicateRecordFields #-}
 module Modelling.ActivityDiagram.ActionSequences (
   validActionSequence,
+  validActionSequenceWithPetri,
   generateActionSequence,
-  isExecutableButIncomplete
+  terminatesSomeButNotAllFlowsWithPetri
 ) where
 
 import qualified Modelling.ActivityDiagram.Datatype as Ad (
@@ -79,11 +80,17 @@ generateActionSequence' diag =
 
 validActionSequence :: [String] -> UMLActivityDiagram -> Bool
 validActionSequence input diag =
+  let petri = convertToPetriNet diag
+  in validActionSequenceWithPetri input diag petri
+
+-- | Check if an action sequence is valid, using a pre-computed Petri net.
+-- This version avoids re-computing the Petri net conversion
+validActionSequenceWithPetri :: [String] -> UMLActivityDiagram -> PetriLike Node PetriKey -> Bool
+validActionSequenceWithPetri input diag petri =
   let nameMap = map
         (\n -> (name n, Ad.label n))
         $ filter isActionNode $ nodes diag
       labels = mapMaybe (`lookup` nameMap) input
-      petri = convertToPetriNet diag
       petriKeyMap = map
         (\k -> (Ad.label $ sourceNode k, k))
         $ filter isNormalPetriNode $ M.keys $ allNodes petri
@@ -91,41 +98,27 @@ validActionSequence input diag =
       actions = map snd $ filter (\(l,_) -> l `elem` map snd nameMap) petriKeyMap
   in length input == length labels && validActionSequence' input' actions petri
 
--- | Check if an action sequence is executable but does not terminate all flows
--- This detects the case where a sequence can be executed but doesn't reach the zero state
--- (i.e., doesn't consume all tokens, leaving some flows active)
-isExecutableButIncomplete :: [String] -> UMLActivityDiagram -> Bool
-isExecutableButIncomplete input diag =
+-- | Check if an action sequence terminates some but not all flows, using a pre-computed Petri net.
+-- This detects the case where a sequence terminates at least one flow
+-- but doesn't reach the zero state (i.e., doesn't consume all tokens, leaving some flows active).
+terminatesSomeButNotAllFlowsWithPetri :: [String] -> UMLActivityDiagram -> PetriLike Node PetriKey -> Bool
+terminatesSomeButNotAllFlowsWithPetri input diag petri =
   let nameMap = map
         (\n -> (name n, Ad.label n))
         $ filter isActionNode $ nodes diag
       labels = mapMaybe (`lookup` nameMap) input
-      petri = convertToPetriNet diag
       petriKeyMap = map
         (\k -> (Ad.label $ sourceNode k, k))
         $ filter isNormalPetriNode $ M.keys $ allNodes petri
       input' = mapMaybe (`lookup` petriKeyMap) labels
       actions = map snd $ filter (\(l,_) -> l `elem` map snd nameMap) petriKeyMap
-  in length input == length labels &&
-     isExecutableButIncomplete' input' actions petri
-
--- | Helper function to check if sequence is executable but incomplete
--- Checks if the sequence terminates at least one flow (reaches a FinalPetriNode)
--- but doesn't terminate all flows (doesn't reach zero state)
-isExecutableButIncomplete'
-  :: [PetriKey]
-  -> [PetriKey]
-  -> PetriLike Node PetriKey
-  -> Bool
-isExecutableButIncomplete' input actions petri =
-  let net = fromPetriLike petri
+      net = fromPetriLike petri
       zeroState = State $ M.map (const 0) $ unState $ start net
-      levels = levelsCheckAS input actions net
-      hasReachableStates = not $ all null levels
+      levels = levelsCheckAS input' actions net
       reachesZeroState = any (isJust . lookup zeroState) levels
       -- Check if any FinalPetriNode transition was fired (meaning a flow was terminated)
       finalNodeReached = any (any (\(_, path) -> any isFinalPetriNode path)) levels
-  in hasReachableStates && not reachesZeroState && finalNodeReached
+  in length input == length labels && not reachesZeroState && finalNodeReached
 
 -- | Check if a PetriKey represents a final node transition
 isFinalPetriNode :: PetriKey -> Bool
