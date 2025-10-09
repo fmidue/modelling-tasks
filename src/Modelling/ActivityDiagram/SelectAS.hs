@@ -13,6 +13,7 @@ module Modelling.ActivityDiagram.SelectAS (
   checkSelectASConfig,
   selectASAlloy,
   checkSelectASInstance,
+  checkSelectASInstanceForConfig,
   selectActionSequence,
   selectASTask,
   selectASSyntax,
@@ -173,13 +174,13 @@ checkSelectASInstanceForConfig
 checkSelectASInstanceForConfig inst SelectASConfig {
   answerLength
   }
-  | length solution < fst answerLength
-  = Just "Solution should not be shorter than the minimal 'answerLength'"
-  | length solution > snd answerLength
-  = Just "Solution should not be longer than the maximal 'answerLength'"
+  | any (\actionSequence -> length actionSequence < fst answerLength) allSequences
+  = Just "All action sequences should not be shorter than the minimal 'answerLength'"
+  | any (\actionSequence -> length actionSequence > snd answerLength) allSequences
+  = Just "All action sequences should not be longer than the maximal 'answerLength'"
   | otherwise
     = Nothing
-  where (_, solution) = head $ M.toList $ M.map snd $ M.filter fst $ actionSequences inst
+  where allSequences = M.map snd $ actionSequences inst
 
 data SelectASSolution = SelectASSolution {
   correctSequence :: [String],
