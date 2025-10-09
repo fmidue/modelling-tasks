@@ -54,7 +54,7 @@ import Modelling.PetriNet.Reach.Type (
 
 import Control.Applicative              (Alternative, (<|>))
 import Control.Functor.Trans            (FunctorTrans (lift))
-import Control.Monad                    (forM, guard, when)
+import Control.Monad                    (forM, guard, unless)
 import Control.Monad.Catch              (MonadCatch, MonadThrow)
 import Control.Monad.Extra              (findM, maybeM, whenJust)
 import Control.Monad.State              (put)
@@ -84,7 +84,7 @@ import Control.Monad.Random             (mkStdGen)
 import Control.Monad.Trans.Random       (evalRandT)
 import Data.Bifunctor                   (Bifunctor (second))
 import Data.Either.Combinators          (whenRight)
-import Data.Foldable                    (traverse_)
+import Data.Foldable                    (sequenceA_, traverse_)
 import Data.GraphViz                    (GraphvizCommand (..))
 import Data.List                        (minimumBy)
 import Data.List.Extra                  (nubSort)
@@ -199,26 +199,28 @@ reportReachFor img noLonger lengthHint minLength showMinLengthHint maybeGoal = d
       st1, ", danach ", st2, ", und schließlich ", st3,
       " (in genau dieser Reihenfolge), die gesuchte Markierung erreicht wird."
       ]
-  case lengthHint of
-    Just maxSteps | showMinLengthHint && maxSteps == minLength -> collapsed True (put $ translations $ do
-      english "Hint on solution length"
-      german "Hinweis zur Lösungslänge"
-      ) $ translate $ do
-      english [i|The shortest solutions have exactly #{maxSteps} steps.|]
-      german [i|Die kürzesten Lösungen haben genau #{maxSteps} Schritte.|]
-    Just maxSteps -> collapsed True (put $ translations $ do
-      english "Hint on solution length"
-      german "Hinweis zur Lösungslänge"
-      ) $ translate $ do
-      english [i|There is a solution with not more than #{maxSteps} steps.|]
-      german [i|Es gibt eine Lösung mit nicht mehr als #{maxSteps} Schritten.|]
-    Nothing -> pure ()
-  when (showMinLengthHint && lengthHint /= Just minLength) $ collapsed True (put $ translations $ do
-    english "Hint on minimum length"
-    german "Hinweis zur Mindestlänge"
-    ) $ translate $ do
-    english [i|There is no solution with less than #{minLength} steps.|]
-    german [i|Es gibt keine Lösung mit weniger als #{minLength} Schritten.|]
+  let maxStepsHint = case lengthHint of
+        Just maxSteps | showMinLengthHint && maxSteps == minLength -> Just $ paragraph $ translate $ do
+          english [i|The shortest solutions have exactly #{maxSteps} steps.|]
+          german [i|Die kürzesten Lösungen haben genau #{maxSteps} Schritte.|]
+        Just maxSteps -> Just $ paragraph $ translate $ do
+          english [i|There is a solution with not more than #{maxSteps} steps.|]
+          german [i|Es gibt eine Lösung mit nicht mehr als #{maxSteps} Schritten.|]
+        Nothing -> Nothing
+      minStepsHint = if showMinLengthHint && lengthHint /= Just minLength
+        then Just $ paragraph $ translate $ do
+          english [i|There is no solution with less than #{minLength} steps.|]
+          german [i|Es gibt keine Lösung mit weniger als #{minLength} Schritten.|]
+        else Nothing
+      hints = case (maxStepsHint, minStepsHint) of
+        (Nothing, Nothing) -> []
+        (Just h, Nothing) -> [h]
+        (Nothing, Just h) -> [h]
+        (Just h1, Just h2) -> [h1, h2]
+  unless (null hints) $ collapsed True (put $ translations $ do
+    english "Hints on solution length"
+    german "Hinweise zur Lösungslänge"
+    ) $ sequenceA_ hints
   hoveringInformation
   pure ()
 
