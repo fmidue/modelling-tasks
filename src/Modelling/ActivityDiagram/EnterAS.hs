@@ -26,7 +26,7 @@ import Capabilities.Alloy               (MonadAlloy, getInstances)
 import Capabilities.PlantUml            (MonadPlantUml)
 import Capabilities.WriteFile           (MonadWriteFile)
 import Modelling.ActivityDiagram.ActionSequences (
-  generateActionSequence,
+  generateActionSequenceWithPetri,
   validActionSequenceWithPetri,
   terminatesSomeButNotAllFlowsWithPetri,
   )
@@ -188,9 +188,9 @@ newtype EnterASSolution = EnterASSolution {
   sampleSolution :: [String]
 } deriving (Show, Eq)
 
-enterActionSequence :: UMLActivityDiagram -> EnterASSolution
-enterActionSequence ad =
-  EnterASSolution {sampleSolution=generateActionSequence ad}
+enterActionSequence :: UMLActivityDiagram -> PetriLike Node PetriKey -> EnterASSolution
+enterActionSequence ad petri =
+  EnterASSolution {sampleSolution=generateActionSequenceWithPetri ad petri}
 
 enterASTask
   :: (MonadPlantUml m, MonadWriteFile m, OutputCapable m)
@@ -326,7 +326,7 @@ getEnterASTask config = do
           drawSettings = defaultPlantUmlConfig {
             suppressBranchConditions = hideBranchConditions config
             },
-          sampleSequence = sampleSolution $ enterActionSequence x,
+          sampleSequence = sampleSolution $ enterActionSequence x petri,
           showSolution = printSolution config,
           addText = extraText config
         }) ad
