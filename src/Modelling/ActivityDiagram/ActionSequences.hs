@@ -4,7 +4,6 @@ module Modelling.ActivityDiagram.ActionSequences (
   validActionSequenceWithPetri,
   generateActionSequence,
   generateActionSequenceWithPetri,
-  reachesFinalNode,
   computeActionSequenceLevels,
   isFinalPetriNode
 ) where
@@ -116,15 +115,6 @@ validActionSequenceWithPetri :: [String] -> UMLActivityDiagram -> PetriLike Node
 validActionSequenceWithPetri input diag petri =
   let (levels, zeroState) = computeActionSequenceLevels input diag petri
   in any (isJust . lookup zeroState) levels
-
--- | Check if a final node was reached in an action sequence execution.
--- This is used to provide feedback when a sequence terminates some but not all flows.
-reachesFinalNode :: [String] -> UMLActivityDiagram -> PetriLike Node PetriKey -> Bool
-reachesFinalNode input diag petri =
-  let (levels, _) = computeActionSequenceLevels input diag petri
-      -- Check if any FinalPetriNode transition was fired (meaning a flow was terminated)
-      finalNodeReached = any (any (\(_, path) -> any isFinalPetriNode path)) levels
-  in finalNodeReached
 
 -- | Check if a PetriKey represents a final node transition
 isFinalPetriNode :: PetriKey -> Bool
