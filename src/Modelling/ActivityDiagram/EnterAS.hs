@@ -249,7 +249,6 @@ enterASEvaluation
 enterASEvaluation task sub = do
   let objectNames = map name $ filter isObjectNode $ nodes $ activityDiagram task
       objectNamesInSubmission = nubOrd $ sub `intersect` objectNames
-      -- Inline validActionSequenceWithPetri
       (levels, zeroState) = computeActionSequenceLevels sub (activityDiagram task) (petriNet task)
       reachesZeroState = any (isJust . lookup zeroState) levels
       correct = null objectNamesInSubmission && reachesZeroState
@@ -264,8 +263,7 @@ enterASEvaluation task sub = do
     german "Die eingereichte Aktionsfolge ist korrekt?"
 
   -- Provide specific feedback for sequences that terminate some but not all flows
-  when (not correct && null objectNamesInSubmission) $ do
-    -- Inline reachesFinalNode
+  when (not reachesZeroState && null objectNamesInSubmission) $ do
     let finalNodeReached = any (any (\(_, path) -> any isFinalPetriNode path)) levels
     when finalNodeReached $ do
       paragraph $ translate $ do
