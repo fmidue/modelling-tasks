@@ -91,6 +91,13 @@ validActionSequence input diag =
   let petri = convertToPetriNet diag
   in validActionSequenceWithPetri input diag petri
 
+-- | Check if an action sequence is valid, using a pre-computed Petri net.
+-- This version avoids re-computing the Petri net conversion
+validActionSequenceWithPetri :: [String] -> UMLActivityDiagram -> PetriLike Node PetriKey -> Bool
+validActionSequenceWithPetri input diag petri =
+  let (levels, zeroState) = computeActionSequenceLevels input diag petri
+  in any (isJust . lookup zeroState) levels
+
 -- | Common computation for action sequence validation
 -- Returns (levels, zeroState) for checking sequence properties
 computeActionSequenceLevels :: [String] -> UMLActivityDiagram -> PetriLike Node PetriKey -> ([[(State PetriKey, [PetriKey])]], State PetriKey)
@@ -108,13 +115,6 @@ computeActionSequenceLevels input diag petri =
       zeroState = State $ M.map (const 0) $ unState $ start net
       levels = levelsCheckAS input' actions net
   in (levels, zeroState)
-
--- | Check if an action sequence is valid, using a pre-computed Petri net.
--- This version avoids re-computing the Petri net conversion
-validActionSequenceWithPetri :: [String] -> UMLActivityDiagram -> PetriLike Node PetriKey -> Bool
-validActionSequenceWithPetri input diag petri =
-  let (levels, zeroState) = computeActionSequenceLevels input diag petri
-  in any (isJust . lookup zeroState) levels
 
 -- | Check if a PetriKey represents a final node transition
 isFinalPetriNode :: PetriKey -> Bool
