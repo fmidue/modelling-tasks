@@ -41,7 +41,7 @@ import Modelling.PetriNet.Reach.Type (
 import Modelling.PetriNet.Reach.Step (levels', successors)
 
 import Control.Monad (guard)
-import Data.List (find, union)
+import Data.List (union)
 import Data.Maybe(mapMaybe, isJust, fromJust)
 
 
@@ -90,9 +90,16 @@ generateActionSequence' allowRepetition petriLike =
       zeroState = State $ M.map (const 0) $ unState $ start petri
       allLevels = levels' petri
       levelsWithZeroState = filter (isJust . lookup zeroState) allLevels
-      sequences = if allowRepetition && length levelsWithZeroState > 1
-                  then levelsWithZeroState !! 1  -- Take the second occurrence (longer path)
-                  else fromJust $ find (isJust . lookup zeroState) allLevels  -- Take the first as before
+      -- When repetition is allowed and there are multiple occurrences of zeroState,
+      -- take the second one (longer path with potential repetition).
+      -- Otherwise, take the first one (shortest path).
+      sequences = case levelsWithZeroState of
+        [] -> error "No path to zero state found"
+        [firstLevel] -> firstLevel
+        firstLevel : secondLevel : _ ->
+          if allowRepetition
+          then secondLevel
+          else firstLevel
   in reverse $ fromJust $ lookup zeroState sequences
 
 
