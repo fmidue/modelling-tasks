@@ -72,8 +72,8 @@ generateActionSequenceWithPetri =
 -- When minDistance is Nothing, generates the shortest valid sequence without trying for repetition.
 generateActionSequenceWithPetriAndRepetition :: Maybe Int -> UMLActivityDiagram -> PetriLike Node PetriKey -> [String]
 generateActionSequenceWithPetriAndRepetition minDistance diag petri =
-  let transitionSequence = generateActionSequence' minDistance petri
-      tSeqLabels = map (Ad.label . sourceNode) $ filter isNormalPetriNode transitionSequence
+  let tSeq = generateActionSequence' minDistance petri
+      tSeqLabels = map (Ad.label . sourceNode) $ filter isNormalPetriNode tSeq
       actions = map
         (\n -> (Ad.label n, name n))
         $ filter isActionNode $ nodes diag
