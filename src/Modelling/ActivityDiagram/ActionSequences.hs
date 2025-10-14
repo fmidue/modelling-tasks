@@ -72,8 +72,8 @@ generateActionSequenceWithPetri =
 -- When minDistance is Nothing, generates the shortest valid sequence without trying for repetition.
 generateActionSequenceWithPetriAndRepetition :: Maybe Int -> UMLActivityDiagram -> PetriLike Node PetriKey -> [String]
 generateActionSequenceWithPetriAndRepetition minDistance diag petri =
-  let tSeq = generateActionSequence' minDistance petri
-      tSeqLabels = map (Ad.label . sourceNode) $ filter isNormalPetriNode tSeq
+  let transitionSequence = generateActionSequence' minDistance petri
+      tSeqLabels = map (Ad.label . sourceNode) $ filter isNormalPetriNode transitionSequence
       actions = map
         (\n -> (Ad.label n, name n))
         $ filter isActionNode $ nodes diag
@@ -92,10 +92,10 @@ hasTransitionRepetitionWithMinDistance minDistance transitionSeq =
   let normalNodes = filter isNormalPetriNode transitionSeq
       labels = map (Ad.label . sourceNode) normalNodes
       -- Find all pairs of indices where the same label occurs
-      indicesOf lbl = [i | (i, l) <- zip [0..] labels, l == lbl]
+      indicesOf labelValue = [i | (i, l) <- zip [0..] labels, l == labelValue]
       -- Check if any label has two occurrences with sufficient distance
-      checkLabel lbl =
-        let indices = indicesOf lbl
+      checkLabel labelValue =
+        let indices = indicesOf labelValue
         in any (\(i, j) -> j - i - 1 >= minDistance) [(i, j) | i <- indices, j <- indices, i < j]
   in any checkLabel $ nub labels
 
@@ -116,7 +116,7 @@ generateActionSequence' minDistance petriLike =
         _ | Just distance <- minDistance ->
             -- Try to find sequences with the required repetition pattern
             case filter (hasTransitionRepetitionWithMinDistance distance) allSequences of
-              (bestSeq:_) -> bestSeq
+              (bestSequence:_) -> bestSequence
               [] -> -- If none found with requirement, return shortest to avoid length violations
                     head allSequences
         _ -> -- No repetition requested, take shortest
