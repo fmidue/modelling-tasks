@@ -173,7 +173,7 @@ The repository includes comprehensive spell checking via GitHub Actions:
 
 ### Naming Conventions
 
-**CRITICAL**: All function and variable names in Haskell code MUST be spell-checkable and avoid abbreviations.
+**CRITICAL**: All function and variable names (also local variable names) in Haskell code MUST be spell-checkable and avoid abbreviations.
 
 **Rules for naming**:
 
