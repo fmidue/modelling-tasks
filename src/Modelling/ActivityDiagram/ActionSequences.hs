@@ -4,7 +4,7 @@ module Modelling.ActivityDiagram.ActionSequences (
   validActionSequenceWithPetri,
   generateActionSequence,
   generateActionSequenceWithPetri,
-  terminatesSomeButNotAllFlowsWithPetri
+  reachesFinalNode
 ) where
 
 import qualified Modelling.ActivityDiagram.Datatype as Ad (
@@ -90,11 +90,10 @@ validActionSequence input diag =
   let petri = convertToPetriNet diag
   in validActionSequenceWithPetri input diag petri
 
--- | Convert input strings to PetriKeys and actions for validation
--- Returns (input', actions) where input' is the sequence of PetriKeys to validate
--- and actions is the list of all action PetriKeys
-convertInputToPetriKeys :: [String] -> UMLActivityDiagram -> PetriLike Node PetriKey -> ([PetriKey], [PetriKey])
-convertInputToPetriKeys input diag petri =
+-- | Common computation for action sequence validation
+-- Returns (levels, zeroState) for checking sequence properties
+computeActionSequenceLevels :: [String] -> UMLActivityDiagram -> PetriLike Node PetriKey -> ([[(State PetriKey, [PetriKey])]], State PetriKey)
+computeActionSequenceLevels input diag petri =
   let nameMap = map
         (\n -> (name n, Ad.label n))
         $ filter isActionNode $ nodes diag
@@ -104,13 +103,6 @@ convertInputToPetriKeys input diag petri =
         $ filter isNormalPetriNode $ M.keys $ allNodes petri
       input' = mapMaybe (`lookup` petriKeyMap) labels
       actions = map snd $ filter (\(l,_) -> l `elem` map snd nameMap) petriKeyMap
-  in (input', actions)
-
--- | Common computation for action sequence validation
--- Returns (levels, zeroState) for checking sequence properties
-computeActionSequenceLevels :: [String] -> UMLActivityDiagram -> PetriLike Node PetriKey -> ([[(State PetriKey, [PetriKey])]], State PetriKey)
-computeActionSequenceLevels input diag petri =
-  let (input', actions) = convertInputToPetriKeys input diag petri
       net = fromPetriLike petri
       zeroState = State $ M.map (const 0) $ unState $ start net
       levels = levelsCheckAS input' actions net
@@ -123,16 +115,14 @@ validActionSequenceWithPetri input diag petri =
   let (levels, zeroState) = computeActionSequenceLevels input diag petri
   in any (isJust . lookup zeroState) levels
 
--- | Check if an action sequence terminates some but not all flows, using a pre-computed Petri net.
--- This detects the case where a sequence terminates at least one flow
--- but doesn't reach the zero state (i.e., doesn't consume all tokens, leaving some flows active).
-terminatesSomeButNotAllFlowsWithPetri :: [String] -> UMLActivityDiagram -> PetriLike Node PetriKey -> Bool
-terminatesSomeButNotAllFlowsWithPetri input diag petri =
-  let (levels, zeroState) = computeActionSequenceLevels input diag petri
-      reachesZeroState = any (isJust . lookup zeroState) levels
+-- | Check if a final node was reached in an action sequence execution.
+-- This is used to provide feedback when a sequence terminates some but not all flows.
+reachesFinalNode :: [String] -> UMLActivityDiagram -> PetriLike Node PetriKey -> Bool
+reachesFinalNode input diag petri =
+  let (levels, _) = computeActionSequenceLevels input diag petri
       -- Check if any FinalPetriNode transition was fired (meaning a flow was terminated)
       finalNodeReached = any (any (\(_, path) -> any isFinalPetriNode path)) levels
-  in not reachesZeroState && finalNodeReached
+  in finalNodeReached
 
 -- | Check if a PetriKey represents a final node transition
 isFinalPetriNode :: PetriKey -> Bool

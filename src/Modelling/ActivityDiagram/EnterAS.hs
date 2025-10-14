@@ -28,7 +28,7 @@ import Capabilities.WriteFile           (MonadWriteFile)
 import Modelling.ActivityDiagram.ActionSequences (
   generateActionSequenceWithPetri,
   validActionSequenceWithPetri,
-  terminatesSomeButNotAllFlowsWithPetri,
+  reachesFinalNode,
   )
 import Modelling.ActivityDiagram.Auxiliary.ActionSequences (actionSequencesAlloy)
 import Modelling.ActivityDiagram.Config (
@@ -262,7 +262,7 @@ enterASEvaluation task sub = do
 
   -- Provide specific feedback for sequences that terminate some but not all flows
   when (not correct && null objectNamesInSubmission) $ do
-    let isIncomplete = terminatesSomeButNotAllFlowsWithPetri sub (activityDiagram task) (petriNet task)
+    let isIncomplete = reachesFinalNode sub (activityDiagram task) (petriNet task)
     when isIncomplete $ do
       paragraph $ translate $ do
         german [iii|
