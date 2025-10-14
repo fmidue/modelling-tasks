@@ -262,8 +262,14 @@ enterASEvaluation task sub = do
     english "The submitted action sequence is correct?"
     german "Die eingereichte Aktionsfolge ist korrekt?"
 
-  -- Provide specific feedback for sequences that terminate some but not all flows
-  when (not reachesZeroState && null objectNamesInSubmission) $ do
+  unless (null objectNamesInSubmission) $ do
+    translate $ do
+      english "The following referenced nodes are object nodes and thus not actions:"
+      german "Die folgenden referenzierten Knoten sind Objektknoten und damit keine Aktionen:"
+    code $ intercalate ", " objectNamesInSubmission
+    pure ()
+
+  when (null objectNamesInSubmission && not reachesZeroState) $ do
     let finalNodeReached = any (any (\(_, path) -> any isFinalPetriNode path)) levels
     when finalNodeReached $ do
       paragraph $ translate $ do
@@ -280,13 +286,6 @@ enterASEvaluation task sub = do
           A complete solution must terminate all flows present in the diagram.
           |]
       pure ()
-
-  unless (null objectNamesInSubmission) $ do
-    translate $ do
-      english "The following referenced nodes are object nodes and thus not actions:"
-      german "Die folgenden referenzierten Knoten sind Objektknoten und damit keine Aktionen:"
-    code $ intercalate ", " objectNamesInSubmission
-    pure ()
 
   printSolutionAndAssert IndefiniteArticle maybeSolutionString points
 
