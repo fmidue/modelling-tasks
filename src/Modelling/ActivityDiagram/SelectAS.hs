@@ -107,7 +107,7 @@ data SelectASConfig = SelectASConfig {
   numberOfWrongAnswers :: Int,
   answerLength :: !(Int, Int),
   printSolution :: Bool,
-  allowActionRepetition :: Bool,
+  minActionRepetitionDistance :: Int,
   extraText :: ExtraText
 } deriving (Generic, Read, Show)
 
@@ -126,7 +126,7 @@ defaultSelectASConfig = SelectASConfig {
   numberOfWrongAnswers = 2,
   answerLength = (5, 8),
   printSolution = False,
-  allowActionRepetition = False,
+  minActionRepetitionDistance = -1,
   extraText = NoExtraText
 }
 
@@ -141,7 +141,8 @@ checkSelectASConfig' SelectASConfig {
     maxInstances,
     objectNodeOnEveryPath,
     numberOfWrongAnswers,
-    answerLength
+    answerLength,
+    minActionRepetitionDistance
   }
   | Just instances <- maxInstances, instances < 1
     = Just "The parameter 'maxInstances' must either be set to a positive value or to Nothing"
@@ -156,6 +157,10 @@ checkSelectASConfig' SelectASConfig {
     The second value of parameter 'answerLength' should be greater or equal to
     its first value.
     |]
+  | minActionRepetitionDistance < -1
+    = Just "The parameter 'minActionRepetitionDistance' must be at least -1 (where -1 means no repetition)"
+  | minActionRepetitionDistance >= 0 && cycles adConfig < 1
+    = Just "Setting 'minActionRepetitionDistance' to a non-negative value requires at least 1 cycle in the activity diagram configuration"
   | otherwise
     = Nothing
 
@@ -192,10 +197,10 @@ data SelectASSolution = SelectASSolution {
   wrongSequences :: [[String]]
 } deriving (Show, Eq)
 
-selectActionSequence :: Bool -> Int -> UMLActivityDiagram -> SelectASSolution
-selectActionSequence allowRepetition numberOfWrongSequences ad =
+selectActionSequence :: Int -> Int -> UMLActivityDiagram -> SelectASSolution
+selectActionSequence minRepetitionDistance numberOfWrongSequences ad =
   let petri = convertToPetriNet ad
-      correctSequence = generateActionSequenceWithPetriAndRepetition allowRepetition ad petri
+      correctSequence = generateActionSequenceWithPetriAndRepetition minRepetitionDistance ad petri
       wrongSequences =
         take numberOfWrongSequences $
         sortBy (compareDistToCorrect correctSequence) $
@@ -320,7 +325,7 @@ getSelectASTask config = do
   randomInstances <- shuffleM instances >>= mapM parseInstance
   ad <- mapM (fmap snd . shuffleAdNames) randomInstances
   validInstances <- firstJustM (\x -> do
-    actionSequences <- selectASSolutionToMap $ selectActionSequence (allowActionRepetition config) (numberOfWrongAnswers config) x
+    actionSequences <- selectASSolutionToMap $ selectActionSequence (minActionRepetitionDistance config) (numberOfWrongAnswers config) x
     let selectASInst = SelectASInstance {
           activityDiagram=x,
           actionSequences = actionSequences,

@@ -5,7 +5,8 @@ module Modelling.ActivityDiagram.ActionSequences (
   generateActionSequence,
   generateActionSequenceWithPetri,
   generateActionSequenceWithPetriAndRepetition,
-  terminatesSomeButNotAllFlowsWithPetri
+  terminatesSomeButNotAllFlowsWithPetri,
+  hasActionRepetitionWithMinDistance
 ) where
 
 import qualified Modelling.ActivityDiagram.Datatype as Ad (
@@ -64,13 +65,15 @@ generateActionSequence diag =
 -- This version avoids re-computing the Petri net conversion
 generateActionSequenceWithPetri :: UMLActivityDiagram -> PetriLike Node PetriKey -> [String]
 generateActionSequenceWithPetri =
-  generateActionSequenceWithPetriAndRepetition False
+  generateActionSequenceWithPetriAndRepetition (-1)
 
 -- | Generate one valid action sequence with optional repetition, using a pre-computed Petri net.
--- When allowRepetition is True, may generate sequences with repeated actions by exploring longer paths.
-generateActionSequenceWithPetriAndRepetition :: Bool -> UMLActivityDiagram -> PetriLike Node PetriKey -> [String]
-generateActionSequenceWithPetriAndRepetition allowRepetition diag petri =
-  let tSeq = generateActionSequence' allowRepetition petri
+-- When minDistance >= 0, tries to generate sequences with action repetition where actions are
+-- at least minDistance apart (0 = immediate repetition like [A,A], 1 = at least one action between like [A,B,A]).
+-- When minDistance = -1, generates the shortest valid sequence without trying for repetition.
+generateActionSequenceWithPetriAndRepetition :: Int -> UMLActivityDiagram -> PetriLike Node PetriKey -> [String]
+generateActionSequenceWithPetriAndRepetition minDistance diag petri =
+  let tSeq = generateActionSequence' minDistance petri
       tSeqLabels = map (Ad.label . sourceNode) $ filter isNormalPetriNode tSeq
       actions = map
         (\n -> (Ad.label n, name n))
@@ -83,24 +86,64 @@ isNormalPetriNode pk =
     NormalPetriNode {} -> True
     _ -> False
 
+-- | Check if a sequence of action names has repetition with at least the specified minimum distance
+-- between repeated actions. For example:
+-- minDistance = 0: [A,A,...] is valid (immediate repetition)
+-- minDistance = 1: [A,B,A,...] is valid (at least 1 action between)
+-- minDistance = 2: [A,B,C,A,...] is valid (at least 2 actions between)
+hasActionRepetitionWithMinDistance :: Int -> [String] -> Bool
+hasActionRepetitionWithMinDistance minDistance actionSequence =
+  let -- Find all pairs of indices where the same action occurs
+      indicesOf action = [i | (i, a) <- zip [0..] actionSequence, a == action]
+      -- Check if any action has two occurrences with sufficient distance
+      checkAction action =
+        let indices = indicesOf action
+        in any (\(i, j) -> j - i - 1 >= minDistance) [(i, j) | i <- indices, j <- indices, i < j]
+  in any checkAction $ nub actionSequence
+  where
+    nub [] = []
+    nub (x:xs) = x : nub (filter (/= x) xs)
+
+-- | Check if a sequence of PetriKeys (transitions) has repetition with minimum distance
+-- Only considers NormalPetriNode transitions
+hasTransitionRepetitionWithMinDistance :: Int -> [PetriKey] -> Bool
+hasTransitionRepetitionWithMinDistance minDistance transitionSeq =
+  let normalNodes = filter isNormalPetriNode transitionSeq
+      labels = map (Ad.label . sourceNode) normalNodes
+      -- Find all pairs of indices where the same label occurs
+      indicesOf lbl = [i | (i, l) <- zip [0..] labels, l == lbl]
+      -- Check if any label has two occurrences with sufficient distance
+      checkLabel lbl =
+        let indices = indicesOf lbl
+        in any (\(i, j) -> j - i - 1 >= minDistance) [(i, j) | i <- indices, j <- indices, i < j]
+  in any checkLabel $ nub labels
+  where
+    nub [] = []
+    nub (x:xs) = x : nub (filter (/= x) xs)
+
 --Generate at one sequence of transitions to each final node
-generateActionSequence' :: Bool -> PetriLike Node PetriKey -> [PetriKey]
-generateActionSequence' allowRepetition petriLike =
+generateActionSequence' :: Int -> PetriLike Node PetriKey -> [PetriKey]
+generateActionSequence' minDistance petriLike =
   let petri = fromPetriLike petriLike
       zeroState = State $ M.map (const 0) $ unState $ start petri
       allLevels = levels' petri
       levelsWithZeroState = filter (isJust . lookup zeroState) allLevels
-      -- When repetition is allowed and there are multiple occurrences of zeroState,
-      -- take the second one (longer path with potential repetition).
-      -- Otherwise, take the first one (shortest path).
-      sequences = case levelsWithZeroState of
+
+      -- Extract all possible sequences to zero state
+      allSequences = [reverse $ fromJust $ lookup zeroState level | level <- levelsWithZeroState]
+
+      -- Find a sequence that matches the repetition requirement
+      sequences = case allSequences of
         [] -> error "No path to zero state found"
-        [firstLevel] -> firstLevel
-        firstLevel : secondLevel : _ ->
-          if allowRepetition
-          then secondLevel
-          else firstLevel
-  in reverse $ fromJust $ lookup zeroState sequences
+        _ | minDistance >= 0 ->
+            -- Try to find sequences with the required repetition pattern
+            case filter (hasTransitionRepetitionWithMinDistance minDistance) allSequences of
+              (bestSeq:_) -> bestSeq
+              [] -> -- If none found with requirement, take longest available (best effort)
+                    last allSequences
+        _ -> -- No repetition requested, take shortest
+            head allSequences
+  in sequences
 
 
 validActionSequence :: [String] -> UMLActivityDiagram -> Bool
