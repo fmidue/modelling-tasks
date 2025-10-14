@@ -19,7 +19,7 @@ import Modelling.ActivityDiagram.Datatype (
   )
 import Test.Hspec (Spec, describe, it, context, shouldBe, shouldSatisfy)
 import Data.Maybe (isJust)
-import Data.List (nub)
+import Data.Containers.ListUtils (nubOrd)
 
 -- | Check if a sequence of action names has repetition with at least the specified minimum distance
 -- between repeated actions. For example:
@@ -34,7 +34,7 @@ hasActionRepetitionWithMinDistance minDistance actionSequence =
       checkAction action =
         let indices = indicesOf action
         in any (\(i, j) -> j - i - 1 >= minDistance) [(i, j) | i <- indices, j <- indices, i < j]
-  in any checkAction $ nub actionSequence
+  in any checkAction $ nubOrd actionSequence
 
 spec :: Spec
 spec = do
