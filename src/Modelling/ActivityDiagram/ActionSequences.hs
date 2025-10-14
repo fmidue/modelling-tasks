@@ -4,6 +4,7 @@ module Modelling.ActivityDiagram.ActionSequences (
   validActionSequenceWithPetri,
   generateActionSequence,
   generateActionSequenceWithPetri,
+  generateActionSequenceWithPetriAndRepetition,
   terminatesSomeButNotAllFlowsWithPetri
 ) where
 
@@ -62,8 +63,14 @@ generateActionSequence diag =
 -- | Generate one valid action sequence, using a pre-computed Petri net.
 -- This version avoids re-computing the Petri net conversion
 generateActionSequenceWithPetri :: UMLActivityDiagram -> PetriLike Node PetriKey -> [String]
-generateActionSequenceWithPetri diag petri =
-  let tSeq = generateActionSequence' petri
+generateActionSequenceWithPetri =
+  generateActionSequenceWithPetriAndRepetition False
+
+-- | Generate one valid action sequence with optional repetition, using a pre-computed Petri net.
+-- When allowRepetition is True, may generate sequences with repeated actions by exploring longer paths.
+generateActionSequenceWithPetriAndRepetition :: Bool -> UMLActivityDiagram -> PetriLike Node PetriKey -> [String]
+generateActionSequenceWithPetriAndRepetition allowRepetition diag petri =
+  let tSeq = generateActionSequence' allowRepetition petri
       tSeqLabels = map (Ad.label . sourceNode) $ filter isNormalPetriNode tSeq
       actions = map
         (\n -> (Ad.label n, name n))
@@ -77,11 +84,15 @@ isNormalPetriNode pk =
     _ -> False
 
 --Generate at one sequence of transitions to each final node
-generateActionSequence' :: PetriLike Node PetriKey -> [PetriKey]
-generateActionSequence' petriLike =
+generateActionSequence' :: Bool -> PetriLike Node PetriKey -> [PetriKey]
+generateActionSequence' allowRepetition petriLike =
   let petri = fromPetriLike petriLike
       zeroState = State $ M.map (const 0) $ unState $ start petri
-      sequences = fromJust $ find (isJust . lookup zeroState) $ levels' petri
+      allLevels = levels' petri
+      levelsWithZeroState = filter (isJust . lookup zeroState) allLevels
+      sequences = if allowRepetition && length levelsWithZeroState > 1
+                  then levelsWithZeroState !! 1  -- Take the second occurrence (longer path)
+                  else fromJust $ find (isJust . lookup zeroState) allLevels  -- Take the first as before
   in reverse $ fromJust $ lookup zeroState sequences
 
 

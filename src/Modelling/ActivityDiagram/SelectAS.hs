@@ -28,7 +28,10 @@ import qualified Data.Vector as V (fromList)
 import Capabilities.Alloy               (MonadAlloy, getInstances)
 import Capabilities.PlantUml            (MonadPlantUml)
 import Capabilities.WriteFile           (MonadWriteFile)
-import Modelling.ActivityDiagram.ActionSequences (generateActionSequenceWithPetri, validActionSequenceWithPetri)
+import Modelling.ActivityDiagram.ActionSequences (
+  generateActionSequenceWithPetriAndRepetition,
+  validActionSequenceWithPetri
+  )
 import Modelling.ActivityDiagram.Auxiliary.ActionSequences (actionSequencesAlloy)
 import Modelling.ActivityDiagram.PetriNet (convertToPetriNet)
 import Modelling.ActivityDiagram.Config (
@@ -104,6 +107,7 @@ data SelectASConfig = SelectASConfig {
   numberOfWrongAnswers :: Int,
   answerLength :: !(Int, Int),
   printSolution :: Bool,
+  allowActionRepetition :: Bool,
   extraText :: ExtraText
 } deriving (Generic, Read, Show)
 
@@ -122,6 +126,7 @@ defaultSelectASConfig = SelectASConfig {
   numberOfWrongAnswers = 2,
   answerLength = (5, 8),
   printSolution = False,
+  allowActionRepetition = False,
   extraText = NoExtraText
 }
 
@@ -187,10 +192,10 @@ data SelectASSolution = SelectASSolution {
   wrongSequences :: [[String]]
 } deriving (Show, Eq)
 
-selectActionSequence :: Int -> UMLActivityDiagram -> SelectASSolution
-selectActionSequence numberOfWrongSequences ad =
+selectActionSequence :: Bool -> Int -> UMLActivityDiagram -> SelectASSolution
+selectActionSequence allowRepetition numberOfWrongSequences ad =
   let petri = convertToPetriNet ad
-      correctSequence = generateActionSequenceWithPetri ad petri
+      correctSequence = generateActionSequenceWithPetriAndRepetition allowRepetition ad petri
       wrongSequences =
         take numberOfWrongSequences $
         sortBy (compareDistToCorrect correctSequence) $
@@ -315,7 +320,7 @@ getSelectASTask config = do
   randomInstances <- shuffleM instances >>= mapM parseInstance
   ad <- mapM (fmap snd . shuffleAdNames) randomInstances
   validInstances <- firstJustM (\x -> do
-    actionSequences <- selectASSolutionToMap $ selectActionSequence (numberOfWrongAnswers config) x
+    actionSequences <- selectASSolutionToMap $ selectActionSequence (allowActionRepetition config) (numberOfWrongAnswers config) x
     let selectASInst = SelectASInstance {
           activityDiagram=x,
           actionSequences = actionSequences,
