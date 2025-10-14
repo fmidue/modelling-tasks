@@ -41,7 +41,7 @@ import Modelling.PetriNet.Reach.Type (
 import Modelling.PetriNet.Reach.Step (levels', successors)
 
 import Control.Monad (guard)
-import Data.List (union)
+import Data.List (union, nub)
 import Data.Maybe(mapMaybe, isJust, fromJust)
 
 
@@ -98,9 +98,6 @@ hasTransitionRepetitionWithMinDistance minDistance transitionSeq =
         let indices = indicesOf lbl
         in any (\(i, j) -> j - i - 1 >= minDistance) [(i, j) | i <- indices, j <- indices, i < j]
   in any checkLabel $ nub labels
-  where
-    nub [] = []
-    nub (x:xs) = x : nub (filter (/= x) xs)
 
 --Generate at one sequence of transitions to each final node
 generateActionSequence' :: Maybe Int -> PetriLike Node PetriKey -> [PetriKey]
@@ -120,8 +117,8 @@ generateActionSequence' minDistance petriLike =
             -- Try to find sequences with the required repetition pattern
             case filter (hasTransitionRepetitionWithMinDistance distance) allSequences of
               (bestSeq:_) -> bestSeq
-              [] -> -- If none found with requirement, take longest available (best effort)
-                    last allSequences
+              [] -> -- If none found with requirement, return shortest to avoid length violations
+                    head allSequences
         _ -> -- No repetition requested, take shortest
             head allSequences
   in sequences
