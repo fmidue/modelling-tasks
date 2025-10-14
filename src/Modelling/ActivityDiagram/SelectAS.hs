@@ -107,7 +107,7 @@ data SelectASConfig = SelectASConfig {
   numberOfWrongAnswers :: Int,
   answerLength :: !(Int, Int),
   printSolution :: Bool,
-  minActionRepetitionDistance :: Int,
+  minActionRepetitionDistance :: Maybe Int,
   extraText :: ExtraText
 } deriving (Generic, Read, Show)
 
@@ -126,7 +126,7 @@ defaultSelectASConfig = SelectASConfig {
   numberOfWrongAnswers = 2,
   answerLength = (5, 8),
   printSolution = False,
-  minActionRepetitionDistance = -1,
+  minActionRepetitionDistance = Nothing,
   extraText = NoExtraText
 }
 
@@ -157,10 +157,10 @@ checkSelectASConfig' SelectASConfig {
     The second value of parameter 'answerLength' should be greater or equal to
     its first value.
     |]
-  | minActionRepetitionDistance < -1
-    = Just "The parameter 'minActionRepetitionDistance' must be at least -1 (where -1 means no repetition)"
-  | minActionRepetitionDistance >= 0 && cycles adConfig < 1
-    = Just "Setting 'minActionRepetitionDistance' to a non-negative value requires at least 1 cycle in the activity diagram configuration"
+  | Just distance <- minActionRepetitionDistance, distance < 0
+    = Just "The parameter 'minActionRepetitionDistance' must be non-negative when specified"
+  | Just _ <- minActionRepetitionDistance, cycles adConfig < 1
+    = Just "Setting 'minActionRepetitionDistance' requires at least 1 cycle in the activity diagram configuration"
   | otherwise
     = Nothing
 
@@ -197,7 +197,7 @@ data SelectASSolution = SelectASSolution {
   wrongSequences :: [[String]]
 } deriving (Show, Eq)
 
-selectActionSequence :: Int -> Int -> UMLActivityDiagram -> SelectASSolution
+selectActionSequence :: Maybe Int -> Int -> UMLActivityDiagram -> SelectASSolution
 selectActionSequence minRepetitionDistance numberOfWrongSequences ad =
   let petri = convertToPetriNet ad
       correctSequence = generateActionSequenceWithPetriAndRepetition minRepetitionDistance ad petri

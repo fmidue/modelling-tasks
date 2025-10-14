@@ -5,8 +5,7 @@ module Modelling.ActivityDiagram.ActionSequences (
   generateActionSequence,
   generateActionSequenceWithPetri,
   generateActionSequenceWithPetriAndRepetition,
-  terminatesSomeButNotAllFlowsWithPetri,
-  hasActionRepetitionWithMinDistance
+  terminatesSomeButNotAllFlowsWithPetri
 ) where
 
 import qualified Modelling.ActivityDiagram.Datatype as Ad (
@@ -65,13 +64,13 @@ generateActionSequence diag =
 -- This version avoids re-computing the Petri net conversion
 generateActionSequenceWithPetri :: UMLActivityDiagram -> PetriLike Node PetriKey -> [String]
 generateActionSequenceWithPetri =
-  generateActionSequenceWithPetriAndRepetition (-1)
+  generateActionSequenceWithPetriAndRepetition Nothing
 
 -- | Generate one valid action sequence with optional repetition, using a pre-computed Petri net.
--- When minDistance >= 0, tries to generate sequences with action repetition where actions are
--- at least minDistance apart (0 = immediate repetition like [A,A], 1 = at least one action between like [A,B,A]).
--- When minDistance = -1, generates the shortest valid sequence without trying for repetition.
-generateActionSequenceWithPetriAndRepetition :: Int -> UMLActivityDiagram -> PetriLike Node PetriKey -> [String]
+-- When minDistance is Just n, tries to generate sequences with action repetition where actions are
+-- at least n apart (0 = immediate repetition like [A,A], 1 = at least one action between like [A,B,A]).
+-- When minDistance is Nothing, generates the shortest valid sequence without trying for repetition.
+generateActionSequenceWithPetriAndRepetition :: Maybe Int -> UMLActivityDiagram -> PetriLike Node PetriKey -> [String]
 generateActionSequenceWithPetriAndRepetition minDistance diag petri =
   let tSeq = generateActionSequence' minDistance petri
       tSeqLabels = map (Ad.label . sourceNode) $ filter isNormalPetriNode tSeq
@@ -85,24 +84,6 @@ isNormalPetriNode pk =
   case pk of
     NormalPetriNode {} -> True
     _ -> False
-
--- | Check if a sequence of action names has repetition with at least the specified minimum distance
--- between repeated actions. For example:
--- minDistance = 0: [A,A,...] is valid (immediate repetition)
--- minDistance = 1: [A,B,A,...] is valid (at least 1 action between)
--- minDistance = 2: [A,B,C,A,...] is valid (at least 2 actions between)
-hasActionRepetitionWithMinDistance :: Int -> [String] -> Bool
-hasActionRepetitionWithMinDistance minDistance actionSequence =
-  let -- Find all pairs of indices where the same action occurs
-      indicesOf action = [i | (i, a) <- zip [0..] actionSequence, a == action]
-      -- Check if any action has two occurrences with sufficient distance
-      checkAction action =
-        let indices = indicesOf action
-        in any (\(i, j) -> j - i - 1 >= minDistance) [(i, j) | i <- indices, j <- indices, i < j]
-  in any checkAction $ nub actionSequence
-  where
-    nub [] = []
-    nub (x:xs) = x : nub (filter (/= x) xs)
 
 -- | Check if a sequence of PetriKeys (transitions) has repetition with minimum distance
 -- Only considers NormalPetriNode transitions
@@ -122,7 +103,7 @@ hasTransitionRepetitionWithMinDistance minDistance transitionSeq =
     nub (x:xs) = x : nub (filter (/= x) xs)
 
 --Generate at one sequence of transitions to each final node
-generateActionSequence' :: Int -> PetriLike Node PetriKey -> [PetriKey]
+generateActionSequence' :: Maybe Int -> PetriLike Node PetriKey -> [PetriKey]
 generateActionSequence' minDistance petriLike =
   let petri = fromPetriLike petriLike
       zeroState = State $ M.map (const 0) $ unState $ start petri
@@ -135,9 +116,9 @@ generateActionSequence' minDistance petriLike =
       -- Find a sequence that matches the repetition requirement
       sequences = case allSequences of
         [] -> error "No path to zero state found"
-        _ | minDistance >= 0 ->
+        _ | Just distance <- minDistance ->
             -- Try to find sequences with the required repetition pattern
-            case filter (hasTransitionRepetitionWithMinDistance minDistance) allSequences of
+            case filter (hasTransitionRepetitionWithMinDistance distance) allSequences of
               (bestSeq:_) -> bestSeq
               [] -> -- If none found with requirement, take longest available (best effort)
                     last allSequences

@@ -8,7 +8,6 @@ import Modelling.ActivityDiagram.SelectAS (
   selectActionSequence
   )
 
-import Modelling.ActivityDiagram.ActionSequences (hasActionRepetitionWithMinDistance)
 import Modelling.ActivityDiagram.Config (
   AdConfig (objectNodeLimits, cycles),
   defaultAdConfig,
@@ -21,6 +20,24 @@ import Modelling.ActivityDiagram.Datatype (
 import Test.Hspec (Spec, describe, it, context, shouldBe, shouldSatisfy)
 import Data.Maybe (isJust)
 
+-- | Check if a sequence of action names has repetition with at least the specified minimum distance
+-- between repeated actions. For example:
+-- minDistance = 0: [A,A,...] is valid (immediate repetition)
+-- minDistance = 1: [A,B,A,...] is valid (at least 1 action between)
+-- minDistance = 2: [A,B,C,A,...] is valid (at least 2 actions between)
+hasActionRepetitionWithMinDistance :: Int -> [String] -> Bool
+hasActionRepetitionWithMinDistance minDistance actionSequence =
+  let -- Find all pairs of indices where the same action occurs
+      indicesOf action = [i | (i, a) <- zip [0..] actionSequence, a == action]
+      -- Check if any action has two occurrences with sufficient distance
+      checkAction action =
+        let indices = indicesOf action
+        in any (\(i, j) -> j - i - 1 >= minDistance) [(i, j) | i <- indices, j <- indices, i < j]
+  in any checkAction $ nub actionSequence
+  where
+    nub [] = []
+    nub (x:xs) = x : nub (filter (/= x) xs)
+
 spec :: Spec
 spec = do
   describe "checkSelectASConfig" $ do
@@ -32,18 +49,18 @@ spec = do
           adConfig = defaultAdConfig {objectNodeLimits = (0, 1)},
           objectNodeOnEveryPath = Just True
         } `shouldSatisfy` isJust
-      it "rejects minActionRepetitionDistance >= 0 when cycles = 0" $
+      it "rejects minActionRepetitionDistance when cycles = 0" $
         checkSelectASConfig defaultSelectASConfig {
-          minActionRepetitionDistance = 0,
+          minActionRepetitionDistance = Just 0,
           adConfig = defaultAdConfig {cycles = 0}
         } `shouldSatisfy` isJust
-      it "rejects minActionRepetitionDistance < -1" $
+      it "rejects negative minActionRepetitionDistance" $
         checkSelectASConfig defaultSelectASConfig {
-          minActionRepetitionDistance = -2
+          minActionRepetitionDistance = Just (-1)
         } `shouldSatisfy` isJust
       it "accepts minActionRepetitionDistance >= 0 when cycles >= 1" $
         checkSelectASConfig defaultSelectASConfig {
-          minActionRepetitionDistance = 1,
+          minActionRepetitionDistance = Just 1,
           adConfig = defaultAdConfig {cycles = 1}
         } `shouldBe` Nothing
 
@@ -68,18 +85,18 @@ spec = do
             AdConnection {from = 3, to = 7, guard = ""}
           ]
         }
-    context "when minActionRepetitionDistance = -1" $
+    context "when minActionRepetitionDistance = Nothing" $
       it "generates sequences without forcing repetition" $ do
-        let solution = selectActionSequence (-1) 2 testDiagram
+        let solution = selectActionSequence Nothing 2 testDiagram
             actionSeq = correctSequence solution
         length actionSeq `shouldSatisfy` (>= 2)
-    context "when minActionRepetitionDistance = 0" $
+    context "when minActionRepetitionDistance = Just 0" $
       it "generates sequences with immediate repetition when possible" $ do
-        let solution = selectActionSequence 0 2 testDiagram
+        let solution = selectActionSequence (Just 0) 2 testDiagram
             actionSeq = correctSequence solution
         hasActionRepetitionWithMinDistance 0 actionSeq `shouldBe` True
-    context "when minActionRepetitionDistance = 1" $
+    context "when minActionRepetitionDistance = Just 1" $
       it "generates sequences with at least 1 action between repetitions" $ do
-        let solution = selectActionSequence 1 2 testDiagram
+        let solution = selectActionSequence (Just 1) 2 testDiagram
             actionSeq = correctSequence solution
         hasActionRepetitionWithMinDistance 1 actionSeq `shouldBe` True
