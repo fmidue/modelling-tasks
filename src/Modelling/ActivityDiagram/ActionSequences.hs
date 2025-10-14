@@ -90,10 +90,11 @@ validActionSequence input diag =
   let petri = convertToPetriNet diag
   in validActionSequenceWithPetri input diag petri
 
--- | Check if an action sequence is valid, using a pre-computed Petri net.
--- This version avoids re-computing the Petri net conversion
-validActionSequenceWithPetri :: [String] -> UMLActivityDiagram -> PetriLike Node PetriKey -> Bool
-validActionSequenceWithPetri input diag petri =
+-- | Convert input strings to PetriKeys and actions for validation
+-- Returns (input', actions) where input' is the sequence of PetriKeys to validate
+-- and actions is the list of all action PetriKeys
+convertInputToPetriKeys :: [String] -> UMLActivityDiagram -> PetriLike Node PetriKey -> ([PetriKey], [PetriKey])
+convertInputToPetriKeys input diag petri =
   let nameMap = map
         (\n -> (name n, Ad.label n))
         $ filter isActionNode $ nodes diag
@@ -103,6 +104,13 @@ validActionSequenceWithPetri input diag petri =
         $ filter isNormalPetriNode $ M.keys $ allNodes petri
       input' = mapMaybe (`lookup` petriKeyMap) labels
       actions = map snd $ filter (\(l,_) -> l `elem` map snd nameMap) petriKeyMap
+  in (input', actions)
+
+-- | Check if an action sequence is valid, using a pre-computed Petri net.
+-- This version avoids re-computing the Petri net conversion
+validActionSequenceWithPetri :: [String] -> UMLActivityDiagram -> PetriLike Node PetriKey -> Bool
+validActionSequenceWithPetri input diag petri =
+  let (input', actions) = convertInputToPetriKeys input diag petri
   in validActionSequence' input' actions petri
 
 -- | Check if an action sequence terminates some but not all flows, using a pre-computed Petri net.
@@ -110,15 +118,7 @@ validActionSequenceWithPetri input diag petri =
 -- but doesn't reach the zero state (i.e., doesn't consume all tokens, leaving some flows active).
 terminatesSomeButNotAllFlowsWithPetri :: [String] -> UMLActivityDiagram -> PetriLike Node PetriKey -> Bool
 terminatesSomeButNotAllFlowsWithPetri input diag petri =
-  let nameMap = map
-        (\n -> (name n, Ad.label n))
-        $ filter isActionNode $ nodes diag
-      labels = mapMaybe (`lookup` nameMap) input
-      petriKeyMap = map
-        (\k -> (Ad.label $ sourceNode k, k))
-        $ filter isNormalPetriNode $ M.keys $ allNodes petri
-      input' = mapMaybe (`lookup` petriKeyMap) labels
-      actions = map snd $ filter (\(l,_) -> l `elem` map snd nameMap) petriKeyMap
+  let (input', actions) = convertInputToPetriKeys input diag petri
       net = fromPetriLike petri
       zeroState = State $ M.map (const 0) $ unState $ start net
       levels = levelsCheckAS input' actions net
