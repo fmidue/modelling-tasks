@@ -198,13 +198,13 @@ data SelectASSolution = SelectASSolution {
 } deriving (Show, Eq)
 
 selectActionSequence :: Maybe Int -> Int -> UMLActivityDiagram -> SelectASSolution
-selectActionSequence minRepetitionDistance numberOfWrongSequences activityDiagram =
-  let petri = convertToPetriNet activityDiagram
-      correctSequence = generateActionSequenceWithPetriAndRepetition minRepetitionDistance activityDiagram petri
+selectActionSequence minRepetitionDistance numberOfWrongSequences ad =
+  let petri = convertToPetriNet ad
+      correctSequence = generateActionSequenceWithPetriAndRepetition minRepetitionDistance ad petri
       wrongSequences =
         take numberOfWrongSequences $
         sortBy (compareDistToCorrect correctSequence) $
-        filter (not . (\actionSeq -> validActionSequenceWithPetri actionSeq activityDiagram petri)) $
+        filter (not . (\actionSeq -> validActionSequenceWithPetri actionSeq ad petri)) $
         permutations correctSequence
   in SelectASSolution {correctSequence=correctSequence, wrongSequences=wrongSequences}
 
