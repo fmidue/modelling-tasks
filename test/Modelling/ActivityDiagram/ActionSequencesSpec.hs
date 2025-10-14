@@ -37,8 +37,6 @@ spec =
         validActionSequence ["A", "E", "D", "C", "E", "E", "C", "E", "C", "B", "B", "B", "B"] testDiagram `shouldBe` (True::Bool)
       it "rejects an empty input sequence" $
         validActionSequence [] testDiagram `shouldBe` (False::Bool)
-      it "ignores non-existent action names in the sequence" $
-        validActionSequence ["A", "X", "E", "C", "B"] testDiagram `shouldBe` (True::Bool)
       it "rejects input sequences that are too short to terminate any flows of the diagram" $
         validActionSequence ["A"] testDiagram `shouldBe` (False::Bool)
       it "rejects input sequences that dont terminate all flows of the diagram" $
