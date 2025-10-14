@@ -27,8 +27,8 @@ import Capabilities.PlantUml            (MonadPlantUml)
 import Capabilities.WriteFile           (MonadWriteFile)
 import Modelling.ActivityDiagram.ActionSequences (
   generateActionSequenceWithPetri,
-  validActionSequenceWithPetri,
-  reachesFinalNode,
+  computeActionSequenceLevels,
+  isFinalPetriNode,
   )
 import Modelling.ActivityDiagram.Auxiliary.ActionSequences (actionSequencesAlloy)
 import Modelling.ActivityDiagram.Config (
@@ -81,7 +81,7 @@ import Control.Monad.Random (
   )
 import Data.List (intercalate, intersect)
 import Data.List.Extra (nubOrd)
-import Data.Maybe                       (isNothing)
+import Data.Maybe                       (isNothing, isJust)
 import Data.String.Interpolate (i, iii)
 import GHC.Generics (Generic)
 import Modelling.Auxiliary.Output (
@@ -249,7 +249,10 @@ enterASEvaluation
 enterASEvaluation task sub = do
   let objectNames = map name $ filter isObjectNode $ nodes $ activityDiagram task
       objectNamesInSubmission = nubOrd $ sub `intersect` objectNames
-      correct = null objectNamesInSubmission && validActionSequenceWithPetri sub (activityDiagram task) (petriNet task)
+      -- Inline validActionSequenceWithPetri
+      (levels, zeroState) = computeActionSequenceLevels sub (activityDiagram task) (petriNet task)
+      reachesZeroState = any (isJust . lookup zeroState) levels
+      correct = null objectNamesInSubmission && reachesZeroState
       points = if correct then 1 else 0
       maybeSolutionString =
         if showSolution task
@@ -262,8 +265,9 @@ enterASEvaluation task sub = do
 
   -- Provide specific feedback for sequences that terminate some but not all flows
   when (not correct && null objectNamesInSubmission) $ do
-    let isIncomplete = reachesFinalNode sub (activityDiagram task) (petriNet task)
-    when isIncomplete $ do
+    -- Inline reachesFinalNode
+    let finalNodeReached = any (any (\(_, path) -> any isFinalPetriNode path)) levels
+    when finalNodeReached $ do
       paragraph $ translate $ do
         german [iii|
           Die eingereichte Sequenz erreicht ein Flussende, aber terminiert nicht alle Flüsse.

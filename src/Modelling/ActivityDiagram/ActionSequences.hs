@@ -4,7 +4,9 @@ module Modelling.ActivityDiagram.ActionSequences (
   validActionSequenceWithPetri,
   generateActionSequence,
   generateActionSequenceWithPetri,
-  reachesFinalNode
+  reachesFinalNode,
+  computeActionSequenceLevels,
+  isFinalPetriNode
 ) where
 
 import qualified Modelling.ActivityDiagram.Datatype as Ad (
