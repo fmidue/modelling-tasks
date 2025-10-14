@@ -106,22 +106,29 @@ convertInputToPetriKeys input diag petri =
       actions = map snd $ filter (\(l,_) -> l `elem` map snd nameMap) petriKeyMap
   in (input', actions)
 
+-- | Common computation for action sequence validation
+-- Returns (levels, zeroState) for checking sequence properties
+computeActionSequenceLevels :: [String] -> UMLActivityDiagram -> PetriLike Node PetriKey -> ([[(State PetriKey, [PetriKey])]], State PetriKey)
+computeActionSequenceLevels input diag petri =
+  let (input', actions) = convertInputToPetriKeys input diag petri
+      net = fromPetriLike petri
+      zeroState = State $ M.map (const 0) $ unState $ start net
+      levels = levelsCheckAS input' actions net
+  in (levels, zeroState)
+
 -- | Check if an action sequence is valid, using a pre-computed Petri net.
 -- This version avoids re-computing the Petri net conversion
 validActionSequenceWithPetri :: [String] -> UMLActivityDiagram -> PetriLike Node PetriKey -> Bool
 validActionSequenceWithPetri input diag petri =
-  let (input', actions) = convertInputToPetriKeys input diag petri
-  in validActionSequence' input' actions petri
+  let (levels, zeroState) = computeActionSequenceLevels input diag petri
+  in any (isJust . lookup zeroState) levels
 
 -- | Check if an action sequence terminates some but not all flows, using a pre-computed Petri net.
 -- This detects the case where a sequence terminates at least one flow
 -- but doesn't reach the zero state (i.e., doesn't consume all tokens, leaving some flows active).
 terminatesSomeButNotAllFlowsWithPetri :: [String] -> UMLActivityDiagram -> PetriLike Node PetriKey -> Bool
 terminatesSomeButNotAllFlowsWithPetri input diag petri =
-  let (input', actions) = convertInputToPetriKeys input diag petri
-      net = fromPetriLike petri
-      zeroState = State $ M.map (const 0) $ unState $ start net
-      levels = levelsCheckAS input' actions net
+  let (levels, zeroState) = computeActionSequenceLevels input diag petri
       reachesZeroState = any (isJust . lookup zeroState) levels
       -- Check if any FinalPetriNode transition was fired (meaning a flow was terminated)
       finalNodeReached = any (any (\(_, path) -> any isFinalPetriNode path)) levels
@@ -131,16 +138,6 @@ terminatesSomeButNotAllFlowsWithPetri input diag petri =
 isFinalPetriNode :: PetriKey -> Bool
 isFinalPetriNode (FinalPetriNode {}) = True
 isFinalPetriNode _ = False
-
-validActionSequence'
-  :: [PetriKey]
-  -> [PetriKey]
-  -> PetriLike Node PetriKey
-  -> Bool
-validActionSequence' input actions petri =
-  let net = fromPetriLike petri
-      zeroState = State $ M.map (const 0) $ unState $ start net
-  in any (isJust . lookup zeroState) (levelsCheckAS input actions net)
 
 
 levelsCheckAS :: [PetriKey] -> [PetriKey] -> Net PetriKey PetriKey-> [[(State PetriKey, [PetriKey])]]
