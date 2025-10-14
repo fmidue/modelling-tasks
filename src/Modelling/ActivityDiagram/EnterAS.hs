@@ -262,6 +262,7 @@ enterASEvaluation task sub = do
     english "The submitted action sequence is correct?"
     german "Die eingereichte Aktionsfolge ist korrekt?"
 
+  -- Provide specific feedback for sequences that terminate some but not all flows
   when (null objectNamesInSubmission && not reachesZeroState) $ do
     let finalNodeReached = any (any (\(_, path) -> any isFinalPetriNode path)) levels
     when finalNodeReached $ do
