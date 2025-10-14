@@ -79,34 +79,29 @@ generateActionSequenceWithPetriAndRepetition minDistance diag petri =
       allTransitionSequences = generateAllActionSequences' petri
       -- Convert transition sequences to action name sequences
       toActionNames transitionSeq =
-        let tSeqLabels = map (Ad.label . sourceNode) $ filter isNormalPetriNode transitionSeq
-        in mapMaybe (`lookup` actions) tSeqLabels
+        let transitionSequenceLabels = map (Ad.label . sourceNode) $ filter isNormalPetriNode transitionSeq
+        in mapMaybe (`lookup` actions) transitionSequenceLabels
       allActionSequences = map toActionNames allTransitionSequences
       -- Find sequence matching repetition requirement
       result = case minDistance of
         Nothing -> head allActionSequences  -- Take shortest
-        Just distance ->
-          -- Try to find sequences with the required repetition pattern
-          case filter (hasActionRepetitionWithMinDistance distance) allActionSequences of
-            (bestSequence:_) -> bestSequence
-            [] -> -- Try smaller distances as fallback
-              findWithSmallerDistance (distance - 1) allActionSequences
+        Just distance -> findSequenceWithRepetitionDistance distance allActionSequences
   in result
   where
     -- Helper to check repetition with action names
-    hasActionRepetitionWithMinDistance dist actionSeq =
-      let indicesOf action = [i | (i, a) <- zip [0..] actionSeq, a == action]
+    hasActionRepetitionWithMinDistance distance actionSequence =
+      let indicesOf action = [i | (i, a) <- zip [0..] actionSequence, a == action]
           checkAction action =
             let indices = indicesOf action
-            in any (\(i, j) -> j - i - 1 >= dist) [(i, j) | i <- indices, j <- indices, i < j]
-      in any checkAction $ nubOrd actionSeq
-    -- Try to find sequence with smaller repetition distance
-    findWithSmallerDistance dist actionSeqs
-      | dist < 0 = head actionSeqs  -- Give up, return shortest
+            in any (\(i, j) -> j - i - 1 >= distance) [(i, j) | i <- indices, j <- indices, i < j]
+      in any checkAction $ nubOrd actionSequence
+    -- Try to find sequence with the required repetition distance, falling back to smaller distances
+    findSequenceWithRepetitionDistance distance actionSequences
+      | distance < 0 = head actionSequences  -- Give up, return shortest
       | otherwise =
-          case filter (hasActionRepetitionWithMinDistance dist) actionSeqs of
-            (seq':_) -> seq'
-            [] -> findWithSmallerDistance (dist - 1) actionSeqs
+          case filter (hasActionRepetitionWithMinDistance distance) actionSequences of
+            (matchingSequence:_) -> matchingSequence
+            [] -> findSequenceWithRepetitionDistance (distance - 1) actionSequences
 
 isNormalPetriNode :: PetriKey -> Bool
 isNormalPetriNode pk =
