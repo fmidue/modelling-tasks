@@ -19,7 +19,7 @@ import Control.OutputCapable.Blocks (
 
 finalNodesAdvice :: OutputCapable m => LangM m
 finalNodesAdvice = collapsed True (put $ translations $ do
-  english "Hint on translation to Petri net"
+  english "Hint on the translation to a Petri net"
   german "Hinweis zur Übersetzung in ein Petrinetz"
   ) $ translate $ do
   english [iii|
