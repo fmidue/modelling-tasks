@@ -46,14 +46,18 @@ instance Read Name where
     readParen (prec > 10) (\s -> do
       ("Name", s1) <- lex s
       (str, s2) <- reads s1  -- reads a String, handles quotes and escapes
-      let nameStr = case str of
-            "" -> ""
-            _ | last str == '.' -> init str
-            _ -> str
+      let nameStr = stripTrailingPeriod str
       return (Name nameStr, s2)) input
     -- Also try to read just alphanumeric chars with optional period (for bare usage)
     ++ readBareAlphaNum input
     where
+      stripTrailingPeriod :: String -> String
+      stripTrailingPeriod [] = []
+      stripTrailingPeriod str =
+        case reverse str of
+          ('.':rest) -> reverse rest
+          _ -> str
+
       readBareAlphaNum str =
         let trimmed = dropWhile (== ' ') str
             (alphanumericName, rest1) = span isAlphaNum trimmed
