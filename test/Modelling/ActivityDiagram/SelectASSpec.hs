@@ -8,6 +8,7 @@ import Modelling.ActivityDiagram.SelectAS (
   selectActionSequence
   )
 
+import Modelling.ActivityDiagram.ActionSequences (hasActionRepetitionWithMinDistance)
 import Modelling.ActivityDiagram.Config (
   AdConfig (objectNodeLimits, cycles),
   defaultAdConfig,
@@ -19,22 +20,6 @@ import Modelling.ActivityDiagram.Datatype (
   )
 import Test.Hspec (Spec, describe, it, context, shouldBe, shouldSatisfy)
 import Data.Maybe (isJust)
-import Data.Containers.ListUtils (nubOrd)
-
--- | Check if a sequence of action names has repetition with at least the specified minimum distance
--- between repeated actions. For example:
--- minDistance = 0: [A,A,...] is valid (immediate repetition)
--- minDistance = 1: [A,B,A,...] is valid (at least 1 action between)
--- minDistance = 2: [A,B,C,A,...] is valid (at least 2 actions between)
-hasActionRepetitionWithMinDistance :: Int -> [String] -> Bool
-hasActionRepetitionWithMinDistance minDistance actionSequence =
-  let -- Find all pairs of indices where the same action occurs
-      indicesOf action = [i | (i, a) <- zip [0..] actionSequence, a == action]
-      -- Check if any action has two occurrences with sufficient distance
-      checkAction action =
-        let indices = indicesOf action
-        in any (\(i, j) -> j - i - 1 >= minDistance) [(i, j) | i <- indices, j <- indices, i < j]
-  in any checkAction $ nubOrd actionSequence
 
 spec :: Spec
 spec = do

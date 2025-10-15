@@ -5,7 +5,8 @@ module Modelling.ActivityDiagram.ActionSequences (
   generateActionSequence,
   generateActionSequenceWithPetri,
   generateActionSequenceWithPetriAndRepetition,
-  terminatesSomeButNotAllFlowsWithPetri
+  terminatesSomeButNotAllFlowsWithPetri,
+  hasActionRepetitionWithMinDistance
 ) where
 
 import qualified Modelling.ActivityDiagram.Datatype as Ad (
@@ -67,6 +68,19 @@ generateActionSequenceWithPetri :: UMLActivityDiagram -> PetriLike Node PetriKey
 generateActionSequenceWithPetri =
   generateActionSequenceWithPetriAndRepetition Nothing
 
+-- | Check if a sequence of action names has repetition with at least the specified minimum distance
+-- between repeated actions. For example:
+-- minDistance = 0: [A,A,...] is valid (immediate repetition)
+-- minDistance = 1: [A,B,A,...] is valid (at least 1 action between)
+-- minDistance = 2: [A,B,C,A,...] is valid (at least 2 actions between)
+hasActionRepetitionWithMinDistance :: Int -> [String] -> Bool
+hasActionRepetitionWithMinDistance distance actionSequence =
+  let indicesOf action = [i | (i, a) <- zip [0..] actionSequence, a == action]
+      checkAction action =
+        let indices = indicesOf action
+        in any (\(i, j) -> j - i - 1 >= distance) [(i, j) | i <- indices, j <- indices, i < j]
+  in any checkAction $ nubOrd actionSequence
+
 -- | Generate one valid action sequence with optional repetition, using a pre-computed Petri net.
 -- When minDistance is Just n, tries to generate sequences with action repetition where actions are
 -- at least n apart (0 = immediate repetition like [A,A], 1 = at least one action between like [A,B,A]).
@@ -88,13 +102,6 @@ generateActionSequenceWithPetriAndRepetition minDistance diag petri =
         Just distance -> findSequenceWithRepetitionDistance distance allActionSequences
   in result
   where
-    -- Helper to check repetition with action names
-    hasActionRepetitionWithMinDistance distance actionSequence =
-      let indicesOf action = [i | (i, a) <- zip [0..] actionSequence, a == action]
-          checkAction action =
-            let indices = indicesOf action
-            in any (\(i, j) -> j - i - 1 >= distance) [(i, j) | i <- indices, j <- indices, i < j]
-      in any checkAction $ nubOrd actionSequence
     -- Try to find sequence with the required repetition distance, falling back to smaller distances
     findSequenceWithRepetitionDistance distance actionSequences
       | distance < 0 = head actionSequences  -- Give up, return shortest
