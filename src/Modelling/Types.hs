@@ -35,22 +35,32 @@ import Text.ParserCombinators.Parsec (
 newtype Name = Name { unName :: String }
   deriving (Eq, Generic, Ord, Show)
 
+-- | Custom Read instance for Name that accepts optional trailing periods.
+-- This allows parsing both bare alphanumeric names (e.g., "1", "abc")
+-- and names with trailing periods (e.g., "1.", "abc.").
+-- The period is stripped during parsing.
+-- Also supports standard constructor syntax: Name "1" and Name "1."
 instance Read Name where
   readsPrec prec input =
     -- Try to read with Name constructor and a string argument
     readParen (prec > 10) (\s -> do
       ("Name", s1) <- lex s
       (str, s2) <- reads s1  -- reads a String, handles quotes and escapes
-      let nameStr = if not (null str) && last str == '.' then init str else str
+      let nameStr = case str of
+            "" -> ""
+            _ | last str == '.' -> init str
+            _ -> str
       return (Name nameStr, s2)) input
     -- Also try to read just alphanumeric chars with optional period (for bare usage)
-    ++ [(Name name, rest2) | not (null name)]
+    ++ readBareAlphaNum input
     where
-      trimmed = dropWhile (== ' ') input
-      (name, rest1) = span isAlphaNum trimmed
-      rest2 = case rest1 of
-        ('.':xs) -> xs
-        xs -> xs
+      readBareAlphaNum str =
+        let trimmed = dropWhile (== ' ') str
+            (alphanumericName, rest1) = span isAlphaNum trimmed
+            rest2 = case rest1 of
+              ('.':xs) -> xs
+              xs -> xs
+        in [(Name alphanumericName, rest2) | not (null alphanumericName)]
 
 instance IsString Name where
   fromString = Name
