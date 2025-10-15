@@ -366,7 +366,7 @@ matchPetriTask path task = do
         und kein Petrinetzknoten entspricht einem Flussende.
         |]
     pure ()
-  finalNodesAdvice False
+  finalNodesAdvice
 
   extra $ addText task
 
