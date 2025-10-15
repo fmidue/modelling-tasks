@@ -236,7 +236,7 @@ an Nicht-Hilfsknoten (Stellen und Transitionen minus Hilfsstellen und Hilfstrans
 (nämlich 10 Knoten insgesamt minus 2 Hilfsstellen minus 3 Hilfstransitionen),
 dazu 2 Hilfsstellen und 3 Hilfstransitionen.|]
     pure ()
-  finalNodesAdvice False
+  finalNodesAdvice
 
   extra $ addText task
 

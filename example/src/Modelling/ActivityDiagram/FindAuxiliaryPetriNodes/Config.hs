@@ -15,10 +15,15 @@ import Control.OutputCapable.Blocks     (Language(..))
 -- This text explains that transitions required for realizing final node behavior
 -- do not count as auxiliary nodes.
 finalNodeTransitionAdvice :: ExtraText
-finalNodeTransitionAdvice = Static $ M.fromList [
-  (English, "If an additional transition is required to realise this behavior at a position in the diagram where there is a final node, this transition does not count as auxiliary node."),
-  (German, "Falls eine zusätzliche Transition erforderlich ist, um dieses Verhalten an einer Position im Diagramm zu realisieren, an der sich ein Endknoten befindet, zählt diese Transition nicht als Hilfsknoten.")
-  ]
+finalNodeTransitionAdvice = Collapsible True
+  (M.fromList [
+    (English, "Additional information on auxiliary nodes"),
+    (German, "Zusätzliche Informationen zu Hilfsknoten")
+  ])
+  (M.fromList [
+    (English, "For final nodes no additional places are introduced. They are realised in a way that a token is consumed, i.e. disappears from the net at that position. If an additional transition is required to realise this behavior at a position in the diagram where there is a final node, this transition does not count as auxiliary node."),
+    (German, "Für Endknoten werden keine zusätzlichen Stellen eingeführt. Sie werden so realisiert, dass ein Token verbraucht wird, also an dieser Position aus dem Netz verschwindet. Falls eine zusätzliche Transition erforderlich ist, um dieses Verhalten an einer Position im Diagramm zu realisieren, an der sich ein Endknoten befindet, zählt diese Transition nicht als Hilfsknoten.")
+  ])
 
 {-|
 points: 0.15
