@@ -35,6 +35,7 @@ import qualified Data.Bimap                       as BM (
   keys,
   lookup,
   lookupR,
+  mapMonotonicR,
   toAscList,
   )
 import qualified Data.Map                         as M (
@@ -111,7 +112,7 @@ import Modelling.CdOd.Types (
   shuffleObjectAndLinkOrder,
   )
 import Modelling.Types (
-  Name (Name),
+  Name (Name, unName),
   NameMapping (nameMapping),
   fromNameMapping,
   showName,
@@ -154,6 +155,7 @@ import Data.Bifunctor                   (Bifunctor (bimap, first))
 import Data.Bimap                       (Bimap)
 import Data.Bitraversable               (bitraverse)
 import Data.Bool                        (bool)
+import Data.Char                        (isDigit)
 import Data.Containers.ListUtils        (nubOrd, nubOrdOn)
 import Data.Functor.Identity            (Identity (Identity, runIdentity))
 import Data.GraphViz                    (DirType (Forward))
@@ -485,18 +487,29 @@ differentNamesSyntax DifferentNamesInstance {..} cs = addPretext $ do
     _ -> pure ()
   pure ()
   where
-    links = linkLabels oDiagram
+    -- Only strip periods from strings that look like numbers (all digits before the period)
+    stripPeriod :: String -> String
+    stripPeriod "" = ""
+    stripPeriod s = case reverse s of
+      ('.':rest) | not (null rest) && all isDigit rest -> reverse rest
+      _ -> s
+    -- Strip periods from link labels for comparison with student input
+    linksStripped = map stripPeriod $ linkLabels oDiagram
     sortPair (x, y) = if x <= y then (x, y) else (y, x)
-    choices = nubOrdOn sortPair cs
+    -- First check for overlapping without stripping
+    choicesRaw = nubOrdOn sortPair cs
+    allMappingValuesRaw = filter
+      (not . null . tail)
+      $ group $ sort (map fst choicesRaw ++ map snd choicesRaw)
+    -- Then strip for validity checking against actual names
+    choices = map (bimap (Name . stripPeriod . unName) (Name . stripPeriod . unName)) choicesRaw
     associations = associationNames cDiagram
     isAssociationMappingForward (Name x, Name y) =
-      x `elem` associations && y `elem` links
+      x `elem` associations && y `elem` linksStripped
     isAssociationMapping x = isAssociationMappingForward x
       || isAssociationMappingForward (swap x)
     invalidMappings = filter (not . isAssociationMapping) choices
-    allMappingValues = filter
-      (not . null . tail)
-      $ group $ sort (map fst choices ++ map snd choices)
+    allMappingValues = allMappingValuesRaw
 
 readMapping :: Ord a => Bimap a a -> (a, a) -> Maybe (a, a)
 readMapping m (x, y)
@@ -513,16 +526,23 @@ differentNamesEvaluation
   -> [(Name, Name)]
   -> Rated m
 differentNamesEvaluation task cs = do
-  let what = translations $ do
+  let -- Only strip periods from strings that look like numbers
+      stripPeriod "" = ""
+      stripPeriod s = case reverse s of
+        ('.':rest) | not (null rest) && all isDigit rest -> reverse rest
+        _ -> s
+      csStripped = map (bimap (Name . stripPeriod . unName) (Name . stripPeriod . unName)) cs
+      -- Strip periods from the mapping's link labels (second element of each pair)
+      mStripped = BM.mapMonotonicR (Name . stripPeriod . unName) $ nameMapping $ mapping task
+      what = translations $ do
         german "Zuordnungen"
         english "mappings"
-      m = nameMapping $ mapping task
-      ms = M.fromAscList $ map (,True) $ BM.toAscList m
+      ms = M.fromAscList $ map (,True) $ BM.toAscList mStripped
       solution =
         if showSolution task
         then Just . show . mappingShow $ differentNamesSolution task
         else Nothing
-  multipleChoice DefiniteArticle what solution ms (mapMaybe (readMapping m) cs)
+  multipleChoice DefiniteArticle what solution ms (mapMaybe (readMapping mStripped) csStripped)
 
 differentNamesSolution :: DifferentNamesInstance -> [(Name, Name)]
 differentNamesSolution = BM.toAscList . nameMapping . mapping
@@ -613,15 +633,15 @@ defaultDifferentNamesInstance = DifferentNamesInstance {
       Object {isAnonymous = True, objectName = "a",  objectClass = "A"}
       ],
     links = [
-      Link {linkLabel = "2", linkFrom = "d1", linkTo = "b"},
-      Link {linkLabel = "1", linkFrom = "b",  linkTo = "a"},
-      Link {linkLabel = "2", linkFrom = "d",  linkTo = "b"},
-      Link {linkLabel = "3", linkFrom = "c",  linkTo = "d1"},
-      Link {linkLabel = "3", linkFrom = "c1", linkTo = "d1"}
+      Link {linkLabel = "2.", linkFrom = "d1", linkTo = "b"},
+      Link {linkLabel = "1.", linkFrom = "b",  linkTo = "a"},
+      Link {linkLabel = "2.", linkFrom = "d",  linkTo = "b"},
+      Link {linkLabel = "3.", linkFrom = "c",  linkTo = "d1"},
+      Link {linkLabel = "3.", linkFrom = "c1", linkTo = "d1"}
       ]
     },
   showSolution = False,
-  mapping = toNameMapping $ BM.fromList [("x", "2"), ("y", "3"), ("z", "1")],
+  mapping = toNameMapping $ BM.fromList [("x", "2."), ("y", "3."), ("z", "1.")],
   linkShuffling = ConsecutiveNumbers,
   taskText = defaultDifferentNamesTaskText,
   addText = NoExtraText
@@ -662,7 +682,7 @@ getDifferentNamesTask tryNext DifferentNamesConfig {..} cd = do
       labels' <- shuffleM labels
       used <- usedLabels labels od1
       let usedFirst = uncurry (++) $ partition (`elem` used) labels'
-          bm  = BM.fromList $ zip usedFirst (map show [1 :: Int ..])
+          bm  = BM.fromList $ zip usedFirst (map (\n -> show n ++ ".") [1 :: Int ..])
           bm' = BM.filter (const . (`elem` used)) bm
           isCompleteMapping = BM.keys bm == sort used
       if maybe
