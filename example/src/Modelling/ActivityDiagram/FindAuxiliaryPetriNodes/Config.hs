@@ -17,12 +17,12 @@ import Control.OutputCapable.Blocks     (Language(..))
 finalNodeTransitionAdvice :: ExtraText
 finalNodeTransitionAdvice = Collapsible True
   (M.fromList [
-    (English, "Additional information on auxiliary nodes"),
-    (German, "Zusätzliche Informationen zu Hilfsknoten")
+    (English, "Additional information in the context of final nodes"),
+    (German, "Zusätzliche Informationen im Kontext von Endknoten")
   ])
   (M.fromList [
-    (English, "For final nodes no additional places are introduced. They are realised in a way that a token is consumed, i.e. disappears from the net at that position. If an additional transition is required to realise this behavior at a position in the diagram where there is a final node, this transition does not count as auxiliary node."),
-    (German, "Für Endknoten werden keine zusätzlichen Stellen eingeführt. Sie werden so realisiert, dass ein Token verbraucht wird, also an dieser Position aus dem Netz verschwindet. Falls eine zusätzliche Transition erforderlich ist, um dieses Verhalten an einer Position im Diagramm zu realisieren, an der sich ein Endknoten befindet, zählt diese Transition nicht als Hilfsknoten.")
+    (English, "As mentioned, final nodes are realised by letting a token disappear. If an additional transition is required to realise this behavior, this transition does not count as auxiliary node."),
+    (German, "Wie angemerkt, werden Endknoten so realisiert, dass ein Token verschwinden gelassen wird. Falls eine zusätzliche Transition erforderlich ist, um dieses Verhalten zu realisieren, zählt diese Transition nicht als Hilfsknoten.")
   ])
 
 {-|
