@@ -498,19 +498,20 @@ differentNamesSyntax DifferentNamesInstance {..} cs = addPretext $ do
     -- Strip periods from link labels for comparison with student input
     linksStripped = map stripNumericPeriod $ linkLabels oDiagram
     sortPair (x, y) = if x <= y then (x, y) else (y, x)
-    -- First check for overlapping without stripping
-    choicesRaw = nubOrdOn sortPair cs
-    -- Then strip for validity checking against actual names
-    choices = map (bimap (Name . stripNumericPeriod . unName) (Name . stripNumericPeriod . unName)) choicesRaw
+    -- Strip periods from student input for all checking
+    choicesStripped = map (bimap (Name . stripNumericPeriod . unName) (Name . stripNumericPeriod . unName)) cs
+    -- Deduplicate after stripping
+    choices = nubOrdOn sortPair choicesStripped
     associations = associationNames cDiagram
     isAssociationMappingForward (Name x, Name y) =
       x `elem` associations && y `elem` linksStripped
     isAssociationMapping x = isAssociationMappingForward x
       || isAssociationMappingForward (swap x)
     invalidMappings = filter (not . isAssociationMapping) choices
+    -- Check for overlapping on stripped identifiers
     allMappingValues = filter
       (not . null . tail)
-      $ group $ sort (map fst choicesRaw ++ map snd choicesRaw)
+      $ group $ sort (map fst choicesStripped ++ map snd choicesStripped)
 
 readMapping :: Ord a => Bimap a a -> (a, a) -> Maybe (a, a)
 readMapping m (x, y)
