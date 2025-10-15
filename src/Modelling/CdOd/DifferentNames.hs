@@ -452,6 +452,14 @@ inputHelpText =
 differentNamesInitial :: [(Name, Name)]
 differentNamesInitial = map (bimap Name Name) [("x", "1"), ("y", "2")]
 
+-- | Strip trailing period from numeric strings only (e.g., "1." -> "1", "123." -> "123").
+-- Non-numeric strings are left unchanged (e.g., "abc." -> "abc.", "x1." -> "x1.").
+stripNumericPeriod :: String -> String
+stripNumericPeriod "" = ""
+stripNumericPeriod s = case reverse s of
+  ('.':rest) | not (null rest) && all isDigit rest -> reverse rest
+  _ -> s
+
 differentNamesSyntax
   :: OutputCapable m
   => DifferentNamesInstance
@@ -487,29 +495,22 @@ differentNamesSyntax DifferentNamesInstance {..} cs = addPretext $ do
     _ -> pure ()
   pure ()
   where
-    -- Only strip periods from strings that look like numbers (all digits before the period)
-    stripPeriod :: String -> String
-    stripPeriod "" = ""
-    stripPeriod s = case reverse s of
-      ('.':rest) | not (null rest) && all isDigit rest -> reverse rest
-      _ -> s
     -- Strip periods from link labels for comparison with student input
-    linksStripped = map stripPeriod $ linkLabels oDiagram
+    linksStripped = map stripNumericPeriod $ linkLabels oDiagram
     sortPair (x, y) = if x <= y then (x, y) else (y, x)
     -- First check for overlapping without stripping
     choicesRaw = nubOrdOn sortPair cs
-    allMappingValuesRaw = filter
-      (not . null . tail)
-      $ group $ sort (map fst choicesRaw ++ map snd choicesRaw)
     -- Then strip for validity checking against actual names
-    choices = map (bimap (Name . stripPeriod . unName) (Name . stripPeriod . unName)) choicesRaw
+    choices = map (bimap (Name . stripNumericPeriod . unName) (Name . stripNumericPeriod . unName)) choicesRaw
     associations = associationNames cDiagram
     isAssociationMappingForward (Name x, Name y) =
       x `elem` associations && y `elem` linksStripped
     isAssociationMapping x = isAssociationMappingForward x
       || isAssociationMappingForward (swap x)
     invalidMappings = filter (not . isAssociationMapping) choices
-    allMappingValues = allMappingValuesRaw
+    allMappingValues = filter
+      (not . null . tail)
+      $ group $ sort (map fst choicesRaw ++ map snd choicesRaw)
 
 readMapping :: Ord a => Bimap a a -> (a, a) -> Maybe (a, a)
 readMapping m (x, y)
@@ -526,14 +527,9 @@ differentNamesEvaluation
   -> [(Name, Name)]
   -> Rated m
 differentNamesEvaluation task cs = do
-  let -- Only strip periods from strings that look like numbers
-      stripPeriod "" = ""
-      stripPeriod s = case reverse s of
-        ('.':rest) | not (null rest) && all isDigit rest -> reverse rest
-        _ -> s
-      csStripped = map (bimap (Name . stripPeriod . unName) (Name . stripPeriod . unName)) cs
+  let csStripped = map (bimap (Name . stripNumericPeriod . unName) (Name . stripNumericPeriod . unName)) cs
       -- Strip periods from the mapping's link labels (second element of each pair)
-      mStripped = BM.mapMonotonicR (Name . stripPeriod . unName) $ nameMapping $ mapping task
+      mStripped = BM.mapMonotonicR (Name . stripNumericPeriod . unName) $ nameMapping $ mapping task
       what = translations $ do
         german "Zuordnungen"
         english "mappings"
