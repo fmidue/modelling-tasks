@@ -33,7 +33,24 @@ import Text.ParserCombinators.Parsec (
   )
 
 newtype Name = Name { unName :: String }
-  deriving (Eq, Generic, Ord, Read, Show)
+  deriving (Eq, Generic, Ord, Show)
+
+instance Read Name where
+  readsPrec prec input =
+    -- Try to read with Name constructor and a string argument
+    readParen (prec > 10) (\s -> do
+      ("Name", s1) <- lex s
+      (str, s2) <- reads s1  -- reads a String, handles quotes and escapes
+      let nameStr = if not (null str) && last str == '.' then init str else str
+      return (Name nameStr, s2)) input
+    -- Also try to read just alphanumeric chars with optional period (for bare usage)
+    ++ [(Name name, rest2) | not (null name)]
+    where
+      trimmed = dropWhile (== ' ') input
+      (name, rest1) = span isAlphaNum trimmed
+      rest2 = case rest1 of
+        ('.':xs) -> xs
+        xs -> xs
 
 instance IsString Name where
   fromString = Name
