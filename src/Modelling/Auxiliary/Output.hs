@@ -132,7 +132,7 @@ data ExtraText
       (Map Language String)  -- ^ The text do be displayed.
   | Collapsible              -- ^ Provide additional text that can be collapsed.
       Bool                   -- ^ The default collapse status of the text.
-      (Map Language String)  -- ^ The summary of the text to be shown.
+      (Map Language String)  -- ^ The description of the text to be shown.
       (Map Language String)  -- ^ The text to be shown when not collapsed.
   deriving (Data, Eq, Read, Show)
 

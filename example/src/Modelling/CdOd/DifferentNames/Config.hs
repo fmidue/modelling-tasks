@@ -47,7 +47,7 @@ task2023_12 = DifferentNamesConfig {
   omittedDefaultMultiplicities = OmittedDefaultMultiplicities {
     aggregationWholeOmittedDefaultMultiplicity = Just (0, Nothing),
     associationOmittedDefaultMultiplicity = Just (0, Nothing),
-    compositionWholeOmittedDefaultMultiplicity = Just (1, Just 1)
+    compositionWholeOmittedDefaultMultiplicity = Nothing
     },
   printSolution = True,
   timeout = Nothing,
@@ -87,7 +87,7 @@ task2023_13 = DifferentNamesConfig {
   omittedDefaultMultiplicities = OmittedDefaultMultiplicities {
     aggregationWholeOmittedDefaultMultiplicity = Just (0, Nothing),
     associationOmittedDefaultMultiplicity = Just (0, Nothing),
-    compositionWholeOmittedDefaultMultiplicity = Just (1, Just 1)
+    compositionWholeOmittedDefaultMultiplicity = Nothing
     },
   printSolution = True,
   timeout = Nothing,
@@ -127,7 +127,7 @@ task2023_25 = DifferentNamesConfig {
   omittedDefaultMultiplicities = OmittedDefaultMultiplicities {
     aggregationWholeOmittedDefaultMultiplicity = Just (0, Nothing),
     associationOmittedDefaultMultiplicity = Just (0, Nothing),
-    compositionWholeOmittedDefaultMultiplicity = Just (1, Just 1)
+    compositionWholeOmittedDefaultMultiplicity = Nothing
     },
   printSolution = True,
   timeout = Nothing,

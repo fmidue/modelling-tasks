@@ -62,7 +62,7 @@ task2023_07 = RepairCdConfig {
     omittedDefaults = OmittedDefaultMultiplicities {
       aggregationWholeOmittedDefaultMultiplicity = Just (0, Nothing),
       associationOmittedDefaultMultiplicity = Just (0, Nothing),
-      compositionWholeOmittedDefaultMultiplicity = Just (1, Just 1)
+      compositionWholeOmittedDefaultMultiplicity = Nothing
       },
     printNames = True,
     printNavigations = False
@@ -123,7 +123,7 @@ task2023_08 = RepairCdConfig {
     omittedDefaults = OmittedDefaultMultiplicities {
       aggregationWholeOmittedDefaultMultiplicity = Just (0, Nothing),
       associationOmittedDefaultMultiplicity = Just (0, Nothing),
-      compositionWholeOmittedDefaultMultiplicity = Just (1, Just 1)
+      compositionWholeOmittedDefaultMultiplicity = Nothing
       },
     printNames = False,
     printNavigations = True
@@ -183,7 +183,7 @@ task2024_12 = RepairCdConfig {
     omittedDefaults = OmittedDefaultMultiplicities {
       aggregationWholeOmittedDefaultMultiplicity = Just (0, Nothing),
       associationOmittedDefaultMultiplicity = Just (0, Nothing),
-      compositionWholeOmittedDefaultMultiplicity = Just (1, Just 1)
+      compositionWholeOmittedDefaultMultiplicity = Nothing
       },
     printNames = True,
     printNavigations = False

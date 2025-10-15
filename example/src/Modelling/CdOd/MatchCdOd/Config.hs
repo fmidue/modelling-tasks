@@ -55,7 +55,7 @@ task2023_14 = MatchCdOdConfig {
   omittedDefaultMultiplicities = OmittedDefaultMultiplicities {
     aggregationWholeOmittedDefaultMultiplicity = Just (0, Nothing),
     associationOmittedDefaultMultiplicity = Just (0, Nothing),
-    compositionWholeOmittedDefaultMultiplicity = Just (1, Just 1)
+    compositionWholeOmittedDefaultMultiplicity = Nothing
     },
   printSolution = True,
   timeout = Nothing,
@@ -101,7 +101,7 @@ task2023_15 = MatchCdOdConfig {
   omittedDefaultMultiplicities = OmittedDefaultMultiplicities {
     aggregationWholeOmittedDefaultMultiplicity = Just (0, Nothing),
     associationOmittedDefaultMultiplicity = Just (0, Nothing),
-    compositionWholeOmittedDefaultMultiplicity = Just (1, Just 1)
+    compositionWholeOmittedDefaultMultiplicity = Nothing
     },
   printSolution = True,
   timeout = Nothing,

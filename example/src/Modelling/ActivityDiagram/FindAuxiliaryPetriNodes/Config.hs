@@ -2,11 +2,28 @@
 
 module Modelling.ActivityDiagram.FindAuxiliaryPetriNodes.Config where
 
+import qualified Data.Map                         as M
+
 import Modelling.ActivityDiagram.FindAuxiliaryPetriNodes (
   FindAuxiliaryPetriNodesConfig (..),
   )
 import Modelling.ActivityDiagram.Config (AdConfig(..))
 import Modelling.Auxiliary.Output       (ExtraText(..))
+import Control.OutputCapable.Blocks     (Language(..))
+
+-- | Extended advice text for final nodes and auxiliary transitions.
+-- This text explains that transitions required for realizing final node behavior
+-- do not count as auxiliary nodes.
+finalNodeTransitionAdvice :: ExtraText
+finalNodeTransitionAdvice = Collapsible True
+  (M.fromList [
+    (English, "Additional information in the context of final nodes"),
+    (German, "Zusätzliche Informationen im Kontext von Endknoten")
+  ])
+  (M.fromList [
+    (English, "As mentioned, final nodes are realised by letting a token disappear. If an additional transition is required to realise this behavior, this transition does not count as auxiliary node."),
+    (German, "Wie angemerkt, werden Endknoten so realisiert, dass ein Token verschwinden gelassen wird. Falls eine zusätzliche Transition erforderlich ist, um dieses Verhalten zu realisieren, zählt diese Transition nicht als Hilfsknoten.")
+  ])
 
 {-|
 points: 0.15
@@ -31,7 +48,7 @@ task2023_41 = FindAuxiliaryPetriNodesConfig {
   hideBranchConditions = True,
   presenceOfSinkTransitionsForFinals = Nothing,
   printSolution = True,
-  extraText = NoExtraText
+  extraText = finalNodeTransitionAdvice
   }
 
 {-|
@@ -57,7 +74,7 @@ task2023_42 = FindAuxiliaryPetriNodesConfig {
   hideBranchConditions = True,
   presenceOfSinkTransitionsForFinals = Nothing,
   printSolution = True,
-  extraText = NoExtraText
+  extraText = finalNodeTransitionAdvice
   }
 
 {-|
@@ -83,7 +100,7 @@ task2024_47 = FindAuxiliaryPetriNodesConfig {
   hideBranchConditions = True,
   presenceOfSinkTransitionsForFinals = Nothing,
   printSolution = True,
-  extraText = NoExtraText
+  extraText = finalNodeTransitionAdvice
   }
 
 {-|
@@ -109,7 +126,7 @@ task2024_48 = FindAuxiliaryPetriNodesConfig {
   hideBranchConditions = True,
   presenceOfSinkTransitionsForFinals = Nothing,
   printSolution = True,
-  extraText = NoExtraText
+  extraText = finalNodeTransitionAdvice
   }
 
 {-|
@@ -135,7 +152,7 @@ task2024_72 = FindAuxiliaryPetriNodesConfig {
   hideBranchConditions = True,
   presenceOfSinkTransitionsForFinals = Just False,
   printSolution = True,
-  extraText = NoExtraText
+  extraText = finalNodeTransitionAdvice
   }
 
 {-|
@@ -161,5 +178,5 @@ task2024_73 = FindAuxiliaryPetriNodesConfig {
   hideBranchConditions = True,
   presenceOfSinkTransitionsForFinals = Just True,
   printSolution = True,
-  extraText = NoExtraText
+  extraText = finalNodeTransitionAdvice
   }
