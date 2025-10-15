@@ -11,6 +11,15 @@ import Modelling.ActivityDiagram.Config (AdConfig(..))
 import Modelling.Auxiliary.Output       (ExtraText(..))
 import Control.OutputCapable.Blocks     (Language(..))
 
+-- | Extended advice text for final nodes and auxiliary transitions.
+-- This text explains that transitions required for realizing final node behavior
+-- do not count as auxiliary nodes.
+finalNodeTransitionAdvice :: ExtraText
+finalNodeTransitionAdvice = Static $ M.fromList [
+  (English, "If an additional transition is required to realise this behavior at a position in the diagram where there is a final node, this transition does not count as auxiliary node."),
+  (German, "Falls eine zusätzliche Transition erforderlich ist, um dieses Verhalten an einer Position im Diagramm zu realisieren, an der sich ein Endknoten befindet, zählt diese Transition nicht als Hilfsknoten.")
+  ]
+
 {-|
 points: 0.15
 average generation time per instance: 2:00min
@@ -34,10 +43,7 @@ task2023_41 = FindAuxiliaryPetriNodesConfig {
   hideBranchConditions = True,
   presenceOfSinkTransitionsForFinals = Nothing,
   printSolution = True,
-  extraText = Static $ M.fromList [
-    (English, "If an additional transition is required to realise this behavior at a position in the diagram where there is a final node, this transition does not count as auxiliary node."),
-    (German, "Falls eine zusätzliche Transition erforderlich ist, um dieses Verhalten an einer Position im Diagramm zu realisieren, an der sich ein Endknoten befindet, zählt diese Transition nicht als Hilfsknoten.")
-    ]
+  extraText = finalNodeTransitionAdvice
   }
 
 {-|
@@ -63,10 +69,7 @@ task2023_42 = FindAuxiliaryPetriNodesConfig {
   hideBranchConditions = True,
   presenceOfSinkTransitionsForFinals = Nothing,
   printSolution = True,
-  extraText = Static $ M.fromList [
-    (English, "If an additional transition is required to realise this behavior at a position in the diagram where there is a final node, this transition does not count as auxiliary node."),
-    (German, "Falls eine zusätzliche Transition erforderlich ist, um dieses Verhalten an einer Position im Diagramm zu realisieren, an der sich ein Endknoten befindet, zählt diese Transition nicht als Hilfsknoten.")
-    ]
+  extraText = finalNodeTransitionAdvice
   }
 
 {-|
@@ -92,10 +95,7 @@ task2024_47 = FindAuxiliaryPetriNodesConfig {
   hideBranchConditions = True,
   presenceOfSinkTransitionsForFinals = Nothing,
   printSolution = True,
-  extraText = Static $ M.fromList [
-    (English, "If an additional transition is required to realise this behavior at a position in the diagram where there is a final node, this transition does not count as auxiliary node."),
-    (German, "Falls eine zusätzliche Transition erforderlich ist, um dieses Verhalten an einer Position im Diagramm zu realisieren, an der sich ein Endknoten befindet, zählt diese Transition nicht als Hilfsknoten.")
-    ]
+  extraText = finalNodeTransitionAdvice
   }
 
 {-|
@@ -121,10 +121,7 @@ task2024_48 = FindAuxiliaryPetriNodesConfig {
   hideBranchConditions = True,
   presenceOfSinkTransitionsForFinals = Nothing,
   printSolution = True,
-  extraText = Static $ M.fromList [
-    (English, "If an additional transition is required to realise this behavior at a position in the diagram where there is a final node, this transition does not count as auxiliary node."),
-    (German, "Falls eine zusätzliche Transition erforderlich ist, um dieses Verhalten an einer Position im Diagramm zu realisieren, an der sich ein Endknoten befindet, zählt diese Transition nicht als Hilfsknoten.")
-    ]
+  extraText = finalNodeTransitionAdvice
   }
 
 {-|
@@ -150,10 +147,7 @@ task2024_72 = FindAuxiliaryPetriNodesConfig {
   hideBranchConditions = True,
   presenceOfSinkTransitionsForFinals = Just False,
   printSolution = True,
-  extraText = Static $ M.fromList [
-    (English, "If an additional transition is required to realise this behavior at a position in the diagram where there is a final node, this transition does not count as auxiliary node."),
-    (German, "Falls eine zusätzliche Transition erforderlich ist, um dieses Verhalten an einer Position im Diagramm zu realisieren, an der sich ein Endknoten befindet, zählt diese Transition nicht als Hilfsknoten.")
-    ]
+  extraText = finalNodeTransitionAdvice
   }
 
 {-|
@@ -179,8 +173,5 @@ task2024_73 = FindAuxiliaryPetriNodesConfig {
   hideBranchConditions = True,
   presenceOfSinkTransitionsForFinals = Just True,
   printSolution = True,
-  extraText = Static $ M.fromList [
-    (English, "If an additional transition is required to realise this behavior at a position in the diagram where there is a final node, this transition does not count as auxiliary node."),
-    (German, "Falls eine zusätzliche Transition erforderlich ist, um dieses Verhalten an einer Position im Diagramm zu realisieren, an der sich ein Endknoten befindet, zählt diese Transition nicht als Hilfsknoten.")
-    ]
+  extraText = finalNodeTransitionAdvice
   }
