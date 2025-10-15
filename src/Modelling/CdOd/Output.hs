@@ -476,7 +476,7 @@ drawLink font direction printNames fl tl Link {..} =
       & headGap .~ local 0
       & tailLength .~ local 7
     ml
-      | printNames = Just linkLabel
+      | printNames = Just (linkLabel ++ ".")
       | otherwise  = Nothing
 
 drawObject

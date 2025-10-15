@@ -27,6 +27,7 @@ import GHC.Generics                     (Generic)
 import Text.ParserCombinators.Parsec (
   Parser,
   many1,
+  optional,
   satisfy,
   endBy,
   )
@@ -43,7 +44,10 @@ showName = unName
 parseNamePrec :: Int -> Parser Name
 parseNamePrec _ = do
   skipSpaces
-  Name <$> many1 (satisfy isAlphaNum) <* skipSpaces
+  name <- many1 (satisfy isAlphaNum)
+  _ <- optional (satisfy (== '.'))
+  skipSpaces
+  return $ Name name
 
 newtype Letters = Letters { lettersList :: String }
   deriving (Eq, Generic, Ord, Read, Show)
