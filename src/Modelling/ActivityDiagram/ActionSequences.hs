@@ -71,10 +71,15 @@ generateActionSequenceWithPetri diag petri =
 -- | Helper to convert transition sequences to action name sequences
 transitionsToActionNames :: UMLActivityDiagram -> [PetriKey] -> [String]
 transitionsToActionNames diag transitionSequence =
-  let transitionSequenceLabels = map (Ad.label . sourceNode) $ filter isNormalPetriNode transitionSequence
-      actions = map
+  let actions = map
         (\n -> (Ad.label n, name n))
         $ filter isActionNode $ nodes diag
+  in transitionsToActionNamesWithLookup actions transitionSequence
+
+-- | Helper to convert transition sequences to action names using a pre-computed action lookup table
+transitionsToActionNamesWithLookup :: [(Int, String)] -> [PetriKey] -> [String]
+transitionsToActionNamesWithLookup actions transitionSequence =
+  let transitionSequenceLabels = map (Ad.label . sourceNode) $ filter isNormalPetriNode transitionSequence
   in mapMaybe (`lookup` actions) transitionSequenceLabels
 
 -- | Generate one valid action sequence with repetition, using a pre-computed Petri net.
@@ -82,7 +87,11 @@ transitionsToActionNames diag transitionSequence =
 -- (0 = immediate repetition like [A,A], 1 = at least one action between like [A,B,A]).
 generateActionSequenceWithPetriAndRepetition :: Int -> UMLActivityDiagram -> PetriLike Node PetriKey -> [String]
 generateActionSequenceWithPetriAndRepetition minDistance diag petri =
-  let allActionSequences = map (transitionsToActionNames diag) (generateSequencesWithLevels levelsWithCycles petri)
+  let actions = map
+        (\n -> (Ad.label n, name n))
+        $ filter isActionNode $ nodes diag
+      transitionSequences = generateSequencesWithLevels levelsWithCycles petri
+      allActionSequences = map (transitionsToActionNamesWithLookup actions) transitionSequences
       -- Try to find sequence with the required repetition distance, falling back to smaller distances
       findSequenceWithRepetitionDistance distance
         | distance < 0 = head allActionSequences  -- Give up, return shortest
