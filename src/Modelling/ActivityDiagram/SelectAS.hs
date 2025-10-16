@@ -29,6 +29,7 @@ import Capabilities.Alloy               (MonadAlloy, getInstances)
 import Capabilities.PlantUml            (MonadPlantUml)
 import Capabilities.WriteFile           (MonadWriteFile)
 import Modelling.ActivityDiagram.ActionSequences (
+  generateActionSequenceWithPetri,
   generateActionSequenceWithPetriAndRepetition,
   validActionSequenceWithPetri
   )
@@ -200,7 +201,9 @@ data SelectASSolution = SelectASSolution {
 selectActionSequence :: Maybe Int -> Int -> UMLActivityDiagram -> SelectASSolution
 selectActionSequence minRepetitionDistance numberOfWrongSequences ad =
   let petri = convertToPetriNet ad
-      correctSequence = generateActionSequenceWithPetriAndRepetition minRepetitionDistance ad petri
+      correctSequence = case minRepetitionDistance of
+        Nothing -> generateActionSequenceWithPetri ad petri
+        Just distance -> generateActionSequenceWithPetriAndRepetition distance ad petri
       wrongSequences =
         take numberOfWrongSequences $
         sortBy (compareDistToCorrect correctSequence) $

@@ -65,44 +65,31 @@ generateActionSequence diag =
 -- | Generate one valid action sequence, using a pre-computed Petri net.
 -- This version avoids re-computing the Petri net conversion
 generateActionSequenceWithPetri :: UMLActivityDiagram -> PetriLike Node PetriKey -> [String]
-generateActionSequenceWithPetri =
-  generateActionSequenceWithPetriAndRepetition Nothing
+generateActionSequenceWithPetri diag petri =
+  let transitionSequence = generateActionSequence' petri
+      transitionSequenceLabels = map (Ad.label . sourceNode) $ filter isNormalPetriNode transitionSequence
+      actions = map
+        (\n -> (Ad.label n, name n))
+        $ filter isActionNode $ nodes diag
+  in mapMaybe (`lookup` actions) transitionSequenceLabels
 
--- | Check if a sequence of action names has repetition with at least the specified minimum distance
--- between repeated actions. For example:
--- minDistance = 0: [A,A,...] is valid (immediate repetition)
--- minDistance = 1: [A,B,A,...] is valid (at least 1 action between)
--- minDistance = 2: [A,B,C,A,...] is valid (at least 2 actions between)
-hasActionRepetitionWithMinDistance :: Int -> [String] -> Bool
-hasActionRepetitionWithMinDistance distance actionSequence =
-  let indicesOf action = [i | (i, a) <- zip [0..] actionSequence, a == action]
-      checkAction action =
-        let indices = indicesOf action
-        in any (\(i, j) -> j - i - 1 >= distance) [(i, j) | i <- indices, j <- indices, i < j]
-  in any checkAction $ nubOrd actionSequence
-
--- | Generate one valid action sequence with optional repetition, using a pre-computed Petri net.
--- When minDistance is Just n, tries to generate sequences with action repetition where actions are
--- at least n apart (0 = immediate repetition like [A,A], 1 = at least one action between like [A,B,A]).
--- When minDistance is Nothing, generates the shortest valid sequence without trying for repetition.
-generateActionSequenceWithPetriAndRepetition :: Maybe Int -> UMLActivityDiagram -> PetriLike Node PetriKey -> [String]
+-- | Generate one valid action sequence with repetition, using a pre-computed Petri net.
+-- Tries to generate sequences with action repetition where actions are at least minDistance apart
+-- (0 = immediate repetition like [A,A], 1 = at least one action between like [A,B,A]).
+generateActionSequenceWithPetriAndRepetition :: Int -> UMLActivityDiagram -> PetriLike Node PetriKey -> [String]
 generateActionSequenceWithPetriAndRepetition minDistance diag petri =
   let actions = map
         (\n -> (Ad.label n, name n))
         $ filter isActionNode $ nodes diag
       -- Use cycle-allowing version when requesting repetition
-      allTransitionSequences = case minDistance of
-        Nothing -> [ generateActionSequence' petri ]
-        Just _ -> generateAllActionSequencesWithCycles' petri
+      allTransitionSequences = generateAllActionSequencesWithCycles' petri
       -- Convert transition sequences to action name sequences
       toActionNames transitionSeq =
         let transitionSequenceLabels = map (Ad.label . sourceNode) $ filter isNormalPetriNode transitionSeq
         in mapMaybe (`lookup` actions) transitionSequenceLabels
       allActionSequences = map toActionNames allTransitionSequences
       -- Find sequence matching repetition requirement
-      result = case minDistance of
-        Nothing -> head allActionSequences  -- Take shortest
-        Just distance -> findSequenceWithRepetitionDistance distance allActionSequences
+      result = findSequenceWithRepetitionDistance minDistance allActionSequences
   in result
   where
     -- Try to find sequence with the required repetition distance, falling back to smaller distances
@@ -118,6 +105,19 @@ isNormalPetriNode pk =
   case pk of
     NormalPetriNode {} -> True
     _ -> False
+
+-- | Check if a sequence of action names has repetition with at least the specified minimum distance
+-- between repeated actions. For example:
+-- minDistance = 0: [A,A,...] is valid (immediate repetition)
+-- minDistance = 1: [A,B,A,...] is valid (at least 1 action between)
+-- minDistance = 2: [A,B,C,A,...] is valid (at least 2 actions between)
+hasActionRepetitionWithMinDistance :: Int -> [String] -> Bool
+hasActionRepetitionWithMinDistance distance actionSequence =
+  let indicesOf action = [i | (i, a) <- zip [0..] actionSequence, a == action]
+      checkAction action =
+        let indices = indicesOf action
+        in any (\(i, j) -> j - i - 1 >= distance) [(i, j) | i <- indices, j <- indices, i < j]
+  in any checkAction $ nubOrd actionSequence
 
 -- | Generate at least one sequence of transitions to each final node
 generateActionSequence' :: PetriLike Node PetriKey -> [PetriKey]
@@ -144,28 +144,20 @@ generateAllActionSequencesWithCycles' petriLike =
   where
     -- Variant of levels' that manages visited states per path rather than globally
     -- This allows exploring cycles while preventing infinite loops within each path
-    levelsWithCycles :: (Ord s, Eq t) => Net s t -> [[(State s, [t])]]
+    levelsWithCycles :: Ord s => Net s t -> [[(State s, [t])]]
     levelsWithCycles n =
       let f xs
             | null xs = []
             | otherwise =
-                let next = M.toList $ M.fromList
-                      [ (y, t:p)
-                      | (x, p) <- xs
-                      , (t, y) <- successors n x
-                      -- Prevent state from appearing again in its own path
-                      , y `notElem` pathStates x p
-                      ]
-                in xs : f next
-          -- Extract all states visited in a path by replaying transitions from start
-          pathStates currentState transitionPath =
-            let replayPath startState [] = [startState]
-                replayPath state (trans:rest) =
-                  case [nextState | (t, nextState) <- successors n state, t == trans] of
-                    (nextState:_) -> state : replayPath nextState rest
-                    [] -> [state]  -- Should not happen in valid paths
-            in currentState : replayPath (start n) (reverse transitionPath)
-      in f [(start n, [])]
+                xs' : f next'
+                  where
+                    xs' = map (\(x, p, _) -> (x, p)) xs
+                    next' = [ (y, t:p, y:visited)
+                            | (x, p, visited) <- xs
+                            , (t, y) <- successors n x
+                            , y `notElem` visited
+                            ]
+      in f [(start n, [], [start n])]
 
 
 validActionSequence :: [String] -> UMLActivityDiagram -> Bool
