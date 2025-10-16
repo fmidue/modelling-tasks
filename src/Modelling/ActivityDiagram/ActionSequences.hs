@@ -90,9 +90,10 @@ generateActionSequenceWithPetriAndRepetition minDistance diag petri =
   let actions = map
         (\n -> (Ad.label n, name n))
         $ filter isActionNode $ nodes diag
-      -- Allow cycles when requesting repetition
-      allowCycles = isJust minDistance
-      allTransitionSequences = generateAllActionSequences' allowCycles petri
+      -- Use cycle-allowing version when requesting repetition
+      allTransitionSequences = case minDistance of
+        Nothing -> generateAllActionSequences' petri
+        Just _ -> generateAllActionSequencesWithCycles' petri
       -- Convert transition sequences to action name sequences
       toActionNames transitionSeq =
         let transitionSequenceLabels = map (Ad.label . sourceNode) $ filter isNormalPetriNode transitionSeq
@@ -119,14 +120,25 @@ isNormalPetriNode pk =
     _ -> False
 
 -- | Generate all possible transition sequences that reach the zero state
--- When allowCycles is True, uses a per-path exploration that allows cycles
-generateAllActionSequences' :: Bool -> PetriLike Node PetriKey -> [[PetriKey]]
-generateAllActionSequences' allowCycles petriLike =
+-- This is the original function that uses global done set (no cycles)
+generateAllActionSequences' :: PetriLike Node PetriKey -> [[PetriKey]]
+generateAllActionSequences' petriLike =
   let petri = fromPetriLike petriLike
       zeroState = State $ M.map (const 0) $ unState $ start petri
-      allLevels = if allowCycles
-                  then levelsWithCycles petri
-                  else levels' petri
+      allLevels = levels' petri
+      -- Extract one possible sequence to zero state per level
+      allSequences = [reverse p | Just p <- map (lookup zeroState) allLevels]
+  in if null allSequences
+     then error "No path to zero state found"
+     else allSequences
+
+-- | Generate all possible transition sequences that reach the zero state, allowing cycles
+-- This variant manages visited states per path rather than globally
+generateAllActionSequencesWithCycles' :: PetriLike Node PetriKey -> [[PetriKey]]
+generateAllActionSequencesWithCycles' petriLike =
+  let petri = fromPetriLike petriLike
+      zeroState = State $ M.map (const 0) $ unState $ start petri
+      allLevels = levelsWithCycles petri
       -- Extract one possible sequence to zero state per level
       allSequences = [reverse p | Just p <- map (lookup zeroState) allLevels]
   in if null allSequences
@@ -137,8 +149,7 @@ generateAllActionSequences' allowCycles petriLike =
     -- This allows exploring cycles while preventing infinite loops within each path
     levelsWithCycles :: (Ord s, Eq t) => Net s t -> [[(State s, [t])]]
     levelsWithCycles n =
-      let f depth xs
-            | depth > 50 = []  -- Safety limit to prevent excessive exploration
+      let f xs
             | null xs = []
             | otherwise =
                 let next = M.toList $ M.fromList
@@ -148,7 +159,7 @@ generateAllActionSequences' allowCycles petriLike =
                       -- Prevent state from appearing again in its own path
                       , y `notElem` pathStates x p
                       ]
-                in xs : f (depth + 1) next
+                in xs : f next
           -- Extract all states visited in a path by replaying transitions from start
           pathStates currentState transitionPath =
             let replayPath startState [] = [startState]
@@ -157,7 +168,7 @@ generateAllActionSequences' allowCycles petriLike =
                     (nextState:_) -> state : replayPath nextState rest
                     [] -> [state]  -- Should not happen in valid paths
             in currentState : replayPath (start n) (reverse transitionPath)
-      in f (0 :: Int) [(start n, [])]
+      in f [(start n, [])]
 
 
 validActionSequence :: [String] -> UMLActivityDiagram -> Bool
