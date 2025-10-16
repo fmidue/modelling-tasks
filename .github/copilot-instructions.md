@@ -356,3 +356,88 @@ Different tasks can be tested by following the naming pattern in GHCi:
 - Change `English` to `German` for German language versions
 - Tasks may require directory arguments (e.g., `"/tmp/"`) - check function signatures
 - Import modules based on task type: `Modelling.CdOd.NameCdError`, `Modelling.ActivityDiagram.MatchAd`
+
+### Test Matching with HSpec
+
+This repository uses **hspec-discover** for automatic test discovery. Tests are organized hierarchically, and matching follows a specific pattern.
+
+**Test Structure Hierarchy**:
+
+Tests are matched using a hierarchical path consisting of:
+1. **Module name** (from the file path, e.g., `Modelling.ActivityDiagram.SelectAS`)
+2. **describe blocks** (top-level grouping in specs)
+3. **context blocks** (optional nested grouping)
+4. **it blocks** (individual test names)
+
+**How to Use --match**:
+
+The `--match` (or `-m`) option accepts patterns that match against the full hierarchical test path. Matching is substring-based and case-sensitive.
+
+**IMPORTANT**: When using `stack test --test-arguments`, patterns with spaces MUST be quoted with escaped quotes:
+
+```bash
+# CORRECT - Pattern with spaces requires escaped quotes
+stack test --test-arguments="-m \"is valid\""
+
+# CORRECT - Simple patterns without spaces don't need quotes
+stack test --test-arguments="-m SelectAS"
+```
+
+**Examples with actual tests from this repository**:
+
+```bash
+# Match all tests in the SelectAS module (substring match works!)
+stack test --test-arguments="-m SelectAS"
+
+# Match all tests in the MatchCdOd module using full path
+stack test --test-arguments="-m Modelling.CdOd.MatchCdOd"
+
+# Match all tests in the ActivityDiagram category
+stack test --test-arguments="-m Modelling.ActivityDiagram"
+
+# Match all tests in the CdOd category
+stack test --test-arguments="-m Modelling.CdOd"
+
+# Match a specific test description across all modules (needs escaped quotes)
+stack test --test-arguments="-m \"is valid\""
+
+# Combine with other test options
+stack test --test-arguments="-m SelectAS --skip-needs-tuning --maximum-generated-tests=10"
+```
+
+**Common Test Modules**:
+
+Based on the test directory structure, here are the main test modules:
+
+- `Modelling.ActivityDiagram.SelectAS` - SelectAS task tests
+- `Modelling.ActivityDiagram.MatchAd` - MatchAd task tests
+- `Modelling.ActivityDiagram.EnterAS` - EnterAS task tests
+- `Modelling.ActivityDiagram.MatchPetri` - MatchPetri task tests
+- `Modelling.ActivityDiagram.SelectPetri` - SelectPetri task tests
+- `Modelling.CdOd.MatchCdOd` - MatchCdOd task tests
+- `Modelling.CdOd.NameCdError` - NameCdError task tests
+- `Modelling.CdOd.DifferentNames` - DifferentNames task tests
+- `Modelling.CdOd.RepairCd` - RepairCd task tests
+- `Modelling.CdOd.SelectValidCd` - SelectValidCd task tests
+- `Modelling.PetriNet.Types` - Petri net type tests
+- `Modelling.PetriNet.Reach.Reach` - Petri net reachability tests
+
+**Finding Test Names**:
+
+To see available test names and their hierarchy:
+
+```bash
+# List all test specs (shows full tree)
+stack test --test-arguments="--dry-run"
+
+# Filter and view specific category
+stack test --test-arguments="-m Modelling.ActivityDiagram --dry-run"
+```
+
+**Best Practices**:
+
+- **Simple substring matching works**: `SelectAS` will match `Modelling.ActivityDiagram.SelectAS`
+- **Use `--dry-run` to verify**: Always test your pattern with `--dry-run` first to see what will run
+- **Quote patterns with spaces**: Use `-m \"is valid\"` with escaped quotes for multi-word patterns
+- **Be specific to avoid over-matching**: `SelectAS` is better than just `Select` which might match multiple modules
+- **Substring matching is powerful**: `Modelling.CdOd` matches all class/object diagram tests
