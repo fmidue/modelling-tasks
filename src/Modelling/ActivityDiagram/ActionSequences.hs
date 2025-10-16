@@ -66,23 +66,7 @@ generateActionSequence diag =
 -- This version avoids re-computing the Petri net conversion
 generateActionSequenceWithPetri :: UMLActivityDiagram -> PetriLike Node PetriKey -> [String]
 generateActionSequenceWithPetri diag petri =
-  transitionsToActionNames diag $ head $ generateActionSequences' petri
-
--- | Generate one valid action sequence with repetition, using a pre-computed Petri net.
--- Tries to generate sequences with action repetition where actions are at least minDistance apart
--- (0 = immediate repetition like [A,A], 1 = at least one action between like [A,B,A]).
-generateActionSequenceWithPetriAndRepetition :: Int -> UMLActivityDiagram -> PetriLike Node PetriKey -> [String]
-generateActionSequenceWithPetriAndRepetition minDistance diag petri =
-  let allTransitionSequences = generateAllActionSequencesWithCycles' petri
-      allActionSequences = map (transitionsToActionNames diag) allTransitionSequences
-      -- Try to find sequence with the required repetition distance, falling back to smaller distances
-      findSequenceWithRepetitionDistance distance
-        | distance < 0 = head allActionSequences  -- Give up, return shortest
-        | otherwise =
-            case filter (hasActionRepetitionWithMinDistance distance) allActionSequences of
-              (matchingSequence:_) -> matchingSequence
-              [] -> findSequenceWithRepetitionDistance (distance - 1)
-  in findSequenceWithRepetitionDistance minDistance
+  transitionsToActionNames diag $ head $ generateSequencesWithLevels levels' petri
 
 -- | Helper to convert transition sequences to action name sequences
 transitionsToActionNames :: UMLActivityDiagram -> [PetriKey] -> [String]
@@ -92,6 +76,21 @@ transitionsToActionNames diag transitionSequence =
         (\n -> (Ad.label n, name n))
         $ filter isActionNode $ nodes diag
   in mapMaybe (`lookup` actions) transitionSequenceLabels
+
+-- | Generate one valid action sequence with repetition, using a pre-computed Petri net.
+-- Tries to generate sequences with action repetition where actions are at least minDistance apart
+-- (0 = immediate repetition like [A,A], 1 = at least one action between like [A,B,A]).
+generateActionSequenceWithPetriAndRepetition :: Int -> UMLActivityDiagram -> PetriLike Node PetriKey -> [String]
+generateActionSequenceWithPetriAndRepetition minDistance diag petri =
+  let allActionSequences = map (transitionsToActionNames diag) (generateSequencesWithLevels levelsWithCycles petri)
+      -- Try to find sequence with the required repetition distance, falling back to smaller distances
+      findSequenceWithRepetitionDistance distance
+        | distance < 0 = head allActionSequences  -- Give up, return shortest
+        | otherwise =
+            case filter (hasActionRepetitionWithMinDistance distance) allActionSequences of
+              (matchingSequence:_) -> matchingSequence
+              [] -> findSequenceWithRepetitionDistance (distance - 1)
+  in findSequenceWithRepetitionDistance minDistance
 
 isNormalPetriNode :: PetriKey -> Bool
 isNormalPetriNode pk =
@@ -112,24 +111,13 @@ hasActionRepetitionWithMinDistance distance actionSequence =
         in any (\(i, j) -> j - i - 1 >= distance) [(i, j) | i <- indices, j <- indices, i < j]
   in any checkAction $ nubOrd actionSequence
 
--- | Generate at least one sequence of transitions to each final node
-generateActionSequences' :: PetriLike Node PetriKey -> [[PetriKey]]
-generateActionSequences' = generateSequencesWithLevels levels'
-
--- | Generate all possible transition sequences that reach the zero state, allowing cycles
--- This variant manages visited states per path rather than globally
-generateAllActionSequencesWithCycles' :: PetriLike Node PetriKey -> [[PetriKey]]
-generateAllActionSequencesWithCycles' = generateSequencesWithLevels levelsWithCycles
-
 -- | Helper to generate sequences using a specific levels function
 generateSequencesWithLevels :: (Net PetriKey PetriKey -> [[(State PetriKey, [PetriKey])]]) -> PetriLike Node PetriKey -> [[PetriKey]]
 generateSequencesWithLevels levelsFunction petriLike =
   let petri = fromPetriLike petriLike
       zeroState = State $ M.map (const 0) $ unState $ start petri
       allLevels = levelsFunction petri
-      -- Extract one possible sequence to zero state per level
-      allSequences = [reverse p | Just p <- map (lookup zeroState) allLevels]
-  in allSequences
+  in [reverse p | Just p <- map (lookup zeroState) allLevels]
 
 -- | Variant of levels' that manages visited states per path rather than globally
 -- This allows exploring cycles while preventing infinite loops within each path
