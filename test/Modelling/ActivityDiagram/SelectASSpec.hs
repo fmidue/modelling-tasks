@@ -50,22 +50,38 @@ spec = do
   describe "selectActionSequence with repetition" $ do
     let testDiagram = UMLActivityDiagram {
           nodes = [
-            AdActionNode {label = 1, name = "A"},
-            AdActionNode {label = 2, name = "B"},
-            AdActionNode {label = 3, name = "C"},
-            AdInitialNode {label = 4},
-            AdFlowFinalNode {label = 5},
-            AdDecisionNode {label = 6},
-            AdMergeNode {label = 7}
+            AdInitialNode {label = 1},
+            AdActionNode {label = 2, name = "A"},
+            AdForkNode {label = 3},
+            AdActionNode {label = 4, name = "B"},
+            AdActionNode {label = 5, name = "C"},
+            AdMergeNode {label = 6},
+            AdActionNode {label = 7, name = "D"},
+            AdActionNode {label = 8, name = "E"},
+            AdDecisionNode {label = 9},
+            AdJoinNode {label = 10},
+            AdActionNode {label = 11, name = "F"},
+            AdFlowFinalNode {label = 12},
+            AdMergeNode {label = 13},
+            AdDecisionNode  {label = 14}
           ],
           connections = [
-            AdConnection {from = 4, to = 1, guard = ""},
-            AdConnection {from = 1, to = 7, guard = ""},
-            AdConnection {from = 7, to = 2, guard = ""},
-            AdConnection {from = 2, to = 6, guard = ""},
-            AdConnection {from = 6, to = 5, guard = "end"},
-            AdConnection {from = 6, to = 3, guard = "loop"},
-            AdConnection {from = 3, to = 7, guard = ""}
+            AdConnection {from = 1, to = 2, guard = ""}, -- Initial node to A
+            AdConnection {from = 2, to = 3, guard = ""}, -- A to fork
+            AdConnection {from = 3, to = 13, guard = ""}, -- left fork path (directly to merge)
+            AdConnection {from = 3, to = 5, guard = ""}, -- right fork path (C)
+            AdConnection {from = 5, to = 6, guard = ""}, -- C to merge,
+            AdConnection {from = 6, to = 7, guard = ""}, -- merge to D
+            AdConnection {from = 7, to = 8, guard = ""}, -- D to E
+            AdConnection {from = 8, to = 9, guard = ""}, -- E to decision
+            AdConnection {from = 9, to = 6, guard = ""}, -- decision to merge
+            AdConnection {from = 9, to = 10, guard = ""}, -- decision to join
+            AdConnection {from = 10, to = 11, guard = ""}, -- join to F
+            AdConnection {from = 11, to = 12, guard = ""}, -- F to flow final node,
+            AdConnection {from = 13, to = 4, guard = ""}, -- left fork path (merge to B)
+            AdConnection {from = 4, to = 14, guard = ""}, -- B to decision (left fork path)
+            AdConnection {from = 14, to = 13, guard = ""}, -- decision to merge (left fork path)
+            AdConnection {from = 14, to = 10, guard = ""} -- decision to join (left fork path)
           ]
         }
     context "when minActionRepetitionDistance = Nothing" $
