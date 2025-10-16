@@ -44,7 +44,7 @@ import Modelling.PetriNet.Reach.Step (levels', successors)
 import Control.Monad (guard)
 import Data.Containers.ListUtils (nubOrd)
 import Data.List (union)
-import Data.Maybe(mapMaybe, isJust, fromJust)
+import Data.Maybe(mapMaybe, isJust)
 
 
 fromPetriLike :: Ord a => PetriLike Node a -> Net a a
@@ -122,9 +122,8 @@ generateAllActionSequences' petriLike =
   let petri = fromPetriLike petriLike
       zeroState = State $ M.map (const 0) $ unState $ start petri
       allLevels = levels' petri
-      levelsWithZeroState = filter (isJust . lookup zeroState) allLevels
-      -- Extract all possible sequences to zero state
-      allSequences = [reverse $ fromJust $ lookup zeroState level | level <- levelsWithZeroState]
+      -- Extract one possible sequence to zero state per level
+      allSequences = [reverse p | Just p <- map (lookup zeroState) allLevels]
   in if null allSequences
      then error "No path to zero state found"
      else allSequences
