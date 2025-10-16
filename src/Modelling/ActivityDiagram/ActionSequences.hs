@@ -92,7 +92,7 @@ generateActionSequenceWithPetriAndRepetition minDistance diag petri =
         $ filter isActionNode $ nodes diag
       -- Use cycle-allowing version when requesting repetition
       allTransitionSequences = case minDistance of
-        Nothing -> generateAllActionSequences' petri
+        Nothing -> [ generateActionSequence' petri ]
         Just _ -> generateAllActionSequencesWithCycles' petri
       -- Convert transition sequences to action name sequences
       toActionNames transitionSeq =
@@ -119,18 +119,15 @@ isNormalPetriNode pk =
     NormalPetriNode {} -> True
     _ -> False
 
--- | Generate all possible transition sequences that reach the zero state
--- This is the original function that uses global done set (no cycles)
-generateAllActionSequences' :: PetriLike Node PetriKey -> [[PetriKey]]
-generateAllActionSequences' petriLike =
+-- | Generate at least one sequence of transitions to each final node
+generateActionSequence' :: PetriLike Node PetriKey -> [PetriKey]
+generateActionSequence' petriLike =
   let petri = fromPetriLike petriLike
       zeroState = State $ M.map (const 0) $ unState $ start petri
       allLevels = levels' petri
       -- Extract one possible sequence to zero state per level
       allSequences = [reverse p | Just p <- map (lookup zeroState) allLevels]
-  in if null allSequences
-     then error "No path to zero state found"
-     else allSequences
+  in head allSequences
 
 -- | Generate all possible transition sequences that reach the zero state, allowing cycles
 -- This variant manages visited states per path rather than globally
