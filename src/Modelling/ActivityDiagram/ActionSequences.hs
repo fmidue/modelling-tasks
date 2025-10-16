@@ -66,7 +66,7 @@ generateActionSequence diag =
 -- This version avoids re-computing the Petri net conversion
 generateActionSequenceWithPetri :: UMLActivityDiagram -> PetriLike Node PetriKey -> [String]
 generateActionSequenceWithPetri diag petri =
-  let transitionSequence = generateActionSequence' petri
+  let transitionSequence = head (generateActionSequences' petri)
       transitionSequenceLabels = map (Ad.label . sourceNode) $ filter isNormalPetriNode transitionSequence
       actions = map
         (\n -> (Ad.label n, name n))
@@ -89,8 +89,7 @@ generateActionSequenceWithPetriAndRepetition minDistance diag petri =
         in mapMaybe (`lookup` actions) transitionSequenceLabels
       allActionSequences = map toActionNames allTransitionSequences
       -- Find sequence matching repetition requirement
-      result = findSequenceWithRepetitionDistance minDistance allActionSequences
-  in result
+  in findSequenceWithRepetitionDistance minDistance allActionSequences
   where
     -- Try to find sequence with the required repetition distance, falling back to smaller distances
     findSequenceWithRepetitionDistance distance actionSequences
@@ -120,14 +119,14 @@ hasActionRepetitionWithMinDistance distance actionSequence =
   in any checkAction $ nubOrd actionSequence
 
 -- | Generate at least one sequence of transitions to each final node
-generateActionSequence' :: PetriLike Node PetriKey -> [PetriKey]
-generateActionSequence' petriLike =
+generateActionSequences' :: PetriLike Node PetriKey -> [[PetriKey]]
+generateActionSequences' petriLike =
   let petri = fromPetriLike petriLike
       zeroState = State $ M.map (const 0) $ unState $ start petri
       allLevels = levels' petri
       -- Extract one possible sequence to zero state per level
       allSequences = [reverse p | Just p <- map (lookup zeroState) allLevels]
-  in head allSequences
+  in allSequences
 
 -- | Generate all possible transition sequences that reach the zero state, allowing cycles
 -- This variant manages visited states per path rather than globally
@@ -138,9 +137,7 @@ generateAllActionSequencesWithCycles' petriLike =
       allLevels = levelsWithCycles petri
       -- Extract one possible sequence to zero state per level
       allSequences = [reverse p | Just p <- map (lookup zeroState) allLevels]
-  in if null allSequences
-     then error "No path to zero state found"
-     else allSequences
+  in allSequences
   where
     -- Variant of levels' that manages visited states per path rather than globally
     -- This allows exploring cycles while preventing infinite loops within each path
