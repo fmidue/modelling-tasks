@@ -68,13 +68,9 @@ generateActionSequence diag =
 -- This version avoids re-computing the Petri net conversion
 generateActionSequenceWithPetri :: UMLActivityDiagram -> PetriLike Node PetriKey -> [String]
 generateActionSequenceWithPetri diag petri =
-  transitionsToActionNames diag $ head $ generateSequencesWithLevels levels' petri
-
--- | Helper to convert transition sequences to action name sequences
-transitionsToActionNames :: UMLActivityDiagram -> [PetriKey] -> [String]
-transitionsToActionNames diag transitionSequence =
   let actions = extractActionLookup diag
-  in transitionsToActionNamesWithLookup actions transitionSequence
+      transitionSequences = generateSequencesWithLevels levels' petri
+  in transitionsToActionNamesWithLookup actions $ head transitionSequences
 
 -- | Helper to convert transition sequences to action names using a pre-computed action lookup table
 transitionsToActionNamesWithLookup :: [(Int, String)] -> [PetriKey] -> [String]
@@ -160,32 +156,30 @@ validActionSequence input diag =
 -- This version avoids re-computing the Petri net conversion
 validActionSequenceWithPetri :: [String] -> UMLActivityDiagram -> PetriLike Node PetriKey -> Bool
 validActionSequenceWithPetri input diag petri =
-  let actions = extractActionLookup diag
-      nameMap = map swap actions
+  let nameMap = map swap (extractActionLookup diag)
       labels = mapMaybe (`lookup` nameMap) input
       petriKeyMap = map
         (\k -> (Ad.label $ sourceNode k, k))
         $ filter isNormalPetriNode $ M.keys $ allNodes petri
       input' = mapMaybe (`lookup` petriKeyMap) labels
-      actionKeys = map snd $ filter (\(l,_) -> l `elem` map fst actions) petriKeyMap
-  in length input == length labels && validActionSequence' input' actionKeys petri
+      actions = map snd $ filter (\(l,_) -> l `elem` map snd nameMap) petriKeyMap
+  in length input == length labels && validActionSequence' input' actions petri
 
 -- | Check if an action sequence terminates some but not all flows, using a pre-computed Petri net.
 -- This detects the case where a sequence terminates at least one flow
 -- but doesn't reach the zero state (i.e., doesn't consume all tokens, leaving some flows active).
 terminatesSomeButNotAllFlowsWithPetri :: [String] -> UMLActivityDiagram -> PetriLike Node PetriKey -> Bool
 terminatesSomeButNotAllFlowsWithPetri input diag petri =
-  let actions = extractActionLookup diag
-      nameMap = map swap actions
+  let nameMap = map swap (extractActionLookup diag)
       labels = mapMaybe (`lookup` nameMap) input
       petriKeyMap = map
         (\k -> (Ad.label $ sourceNode k, k))
         $ filter isNormalPetriNode $ M.keys $ allNodes petri
       input' = mapMaybe (`lookup` petriKeyMap) labels
-      actionKeys = map snd $ filter (\(l,_) -> l `elem` map fst actions) petriKeyMap
+      actions = map snd $ filter (\(l,_) -> l `elem` map snd nameMap) petriKeyMap
       net = fromPetriLike petri
       zeroState = State $ M.map (const 0) $ unState $ start net
-      levels = levelsCheckAS input' actionKeys net
+      levels = levelsCheckAS input' actions net
       reachesZeroState = any (isJust . lookup zeroState) levels
       -- Check if any FinalPetriNode transition was fired (meaning a flow was terminated)
       finalNodeReached = any (any (\(_, path) -> any isFinalPetriNode path)) levels
