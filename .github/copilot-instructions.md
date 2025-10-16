@@ -250,6 +250,116 @@ sed -i 's/[[:space:]]*$//' filename
 echo >> filename
 ```
 
+## Haskell Development Guidelines
+
+When writing Haskell code for this project, follow these best practices:
+
+### Code Reuse and Refactoring
+
+**Always look for refactoring opportunities**: Whenever adding functions, check whether there are opportunities to increase code reuse:
+
+- Between the new function and pre-existing ones
+- Between multiple functions being added in the same pull request
+- Look for common patterns that can be extracted into helper functions
+- Consider using higher-order functions to abstract common behaviors
+
+### Unsafe Functions and Partiality
+
+**Avoid `fromJust` in most cases** (in probably more than 90% of occurrences, use of `fromJust` is a mistake):
+
+- `fromJust` is partial and can crash at runtime
+- Use pattern matching on `Maybe` instead: `case maybeValue of Just x -> ...; Nothing -> ...`
+- Use `fromMaybe` with a default value: `fromMaybe defaultValue maybeValue`
+- Use monadic binding with `maybe` or `>>=` to handle `Nothing` cases gracefully
+- Only use `fromJust` when you have a very strong proof that the value is always `Just`, and document why
+
+### List Operations
+
+**Prefer `nubOrd` or `nubSort` over `nub`**:
+
+- Using `nub` is almost never a good idea due to O(n²) complexity
+- Use `nubOrd` from `Data.List.NonEmpty` or similar for O(n log n) performance
+- Use `nubSort` when you also want the result sorted
+- These require an `Ord` constraint but are much more efficient
+
+**Avoid writing explicit recursions on lists**:
+
+- Writing your own recursions on lists is very rarely necessary
+- Usually, list comprehensions or existing higher-order functions are a better fit
+- Use functions like `map`, `filter`, `fold`, `zipWith`, `concatMap`, etc.
+- Use list comprehensions for clear, declarative list transformations
+- Combine higher-order functions to express complex transformations
+- Only write explicit recursion when the logic truly doesn't fit existing abstractions
+
+### Helper Libraries
+
+**The `extra` package is a good source of helper functions**:
+
+- Check the `extra` package before writing utility functions
+- It provides many useful functions like `groupSort`, `nubOrd`, `whenJust`, etc.
+- Familiarize yourself with its contents to avoid reinventing the wheel
+
+### Numeric Types
+
+**Make conscious decisions about using `Int` vs. using `Integer`**:
+
+- Use `Int` for bounded integers with better performance (typically 64-bit)
+- Use `Integer` for unbounded arbitrary-precision integers
+- Consider whether overflow is a concern for your use case
+- Document the choice if it's not obvious
+
+**Use `fromIntegral` instead of `fromInteger` or `toInteger`**:
+
+- `fromIntegral` is more general and works between any `Integral` types
+- It combines `toInteger` and `fromInteger` in one step
+- More flexible for refactoring when types change
+
+### Type Definitions
+
+**Mostly avoid introducing type synonyms via `type`**:
+
+- `type` synonyms are just aliases and provide no type safety
+- Use `newtype` when you want a distinct type with zero runtime overhead
+- Use `data` when you need multiple constructors or more complex structures
+- Both `newtype` and `data` provide better type safety and clearer error messages
+- Reserve `type` only for very simple abbreviations where type safety doesn't matter
+
+### Function Definitions
+
+**Use anonymous functions where appropriate**:
+
+- Sometimes not introducing a name is a good way of not introducing a bad name
+- Use lambda functions (`\x -> ...`) for simple, inline transformations
+- Prefer named functions when they have clear, meaningful names
+- Avoid deeply nested anonymous functions that hurt readability
+
+**Consider inlining single-use definitions**:
+
+- If a named entity (like a `let`-introduced value or top-level function) has:
+  - A very short definition, AND
+  - Is used only exactly once in the rest of the code
+- Then it is sometimes better to simply inline it directly instead
+- Again: Sometimes not introducing a name is a good way of not introducing a bad name
+- Balance this with readability - don't inline if it makes code harder to understand
+
+### Module Organization
+
+**Use explicit export lists**:
+
+- Always specify what a module exports with an explicit export list
+- Make export lists as short as possible in each module
+- Only export what needs to be public
+- This makes APIs clearer and prevents accidental exposure of internals
+- Example: `module MyModule (foo, bar, MyType(..)) where`
+
+**Mostly use explicit import lists**:
+
+- Prefer `import ModuleName (foo, bar)` over `import ModuleName`
+- Makes dependencies clear and prevents name conflicts
+- Exception: Widely-used, standard modules like `Control.Monad` may use qualified imports
+- Use qualified imports for modules with common names: `import qualified Data.Map as M`
+- Explicit imports make it easier to find where functions come from
+
 ## Repository Structure
 
 ### Key Directories
