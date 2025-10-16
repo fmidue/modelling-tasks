@@ -90,7 +90,9 @@ generateActionSequenceWithPetriAndRepetition minDistance diag petri =
   let actions = map
         (\n -> (Ad.label n, name n))
         $ filter isActionNode $ nodes diag
-      allTransitionSequences = generateAllActionSequences' petri
+      -- Allow cycles when requesting repetition
+      allowCycles = isJust minDistance
+      allTransitionSequences = generateAllActionSequences' allowCycles petri
       -- Convert transition sequences to action name sequences
       toActionNames transitionSeq =
         let transitionSequenceLabels = map (Ad.label . sourceNode) $ filter isNormalPetriNode transitionSeq
@@ -117,16 +119,45 @@ isNormalPetriNode pk =
     _ -> False
 
 -- | Generate all possible transition sequences that reach the zero state
-generateAllActionSequences' :: PetriLike Node PetriKey -> [[PetriKey]]
-generateAllActionSequences' petriLike =
+-- When allowCycles is True, uses a per-path exploration that allows cycles
+generateAllActionSequences' :: Bool -> PetriLike Node PetriKey -> [[PetriKey]]
+generateAllActionSequences' allowCycles petriLike =
   let petri = fromPetriLike petriLike
       zeroState = State $ M.map (const 0) $ unState $ start petri
-      allLevels = levels' petri
+      allLevels = if allowCycles
+                  then levelsWithCycles petri
+                  else levels' petri
       -- Extract one possible sequence to zero state per level
       allSequences = [reverse p | Just p <- map (lookup zeroState) allLevels]
   in if null allSequences
      then error "No path to zero state found"
      else allSequences
+  where
+    -- Variant of levels' that manages visited states per path rather than globally
+    -- This allows exploring cycles while preventing infinite loops within each path
+    levelsWithCycles :: (Ord s, Eq t) => Net s t -> [[(State s, [t])]]
+    levelsWithCycles n =
+      let f depth xs
+            | depth > 50 = []  -- Safety limit to prevent excessive exploration
+            | null xs = []
+            | otherwise =
+                let next = M.toList $ M.fromList
+                      [ (y, t:p)
+                      | (x, p) <- xs
+                      , (t, y) <- successors n x
+                      -- Prevent state from appearing again in its own path
+                      , y `notElem` pathStates x p
+                      ]
+                in xs : f (depth + 1) next
+          -- Extract all states visited in a path by replaying transitions from start
+          pathStates currentState transitionPath =
+            let replayPath startState [] = [startState]
+                replayPath state (trans:rest) =
+                  case [nextState | (t, nextState) <- successors n state, t == trans] of
+                    (nextState:_) -> state : replayPath nextState rest
+                    [] -> [state]  -- Should not happen in valid paths
+            in currentState : replayPath (start n) (reverse transitionPath)
+      in f (0 :: Int) [(start n, [])]
 
 
 validActionSequence :: [String] -> UMLActivityDiagram -> Bool
