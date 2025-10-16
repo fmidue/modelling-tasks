@@ -108,7 +108,7 @@ data SelectASConfig = SelectASConfig {
   numberOfWrongAnswers :: Int,
   answerLength :: !(Int, Int),
   printSolution :: Bool,
-  minActionRepetitionDistance :: Maybe Int,
+  preferActionRepetitionDistance :: Maybe Int,
   extraText :: ExtraText
 } deriving (Generic, Read, Show)
 
@@ -127,7 +127,7 @@ defaultSelectASConfig = SelectASConfig {
   numberOfWrongAnswers = 2,
   answerLength = (5, 8),
   printSolution = False,
-  minActionRepetitionDistance = Nothing,
+  preferActionRepetitionDistance = Nothing,
   extraText = NoExtraText
 }
 
@@ -143,7 +143,7 @@ checkSelectASConfig' SelectASConfig {
     objectNodeOnEveryPath,
     numberOfWrongAnswers,
     answerLength,
-    minActionRepetitionDistance
+    preferActionRepetitionDistance
   }
   | Just instances <- maxInstances, instances < 1
     = Just "The parameter 'maxInstances' must either be set to a positive value or to Nothing"
@@ -158,10 +158,14 @@ checkSelectASConfig' SelectASConfig {
     The second value of parameter 'answerLength' should be greater or equal to
     its first value.
     |]
-  | Just distance <- minActionRepetitionDistance, distance < 0
-    = Just "The parameter 'minActionRepetitionDistance' must be non-negative when specified"
-  | Just _ <- minActionRepetitionDistance, cycles adConfig < 1
-    = Just "Setting 'minActionRepetitionDistance' requires at least 1 cycle in the activity diagram configuration"
+  | Just distance <- preferActionRepetitionDistance, distance < 0
+    = Just "The parameter 'preferActionRepetitionDistance' must be non-negative when specified"
+  | Just _ <- preferActionRepetitionDistance, cycles adConfig < 1
+    = Just "Setting 'preferActionRepetitionDistance' requires at least 1 cycle in the activity diagram configuration"
+  | Just _ <- preferActionRepetitionDistance, snd (actionLimits adConfig) < 2
+    = Just "Setting 'preferActionRepetitionDistance' requires at least 2 actions in the activity diagram configuration"
+  | Just _ <- preferActionRepetitionDistance, forkJoinPairs adConfig < 1
+    = Just "Setting 'preferActionRepetitionDistance' requires at least 1 fork/join pair in the activity diagram configuration"
   | otherwise
     = Nothing
 
@@ -328,7 +332,7 @@ getSelectASTask config = do
   randomInstances <- shuffleM instances >>= mapM parseInstance
   ad <- mapM (fmap snd . shuffleAdNames) randomInstances
   validInstances <- firstJustM (\x -> do
-    actionSequences <- selectASSolutionToMap $ selectActionSequence (minActionRepetitionDistance config) (numberOfWrongAnswers config) x
+    actionSequences <- selectASSolutionToMap $ selectActionSequence (preferActionRepetitionDistance config) (numberOfWrongAnswers config) x
     let selectASInst = SelectASInstance {
           activityDiagram=x,
           actionSequences = actionSequences,
