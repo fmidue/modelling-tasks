@@ -364,6 +364,7 @@ This repository uses **hspec-discover** for automatic test discovery. Tests are 
 **Test Structure Hierarchy**:
 
 Tests are matched using a hierarchical path consisting of:
+
 1. **Module name** (from the file path, e.g., `Modelling.ActivityDiagram.SelectAS`)
 2. **describe blocks** (top-level grouping in specs)
 3. **context blocks** (optional nested grouping)
