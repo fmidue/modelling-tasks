@@ -13,7 +13,7 @@ import qualified Modelling.ActivityDiagram.Datatype as Ad (
   AdNode (label),
   )
 
-import qualified Data.Set as S (fromList)
+import qualified Data.Set as S (fromList, singleton, insert, notMember)
 import qualified Data.Map as M (filter, map, keys, fromList, toList)
 
 import Modelling.ActivityDiagram.Datatype (
@@ -43,8 +43,10 @@ import Modelling.PetriNet.Reach.Step (levels', successors)
 
 import Control.Monad (guard)
 import Data.Containers.ListUtils (nubOrd)
-import Data.List (union)
+import Data.List (union, maximumBy)
 import Data.Maybe(mapMaybe, isJust)
+import Data.Ord (comparing)
+import Data.Tuple (swap)
 
 
 fromPetriLike :: Ord a => PetriLike Node a -> Net a a
@@ -71,9 +73,7 @@ generateActionSequenceWithPetri diag petri =
 -- | Helper to convert transition sequences to action name sequences
 transitionsToActionNames :: UMLActivityDiagram -> [PetriKey] -> [String]
 transitionsToActionNames diag transitionSequence =
-  let actions = map
-        (\n -> (Ad.label n, name n))
-        $ filter isActionNode $ nodes diag
+  let actions = extractActionLookup diag
   in transitionsToActionNamesWithLookup actions transitionSequence
 
 -- | Helper to convert transition sequences to action names using a pre-computed action lookup table
@@ -93,7 +93,7 @@ generateActionSequenceWithPetriAndRepetition diag petri =
       sequencesWithDistances = [(seq', d) | seq' <- allActionSequences, Just d <- [actionRepetitionDistance seq']]
   in if null sequencesWithDistances
      then Nothing
-     else Just $ fst $ maximum sequencesWithDistances  -- Select sequence with maximum repetition distance
+     else Just $ fst $ maximumBy (comparing snd) sequencesWithDistances  -- Select sequence with maximum repetition distance
 
 isNormalPetriNode :: PetriKey -> Bool
 isNormalPetriNode pk =
@@ -143,12 +143,12 @@ levelsWithCycles n =
             xs' : f next'
               where
                 xs' = map (\(x, p, _) -> (x, p)) xs
-                next' = [ (y, t:p, y:visited)
+                next' = [ (y, t:p, S.insert y visited)
                         | (x, p, visited) <- xs
                         , (t, y) <- successors n x
-                        , y `notElem` visited
+                        , y `S.notMember` visited
                         ]
-  in f [(start n, [], [start n])]
+  in f [(start n, [], S.singleton (start n))]
 
 
 validActionSequence :: [String] -> UMLActivityDiagram -> Bool
@@ -161,7 +161,7 @@ validActionSequence input diag =
 validActionSequenceWithPetri :: [String] -> UMLActivityDiagram -> PetriLike Node PetriKey -> Bool
 validActionSequenceWithPetri input diag petri =
   let actions = extractActionLookup diag
-      nameMap = map (\(l, n) -> (n, l)) actions
+      nameMap = map swap actions
       labels = mapMaybe (`lookup` nameMap) input
       petriKeyMap = map
         (\k -> (Ad.label $ sourceNode k, k))
@@ -176,7 +176,7 @@ validActionSequenceWithPetri input diag petri =
 terminatesSomeButNotAllFlowsWithPetri :: [String] -> UMLActivityDiagram -> PetriLike Node PetriKey -> Bool
 terminatesSomeButNotAllFlowsWithPetri input diag petri =
   let actions = extractActionLookup diag
-      nameMap = map (\(l, n) -> (n, l)) actions
+      nameMap = map swap actions
       labels = mapMaybe (`lookup` nameMap) input
       petriKeyMap = map
         (\k -> (Ad.label $ sourceNode k, k))

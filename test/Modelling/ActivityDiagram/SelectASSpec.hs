@@ -86,10 +86,7 @@ spec = do
             actionSeq = correctSequence solution
         length actionSeq `shouldSatisfy` (>= 2)
     context "when withActionRepetition = True" $
-      it "generates sequences with repetition (or returns Nothing)" $ do
-        let maybeSolution = selectActionSequence True 2 testDiagram
-        case maybeSolution of
-          Nothing -> return ()  -- Acceptable when repetition cannot be achieved
-          Just solution -> do
-            let actionSeq = correctSequence solution
-            actionRepetitionDistance actionSeq `shouldSatisfy` isJust
+      it "generates sequences with repetition" $ do
+        let Just solution = selectActionSequence True 2 testDiagram
+            actionSeq = correctSequence solution
+        actionRepetitionDistance actionSeq `shouldSatisfy` maybe False (>= 1)
