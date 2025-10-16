@@ -173,7 +173,7 @@ The repository includes comprehensive spell checking via GitHub Actions:
 
 ### Naming Conventions
 
-**CRITICAL**: All function and variable names in Haskell code MUST be spell-checkable and avoid abbreviations.
+**CRITICAL**: All function and variable names (also local variable names) in Haskell code MUST be spell-checkable and avoid abbreviations.
 
 **Rules for naming**:
 
@@ -249,6 +249,56 @@ sed -i 's/[[:space:]]*$//' filename
 # Add final newline:
 echo >> filename
 ```
+
+## Haskell Development Guidelines
+
+When writing Haskell code for this project, follow these best practices:
+
+### Code Reuse and Refactoring
+
+**Always look for refactoring opportunities**: Whenever adding functions, check whether there are opportunities to increase code reuse:
+
+- Between the new function and pre-existing ones
+- Between multiple functions being added in the same pull request
+
+### Unsafe Functions and Partiality
+
+**Avoid `fromJust` in most cases**:
+
+- Use pattern matching on `Maybe` instead: `case maybeValue of Just x -> ...; Nothing -> ...`
+- Use `fromMaybe` with a default value: `fromMaybe defaultValue maybeValue`
+- Use `maybe` to handle `Nothing` cases gracefully
+- Only use `fromJust` when you have a very strong proof that the value is always `Just`, and document why
+
+### List Operations
+
+**Prefer `nubOrd` or `nubSort` over `nub`**:
+
+- Use `nubOrd` for better performance
+- Use `nubSort` when you also want the result sorted
+- These require an `Ord` constraint but are much more efficient
+
+**Avoid writing explicit recursions on lists**:
+
+- Only write explicit recursion when the logic truly doesn't fit existing abstractions
+- Usually, list comprehensions or existing higher-order functions are a better fit
+
+### Function Definitions
+
+**Use anonymous functions where appropriate**:
+
+- Sometimes not introducing a name is a good way of not introducing a bad name
+- Use lambda functions (`\x -> ...`) for simple, inline transformations
+- Prefer named functions when they have clear, meaningful names
+- Avoid deeply nested anonymous functions that hurt readability
+
+**Consider inlining single-use definitions**:
+
+- If a named entity (like a `let`-introduced value or top-level function) has:
+  - A very short definition, AND
+  - Is used only exactly once in the rest of the code
+- Then it is sometimes better to simply inline it directly instead
+- Balance this with readability - don't inline if it makes code harder to understand
 
 ## Repository Structure
 

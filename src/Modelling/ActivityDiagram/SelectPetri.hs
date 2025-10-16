@@ -395,7 +395,7 @@ Bitte geben Sie Ihre Antwort als Zahl an, welche das passende Petrinetz repräse
       english [i|would indicate that Petri net 2 is the matching Petri net.|]
       german  [i|bedeuten, dass Petrinetz 2 das passende Petrinetz ist.|]
     pure ()
-  finalNodesAdvice False
+  finalNodesAdvice
 
   extra $ addText task
 
