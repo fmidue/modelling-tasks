@@ -162,7 +162,7 @@ checkSelectASConfig' SelectASConfig {
     = Just "The parameter 'preferActionRepetitionDistance' must be non-negative when specified"
   | Just _ <- preferActionRepetitionDistance, cycles adConfig < 1
     = Just "Setting 'preferActionRepetitionDistance' requires at least 1 cycle in the activity diagram configuration"
-  | Just _ <- preferActionRepetitionDistance, snd (actionLimits adConfig) < 2
+  | Just _ <- preferActionRepetitionDistance, fst (actionLimits adConfig) < 2
     = Just "Setting 'preferActionRepetitionDistance' requires at least 2 actions in the activity diagram configuration"
   | Just _ <- preferActionRepetitionDistance, forkJoinPairs adConfig < 1
     = Just "Setting 'preferActionRepetitionDistance' requires at least 1 fork/join pair in the activity diagram configuration"
