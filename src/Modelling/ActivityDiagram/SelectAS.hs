@@ -108,7 +108,7 @@ data SelectASConfig = SelectASConfig {
   numberOfWrongAnswers :: Int,
   answerLength :: !(Int, Int),
   printSolution :: Bool,
-  preferActionRepetitionDistance :: Maybe Int,
+  withActionRepetition :: Bool,
   extraText :: ExtraText
 } deriving (Generic, Read, Show)
 
@@ -127,7 +127,7 @@ defaultSelectASConfig = SelectASConfig {
   numberOfWrongAnswers = 2,
   answerLength = (5, 8),
   printSolution = False,
-  preferActionRepetitionDistance = Nothing,
+  withActionRepetition = False,
   extraText = NoExtraText
 }
 
@@ -143,7 +143,7 @@ checkSelectASConfig' SelectASConfig {
     objectNodeOnEveryPath,
     numberOfWrongAnswers,
     answerLength,
-    preferActionRepetitionDistance
+    withActionRepetition
   }
   | Just instances <- maxInstances, instances < 1
     = Just "The parameter 'maxInstances' must either be set to a positive value or to Nothing"
@@ -158,14 +158,12 @@ checkSelectASConfig' SelectASConfig {
     The second value of parameter 'answerLength' should be greater or equal to
     its first value.
     |]
-  | Just distance <- preferActionRepetitionDistance, distance < 0
-    = Just "The parameter 'preferActionRepetitionDistance' must be non-negative when specified"
-  | Just _ <- preferActionRepetitionDistance, cycles adConfig < 1
-    = Just "Setting 'preferActionRepetitionDistance' requires at least 1 cycle in the activity diagram configuration"
-  | Just _ <- preferActionRepetitionDistance, fst (actionLimits adConfig) < 2
-    = Just "Setting 'preferActionRepetitionDistance' requires at least 2 actions in the activity diagram configuration"
-  | Just _ <- preferActionRepetitionDistance, forkJoinPairs adConfig < 1
-    = Just "Setting 'preferActionRepetitionDistance' requires at least 1 fork/join pair in the activity diagram configuration"
+  | withActionRepetition && cycles adConfig < 1
+    = Just "Setting 'withActionRepetition' to True requires at least 1 cycle in the activity diagram configuration"
+  | withActionRepetition && fst (actionLimits adConfig) < 2
+    = Just "Setting 'withActionRepetition' to True requires at least 2 actions in the activity diagram configuration"
+  | withActionRepetition && forkJoinPairs adConfig < 1
+    = Just "Setting 'withActionRepetition' to True requires at least 1 fork/join pair in the activity diagram configuration"
   | otherwise
     = Nothing
 
@@ -202,18 +200,21 @@ data SelectASSolution = SelectASSolution {
   wrongSequences :: [[String]]
 } deriving (Show, Eq)
 
-selectActionSequence :: Maybe Int -> Int -> UMLActivityDiagram -> SelectASSolution
-selectActionSequence minRepetitionDistance numberOfWrongSequences ad =
+selectActionSequence :: Bool -> Int -> UMLActivityDiagram -> Maybe SelectASSolution
+selectActionSequence withRepetition numberOfWrongSequences ad =
   let petri = convertToPetriNet ad
-      correctSequence = case minRepetitionDistance of
-        Nothing -> generateActionSequenceWithPetri ad petri
-        Just distance -> generateActionSequenceWithPetriAndRepetition distance ad petri
-      wrongSequences =
-        take numberOfWrongSequences $
-        sortBy (compareDistToCorrect correctSequence) $
-        filter (not . (\actionSeq -> validActionSequenceWithPetri actionSeq ad petri)) $
-        permutations correctSequence
-  in SelectASSolution {correctSequence=correctSequence, wrongSequences=wrongSequences}
+      maybeCorrectSequence = if withRepetition
+        then generateActionSequenceWithPetriAndRepetition ad petri
+        else Just (generateActionSequenceWithPetri ad petri)
+  in case maybeCorrectSequence of
+       Nothing -> Nothing
+       Just correctSequence ->
+         let wrongSequences =
+               take numberOfWrongSequences $
+               sortBy (compareDistToCorrect correctSequence) $
+               filter (not . (\actionSeq -> validActionSequenceWithPetri actionSeq ad petri)) $
+               permutations correctSequence
+         in Just SelectASSolution {correctSequence=correctSequence, wrongSequences=wrongSequences}
 
 asEditDistParams :: [String] -> Params String (String, Int, String) (Sum Int)
 asEditDistParams xs = Params
@@ -332,19 +333,22 @@ getSelectASTask config = do
   randomInstances <- shuffleM instances >>= mapM parseInstance
   ad <- mapM (fmap snd . shuffleAdNames) randomInstances
   validInstances <- firstJustM (\x -> do
-    actionSequences <- selectASSolutionToMap $ selectActionSequence (preferActionRepetitionDistance config) (numberOfWrongAnswers config) x
-    let selectASInst = SelectASInstance {
-          activityDiagram=x,
-          actionSequences = actionSequences,
-          drawSettings = defaultPlantUmlConfig {
-            suppressBranchConditions = hideBranchConditions config
-            },
-          showSolution = printSolution config,
-          addText = extraText config
-        }
-    case checkSelectASInstanceForConfig selectASInst config of
-      Just _ -> return Nothing
-      Nothing -> return $ Just selectASInst
+    case selectActionSequence (withActionRepetition config) (numberOfWrongAnswers config) x of
+      Nothing -> return Nothing  -- Could not generate sequence with repetition
+      Just solution -> do
+        actionSequences <- selectASSolutionToMap solution
+        let selectASInst = SelectASInstance {
+              activityDiagram=x,
+              actionSequences = actionSequences,
+              drawSettings = defaultPlantUmlConfig {
+                suppressBranchConditions = hideBranchConditions config
+                },
+              showSolution = printSolution config,
+              addText = extraText config
+            }
+        case checkSelectASInstanceForConfig selectASInst config of
+          Just _ -> return Nothing
+          Nothing -> return $ Just selectASInst
     ) ad
   case validInstances of
     Just x -> return x

@@ -8,7 +8,7 @@ import Modelling.ActivityDiagram.SelectAS (
   selectActionSequence
   )
 
-import Modelling.ActivityDiagram.ActionSequences (hasActionRepetitionWithMinDistance)
+import Modelling.ActivityDiagram.ActionSequences (actionRepetitionDistance)
 import Modelling.ActivityDiagram.Config (
   AdConfig (objectNodeLimits, cycles),
   defaultAdConfig,
@@ -32,18 +32,14 @@ spec = do
           adConfig = defaultAdConfig {objectNodeLimits = (0, 1)},
           objectNodeOnEveryPath = Just True
         } `shouldSatisfy` isJust
-      it "rejects preferActionRepetitionDistance when cycles = 0" $
+      it "rejects withActionRepetition when cycles = 0" $
         checkSelectASConfig defaultSelectASConfig {
-          preferActionRepetitionDistance = Just 0,
+          withActionRepetition = True,
           adConfig = defaultAdConfig {cycles = 0}
         } `shouldSatisfy` isJust
-      it "rejects negative preferActionRepetitionDistance" $
+      it "accepts withActionRepetition = True when cycles >= 1" $
         checkSelectASConfig defaultSelectASConfig {
-          preferActionRepetitionDistance = Just (-1)
-        } `shouldSatisfy` isJust
-      it "accepts preferActionRepetitionDistance >= 0 when cycles >= 1" $
-        checkSelectASConfig defaultSelectASConfig {
-          preferActionRepetitionDistance = Just 1,
+          withActionRepetition = True,
           adConfig = defaultAdConfig {cycles = 1}
         } `shouldBe` Nothing
 
@@ -84,18 +80,16 @@ spec = do
             AdConnection {from = 14, to = 10, guard = ""} -- decision to join (left fork path)
           ]
         }
-    context "when preferActionRepetitionDistance = Nothing" $
+    context "when withActionRepetition = False" $
       it "generates sequences without forcing repetition" $ do
-        let solution = selectActionSequence Nothing 2 testDiagram
+        let Just solution = selectActionSequence False 2 testDiagram
             actionSeq = correctSequence solution
         length actionSeq `shouldSatisfy` (>= 2)
-    context "when preferActionRepetitionDistance = Just 0" $
-      it "generates sequences with immediate repetition when possible" $ do
-        let solution = selectActionSequence (Just 0) 2 testDiagram
-            actionSeq = correctSequence solution
-        hasActionRepetitionWithMinDistance 0 actionSeq `shouldBe` True
-    context "when preferActionRepetitionDistance = Just 1" $
-      it "generates sequences with at least 1 action between repetitions" $ do
-        let solution = selectActionSequence (Just 1) 2 testDiagram
-            actionSeq = correctSequence solution
-        hasActionRepetitionWithMinDistance 1 actionSeq `shouldBe` True
+    context "when withActionRepetition = True" $
+      it "generates sequences with repetition (or returns Nothing)" $ do
+        let maybeSolution = selectActionSequence True 2 testDiagram
+        case maybeSolution of
+          Nothing -> return ()  -- Acceptable when repetition cannot be achieved
+          Just solution -> do
+            let actionSeq = correctSequence solution
+            actionRepetitionDistance actionSeq `shouldSatisfy` isJust

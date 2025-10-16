@@ -6,7 +6,7 @@ module Modelling.ActivityDiagram.ActionSequences (
   generateActionSequenceWithPetri,
   generateActionSequenceWithPetriAndRepetition,
   terminatesSomeButNotAllFlowsWithPetri,
-  hasActionRepetitionWithMinDistance
+  actionRepetitionDistance
 ) where
 
 import qualified Modelling.ActivityDiagram.Datatype as Ad (
@@ -83,23 +83,17 @@ transitionsToActionNamesWithLookup actions transitionSequence =
   in mapMaybe (`lookup` actions) transitionSequenceLabels
 
 -- | Generate one valid action sequence with repetition, using a pre-computed Petri net.
--- Tries to generate sequences with action repetition where actions are at least minDistance apart
--- (0 = immediate repetition like [A,A], 1 = at least one action between like [A,B,A]).
-generateActionSequenceWithPetriAndRepetition :: Int -> UMLActivityDiagram -> PetriLike Node PetriKey -> [String]
-generateActionSequenceWithPetriAndRepetition minDistance diag petri =
-  let actions = map
-        (\n -> (Ad.label n, name n))
-        $ filter isActionNode $ nodes diag
+-- This version allows cycle exploration to generate sequences with repeated actions.
+-- Returns Nothing if no sequence with repetition can be found.
+generateActionSequenceWithPetriAndRepetition :: UMLActivityDiagram -> PetriLike Node PetriKey -> Maybe [String]
+generateActionSequenceWithPetriAndRepetition diag petri =
+  let actions = extractActionLookup diag
       transitionSequences = generateSequencesWithLevels levelsWithCycles petri
       allActionSequences = map (transitionsToActionNamesWithLookup actions) transitionSequences
-      -- Try to find sequence with the required repetition distance, falling back to smaller distances
-      findSequenceWithRepetitionDistance distance
-        | distance < 0 = head allActionSequences  -- Give up, return shortest
-        | otherwise =
-            case filter (hasActionRepetitionWithMinDistance distance) allActionSequences of
-              (matchingSequence:_) -> matchingSequence
-              [] -> findSequenceWithRepetitionDistance (distance - 1)
-  in findSequenceWithRepetitionDistance minDistance
+      sequencesWithDistances = [(seq', d) | seq' <- allActionSequences, Just d <- [actionRepetitionDistance seq']]
+  in if null sequencesWithDistances
+     then Nothing
+     else Just $ fst $ maximum sequencesWithDistances  -- Select sequence with maximum repetition distance
 
 isNormalPetriNode :: PetriKey -> Bool
 isNormalPetriNode pk =
@@ -107,18 +101,29 @@ isNormalPetriNode pk =
     NormalPetriNode {} -> True
     _ -> False
 
--- | Check if a sequence of action names has repetition with at least the specified minimum distance
--- between repeated actions. For example:
--- minDistance = 0: [A,A,...] is valid (immediate repetition)
--- minDistance = 1: [A,B,A,...] is valid (at least 1 action between)
--- minDistance = 2: [A,B,C,A,...] is valid (at least 2 actions between)
-hasActionRepetitionWithMinDistance :: Int -> [String] -> Bool
-hasActionRepetitionWithMinDistance distance actionSequence =
+-- | Extract action lookup table from diagram
+extractActionLookup :: UMLActivityDiagram -> [(Int, String)]
+extractActionLookup diag = map
+  (\n -> (Ad.label n, name n))
+  $ filter isActionNode $ nodes diag
+
+-- | Calculate the maximum distance between any two occurrences of the same action.
+-- Returns Nothing if there are no repeated actions.
+-- For example:
+-- [A,A] -> Just 0 (immediate repetition)
+-- [A,B,A] -> Just 1 (1 action between repetitions)
+-- [A,B,C,A] -> Just 2 (2 actions between repetitions)
+-- [A,B,C] -> Nothing (no repetitions)
+actionRepetitionDistance :: [String] -> Maybe Int
+actionRepetitionDistance actionSequence =
   let indicesOf action = [i | (i, a) <- zip [0..] actionSequence, a == action]
-      checkAction action =
+      maxDistanceForAction action =
         let indices = indicesOf action
-        in any (\(i, j) -> j - i - 1 >= distance) [(i, j) | i <- indices, j <- indices, i < j]
-  in any checkAction $ nubOrd actionSequence
+        in if length indices < 2
+           then Nothing
+           else Just (maximum indices - minimum indices - 1)
+      distances = [d | action <- nubOrd actionSequence, Just d <- [maxDistanceForAction action]]
+  in if null distances then Nothing else Just (maximum distances)
 
 -- | Helper to generate sequences using a specific levels function
 generateSequencesWithLevels :: (Net PetriKey PetriKey -> [[(State PetriKey, [PetriKey])]]) -> PetriLike Node PetriKey -> [[PetriKey]]
@@ -155,34 +160,32 @@ validActionSequence input diag =
 -- This version avoids re-computing the Petri net conversion
 validActionSequenceWithPetri :: [String] -> UMLActivityDiagram -> PetriLike Node PetriKey -> Bool
 validActionSequenceWithPetri input diag petri =
-  let nameMap = map
-        (\n -> (name n, Ad.label n))
-        $ filter isActionNode $ nodes diag
+  let actions = extractActionLookup diag
+      nameMap = map (\(l, n) -> (n, l)) actions
       labels = mapMaybe (`lookup` nameMap) input
       petriKeyMap = map
         (\k -> (Ad.label $ sourceNode k, k))
         $ filter isNormalPetriNode $ M.keys $ allNodes petri
       input' = mapMaybe (`lookup` petriKeyMap) labels
-      actions = map snd $ filter (\(l,_) -> l `elem` map snd nameMap) petriKeyMap
-  in length input == length labels && validActionSequence' input' actions petri
+      actionKeys = map snd $ filter (\(l,_) -> l `elem` map fst actions) petriKeyMap
+  in length input == length labels && validActionSequence' input' actionKeys petri
 
 -- | Check if an action sequence terminates some but not all flows, using a pre-computed Petri net.
 -- This detects the case where a sequence terminates at least one flow
 -- but doesn't reach the zero state (i.e., doesn't consume all tokens, leaving some flows active).
 terminatesSomeButNotAllFlowsWithPetri :: [String] -> UMLActivityDiagram -> PetriLike Node PetriKey -> Bool
 terminatesSomeButNotAllFlowsWithPetri input diag petri =
-  let nameMap = map
-        (\n -> (name n, Ad.label n))
-        $ filter isActionNode $ nodes diag
+  let actions = extractActionLookup diag
+      nameMap = map (\(l, n) -> (n, l)) actions
       labels = mapMaybe (`lookup` nameMap) input
       petriKeyMap = map
         (\k -> (Ad.label $ sourceNode k, k))
         $ filter isNormalPetriNode $ M.keys $ allNodes petri
       input' = mapMaybe (`lookup` petriKeyMap) labels
-      actions = map snd $ filter (\(l,_) -> l `elem` map snd nameMap) petriKeyMap
+      actionKeys = map snd $ filter (\(l,_) -> l `elem` map fst actions) petriKeyMap
       net = fromPetriLike petri
       zeroState = State $ M.map (const 0) $ unState $ start net
-      levels = levelsCheckAS input' actions net
+      levels = levelsCheckAS input' actionKeys net
       reachesZeroState = any (isJust . lookup zeroState) levels
       -- Check if any FinalPetriNode transition was fired (meaning a flow was terminated)
       finalNodeReached = any (any (\(_, path) -> any isFinalPetriNode path)) levels
