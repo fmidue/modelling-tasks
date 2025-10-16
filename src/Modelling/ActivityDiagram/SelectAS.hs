@@ -334,7 +334,7 @@ getSelectASTask config = do
   ad <- mapM (fmap snd . shuffleAdNames) randomInstances
   validInstances <- firstJustM (\x -> do
     case selectActionSequence (withActionRepetition config) (numberOfWrongAnswers config) x of
-      Nothing -> return Nothing  -- Could not generate sequence with repetition
+      Nothing -> return Nothing  -- Could not generate sequence with repetition despite being asked to
       Just solution -> do
         actionSequences <- selectASSolutionToMap solution
         let selectASInst = SelectASInstance {
