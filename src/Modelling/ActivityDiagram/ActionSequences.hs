@@ -66,38 +66,32 @@ generateActionSequence diag =
 -- This version avoids re-computing the Petri net conversion
 generateActionSequenceWithPetri :: UMLActivityDiagram -> PetriLike Node PetriKey -> [String]
 generateActionSequenceWithPetri diag petri =
-  let transitionSequence = head (generateActionSequences' petri)
-      transitionSequenceLabels = map (Ad.label . sourceNode) $ filter isNormalPetriNode transitionSequence
-      actions = map
-        (\n -> (Ad.label n, name n))
-        $ filter isActionNode $ nodes diag
-  in mapMaybe (`lookup` actions) transitionSequenceLabels
+  transitionsToActionNames diag $ head $ generateActionSequences' petri
 
 -- | Generate one valid action sequence with repetition, using a pre-computed Petri net.
 -- Tries to generate sequences with action repetition where actions are at least minDistance apart
 -- (0 = immediate repetition like [A,A], 1 = at least one action between like [A,B,A]).
 generateActionSequenceWithPetriAndRepetition :: Int -> UMLActivityDiagram -> PetriLike Node PetriKey -> [String]
 generateActionSequenceWithPetriAndRepetition minDistance diag petri =
-  let actions = map
+  let allTransitionSequences = generateAllActionSequencesWithCycles' petri
+      allActionSequences = map (transitionsToActionNames diag) allTransitionSequences
+      -- Try to find sequence with the required repetition distance, falling back to smaller distances
+      findSequenceWithRepetitionDistance distance
+        | distance < 0 = head allActionSequences  -- Give up, return shortest
+        | otherwise =
+            case filter (hasActionRepetitionWithMinDistance distance) allActionSequences of
+              (matchingSequence:_) -> matchingSequence
+              [] -> findSequenceWithRepetitionDistance (distance - 1)
+  in findSequenceWithRepetitionDistance minDistance
+
+-- | Helper to convert transition sequences to action name sequences
+transitionsToActionNames :: UMLActivityDiagram -> [PetriKey] -> [String]
+transitionsToActionNames diag transitionSequence =
+  let transitionSequenceLabels = map (Ad.label . sourceNode) $ filter isNormalPetriNode transitionSequence
+      actions = map
         (\n -> (Ad.label n, name n))
         $ filter isActionNode $ nodes diag
-      -- Use cycle-allowing version when requesting repetition
-      allTransitionSequences = generateAllActionSequencesWithCycles' petri
-      -- Convert transition sequences to action name sequences
-      toActionNames transitionSeq =
-        let transitionSequenceLabels = map (Ad.label . sourceNode) $ filter isNormalPetriNode transitionSeq
-        in mapMaybe (`lookup` actions) transitionSequenceLabels
-      allActionSequences = map toActionNames allTransitionSequences
-      -- Find sequence matching repetition requirement
-  in findSequenceWithRepetitionDistance minDistance allActionSequences
-  where
-    -- Try to find sequence with the required repetition distance, falling back to smaller distances
-    findSequenceWithRepetitionDistance distance actionSequences
-      | distance < 0 = head actionSequences  -- Give up, return shortest
-      | otherwise =
-          case filter (hasActionRepetitionWithMinDistance distance) actionSequences of
-            (matchingSequence:_) -> matchingSequence
-            [] -> findSequenceWithRepetitionDistance (distance - 1) actionSequences
+  in mapMaybe (`lookup` actions) transitionSequenceLabels
 
 isNormalPetriNode :: PetriKey -> Bool
 isNormalPetriNode pk =
@@ -120,41 +114,39 @@ hasActionRepetitionWithMinDistance distance actionSequence =
 
 -- | Generate at least one sequence of transitions to each final node
 generateActionSequences' :: PetriLike Node PetriKey -> [[PetriKey]]
-generateActionSequences' petriLike =
-  let petri = fromPetriLike petriLike
-      zeroState = State $ M.map (const 0) $ unState $ start petri
-      allLevels = levels' petri
-      -- Extract one possible sequence to zero state per level
-      allSequences = [reverse p | Just p <- map (lookup zeroState) allLevels]
-  in allSequences
+generateActionSequences' = generateSequencesWithLevels levels'
 
 -- | Generate all possible transition sequences that reach the zero state, allowing cycles
 -- This variant manages visited states per path rather than globally
 generateAllActionSequencesWithCycles' :: PetriLike Node PetriKey -> [[PetriKey]]
-generateAllActionSequencesWithCycles' petriLike =
+generateAllActionSequencesWithCycles' = generateSequencesWithLevels levelsWithCycles
+
+-- | Helper to generate sequences using a specific levels function
+generateSequencesWithLevels :: (Net PetriKey PetriKey -> [[(State PetriKey, [PetriKey])]]) -> PetriLike Node PetriKey -> [[PetriKey]]
+generateSequencesWithLevels levelsFunction petriLike =
   let petri = fromPetriLike petriLike
       zeroState = State $ M.map (const 0) $ unState $ start petri
-      allLevels = levelsWithCycles petri
+      allLevels = levelsFunction petri
       -- Extract one possible sequence to zero state per level
       allSequences = [reverse p | Just p <- map (lookup zeroState) allLevels]
   in allSequences
-  where
-    -- Variant of levels' that manages visited states per path rather than globally
-    -- This allows exploring cycles while preventing infinite loops within each path
-    levelsWithCycles :: Ord s => Net s t -> [[(State s, [t])]]
-    levelsWithCycles n =
-      let f xs
-            | null xs = []
-            | otherwise =
-                xs' : f next'
-                  where
-                    xs' = map (\(x, p, _) -> (x, p)) xs
-                    next' = [ (y, t:p, y:visited)
-                            | (x, p, visited) <- xs
-                            , (t, y) <- successors n x
-                            , y `notElem` visited
-                            ]
-      in f [(start n, [], [start n])]
+
+-- | Variant of levels' that manages visited states per path rather than globally
+-- This allows exploring cycles while preventing infinite loops within each path
+levelsWithCycles :: Ord s => Net s t -> [[(State s, [t])]]
+levelsWithCycles n =
+  let f xs
+        | null xs = []
+        | otherwise =
+            xs' : f next'
+              where
+                xs' = map (\(x, p, _) -> (x, p)) xs
+                next' = [ (y, t:p, y:visited)
+                        | (x, p, visited) <- xs
+                        , (t, y) <- successors n x
+                        , y `notElem` visited
+                        ]
+  in f [(start n, [], [start n])]
 
 
 validActionSequence :: [String] -> UMLActivityDiagram -> Bool
