@@ -127,7 +127,7 @@ generateSequencesWithLevels levelsFunction petriLike =
   let petri = fromPetriLike petriLike
       zeroState = State $ M.map (const 0) $ unState $ start petri
       allLevels = levelsFunction petri
-  in [reverse p | Just p <- map (lookup zeroState) allLevels]
+  in map (reverse . snd) $ concatMap (filter ((== zeroState) . fst)) allLevels
 
 -- | Variant of levels' that manages visited states per path rather than globally
 -- This allows exploring cycles while preventing infinite loops within each path

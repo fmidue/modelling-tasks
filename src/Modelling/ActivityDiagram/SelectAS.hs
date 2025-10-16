@@ -214,7 +214,7 @@ selectActionSequence withRepetition numberOfWrongSequences ad =
                sortBy (compareDistToCorrect correctSequence) $
                filter (not . (\actionSeq -> validActionSequenceWithPetri actionSeq ad petri)) $
                permutations correctSequence
-         in Just SelectASSolution {correctSequence=correctSequence, wrongSequences=wrongSequences}
+         in SelectASSolution {correctSequence=correctSequence, wrongSequences=wrongSequences} <$ Just correctSequence
 
 asEditDistParams :: [String] -> Params String (String, Int, String) (Sum Int)
 asEditDistParams xs = Params
