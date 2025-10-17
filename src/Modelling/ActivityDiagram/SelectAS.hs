@@ -316,12 +316,10 @@ getSelectASTask config = do
     $ selectASAlloy config
   randomInstances <- shuffleM instances >>= mapM parseInstance
   ad <- mapM (fmap snd . shuffleAdNames) randomInstances
-  validInstances <- firstJustM (\x -> do
-    case selectActionSequence (withActionRepetition config) (numberOfWrongAnswers config) (answerLength config) x of
-      Nothing -> return Nothing  -- Could not generate sequence with repetition despite being asked to
-      Just solution -> do
+  validInstances <- firstJustM (\x ->
+    traverse (\solution -> do
         actionSequences <- selectASSolutionToMap solution
-        return $ Just SelectASInstance {
+        return SelectASInstance {
               activityDiagram=x,
               actionSequences = actionSequences,
               drawSettings = defaultPlantUmlConfig {
@@ -330,6 +328,7 @@ getSelectASTask config = do
               showSolution = printSolution config,
               addText = extraText config
             }
+    ) (selectActionSequence (withActionRepetition config) (numberOfWrongAnswers config) (answerLength config) x)
     ) ad
   case validInstances of
     Just x -> return x

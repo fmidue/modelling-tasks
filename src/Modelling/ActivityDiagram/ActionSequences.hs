@@ -67,9 +67,9 @@ generateActionSequence diag =
 -- | Generate one valid action sequence, using a pre-computed Petri net.
 -- This version avoids re-computing the Petri net conversion.
 -- Returns Nothing if no valid sequence can be found within the length constraints.
-generateActionSequenceWithPetri 
-  :: UMLActivityDiagram 
-  -> PetriLike Node PetriKey 
+generateActionSequenceWithPetri
+  :: UMLActivityDiagram
+  -> PetriLike Node PetriKey
   -> Maybe (Int, Int)  -- Optional (minLength, maxLength) constraints
   -> Maybe [String]
 generateActionSequenceWithPetri diag petri maybeLengthBounds =
@@ -77,31 +77,13 @@ generateActionSequenceWithPetri diag petri maybeLengthBounds =
       validSequences = generateSequencesWithLevels levels' actions maybeLengthBounds petri
   in if null validSequences then Nothing else Just (head validSequences)
 
--- | Helper to convert transition sequences to action names using a pre-computed action lookup table.
--- Returns Nothing if the resulting sequence violates length constraints.
-transitionsToActionNamesWithLookup 
-  :: [(Int, String)] 
-  -> Maybe (Int, Int)  -- Optional (minLength, maxLength) constraints
-  -> [PetriKey] 
-  -> Maybe [String]
-transitionsToActionNamesWithLookup actions maybeLengthBounds transitionSequence =
-  let transitionSequenceLabels = map (Ad.label . sourceNode) $ filter isNormalPetriNode transitionSequence
-      actionSequence = mapMaybe (`lookup` actions) transitionSequenceLabels
-      seqLength = length actionSequence
-  in case maybeLengthBounds of
-       Nothing -> Just actionSequence
-       Just (minLength, maxLength) ->
-         if seqLength >= minLength && seqLength <= maxLength
-         then Just actionSequence
-         else Nothing
-
 -- | Generate one valid action sequence with repetition, using a pre-computed Petri net.
 -- This version allows cycle exploration to generate sequences with repeated actions.
 -- Returns Nothing if no sequence with repetition can be found, or if all sequences with repetition
 -- violate the length constraints.
-generateActionSequenceWithPetriAndRepetition 
-  :: UMLActivityDiagram 
-  -> PetriLike Node PetriKey 
+generateActionSequenceWithPetriAndRepetition
+  :: UMLActivityDiagram
+  -> PetriLike Node PetriKey
   -> Maybe (Int, Int)  -- Optional (minLength, maxLength) constraints
   -> Maybe [String]
 generateActionSequenceWithPetriAndRepetition diag petri maybeLengthBounds =
@@ -143,18 +125,28 @@ actionRepetitionDistance actionSequence =
 
 -- | Helper to generate sequences using a specific levels function
 -- Now includes the action name conversion and length bounds filtering
-generateSequencesWithLevels 
+generateSequencesWithLevels
   :: (Net PetriKey PetriKey -> [[(State PetriKey, [PetriKey])]])
   -> [(Int, String)]  -- action lookup table
   -> Maybe (Int, Int)  -- Optional (minLength, maxLength) constraints
-  -> PetriLike Node PetriKey 
+  -> PetriLike Node PetriKey
   -> [[String]]
 generateSequencesWithLevels levelsFunction actions maybeLengthBounds petriLike =
   let petri = fromPetriLike petriLike
       zeroState = State $ M.map (const 0) $ unState $ start petri
       allLevels = levelsFunction petri
       transitionSequences = [reverse p | level <- allLevels, (s, p) <- level, s == zeroState]
-  in mapMaybe (transitionsToActionNamesWithLookup actions maybeLengthBounds) transitionSequences
+      transitionsToActionNames transitionSequence =
+        let transitionSequenceLabels = map (Ad.label . sourceNode) $ filter isNormalPetriNode transitionSequence
+            actionSequence = mapMaybe (`lookup` actions) transitionSequenceLabels
+            seqLength = length actionSequence
+        in case maybeLengthBounds of
+             Nothing -> Just actionSequence
+             Just (minLength, maxLength) ->
+               if seqLength >= minLength && seqLength <= maxLength
+               then Just actionSequence
+               else Nothing
+  in mapMaybe transitionsToActionNames transitionSequences
 
 -- | Variant of levels' that manages visited states per path rather than globally
 -- This allows exploring cycles while preventing infinite loops within each path
