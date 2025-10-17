@@ -160,8 +160,6 @@ checkSelectASConfig' SelectASConfig {
     |]
   | withActionRepetition && cycles adConfig < 1
     = Just "Setting 'withActionRepetition' to True requires at least 1 cycle in the activity diagram configuration"
-  | withActionRepetition && fst (actionLimits adConfig) < 2
-    = Just "Setting 'withActionRepetition' to True requires at least 2 actions in the activity diagram configuration"
   | withActionRepetition && forkJoinPairs adConfig < 1
     = Just "Setting 'withActionRepetition' to True requires at least 1 fork/join pair in the activity diagram configuration"
   | otherwise
