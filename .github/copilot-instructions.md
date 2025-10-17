@@ -374,6 +374,12 @@ Tests are matched using a hierarchical path consisting of:
 
 The `--match` (or `-m`) option accepts patterns that match against the full hierarchical test path. Matching is substring-based and case-sensitive.
 
+**CRITICAL QUOTING RULES**: When using `stack test --test-arguments`, the entire argument string is already in double quotes. Therefore:
+
+- **DO NOT** use single quotes around patterns - they become part of the pattern itself
+- For patterns with spaces, use escaped double quotes: `\"`
+- For simple patterns without spaces, no quotes are needed
+
 **IMPORTANT**: When using `stack test --test-arguments`, patterns with spaces MUST be quoted with escaped quotes:
 
 ```bash
@@ -382,6 +388,12 @@ stack test --test-arguments="-m \"is valid\""
 
 # CORRECT - Simple patterns without spaces don't need quotes
 stack test --test-arguments="-m SelectAS"
+
+# WRONG - Do NOT use single quotes around the pattern
+stack test --test-arguments="--match 'SelectAS'"  # This will match 0 tests!
+
+# WRONG - This is also incorrect (single quotes become part of the pattern)
+stack test --test-arguments="-m 'Modelling.CdOd'"  # Will match nothing!
 ```
 
 **Examples with actual tests from this repository**:
