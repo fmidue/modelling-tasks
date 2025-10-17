@@ -7,7 +7,7 @@ on:
       - dev
       - develop
       - master
-    paths:
+    paths: &haskell_paths
       - '**.hs'
       - '**/package.yaml'
       - '**.cabal'
@@ -21,15 +21,7 @@ on:
       - dev
       - develop
       - master
-    paths:
-      - '**.hs'
-      - '**/package.yaml'
-      - '**.cabal'
-      - 'stack*.yaml'
-      - 'alloy/**.als'
-      - '**/hie.yaml'
-      - '.hlint.yaml'
-      - '.github/workflows/haskell.yml'
+    paths: *haskell_paths
 
 permissions: read-all
 
