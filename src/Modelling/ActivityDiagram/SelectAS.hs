@@ -179,7 +179,6 @@ checkSelectASInstance inst
   = Nothing
 
 
-
 data SelectASSolution = SelectASSolution {
   correctSequence :: [String],
   wrongSequences :: [[String]]
@@ -197,7 +196,7 @@ selectActionSequence withRepetition numberOfWrongSequences lengthBounds ad =
               sortBy (compareDistToCorrect correctSequence) $
               filter (not . (\actionSeq -> validActionSequenceWithPetri actionSeq ad petri)) $
               permutations correctSequence
-        in SelectASSolution {correctSequence=correctSequence, wrongSequences=wrongSequences})
+        in SelectASSolution {correctSequence = correctSequence, wrongSequences = wrongSequences})
       maybeCorrectSequence
 
 asEditDistParams :: [String] -> Params String (String, Int, String) (Sum Int)
@@ -317,10 +316,10 @@ getSelectASTask config = do
   randomInstances <- shuffleM instances >>= mapM parseInstance
   ad <- mapM (fmap snd . shuffleAdNames) randomInstances
   validInstances <- firstJustM (\x ->
-    traverse (\solution -> do
+    mapM (\solution -> do
         actionSequences <- selectASSolutionToMap solution
         return SelectASInstance {
-              activityDiagram=x,
+              activityDiagram = x,
               actionSequences = actionSequences,
               drawSettings = defaultPlantUmlConfig {
                 suppressBranchConditions = hideBranchConditions config
