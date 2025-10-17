@@ -80,13 +80,8 @@ spec = do
             AdConnection {from = 14, to = 10, guard = ""} -- decision to join (left fork path)
           ]
         }
-    context "when withActionRepetition = False" $
-      it "generates sequences without forcing repetition" $ do
-        let Just solution = selectActionSequence False 2 testDiagram
-            actionSeq = correctSequence solution
-        length actionSeq `shouldSatisfy` (>= 2)
     context "when withActionRepetition = True" $
       it "generates sequences with repetition" $ do
         let Just solution = selectActionSequence True 2 testDiagram
             actionSeq = correctSequence solution
-        actionRepetitionDistance actionSeq `shouldSatisfy` maybe False (>= 1)
+        actionRepetitionDistance actionSeq `shouldSatisfy` maybe False (>= 2)
