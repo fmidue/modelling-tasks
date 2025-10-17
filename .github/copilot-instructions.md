@@ -14,9 +14,7 @@ This repository includes an automated setup workflow (`.github/workflows/copilot
 - **Installs HLint**: Enables code quality checking
 - **Pre-builds dependencies**: Downloads and builds Haskell project dependencies
 
-**When Copilot environment is provided**: System dependencies and Haskell dependencies should already be available. You can immediately proceed with builds and tests without manual setup.
-
-**Manual setup required when**: Working outside the automated Copilot environment or troubleshooting setup issues.
+System dependencies and Haskell dependencies are already available. You can immediately proceed with builds and tests.
 
 ## 🚨 CRITICAL WARNINGS
 
@@ -55,33 +53,11 @@ Then run EditorConfig validation again to confirm fixes:
 
 ### ⏰ NEVER CANCEL BUILDS OR TESTS
 
-- **Dependency builds**: 45-75 minutes (set timeout to 90+ minutes)
 - **Project builds**: 30-45 minutes (set timeout to 60+ minutes)
 - **Test suites**: 15-30 minutes (set timeout to 45+ minutes)
 - Builds resume from cache when interrupted properly - canceling wastes progress
 
-### 🌐 NETWORK ACCESS REQUIRED
-
-- **Required domains**: hackage.haskell.org, raw.githubusercontent.com, github.com
-- **Test connectivity**: `curl -I https://hackage.haskell.org/root.json`
-- **No offline mode**: All builds require internet for dependency downloads
-- **Restricted environments**: Will fail with `ConnectionTimeout` errors
-
 ## Working Effectively
-
-### System Dependencies
-
-**Automated in Copilot environments**: The automated setup workflow handles system dependency installation. Check if dependencies are already available before manual installation.
-
-**Manual installation** (if needed):
-
-- `sudo apt-get update`
-- `sudo apt-get install -y graphviz texlive-base texlive-latex-base`
-
-**Verify installations**:
-
-- `dot -V` -- should show graphviz version 2.43.0 or later
-- `pdflatex --version` -- should show pdfTeX 3.141592653 or later
 
 ### Build Tool Setup
 
@@ -91,51 +67,25 @@ This project uses Haskell Stack as its primary build tool. Three Stack configura
 - `stack-apps.yaml` -- applications configuration (includes app/, legacy-app/, example/)
 - `stack-examples.yaml` -- examples only configuration (includes example/)
 
-**CRITICAL NETWORK REQUIREMENT**: This project requires internet access to download dependencies from Hackage and GitHub.
-
-**Network Issues**:
-
-- **Symptoms**: `ConnectionTimeout` errors during `stack build --only-dependencies`
-- **URLs Required**: hackage.haskell.org, raw.githubusercontent.com, github.com
-- **Testing connectivity**: `ping hackage.haskell.org` and `curl -I https://hackage.haskell.org`
-- **Fallback**: Builds will fail in restricted network environments (corporate firewalls, sandboxed CI)
-
 ### Building the Project
 
 **NEVER CANCEL builds or dependency installations - they can take 60+ minutes**
 
-**In Copilot environments**: Dependencies are pre-installed by the automated setup workflow. You can typically skip step 1 and proceed directly to building.
+Dependencies are pre-installed by the automated setup workflow. Build the project with:
 
-#### Full Build Process
-
-1. Install dependencies: `stack --stack-yaml=stack-apps.yaml build --only-dependencies`
-   - **LIKELY AUTOMATED**: In Copilot environments, this step is handled by the setup workflow
-   - **NEVER CANCEL**: Takes 45-75 minutes. Set timeout to 90+ minutes.
-   - Downloads from hackage.haskell.org and github.com
-   - Downloads custom dependencies: output-blocks, autotool-capabilities, call-alloy, etc.
-   - If this fails with `ConnectionTimeout`, you are in a restricted network environment
-
-2. Build library and applications: `stack --stack-yaml=stack-apps.yaml build`
-   - **NEVER CANCEL**: Takes 30-45 minutes. Set timeout to 60+ minutes.
-   - Builds the main library plus all applications in `/app`, `/legacy-app`, and `/example`
-
-#### Alternative Build for Library Only
-
-- `stack build --only-dependencies` -- 30-45 minutes
-- `stack build` -- 15-30 minutes
-
-#### Alternative Build for Examples
-
-- `stack --stack-yaml=stack-examples.yaml build --only-dependencies` -- 30-45 minutes
-- `stack --stack-yaml=stack-examples.yaml build` -- 15-30 minutes
+- `stack --stack-yaml=stack-apps.yaml build` -- Builds the main library plus all applications in `/app`, `/legacy-app`, and `/example` (30-45 minutes)
+- `stack build` -- Build library only (15-30 minutes)
+- `stack --stack-yaml=stack-examples.yaml build` -- Build examples (15-30 minutes)
 
 ### Running Tests
 
-- `stack test` -- **NEVER CANCEL**: Takes 15-30 minutes. Set timeout to 45+ minutes.
+- `stack test` -- Takes 15-30 minutes. Set timeout to 45+ minutes.
 - `stack --stack-yaml=stack-apps.yaml test` -- includes all test suites
 - Test-specific options:
   - `--test-arguments="--skip-needs-tuning"` -- excludes unstable/long-running tests
   - `--test-arguments="--times --maximum-generated-tests=50"` -- limits test case generation
+
+**NEVER CANCEL**: Allow adequate time for tests to complete.
 
 ### Running Applications
 
@@ -147,8 +97,6 @@ The project includes multiple command-line applications in the `/app` directory:
 - `stack exec check-cds` -- Check class diagrams
 - `stack exec concurrency` -- Concurrency analysis
 - `stack exec conflicts` -- Conflict analysis
-
-**Build applications first**: `stack --stack-yaml=stack-apps.yaml build`
 
 ### Using GHCi for Interactive Development
 
@@ -225,7 +173,7 @@ The repository includes comprehensive spell checking via GitHub Actions:
 
 ### Naming Conventions
 
-**CRITICAL**: All function and variable names in Haskell code MUST be spell-checkable and avoid abbreviations.
+**CRITICAL**: All function and variable names (also local variable names) in Haskell code MUST be spell-checkable and avoid abbreviations.
 
 **Rules for naming**:
 
@@ -302,6 +250,56 @@ sed -i 's/[[:space:]]*$//' filename
 echo >> filename
 ```
 
+## Haskell Development Guidelines
+
+When writing Haskell code for this project, follow these best practices:
+
+### Code Reuse and Refactoring
+
+**Always look for refactoring opportunities**: Whenever adding functions, check whether there are opportunities to increase code reuse:
+
+- Between the new function and pre-existing ones
+- Between multiple functions being added in the same pull request
+
+### Unsafe Functions and Partiality
+
+**Avoid `fromJust` in most cases**:
+
+- Use pattern matching on `Maybe` instead: `case maybeValue of Just x -> ...; Nothing -> ...`
+- Use `fromMaybe` with a default value: `fromMaybe defaultValue maybeValue`
+- Use `maybe` to handle `Nothing` cases gracefully
+- Only use `fromJust` when you have a very strong proof that the value is always `Just`, and document why
+
+### List Operations
+
+**Prefer `nubOrd` or `nubSort` over `nub`**:
+
+- Use `nubOrd` for better performance
+- Use `nubSort` when you also want the result sorted
+- These require an `Ord` constraint but are much more efficient
+
+**Avoid writing explicit recursions on lists**:
+
+- Only write explicit recursion when the logic truly doesn't fit existing abstractions
+- Usually, list comprehensions or existing higher-order functions are a better fit
+
+### Function Definitions
+
+**Use anonymous functions where appropriate**:
+
+- Sometimes not introducing a name is a good way of not introducing a bad name
+- Use lambda functions (`\x -> ...`) for simple, inline transformations
+- Prefer named functions when they have clear, meaningful names
+- Avoid deeply nested anonymous functions that hurt readability
+
+**Consider inlining single-use definitions**:
+
+- If a named entity (like a `let`-introduced value or top-level function) has:
+  - A very short definition, AND
+  - Is used only exactly once in the rest of the code
+- Then it is sometimes better to simply inline it directly instead
+- Balance this with readability - don't inline if it makes code harder to understand
+
 ## Repository Structure
 
 ### Key Directories
@@ -329,127 +327,15 @@ echo >> filename
 - `.editorconfig` -- Code formatting standards for editors
 - `.ghci` -- Default GHCi configuration with preloaded modules and imports
 
-## CI/CD Pipeline
+## Validation and Testing
 
-### GitHub Actions Workflows
-
-- `.github/workflows/copilot-setup-steps.yml` -- Automated Copilot environment setup
-- `.github/workflows/haskell.yml` -- Main CI build and test
-- `.github/workflows/haskell-nightly.yml` -- Nightly builds with latest dependencies
-- `.github/workflows/hlint.yml` -- Haskell linting with HLint
-- `.github/workflows/linter.yml` -- Super-linter for general code quality
-- `.github/workflows/spelling.yml` -- Spell checking with multiple dictionaries
-- `.github/workflows/checks.yml` -- General consistency checks
-- `.github/workflows/consistency.yml` -- Cabal file consistency validation
-- `.github/workflows/haddock.yml` -- Generate and deploy documentation to GitHub Pages
-
-### Build Process in CI
-
-The CI installs system dependencies and runs comprehensive validation:
-
-```bash
-# Main build and test (haskell.yml)
-stack --no-terminal test --stack-yaml=stack-apps.yaml --coverage \
-  --bench --no-run-benchmarks --haddock --no-haddock-deps \
-  --test-arguments="--skip-needs-tuning --times --maximum-generated-tests=50"
-
-# Additional validations:
-# - HLint checking (hlint.yml)
-# - Spell checking with multiple dictionaries (spelling.yml)
-# - Cabal file consistency checking (consistency.yml)
-# - Super-linter for general code quality (linter.yml)
-# - Nightly builds with latest dependencies (haskell-nightly.yml)
-# - Haddock documentation generation (haddock.yml)
-# - Runaway IO usage checking (checks.yml)
-```
-
-## Common Tasks and Troubleshooting
-
-### Network Issues
-
-- **Symptom**: `ConnectionTimeout` errors during `stack build --only-dependencies`
-- **Root Cause**: Firewall blocking access to hackage.haskell.org, raw.githubusercontent.com, github.com
-- **Testing**: `curl -I https://hackage.haskell.org/root.json` should return HTTP 200
-- **Solution**: Requires unrestricted internet access or internal package mirrors
-- **Workaround**: None available - build requires external dependency downloads
-
-### Stack Configuration Issues
-
-- **Symptom**: `Exception while reading snapshot` errors
-- **Solution**: Verify internet connectivity, check stack.yaml resolver version
-- **Alternative**: Try different stack YAML files (`stack-apps.yaml` vs `stack.yaml`)
-
-### GHC Version Compatibility
-
-- **Currently supported**: GHC 9.12.2 with resolver lts-21.25
-- **Stack manages GHC**: Uses system GHC when `system-ghc: true` is configured
-- **Verify**: `stack ghc --version` should match expected version
-
-### Long Build Times - THIS IS NORMAL
-
-- **Expected**: 45-75 minutes for full dependency build, 30-45 minutes for project build
-- **Important**: NEVER cancel builds - they will resume from cache if interrupted properly
-- **Progress indicators**: Stack shows download progress and compilation stages
-- **Parallel builds**: Stack builds dependencies in parallel when possible
-
-### Testing Specific Tasks
-
-Different tasks can be tested by following the naming pattern in GHCi:
-
-- Replace `NameCdError` with other task names (e.g., `MatchCdOd`, `SelectAS`)
-- Change `English` to `German` for German language versions
-- Tasks may require directory arguments (e.g., `"/tmp/"`) - check function signatures
-- Import modules based on task type: `Modelling.CdOd.NameCdError`, `Modelling.ActivityDiagram.MatchAd`
-
-## Validation Status
-
-### 🤖 Automated in Copilot Environments
-
-These components are automatically set up by the `.github/workflows/copilot-setup-steps.yml` workflow:
-
-- System dependencies installation (graphviz, texlive-base, texlive-latex-base)
-- Graphviz and LaTeX verification (`dot -V`, `pdflatex --version`)
-- Network connectivity testing (`curl -I https://hackage.haskell.org/root.json`)
-- Haskell Stack environment setup
-- HLint installation and configuration
-- Haskell project dependencies pre-installation (`stack build --only-dependencies`)
-
-### ✅ Validated Commands
-
-These commands have been tested and work correctly:
-
-- `dot -V` -- verifies Graphviz installation (graphviz version 2.43.0)
-- `pdflatex --version` -- verifies LaTeX installation (pdfTeX 3.141592653)
-- `stack --version` -- verifies Stack installation (Version 3.7.1)
-- `ghc --version` -- verifies GHC installation (GHC 9.12.2)
-- `hlint --version` -- verifies HLint installation (automated in Copilot)
-- Repository structure and file access work correctly
-
-### ⚠️ Network-Dependent Commands (Automated in Copilot)
-
-These commands require internet access but are handled by automated setup:
-
-- `stack build --only-dependencies` -- automated by setup workflow
-- `stack test` -- dependencies pre-installed in Copilot environments
-- `stack exec <app-name>` -- should work after automated setup
-- GHCi task generation -- dependencies available in Copilot environments
-
-### 🔧 Workarounds for Restricted Networks
-
-- **CI/CD**: Use unrestricted GitHub Actions environment
-- **Local development**: Configure network access or use pre-built environments
-- **Testing**: Use `ghc` directly for syntax checking individual modules
-- **Validation**: Rely on CI workflows for full build/test validation
-
-## Complete Validation Scenarios
-
-### End-to-End Testing
+### End-to-End Validation
 
 After making changes, always validate:
 
-1. **Build succeeds**: `stack --stack-yaml=stack-apps.yaml build` (dependencies pre-installed in Copilot)
+1. **EditorConfig compliance**: `./scripts/check-editorconfig.sh` **MUST PASS**
 2. **HLint does not complain**: `hlint src/ test/ app/`
-3. **.editorconfig compliance**: `./scripts/check-editorconfig.sh` **MUST PASS**
+3. **Build succeeds**: `stack --stack-yaml=stack-apps.yaml build`
 4. **Tests pass**: `stack --stack-yaml=stack-apps.yaml test` (30+ minutes)
 5. **App execution**: Test at least one app with `stack exec <app-name>`
 6. **GHCi interaction**: Load examples and generate task instances
@@ -462,14 +348,11 @@ After making changes, always validate:
 4. **Verify outputs**: Check that .tex, .svg, .pdf files are created correctly
 5. **Test validation**: Try sample answers with task validation functions
 
-### Minimal Validation (Network-Restricted)
+### Testing Specific Tasks
 
-When full builds aren't possible:
+Different tasks can be tested by following the naming pattern in GHCi:
 
-1. **EditorConfig compliance**: `./scripts/check-editorconfig.sh` **MUST PASS**
-2. **Syntax check**: `ghc -Wall --make -fno-code src/Modelling/Types.hs`
-3. **File structure**: Verify imports and exports align with exposed-modules
-4. **Configuration**: Check stack.yaml resolver and dependencies are consistent
-5. **Static analysis**: Use any available Haskell linting tools, in particular `hlint src/ test/ app/`
-
-**CRITICAL**: NEVER CANCEL builds, tests, or long-running operations. Allow 60+ minutes for builds and 30+ minutes for tests. Plan accordingly and set appropriate timeouts.
+- Replace `NameCdError` with other task names (e.g., `MatchCdOd`, `SelectAS`)
+- Change `English` to `German` for German language versions
+- Tasks may require directory arguments (e.g., `"/tmp/"`) - check function signatures
+- Import modules based on task type: `Modelling.CdOd.NameCdError`, `Modelling.ActivityDiagram.MatchAd`

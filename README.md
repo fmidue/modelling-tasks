@@ -1,4 +1,4 @@
-# modelling-tasks [![Haskell CI](https://github.com/fmidue/modelling-tasks/workflows/Haskell%20CI/badge.svg)](https://github.com/fmidue/modelling-tasks/actions?query=workflow%3A%22Haskell+CI%22+branch%3Amaster)
+# modelling-tasks [![Haskell CI](https://github.com/fmidue/modelling-tasks/workflows/Haskell%20CI/badge.svg)](https://github.com/fmidue/modelling-tasks/actions?query=workflow%3A%22Haskell+CI%22+branch%3Adev)
 
 This repository contains exercise tasks for modelling lecture contents.
 
@@ -36,7 +36,7 @@ stack ghci --stack-yaml=stack-examples.yaml  --package=autotool-capabilities-io-
 ```
 
 ```haskell
-:m + Capabilities.Alloy.IO Capabilities.Cache.IO Capabilities.Diagrams.IO Capabilities.Graphviz.IO Capabilities.PlantUml.IO
+:m + Capabilities.Alloy.IO Capabilities.Cache.IO Capabilities.Diagrams.IO Capabilities.Graphviz.IO Capabilities.LatexSvg.IO Capabilities.PlantUml.IO Capabilities.WriteFile.IO
 :m + Control.OutputCapable.Blocks Control.OutputCapable.Blocks.Generic
 inst <- nameCdErrorGenerate defaultNameCdErrorConfig 0 0
 runLangMReport (return ()) (>>) (nameCdErrorTask "/tmp/" inst) >>= \(Just (), x) -> (x English :: IO ())

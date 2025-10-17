@@ -1,7 +1,10 @@
 {-# LANGUAGE DuplicateRecordFields #-}
 module Modelling.ActivityDiagram.ActionSequences (
   validActionSequence,
+  validActionSequenceWithPetri,
   generateActionSequence,
+  generateActionSequenceWithPetri,
+  terminatesSomeButNotAllFlowsWithPetri
 ) where
 
 import qualified Modelling.ActivityDiagram.Datatype as Ad (
@@ -56,6 +59,12 @@ fromPetriLike petri =
 --Generate one valid action sequence to each of the final nodes
 generateActionSequence :: UMLActivityDiagram -> [String]
 generateActionSequence diag =
+  generateActionSequenceWithPetri diag (convertToPetriNet diag)
+
+-- | Generate one valid action sequence, using a pre-computed Petri net.
+-- This version avoids re-computing the Petri net conversion
+generateActionSequenceWithPetri :: UMLActivityDiagram -> PetriLike Node PetriKey -> [String]
+generateActionSequenceWithPetri diag petri =
   let actionsLeadingToActivityFinals = getActionsLeadingToActivityFinals diag
       tSeq = generateActionSequence' diag actionsLeadingToActivityFinals
       tSeqLabels = map (Ad.label . sourceNode) $ filter isNormalPetriNode tSeq
@@ -83,9 +92,9 @@ getActionsLeadingToActivityFinals (UMLActivityDiagram adNodes adConnections) =
   in actionsDirectlyToActivityFinals
 
 --Generate at one sequence of transitions to each final node
-generateActionSequence' :: UMLActivityDiagram -> [Int] -> [PetriKey]
-generateActionSequence' diag actionsLeadingToActivityFinals =
-  let petri = fromPetriLike $ convertToPetriNet diag
+generateActionSequence' :: PetriLike Node PetriKey -> [Int] -> [PetriKey]
+generateActionSequence' petriLike actionsLeadingToActivityFinals =
+  let petri = fromPetriLike petriLike
       -- Use all places in the network to create the zero state for consistency
       allPlaces = S.toList $ places petri
       zeroState = State $ M.fromList [(p, 0) | p <- allPlaces]
@@ -122,11 +131,17 @@ levelsAS n actionsLeadingToActivityFinals =
 
 validActionSequence :: [String] -> UMLActivityDiagram -> Bool
 validActionSequence input diag =
+  let petri = convertToPetriNet diag
+  in validActionSequenceWithPetri input diag petri
+
+-- | Check if an action sequence is valid, using a pre-computed Petri net.
+-- This version avoids re-computing the Petri net conversion
+validActionSequenceWithPetri :: [String] -> UMLActivityDiagram -> PetriLike Node PetriKey -> Bool
+validActionSequenceWithPetri input diag petri =
   let nameMap = map
         (\n -> (name n, Ad.label n))
         $ filter isActionNode $ nodes diag
       labels = mapMaybe (`lookup` nameMap) input
-      petri = convertToPetriNet diag
       petriKeyMap = map
         (\k -> (Ad.label $ sourceNode k, k))
         $ filter isNormalPetriNode $ M.keys $ allNodes petri
@@ -136,6 +151,32 @@ validActionSequence input diag =
       actionsLeadingToActivityFinals = getActionsLeadingToActivityFinals diag
   in length input == length labels && validActionSequence' input' actions petri actionsLeadingToActivityFinals
 
+-- | Check if an action sequence terminates some but not all flows, using a pre-computed Petri net.
+-- This detects the case where a sequence terminates at least one flow
+-- but doesn't reach the zero state (i.e., doesn't consume all tokens, leaving some flows active).
+terminatesSomeButNotAllFlowsWithPetri :: [String] -> UMLActivityDiagram -> PetriLike Node PetriKey -> Bool
+terminatesSomeButNotAllFlowsWithPetri input diag petri =
+  let nameMap = map
+        (\n -> (name n, Ad.label n))
+        $ filter isActionNode $ nodes diag
+      labels = mapMaybe (`lookup` nameMap) input
+      petriKeyMap = map
+        (\k -> (Ad.label $ sourceNode k, k))
+        $ filter isNormalPetriNode $ M.keys $ allNodes petri
+      input' = mapMaybe (`lookup` petriKeyMap) labels
+      actions = map snd $ filter (\(l,_) -> l `elem` map snd nameMap) petriKeyMap
+      net = fromPetriLike petri
+      zeroState = State $ M.map (const 0) $ unState $ start net
+      levels = levelsCheckAS input' actions net
+      reachesZeroState = any (isJust . lookup zeroState) levels
+      -- Check if any FinalPetriNode transition was fired (meaning a flow was terminated)
+      finalNodeReached = any (any (\(_, path) -> any isFinalPetriNode path)) levels
+  in length input == length labels && not reachesZeroState && finalNodeReached
+
+-- | Check if a PetriKey represents a final node transition
+isFinalPetriNode :: PetriKey -> Bool
+isFinalPetriNode (FinalPetriNode {}) = True
+isFinalPetriNode _ = False
 
 validActionSequence'
   :: [PetriKey]

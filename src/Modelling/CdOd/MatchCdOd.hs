@@ -51,8 +51,10 @@ import Modelling.Auxiliary.Common (
   RandomiseNames (hasRandomisableNames, randomiseNames),
   )
 import Modelling.Auxiliary.Output (
+  ExtraText(..),
   addPretext,
   directionsAdvice,
+  extra,
   hoveringInformation,
   simplifiedInformation,
   uniform,
@@ -121,7 +123,7 @@ import Modelling.Types (
 
 import Control.Applicative              (Alternative ((<|>)))
 import Control.Exception                (Exception)
-import Control.Monad                    ((<=<))
+import Control.Monad                    ((<=<), when)
 import Control.Monad.Catch              (MonadCatch, MonadThrow, throwM)
 #if __GLASGOW_HASKELL__ < 808
 import Control.Monad.Fail               (MonadFail)
@@ -130,7 +132,6 @@ import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
   GenericOutputCapable (..),
   LangM,
-  Language,
   OutputCapable,
   Rated,
   ($=<<),
@@ -144,8 +145,10 @@ import Control.OutputCapable.Blocks.Generic.Type (
   GenericOutput (Code, Paragraph, Special, Translated),
   )
 import Control.OutputCapable.Blocks.Type (
+  Output,
   SpecialOutput,
   specialToOutputCapable,
+  toOutputCapable,
   )
 import Control.Monad.Random (
   MonadRandom,
@@ -177,7 +180,7 @@ data MatchCdOdInstance
     instances      :: Map Char ([Int], Od),
     showSolution   :: !Bool,
     taskText       :: !MatchCdOdTaskText,
-    addText        :: Maybe (Map Language String)
+    addText        :: ExtraText
   } deriving (Eq, Generic, Read, Show)
 
 data MatchCdOdConfig
@@ -191,7 +194,7 @@ data MatchCdOdConfig
     printSolution    :: Bool,
     timeout          :: Maybe Int,
     withNonTrivialInheritance :: Maybe Bool,
-    extraText        :: Maybe (Map Language String)
+    extraText        :: ExtraText
   } deriving (Generic, Read, Show)
 
 defaultMatchCdOdConfig :: MatchCdOdConfig
@@ -223,7 +226,7 @@ defaultMatchCdOdConfig
     printSolution    = False,
     timeout          = Nothing,
     withNonTrivialInheritance = Just True,
-    extraText        = Nothing
+    extraText        = NoExtraText
   }
 
 toMatching :: Map Char [Int] -> Map (Int, Char) Bool
@@ -283,11 +286,12 @@ matchCdOdTask
     MonadThrow m,
     OutputCapable m
     )
-  => FilePath
+  => Bool
+  -> FilePath
   -> MatchCdOdInstance
   -> LangM m
-matchCdOdTask path task = do
-  toTaskText path task
+matchCdOdTask showInputHelp path task = do
+  toTaskText showInputHelp path task
   paragraph simplifiedInformation
   paragraph directionsAdvice
   paragraph hoveringInformation
@@ -301,11 +305,16 @@ toTaskText
     MonadThrow m,
     OutputCapable m
     )
-  => FilePath
+  => Bool
+  -> FilePath
   -> MatchCdOdInstance
   -> LangM m
-toTaskText path task =
+toTaskText showInputHelp path task = do
   specialToOutputCapable (toTaskSpecificText path task) (taskText task)
+  when showInputHelp $
+    toOutputCapable inputHelpText
+  extra $ addText task
+  pure ()
 
 toTaskSpecificText
   :: (
@@ -346,7 +355,11 @@ defaultMatchCdOdTaskText = [
       Ein Objektdiagramm kann zu keinem,
       einem oder beiden Klassendiagrammen passen.
       |],
-  Special GivenOds,
+  Special GivenOds
+  ]
+
+inputHelpText :: [Output]
+inputHelpText = [
   Paragraph [
     Translated $ translations $ do
       english [iii|
@@ -658,7 +671,7 @@ defaultMatchCdOdInstance = MatchCdOdInstance {
     ],
   showSolution = False,
   taskText = defaultMatchCdOdTaskText,
-  addText = Nothing
+  addText = NoExtraText
   }
 
 classAndNonInheritanceNames :: MatchCdOdInstance -> ([String], [String])

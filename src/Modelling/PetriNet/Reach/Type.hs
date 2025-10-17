@@ -1,5 +1,9 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DeriveGeneric #-}
+#if !MIN_VERSION_base(4,18,0)
+{-# LANGUAGE DerivingStrategies #-}
+#endif
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
 {-|
@@ -30,7 +34,9 @@ import Data.Data                        (Data)
 import Data.List                        (intercalate)
 import Data.Map                         (Map)
 import Data.Set                         (Set)
+#if !MIN_VERSION_base(4,18,0)
 import Data.Typeable                    (Typeable)
+#endif
 import GHC.Generics                     (Generic)
 import Text.ParserCombinators.Parsec (
   Parser,
@@ -44,7 +50,10 @@ import Text.ParserCombinators.Parsec (
 type Connection s t = ([s], t, [s])
 
 newtype State s = State {unState :: Map s Int}
-  deriving (Generic, Typeable, Data)
+  deriving (Generic, Data)
+#if !MIN_VERSION_base(4,18,0)
+  deriving Typeable
+#endif
 
 mapState :: Ord b => (a -> b) -> State a -> State b
 mapState f (State x) = State { unState = M.mapKeys f x }
@@ -71,7 +80,10 @@ data Capacity s
   = Unbounded
   | AllBounded Int
   | Bounded (Map s Int)
-  deriving (Eq, Generic, Ord, Read, Show, Typeable, Data)
+  deriving (Eq, Generic, Ord, Read, Show, Data)
+#if !MIN_VERSION_base(4,18,0)
+  deriving Typeable
+#endif
 
 mapCapacity :: Ord a => (s -> a) -> Capacity s -> Capacity a
 mapCapacity _ Unbounded      = Unbounded
@@ -85,7 +97,7 @@ data Net s t = Net {
   capacity :: Capacity s,
   start :: State s
   }
-  deriving (Eq, Generic, Ord, Read, Show, Typeable, Data)
+  deriving (Eq, Generic, Ord, Read, Show, Data)
 
 bimapNet :: (Ord a, Ord b) => (s -> a) -> (t -> b) -> Net s t -> Net a b
 bimapNet f g x = Net {
@@ -115,7 +127,10 @@ conforms cap (State z) = case cap of
     (M.toList z)
 
 newtype Place = Place Int
-  deriving (Enum, Eq, Generic, Ord, Read, Show, Typeable, Data)
+  deriving (Enum, Eq, Generic, Ord, Read, Show, Data)
+#if !MIN_VERSION_base(4,18,0)
+  deriving Typeable
+#endif
 
 newtype ShowPlace = ShowPlace Place
   deriving (Eq, Ord)
@@ -133,7 +148,10 @@ parsePlacePrec _ = do
   Place <$> parseInt <* skipMany space
 
 newtype Transition = Transition Int
-  deriving (Enum, Eq, Generic, Ord, Read, Show, Typeable, Data)
+  deriving (Enum, Eq, Generic, Ord, Read, Show, Data)
+#if !MIN_VERSION_base(4,18,0)
+  deriving Typeable
+#endif
 
 newtype ShowTransition = ShowTransition Transition
   deriving (Eq, Ord)

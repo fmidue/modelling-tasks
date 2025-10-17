@@ -1,6 +1,10 @@
 {-# LANGUAGE ApplicativeDo #-}
-{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE DeriveGeneric #-}
+#if !MIN_VERSION_base(4,18,0)
+{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE DerivingStrategies #-}
+#endif
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
@@ -50,7 +54,9 @@ import Control.OutputCapable.Blocks.Generic (
   )
 import Data.Either                      (fromLeft)
 import Data.Foldable                    (for_)
+#if !MIN_VERSION_base(4,18,0)
 import Data.Typeable                    (Typeable)
+#endif
 import GHC.Generics                     (Generic)
 
 data Property
@@ -60,7 +66,10 @@ data Property
   | MaxEdgeMultiplicity Int
   | MaxInitialTokens Int
   | Capacity (Capacity ())
-  deriving (Typeable, Generic)
+  deriving Generic
+#if !MIN_VERSION_base(4,18,0)
+  deriving Typeable
+#endif
 
 validates
   :: (Foldable f, Ord a, Ord b, OutputCapable m, Show a, Show b)

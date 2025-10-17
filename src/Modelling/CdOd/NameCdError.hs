@@ -67,6 +67,7 @@ import Modelling.Auxiliary.Common (
   upperToDash,
   )
 import Modelling.Auxiliary.Output (
+  ExtraText(..),
   addPretext,
   checkTaskText,
   hoveringInformation,
@@ -147,7 +148,7 @@ import Modelling.CdOd.Types (
 import Modelling.Types                  (Change (..))
 
 import Control.Applicative              (Alternative ((<|>)))
-import Control.Monad                    ((>=>), forM, join)
+import Control.Monad                    ((>=>), forM, join, when)
 import Control.Monad.Catch              (MonadCatch, MonadThrow)
 import Control.Monad.Except             (runExceptT)
 import Control.OutputCapable.Blocks (
@@ -175,9 +176,11 @@ import Control.OutputCapable.Blocks.Generic.Type (
   GenericOutput (Code, Paragraph, Special, Translated),
   )
 import Control.OutputCapable.Blocks.Type (
+  Output,
   SpecialOutput,
   checkTranslation,
   specialToOutputCapable,
+  toOutputCapable,
   )
 import Control.Monad.Random
   (MonadRandom, RandT, RandomGen, evalRandT, mkStdGen)
@@ -251,7 +254,7 @@ data NameCdErrorConfig = NameCdErrorConfig {
   reasonsPerInstance          :: NumberOfReasons,
   timeout                     :: Maybe Int,
   useNames                    :: Bool,
-  extraText                   :: Maybe (Map Language String)
+  extraText                   :: ExtraText
   } deriving (Generic, Read, Show)
 
 defaultNameCdErrorConfig :: NameCdErrorConfig
@@ -288,7 +291,7 @@ defaultNameCdErrorConfig = NameCdErrorConfig {
     },
   timeout = Nothing,
   useNames = True,
-  extraText = Nothing
+  extraText = NoExtraText
   }
 
 checkNameCdErrorConfig :: NameCdErrorConfig -> Maybe String
@@ -378,11 +381,15 @@ data NameCdErrorTaskTextElement =
 
 toTaskText
   :: (MonadCache m, MonadDiagrams m, MonadGraphviz m, OutputCapable m)
-  => FilePath
+  => Bool
+  -> FilePath
   -> NameCdErrorInstance
   -> LangM m
-toTaskText path task =
+toTaskText showInputHelp path task = do
   specialToOutputCapable (toTaskSpecificText path task) (taskText task)
+  when showInputHelp $
+    toOutputCapable inputHelpText
+  pure ()
 
 toTaskSpecificText
   :: (MonadCache m, MonadDiagrams m, MonadGraphviz m, OutputCapable m)
@@ -420,7 +427,7 @@ data NameCdErrorInstance = NameCdErrorInstance {
   errorReasons                :: !(Map Char (Bool, Reason)),
   showSolution                :: Bool,
   taskText                    :: !NameCdErrorTaskText,
-  addText                     :: Maybe (Map Language String)
+  addText                     :: ExtraText
   } deriving (Data, Eq, Generic, Read, Show)
 
 relevantRelationships
@@ -514,7 +521,11 @@ defaultNameCdErrorTaskText = [
   Paragraph $ singleton $ Translated $ translations $ do
     english [i|The class diagram ...|]
     german [i|Das Klassendiagramm ...|],
-  Paragraph $ singleton $ Special ReasonsList,
+  Paragraph $ singleton $ Special ReasonsList
+  ]
+
+inputHelpText :: [Output]
+inputHelpText = [
   Paragraph [
     Paragraph $ singleton $ Translated $ translations $ do
       english [iii|
@@ -555,11 +566,12 @@ defaultNameCdErrorTaskText = [
 
 nameCdErrorTask
   :: (MonadCache m, MonadDiagrams m, MonadGraphviz m, OutputCapable m)
-  => FilePath
+  => Bool
+  -> FilePath
   -> NameCdErrorInstance
   -> LangM m
-nameCdErrorTask path task = do
-  toTaskText path task
+nameCdErrorTask showInputHelp path task = do
+  toTaskText showInputHelp path task
   paragraph simplifiedInformation
   paragraph hoveringInformation
   extra $ addText task
@@ -1070,5 +1082,5 @@ defaultNameCdErrorInstance = NameCdErrorInstance {
     ],
   showSolution = False,
   taskText = defaultNameCdErrorTaskText,
-  addText = Nothing
+  addText = NoExtraText
   }

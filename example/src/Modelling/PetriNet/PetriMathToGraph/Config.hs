@@ -3,6 +3,7 @@ Configurations might work for @PetriGraphToMath@ and @PetriMathToGraph@ tasks
 -}
 module Modelling.PetriNet.PetriMathToGraph.Config where
 
+import Modelling.Auxiliary.Output       (ExtraText(..))
 import Modelling.PetriNet.MatchToMath (
   MathConfig (..),
   )
@@ -57,7 +58,7 @@ task2023_19 = MathConfig {
     maxInstances = Just 2000,
     timeout = Nothing
     },
-  extraText = Nothing
+  extraText = NoExtraText
   }
 
 {-|
@@ -102,7 +103,7 @@ task2023_20 = MathConfig {
     maxInstances = Just 2000,
     timeout = Nothing
     },
-  extraText = Nothing
+  extraText = NoExtraText
   }
 
 {-|
