@@ -10,7 +10,7 @@ import Modelling.ActivityDiagram.SelectAS (
 
 import Modelling.ActivityDiagram.ActionSequences (actionRepetitionDistance)
 import Modelling.ActivityDiagram.Config (
-  AdConfig (objectNodeLimits, cycles),
+  AdConfig (objectNodeLimits),
   defaultAdConfig,
   )
 import Modelling.ActivityDiagram.Datatype (
