@@ -2,6 +2,7 @@
 
 module Modelling.CdOd.SelectValidCd.Config where
 
+import Modelling.Auxiliary.Output       (ExtraText(..))
 import Modelling.CdOd.RepairCd (
   WeakeningKind (..),
   )
@@ -65,7 +66,7 @@ task2023_05 = SelectValidCdConfig {
     omittedDefaults = OmittedDefaultMultiplicities {
       aggregationWholeOmittedDefaultMultiplicity = Just (0, Nothing),
       associationOmittedDefaultMultiplicity = Just (0, Nothing),
-      compositionWholeOmittedDefaultMultiplicity = Just (1, Just 1)
+      compositionWholeOmittedDefaultMultiplicity = Nothing
       },
     printNames = True,
     printNavigations = False
@@ -82,7 +83,7 @@ task2023_05 = SelectValidCdConfig {
   printSolution = True,
   shuffleEachCd = True,
   timeout = Nothing,
-  extraText = Nothing
+  extraText = NoExtraText
   }
 
 {-|
@@ -128,7 +129,7 @@ task2023_06 = SelectValidCdConfig {
     omittedDefaults = OmittedDefaultMultiplicities {
       aggregationWholeOmittedDefaultMultiplicity = Just (0, Nothing),
       associationOmittedDefaultMultiplicity = Just (0, Nothing),
-      compositionWholeOmittedDefaultMultiplicity = Just (1, Just 1)
+      compositionWholeOmittedDefaultMultiplicity = Nothing
       },
     printNames = True,
     printNavigations = True
@@ -145,7 +146,7 @@ task2023_06 = SelectValidCdConfig {
   printSolution = True,
   shuffleEachCd = True,
   timeout = Nothing,
-  extraText = Nothing
+  extraText = NoExtraText
   }
 
 {-|
@@ -206,7 +207,7 @@ task2024_06 = SelectValidCdConfig {
   printSolution = True,
   shuffleEachCd = True,
   timeout = Nothing,
-  extraText = Nothing
+  extraText = NoExtraText
   }
 
 {-|
@@ -268,7 +269,7 @@ task2024_07 = SelectValidCdConfig {
   printSolution = True,
   shuffleEachCd = True,
   timeout = Nothing,
-  extraText = Nothing
+  extraText = NoExtraText
   }
 
 {-|
@@ -328,7 +329,7 @@ task2024_08 = SelectValidCdConfig {
   printSolution = True,
   shuffleEachCd = True,
   timeout = Nothing,
-  extraText = Nothing
+  extraText = NoExtraText
   }
 
 {-|
@@ -389,7 +390,7 @@ task2024_51 = SelectValidCdConfig {
   printSolution = True,
   shuffleEachCd = False,
   timeout = Nothing,
-  extraText = Nothing
+  extraText = NoExtraText
   }
 
 {-|
@@ -449,5 +450,5 @@ task2024_52 = SelectValidCdConfig {
   printSolution = True,
   shuffleEachCd = False,
   timeout = Nothing,
-  extraText = Nothing
+  extraText = NoExtraText
   }

@@ -52,7 +52,6 @@ import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
   GenericOutputCapable (..),
   LangM,
-  Language,
   Rated,
   OutputCapable,
   ($=<<),
@@ -74,6 +73,7 @@ import Data.Maybe (isJust, isNothing, fromJust)
 import Data.String.Interpolate (i, iii)
 import GHC.Generics (Generic)
 import Modelling.Auxiliary.Output (
+  ExtraText(..),
   addPretext,
   extra
   )
@@ -83,7 +83,7 @@ data MatchAdInstance = MatchAdInstance {
   activityDiagram :: UMLActivityDiagram,
   plantUMLConf :: PlantUmlConfig,
   showSolution :: Bool,
-  addText :: Maybe (Map Language String)
+  addText :: ExtraText
 } deriving (Generic, Read, Show)
 
 data MatchAdConfig = MatchAdConfig {
@@ -92,7 +92,7 @@ data MatchAdConfig = MatchAdConfig {
   hideBranchConditions :: Bool,
   withActivityFinalInForkBlocks :: !(Maybe Bool),
   printSolution :: Bool,
-  extraText :: Maybe (Map Language String)
+  extraText :: ExtraText
 } deriving (Generic, Read, Show)
 
 defaultMatchAdConfig :: MatchAdConfig
@@ -102,7 +102,7 @@ defaultMatchAdConfig = MatchAdConfig {
   hideBranchConditions = False,
   withActivityFinalInForkBlocks = Just True,
   printSolution = False,
-  extraText = Nothing
+  extraText = NoExtraText
 }
 
 checkMatchAdConfig :: MatchAdConfig -> Maybe String
@@ -338,5 +338,5 @@ defaultMatchAdInstance = MatchAdInstance {
   },
   plantUMLConf = defaultPlantUmlConfig,
   showSolution = False,
-  addText = Nothing
+  addText = NoExtraText
 }

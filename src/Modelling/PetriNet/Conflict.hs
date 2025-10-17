@@ -57,6 +57,7 @@ import Modelling.Auxiliary.Common (
   upperFirst,
   )
 import Modelling.Auxiliary.Output (
+  ExtraText(..),
   hoveringInformation,
   extra,
   )
@@ -727,7 +728,7 @@ defaultPickConflictInstance = PickInstance {
       )))
     ],
   showSolution = False,
-  addText = Nothing
+  addText = NoExtraText
   }
 
 defaultFindConflictInstance :: FindInstance SimplePetriNet Conflict
@@ -757,5 +758,5 @@ defaultFindConflictInstance = FindInstance {
   numberOfPlaces = 4,
   numberOfTransitions = 3,
   showSolution = False,
-  addText = Nothing
+  addText = NoExtraText
   }

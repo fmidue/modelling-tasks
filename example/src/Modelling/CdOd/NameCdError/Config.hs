@@ -2,6 +2,7 @@
 
 module Modelling.CdOd.NameCdError.Config where
 
+import Modelling.Auxiliary.Output       (ExtraText(..))
 import Modelling.CdOd.NameCdError (
   NameCdErrorConfig (..),
   NumberOfReasons (..),
@@ -55,7 +56,7 @@ task2023_09 = NameCdErrorConfig {
     omittedDefaults = OmittedDefaultMultiplicities {
       aggregationWholeOmittedDefaultMultiplicity = Just (0, Nothing),
       associationOmittedDefaultMultiplicity = Just (0, Nothing),
-      compositionWholeOmittedDefaultMultiplicity = Just (1, Just 1)
+      compositionWholeOmittedDefaultMultiplicity = Nothing
       },
     printNames = True,
     printNavigations = True
@@ -89,7 +90,7 @@ task2023_09 = NameCdErrorConfig {
     },
   timeout = Nothing,
   useNames = True,
-  extraText = Nothing
+  extraText = NoExtraText
   }
 
 {-|
@@ -127,7 +128,7 @@ task2023_10 = NameCdErrorConfig {
     omittedDefaults = OmittedDefaultMultiplicities {
       aggregationWholeOmittedDefaultMultiplicity = Just (0, Nothing),
       associationOmittedDefaultMultiplicity = Just (0, Nothing),
-      compositionWholeOmittedDefaultMultiplicity = Just (1, Just 1)
+      compositionWholeOmittedDefaultMultiplicity = Nothing
       },
     printNames = True,
     printNavigations = False
@@ -161,7 +162,7 @@ task2023_10 = NameCdErrorConfig {
     },
   timeout = Nothing,
   useNames = True,
-  extraText = Nothing
+  extraText = NoExtraText
   }
 
 {-|
@@ -233,7 +234,7 @@ task2024_10 = NameCdErrorConfig {
     },
   timeout = Nothing,
   useNames = True,
-  extraText = Nothing
+  extraText = NoExtraText
   }
 
 {-|
@@ -305,7 +306,7 @@ task2024_11 = NameCdErrorConfig {
     },
   timeout = Nothing,
   useNames = False,
-  extraText = Nothing
+  extraText = NoExtraText
   }
 
 {-|
@@ -377,5 +378,5 @@ task2024_54 = NameCdErrorConfig {
     },
   timeout = Nothing,
   useNames = True,
-  extraText = Nothing
+  extraText = NoExtraText
   }

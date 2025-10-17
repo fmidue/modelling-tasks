@@ -34,6 +34,7 @@ import Modelling.Auxiliary.Common (
   Object,
   findFittingRandomElements,
   )
+import Modelling.Auxiliary.Output (ExtraText)
 import Modelling.PetriNet.Diagram (
   cacheNet,
   getDefaultNet,
@@ -61,7 +62,6 @@ import Control.Monad.Extra              (maybeM)
 import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
   LangM,
-  Language,
   OutputCapable,
   english,
   german,
@@ -90,7 +90,7 @@ import System.Random.Shuffle            (shuffleM)
 data PickInstance n = PickInstance {
   nets :: !(Map Int (Bool, Drawable n)),
   showSolution :: !Bool,
-  addText :: !(Maybe (Map Language String))
+  addText :: !ExtraText
   }
   deriving (Generic, Read, Show)
 
@@ -121,7 +121,7 @@ pickGenerate
   -> (c -> GraphConfig)
   -> (c -> Bool)
   -> (c -> Bool)
-  -> (c -> Maybe (Map Language String))
+  -> (c -> ExtraText)
   -> c
   -> Int
   -> Int
