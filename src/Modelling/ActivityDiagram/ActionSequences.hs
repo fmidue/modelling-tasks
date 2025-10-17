@@ -70,7 +70,7 @@ generateActionSequenceWithPetri :: UMLActivityDiagram -> PetriLike Node PetriKey
 generateActionSequenceWithPetri diag petri =
   let actions = extractActionLookup diag
       transitionSequences = generateSequencesWithLevels levels' petri
-  in transitionsToActionNamesWithLookup actions $ head transitionSequences
+  in  head $ map (transitionsToActionNamesWithLookup actions) transitionSequences
 
 -- | Helper to convert transition sequences to action names using a pre-computed action lookup table
 transitionsToActionNamesWithLookup :: [(Int, String)] -> [PetriKey] -> [String]
