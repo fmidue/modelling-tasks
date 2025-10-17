@@ -112,9 +112,8 @@ extractActionLookup diag = map
 -- [A,B,C] -> Nothing (no repetitions)
 actionRepetitionDistance :: [String] -> Maybe Int
 actionRepetitionDistance actionSequence =
-  let indicesOf action = [i | (i, a) <- zip [0..] actionSequence, a == action]
-      maxDistanceForAction action =
-        let indices = indicesOf action
+  let maxDistanceForAction action =
+        let indices = [i | (i, a) <- zip [0..] actionSequence, a == action]
         in if length indices < 2
            then Nothing
            else Just (maximum indices - minimum indices - 1)
