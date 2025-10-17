@@ -44,7 +44,7 @@ import Modelling.PetriNet.Reach.Step (levels', successors)
 import Control.Monad (guard)
 import Data.Containers.ListUtils (nubOrd)
 import Data.List (union, maximumBy)
-import Data.Maybe(mapMaybe, isJust)
+import Data.Maybe(mapMaybe, isJust, fromJust)
 import Data.Ord (comparing)
 import Data.Tuple (swap)
 
@@ -60,9 +60,9 @@ fromPetriLike petri =
   }
 
 --Generate one valid action sequence to each of the final nodes
-generateActionSequence :: UMLActivityDiagram -> Maybe [String]
+generateActionSequence :: UMLActivityDiagram -> [String]
 generateActionSequence diag =
-  generateActionSequenceWithPetri diag (convertToPetriNet diag) Nothing
+  fromJust $ generateActionSequenceWithPetri diag (convertToPetriNet diag) Nothing
 
 -- | Generate one valid action sequence, using a pre-computed Petri net.
 -- This version avoids re-computing the Petri net conversion.
@@ -74,8 +74,7 @@ generateActionSequenceWithPetri
   -> Maybe [String]
 generateActionSequenceWithPetri diag petri maybeLengthBounds =
   let actions = extractActionLookup diag
-      transitionSequences = generateSequencesWithLevels levels' petri
-      validSequences = mapMaybe (transitionsToActionNamesWithLookup actions maybeLengthBounds) transitionSequences
+      validSequences = generateSequencesWithLevels levels' actions maybeLengthBounds petri
   in if null validSequences then Nothing else Just (head validSequences)
 
 -- | Helper to convert transition sequences to action names using a pre-computed action lookup table.
@@ -107,8 +106,7 @@ generateActionSequenceWithPetriAndRepetition
   -> Maybe [String]
 generateActionSequenceWithPetriAndRepetition diag petri maybeLengthBounds =
   let actions = extractActionLookup diag
-      transitionSequences = generateSequencesWithLevels levelsWithCycles petri
-      allActionSequences = mapMaybe (transitionsToActionNamesWithLookup actions maybeLengthBounds) transitionSequences
+      allActionSequences = generateSequencesWithLevels levelsWithCycles actions maybeLengthBounds petri
       sequencesWithDistances = [(seq', d) | seq' <- allActionSequences, Just d <- [actionRepetitionDistance seq']]
   in if null sequencesWithDistances
      then Nothing
@@ -144,12 +142,19 @@ actionRepetitionDistance actionSequence =
   in if null distances then Nothing else Just (maximum distances)
 
 -- | Helper to generate sequences using a specific levels function
-generateSequencesWithLevels :: (Net PetriKey PetriKey -> [[(State PetriKey, [PetriKey])]]) -> PetriLike Node PetriKey -> [[PetriKey]]
-generateSequencesWithLevels levelsFunction petriLike =
+-- Now includes the action name conversion and length bounds filtering
+generateSequencesWithLevels 
+  :: (Net PetriKey PetriKey -> [[(State PetriKey, [PetriKey])]])
+  -> [(Int, String)]  -- action lookup table
+  -> Maybe (Int, Int)  -- Optional (minLength, maxLength) constraints
+  -> PetriLike Node PetriKey 
+  -> [[String]]
+generateSequencesWithLevels levelsFunction actions maybeLengthBounds petriLike =
   let petri = fromPetriLike petriLike
       zeroState = State $ M.map (const 0) $ unState $ start petri
       allLevels = levelsFunction petri
-  in [reverse p | level <- allLevels, (s, p) <- level, s == zeroState]
+      transitionSequences = [reverse p | level <- allLevels, (s, p) <- level, s == zeroState]
+  in mapMaybe (transitionsToActionNamesWithLookup actions maybeLengthBounds) transitionSequences
 
 -- | Variant of levels' that manages visited states per path rather than globally
 -- This allows exploring cycles while preventing infinite loops within each path

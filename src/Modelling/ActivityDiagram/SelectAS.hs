@@ -178,20 +178,7 @@ checkSelectASInstance inst
   | otherwise
   = Nothing
 
-checkSelectASInstanceForConfig
-  :: SelectASInstance
-  -> SelectASConfig
-  -> Maybe String
-checkSelectASInstanceForConfig inst SelectASConfig {
-  answerLength
-  }
-  | any (\actionSequence -> length actionSequence < fst answerLength) allSequences
-  = Just "All action sequences should not be shorter than the minimal 'answerLength'"
-  | any (\actionSequence -> length actionSequence > snd answerLength) allSequences
-  = Just "All action sequences should not be longer than the maximal 'answerLength'"
-  | otherwise
-    = Nothing
-  where allSequences = M.map snd $ actionSequences inst
+
 
 data SelectASSolution = SelectASSolution {
   correctSequence :: [String],
@@ -334,7 +321,7 @@ getSelectASTask config = do
       Nothing -> return Nothing  -- Could not generate sequence with repetition despite being asked to
       Just solution -> do
         actionSequences <- selectASSolutionToMap solution
-        let selectASInst = SelectASInstance {
+        return $ Just SelectASInstance {
               activityDiagram=x,
               actionSequences = actionSequences,
               drawSettings = defaultPlantUmlConfig {
@@ -343,9 +330,6 @@ getSelectASTask config = do
               showSolution = printSolution config,
               addText = extraText config
             }
-        case checkSelectASInstanceForConfig selectASInst config of
-          Just _ -> return Nothing
-          Nothing -> return $ Just selectASInst
     ) ad
   case validInstances of
     Just x -> return x
