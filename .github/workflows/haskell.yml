@@ -13,6 +13,8 @@ on:
       - '**.cabal'
       - 'stack*.yaml'
       - 'alloy/**.als'
+      - 'test/unit/**.als'
+      - 'test/unit/**.svg'
       - '**/hie.yaml'
       - '.hlint.yaml'
       - '.github/workflows/haskell.yml'
