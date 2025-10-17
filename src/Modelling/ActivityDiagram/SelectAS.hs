@@ -204,15 +204,14 @@ selectActionSequence withRepetition numberOfWrongSequences ad =
       maybeCorrectSequence = if withRepetition
         then generateActionSequenceWithPetriAndRepetition ad petri
         else Just (generateActionSequenceWithPetri ad petri)
-  in case maybeCorrectSequence of
-       Nothing -> Nothing
-       Just correctSequence ->
-         let wrongSequences =
-               take numberOfWrongSequences $
-               sortBy (compareDistToCorrect correctSequence) $
-               filter (not . (\actionSeq -> validActionSequenceWithPetri actionSeq ad petri)) $
-               permutations correctSequence
-         in Just (SelectASSolution {correctSequence=correctSequence, wrongSequences=wrongSequences})
+  in fmap (\correctSequence ->
+        let wrongSequences =
+              take numberOfWrongSequences $
+              sortBy (compareDistToCorrect correctSequence) $
+              filter (not . (\actionSeq -> validActionSequenceWithPetri actionSeq ad petri)) $
+              permutations correctSequence
+        in SelectASSolution {correctSequence=correctSequence, wrongSequences=wrongSequences})
+      maybeCorrectSequence
 
 asEditDistParams :: [String] -> Params String (String, Int, String) (Sum Int)
 asEditDistParams xs = Params
