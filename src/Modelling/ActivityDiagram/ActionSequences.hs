@@ -167,7 +167,7 @@ terminatesSomeButNotAllFlowsWithPetri input diag petri =
       actions = map snd $ filter (\(l,_) -> l `elem` map snd nameMap) petriKeyMap
       net = fromPetriLike petri
       zeroState = State $ M.map (const 0) $ unState $ start net
-      levels = levelsCheckAS input' actions net
+      levels = levelsCheckAS input' actions net (getActionsLeadingToActivityFinals diag)
       reachesZeroState = any (isJust . lookup zeroState) levels
       -- Check if any FinalPetriNode transition was fired (meaning a flow was terminated)
       finalNodeReached = any (any (\(_, path) -> any isFinalPetriNode path)) levels
