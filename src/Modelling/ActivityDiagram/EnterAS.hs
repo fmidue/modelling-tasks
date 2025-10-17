@@ -81,7 +81,7 @@ import Control.Monad.Random (
   )
 import Data.List (intercalate, intersect)
 import Data.List.Extra (nubOrd)
-import Data.Maybe                       (fromMaybe, isNothing)
+import Data.Maybe (fromJust, isNothing)
 import Data.String.Interpolate (i, iii)
 import GHC.Generics (Generic)
 import Modelling.Auxiliary.Output (
@@ -190,7 +190,7 @@ newtype EnterASSolution = EnterASSolution {
 
 enterActionSequence :: UMLActivityDiagram -> PetriLike Node PetriKey -> EnterASSolution
 enterActionSequence ad petri =
-  EnterASSolution {sampleSolution=fromMaybe [] $ generateActionSequenceWithPetri ad petri Nothing}
+  EnterASSolution {sampleSolution = fromJust $ generateActionSequenceWithPetri ad petri Nothing}
 
 enterASTask
   :: (MonadPlantUml m, MonadWriteFile m, OutputCapable m)
