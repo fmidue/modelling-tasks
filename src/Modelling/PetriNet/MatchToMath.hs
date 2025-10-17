@@ -47,6 +47,7 @@ import Capabilities.Diagrams            (MonadDiagrams)
 import Capabilities.Graphviz            (MonadGraphviz)
 import Modelling.Auxiliary.Common       (Object (oName), findFittingRandomElements)
 import Modelling.Auxiliary.Output       (
+  ExtraText(..),
   hoveringInformation,
   extra,
   )
@@ -169,7 +170,7 @@ data MathConfig = MathConfig {
   useDifferentGraphLayouts :: Bool,
   wrongInstances :: Int,
   alloyConfig :: AlloyConfig,
-  extraText :: Maybe (Map Language String)
+  extraText :: ExtraText
   } deriving (Generic, Read, Show)
 
 defaultMathConfig :: MathConfig
@@ -186,14 +187,14 @@ defaultMathConfig = MathConfig {
   useDifferentGraphLayouts = False,
   wrongInstances = 3,
   alloyConfig = defaultAlloyConfig,
-  extraText = Nothing
+  extraText = NoExtraText
   }
 
 data MatchInstance a b = MatchInstance {
   from :: a,
   showSolution :: Bool,
   to :: Map Int (Bool, b),
-  addText :: Maybe (Map Language String)
+  addText :: ExtraText
   }
   deriving (Data, Functor, Generic, Read, Show)
 
@@ -743,7 +744,7 @@ defaultGraphToMathInstance = MatchInstance {
       placeOrderMath = Just "\\left(s_{1},s_{2},s_{3},s_{4}\\right)"
       }))
     ],
-    addText = Nothing
+    addText = NoExtraText
   }
 
 defaultMathToGraphInstance :: MathToGraphInstance
@@ -842,5 +843,5 @@ defaultMathToGraphInstance = MatchInstance {
         }
       )))
     ],
-    addText = Nothing
+    addText = NoExtraText
   }

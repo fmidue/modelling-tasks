@@ -9,6 +9,7 @@ import Modelling.CdOd.SelectValidCd (
   SelectValidCdTaskTextElement (..),
   )
 
+import Modelling.Auxiliary.Output  (ExtraText (..))
 import Modelling.Auxiliary.Shuffle.All  (ShuffleInstance (..))
 import Modelling.CdOd.RepairCd          (InValidOption (..))
 import Modelling.CdOd.Types (
@@ -45,7 +46,7 @@ task2024_05 = SelectValidCdInstance {
     omittedDefaults = OmittedDefaultMultiplicities {
       aggregationWholeOmittedDefaultMultiplicity = Just (0, Nothing),
       associationOmittedDefaultMultiplicity = Just (0, Nothing),
-      compositionWholeOmittedDefaultMultiplicity = Just (1, Just 1)
+      compositionWholeOmittedDefaultMultiplicity = Nothing
       },
     printNames = True,
     printNavigations = True
@@ -192,7 +193,7 @@ task2024_05 = SelectValidCdInstance {
         ])
       ]
     ],
-  addText = Nothing
+  addText = NoExtraText
   }
 
 {-|
@@ -435,7 +436,7 @@ task2024_06picked = ShuffleInstance {
           ])
         ]
       ],
-    addText = Nothing
+    addText = NoExtraText
     },
   allowLayoutMangling = True,
   shuffleNames = True,
@@ -866,7 +867,7 @@ task2024_09 = ShuffleInstance {
           ])
         ]
       ],
-    addText = Nothing
+    addText = NoExtraText
     },
   allowLayoutMangling = True,
   shuffleNames = True,
@@ -1160,7 +1161,7 @@ task2024_53 = ShuffleInstance {
           ])
         ]
       ],
-    addText = Nothing
+    addText = NoExtraText
     },
   allowLayoutMangling = True,
   shuffleNames = False,

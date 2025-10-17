@@ -2,6 +2,7 @@
 
 module Modelling.CdOd.RepairCd.Config where
 
+import Modelling.Auxiliary.Output       (ExtraText(..))
 import Modelling.CdOd.RepairCd (
   RepairCdConfig (..),
   )
@@ -61,7 +62,7 @@ task2023_07 = RepairCdConfig {
     omittedDefaults = OmittedDefaultMultiplicities {
       aggregationWholeOmittedDefaultMultiplicity = Just (0, Nothing),
       associationOmittedDefaultMultiplicity = Just (0, Nothing),
-      compositionWholeOmittedDefaultMultiplicity = Just (1, Just 1)
+      compositionWholeOmittedDefaultMultiplicity = Nothing
       },
     printNames = True,
     printNavigations = False
@@ -78,7 +79,7 @@ task2023_07 = RepairCdConfig {
   printSolution = True,
   timeout = Nothing,
   useNames = True,
-  extraText = Nothing
+  extraText = NoExtraText
   }
 
 {-|
@@ -122,7 +123,7 @@ task2023_08 = RepairCdConfig {
     omittedDefaults = OmittedDefaultMultiplicities {
       aggregationWholeOmittedDefaultMultiplicity = Just (0, Nothing),
       associationOmittedDefaultMultiplicity = Just (0, Nothing),
-      compositionWholeOmittedDefaultMultiplicity = Just (1, Just 1)
+      compositionWholeOmittedDefaultMultiplicity = Nothing
       },
     printNames = False,
     printNavigations = True
@@ -139,7 +140,7 @@ task2023_08 = RepairCdConfig {
   printSolution = True,
   timeout = Nothing,
   useNames = False,
-  extraText = Nothing
+  extraText = NoExtraText
   }
 
 {-|
@@ -182,7 +183,7 @@ task2024_12 = RepairCdConfig {
     omittedDefaults = OmittedDefaultMultiplicities {
       aggregationWholeOmittedDefaultMultiplicity = Just (0, Nothing),
       associationOmittedDefaultMultiplicity = Just (0, Nothing),
-      compositionWholeOmittedDefaultMultiplicity = Just (1, Just 1)
+      compositionWholeOmittedDefaultMultiplicity = Nothing
       },
     printNames = True,
     printNavigations = False
@@ -199,7 +200,7 @@ task2024_12 = RepairCdConfig {
   printSolution = True,
   timeout = Nothing,
   useNames = True,
-  extraText = Nothing
+  extraText = NoExtraText
   }
 
 {-|
@@ -258,7 +259,7 @@ task2024_13 = RepairCdConfig {
   printSolution = True,
   timeout = Nothing,
   useNames = False,
-  extraText = Nothing
+  extraText = NoExtraText
   }
 
 {-|
@@ -318,5 +319,5 @@ task2024_55 = RepairCdConfig {
   printSolution = True,
   timeout = Nothing,
   useNames = True,
-  extraText = Nothing
+  extraText = NoExtraText
   }

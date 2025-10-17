@@ -49,6 +49,7 @@ import Modelling.Auxiliary.Common (
   parseWith,
   )
 import Modelling.Auxiliary.Output (
+  ExtraText(..),
   hoveringInformation,
   extra,
   )
@@ -575,7 +576,7 @@ defaultPickConcurrencyInstance = PickInstance {
       )))
     ],
   showSolution = False,
-  addText = Nothing
+  addText = NoExtraText
   }
 
 defaultFindConcurrencyInstance :: FindInstance SimplePetriNet (Concurrent Transition)
@@ -602,5 +603,5 @@ defaultFindConcurrencyInstance = FindInstance {
   numberOfPlaces = 4,
   numberOfTransitions = 3,
   showSolution = False,
-  addText = Nothing
+  addText = NoExtraText
   }

@@ -2,6 +2,7 @@
 
 module Modelling.PetriNet.PetriPickConcurrency.Config where
 
+import Modelling.Auxiliary.Output       (ExtraText(..))
 import Modelling.PetriNet.Types (
   AlloyConfig (..),
   BasicConfig (..),
@@ -47,7 +48,7 @@ task2023_21 = PickConcurrencyConfig {
     maxInstances = Just 2000,
     timeout = Nothing
     },
-  extraText = Nothing
+  extraText = NoExtraText
   }
 
 {-|

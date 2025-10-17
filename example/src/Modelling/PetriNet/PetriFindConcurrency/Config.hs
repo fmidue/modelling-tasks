@@ -2,6 +2,7 @@
 
 module Modelling.PetriNet.PetriFindConcurrency.Config where
 
+import Modelling.Auxiliary.Output       (ExtraText(..))
 import Modelling.PetriNet.Types (
   AdvConfig (..),
   AlloyConfig (..),
@@ -51,7 +52,7 @@ task2023_23 = FindConcurrencyConfig {
     maxInstances = Just 2000,
     timeout = Nothing
     },
-  extraText = Nothing
+  extraText = NoExtraText
   }
 
 {-|
@@ -101,7 +102,7 @@ task2024_33 = FindConcurrencyConfig {
     maxInstances = Just 2000,
     timeout = Nothing
     },
-  extraText = Nothing
+  extraText = NoExtraText
   }
 
 {-|
@@ -143,7 +144,7 @@ task2024_62 = FindConcurrencyConfig {
     maxInstances = Just 2000,
     timeout = Nothing
     },
-  extraText = Nothing
+  extraText = NoExtraText
   }
 
 {-|
@@ -185,5 +186,5 @@ task2024_63 = FindConcurrencyConfig {
     maxInstances = Just 2000,
     timeout = Nothing
     },
-  extraText = Nothing
+  extraText = NoExtraText
   }

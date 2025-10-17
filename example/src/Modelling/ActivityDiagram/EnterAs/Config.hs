@@ -4,6 +4,7 @@ module Modelling.ActivityDiagram.EnterAs.Config where
 
 import Modelling.ActivityDiagram.Config (AdConfig(..))
 import Modelling.ActivityDiagram.EnterAS (EnterASConfig(..))
+import Modelling.Auxiliary.Output       (ExtraText(..))
 
 {-|
 points: 0.15
@@ -27,7 +28,7 @@ task2023_35 = EnterASConfig {
   objectNodeOnEveryPath = Just True,
   answerLength = (10, 10),
   printSolution = True,
-  extraText = Nothing
+  extraText = NoExtraText
   }
 
 {-|
@@ -52,7 +53,7 @@ task2023_36 = EnterASConfig {
   objectNodeOnEveryPath = Just False,
   answerLength = (14, 14),
   printSolution = True,
-  extraText = Nothing
+  extraText = NoExtraText
   }
 
 {-|
@@ -77,7 +78,7 @@ task2024_41 = EnterASConfig {
   objectNodeOnEveryPath = Just True,
   answerLength = (11, 11),
   printSolution = True,
-  extraText = Nothing
+  extraText = NoExtraText
   }
 
 {-|

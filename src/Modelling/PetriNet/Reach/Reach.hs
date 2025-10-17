@@ -1,6 +1,10 @@
 {-# LANGUAGE ApplicativeDo #-}
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DeriveGeneric #-}
+#if !MIN_VERSION_base(4,18,0)
+{-# LANGUAGE DerivingStrategies #-}
+#endif
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
@@ -133,7 +137,9 @@ import Data.Maybe                       (fromMaybe)
 import Data.Ord                         (comparing)
 import Data.Ratio                       ((%))
 import Data.String.Interpolate          (i)
+#if !MIN_VERSION_base(4,18,0)
 import Data.Typeable                    (Typeable)
+#endif
 import GHC.Generics                     (Generic)
 
 verifyReach :: (Ord a, Ord t, OutputCapable m, Show a, Show t)
@@ -417,13 +423,21 @@ data ReachInstance s t = ReachInstance {
   showSolution      :: Bool,
   withLengthHint    :: Maybe Int,
   withMinLengthHint :: Bool
-  } deriving (Generic, Read, Show, Typeable, Data)
+  }
+  deriving (Generic, Read, Show, Data)
+#if !MIN_VERSION_base(4,18,0)
+  deriving Typeable
+#endif
 
 data NetGoal s t = NetGoal {
   drawUsing         :: GraphvizCommand,
   petriNet          :: Net s t,
   goal              :: State s
-  } deriving (Generic, Read, Show, Typeable, Data)
+  }
+  deriving (Generic, Read, Show, Data)
+#if !MIN_VERSION_base(4,18,0)
+  deriving Typeable
+#endif
 
 bimapReachInstance
   :: (Ord a, Ord b)
@@ -474,7 +488,10 @@ data ReachConfig = ReachConfig {
   showPlaceNamesInNet :: Bool,
   filterConfig        :: FilterConfig
   }
-  deriving (Generic, Read, Show, Typeable)
+  deriving (Generic, Read, Show)
+#if !MIN_VERSION_base(4,18,0)
+  deriving Typeable
+#endif
 
 data NetGoalConfig = NetGoalConfig {
   numPlaces :: Int,
@@ -486,7 +503,10 @@ data NetGoalConfig = NetGoalConfig {
   postconditionsRange :: (Int, Maybe Int),
   preconditionsRange  :: (Int, Maybe Int)
   }
-  deriving (Generic, Read, Show, Typeable)
+  deriving (Generic, Read, Show)
+#if !MIN_VERSION_base(4,18,0)
+  deriving Typeable
+#endif
 
 defaultReachConfig :: ReachConfig
 defaultReachConfig = ReachConfig {
