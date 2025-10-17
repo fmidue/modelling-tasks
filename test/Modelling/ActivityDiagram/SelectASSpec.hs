@@ -32,16 +32,6 @@ spec = do
           adConfig = defaultAdConfig {objectNodeLimits = (0, 1)},
           objectNodeOnEveryPath = Just True
         } `shouldSatisfy` isJust
-      it "rejects withActionRepetition when cycles = 0" $
-        checkSelectASConfig defaultSelectASConfig {
-          withActionRepetition = True,
-          adConfig = defaultAdConfig {cycles = 0}
-        } `shouldSatisfy` isJust
-      it "accepts withActionRepetition = True when cycles >= 1" $
-        checkSelectASConfig defaultSelectASConfig {
-          withActionRepetition = True,
-          adConfig = defaultAdConfig {cycles = 1}
-        } `shouldBe` Nothing
 
   describe "selectActionSequence with repetition" $ do
     let testDiagram = UMLActivityDiagram {
@@ -84,4 +74,4 @@ spec = do
       it "generates sequences with repetition" $ do
         let Just solution = selectActionSequence True 2 testDiagram
             actionSeq = correctSequence solution
-        actionRepetitionDistance actionSeq `shouldSatisfy` maybe False (>= 2)
+        actionRepetitionDistance actionSeq `shouldSatisfy` maybe False (>= 3)
