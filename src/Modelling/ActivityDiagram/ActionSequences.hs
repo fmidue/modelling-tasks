@@ -135,17 +135,15 @@ generateSequencesWithLevels levelsFunction actions maybeLengthBounds petriLike =
   let petri = fromPetriLike petriLike
       zeroState = State $ M.map (const 0) $ unState $ start petri
       allLevels = levelsFunction petri
-      transitionSequences = [reverse p | level <- allLevels, (s, p) <- level, s == zeroState]
+      transitionSequences = [ p | level <- allLevels, (s, p) <- level, s == zeroState ]
       transitionsToActionNames transitionSequence =
         let transitionSequenceLabels = map (Ad.label . sourceNode) $ filter isNormalPetriNode transitionSequence
             actionSequence = mapMaybe (`lookup` actions) transitionSequenceLabels
             seqLength = length actionSequence
         in case maybeLengthBounds of
-             Nothing -> Just actionSequence
-             Just (minLength, maxLength) ->
-               if seqLength >= minLength && seqLength <= maxLength
-               then Just actionSequence
-               else Nothing
+             Just (minLength, maxLength) | seqLength < minLength || seqLength > maxLength
+               -> Nothing
+             _ -> Just (reverse actionSequence)
   in mapMaybe transitionsToActionNames transitionSequences
 
 -- | Variant of levels' that manages visited states per path rather than globally
