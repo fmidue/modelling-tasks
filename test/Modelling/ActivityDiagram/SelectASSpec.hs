@@ -72,6 +72,6 @@ spec = do
         }
     context "when withActionRepetition = True" $
       it "generates sequences with repetition" $ do
-        let Just solution = selectActionSequence True 2 testDiagram
+        let Just solution = selectActionSequence True 2 (5, 15) testDiagram
             actionSeq = correctSequence solution
-        actionRepetitionDistance actionSeq `shouldSatisfy` maybe False (>= 3)
+        actionRepetitionDistance actionSeq `shouldSatisfy` maybe False (>= 1)

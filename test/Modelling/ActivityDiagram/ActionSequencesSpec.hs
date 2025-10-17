@@ -59,7 +59,7 @@ spec =
       where
         modules = moduleActionSequencesRules
         predicates = "someActionNodesExistInEachBlock"
-        p x = validActionSequence (generateActionSequence x) x
+        p x = maybe False (`validActionSequence` x) (generateActionSequenceWithPetri (0, 1000) x)
 
 testDiagram :: UMLActivityDiagram
 testDiagram = UMLActivityDiagram

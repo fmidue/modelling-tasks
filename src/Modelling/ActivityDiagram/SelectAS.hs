@@ -198,12 +198,12 @@ data SelectASSolution = SelectASSolution {
   wrongSequences :: [[String]]
 } deriving (Show, Eq)
 
-selectActionSequence :: Bool -> Int -> UMLActivityDiagram -> Maybe SelectASSolution
-selectActionSequence withRepetition numberOfWrongSequences ad =
+selectActionSequence :: Bool -> Int -> (Int, Int) -> UMLActivityDiagram -> Maybe SelectASSolution
+selectActionSequence withRepetition numberOfWrongSequences lengthBounds ad =
   let petri = convertToPetriNet ad
       maybeCorrectSequence = if withRepetition
-        then generateActionSequenceWithPetriAndRepetition ad petri
-        else Just (generateActionSequenceWithPetri ad petri)
+        then generateActionSequenceWithPetriAndRepetition ad petri (Just lengthBounds)
+        else generateActionSequenceWithPetri ad petri (Just lengthBounds)
   in fmap (\correctSequence ->
         let wrongSequences =
               take numberOfWrongSequences $
@@ -330,7 +330,7 @@ getSelectASTask config = do
   randomInstances <- shuffleM instances >>= mapM parseInstance
   ad <- mapM (fmap snd . shuffleAdNames) randomInstances
   validInstances <- firstJustM (\x -> do
-    case selectActionSequence (withActionRepetition config) (numberOfWrongAnswers config) x of
+    case selectActionSequence (withActionRepetition config) (numberOfWrongAnswers config) (answerLength config) x of
       Nothing -> return Nothing  -- Could not generate sequence with repetition despite being asked to
       Just solution -> do
         actionSequences <- selectASSolutionToMap solution

@@ -60,32 +60,55 @@ fromPetriLike petri =
   }
 
 --Generate one valid action sequence to each of the final nodes
-generateActionSequence :: UMLActivityDiagram -> [String]
+generateActionSequence :: UMLActivityDiagram -> Maybe [String]
 generateActionSequence diag =
-  generateActionSequenceWithPetri diag (convertToPetriNet diag)
+  generateActionSequenceWithPetri diag (convertToPetriNet diag) Nothing
 
 -- | Generate one valid action sequence, using a pre-computed Petri net.
--- This version avoids re-computing the Petri net conversion
-generateActionSequenceWithPetri :: UMLActivityDiagram -> PetriLike Node PetriKey -> [String]
-generateActionSequenceWithPetri diag petri =
+-- This version avoids re-computing the Petri net conversion.
+-- Returns Nothing if no valid sequence can be found within the length constraints.
+generateActionSequenceWithPetri 
+  :: UMLActivityDiagram 
+  -> PetriLike Node PetriKey 
+  -> Maybe (Int, Int)  -- Optional (minLength, maxLength) constraints
+  -> Maybe [String]
+generateActionSequenceWithPetri diag petri maybeLengthBounds =
   let actions = extractActionLookup diag
       transitionSequences = generateSequencesWithLevels levels' petri
-  in  head $ map (transitionsToActionNamesWithLookup actions) transitionSequences
+      validSequences = mapMaybe (transitionsToActionNamesWithLookup actions maybeLengthBounds) transitionSequences
+  in if null validSequences then Nothing else Just (head validSequences)
 
--- | Helper to convert transition sequences to action names using a pre-computed action lookup table
-transitionsToActionNamesWithLookup :: [(Int, String)] -> [PetriKey] -> [String]
-transitionsToActionNamesWithLookup actions transitionSequence =
+-- | Helper to convert transition sequences to action names using a pre-computed action lookup table.
+-- Returns Nothing if the resulting sequence violates length constraints.
+transitionsToActionNamesWithLookup 
+  :: [(Int, String)] 
+  -> Maybe (Int, Int)  -- Optional (minLength, maxLength) constraints
+  -> [PetriKey] 
+  -> Maybe [String]
+transitionsToActionNamesWithLookup actions maybeLengthBounds transitionSequence =
   let transitionSequenceLabels = map (Ad.label . sourceNode) $ filter isNormalPetriNode transitionSequence
-  in mapMaybe (`lookup` actions) transitionSequenceLabels
+      actionSequence = mapMaybe (`lookup` actions) transitionSequenceLabels
+      seqLength = length actionSequence
+  in case maybeLengthBounds of
+       Nothing -> Just actionSequence
+       Just (minLength, maxLength) ->
+         if seqLength >= minLength && seqLength <= maxLength
+         then Just actionSequence
+         else Nothing
 
 -- | Generate one valid action sequence with repetition, using a pre-computed Petri net.
 -- This version allows cycle exploration to generate sequences with repeated actions.
--- Returns Nothing if no sequence with repetition can be found.
-generateActionSequenceWithPetriAndRepetition :: UMLActivityDiagram -> PetriLike Node PetriKey -> Maybe [String]
-generateActionSequenceWithPetriAndRepetition diag petri =
+-- Returns Nothing if no sequence with repetition can be found, or if all sequences with repetition
+-- violate the length constraints.
+generateActionSequenceWithPetriAndRepetition 
+  :: UMLActivityDiagram 
+  -> PetriLike Node PetriKey 
+  -> Maybe (Int, Int)  -- Optional (minLength, maxLength) constraints
+  -> Maybe [String]
+generateActionSequenceWithPetriAndRepetition diag petri maybeLengthBounds =
   let actions = extractActionLookup diag
       transitionSequences = generateSequencesWithLevels levelsWithCycles petri
-      allActionSequences = map (transitionsToActionNamesWithLookup actions) transitionSequences
+      allActionSequences = mapMaybe (transitionsToActionNamesWithLookup actions maybeLengthBounds) transitionSequences
       sequencesWithDistances = [(seq', d) | seq' <- allActionSequences, Just d <- [actionRepetitionDistance seq']]
   in if null sequencesWithDistances
      then Nothing
