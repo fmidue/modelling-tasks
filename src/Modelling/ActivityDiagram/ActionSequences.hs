@@ -66,7 +66,7 @@ generateActionSequence diag =
 generateActionSequenceWithPetri :: UMLActivityDiagram -> PetriLike Node PetriKey -> [String]
 generateActionSequenceWithPetri diag petri =
   let actionsLeadingToActivityFinals = getActionsLeadingToActivityFinals diag
-      tSeq = generateActionSequence' diag actionsLeadingToActivityFinals
+      tSeq = generateActionSequence' petri actionsLeadingToActivityFinals
       tSeqLabels = map (Ad.label . sourceNode) $ filter isNormalPetriNode tSeq
       actions = map
         (\n -> (Ad.label n, name n))
