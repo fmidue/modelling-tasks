@@ -48,7 +48,6 @@ import Data.Containers.ListUtils (nubOrd)
 import Data.List (union, maximumBy)
 import Data.Maybe(mapMaybe, isJust, fromJust)
 import Data.Ord (comparing)
-import Data.Tuple (swap)
 
 
 fromPetriLike :: Ord a => PetriLike Node a -> Net a a
@@ -75,8 +74,7 @@ generateActionSequenceWithPetri
   -> Maybe (Int, Int)  -- Optional (minLength, maxLength) constraints
   -> Maybe [String]
 generateActionSequenceWithPetri diag petri maybeLengthBounds =
-  let actions = extractActionLookup diag
-      validSequences = generateSequencesWithLevels levels' actions maybeLengthBounds petri
+  let validSequences = generateSequencesWithLevels levels' (extractActionLookup diag) maybeLengthBounds petri
   in if null validSequences then Nothing else Just (head validSequences)
 
 -- | Generate one valid action sequence with repetition, using a pre-computed Petri net.
@@ -89,8 +87,7 @@ generateActionSequenceWithPetriAndRepetition
   -> Maybe (Int, Int)  -- Optional (minLength, maxLength) constraints
   -> Maybe [String]
 generateActionSequenceWithPetriAndRepetition diag petri maybeLengthBounds =
-  let actions = extractActionLookup diag
-      allActionSequences = generateSequencesWithLevels levelsWithCycles actions maybeLengthBounds petri
+  let allActionSequences = generateSequencesWithLevels levelsWithCycles (extractActionLookup diag) maybeLengthBounds petri
       sequencesWithDistances = [(seq', d) | seq' <- allActionSequences, Just d <- [actionRepetitionDistance seq']]
   in if null sequencesWithDistances
      then Nothing
@@ -178,9 +175,9 @@ levelsWithCycles n =
           xs' = map (\(x, p, _) -> (x, p)) xs
           next' = [ (y, t:p, S.insert y visited)
                   | (x, p, visited) <- xs
-                        , (t, y) <- successors n x
-                        , y `S.notMember` visited
-                        ]
+                  , (t, y) <- successors n x
+                  , y `S.notMember` visited
+                  ]
   in f [(start n, [], S.singleton (start n))]
 
 
