@@ -17,8 +17,8 @@ import Control.OutputCapable.Blocks     (Language(..))
 finalNodesAndTransitionsAdvice :: ExtraText
 finalNodesAndTransitionsAdvice = Collapsible True
   (M.fromList [
-    (English, "Hint on the translation to a Petri net"),
-    (German, "Hinweis zur Übersetzung in ein Petrinetz")
+    (English, "Hints on the translation to a Petri net"),
+    (German, "Hinweise zur Übersetzung in ein Petrinetz")
   ])
   (M.fromList [
     (English, "For final nodes no additional places are introduced. They are realised in a way that a token is consumed, i.e. disappears from the net at that position. If an additional transition is required to realise this behavior, this transition does not count as auxiliary node."),
