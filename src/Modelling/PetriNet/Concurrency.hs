@@ -225,7 +225,7 @@ findConcurrencyTask path task = do
         des Paars spielt hierbei keine Rolle.
         |]
     pure ()
-  paragraph hoveringInformation
+  hoveringInformation
   extra $ Find.addText task
   pure ()
 
@@ -330,7 +330,7 @@ pickConcurrencyTask path task = do
             else "das andere Petrinetz nicht")
         ++ ")."
     pure ()
-  paragraph hoveringInformation
+  hoveringInformation
   extra $ Pick.addText task
   pure ()
 

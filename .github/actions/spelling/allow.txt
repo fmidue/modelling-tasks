@@ -18,6 +18,7 @@ GHCi
 Graphviz
 HUnit
 HXT
+Hovern
 Hspec
 Leftrightarrow
 Lexer

@@ -233,7 +233,7 @@ findConflictTask path task = do
       english "The order of transitions within the pair does not matter here."
       german "Die Reihenfolge der Transitionen innerhalb des Paars spielt hierbei keine Rolle."
     pure ()
-  paragraph hoveringInformation
+  hoveringInformation
   extra $ Find.addText task
   pure ()
 
@@ -384,7 +384,7 @@ pickConflictTask path task = do
             else "das andere Petrinetz nicht")
         ++ ")."
     pure ()
-  paragraph hoveringInformation
+  hoveringInformation
   extra $ Pick.addText task
   pure ()
 
