@@ -2,28 +2,11 @@
 
 module Modelling.ActivityDiagram.FindAuxiliaryPetriNodes.Config where
 
-import qualified Data.Map                         as M
-
+import Modelling.ActivityDiagram.Common (finalNodesAndTransitionsAdvice)
 import Modelling.ActivityDiagram.FindAuxiliaryPetriNodes (
   FindAuxiliaryPetriNodesConfig (..),
   )
 import Modelling.ActivityDiagram.Config (AdConfig(..))
-import Modelling.Auxiliary.Output       (ExtraText(..))
-import Control.OutputCapable.Blocks     (Language(..))
-
--- | Combined advice text for final nodes and auxiliary transitions.
--- This text explains how final nodes are realized in Petri nets and clarifies
--- that transitions required for realizing final node behavior do not count as auxiliary nodes.
-finalNodesAndTransitionsAdvice :: ExtraText
-finalNodesAndTransitionsAdvice = Collapsible True
-  (M.fromList [
-    (English, "Hints on the translation to a Petri net"),
-    (German, "Hinweise zur Übersetzung in ein Petrinetz")
-  ])
-  (M.fromList [
-    (English, "For final nodes no additional places are introduced. They are realised in a way that a token is consumed, i.e. disappears from the net at that position. If an additional transition is required to realise this behavior, this transition does not count as auxiliary node."),
-    (German, "Für Endknoten werden keine zusätzlichen Stellen eingeführt. Sie werden so realisiert, dass ein Token verbraucht wird, also an dieser Position aus dem Netz verschwindet. Falls eine zusätzliche Transition erforderlich ist, um dieses Verhalten zu realisieren, zählt diese Transition nicht als Hilfsknoten.")
-  ])
 
 {-|
 points: 0.15
