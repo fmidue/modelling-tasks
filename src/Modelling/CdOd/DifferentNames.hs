@@ -128,6 +128,7 @@ import Control.OutputCapable.Blocks (
   OutputCapable,
   Rated,
   ($=<<),
+  collapsed,
   english,
   german,
   multipleChoice,
@@ -149,6 +150,7 @@ import Control.Monad.Random (
   evalRandT,
   mkStdGen,
   )
+import Control.Monad.State               (put)
 import Control.Monad.Trans.Except       (runExceptT)
 import Data.Bifunctor                   (Bifunctor (bimap, first))
 import Data.Bimap                       (Bimap)
@@ -334,9 +336,9 @@ differentNamesTask
   -> LangM m
 differentNamesTask showInputHelp path task = do
   toTaskText showInputHelp path task
-  paragraph simplifiedInformation
-  paragraph directionsAdvice
-  paragraph hoveringInformation
+  simplifiedInformation
+  directionsAdvice
+  hoveringInformation
   pure ()
 
 toTaskText
@@ -359,15 +361,18 @@ toTaskText showInputHelp path task = do
   pure ()
 
 mappingAdvice :: OutputCapable m => LangM m
-mappingAdvice = do
+mappingAdvice = collapsed True (put $ translations $ do
+  english "Note on link grouping"
+  german "Anmerkung zur Link-Gruppierung"
+  ) $ do
   paragraph $ translate $ do
     english [iii|
-      Please note: Links are already grouped correctly and fully,
+      Links are already grouped correctly and fully,
       i.e., all links with the same label (and only links with the same label!)
       in the OD correspond to exactly the same relationship in the CD.
       |]
     german [iii|
-      Bitte beachten Sie: Links sind bereits vollständig und korrekt gruppiert,
+      Links sind bereits vollständig und korrekt gruppiert,
       d.h., alle Links mit der selben Beschriftung
       (and auch nur Links mit der selben Beschriftung!)
       im OD entsprechen genau der selben Beziehung im CD.
