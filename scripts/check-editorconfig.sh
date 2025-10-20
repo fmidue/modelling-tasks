@@ -37,7 +37,7 @@ while IFS= read -r -d '' file; do
 
 done < <(find . -type f \( -name "*.hs" -o -name "*.md" -o -name "*.yml" -o -name "*.yaml" \
   -o -name "*.cabal" -o -name "*.sh" -o -name "*.als" -o -name "*.tex" \) \
-  -not -path "./.git/*" -not -path "*/.stack-work/*" -print0)
+  -not -path "./.git/*" -not -path "./.stack-work/*" -print0)
 
 if [ $violations_found -gt 0 ]; then
   echo ""
