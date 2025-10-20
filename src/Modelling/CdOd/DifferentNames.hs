@@ -460,6 +460,10 @@ stripNumericPeriod s = case reverse s of
   ('.':rest) | not (null rest) && all isDigit rest -> reverse rest
   _ -> s
 
+-- | Apply stripNumericPeriod to a Name value.
+stripName :: Name -> Name
+stripName = Name . stripNumericPeriod . unName
+
 differentNamesSyntax
   :: OutputCapable m
   => DifferentNamesInstance
@@ -499,7 +503,7 @@ differentNamesSyntax DifferentNamesInstance {..} cs = addPretext $ do
     linksStripped = map stripNumericPeriod $ linkLabels oDiagram
     sortPair (x, y) = if x <= y then (x, y) else (y, x)
     -- Strip periods from student input for all checking
-    choicesStripped = map (bimap (Name . stripNumericPeriod . unName) (Name . stripNumericPeriod . unName)) cs
+    choicesStripped = map (bimap stripName stripName) cs
     -- Deduplicate after stripping
     choices = nubOrdOn sortPair choicesStripped
     associations = associationNames cDiagram
@@ -528,9 +532,9 @@ differentNamesEvaluation
   -> [(Name, Name)]
   -> Rated m
 differentNamesEvaluation task cs = do
-  let csStripped = map (bimap (Name . stripNumericPeriod . unName) (Name . stripNumericPeriod . unName)) cs
+  let csStripped = map (bimap stripName stripName) cs
       -- Strip periods from the mapping's link labels (second element of each pair)
-      mStripped = BM.mapMonotonicR (Name . stripNumericPeriod . unName) $ nameMapping $ mapping task
+      mStripped = BM.mapMonotonicR stripName $ nameMapping $ mapping task
       what = translations $ do
         german "Zuordnungen"
         english "mappings"
