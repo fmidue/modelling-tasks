@@ -57,6 +57,7 @@ import Modelling.Auxiliary.Common (
   )
 
 import Control.Applicative (Alternative ((<|>)))
+import Control.Monad                   (guard)
 import Control.Monad.Catch              (MonadThrow, throwM)
 import Control.Monad.Extra (firstJustM)
 import Control.OutputCapable.Blocks (
@@ -185,19 +186,18 @@ data SelectASSolution = SelectASSolution {
 } deriving (Show, Eq)
 
 selectActionSequence :: Bool -> Int -> (Int, Int) -> UMLActivityDiagram -> Maybe SelectASSolution
-selectActionSequence withRepetition numberOfWrongSequences lengthBounds ad =
+selectActionSequence withRepetition numberOfWrongSequences lengthBounds ad = do
   let petri = convertToPetriNet ad
-      maybeCorrectSequence = if withRepetition
-        then generateActionSequenceWithPetriAndRepetition ad petri (Just lengthBounds)
-        else generateActionSequenceWithPetri ad petri (Just lengthBounds)
-  in fmap (\correctSequence ->
-        let wrongSequences =
-              take numberOfWrongSequences $
-              sortBy (compareDistToCorrect correctSequence) $
-              filter (not . (\actionSeq -> validActionSequenceWithPetri actionSeq ad petri)) $
-              permutations correctSequence
-        in SelectASSolution {correctSequence = correctSequence, wrongSequences = wrongSequences})
-      maybeCorrectSequence
+  correctSequence <- if withRepetition
+    then generateActionSequenceWithPetriAndRepetition ad petri (Just lengthBounds)
+    else generateActionSequenceWithPetri ad petri (Just lengthBounds)
+  let wrongSequences =
+        take numberOfWrongSequences $
+        sortBy (compareDistToCorrect correctSequence) $
+        filter (not . (\actionSeq -> validActionSequenceWithPetri actionSeq ad petri)) $
+        permutations correctSequence
+  guard (length wrongSequences >= numberOfWrongSequences)
+  return SelectASSolution {correctSequence = correctSequence, wrongSequences = wrongSequences}
 
 asEditDistParams :: [String] -> Params String (String, Int, String) (Sum Int)
 asEditDistParams xs = Params

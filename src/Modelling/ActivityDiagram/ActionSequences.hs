@@ -101,19 +101,40 @@ isNormalPetriNode pk =
     NormalPetriNode {} -> True
     _ -> False
 
--- | Extract action lookup table from diagram
-extractActionLookup :: UMLActivityDiagram -> [(Int, String)]
-extractActionLookup diag = map
-  (\n -> (Ad.label n, name n))
-  $ filter isActionNode $ nodes diag
+-- | Extract action lookup table from diagram as a Bimap for bidirectional lookups
+extractActionLookup :: UMLActivityDiagram -> BM.Bimap Int String
+extractActionLookup diag = BM.fromList
+  [ (Ad.label n, name n)
+  | n <- nodes diag
+  , isActionNode n
+  ]
 
--- | Calculate the maximum distance between any two occurrences of the same action.
--- Returns Nothing if there are no repeated actions.
--- For example:
--- [A,A] -> Just 0 (immediate repetition)
--- [A,B,A] -> Just 1 (1 action between repetitions)
--- [A,B,C,A] -> Just 2 (2 actions between repetitions)
--- [A,B,C] -> Nothing (no repetitions)
+{-|
+Calculate the maximum distance between any two occurrences of the same action.
+Returns Nothing if there are no repeated actions.
+
+For example:
+
+immediate repetition:
+
+>>> actionRepetitionDistance ["A", "A"]
+Just 0
+
+1 action between repetitions:
+
+>>> actionRepetitionDistance ["A", "B", "A"]
+Just 1
+
+2 actions between repetitions:
+
+>>> actionRepetitionDistance ["A", "B", "C", "A"]
+Just 2
+
+no repetitions:
+
+>>> actionRepetitionDistance ["A", "B", "C"]
+Nothing
+-}
 actionRepetitionDistance :: [String] -> Maybe Int
 actionRepetitionDistance actionSequence =
   let maxDistanceForAction action =
@@ -128,17 +149,17 @@ actionRepetitionDistance actionSequence =
 -- Now includes the action name conversion and length bounds filtering
 generateSequencesWithLevels
   :: (Net PetriKey PetriKey -> [[(State PetriKey, [PetriKey])]])
-  -> [(Int, String)]  -- action lookup table
+  -> BM.Bimap Int String  -- action lookup table
   -> Maybe (Int, Int)  -- Optional (minLength, maxLength) constraints
   -> PetriLike Node PetriKey
   -> [[String]]
-generateSequencesWithLevels levelsFunction actions maybeLengthBounds petriLike =
+generateSequencesWithLevels levelsFunction actionLookup maybeLengthBounds petriLike =
   let petri = fromPetriLike petriLike
       zeroState = State $ M.map (const 0) $ unState $ start petri
       allLevels = levelsFunction petri
       convertAndFilterSequence transitionSequence =
         let transitionSequenceLabels = map (Ad.label . sourceNode) $ filter isNormalPetriNode transitionSequence
-            actionSequence = mapMaybe (`lookup` actions) transitionSequenceLabels
+            actionSequence = mapMaybe (`BM.lookup` actionLookup) transitionSequenceLabels
             seqLength = length actionSequence
         in case maybeLengthBounds of
              Just (minLength, maxLength) | seqLength < minLength || seqLength > maxLength
@@ -150,14 +171,12 @@ generateSequencesWithLevels levelsFunction actions maybeLengthBounds petriLike =
 -- This allows exploring cycles while preventing infinite loops within each path
 levelsWithCycles :: Ord s => Net s t -> [[(State s, [t])]]
 levelsWithCycles n =
-  let f xs
-        | null xs = []
-        | otherwise =
-            xs' : f next'
-              where
-                xs' = map (\(x, p, _) -> (x, p)) xs
-                next' = [ (y, t:p, S.insert y visited)
-                        | (x, p, visited) <- xs
+  let f [] = []
+      f xs = xs' : f next'
+        where
+          xs' = map (\(x, p, _) -> (x, p)) xs
+          next' = [ (y, t:p, S.insert y visited)
+                  | (x, p, visited) <- xs
                         , (t, y) <- successors n x
                         , y `S.notMember` visited
                         ]
@@ -180,13 +199,13 @@ validActionSequenceWithPetri input diag petri =
 -- Returns (levels, zeroState) for checking sequence properties
 computeActionSequenceLevels :: [String] -> UMLActivityDiagram -> PetriLike Node PetriKey -> ([[(State PetriKey, [PetriKey])]], State PetriKey)
 computeActionSequenceLevels input diag petri =
-  let nameMap = map swap (extractActionLookup diag)
-      labels = mapMaybe (`lookup` nameMap) input
+  let actionLookup = extractActionLookup diag
+      labels = mapMaybe (`BM.lookupR` actionLookup) input
       petriKeyMap = map
         (\k -> (Ad.label $ sourceNode k, k))
         $ filter isNormalPetriNode $ M.keys $ allNodes petri
       input' = mapMaybe (`lookup` petriKeyMap) labels
-      actions = map snd $ filter (\(l,_) -> l `elem` map snd nameMap) petriKeyMap
+      actions = map snd $ filter (\(l,_) -> l `BM.member` actionLookup) petriKeyMap
       net = fromPetriLike petri
       zeroState = State $ M.map (const 0) $ unState $ start net
       levels = levelsCheckAS input' actions net
