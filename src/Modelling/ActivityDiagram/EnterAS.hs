@@ -28,9 +28,10 @@ import Capabilities.WriteFile           (MonadWriteFile)
 import Modelling.ActivityDiagram.ActionSequences (
   generateActionSequenceWithPetri,
   computeActionSequenceLevels,
+  getActionsLeadingToActivityFinals,
   isFinalPetriNode,
   )
-import Modelling.ActivityDiagram.Auxiliary.ActionSequences (actionSequencesAlloy, getActionsLeadingToActivityFinals)
+import Modelling.ActivityDiagram.Auxiliary.ActionSequences (actionSequencesAlloy)
 import Modelling.ActivityDiagram.Config (
   AdConfig (..),
   checkAdConfig,
