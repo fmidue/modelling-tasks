@@ -30,7 +30,7 @@ import Modelling.ActivityDiagram.ActionSequences (
   computeActionSequenceLevels,
   isFinalPetriNode,
   )
-import Modelling.ActivityDiagram.Auxiliary.ActionSequences (actionSequencesAlloy)
+import Modelling.ActivityDiagram.Auxiliary.ActionSequences (actionSequencesAlloy, getActionsLeadingToActivityFinals)
 import Modelling.ActivityDiagram.Config (
   AdConfig (..),
   checkAdConfig,
@@ -249,7 +249,7 @@ enterASEvaluation
 enterASEvaluation task sub = do
   let objectNames = map name $ filter isObjectNode $ nodes $ activityDiagram task
       objectNamesInSubmission = nubOrd $ sub `intersect` objectNames
-      (levels, zeroState) = computeActionSequenceLevels sub (activityDiagram task) (petriNet task)
+      (levels, zeroState) = computeActionSequenceLevels sub (activityDiagram task) (petriNet task) (getActionsLeadingToActivityFinals diag)
       reachesZeroState = any (isJust . lookup zeroState) levels
       correct = null objectNamesInSubmission && reachesZeroState
       points = if correct then 1 else 0
