@@ -250,7 +250,7 @@ enterASEvaluation
 enterASEvaluation task sub = do
   let objectNames = map name $ filter isObjectNode $ nodes $ activityDiagram task
       objectNamesInSubmission = nubOrd $ sub `intersect` objectNames
-      (levels, zeroState) = computeActionSequenceLevels sub (activityDiagram task) (petriNet task) (getActionsLeadingToActivityFinals diag)
+      (levels, zeroState) = let diag = activityDiagram task in computeActionSequenceLevels sub diag (petriNet task) (getActionsLeadingToActivityFinals diag)
       reachesZeroState = any (isJust . lookup zeroState) levels
       correct = null objectNamesInSubmission && reachesZeroState
       points = if correct then 1 else 0
