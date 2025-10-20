@@ -2,11 +2,27 @@
 
 module Modelling.ActivityDiagram.SelectPetri.Config where
 
+import qualified Data.Map                         as M
+
 import Modelling.ActivityDiagram.Config (AdConfig(..))
 import Modelling.ActivityDiagram.SelectPetri (SelectPetriConfig(..))
 import Modelling.Auxiliary.Output       (ExtraText(..))
+import Control.OutputCapable.Blocks     (Language(..))
 
 import Data.GraphViz.Commands           (GraphvizCommand(..))
+
+-- | Advice text for final nodes in Petri net translation.
+-- This text explains how final nodes are realized in Petri nets.
+finalNodesAdvice :: ExtraText
+finalNodesAdvice = Collapsible True
+  (M.fromList [
+    (English, "Hint on the translation to a Petri net"),
+    (German, "Hinweis zur Übersetzung in ein Petrinetz")
+  ])
+  (M.fromList [
+    (English, "For final nodes no additional places are introduced. They are realised in a way that a token is consumed, i.e. disappears from the net at that position."),
+    (German, "Für Endknoten werden keine zusätzlichen Stellen eingeführt. Sie werden so realisiert, dass ein Token verbraucht wird, also an dieser Position aus dem Netz verschwindet.")
+  ])
 
 {-|
 points: 0.15
@@ -39,7 +55,7 @@ task2023_37 = SelectPetriConfig {
   presenceOfSinkTransitionsForFinals = Nothing,
   withActivityFinalInForkBlocks = Just False,
   printSolution = True,
-  extraText = NoExtraText
+  extraText = finalNodesAdvice
   }
 
 {-|
@@ -71,7 +87,7 @@ task2023_38 = SelectPetriConfig {
   presenceOfSinkTransitionsForFinals = Nothing,
   withActivityFinalInForkBlocks = Just False,
   printSolution = True,
-  extraText = NoExtraText
+  extraText = finalNodesAdvice
   }
 
 {-|
@@ -113,5 +129,5 @@ task2024_44 = SelectPetriConfig {
   presenceOfSinkTransitionsForFinals = Nothing,
   withActivityFinalInForkBlocks = Just False,
   printSolution = True,
-  extraText = NoExtraText
+  extraText = finalNodesAdvice
   }
