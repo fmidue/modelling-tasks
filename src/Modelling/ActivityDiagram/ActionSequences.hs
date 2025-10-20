@@ -16,6 +16,7 @@ import qualified Modelling.ActivityDiagram.Datatype as Ad (
 
 import qualified Data.Set as S (fromList, singleton, insert, notMember)
 import qualified Data.Map as M (filter, map, keys, fromList, toList)
+import qualified Data.Bimap as BM (Bimap, fromList, lookup, lookupR, member)
 
 import Modelling.ActivityDiagram.Datatype (
   AdNode (..),
