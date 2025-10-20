@@ -5,6 +5,7 @@ module Modelling.ActivityDiagram.ActionSequences (
   generateActionSequence,
   generateActionSequenceWithPetri,
   computeActionSequenceLevels,
+  getActionsLeadingToActivityFinals,
   isFinalPetriNode
 ) where
 
