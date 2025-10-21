@@ -157,8 +157,10 @@ generateSequencesWithLevels levelsFunction actionLookup maybeLengthBounds petriL
       relevantLevels = maybe id (\(minLength, maxLength) -> take (5 * maxLength) . drop minLength) maybeLengthBounds
                        $ levelsFunction petri
       convertAndFilterSequence transitionSequence =
-        let transitionSequenceLabels = map (Ad.label . sourceNode) $ filter isNormalPetriNode transitionSequence
-            actionSequence = mapMaybe (`BM.lookup` actionLookup) transitionSequenceLabels
+        let actionSequence = mapMaybe (\node -> case sourceNode node of
+                                          AdActionNode {name = actionName} -> Just actionName
+                                          _ -> Nothing)
+                             $ filter isNormalPetriNode transitionSequence
             seqLength = length actionSequence
         in case maybeLengthBounds of
              Just (minLength, maxLength) | seqLength < minLength || seqLength > maxLength
