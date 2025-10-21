@@ -189,7 +189,7 @@ selectActionSequence :: Bool -> Int -> (Int, Int) -> UMLActivityDiagram -> Maybe
 selectActionSequence withRepetition numberOfWrongSequences lengthBounds ad = do
   let petri = convertToPetriNet ad
   correctSequence <- if withRepetition
-    then generateActionSequenceWithPetriAndRepetition ad petri (Just lengthBounds)
+    then generateActionSequenceWithPetriAndRepetition ad petri lengthBounds
     else generateActionSequenceWithPetri ad petri (Just lengthBounds)
   let wrongSequences =
         take numberOfWrongSequences $

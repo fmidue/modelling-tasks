@@ -84,10 +84,10 @@ generateActionSequenceWithPetri diag petri maybeLengthBounds =
 generateActionSequenceWithPetriAndRepetition
   :: UMLActivityDiagram
   -> PetriLike Node PetriKey
-  -> Maybe (Int, Int)  -- Optional (minLength, maxLength) constraints
+  -> (Int, Int)  -- (minLength, maxLength) constraints
   -> Maybe [String]
-generateActionSequenceWithPetriAndRepetition diag petri maybeLengthBounds =
-  let allActionSequences = generateSequencesWithLevels levelsWithCycles (extractActionLookup diag) maybeLengthBounds petri
+generateActionSequenceWithPetriAndRepetition diag petri lengthBounds =
+  let allActionSequences = generateSequencesWithLevels levelsWithCycles (extractActionLookup diag) (Just lengthBounds) petri
       sequencesWithDistances = [(seq', d) | seq' <- allActionSequences, Just d <- [actionRepetitionDistance seq']]
   in if null sequencesWithDistances
      then Nothing
@@ -154,7 +154,8 @@ generateSequencesWithLevels
 generateSequencesWithLevels levelsFunction actionLookup maybeLengthBounds petriLike =
   let petri = fromPetriLike petriLike
       zeroState = State $ M.map (const 0) $ unState $ start petri
-      allLevels = levelsFunction petri
+      relevantLevels = maybe id (\(minLength, maxLength) -> take (5 * maxLength) . drop minLength) maybeLengthBounds
+                       $ levelsFunction petri
       convertAndFilterSequence transitionSequence =
         let transitionSequenceLabels = map (Ad.label . sourceNode) $ filter isNormalPetriNode transitionSequence
             actionSequence = mapMaybe (`BM.lookup` actionLookup) transitionSequenceLabels
@@ -163,7 +164,7 @@ generateSequencesWithLevels levelsFunction actionLookup maybeLengthBounds petriL
              Just (minLength, maxLength) | seqLength < minLength || seqLength > maxLength
                -> Nothing
              _ -> Just actionSequence
-  in [ reverse a | level <- allLevels, (s, p) <- level, s == zeroState, Just a <- [convertAndFilterSequence p] ]
+  in [ reverse a | level <- relevantLevels, (s, p) <- level, s == zeroState, Just a <- [convertAndFilterSequence p] ]
 
 -- | Variant of levels' that manages visited states per path rather than globally
 -- This allows exploring cycles while preventing infinite loops within each path
