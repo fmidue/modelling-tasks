@@ -1,4 +1,5 @@
 {-# LANGUAGE DuplicateRecordFields #-}
+{-# LANGUAGE LambdaCase #-}
 module Modelling.ActivityDiagram.ActionSequences (
   validActionSequence,
   validActionSequenceWithPetri,
@@ -154,7 +155,7 @@ generateSequencesWithLevels levelsFunction maybeLengthBounds petriLike =
       relevantLevels = maybe id (\(minLength, maxLength) -> take (5 * maxLength) . drop minLength) maybeLengthBounds
                        $ levelsFunction petri
       convertAndFilterSequence transitionSequence =
-        let actionSequence = mapMaybe (\node -> case node of
+        let actionSequence = mapMaybe (\case
                                           NormalPetriNode {sourceNode = AdActionNode {name = actionName}} -> Just actionName
                                           _ -> Nothing)
                              transitionSequence
