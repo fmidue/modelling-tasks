@@ -57,7 +57,7 @@ import Modelling.Auxiliary.Common (
   )
 
 import Control.Applicative (Alternative ((<|>)))
-import qualified Control.Monad          (guard)
+import qualified Control.Monad as Monad (guard)
 import Control.Monad.Catch              (MonadThrow, throwM)
 import Control.Monad.Extra (firstJustM)
 import Control.OutputCapable.Blocks (
@@ -196,7 +196,7 @@ selectActionSequence withRepetition numberOfWrongSequences lengthBounds ad = do
         sortBy (compareDistToCorrect correctSequence) $
         filter (not . (\actionSeq -> validActionSequenceWithPetri actionSeq ad petri)) $
         permutations correctSequence
-  Control.Monad.guard (length wrongSequences == numberOfWrongSequences)
+  Monad.guard (length wrongSequences == numberOfWrongSequences)
   return SelectASSolution {correctSequence = correctSequence, wrongSequences = wrongSequences}
 
 asEditDistParams :: [String] -> Params String (String, Int, String) (Sum Int)
