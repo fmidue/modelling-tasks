@@ -17,7 +17,7 @@ import qualified Modelling.ActivityDiagram.Datatype as Ad (
 
 import qualified Data.Set as S (fromList, singleton, insert, notMember)
 import qualified Data.Map as M (filter, map, keys, fromList, toList)
-import qualified Data.Bimap as BM (Bimap, fromList, lookup, lookupR, member)
+import qualified Data.Bimap as BM (Bimap, fromList, lookupR, member)
 
 import Modelling.ActivityDiagram.Datatype (
   AdNode (..),
@@ -69,12 +69,11 @@ generateActionSequence diag =
 -- | Generate one valid action sequence, using a pre-computed Petri net.
 -- Returns Nothing if no valid sequence can be found within the length constraints.
 generateActionSequenceWithPetri
-  :: BM.Bimap Int String
-  -> PetriLike Node PetriKey
+  :: PetriLike Node PetriKey
   -> Maybe (Int, Int)  -- Optional (minLength, maxLength) constraints
   -> Maybe [String]
-generateActionSequenceWithPetri actionLookup petri maybeLengthBounds =
-  let validSequences = generateSequencesWithLevels levels' actionLookup maybeLengthBounds petri
+generateActionSequenceWithPetri petri maybeLengthBounds =
+  let validSequences = generateSequencesWithLevels levels' maybeLengthBounds petri
   in if null validSequences then Nothing else Just (head validSequences)
 
 -- | Generate one valid action sequence with repetition, using a pre-computed Petri net.
@@ -82,12 +81,11 @@ generateActionSequenceWithPetri actionLookup petri maybeLengthBounds =
 -- Returns Nothing if no sequence with repetition can be found, or if all sequences with repetition
 -- violate the length constraints.
 generateActionSequenceWithPetriAndRepetition
-  :: BM.Bimap Int String
-  -> PetriLike Node PetriKey
+  :: PetriLike Node PetriKey
   -> (Int, Int)  -- (minLength, maxLength) constraints
   -> Maybe [String]
-generateActionSequenceWithPetriAndRepetition actionLookup petri lengthBounds =
-  let allActionSequences = generateSequencesWithLevels levelsWithCycles actionLookup (Just lengthBounds) petri
+generateActionSequenceWithPetriAndRepetition petri lengthBounds =
+  let allActionSequences = generateSequencesWithLevels levelsWithCycles (Just lengthBounds) petri
       sequencesWithDistances = [(seq', d) | seq' <- allActionSequences, Just d <- [actionRepetitionDistance seq']]
   in if null sequencesWithDistances
      then Nothing
@@ -151,16 +149,16 @@ generateSequencesWithLevels
   -> Maybe (Int, Int)  -- Optional (minLength, maxLength) constraints
   -> PetriLike Node PetriKey
   -> [[String]]
-generateSequencesWithLevels levelsFunction actionLookup maybeLengthBounds petriLike =
+generateSequencesWithLevels levelsFunction maybeLengthBounds petriLike =
   let petri = fromPetriLike petriLike
       zeroState = State $ M.map (const 0) $ unState $ start petri
       relevantLevels = maybe id (\(minLength, maxLength) -> take (5 * maxLength) . drop minLength) maybeLengthBounds
                        $ levelsFunction petri
       convertAndFilterSequence transitionSequence =
-        let actionSequence = mapMaybe (\node -> case sourceNode node of
-                                          AdActionNode {name = actionName} -> Just actionName
+        let actionSequence = mapMaybe (\node -> case node of
+                                          NormalPetriNode {sourceNode = AdActionNode {name = actionName}} -> Just actionName
                                           _ -> Nothing)
-                             $ filter isNormalPetriNode transitionSequence
+                             transitionSequence
             seqLength = length actionSequence
         in case maybeLengthBounds of
              Just (minLength, maxLength) | seqLength < minLength || seqLength > maxLength

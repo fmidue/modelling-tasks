@@ -192,7 +192,7 @@ newtype EnterASSolution = EnterASSolution {
 
 enterActionSequence :: BM.Bimap Int String -> PetriLike Node PetriKey -> EnterASSolution
 enterActionSequence actionLookup petri =
-  EnterASSolution {sampleSolution = fromJust $ generateActionSequenceWithPetri actionLookup petri Nothing}
+  EnterASSolution {sampleSolution = fromJust $ generateActionSequenceWithPetri petri Nothing}
 
 enterASTask
   :: (MonadPlantUml m, MonadWriteFile m, OutputCapable m)

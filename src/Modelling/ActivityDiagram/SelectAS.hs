@@ -191,8 +191,8 @@ selectActionSequence withRepetition numberOfWrongSequences lengthBounds ad = do
   let petri = convertToPetriNet ad
       actionLookup = extractActionLookup ad
   correctSequence <- if withRepetition
-    then generateActionSequenceWithPetriAndRepetition actionLookup petri lengthBounds
-    else generateActionSequenceWithPetri actionLookup petri (Just lengthBounds)
+    then generateActionSequenceWithPetriAndRepetition petri lengthBounds
+    else generateActionSequenceWithPetri petri (Just lengthBounds)
   let wrongSequences =
         take numberOfWrongSequences $
         sortBy (compareDistToCorrect correctSequence) $
