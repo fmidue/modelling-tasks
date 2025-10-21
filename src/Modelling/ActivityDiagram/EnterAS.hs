@@ -170,19 +170,19 @@ checkEnterASInstanceForConfig :: EnterASInstance -> EnterASConfig -> Maybe Strin
 checkEnterASInstanceForConfig inst EnterASConfig {
   answerLength
   }
-  | length solution < fst answerLength
+  | solutionLength < fst answerLength
   = Just [iii|
     Solution should not be shorter than
     the first value of parameter 'answerLength'.
     |]
-  | length solution > snd answerLength
+  | solutionLength > snd answerLength
   = Just [iii|
     Solution should not be longer than
     the second value of parameter 'answerLength'.
     |]
   | otherwise
     = Nothing
-  where solution = sampleSequence inst
+  where solutionLength = length $ sampleSequence inst
 
 newtype EnterASSolution = EnterASSolution {
   sampleSolution :: [String]

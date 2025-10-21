@@ -44,8 +44,8 @@ import Modelling.PetriNet.Reach.Type (
 import Modelling.PetriNet.Reach.Step (levels', successors)
 
 import Control.Monad (guard)
-import Data.Containers.ListUtils (nubOrd)
 import Data.List (union, maximumBy)
+import Data.List.Extra (nubOrd)
 import Data.Maybe(mapMaybe, isJust, fromJust)
 import Data.Ord (comparing)
 
@@ -139,7 +139,7 @@ actionRepetitionDistance actionSequence =
         let indices = [i | (i, a) <- zip [0..] actionSequence, a == action]
         in if length indices < 2
            then Nothing
-           else Just (maximum indices - minimum indices - 1)
+           else Just (last indices - head indices - 1)
       distances = [d | action <- nubOrd actionSequence, Just d <- [maxDistanceForAction action]]
   in if null distances then Nothing else Just (maximum distances)
 
