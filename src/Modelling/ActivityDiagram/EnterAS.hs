@@ -91,7 +91,6 @@ import Modelling.Auxiliary.Output (
   extra
   )
 import System.Random.Shuffle (shuffleM)
-import qualified Data.Bimap as BM (Bimap)
 
 data EnterASInstance = EnterASInstance {
   activityDiagram :: UMLActivityDiagram,
@@ -190,8 +189,8 @@ newtype EnterASSolution = EnterASSolution {
   sampleSolution :: [String]
 } deriving (Show, Eq)
 
-enterActionSequence :: BM.Bimap Int String -> PetriLike Node PetriKey -> EnterASSolution
-enterActionSequence actionLookup petri =
+enterActionSequence :: PetriLike Node PetriKey -> EnterASSolution
+enterActionSequence petri =
   EnterASSolution {sampleSolution = fromJust $ generateActionSequenceWithPetri petri Nothing}
 
 enterASTask
@@ -324,14 +323,13 @@ getEnterASTask config = do
   getFirstInstance
         $ filter (isNothing . (`checkEnterASInstanceForConfig` config))
         $ map (\x -> let petri = convertToPetriNet x
-                         actionLookup = extractActionLookup x
                      in EnterASInstance {
           activityDiagram=x,
           petriNet=petri,
           drawSettings = defaultPlantUmlConfig {
             suppressBranchConditions = hideBranchConditions config
             },
-          sampleSequence = sampleSolution $ enterActionSequence actionLookup petri,
+          sampleSequence = sampleSolution $ enterActionSequence petri,
           showSolution = printSolution config,
           addText = extraText config
         }) ad

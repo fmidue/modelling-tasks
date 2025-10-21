@@ -64,7 +64,7 @@ fromPetriLike petri =
 --Generate one valid action sequence to each of the final nodes
 generateActionSequence :: UMLActivityDiagram -> [String]
 generateActionSequence diag =
-  fromJust $ generateActionSequenceWithPetri (extractActionLookup diag) (convertToPetriNet diag) Nothing
+  fromJust $ generateActionSequenceWithPetri (convertToPetriNet diag) Nothing
 
 -- | Generate one valid action sequence, using a pre-computed Petri net.
 -- Returns Nothing if no valid sequence can be found within the length constraints.
@@ -145,7 +145,6 @@ actionRepetitionDistance actionSequence =
 -- Now includes the action name conversion and length bounds filtering
 generateSequencesWithLevels
   :: (Net PetriKey PetriKey -> [[(State PetriKey, [PetriKey])]])
-  -> BM.Bimap Int String  -- action lookup table
   -> Maybe (Int, Int)  -- Optional (minLength, maxLength) constraints
   -> PetriLike Node PetriKey
   -> [[String]]
