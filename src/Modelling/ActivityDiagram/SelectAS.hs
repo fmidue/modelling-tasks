@@ -31,6 +31,7 @@ import Capabilities.WriteFile           (MonadWriteFile)
 import Modelling.ActivityDiagram.ActionSequences (
   generateActionSequenceWithPetri,
   generateActionSequenceWithPetriAndRepetition,
+  extractActionLookup,
   validActionSequenceWithPetri
   )
 import Modelling.ActivityDiagram.Auxiliary.ActionSequences (actionSequencesAlloy)
@@ -188,13 +189,14 @@ data SelectASSolution = SelectASSolution {
 selectActionSequence :: Bool -> Int -> (Int, Int) -> UMLActivityDiagram -> Maybe SelectASSolution
 selectActionSequence withRepetition numberOfWrongSequences lengthBounds ad = do
   let petri = convertToPetriNet ad
+      actionLookup = extractActionLookup ad
   correctSequence <- if withRepetition
-    then generateActionSequenceWithPetriAndRepetition ad petri lengthBounds
-    else generateActionSequenceWithPetri ad petri (Just lengthBounds)
+    then generateActionSequenceWithPetriAndRepetition actionLookup petri lengthBounds
+    else generateActionSequenceWithPetri actionLookup petri (Just lengthBounds)
   let wrongSequences =
         take numberOfWrongSequences $
         sortBy (compareDistToCorrect correctSequence) $
-        filter (not . (\actionSeq -> validActionSequenceWithPetri actionSeq ad petri)) $
+        filter (not . (\actionSeq -> validActionSequenceWithPetri actionSeq actionLookup petri)) $
         permutations correctSequence
   Monad.guard (length wrongSequences == numberOfWrongSequences)
   return SelectASSolution {correctSequence = correctSequence, wrongSequences = wrongSequences}

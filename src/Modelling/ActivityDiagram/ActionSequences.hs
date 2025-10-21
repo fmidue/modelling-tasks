@@ -7,6 +7,7 @@ module Modelling.ActivityDiagram.ActionSequences (
   generateActionSequenceWithPetriAndRepetition,
   computeActionSequenceLevels,
   actionRepetitionDistance,
+  extractActionLookup,
   isFinalPetriNode
 ) where
 
@@ -63,18 +64,17 @@ fromPetriLike petri =
 --Generate one valid action sequence to each of the final nodes
 generateActionSequence :: UMLActivityDiagram -> [String]
 generateActionSequence diag =
-  fromJust $ generateActionSequenceWithPetri diag (convertToPetriNet diag) Nothing
+  fromJust $ generateActionSequenceWithPetri (extractActionLookup diag) (convertToPetriNet diag) Nothing
 
 -- | Generate one valid action sequence, using a pre-computed Petri net.
--- This version avoids re-computing the Petri net conversion.
 -- Returns Nothing if no valid sequence can be found within the length constraints.
 generateActionSequenceWithPetri
-  :: UMLActivityDiagram
+  :: BM.Bimap Int String
   -> PetriLike Node PetriKey
   -> Maybe (Int, Int)  -- Optional (minLength, maxLength) constraints
   -> Maybe [String]
-generateActionSequenceWithPetri diag petri maybeLengthBounds =
-  let validSequences = generateSequencesWithLevels levels' (extractActionLookup diag) maybeLengthBounds petri
+generateActionSequenceWithPetri actionLookup petri maybeLengthBounds =
+  let validSequences = generateSequencesWithLevels levels' actionLookup maybeLengthBounds petri
   in if null validSequences then Nothing else Just (head validSequences)
 
 -- | Generate one valid action sequence with repetition, using a pre-computed Petri net.
@@ -82,12 +82,12 @@ generateActionSequenceWithPetri diag petri maybeLengthBounds =
 -- Returns Nothing if no sequence with repetition can be found, or if all sequences with repetition
 -- violate the length constraints.
 generateActionSequenceWithPetriAndRepetition
-  :: UMLActivityDiagram
+  :: BM.Bimap Int String
   -> PetriLike Node PetriKey
   -> (Int, Int)  -- (minLength, maxLength) constraints
   -> Maybe [String]
-generateActionSequenceWithPetriAndRepetition diag petri lengthBounds =
-  let allActionSequences = generateSequencesWithLevels levelsWithCycles (extractActionLookup diag) (Just lengthBounds) petri
+generateActionSequenceWithPetriAndRepetition actionLookup petri lengthBounds =
+  let allActionSequences = generateSequencesWithLevels levelsWithCycles actionLookup (Just lengthBounds) petri
       sequencesWithDistances = [(seq', d) | seq' <- allActionSequences, Just d <- [actionRepetitionDistance seq']]
   in if null sequencesWithDistances
      then Nothing
@@ -185,21 +185,19 @@ levelsWithCycles n =
 validActionSequence :: [String] -> UMLActivityDiagram -> Bool
 validActionSequence input diag =
   let petri = convertToPetriNet diag
-  in validActionSequenceWithPetri input diag petri
+  in validActionSequenceWithPetri input (extractActionLookup diag) petri
 
 -- | Check if an action sequence is valid, using a pre-computed Petri net.
--- This version avoids re-computing the Petri net conversion
-validActionSequenceWithPetri :: [String] -> UMLActivityDiagram -> PetriLike Node PetriKey -> Bool
-validActionSequenceWithPetri input diag petri =
-  let (levels, zeroState) = computeActionSequenceLevels input diag petri
+validActionSequenceWithPetri :: [String] -> BM.Bimap Int String -> PetriLike Node PetriKey -> Bool
+validActionSequenceWithPetri input actionLookup petri =
+  let (levels, zeroState) = computeActionSequenceLevels input actionLookup petri
   in any (isJust . lookup zeroState) levels
 
 -- | Common computation for action sequence validation
 -- Returns (levels, zeroState) for checking sequence properties
-computeActionSequenceLevels :: [String] -> UMLActivityDiagram -> PetriLike Node PetriKey -> ([[(State PetriKey, [PetriKey])]], State PetriKey)
-computeActionSequenceLevels input diag petri =
-  let actionLookup = extractActionLookup diag
-      labels = mapMaybe (`BM.lookupR` actionLookup) input
+computeActionSequenceLevels :: [String] -> BM.Bimap Int String -> PetriLike Node PetriKey -> ([[(State PetriKey, [PetriKey])]], State PetriKey)
+computeActionSequenceLevels input actionLookup petri =
+  let labels = mapMaybe (`BM.lookupR` actionLookup) input
       petriKeyMap = map
         (\k -> (Ad.label $ sourceNode k, k))
         $ filter isNormalPetriNode $ M.keys $ allNodes petri

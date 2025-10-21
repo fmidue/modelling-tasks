@@ -28,6 +28,7 @@ import Capabilities.WriteFile           (MonadWriteFile)
 import Modelling.ActivityDiagram.ActionSequences (
   generateActionSequenceWithPetri,
   computeActionSequenceLevels,
+  extractActionLookup,
   isFinalPetriNode,
   )
 import Modelling.ActivityDiagram.Auxiliary.ActionSequences (actionSequencesAlloy)
@@ -90,6 +91,7 @@ import Modelling.Auxiliary.Output (
   extra
   )
 import System.Random.Shuffle (shuffleM)
+import qualified Data.Bimap as BM (Bimap)
 
 data EnterASInstance = EnterASInstance {
   activityDiagram :: UMLActivityDiagram,
@@ -188,9 +190,9 @@ newtype EnterASSolution = EnterASSolution {
   sampleSolution :: [String]
 } deriving (Show, Eq)
 
-enterActionSequence :: UMLActivityDiagram -> PetriLike Node PetriKey -> EnterASSolution
-enterActionSequence ad petri =
-  EnterASSolution {sampleSolution = fromJust $ generateActionSequenceWithPetri ad petri Nothing}
+enterActionSequence :: BM.Bimap Int String -> PetriLike Node PetriKey -> EnterASSolution
+enterActionSequence actionLookup petri =
+  EnterASSolution {sampleSolution = fromJust $ generateActionSequenceWithPetri actionLookup petri Nothing}
 
 enterASTask
   :: (MonadPlantUml m, MonadWriteFile m, OutputCapable m)
@@ -247,9 +249,10 @@ enterASEvaluation
   -> [String]
   -> Rated m
 enterASEvaluation task sub = do
-  let objectNames = map name $ filter isObjectNode $ nodes $ activityDiagram task
+  let diag = activityDiagram task
+      objectNames = map name $ filter isObjectNode $ nodes diag
       objectNamesInSubmission = nubOrd $ sub `intersect` objectNames
-      (levels, zeroState) = computeActionSequenceLevels sub (activityDiagram task) (petriNet task)
+      (levels, zeroState) = computeActionSequenceLevels sub (extractActionLookup diag) (petriNet task)
       reachesZeroState = any (isJust . lookup zeroState) levels
       correct = null objectNamesInSubmission && reachesZeroState
       points = if correct then 1 else 0
@@ -321,13 +324,14 @@ getEnterASTask config = do
   getFirstInstance
         $ filter (isNothing . (`checkEnterASInstanceForConfig` config))
         $ map (\x -> let petri = convertToPetriNet x
+                         actionLookup = extractActionLookup x
                      in EnterASInstance {
           activityDiagram=x,
           petriNet=petri,
           drawSettings = defaultPlantUmlConfig {
             suppressBranchConditions = hideBranchConditions config
             },
-          sampleSequence = sampleSolution $ enterActionSequence x petri,
+          sampleSequence = sampleSolution $ enterActionSequence actionLookup petri,
           showSolution = printSolution config,
           addText = extraText config
         }) ad
