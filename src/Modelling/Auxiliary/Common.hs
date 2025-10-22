@@ -50,6 +50,7 @@ import Data.Char (
   toLower,
   toUpper,
   )
+#if !MIN_VERSION_base(4,20,0)
 import Data.Foldable                    (Foldable (foldl'))
 import Data.Function                    ((&))
 import Data.List                       (delete)

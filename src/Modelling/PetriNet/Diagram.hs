@@ -43,6 +43,9 @@ import Control.Monad.Catch (
   MonadThrow (throwM),
   handle,
   )
+#if !MIN_VERSION_base(4,20,0)
+import Data.Foldable                    (Foldable (foldl'))
+#endif
 import Data.Graph.Inductive             (Gr)
 import Data.GraphViz                    (AttributeNode, AttributeEdge)
 import Data.GraphViz.Exception          (GraphvizException)

@@ -51,7 +51,9 @@ import Control.OutputCapable.Blocks (
 import Control.OutputCapable.Blocks.Generic (
   ($>>=),
   )
-import Data.Foldable                    (foldl')
+#if !MIN_VERSION_base(4,20,0)
+import Data.Foldable                    (Foldable (foldl'))
+#endif
 import Data.GraphViz                    (GraphvizCommand)
 
 deadlocks :: Ord s => Net s t -> [[State s]]
