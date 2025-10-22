@@ -82,6 +82,7 @@ import Control.Monad.Random (
   mkStdGen
   )
 import Data.List (permutations, sortBy)
+import Data.List.Extra (nubOrd)
 import Data.Map (Map)
 import Data.Monoid (Sum(..), getSum)
 import Data.String.Interpolate          (i, iii)
@@ -197,6 +198,7 @@ selectActionSequence withRepetition numberOfWrongSequences lengthBounds ad = do
         take numberOfWrongSequences $
         sortBy (compareDistToCorrect correctSequence) $
         filter (not . (\actionSeq -> validActionSequenceWithPetri actionSeq actionLookup petri)) $
+        (if withRepetition then nubOrd else id) $
         permutations correctSequence
   Monad.guard (length wrongSequences == numberOfWrongSequences)
   return SelectASSolution {correctSequence = correctSequence, wrongSequences = wrongSequences}
