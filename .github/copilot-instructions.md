@@ -53,28 +53,28 @@ Then run EditorConfig validation again to confirm fixes:
 
 ### 🔴 NEVER COMMIT CODE THAT DOESN'T BUILD
 
-**ABSOLUTE REQUIREMENT**: Every commit MUST successfully build with `stack build`.
+**ABSOLUTE REQUIREMENT**: Every commit MUST successfully build with `stack test --no-run-tests`.
 
-**BEFORE ANY COMMIT**: Run `stack build` to validate the code compiles:
+**BEFORE ANY COMMIT**: Run `stack test --no-run-tests` to validate the code compiles:
 
 ```bash
-stack build
+stack test --no-run-tests
 ```
 
 Or for the full application suite:
 
 ```bash
-stack --stack-yaml=stack-apps.yaml build
+stack --stack-yaml=stack-apps.yaml test --no-run-tests
 ```
 
 **If build fails**: Fix all compilation errors before committing:
 
 - Review the error messages carefully
 - Fix all type errors, missing imports, and syntax issues
-- Re-run `stack build` until it succeeds
+- Re-run `stack test --no-run-tests` until it succeeds
 - Only then proceed with committing
 
-**IF `stack build` FAILS**:
+**IF `stack test --no-run-tests` FAILS**:
 
 - **DO NOT COMMIT**
 - **DO NOT USE `report_progress`**
@@ -167,13 +167,13 @@ Always run these commands before committing changes:
 **CRITICAL**: Code must successfully build before any commit:
 
 ```bash
-stack build
+stack test --no-run-tests
 ```
 
 For the full application suite:
 
 ```bash
-stack --stack-yaml=stack-apps.yaml build
+stack --stack-yaml=stack-apps.yaml test --no-run-tests
 ```
 
 **Never commit code that doesn't build**. This is a fundamental requirement.
@@ -380,7 +380,7 @@ When writing Haskell code for this project, follow these best practices:
 
 After making changes, always validate:
 
-1. **Build succeeds**: `stack build` or `stack --stack-yaml=stack-apps.yaml build` **MUST PASS BEFORE COMMIT**
+1. **Build succeeds**: `stack --stack-yaml=stack-apps.yaml test --no-run-tests modelling-tasks` or `stack --stack-yaml=stack-apps.yaml test --no-run-tests` **MUST PASS BEFORE COMMIT**
 2. **EditorConfig compliance**: `./scripts/check-editorconfig.sh` **MUST PASS**
 3. **HLint does not complain**: `hlint src/ test/ app/`
 4. **Tests pass**: `stack --stack-yaml=stack-apps.yaml test` (30+ minutes)
