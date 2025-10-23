@@ -47,10 +47,9 @@ import Modelling.PetriNet.Reach.Step (levels', successors)
 
 import Control.Monad (guard)
 import Control.Monad.Random (MonadRandom, uniform)
-import Data.List (union, maximumBy)
-import Data.List.Extra (nubOrd, groupOn)
+import Data.List (union)
+import Data.List.Extra (nubOrd)
 import Data.Maybe(mapMaybe, isJust, fromJust)
-import Data.Ord (comparing)
 
 
 fromPetriLike :: Ord a => PetriLike Node a -> Net a a
