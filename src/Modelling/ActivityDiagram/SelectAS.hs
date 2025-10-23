@@ -205,7 +205,7 @@ selectActionSequence withRepetition numberOfWrongSequences lengthBounds ad = May
         then
           return Nothing
         else
-          Just <$> uniform (head (groupOn length validSequences))
+          Just <$> uniform validSequences
   case maybeCorrectSequence of
     Nothing -> return Nothing
     Just correctSequence -> do
