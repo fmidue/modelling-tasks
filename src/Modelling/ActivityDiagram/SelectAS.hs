@@ -203,9 +203,14 @@ selectActionSequence withRepetition numberOfWrongSequences lengthBounds ad = May
             filter (not . (\actionSeq -> validActionSequenceWithPetri actionSeq actionLookup petri)) $
             (if withRepetition then nubOrd else id) $
             permutations correctSequence
+      -- Early check: reject if insufficient candidates
+      guard $ length allWrongCandidates >= numberOfWrongSequences
+      let -- Precompute edit distance parameters
+          editDistParams = asEditDistParams correctSequence
+          correctSeqVec = V.fromList correctSequence
           -- Pair each candidate with its distance
           candidatesWithDist = map (\actionSeq ->
-            (actionSeq, getSum $ fst $ leastChanges (asEditDistParams correctSequence) (V.fromList correctSequence) (V.fromList actionSeq))) allWrongCandidates
+            (actionSeq, getSum $ fst $ leastChanges editDistParams correctSeqVec (V.fromList actionSeq))) allWrongCandidates
           -- Sort by distance
           sortedByDist = sortBy (comparing snd) candidatesWithDist
           -- Group by distance
@@ -215,9 +220,7 @@ selectActionSequence withRepetition numberOfWrongSequences lengthBounds ad = May
       -- Shuffle only the groups we need
       shuffledGroups <- mapM shuffleM groupsNeeded
       let wrongSequences = take numberOfWrongSequences $ map fst $ concat shuffledGroups
-      if length wrongSequences == numberOfWrongSequences
-        then return $ Just SelectASSolution {correctSequence = correctSequence, wrongSequences = wrongSequences}
-        else return Nothing
+      return $ Just SelectASSolution {correctSequence = correctSequence, wrongSequences = wrongSequences}
   where
     -- Helper to take groups until we have accumulated enough elements
     takeWhileAccum :: Int -> [[a]] -> [[a]]
