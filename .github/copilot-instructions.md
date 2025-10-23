@@ -53,12 +53,12 @@ Then run EditorConfig validation again to confirm fixes:
 
 ### 🔴 NEVER COMMIT CODE THAT DOESN'T BUILD
 
-**ABSOLUTE REQUIREMENT**: Every commit MUST successfully build with `stack test --no-run-tests`.
+**ABSOLUTE REQUIREMENT**: Every commit MUST successfully build with `stack --stack-yaml=stack-apps.yaml test --no-run-tests modelling-tasks`.
 
-**BEFORE ANY COMMIT**: Run `stack test --no-run-tests` to validate the code compiles:
+**BEFORE ANY COMMIT**: Run `stack --stack-yaml=stack-apps.yaml test --no-run-tests modelling-tasks` to validate the code compiles:
 
 ```bash
-stack test --no-run-tests
+stack --stack-yaml=stack-apps.yaml test --no-run-tests modelling-tasks
 ```
 
 Or for the full application suite:
@@ -71,10 +71,10 @@ stack --stack-yaml=stack-apps.yaml test --no-run-tests
 
 - Review the error messages carefully
 - Fix all type errors, missing imports, and syntax issues
-- Re-run `stack test --no-run-tests` until it succeeds
+- Re-run `stack --stack-yaml=stack-apps.yaml test --no-run-tests modelling-tasks` until it succeeds
 - Only then proceed with committing
 
-**IF `stack test --no-run-tests` FAILS**:
+**IF `stack --stack-yaml=stack-apps.yaml test --no-run-tests modelling-tasks` FAILS**:
 
 - **DO NOT COMMIT**
 - **DO NOT USE `report_progress`**
@@ -167,7 +167,7 @@ Always run these commands before committing changes:
 **CRITICAL**: Code must successfully build before any commit:
 
 ```bash
-stack test --no-run-tests
+stack --stack-yaml=stack-apps.yaml test --no-run-tests modelling-tasks
 ```
 
 For the full application suite:
