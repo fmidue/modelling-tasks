@@ -303,40 +303,40 @@ pickConcurrencyTask showInputHelp path task = do
   images show snd
     $=<< renderPick path task
   when showInputHelp $ paragraph $ do
-    paragraph $ translate $ do
+   paragraph $ translate $ do
+    english [iii|
+      State your answer by giving the number of the Petri net
+      having these concurrently activated transitions.
+      #{" "}|]
+    german [iii|
+      Geben Sie Ihre Antwort durch Angabe der Nummer des Petrinetzes an,
+      das diese nebenläufig aktivierten Transitionen hat.
+      #{" "}|]
+   let plural = wrongInstances task > 1
+   paragraph $ do
+    translate $ do
+      english [i|Stating |]
+      german [i|Die Angabe von |]
+    code "1"
+    translate $ do
       english [iii|
-        State your answer by giving the number of the Petri net
-        having these concurrently activated transitions.
-        #{" "}|]
-      german [iii|
-        Geben Sie Ihre Antwort durch Angabe der Nummer des Petrinetzes an,
-        das diese nebenläufig aktivierten Transitionen hat.
-        #{" "}|]
-    let plural = wrongInstances task > 1
-    paragraph $ do
-      translate $ do
-        english [i|Stating |]
-        german [i|Die Angabe von |]
-      code "1"
-      translate $ do
-        english [iii|
-          #{" "}as answer would indicate that Petri net 1 has
-          exactly two transitions that are concurrently activated
-          under the initial marking (and the other Petri
-          #{if plural then "nets don't" else "net doesn't"}).
-          |]
-        german $ [iii|
-          #{" "}als Antwort würde bedeuten, dass Petrinetz 1
-          genau zwei unter der Startmarkierung
-          nebenläufig aktivierte Transitionen hat (und
-          #{" "}
-          |]
-          ++ (if plural
-              then "die anderen Petrinetze nicht"
-              else "das andere Petrinetz nicht")
-          ++ ")."
-      pure ()
+        #{" "}as answer would indicate that Petri net 1 has
+        exactly two transitions that are concurrently activated
+        under the initial marking (and the other Petri
+        #{if plural then "nets don't" else "net doesn't"}).
+        |]
+      german $ [iii|
+        #{" "}als Antwort würde bedeuten, dass Petrinetz 1
+        genau zwei unter der Startmarkierung
+        nebenläufig aktivierte Transitionen hat (und
+        #{" "}
+        |]
+        ++ (if plural
+            then "die anderen Petrinetze nicht"
+            else "das andere Petrinetz nicht")
+        ++ ")."
     pure ()
+   pure ()
   hoveringInformation
   extra $ Pick.addText task
   pure ()

@@ -412,20 +412,20 @@ graphToMathTask showInputHelp path task = do
   enumerateM
     (text . (++ ". ") . show)
     $ map (second (mathToOutput latex . snd)) $ toList (to task)
-  when showInputHelp $ paragraph $ do
-    paragraph $ translate $ do
-      english [i|Please state your answer by giving the number of the matching representation only.|]
-      german [i|Geben Sie Ihre Antwort durch Angabe der Nummer der passenden Repräsentation an.|]
-    paragraph $ do
-      translate $ do
-        english [i|Stating |]
-        german [i|Die Angabe von |]
-      code "1"
-      translate $ do
-        english [i| as answer would indicate that representation 1 matches the given graphical representation (and the other mathematical representations don't).|]
-        german [i| als Antwort würde bedeuten, dass Repräsentation 1 zur gegebenen grafischen Darstellung passt (und die anderen mathematischen Repräsentationen nicht).|]
-      pure ()
+  when showInputHelp $ do
+   paragraph $ translate $ do
+    english [i|Please state your answer by giving the number of the matching representation only.|]
+    german [i|Geben Sie Ihre Antwort durch Angabe der Nummer der passenden Repräsentation an.|]
+   paragraph $ do
+    translate $ do
+      english [i|Stating |]
+      german [i|Die Angabe von |]
+    code "1"
+    translate $ do
+      english [i| as answer would indicate that representation 1 matches the given graphical representation (and the other mathematical representations don't).|]
+      german [i| als Antwort würde bedeuten, dass Repräsentation 1 zur gegebenen grafischen Darstellung passt (und die anderen mathematischen Repräsentationen nicht).|]
     pure ()
+   pure ()
   hoveringInformation
   extra $ addText task
   pure ()
@@ -476,20 +476,20 @@ mathToGraphTask showInputHelp path task = do
     english "Which of the following diagrams represents this Petri net?"
     german "Welches der folgenden Diagramme stellt dieses Petrinetz dar?"
   images show snd $=<< to <$> writeDias path task
-  when showInputHelp $ paragraph $ do
-    paragraph $ translate $ do
-      english [i|Please state your answer by giving the number of the matching diagram only.|]
-      german [i|Geben Sie Ihre Antwort durch Angabe der Nummer des passenden Diagramms an.|]
-    paragraph $ do
-      translate $ do
-        english [i|Stating |]
-        german [i|Die Angabe von |]
-      code "1"
-      translate $ do
-        english [i| as answer would indicate that diagram 1 matches the given mathematical representation (and the other diagrams don't).|]
-        german [i| als Antwort würde bedeuten, dass Diagramm 1 zur gegebenen mathematischen Repräsentation passt (und die anderen Diagramme nicht).|]
-      pure ()
+  when showInputHelp $ do
+   paragraph $ translate $ do
+    english [i|Please state your answer by giving the number of the matching diagram only.|]
+    german [i|Geben Sie Ihre Antwort durch Angabe der Nummer des passenden Diagramms an.|]
+   paragraph $ do
+    translate $ do
+      english [i|Stating |]
+      german [i|Die Angabe von |]
+    code "1"
+    translate $ do
+      english [i| as answer would indicate that diagram 1 matches the given mathematical representation (and the other diagrams don't).|]
+      german [i| als Antwort würde bedeuten, dass Diagramm 1 zur gegebenen mathematischen Repräsentation passt (und die anderen Diagramme nicht).|]
     pure ()
+   pure ()
   hoveringInformation
   extra $ addText task
   pure ()
