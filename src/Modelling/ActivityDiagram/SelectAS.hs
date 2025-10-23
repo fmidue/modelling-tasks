@@ -58,7 +58,6 @@ import Modelling.Auxiliary.Common (
   )
 
 import Control.Applicative (Alternative ((<|>)))
-import qualified Control.Monad as Monad (guard)
 import Control.Monad.Catch              (MonadThrow, throwM)
 import Control.Monad.Trans.Class (lift)
 import Control.Monad.Extra (firstJustM)
