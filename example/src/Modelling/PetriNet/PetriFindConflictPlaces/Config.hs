@@ -2,6 +2,7 @@
 
 module Modelling.PetriNet.PetriFindConflictPlaces.Config where
 
+import Modelling.Auxiliary.Output       (ExtraText(..))
 import Modelling.PetriNet.Types (
   AdvConfig (..),
   AlloyConfig (..),
@@ -60,7 +61,7 @@ task2023_24 = FindConflictConfig {
     maxInstances = Just 2000,
     timeout = Nothing
     },
-  extraText = Nothing
+  extraText = NoExtraText
   }
 
 {-|
@@ -110,7 +111,7 @@ task2023_26 = FindConflictConfig {
     maxInstances = Just 2000,
     timeout = Nothing
     },
-  extraText = Nothing
+  extraText = NoExtraText
   }
 
 {-|
@@ -176,7 +177,7 @@ task2024_36 = FindConflictConfig {
     maxInstances = Just 2000,
     timeout = Nothing
     },
-  extraText = Nothing
+  extraText = NoExtraText
   }
 
 {-|
@@ -226,7 +227,7 @@ task2024_64 = FindConflictConfig {
     maxInstances = Just 2000,
     timeout = Nothing
     },
-  extraText = Nothing
+  extraText = NoExtraText
   }
 
 {-|
@@ -276,7 +277,7 @@ task2024_65 = FindConflictConfig {
     maxInstances = Just 2000,
     timeout = Nothing
     },
-  extraText = Nothing
+  extraText = NoExtraText
   }
 
 {-|
@@ -326,5 +327,5 @@ task2024_66 = FindConflictConfig {
     maxInstances = Just 2000,
     timeout = Nothing
     },
-  extraText = Nothing
+  extraText = NoExtraText
   }

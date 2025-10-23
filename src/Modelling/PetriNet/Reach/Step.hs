@@ -1,4 +1,5 @@
 {-# LANGUAGE ApplicativeDo #-}
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-|
 originally from Autotool (https://gitlab.imn.htwk-leipzig.de/autotool/all0)

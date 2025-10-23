@@ -2,6 +2,7 @@
 
 module Modelling.ActivityDiagram.MatchPetri.Config where
 
+import Modelling.ActivityDiagram.Common (finalNodesAdvice)
 import Modelling.ActivityDiagram.Config (AdConfig(..))
 import Modelling.ActivityDiagram.MatchPetri (MatchPetriConfig(..))
 
@@ -33,7 +34,7 @@ task2023_39 = MatchPetriConfig {
   presenceOfSinkTransitionsForFinals = Nothing,
   withActivityFinalInForkBlocks = Nothing,
   printSolution = True,
-  extraText = Nothing
+  extraText = finalNodesAdvice
   }
 
 {-|
@@ -62,7 +63,7 @@ task2023_40 = MatchPetriConfig {
   presenceOfSinkTransitionsForFinals = Nothing,
   withActivityFinalInForkBlocks = Nothing,
   printSolution = True,
-  extraText = Nothing
+  extraText = finalNodesAdvice
   }
 
 {-|
@@ -107,7 +108,7 @@ task2024_70 = MatchPetriConfig {
   presenceOfSinkTransitionsForFinals = Just True,
   withActivityFinalInForkBlocks = Just False,
   printSolution = True,
-  extraText = Nothing
+  extraText = finalNodesAdvice
   }
 
 {-|
@@ -136,5 +137,5 @@ task2024_71 = MatchPetriConfig {
   presenceOfSinkTransitionsForFinals = Nothing,
   withActivityFinalInForkBlocks = Just False,
   printSolution = True,
-  extraText = Nothing
+  extraText = finalNodesAdvice
   }

@@ -2,6 +2,7 @@
 
 module Modelling.ActivityDiagram.FindAuxiliaryPetriNodes.Config where
 
+import Modelling.ActivityDiagram.Common (finalNodesAndTransitionsAdvice)
 import Modelling.ActivityDiagram.FindAuxiliaryPetriNodes (
   FindAuxiliaryPetriNodesConfig (..),
   )
@@ -30,7 +31,7 @@ task2023_41 = FindAuxiliaryPetriNodesConfig {
   hideBranchConditions = True,
   presenceOfSinkTransitionsForFinals = Nothing,
   printSolution = True,
-  extraText = Nothing
+  extraText = finalNodesAndTransitionsAdvice
   }
 
 {-|
@@ -56,7 +57,7 @@ task2023_42 = FindAuxiliaryPetriNodesConfig {
   hideBranchConditions = True,
   presenceOfSinkTransitionsForFinals = Nothing,
   printSolution = True,
-  extraText = Nothing
+  extraText = finalNodesAndTransitionsAdvice
   }
 
 {-|
@@ -82,7 +83,7 @@ task2024_47 = FindAuxiliaryPetriNodesConfig {
   hideBranchConditions = True,
   presenceOfSinkTransitionsForFinals = Nothing,
   printSolution = True,
-  extraText = Nothing
+  extraText = finalNodesAndTransitionsAdvice
   }
 
 {-|
@@ -108,7 +109,7 @@ task2024_48 = FindAuxiliaryPetriNodesConfig {
   hideBranchConditions = True,
   presenceOfSinkTransitionsForFinals = Nothing,
   printSolution = True,
-  extraText = Nothing
+  extraText = finalNodesAndTransitionsAdvice
   }
 
 {-|
@@ -134,7 +135,7 @@ task2024_72 = FindAuxiliaryPetriNodesConfig {
   hideBranchConditions = True,
   presenceOfSinkTransitionsForFinals = Just False,
   printSolution = True,
-  extraText = Nothing
+  extraText = finalNodesAndTransitionsAdvice
   }
 
 {-|
@@ -160,5 +161,5 @@ task2024_73 = FindAuxiliaryPetriNodesConfig {
   hideBranchConditions = True,
   presenceOfSinkTransitionsForFinals = Just True,
   printSolution = True,
-  extraText = Nothing
+  extraText = finalNodesAndTransitionsAdvice
   }

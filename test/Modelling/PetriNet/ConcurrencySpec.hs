@@ -3,6 +3,7 @@
 {-# LANGUAGE TypeApplications #-}
 module Modelling.PetriNet.ConcurrencySpec where
 
+import Modelling.Auxiliary.Output (ExtraText(..))
 import qualified Modelling.PetriNet.Types         as Find (
   FindConcurrencyConfig (..),
   )
@@ -122,7 +123,7 @@ validFindConcurrencyConfigs cs advancedConfig =
     ?? validGraphConfig
     ?? False
     ?? alloyTestConfig
-    ?? Nothing
+    ?? NoExtraText
  )
 
 validPickConcurrencyConfigs
@@ -137,7 +138,7 @@ validPickConcurrencyConfigs cs = [
     printSolution
     False
     alloyTestConfig
-    Nothing |
+    NoExtraText |
       (basic,change) <- cs,
       printSolution <- [False, True]
     ]

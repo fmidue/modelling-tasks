@@ -41,7 +41,6 @@ import Capabilities.Graphviz            (MonadGraphviz)
 import Capabilities.PlantUml            (MonadPlantUml)
 import Capabilities.WriteFile           (MonadWriteFile)
 import Modelling.ActivityDiagram.Alloy  (adConfigToAlloy, modulePetriNet)
-import Modelling.ActivityDiagram.Auxiliary.Util (finalNodesAdvice)
 import Modelling.ActivityDiagram.Datatype (
   UMLActivityDiagram(..),
   AdNode (..),
@@ -76,6 +75,7 @@ import Modelling.ActivityDiagram.PlantUMLConverter (
   )
 import Modelling.Auxiliary.Common (getFirstInstance, oneOf)
 import Modelling.Auxiliary.Output (
+  ExtraText(..),
   addPretext,
   extra
   )
@@ -95,7 +95,6 @@ import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
   GenericOutputCapable (..),
   LangM,
-  Language,
   Rated,
   OutputCapable,
   ($=<<),
@@ -129,7 +128,7 @@ data MatchPetriInstance = MatchPetriInstance {
   plantUMLConf :: PlantUmlConfig,
   petriDrawConf :: DrawSettings,
   showSolution :: Bool,
-  addText :: Maybe (Map Language String)
+  addText :: ExtraText
 } deriving (Generic, Read, Show)
 
 data MatchPetriConfig = MatchPetriConfig {
@@ -149,7 +148,7 @@ data MatchPetriConfig = MatchPetriConfig {
   -- | Avoid Activity Finals in concurrent flows to reduce confusion
   withActivityFinalInForkBlocks :: !(Maybe Bool),
   printSolution :: Bool,
-  extraText :: Maybe (Map Language String)
+  extraText :: ExtraText
 } deriving (Generic, Read, Show)
 
 pickRandomLayout :: (MonadRandom m) => MatchPetriConfig -> m GraphvizCommand
@@ -171,7 +170,7 @@ defaultMatchPetriConfig =
     presenceOfSinkTransitionsForFinals = Nothing,
     withActivityFinalInForkBlocks = Just False,
     printSolution = False,
-    extraText = Nothing
+    extraText = NoExtraText
   }
 
 checkMatchPetriConfig :: MatchPetriConfig -> Maybe String
@@ -366,7 +365,6 @@ matchPetriTask path task = do
         und kein Petrinetzknoten entspricht einem Flussende.
         |]
     pure ()
-  finalNodesAdvice False
 
   extra $ addText task
 
@@ -967,5 +965,5 @@ defaultMatchPetriInstance = MatchPetriInstance
       withGraphvizCommand = Dot
     },
   showSolution = False,
-  addText = Nothing
+  addText = NoExtraText
   }

@@ -28,8 +28,9 @@ import qualified Data.Vector as V (fromList)
 import Capabilities.Alloy               (MonadAlloy, getInstances)
 import Capabilities.PlantUml            (MonadPlantUml)
 import Capabilities.WriteFile           (MonadWriteFile)
-import Modelling.ActivityDiagram.ActionSequences (generateActionSequence, validActionSequence)
+import Modelling.ActivityDiagram.ActionSequences (generateActionSequenceWithPetri, validActionSequenceWithPetri)
 import Modelling.ActivityDiagram.Auxiliary.ActionSequences (actionSequencesAlloy)
+import Modelling.ActivityDiagram.PetriNet (convertToPetriNet)
 import Modelling.ActivityDiagram.Config (
   AdConfig (..),
   checkAdConfig,
@@ -58,7 +59,6 @@ import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
   GenericOutputCapable (..),
   LangM,
-  Language,
   OutputCapable,
   ($=<<),
   english,
@@ -82,6 +82,7 @@ import Data.String.Interpolate          (i, iii)
 import Data.Vector.Distance (Params(..), leastChanges)
 import GHC.Generics (Generic)
 import Modelling.Auxiliary.Output (
+  ExtraText(..),
   addPretext,
   extra
   )
@@ -92,7 +93,7 @@ data SelectASInstance = SelectASInstance {
   actionSequences :: Map Int (Bool, [String]),
   drawSettings :: PlantUmlConfig,
   showSolution :: Bool,
-  addText :: Maybe (Map Language String)
+  addText :: ExtraText
 } deriving (Eq, Generic, Read, Show)
 
 data SelectASConfig = SelectASConfig {
@@ -103,7 +104,7 @@ data SelectASConfig = SelectASConfig {
   numberOfWrongAnswers :: Int,
   answerLength :: !(Int, Int),
   printSolution :: Bool,
-  extraText :: Maybe (Map Language String)
+  extraText :: ExtraText
 } deriving (Generic, Read, Show)
 
 defaultSelectASConfig :: SelectASConfig
@@ -121,7 +122,7 @@ defaultSelectASConfig = SelectASConfig {
   numberOfWrongAnswers = 2,
   answerLength = (5, 8),
   printSolution = False,
-  extraText = Nothing
+  extraText = NoExtraText
 }
 
 checkSelectASConfig :: SelectASConfig -> Maybe String
@@ -173,13 +174,13 @@ checkSelectASInstanceForConfig
 checkSelectASInstanceForConfig inst SelectASConfig {
   answerLength
   }
-  | length solution < fst answerLength
-  = Just "Solution should not be shorter than the minimal 'answerLength'"
-  | length solution > snd answerLength
-  = Just "Solution should not be longer than the maximal 'answerLength'"
+  | any (\actionSequence -> length actionSequence < fst answerLength) allSequences
+  = Just "All action sequences should not be shorter than the minimal 'answerLength'"
+  | any (\actionSequence -> length actionSequence > snd answerLength) allSequences
+  = Just "All action sequences should not be longer than the maximal 'answerLength'"
   | otherwise
     = Nothing
-  where (_, solution) = head $ M.toList $ M.map snd $ M.filter fst $ actionSequences inst
+  where allSequences = M.map snd $ actionSequences inst
 
 data SelectASSolution = SelectASSolution {
   correctSequence :: [String],
@@ -188,11 +189,12 @@ data SelectASSolution = SelectASSolution {
 
 selectActionSequence :: Int -> UMLActivityDiagram -> SelectASSolution
 selectActionSequence numberOfWrongSequences ad =
-  let correctSequence = generateActionSequence ad
+  let petri = convertToPetriNet ad
+      correctSequence = generateActionSequenceWithPetri ad petri
       wrongSequences =
         take numberOfWrongSequences $
         sortBy (compareDistToCorrect correctSequence) $
-        filter (not . (`validActionSequence` ad)) $
+        filter (not . (\actionSeq -> validActionSequenceWithPetri actionSeq ad petri)) $
         permutations correctSequence
   in SelectASSolution {correctSequence=correctSequence, wrongSequences=wrongSequences}
 
@@ -378,5 +380,5 @@ defaultSelectASInstance = SelectASInstance {
     ],
   drawSettings = defaultPlantUmlConfig,
   showSolution = False,
-  addText = Nothing
+  addText = NoExtraText
 }

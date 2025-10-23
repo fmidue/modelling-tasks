@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# OPTIONS_GHC -Wno-orphans #-}
 module Modelling.Auxiliary.Common (
@@ -52,6 +53,7 @@ import Data.Char (
   )
 #if !MIN_VERSION_base(4,20,0)
 import Data.Foldable                    (Foldable (foldl'))
+#endif
 import Data.Function                    ((&))
 import Data.List                       (delete)
 import Control.Lens (

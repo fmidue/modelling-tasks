@@ -49,6 +49,7 @@ import Modelling.Auxiliary.Common (
   parseWith,
   )
 import Modelling.Auxiliary.Output (
+  ExtraText(..),
   hoveringInformation,
   extra,
   )
@@ -224,7 +225,7 @@ findConcurrencyTask path task = do
         des Paars spielt hierbei keine Rolle.
         |]
     pure ()
-  paragraph hoveringInformation
+  hoveringInformation
   extra $ Find.addText task
   pure ()
 
@@ -329,7 +330,7 @@ pickConcurrencyTask path task = do
             else "das andere Petrinetz nicht")
         ++ ")."
     pure ()
-  paragraph hoveringInformation
+  hoveringInformation
   extra $ Pick.addText task
   pure ()
 
@@ -575,7 +576,7 @@ defaultPickConcurrencyInstance = PickInstance {
       )))
     ],
   showSolution = False,
-  addText = Nothing
+  addText = NoExtraText
   }
 
 defaultFindConcurrencyInstance :: FindInstance SimplePetriNet (Concurrent Transition)
@@ -602,5 +603,5 @@ defaultFindConcurrencyInstance = FindInstance {
   numberOfPlaces = 4,
   numberOfTransitions = 3,
   showSolution = False,
-  addText = Nothing
+  addText = NoExtraText
   }

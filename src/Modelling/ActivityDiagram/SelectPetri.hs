@@ -40,9 +40,6 @@ import Modelling.ActivityDiagram.Alloy  (adConfigToAlloy, modulePetriNet)
 import Modelling.ActivityDiagram.Auxiliary.PetriValidation (
   validatePetriConfig,
   )
-import Modelling.ActivityDiagram.Auxiliary.Util (
-  finalNodesAdvice,
-  )
 import qualified Modelling.ActivityDiagram.Config as Config (
   AdConfig(activityFinalNodes,flowFinalNodes),
   )
@@ -75,6 +72,7 @@ import Modelling.Auxiliary.Common (
   weightedShuffle,
   )
 import Modelling.Auxiliary.Output (
+  ExtraText(..),
   addPretext,
   extra,
   )
@@ -96,7 +94,6 @@ import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
   GenericOutputCapable (..),
   LangM,
-  Language,
   OutputCapable,
   ($=<<),
   english,
@@ -136,7 +133,7 @@ data SelectPetriInstance = SelectPetriInstance {
   petriDrawConf :: DrawSettings,
   petriNets :: Map Int (Bool, SimplePetriLike PetriKey),
   showSolution :: Bool,
-  addText :: Maybe (Map Language String)
+  addText :: ExtraText
 } deriving (Generic, Show)
 
 data SelectPetriConfig = SelectPetriConfig {
@@ -161,7 +158,7 @@ data SelectPetriConfig = SelectPetriConfig {
   -- | Avoid Activity Finals in concurrent flows to reduce confusion
   withActivityFinalInForkBlocks :: !(Maybe Bool),
   printSolution :: Bool,
-  extraText :: Maybe (Map Language String)
+  extraText :: ExtraText
 } deriving (Generic, Show)
 
 pickRandomLayout :: (MonadRandom m) => SelectPetriConfig -> m GraphvizCommand
@@ -187,7 +184,7 @@ defaultSelectPetriConfig = SelectPetriConfig {
   presenceOfSinkTransitionsForFinals = Nothing,
   withActivityFinalInForkBlocks = Just False,
   printSolution = False,
-  extraText = Nothing
+  extraText = NoExtraText
 }
 
 checkSelectPetriConfig :: SelectPetriConfig -> Maybe String
@@ -395,7 +392,6 @@ Bitte geben Sie Ihre Antwort als Zahl an, welche das passende Petrinetz repräse
       english [i|would indicate that Petri net 2 is the matching Petri net.|]
       german  [i|bedeuten, dass Petrinetz 2 das passende Petrinetz ist.|]
     pure ()
-  finalNodesAdvice False
 
   extra $ addText task
 
@@ -914,5 +910,5 @@ defaultSelectPetriInstance =  SelectPetriInstance {
     ]
   }))],
   showSolution = False,
-  addText = Nothing
+  addText = NoExtraText
 }

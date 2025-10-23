@@ -57,6 +57,7 @@ import Modelling.Auxiliary.Common (
   upperFirst,
   )
 import Modelling.Auxiliary.Output (
+  ExtraText(..),
   hoveringInformation,
   extra,
   )
@@ -232,7 +233,7 @@ findConflictTask path task = do
       english "The order of transitions within the pair does not matter here."
       german "Die Reihenfolge der Transitionen innerhalb des Paars spielt hierbei keine Rolle."
     pure ()
-  paragraph hoveringInformation
+  hoveringInformation
   extra $ Find.addText task
   pure ()
 
@@ -383,7 +384,7 @@ pickConflictTask path task = do
             else "das andere Petrinetz nicht")
         ++ ")."
     pure ()
-  paragraph hoveringInformation
+  hoveringInformation
   extra $ Pick.addText task
   pure ()
 
@@ -727,7 +728,7 @@ defaultPickConflictInstance = PickInstance {
       )))
     ],
   showSolution = False,
-  addText = Nothing
+  addText = NoExtraText
   }
 
 defaultFindConflictInstance :: FindInstance SimplePetriNet Conflict
@@ -757,5 +758,5 @@ defaultFindConflictInstance = FindInstance {
   numberOfPlaces = 4,
   numberOfTransitions = 3,
   showSolution = False,
-  addText = Nothing
+  addText = NoExtraText
   }

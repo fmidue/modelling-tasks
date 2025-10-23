@@ -1,4 +1,5 @@
 {-# LANGUAGE ApplicativeDo #-}
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE TypeApplications #-}
@@ -49,7 +50,6 @@ import Data.Foldable                    (Foldable (foldl'))
 import Data.Graph.Inductive             (Gr)
 import Data.GraphViz                    (AttributeNode, AttributeEdge)
 import Data.GraphViz.Exception          (GraphvizException)
-import Data.List                        (foldl')
 import Data.Data (
   Data,
   Typeable,

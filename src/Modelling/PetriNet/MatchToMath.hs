@@ -47,6 +47,7 @@ import Capabilities.Diagrams            (MonadDiagrams)
 import Capabilities.Graphviz            (MonadGraphviz)
 import Modelling.Auxiliary.Common       (Object (oName), findFittingRandomElements)
 import Modelling.Auxiliary.Output       (
+  ExtraText(..),
   hoveringInformation,
   extra,
   )
@@ -169,7 +170,7 @@ data MathConfig = MathConfig {
   useDifferentGraphLayouts :: Bool,
   wrongInstances :: Int,
   alloyConfig :: AlloyConfig,
-  extraText :: Maybe (Map Language String)
+  extraText :: ExtraText
   } deriving (Generic, Read, Show)
 
 defaultMathConfig :: MathConfig
@@ -186,14 +187,14 @@ defaultMathConfig = MathConfig {
   useDifferentGraphLayouts = False,
   wrongInstances = 3,
   alloyConfig = defaultAlloyConfig,
-  extraText = Nothing
+  extraText = NoExtraText
   }
 
 data MatchInstance a b = MatchInstance {
   from :: a,
   showSolution :: Bool,
   to :: Map Int (Bool, b),
-  addText :: Maybe (Map Language String)
+  addText :: ExtraText
   }
   deriving (Data, Functor, Generic, Read, Show)
 
@@ -421,7 +422,7 @@ graphToMathTask path task = do
       english [i| as answer would indicate that representation 1 matches the given graphical representation (and the other mathematical representations don't).|]
       german [i| als Antwort würde bedeuten, dass Repräsentation 1 zur gegebenen grafischen Darstellung passt (und die anderen mathematischen Repräsentationen nicht).|]
     pure ()
-  paragraph hoveringInformation
+  hoveringInformation
   extra $ addText task
   pure ()
 
@@ -482,7 +483,7 @@ mathToGraphTask path task = do
       english [i| as answer would indicate that diagram 1 matches the given mathematical representation (and the other diagrams don't).|]
       german [i| als Antwort würde bedeuten, dass Diagramm 1 zur gegebenen mathematischen Repräsentation passt (und die anderen Diagramme nicht).|]
     pure ()
-  paragraph hoveringInformation
+  hoveringInformation
   extra $ addText task
   pure ()
 
@@ -743,7 +744,7 @@ defaultGraphToMathInstance = MatchInstance {
       placeOrderMath = Just "\\left(s_{1},s_{2},s_{3},s_{4}\\right)"
       }))
     ],
-    addText = Nothing
+    addText = NoExtraText
   }
 
 defaultMathToGraphInstance :: MathToGraphInstance
@@ -842,5 +843,5 @@ defaultMathToGraphInstance = MatchInstance {
         }
       )))
     ],
-    addText = Nothing
+    addText = NoExtraText
   }

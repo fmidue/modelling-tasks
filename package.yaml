@@ -42,7 +42,7 @@ dependencies:
   - bimap
   - bifunctors
   - bytestring
-  - call-alloy >= 0.6.0.2 && < 0.7
+  - call-alloy >= 0.6.0.3 && < 0.7
   - composition
   - containers
   - diagrams-graphviz
@@ -79,7 +79,6 @@ library:
   exposed-modules:
     - Modelling.ActivityDiagram.ActionSequences
     - Modelling.ActivityDiagram.Alloy
-    - Modelling.ActivityDiagram.Auxiliary.Util
     - Modelling.ActivityDiagram.Auxiliary.Parser
     - Modelling.ActivityDiagram.Config
     - Modelling.ActivityDiagram.Datatype

@@ -25,7 +25,11 @@ module Modelling.ActivityDiagram.EnterAS (
 import Capabilities.Alloy               (MonadAlloy, getInstances)
 import Capabilities.PlantUml            (MonadPlantUml)
 import Capabilities.WriteFile           (MonadWriteFile)
-import Modelling.ActivityDiagram.ActionSequences (generateActionSequence, validActionSequence)
+import Modelling.ActivityDiagram.ActionSequences (
+  generateActionSequenceWithPetri,
+  computeActionSequenceLevels,
+  isFinalPetriNode,
+  )
 import Modelling.ActivityDiagram.Auxiliary.ActionSequences (actionSequencesAlloy)
 import Modelling.ActivityDiagram.Config (
   AdConfig (..),
@@ -40,6 +44,10 @@ import Modelling.ActivityDiagram.Datatype (
   isObjectNode,
   )
 import Modelling.ActivityDiagram.Instance (parseInstance)
+import Modelling.ActivityDiagram.PetriNet (
+  PetriKey,
+  convertToPetriNet,
+  )
 import Modelling.ActivityDiagram.PlantUMLConverter (
   PlantUmlConfig (..),
   defaultPlantUmlConfig,
@@ -47,15 +55,15 @@ import Modelling.ActivityDiagram.PlantUMLConverter (
   )
 import Modelling.ActivityDiagram.Shuffle (shuffleAdNames)
 import Modelling.Auxiliary.Common       (getFirstInstance)
+import Modelling.PetriNet.Types         (Node, PetriLike)
 
 import Control.Applicative (Alternative ((<|>)))
-import Control.Monad (unless)
+import Control.Monad (unless, when)
 import Control.Monad.Catch              (MonadThrow)
 import Control.OutputCapable.Blocks (
   ArticleToUse (IndefiniteArticle),
   GenericOutputCapable (..),
   LangM,
-  Language,
   Rated,
   OutputCapable,
   ($=<<),
@@ -73,11 +81,11 @@ import Control.Monad.Random (
   )
 import Data.List (intercalate, intersect)
 import Data.List.Extra (nubOrd)
-import Data.Map (Map)
-import Data.Maybe                       (isNothing)
+import Data.Maybe                       (isNothing, isJust)
 import Data.String.Interpolate (i, iii)
 import GHC.Generics (Generic)
 import Modelling.Auxiliary.Output (
+  ExtraText(..),
   addPretext,
   extra
   )
@@ -85,10 +93,11 @@ import System.Random.Shuffle (shuffleM)
 
 data EnterASInstance = EnterASInstance {
   activityDiagram :: UMLActivityDiagram,
+  petriNet :: PetriLike Node PetriKey,
   drawSettings :: PlantUmlConfig,
   sampleSequence :: [String],
   showSolution :: Bool,
-  addText :: Maybe (Map Language String)
+  addText :: ExtraText
 } deriving (Eq, Generic, Read, Show)
 
 data EnterASConfig = EnterASConfig {
@@ -98,7 +107,7 @@ data EnterASConfig = EnterASConfig {
   objectNodeOnEveryPath :: Maybe Bool,
   answerLength :: !(Int, Int),
   printSolution :: Bool,
-  extraText :: Maybe (Map Language String)
+  extraText :: ExtraText
 } deriving (Generic, Read, Show)
 
 defaultEnterASConfig :: EnterASConfig
@@ -115,7 +124,7 @@ defaultEnterASConfig = EnterASConfig {
   objectNodeOnEveryPath = Just True,
   answerLength = (5, 8),
   printSolution = False,
-  extraText = Nothing
+  extraText = NoExtraText
 }
 
 checkEnterASConfig :: EnterASConfig -> Maybe String
@@ -179,9 +188,9 @@ newtype EnterASSolution = EnterASSolution {
   sampleSolution :: [String]
 } deriving (Show, Eq)
 
-enterActionSequence :: UMLActivityDiagram -> EnterASSolution
-enterActionSequence ad =
-  EnterASSolution {sampleSolution=generateActionSequence ad}
+enterActionSequence :: UMLActivityDiagram -> PetriLike Node PetriKey -> EnterASSolution
+enterActionSequence ad petri =
+  EnterASSolution {sampleSolution=generateActionSequenceWithPetri ad petri}
 
 enterASTask
   :: (MonadPlantUml m, MonadWriteFile m, OutputCapable m)
@@ -238,7 +247,11 @@ enterASEvaluation
   -> [String]
   -> Rated m
 enterASEvaluation task sub = do
-  let correct = validActionSequence sub $ activityDiagram task
+  let objectNames = map name $ filter isObjectNode $ nodes $ activityDiagram task
+      objectNamesInSubmission = nubOrd $ sub `intersect` objectNames
+      (levels, zeroState) = computeActionSequenceLevels sub (activityDiagram task) (petriNet task)
+      reachesZeroState = any (isJust . lookup zeroState) levels
+      correct = null objectNamesInSubmission && reachesZeroState
       points = if correct then 1 else 0
       maybeSolutionString =
         if showSolution task
@@ -249,8 +262,24 @@ enterASEvaluation task sub = do
     english "The submitted action sequence is correct?"
     german "Die eingereichte Aktionsfolge ist korrekt?"
 
-  let objectNames = map name $ filter isObjectNode $ nodes $ activityDiagram task
-      objectNamesInSubmission = nubOrd $ sub `intersect` objectNames
+  -- Provide specific feedback for sequences that terminate some but not all flows
+  when (null objectNamesInSubmission && not reachesZeroState) $ do
+    let finalNodeReached = any (any (\(_, path) -> any isFinalPetriNode path)) levels
+    when finalNodeReached $ do
+      paragraph $ translate $ do
+        german [iii|
+          Die eingereichte Sequenz erreicht ein Flussende, aber terminiert nicht alle Flüsse.
+          Beachten Sie, dass das Erreichen eines Flussendes nur den hineinlaufenden Kontrollfluss beendet,
+          während andere Flüsse (z.B. von einem Fork-Knoten) weiterhin aktiv bleiben können.
+          Eine vollständige Lösung muss alle im Diagramm vorhandenen Flüsse terminieren.
+          |]
+        english [iii|
+          The submitted sequence reaches a flow final node but does not terminate all flows.
+          Note that reaching a flow final node only terminates the incoming control flow,
+          while other flows (e.g., from a fork node) may remain active.
+          A complete solution must terminate all flows present in the diagram.
+          |]
+      pure ()
 
   unless (null objectNamesInSubmission) $ do
     translate $ do
@@ -291,19 +320,22 @@ getEnterASTask config = do
   ad <- mapM (fmap snd . shuffleAdNames) randomInstances
   getFirstInstance
         $ filter (isNothing . (`checkEnterASInstanceForConfig` config))
-        $ map (\x -> EnterASInstance {
+        $ map (\x -> let petri = convertToPetriNet x
+                     in EnterASInstance {
           activityDiagram=x,
+          petriNet=petri,
           drawSettings = defaultPlantUmlConfig {
             suppressBranchConditions = hideBranchConditions config
             },
-          sampleSequence = sampleSolution $ enterActionSequence x,
+          sampleSequence = sampleSolution $ enterActionSequence x petri,
           showSolution = printSolution config,
           addText = extraText config
         }) ad
 
 defaultEnterASInstance :: EnterASInstance
-defaultEnterASInstance = EnterASInstance {
-  activityDiagram = UMLActivityDiagram {
+defaultEnterASInstance =
+ let
+  ad = UMLActivityDiagram {
     nodes = [
       AdActionNode {label = 1, name = "A"},
       AdActionNode {label = 2, name = "E"},
@@ -342,9 +374,13 @@ defaultEnterASInstance = EnterASInstance {
       AdConnection {from = 13, to = 14, guard = ""},
       AdConnection {from = 16, to = 7, guard = ""}
     ]
-  },
+  }
+ in
+  EnterASInstance {
+  activityDiagram = ad,
+  petriNet = convertToPetriNet ad,
   drawSettings = defaultPlantUmlConfig,
   sampleSequence = ["D","E","G","B","F"],
   showSolution = False,
-  addText = Nothing
+  addText = NoExtraText
 }

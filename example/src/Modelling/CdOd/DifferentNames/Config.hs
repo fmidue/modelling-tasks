@@ -2,6 +2,7 @@
 
 module Modelling.CdOd.DifferentNames.Config where
 
+import Modelling.Auxiliary.Output       (ExtraText(..))
 import Modelling.CdOd.DifferentNames (
   DifferentNamesConfig (..),
   )
@@ -46,12 +47,12 @@ task2023_12 = DifferentNamesConfig {
   omittedDefaultMultiplicities = OmittedDefaultMultiplicities {
     aggregationWholeOmittedDefaultMultiplicity = Just (0, Nothing),
     associationOmittedDefaultMultiplicity = Just (0, Nothing),
-    compositionWholeOmittedDefaultMultiplicity = Just (1, Just 1)
+    compositionWholeOmittedDefaultMultiplicity = Nothing
     },
   printSolution = True,
   timeout = Nothing,
   withObviousMapping = Nothing,
-  extraText = Nothing
+  extraText = NoExtraText
   }
 
 {-|
@@ -86,12 +87,12 @@ task2023_13 = DifferentNamesConfig {
   omittedDefaultMultiplicities = OmittedDefaultMultiplicities {
     aggregationWholeOmittedDefaultMultiplicity = Just (0, Nothing),
     associationOmittedDefaultMultiplicity = Just (0, Nothing),
-    compositionWholeOmittedDefaultMultiplicity = Just (1, Just 1)
+    compositionWholeOmittedDefaultMultiplicity = Nothing
     },
   printSolution = True,
   timeout = Nothing,
   withObviousMapping = Nothing,
-  extraText = Nothing
+  extraText = NoExtraText
   }
 
 {-|
@@ -126,12 +127,12 @@ task2023_25 = DifferentNamesConfig {
   omittedDefaultMultiplicities = OmittedDefaultMultiplicities {
     aggregationWholeOmittedDefaultMultiplicity = Just (0, Nothing),
     associationOmittedDefaultMultiplicity = Just (0, Nothing),
-    compositionWholeOmittedDefaultMultiplicity = Just (1, Just 1)
+    compositionWholeOmittedDefaultMultiplicity = Nothing
     },
   printSolution = True,
   timeout = Nothing,
   withObviousMapping = Nothing,
-  extraText = Nothing
+  extraText = NoExtraText
   }
 
 {-|
@@ -171,7 +172,7 @@ task2024_15 = DifferentNamesConfig {
   printSolution = True,
   timeout = Nothing,
   withObviousMapping = Nothing,
-  extraText = Nothing
+  extraText = NoExtraText
   }
 
 {-|
@@ -211,7 +212,7 @@ task2024_16 = DifferentNamesConfig {
   printSolution = True,
   timeout = Nothing,
   withObviousMapping = Nothing,
-  extraText = Nothing
+  extraText = NoExtraText
   }
 
 {-|
@@ -251,5 +252,5 @@ task2024_56 = DifferentNamesConfig {
   printSolution = True,
   timeout = Nothing,
   withObviousMapping = Nothing,
-  extraText = Nothing
+  extraText = NoExtraText
   }

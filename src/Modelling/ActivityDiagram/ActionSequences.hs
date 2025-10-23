@@ -1,7 +1,11 @@
 {-# LANGUAGE DuplicateRecordFields #-}
 module Modelling.ActivityDiagram.ActionSequences (
   validActionSequence,
+  validActionSequenceWithPetri,
   generateActionSequence,
+  generateActionSequenceWithPetri,
+  computeActionSequenceLevels,
+  isFinalPetriNode
 ) where
 
 import qualified Modelling.ActivityDiagram.Datatype as Ad (
@@ -54,7 +58,13 @@ fromPetriLike petri =
 --Generate one valid action sequence to each of the final nodes
 generateActionSequence :: UMLActivityDiagram -> [String]
 generateActionSequence diag =
-  let tSeq = generateActionSequence' diag
+  generateActionSequenceWithPetri diag (convertToPetriNet diag)
+
+-- | Generate one valid action sequence, using a pre-computed Petri net.
+-- This version avoids re-computing the Petri net conversion
+generateActionSequenceWithPetri :: UMLActivityDiagram -> PetriLike Node PetriKey -> [String]
+generateActionSequenceWithPetri diag petri =
+  let tSeq = generateActionSequence' petri
       tSeqLabels = map (Ad.label . sourceNode) $ filter isNormalPetriNode tSeq
       actions = map
         (\n -> (Ad.label n, name n))
@@ -68,9 +78,9 @@ isNormalPetriNode pk =
     _ -> False
 
 --Generate at one sequence of transitions to each final node
-generateActionSequence' :: UMLActivityDiagram -> [PetriKey]
-generateActionSequence' diag =
-  let petri = fromPetriLike $ convertToPetriNet diag
+generateActionSequence' :: PetriLike Node PetriKey -> [PetriKey]
+generateActionSequence' petriLike =
+  let petri = fromPetriLike petriLike
       zeroState = State $ M.map (const 0) $ unState $ start petri
       sequences = fromJust $ find (isJust . lookup zeroState) $ levels' petri
   in reverse $ fromJust $ lookup zeroState sequences
@@ -78,28 +88,38 @@ generateActionSequence' diag =
 
 validActionSequence :: [String] -> UMLActivityDiagram -> Bool
 validActionSequence input diag =
+  let petri = convertToPetriNet diag
+  in validActionSequenceWithPetri input diag petri
+
+-- | Check if an action sequence is valid, using a pre-computed Petri net.
+-- This version avoids re-computing the Petri net conversion
+validActionSequenceWithPetri :: [String] -> UMLActivityDiagram -> PetriLike Node PetriKey -> Bool
+validActionSequenceWithPetri input diag petri =
+  let (levels, zeroState) = computeActionSequenceLevels input diag petri
+  in any (isJust . lookup zeroState) levels
+
+-- | Common computation for action sequence validation
+-- Returns (levels, zeroState) for checking sequence properties
+computeActionSequenceLevels :: [String] -> UMLActivityDiagram -> PetriLike Node PetriKey -> ([[(State PetriKey, [PetriKey])]], State PetriKey)
+computeActionSequenceLevels input diag petri =
   let nameMap = map
         (\n -> (name n, Ad.label n))
         $ filter isActionNode $ nodes diag
       labels = mapMaybe (`lookup` nameMap) input
-      petri = convertToPetriNet diag
       petriKeyMap = map
         (\k -> (Ad.label $ sourceNode k, k))
         $ filter isNormalPetriNode $ M.keys $ allNodes petri
       input' = mapMaybe (`lookup` petriKeyMap) labels
       actions = map snd $ filter (\(l,_) -> l `elem` map snd nameMap) petriKeyMap
-  in length input == length labels && validActionSequence' input' actions petri
-
-
-validActionSequence'
-  :: [PetriKey]
-  -> [PetriKey]
-  -> PetriLike Node PetriKey
-  -> Bool
-validActionSequence' input actions petri =
-  let net = fromPetriLike petri
+      net = fromPetriLike petri
       zeroState = State $ M.map (const 0) $ unState $ start net
-  in any (isJust . lookup zeroState) (levelsCheckAS input actions net)
+      levels = levelsCheckAS input' actions net
+  in (levels, zeroState)
+
+-- | Check if a PetriKey represents a final node transition
+isFinalPetriNode :: PetriKey -> Bool
+isFinalPetriNode (FinalPetriNode {}) = True
+isFinalPetriNode _ = False
 
 
 levelsCheckAS :: [PetriKey] -> [PetriKey] -> Net PetriKey PetriKey-> [[(State PetriKey, [PetriKey])]]

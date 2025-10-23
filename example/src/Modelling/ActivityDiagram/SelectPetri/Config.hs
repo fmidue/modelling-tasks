@@ -2,6 +2,7 @@
 
 module Modelling.ActivityDiagram.SelectPetri.Config where
 
+import Modelling.ActivityDiagram.Common (finalNodesAdvice)
 import Modelling.ActivityDiagram.Config (AdConfig(..))
 import Modelling.ActivityDiagram.SelectPetri (SelectPetriConfig(..))
 
@@ -38,7 +39,7 @@ task2023_37 = SelectPetriConfig {
   presenceOfSinkTransitionsForFinals = Nothing,
   withActivityFinalInForkBlocks = Just False,
   printSolution = True,
-  extraText = Nothing
+  extraText = finalNodesAdvice
   }
 
 {-|
@@ -70,7 +71,7 @@ task2023_38 = SelectPetriConfig {
   presenceOfSinkTransitionsForFinals = Nothing,
   withActivityFinalInForkBlocks = Just False,
   printSolution = True,
-  extraText = Nothing
+  extraText = finalNodesAdvice
   }
 
 {-|
@@ -112,5 +113,5 @@ task2024_44 = SelectPetriConfig {
   presenceOfSinkTransitionsForFinals = Nothing,
   withActivityFinalInForkBlocks = Just False,
   printSolution = True,
-  extraText = Nothing
+  extraText = finalNodesAdvice
   }

@@ -25,6 +25,7 @@ import Modelling.CdOd.DifferentNames (
   renameInstance,
   )
 import Modelling.Auxiliary.Common       (lowerFirst, oneOf)
+import Modelling.Auxiliary.Output       (ExtraText(..))
 import Modelling.CdOd.Types (
   Cd,
   ClassDiagram (..),
@@ -348,7 +349,7 @@ evaluateDifferentNames coins cs cs' = flip withLang English $ do
         mapping = toNameMapping $ BM.fromList cs,
         linkShuffling = ConsecutiveNumbers,
         taskText = defaultDifferentNamesTaskText,
-        addText = Nothing
+        addText = NoExtraText
         }
       cs'' = map (bimap Name Name) cs'
   differentNamesSyntax i cs''

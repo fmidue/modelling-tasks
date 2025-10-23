@@ -43,7 +43,6 @@ import Modelling.ActivityDiagram.Alloy (
 import Modelling.ActivityDiagram.Auxiliary.PetriValidation (
   validateBasePetriConfig,
   )
-import Modelling.ActivityDiagram.Auxiliary.Util (finalNodesAdvice)
 import Modelling.ActivityDiagram.Datatype (
   AdConnection (..),
   AdNode (..),
@@ -69,6 +68,7 @@ import Modelling.ActivityDiagram.PlantUMLConverter (
   )
 import Modelling.Auxiliary.Common       (getFirstInstance)
 import Modelling.Auxiliary.Output (
+  ExtraText(..),
   addPretext,
   extra
   )
@@ -89,7 +89,6 @@ import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
   GenericOutputCapable (..),
   LangM,
-  Language,
   OutputCapable,
   Rated,
   ($=<<),
@@ -115,7 +114,7 @@ data FindAuxiliaryPetriNodesInstance = FindAuxiliaryPetriNodesInstance {
   matchingNet :: SimplePetriLike PetriKey,
   plantUMLConf :: PlantUmlConfig,
   showSolution :: Bool,
-  addText :: Maybe (Map Language String)
+  addText :: ExtraText
 } deriving (Generic, Read, Show)
 
 data FindAuxiliaryPetriNodesConfig = FindAuxiliaryPetriNodesConfig {
@@ -129,7 +128,7 @@ data FindAuxiliaryPetriNodesConfig = FindAuxiliaryPetriNodesConfig {
   -- | Force presence or absence of new sink transitions for representing finals
   presenceOfSinkTransitionsForFinals :: Maybe Bool,
   printSolution :: Bool,
-  extraText :: Maybe (Map Language String)
+  extraText :: ExtraText
 } deriving (Generic, Read, Show)
 
 defaultFindAuxiliaryPetriNodesConfig :: FindAuxiliaryPetriNodesConfig
@@ -142,7 +141,7 @@ defaultFindAuxiliaryPetriNodesConfig =
     hideBranchConditions = False,
     presenceOfSinkTransitionsForFinals = Nothing,
     printSolution = False,
-    extraText = Nothing
+    extraText = NoExtraText
   }
 
 checkFindAuxiliaryPetriNodesConfig :: FindAuxiliaryPetriNodesConfig -> Maybe String
@@ -236,7 +235,6 @@ an Nicht-Hilfsknoten (Stellen und Transitionen minus Hilfsstellen und Hilfstrans
 (nämlich 10 Knoten insgesamt minus 2 Hilfsstellen minus 3 Hilfstransitionen),
 dazu 2 Hilfsstellen und 3 Hilfstransitionen.|]
     pure ()
-  finalNodesAdvice True
 
   extra $ addText task
 
@@ -362,5 +360,5 @@ defaultFindAuxiliaryPetriNodesInstance =
     matchingNet = convertToSimple ad,
     plantUMLConf = defaultPlantUmlConfig,
     showSolution = False,
-    addText = Nothing
+    addText = NoExtraText
   }

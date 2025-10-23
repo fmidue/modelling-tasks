@@ -6,6 +6,7 @@ import Capabilities.Alloy.IO            ()
 import Capabilities.Cache.IO            ()
 import Capabilities.Diagrams.IO         ()
 import Capabilities.Graphviz.IO         ()
+import Modelling.Auxiliary.Output       (ExtraText(..))
 import Modelling.CdOd.Types (
   ClassConfig (..),
   ObjectConfig (..),
@@ -54,10 +55,10 @@ main = do
           printSolution    = False,
           timeout          = Nothing,
           withNonTrivialInheritance = Nothing,
-          extraText = Nothing
+          extraText = NoExtraText
         }
   putStrLn $ "Seed: " ++ show seed
   putStrLn $ "Segment: " ++ show s
   task <- matchCdOd config s seed
   print task
-  matchCdOdTask "" task `withLang` English
+  matchCdOdTask True "" task `withLang` English

@@ -2,6 +2,7 @@
 
 module Modelling.PetriNet.PetriPickConflict.Config where
 
+import Modelling.Auxiliary.Output       (ExtraText(..))
 import Modelling.PetriNet.Types (
   AlloyConfig (..),
   BasicConfig (..),
@@ -56,7 +57,7 @@ task2023_22 = PickConflictConfig {
     maxInstances = Just 2000,
     timeout = Nothing
     },
-  extraText = Nothing
+  extraText = NoExtraText
   }
 
 {-|
@@ -103,7 +104,7 @@ task2023_16 = PickConflictConfig {
     maxInstances = Just 1000,
     timeout = Nothing
     },
-  extraText = Nothing
+  extraText = NoExtraText
   }
 
 {-|

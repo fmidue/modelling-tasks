@@ -1,6 +1,10 @@
 {-# LANGUAGE ApplicativeDo #-}
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DeriveGeneric #-}
+#if !MIN_VERSION_base(4,18,0)
+{-# LANGUAGE DerivingStrategies #-}
+#endif
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
@@ -50,9 +54,10 @@ import Modelling.PetriNet.Reach.Type (
 
 import Control.Applicative              (Alternative, (<|>))
 import Control.Functor.Trans            (FunctorTrans (lift))
-import Control.Monad                    (forM, guard, when)
+import Control.Monad                    (forM, guard, unless)
 import Control.Monad.Catch              (MonadCatch, MonadThrow)
 import Control.Monad.Extra              (findM, maybeM, whenJust)
+import Control.Monad.State              (put)
 import Modelling.PetriNet.Reach.ConfigValidation (
   checkBasicPetriConfig,
   )
@@ -63,10 +68,12 @@ import Control.OutputCapable.Blocks (
   MinimumThreshold (MinimumThreshold),
   OutputCapable,
   Rated,
+  collapsed,
   english,
   german,
   printSolutionAndAssertMinimum,
   translate,
+  translations,
   yesNo,
   )
 import Control.OutputCapable.Blocks.Generic (
@@ -77,15 +84,17 @@ import Control.Monad.Random             (mkStdGen)
 import Control.Monad.Trans.Random       (evalRandT)
 import Data.Bifunctor                   (Bifunctor (second))
 import Data.Either.Combinators          (whenRight)
-import Data.Foldable                    (traverse_)
+import Data.Foldable                    (sequenceA_, traverse_)
 import Data.GraphViz                    (GraphvizCommand (..))
-import Data.List                        (minimumBy)
+import Data.List                        (minimumBy, singleton)
 import Data.List.Extra                  (nubSort)
 import Data.Maybe                       (fromMaybe)
 import Data.Ord                         (comparing)
 import Data.Ratio                       ((%))
 import Data.String.Interpolate          (i)
+#if !MIN_VERSION_base(4,18,0)
 import Data.Typeable                    (Typeable)
+#endif
 import GHC.Generics                     (Generic)
 
 verifyReach :: (Ord a, Ord t, OutputCapable m, Show a, Show t)
@@ -190,17 +199,28 @@ reportReachFor img noLonger lengthHint minLength showMinLengthHint maybeGoal = d
       st1, ", danach ", st2, ", und schließlich ", st3,
       " (in genau dieser Reihenfolge), die gesuchte Markierung erreicht wird."
       ]
-  case lengthHint of
-    Just maxSteps | showMinLengthHint && maxSteps == minLength -> paragraph $ translate $ do
-      english [i|Hint: The shortest solutions have exactly #{maxSteps} steps.|]
-      german [i|Hinweis: Die kürzesten Lösungen haben genau #{maxSteps} Schritte.|]
-    Just maxSteps -> paragraph $ translate $ do
-      english [i|Hint: There is a solution with not more than #{maxSteps} steps.|]
-      german [i|Hinweis: Es gibt eine Lösung mit nicht mehr als #{maxSteps} Schritten.|]
-    Nothing -> pure ()
-  when (showMinLengthHint && lengthHint /= Just minLength) $ paragraph $ translate $ do
-    english [i|Hint: There is no solution with less than #{minLength} steps.|]
-    german [i|Hinweis: Es gibt keine Lösung mit weniger als #{minLength} Schritten.|]
+  let maxStepsHint = case lengthHint of
+        Just maxSteps | showMinLengthHint && maxSteps == minLength -> singleton $ paragraph $ translate $ do
+          english [i|The shortest solutions have exactly #{maxSteps} steps.|]
+          german [i|Die kürzesten Lösungen haben genau #{maxSteps} Schritte.|]
+        Just maxSteps -> singleton $ paragraph $ translate $ do
+          english [i|There is a solution with not more than #{maxSteps} steps.|]
+          german [i|Es gibt eine Lösung mit nicht mehr als #{maxSteps} Schritten.|]
+        Nothing -> []
+      minStepsHint = if showMinLengthHint && lengthHint /= Just minLength
+        then singleton $ paragraph $ translate $ do
+          english [i|There is no solution with less than #{minLength} steps.|]
+          german [i|Es gibt keine Lösung mit weniger als #{minLength} Schritten.|]
+        else []
+      hints = maxStepsHint ++ minStepsHint
+      titleText = if length hints > 1
+        then translations $ do
+          english "Hints on solution length"
+          german "Hinweise zur Lösungslänge"
+        else translations $ do
+          english "Hint on solution length"
+          german "Hinweis zur Lösungslänge"
+  unless (null hints) $ collapsed True (put titleText) $ sequenceA_ hints
   hoveringInformation
   pure ()
 
@@ -324,13 +344,21 @@ data ReachInstance s t = ReachInstance {
   showSolution      :: Bool,
   withLengthHint    :: Maybe Int,
   withMinLengthHint :: Bool
-  } deriving (Generic, Read, Show, Typeable, Data)
+  }
+  deriving (Generic, Read, Show, Data)
+#if !MIN_VERSION_base(4,18,0)
+  deriving Typeable
+#endif
 
 data NetGoal s t = NetGoal {
   drawUsing         :: GraphvizCommand,
   petriNet          :: Net s t,
   goal              :: State s
-  } deriving (Generic, Read, Show, Typeable, Data)
+  }
+  deriving (Generic, Read, Show, Data)
+#if !MIN_VERSION_base(4,18,0)
+  deriving Typeable
+#endif
 
 bimapReachInstance
   :: (Ord a, Ord b)
@@ -380,7 +408,10 @@ data ReachConfig = ReachConfig {
   showTargetNet       :: Bool,
   showPlaceNamesInNet :: Bool
   }
-  deriving (Generic, Read, Show, Typeable)
+  deriving (Generic, Read, Show)
+#if !MIN_VERSION_base(4,18,0)
+  deriving Typeable
+#endif
 
 data NetGoalConfig = NetGoalConfig {
   numPlaces :: Int,
@@ -392,7 +423,10 @@ data NetGoalConfig = NetGoalConfig {
   postconditionsRange :: (Int, Maybe Int),
   preconditionsRange  :: (Int, Maybe Int)
   }
-  deriving (Generic, Read, Show, Typeable)
+  deriving (Generic, Read, Show)
+#if !MIN_VERSION_base(4,18,0)
+  deriving Typeable
+#endif
 
 defaultReachConfig :: ReachConfig
 defaultReachConfig = ReachConfig {
