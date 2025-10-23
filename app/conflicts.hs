@@ -93,7 +93,7 @@ mainPick i = forceErrors $ do
     if isNothing c
     then do
       t <- pickConflictGenerate config 0 i
-      simplePickConflictTask "" t `withLang` English
+      simplePickConflictTask True "" t `withLang` English
       print t
     else print c
 

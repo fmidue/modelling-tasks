@@ -320,7 +320,8 @@ simplePickConflictTask
     MonadThrow m,
     OutputCapable m
     )
-  => FilePath
+  => Bool
+  -> FilePath
   -> PickInstance SimplePetriNet
   -> LangM m
 simplePickConflictTask = pickConflictTask
@@ -338,10 +339,11 @@ pickConflictTask
     Typeable n,
     Typeable p
     )
-  => FilePath
+  => Bool
+  -> FilePath
   -> PickInstance (p n String)
   -> LangM m
-pickConflictTask path task = do
+pickConflictTask showInputHelp path task = do
   paragraph $ translate $ do
     english [iii|
       Which of the following Petri nets has exactly
@@ -353,38 +355,40 @@ pickConflictTask path task = do
       die unter der Startmarkierung in Konflikt stehen?
       |]
   images show snd $=<< renderPick path task
-  paragraph $ translate $ do
-    english [iii|
-      State your answer by giving the number of the Petri net
-      having these conflicting transitions.#{" "}
-      |]
-    german [iii|
-      Geben Sie Ihre Antwort durch Angabe der Nummer des Petrinetzes an,
-      das diese in Konflikt stehenden Transitionen hat.#{" "}
-      |]
-  let plural = wrongInstances task > 1
-  paragraph $ do
-    translate $ do
-      english [i|Stating |]
-      german [i|Die Angabe von |]
-    code "1"
-    translate $ do
+  when showInputHelp $ paragraph $ do
+    paragraph $ translate $ do
       english [iii|
-        #{" "}as answer would indicate that Petri net 1
-        has exactly two transitions that are in conflict
-        under the initial marking (and the other Petri
-        #{if plural then "nets don't" else "net doesn't"}).
+        State your answer by giving the number of the Petri net
+        having these conflicting transitions.#{" "}
         |]
-      german $ [iii|
-        #{" "}als Antwort würde bedeuten, dass Petrinetz 1 genau zwei
-        unter der Startmarkierung
-        in Konflikt stehende Transitionen hat (und
-        #{" "}
+      german [iii|
+        Geben Sie Ihre Antwort durch Angabe der Nummer des Petrinetzes an,
+        das diese in Konflikt stehenden Transitionen hat.#{" "}
         |]
-        ++ (if plural
-            then "die anderen Petrinetze nicht"
-            else "das andere Petrinetz nicht")
-        ++ ")."
+    let plural = wrongInstances task > 1
+    paragraph $ do
+      translate $ do
+        english [i|Stating |]
+        german [i|Die Angabe von |]
+      code "1"
+      translate $ do
+        english [iii|
+          #{" "}as answer would indicate that Petri net 1
+          has exactly two transitions that are in conflict
+          under the initial marking (and the other Petri
+          #{if plural then "nets don't" else "net doesn't"}).
+          |]
+        german $ [iii|
+          #{" "}als Antwort würde bedeuten, dass Petrinetz 1 genau zwei
+          unter der Startmarkierung
+          in Konflikt stehende Transitionen hat (und
+          #{" "}
+          |]
+          ++ (if plural
+              then "die anderen Petrinetze nicht"
+              else "das andere Petrinetz nicht")
+          ++ ")."
+      pure ()
     pure ()
   hoveringInformation
   extra $ Pick.addText task
