@@ -193,9 +193,9 @@ selectActionSequence :: (Monad m, RandomGen g) => Bool -> Int -> (Int, Int) -> U
 selectActionSequence withRepetition numberOfWrongSequences lengthBounds ad = MaybeT $ do
   let petri = convertToPetriNet ad
       actionLookup = extractActionLookup ad
-      maybeCorrectSequence = if withRepetition
-        then generateActionSequenceWithPetriAndRepetition petri lengthBounds
-        else generateActionSequenceWithPetri petri (Just lengthBounds)
+  maybeCorrectSequence <- if withRepetition
+    then generateActionSequenceWithPetriAndRepetition petri lengthBounds
+    else return $ generateActionSequenceWithPetri petri (Just lengthBounds)
   case maybeCorrectSequence of
     Nothing -> return Nothing
     Just correctSequence -> do

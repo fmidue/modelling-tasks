@@ -46,8 +46,9 @@ import Modelling.PetriNet.Reach.Type (
 import Modelling.PetriNet.Reach.Step (levels', successors)
 
 import Control.Monad (guard)
+import Control.Monad.Random (MonadRandom, uniform)
 import Data.List (union, maximumBy)
-import Data.List.Extra (nubOrd)
+import Data.List.Extra (nubOrd, groupOn)
 import Data.Maybe(mapMaybe, isJust, fromJust)
 import Data.Ord (comparing)
 
@@ -81,16 +82,22 @@ generateActionSequenceWithPetri petri maybeLengthBounds =
 -- This version allows cycle exploration to generate sequences with repeated actions.
 -- Returns Nothing if no sequence with repetition can be found, or if all sequences with repetition
 -- violate the length constraints.
+-- Uses randomness to select among sequences with equal maximum repetition distance.
 generateActionSequenceWithPetriAndRepetition
-  :: PetriLike Node PetriKey
+  :: MonadRandom m
+  => PetriLike Node PetriKey
   -> (Int, Int)  -- (minLength, maxLength) constraints
-  -> Maybe [String]
+  -> m (Maybe [String])
 generateActionSequenceWithPetriAndRepetition petri lengthBounds =
   let allActionSequences = generateSequencesWithLevels levelsWithCycles (Just lengthBounds) petri
       sequencesWithDistances = [(seq', d) | seq' <- allActionSequences, Just d <- [actionRepetitionDistance seq']]
   in if null sequencesWithDistances
-     then Nothing
-     else Just $ fst $ maximumBy (comparing snd) sequencesWithDistances  -- Select sequence with maximum repetition distance
+     then return Nothing
+     else do
+       let maxDist = maximum $ map snd sequencesWithDistances
+           maxDistanceSeqs = [seq' | (seq', d) <- sequencesWithDistances, d == maxDist]
+       selectedSeq <- uniform maxDistanceSeqs
+       return $ Just selectedSeq
 
 isNormalPetriNode :: PetriKey -> Bool
 isNormalPetriNode pk =
