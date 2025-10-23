@@ -35,6 +35,7 @@ import qualified Data.Bimap                       as BM (
   keys,
   lookup,
   lookupR,
+  mapMonotonicR,
   toAscList,
   )
 import qualified Data.Map                         as M (
@@ -111,7 +112,7 @@ import Modelling.CdOd.Types (
   shuffleObjectAndLinkOrder,
   )
 import Modelling.Types (
-  Name (Name),
+  Name (Name, unName),
   NameMapping (nameMapping),
   fromNameMapping,
   showName,
@@ -128,6 +129,7 @@ import Control.OutputCapable.Blocks (
   OutputCapable,
   Rated,
   ($=<<),
+  collapsed,
   english,
   german,
   multipleChoice,
@@ -149,11 +151,13 @@ import Control.Monad.Random (
   evalRandT,
   mkStdGen,
   )
+import Control.Monad.State               (put)
 import Control.Monad.Trans.Except       (runExceptT)
 import Data.Bifunctor                   (Bifunctor (bimap, first))
 import Data.Bimap                       (Bimap)
 import Data.Bitraversable               (bitraverse)
 import Data.Bool                        (bool)
+import Data.Char                        (isDigit)
 import Data.Containers.ListUtils        (nubOrd, nubOrdOn)
 import Data.Functor.Identity            (Identity (Identity, runIdentity))
 import Data.GraphViz                    (DirType (Forward))
@@ -334,9 +338,9 @@ differentNamesTask
   -> LangM m
 differentNamesTask showInputHelp path task = do
   toTaskText showInputHelp path task
-  paragraph simplifiedInformation
-  paragraph directionsAdvice
-  paragraph hoveringInformation
+  simplifiedInformation
+  directionsAdvice
+  hoveringInformation
   pure ()
 
 toTaskText
@@ -359,15 +363,18 @@ toTaskText showInputHelp path task = do
   pure ()
 
 mappingAdvice :: OutputCapable m => LangM m
-mappingAdvice = do
+mappingAdvice = collapsed True (put $ translations $ do
+  english "Note on link grouping"
+  german "Anmerkung zur Link-Gruppierung"
+  ) $ do
   paragraph $ translate $ do
     english [iii|
-      Please note: Links are already grouped correctly and fully,
+      Links are already grouped correctly and fully,
       i.e., all links with the same label (and only links with the same label!)
       in the OD correspond to exactly the same relationship in the CD.
       |]
     german [iii|
-      Bitte beachten Sie: Links sind bereits vollständig und korrekt gruppiert,
+      Links sind bereits vollständig und korrekt gruppiert,
       d.h., alle Links mit der selben Beschriftung
       (and auch nur Links mit der selben Beschriftung!)
       im OD entsprechen genau der selben Beziehung im CD.
@@ -434,21 +441,33 @@ inputHelpText =
         State your answer by giving a mapping of
         relationships in the CD to links in the OD.
         \n
-        To state that x in the CD corresponds to 1 in the OD and
-        y in the CD corresponds to 2 in the OD, write the mapping as:
+        To state that x in the CD corresponds to 1. in the OD and
+        y in the CD corresponds to 2. in the OD, write the mapping as:
         |]
       german [iii|
         Geben Sie Ihre Antwort als eine Zuordnung von
         Beziehungen im CD zu Links im OD an.
         \n
-        Um anzugeben, dass x im CD zu 1 im OD und y im CD
-        zu 2 im OD korrespondieren, schreiben Sie die Zuordnung als:
+        Um anzugeben, dass x im CD zu 1. im OD und y im CD
+        zu 2. im OD korrespondieren, schreiben Sie die Zuordnung als:
         |],
     Code . uniform . show $ mappingShow differentNamesInitial
     ]
 
 differentNamesInitial :: [(Name, Name)]
 differentNamesInitial = map (bimap Name Name) [("x", "1"), ("y", "2")]
+
+-- | Strip trailing period from numeric strings only (e.g., "1." -> "1", "123." -> "123").
+-- Non-numeric strings are left unchanged (e.g., "abc." -> "abc.", "x1." -> "x1.").
+stripNumericPeriod :: String -> String
+stripNumericPeriod "" = ""
+stripNumericPeriod s = case reverse s of
+  ('.':rest) | not (null rest) && all isDigit rest -> reverse rest
+  _ -> s
+
+-- | Apply stripNumericPeriod to a Name value.
+stripName :: Name -> Name
+stripName = Name . stripNumericPeriod . unName
 
 differentNamesSyntax
   :: OutputCapable m
@@ -485,18 +504,23 @@ differentNamesSyntax DifferentNamesInstance {..} cs = addPretext $ do
     _ -> pure ()
   pure ()
   where
-    links = linkLabels oDiagram
+    -- Strip periods from link labels for comparison with student input
+    linksStripped = map stripNumericPeriod $ linkLabels oDiagram
     sortPair (x, y) = if x <= y then (x, y) else (y, x)
-    choices = nubOrdOn sortPair cs
+    -- Strip periods from student input for all checking
+    choicesStripped = map (bimap stripName stripName) cs
+    -- Deduplicate after stripping
+    choices = nubOrdOn sortPair choicesStripped
     associations = associationNames cDiagram
     isAssociationMappingForward (Name x, Name y) =
-      x `elem` associations && y `elem` links
+      x `elem` associations && y `elem` linksStripped
     isAssociationMapping x = isAssociationMappingForward x
       || isAssociationMappingForward (swap x)
     invalidMappings = filter (not . isAssociationMapping) choices
+    -- Check for overlapping on stripped identifiers
     allMappingValues = filter
       (not . null . tail)
-      $ group $ sort (map fst choices ++ map snd choices)
+      $ group $ sort (map fst choicesStripped ++ map snd choicesStripped)
 
 readMapping :: Ord a => Bimap a a -> (a, a) -> Maybe (a, a)
 readMapping m (x, y)
@@ -513,16 +537,18 @@ differentNamesEvaluation
   -> [(Name, Name)]
   -> Rated m
 differentNamesEvaluation task cs = do
-  let what = translations $ do
+  let csStripped = map (bimap stripName stripName) cs
+      -- Strip periods from the mapping's link labels (second element of each pair)
+      mStripped = BM.mapMonotonicR stripName $ nameMapping $ mapping task
+      what = translations $ do
         german "Zuordnungen"
         english "mappings"
-      m = nameMapping $ mapping task
-      ms = M.fromAscList $ map (,True) $ BM.toAscList m
+      ms = M.fromAscList $ map (,True) $ BM.toAscList mStripped
       solution =
         if showSolution task
         then Just . show . mappingShow $ differentNamesSolution task
         else Nothing
-  multipleChoice DefiniteArticle what solution ms (mapMaybe (readMapping m) cs)
+  multipleChoice DefiniteArticle what solution ms (mapMaybe (readMapping mStripped) csStripped)
 
 differentNamesSolution :: DifferentNamesInstance -> [(Name, Name)]
 differentNamesSolution = BM.toAscList . nameMapping . mapping
@@ -613,15 +639,15 @@ defaultDifferentNamesInstance = DifferentNamesInstance {
       Object {isAnonymous = True, objectName = "a",  objectClass = "A"}
       ],
     links = [
-      Link {linkLabel = "2", linkFrom = "d1", linkTo = "b"},
-      Link {linkLabel = "1", linkFrom = "b",  linkTo = "a"},
-      Link {linkLabel = "2", linkFrom = "d",  linkTo = "b"},
-      Link {linkLabel = "3", linkFrom = "c",  linkTo = "d1"},
-      Link {linkLabel = "3", linkFrom = "c1", linkTo = "d1"}
+      Link {linkLabel = "2.", linkFrom = "d1", linkTo = "b"},
+      Link {linkLabel = "1.", linkFrom = "b",  linkTo = "a"},
+      Link {linkLabel = "2.", linkFrom = "d",  linkTo = "b"},
+      Link {linkLabel = "3.", linkFrom = "c",  linkTo = "d1"},
+      Link {linkLabel = "3.", linkFrom = "c1", linkTo = "d1"}
       ]
     },
   showSolution = False,
-  mapping = toNameMapping $ BM.fromList [("x", "2"), ("y", "3"), ("z", "1")],
+  mapping = toNameMapping $ BM.fromList [("x", "2."), ("y", "3."), ("z", "1.")],
   linkShuffling = ConsecutiveNumbers,
   taskText = defaultDifferentNamesTaskText,
   addText = NoExtraText
@@ -662,7 +688,7 @@ getDifferentNamesTask tryNext DifferentNamesConfig {..} cd = do
       labels' <- shuffleM labels
       used <- usedLabels labels od1
       let usedFirst = uncurry (++) $ partition (`elem` used) labels'
-          bm  = BM.fromList $ zip usedFirst (map show [1 :: Int ..])
+          bm  = BM.fromList $ zip usedFirst (map (\n -> show n ++ ".") [1 :: Int ..])
           bm' = BM.filter (const . (`elem` used)) bm
           isCompleteMapping = BM.keys bm == sort used
       if maybe

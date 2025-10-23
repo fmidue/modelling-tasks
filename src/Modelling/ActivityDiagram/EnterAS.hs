@@ -27,8 +27,8 @@ import Capabilities.PlantUml            (MonadPlantUml)
 import Capabilities.WriteFile           (MonadWriteFile)
 import Modelling.ActivityDiagram.ActionSequences (
   generateActionSequenceWithPetri,
-  validActionSequenceWithPetri,
-  terminatesSomeButNotAllFlowsWithPetri,
+  computeActionSequenceLevels,
+  isFinalPetriNode,
   )
 import Modelling.ActivityDiagram.Auxiliary.ActionSequences (actionSequencesAlloy)
 import Modelling.ActivityDiagram.Config (
@@ -81,7 +81,7 @@ import Control.Monad.Random (
   )
 import Data.List (intercalate, intersect)
 import Data.List.Extra (nubOrd)
-import Data.Maybe                       (isNothing)
+import Data.Maybe                       (isNothing, isJust)
 import Data.String.Interpolate (i, iii)
 import GHC.Generics (Generic)
 import Modelling.Auxiliary.Output (
@@ -113,8 +113,8 @@ data EnterASConfig = EnterASConfig {
 defaultEnterASConfig :: EnterASConfig
 defaultEnterASConfig = EnterASConfig {
   adConfig = defaultAdConfig {
-    actionLimits = (6, 8),
-    objectNodeLimits = (1, 5),
+    actionLimits = (6, 6),
+    objectNodeLimits = (1, 1),
     maxNamedNodes = 7,
     activityFinalNodes = 0,
     flowFinalNodes = 2
@@ -247,7 +247,11 @@ enterASEvaluation
   -> [String]
   -> Rated m
 enterASEvaluation task sub = do
-  let correct = validActionSequenceWithPetri sub (activityDiagram task) (petriNet task)
+  let objectNames = map name $ filter isObjectNode $ nodes $ activityDiagram task
+      objectNamesInSubmission = nubOrd $ sub `intersect` objectNames
+      (levels, zeroState) = computeActionSequenceLevels sub (activityDiagram task) (petriNet task)
+      reachesZeroState = any (isJust . lookup zeroState) levels
+      correct = null objectNamesInSubmission && reachesZeroState
       points = if correct then 1 else 0
       maybeSolutionString =
         if showSolution task
@@ -259,9 +263,9 @@ enterASEvaluation task sub = do
     german "Die eingereichte Aktionsfolge ist korrekt?"
 
   -- Provide specific feedback for sequences that terminate some but not all flows
-  unless correct $ do
-    let isIncomplete = terminatesSomeButNotAllFlowsWithPetri sub (activityDiagram task) (petriNet task)
-    when isIncomplete $ do
+  when (null objectNamesInSubmission && not reachesZeroState) $ do
+    let finalNodeReached = any (any (\(_, path) -> any isFinalPetriNode path)) levels
+    when finalNodeReached $ do
       paragraph $ translate $ do
         german [iii|
           Die eingereichte Sequenz erreicht ein Flussende, aber terminiert nicht alle Flüsse.
@@ -276,9 +280,6 @@ enterASEvaluation task sub = do
           A complete solution must terminate all flows present in the diagram.
           |]
       pure ()
-
-  let objectNames = map name $ filter isObjectNode $ nodes $ activityDiagram task
-      objectNamesInSubmission = nubOrd $ sub `intersect` objectNames
 
   unless (null objectNamesInSubmission) $ do
     translate $ do

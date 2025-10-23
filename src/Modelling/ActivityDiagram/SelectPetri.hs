@@ -40,9 +40,6 @@ import Modelling.ActivityDiagram.Alloy  (adConfigToAlloy, modulePetriNet)
 import Modelling.ActivityDiagram.Auxiliary.PetriValidation (
   validatePetriConfig,
   )
-import Modelling.ActivityDiagram.Auxiliary.Util (
-  finalNodesAdvice,
-  )
 import qualified Modelling.ActivityDiagram.Config as Config (
   AdConfig(activityFinalNodes,flowFinalNodes),
   )
@@ -395,7 +392,6 @@ Bitte geben Sie Ihre Antwort als Zahl an, welche das passende Petrinetz repräse
       english [i|would indicate that Petri net 2 is the matching Petri net.|]
       german  [i|bedeuten, dass Petrinetz 2 das passende Petrinetz ist.|]
     pure ()
-  finalNodesAdvice
 
   extra $ addText task
 
