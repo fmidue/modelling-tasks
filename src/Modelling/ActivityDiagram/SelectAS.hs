@@ -205,23 +205,25 @@ selectActionSequence withRepetition numberOfWrongSequences lengthBounds ad = May
             (if withRepetition then nubOrd else id) $
             permutations correctSequence
       -- Early check: reject if insufficient candidates
-      Monad.guard $ length allWrongCandidates >= numberOfWrongSequences
-      let -- Precompute edit distance parameters
-          editDistParams = asEditDistParams correctSequence
-          correctSeqVec = V.fromList correctSequence
-          -- Pair each candidate with its distance
-          candidatesWithDist = map (\actionSeq ->
-            (actionSeq, getSum $ fst $ leastChanges editDistParams correctSeqVec (V.fromList actionSeq))) allWrongCandidates
-          -- Sort by distance
-          sortedByDist = sortBy (comparing snd) candidatesWithDist
-          -- Group by distance
-          groupedByDist = groupOn snd sortedByDist
-          -- Determine how many groups we need to shuffle
-          groupsNeeded = takeWhileAccum numberOfWrongSequences groupedByDist
-      -- Shuffle only the groups we need
-      shuffledGroups <- mapM shuffleM groupsNeeded
-      let wrongSequences = take numberOfWrongSequences $ map fst $ concat shuffledGroups
-      return $ Just SelectASSolution {correctSequence = correctSequence, wrongSequences = wrongSequences}
+      if length allWrongCandidates < numberOfWrongSequences
+        then return Nothing
+        else do
+          let -- Precompute edit distance parameters
+              editDistParams = asEditDistParams correctSequence
+              correctSeqVec = V.fromList correctSequence
+              -- Pair each candidate with its distance
+              candidatesWithDist = map (\actionSeq ->
+                (actionSeq, getSum $ fst $ leastChanges editDistParams correctSeqVec (V.fromList actionSeq))) allWrongCandidates
+              -- Sort by distance
+              sortedByDist = sortBy (comparing snd) candidatesWithDist
+              -- Group by distance
+              groupedByDist = groupOn snd sortedByDist
+              -- Determine how many groups we need to shuffle
+              groupsNeeded = takeWhileAccum numberOfWrongSequences groupedByDist
+          -- Shuffle only the groups we need
+          shuffledGroups <- mapM shuffleM groupsNeeded
+          let wrongSequences = take numberOfWrongSequences $ map fst $ concat shuffledGroups
+          return $ Just SelectASSolution {correctSequence = correctSequence, wrongSequences = wrongSequences}
   where
     -- Helper to take groups until we have accumulated enough elements
     takeWhileAccum :: Int -> [[a]] -> [[a]]
