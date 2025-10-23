@@ -73,8 +73,8 @@ generateActionSequenceWithPetri
   :: PetriLike Node PetriKey
   -> Maybe (Int, Int)  -- Optional (minLength, maxLength) constraints
   -> [[String]]
-generateActionSequenceWithPetri petri maybeLengthBounds =
-  generateSequencesWithLevels levels' maybeLengthBounds petri
+generateActionSequenceWithPetri =
+  generateSequencesWithLevels levels'
 
 -- | Generate one valid action sequence with repetition, using a pre-computed Petri net.
 -- This version allows cycle exploration to generate sequences with repeated actions.
@@ -87,7 +87,7 @@ generateActionSequenceWithPetriAndRepetition
   -> (Int, Int)  -- (minLength, maxLength) constraints
   -> Maybe (m [String])
 generateActionSequenceWithPetriAndRepetition petri lengthBounds =
-  let allActionSequences = generateSequencesWithLevels levelsWithCycles (Just lengthBounds) petri
+  let allActionSequences = generateSequencesWithLevels levelsWithCycles petri (Just lengthBounds)
       sequencesWithDistances = [(seq', d) | seq' <- allActionSequences, Just d <- [actionRepetitionDistance seq']]
   in if null sequencesWithDistances
      then Nothing
@@ -149,10 +149,10 @@ actionRepetitionDistance actionSequence =
 -- Now includes the action name conversion and length bounds filtering
 generateSequencesWithLevels
   :: (Net PetriKey PetriKey -> [[(State PetriKey, [PetriKey])]])
-  -> Maybe (Int, Int)  -- Optional (minLength, maxLength) constraints
   -> PetriLike Node PetriKey
+  -> Maybe (Int, Int)  -- Optional (minLength, maxLength) constraints
   -> [[String]]
-generateSequencesWithLevels levelsFunction maybeLengthBounds petriLike =
+generateSequencesWithLevels levelsFunction petriLike maybeLengthBounds =
   let petri = fromPetriLike petriLike
       zeroState = State $ M.map (const 0) $ unState $ start petri
       relevantLevels = maybe id (\(minLength, maxLength) -> take (5 * maxLength) . drop minLength) maybeLengthBounds
