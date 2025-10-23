@@ -112,7 +112,7 @@ defaultSelectASConfig = SelectASConfig {
   adConfig = defaultAdConfig {
     actionLimits = (6, 8),
     objectNodeLimits = (1, 3),
-    maxNamedNodes = 7,
+    maxNamedNodes = 11,
     activityFinalNodes = 0,
     flowFinalNodes = 2
   },

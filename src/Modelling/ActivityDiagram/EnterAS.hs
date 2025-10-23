@@ -115,7 +115,7 @@ defaultEnterASConfig = EnterASConfig {
   adConfig = defaultAdConfig {
     actionLimits = (6, 8),
     objectNodeLimits = (1, 5),
-    maxNamedNodes = 7,
+    maxNamedNodes = 13,
     activityFinalNodes = 0,
     flowFinalNodes = 2
   },
