@@ -53,8 +53,12 @@ checkAdConfig AdConfig {
     = Just "Maximal number of Object Nodes must not be larger than the minimum number"
   | fst actionLimits + fst objectNodeLimits <= 0
     = Just "Minimum number of Actions and Object Nodes together must be positive"
-  | fst actionLimits + fst objectNodeLimits > maxNamedNodes
-    = Just "Minimal number of Actions and Object Nodes together must not be larger than maximum number of Named Nodes"
+  | snd actionLimits + fst objectNodeLimits > maxNamedNodes
+    = Just "Maximal number of Actions plus minimal number of Object Nodes must not be larger than maximum number of Named Nodes"
+  | fst actionLimits + snd objectNodeLimits > maxNamedNodes
+    = Just "Minimal number of Actions plus maximal number of Object Nodes must not be larger than maximum number of Named Nodes"
+  | maxNamedNodes > snd actionLimits + snd objectNodeLimits
+    = Just "Maximum number of Named Nodes must not be larger than sum of maximal numbers of Actions and Object Nodes"
   | decisionMergePairs < 0
     = Just "Number of Decision and Merge pairs must be non-negative"
   | forkJoinPairs < 0
