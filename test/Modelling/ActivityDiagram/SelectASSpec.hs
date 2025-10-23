@@ -75,7 +75,6 @@ spec = do
         }
     context "when withActionRepetition = True" $
       it "generates sequences with repetition" $ do
-        let solution = runIdentity $ evalRandT (runMaybeT (selectActionSequence True 2 (5, 15) testDiagram)) (mkStdGen 42)
-            Just sol = solution
-            actionSeq = correctSequence sol
+        let Just solution = runIdentity $ evalRandT (runMaybeT (selectActionSequence True 2 (5, 15) testDiagram)) (mkStdGen 42)
+            actionSeq = correctSequence solution
         actionRepetitionDistance actionSeq `shouldSatisfy` maybe False (>= 3)
