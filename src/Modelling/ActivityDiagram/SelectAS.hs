@@ -78,6 +78,7 @@ import Control.Monad.Random (
   MonadRandom,
   RandT,
   RandomGen,
+  uniform,
   evalRandT,
   mkStdGen
   )
@@ -196,7 +197,15 @@ selectActionSequence withRepetition numberOfWrongSequences lengthBounds ad = May
   maybeCorrectSequence <- case (withRepetition, generateActionSequenceWithPetriAndRepetition petri lengthBounds) of
     (True, Just genAction) -> Just <$> genAction
     (True, Nothing) -> return Nothing
-    (False, _) -> return $ generateActionSequenceWithPetri petri (Just lengthBounds)
+    (False, _) ->
+      let
+        validSequences = generateActionSequenceWithPetri petri (Just lengthBounds)
+      in
+        if null validSequences
+        then
+          return Nothing
+        else
+          Just <$> uniform (head (groupOn length validSequences))
   case maybeCorrectSequence of
     Nothing -> return Nothing
     Just correctSequence -> do

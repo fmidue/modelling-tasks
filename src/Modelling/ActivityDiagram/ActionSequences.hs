@@ -49,7 +49,7 @@ import Control.Monad (guard)
 import Control.Monad.Random (MonadRandom, uniform)
 import Data.List (union)
 import Data.List.Extra (nubOrd)
-import Data.Maybe(mapMaybe, isJust, fromJust)
+import Data.Maybe(mapMaybe, isJust)
 
 
 fromPetriLike :: Ord a => PetriLike Node a -> Net a a
@@ -65,17 +65,16 @@ fromPetriLike petri =
 --Generate one valid action sequence to each of the final nodes
 generateActionSequence :: UMLActivityDiagram -> [String]
 generateActionSequence diag =
-  fromJust $ generateActionSequenceWithPetri (convertToPetriNet diag) Nothing
+  head $ generateActionSequenceWithPetri (convertToPetriNet diag) Nothing
 
 -- | Generate one valid action sequence, using a pre-computed Petri net.
 -- Returns Nothing if no valid sequence can be found within the length constraints.
 generateActionSequenceWithPetri
   :: PetriLike Node PetriKey
   -> Maybe (Int, Int)  -- Optional (minLength, maxLength) constraints
-  -> Maybe [String]
+  -> [[String]]
 generateActionSequenceWithPetri petri maybeLengthBounds =
-  let validSequences = generateSequencesWithLevels levels' maybeLengthBounds petri
-  in if null validSequences then Nothing else Just (head validSequences)
+  generateSequencesWithLevels levels' maybeLengthBounds petri
 
 -- | Generate one valid action sequence with repetition, using a pre-computed Petri net.
 -- This version allows cycle exploration to generate sequences with repeated actions.
