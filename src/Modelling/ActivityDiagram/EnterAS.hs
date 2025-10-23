@@ -113,9 +113,9 @@ data EnterASConfig = EnterASConfig {
 defaultEnterASConfig :: EnterASConfig
 defaultEnterASConfig = EnterASConfig {
   adConfig = defaultAdConfig {
-    actionLimits = (6, 8),
-    objectNodeLimits = (1, 5),
-    maxNamedNodes = 13,
+    actionLimits = (6, 6),
+    objectNodeLimits = (1, 1),
+    maxNamedNodes = 7,
     activityFinalNodes = 0,
     flowFinalNodes = 2
   },
