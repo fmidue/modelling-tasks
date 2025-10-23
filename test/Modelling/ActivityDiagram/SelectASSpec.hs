@@ -18,6 +18,9 @@ import Modelling.ActivityDiagram.Datatype (
   AdNode(..),
   AdConnection(..)
   )
+import Control.Monad.Random (evalRandT, mkStdGen)
+import Control.Monad.Identity (runIdentity)
+import Control.Monad.Trans.Maybe (runMaybeT)
 import Test.Hspec (Spec, describe, it, context, shouldBe, shouldSatisfy)
 import Data.Maybe (isJust)
 
@@ -72,6 +75,7 @@ spec = do
         }
     context "when withActionRepetition = True" $
       it "generates sequences with repetition" $ do
-        let Just solution = selectActionSequence True 2 (5, 15) testDiagram
-            actionSeq = correctSequence solution
+        let solution = runIdentity $ evalRandT (runMaybeT (selectActionSequence True 2 (5, 15) testDiagram)) (mkStdGen 42)
+            Just sol = solution
+            actionSeq = correctSequence sol
         actionRepetitionDistance actionSeq `shouldSatisfy` maybe False (>= 3)

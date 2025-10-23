@@ -58,8 +58,8 @@ import Modelling.Auxiliary.Common (
   )
 
 import Control.Applicative (Alternative ((<|>)))
-import qualified Control.Monad as Monad (guard)
 import Control.Monad.Catch              (MonadThrow, throwM)
+import Control.Monad.Trans.Class (lift)
 import Control.Monad.Extra (firstJustM)
 import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
@@ -81,8 +81,10 @@ import Control.Monad.Random (
   evalRandT,
   mkStdGen
   )
-import Data.List (permutations, sortBy)
+import Control.Monad.Trans.Maybe (MaybeT(..), runMaybeT)
+import Data.List (permutations, sortBy, groupBy)
 import Data.List.Extra (nubOrd)
+import Data.Ord (comparing)
 import Data.Map (Map)
 import Data.Monoid (Sum(..), getSum)
 import Data.String.Interpolate          (i, iii)
@@ -187,21 +189,44 @@ data SelectASSolution = SelectASSolution {
   wrongSequences :: [[String]]
 } deriving (Show, Eq)
 
-selectActionSequence :: Bool -> Int -> (Int, Int) -> UMLActivityDiagram -> Maybe SelectASSolution
-selectActionSequence withRepetition numberOfWrongSequences lengthBounds ad = do
+selectActionSequence :: (Monad m, RandomGen g) => Bool -> Int -> (Int, Int) -> UMLActivityDiagram -> MaybeT (RandT g m) SelectASSolution
+selectActionSequence withRepetition numberOfWrongSequences lengthBounds ad = MaybeT $ do
   let petri = convertToPetriNet ad
       actionLookup = extractActionLookup ad
-  correctSequence <- if withRepetition
-    then generateActionSequenceWithPetriAndRepetition petri lengthBounds
-    else generateActionSequenceWithPetri petri (Just lengthBounds)
-  let wrongSequences =
-        take numberOfWrongSequences $
-        sortBy (compareDistToCorrect correctSequence) $
-        filter (not . (\actionSeq -> validActionSequenceWithPetri actionSeq actionLookup petri)) $
-        (if withRepetition then nubOrd else id) $
-        permutations correctSequence
-  Monad.guard (length wrongSequences == numberOfWrongSequences)
-  return SelectASSolution {correctSequence = correctSequence, wrongSequences = wrongSequences}
+      maybeCorrectSequence = if withRepetition
+        then generateActionSequenceWithPetriAndRepetition petri lengthBounds
+        else generateActionSequenceWithPetri petri (Just lengthBounds)
+  case maybeCorrectSequence of
+    Nothing -> return Nothing
+    Just correctSequence -> do
+      let allWrongCandidates =
+            filter (not . (\actionSeq -> validActionSequenceWithPetri actionSeq actionLookup petri)) $
+            (if withRepetition then nubOrd else id) $
+            permutations correctSequence
+          -- Pair each candidate with its distance
+          candidatesWithDist = map (\actionSeq -> (actionSeq, distToCorrect correctSequence actionSeq)) allWrongCandidates
+          -- Sort by distance
+          sortedByDist = sortBy (comparing snd) candidatesWithDist
+          -- Group by distance
+          groupedByDist = groupBy (\(_, d1) (_, d2) -> d1 == d2) sortedByDist
+          -- Determine how many groups we need to shuffle
+          groupsNeeded = takeWhileAccum numberOfWrongSequences groupedByDist
+      -- Shuffle only the groups we need
+      shuffledGroups <- mapM shuffleM groupsNeeded
+      let wrongSequences = take numberOfWrongSequences $ map fst $ concat shuffledGroups
+      if length wrongSequences == numberOfWrongSequences
+        then return $ Just SelectASSolution {correctSequence = correctSequence, wrongSequences = wrongSequences}
+        else return Nothing
+  where
+    -- Helper to take groups until we have accumulated enough elements
+    takeWhileAccum :: Int -> [[a]] -> [[a]]
+    takeWhileAccum _ [] = []
+    takeWhileAccum n (g:gs)
+      | n <= 0 = []
+      | otherwise = g : takeWhileAccum (n - length g) gs
+    -- Compute distance to correct sequence
+    distToCorrect correct actionSeq =
+      getSum $ fst $ leastChanges (asEditDistParams correct) (V.fromList correct) (V.fromList actionSeq)
 
 asEditDistParams :: [String] -> Params String (String, Int, String) (Sum Int)
 asEditDistParams xs = Params
@@ -212,15 +237,6 @@ asEditDistParams xs = Params
     , cost = \ (_, n, _) -> Sum $ abs (n - (length xs `div` 2))
     , positionOffset = \ (op, _, _) -> if op == "delete" then 0 else 1
     }
-
-compareDistToCorrect :: [String] -> [String] -> [String] -> Ordering
-compareDistToCorrect correctSequence xs ys =
-  compare (distToCorrect xs) (distToCorrect ys)
-  where
-    distToCorrect zs =
-      getSum
-      $ fst
-      $ leastChanges (asEditDistParams correctSequence) (V.fromList correctSequence) (V.fromList zs)
 
 selectASTask
   :: (MonadPlantUml m, MonadWriteFile m, OutputCapable m)
@@ -319,19 +335,18 @@ getSelectASTask config = do
     $ selectASAlloy config
   randomInstances <- shuffleM instances >>= mapM parseInstance
   ad <- mapM (fmap snd . shuffleAdNames) randomInstances
-  validInstances <- firstJustM (\x ->
-    mapM (\solution -> do
-        actionSequences <- selectASSolutionToMap solution
-        return SelectASInstance {
-              activityDiagram = x,
-              actionSequences = actionSequences,
-              drawSettings = defaultPlantUmlConfig {
-                suppressBranchConditions = hideBranchConditions config
-                },
-              showSolution = printSolution config,
-              addText = extraText config
-            }
-    ) (selectActionSequence (withActionRepetition config) (numberOfWrongAnswers config) (answerLength config) x)
+  validInstances <- firstJustM (\x -> runMaybeT $ do
+      solution <- selectActionSequence (withActionRepetition config) (numberOfWrongAnswers config) (answerLength config) x
+      actionSequences <- lift $ selectASSolutionToMap solution
+      return SelectASInstance {
+            activityDiagram = x,
+            actionSequences = actionSequences,
+            drawSettings = defaultPlantUmlConfig {
+              suppressBranchConditions = hideBranchConditions config
+              },
+            showSolution = printSolution config,
+            addText = extraText config
+          }
     ) ad
   case validInstances of
     Just x -> return x
