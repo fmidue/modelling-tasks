@@ -94,8 +94,7 @@ generateActionSequenceWithPetriAndRepetition petri lengthBounds =
      then Nothing
      else
        let maxDist = maximum $ map snd sequencesWithDistances
-           maxDistanceSeqs = [seq' | (seq', d) <- sequencesWithDistances, d == maxDist]
-       in Just $ uniform maxDistanceSeqs
+       in Just $ uniform [seq' | (seq', d) <- sequencesWithDistances, d == maxDist]
 
 isNormalPetriNode :: PetriKey -> Bool
 isNormalPetriNode pk =
