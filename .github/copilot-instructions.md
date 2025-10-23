@@ -51,6 +51,37 @@ Then run EditorConfig validation again to confirm fixes:
 - **DO NOT USE `report_progress`**
 - **FIX ALL VIOLATIONS FIRST**
 
+### 🔴 NEVER COMMIT CODE THAT DOESN'T BUILD
+
+**ABSOLUTE REQUIREMENT**: Every commit MUST successfully build with `stack test --no-run-tests`.
+
+**BEFORE ANY COMMIT**: Run `stack test --no-run-tests` to validate the code compiles:
+
+```bash
+stack test --no-run-tests
+```
+
+Or for the full application suite:
+
+```bash
+stack --stack-yaml=stack-apps.yaml test --no-run-tests
+```
+
+**If build fails**: Fix all compilation errors before committing:
+
+- Review the error messages carefully
+- Fix all type errors, missing imports, and syntax issues
+- Re-run `stack test --no-run-tests` until it succeeds
+- Only then proceed with committing
+
+**IF `stack test --no-run-tests` FAILS**:
+
+- **DO NOT COMMIT**
+- **DO NOT USE `report_progress`**
+- **FIX ALL BUILD ERRORS FIRST**
+
+**Build times**: Remember that builds can take 30-45 minutes. Set appropriate timeout values (60+ minutes) and never cancel builds.
+
 ### ⏰ NEVER CANCEL BUILDS OR TESTS
 
 - **Project builds**: 30-45 minutes (set timeout to 60+ minutes)
@@ -130,6 +161,22 @@ runLangMReport (return ()) (>>) (nameCdErrorTask "/tmp/" inst) >>= \(Just (), x)
 ## Validation and Linting
 
 Always run these commands before committing changes:
+
+### Build Success (MANDATORY)
+
+**CRITICAL**: Code must successfully build before any commit:
+
+```bash
+stack test --no-run-tests
+```
+
+For the full application suite:
+
+```bash
+stack --stack-yaml=stack-apps.yaml test --no-run-tests
+```
+
+**Never commit code that doesn't build**. This is a fundamental requirement.
 
 ### EditorConfig Compliance (MANDATORY)
 
@@ -333,9 +380,9 @@ When writing Haskell code for this project, follow these best practices:
 
 After making changes, always validate:
 
-1. **EditorConfig compliance**: `./scripts/check-editorconfig.sh` **MUST PASS**
-2. **HLint does not complain**: `hlint src/ test/ app/`
-3. **Build succeeds**: `stack --stack-yaml=stack-apps.yaml build`
+1. **Build succeeds**: `stack --stack-yaml=stack-apps.yaml test --no-run-tests modelling-tasks` or `stack --stack-yaml=stack-apps.yaml test --no-run-tests` **MUST PASS BEFORE COMMIT**
+2. **EditorConfig compliance**: `./scripts/check-editorconfig.sh` **MUST PASS**
+3. **HLint does not complain**: `hlint src/ test/ app/`
 4. **Tests pass**: `stack --stack-yaml=stack-apps.yaml test` (30+ minutes)
 5. **App execution**: Test at least one app with `stack exec <app-name>`
 6. **GHCi interaction**: Load examples and generate task instances
