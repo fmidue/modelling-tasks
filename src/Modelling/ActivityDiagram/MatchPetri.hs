@@ -41,7 +41,6 @@ import Capabilities.Graphviz            (MonadGraphviz)
 import Capabilities.PlantUml            (MonadPlantUml)
 import Capabilities.WriteFile           (MonadWriteFile)
 import Modelling.ActivityDiagram.Alloy  (adConfigToAlloy, modulePetriNet)
-import Modelling.ActivityDiagram.Auxiliary.Util (finalNodesAdvice)
 import Modelling.ActivityDiagram.Datatype (
   UMLActivityDiagram(..),
   AdNode (..),
@@ -366,7 +365,6 @@ matchPetriTask path task = do
         und kein Petrinetzknoten entspricht einem Flussende.
         |]
     pure ()
-  finalNodesAdvice
 
   extra $ addText task
 

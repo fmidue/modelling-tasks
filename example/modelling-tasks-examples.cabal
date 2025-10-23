@@ -10,6 +10,7 @@ build-type:     Simple
 
 library
   exposed-modules:
+      Modelling.ActivityDiagram.Common
       Modelling.ActivityDiagram.EnterAs.Config
       Modelling.ActivityDiagram.FindAuxiliaryPetriNodes.Config
       Modelling.ActivityDiagram.MatchAd.Config

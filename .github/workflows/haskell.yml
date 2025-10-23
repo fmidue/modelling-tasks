@@ -7,11 +7,33 @@ on:
       - dev
       - develop
       - master
+    paths:
+      - '**.hs'
+      - '**/package.yaml'
+      - '**.cabal'
+      - 'stack*.yaml'
+      - 'alloy/**.als'
+      - 'test/unit/**.als'
+      - 'test/unit/**.svg'
+      - '**/hie.yaml'
+      - '.hlint.yaml'
+      - '.github/workflows/haskell.yml'
   pull_request:
     branches:
       - dev
       - develop
       - master
+    paths:
+      - '**.hs'
+      - '**/package.yaml'
+      - '**.cabal'
+      - 'stack*.yaml'
+      - 'alloy/**.als'
+      - 'test/unit/**.als'
+      - 'test/unit/**.svg'
+      - '**/hie.yaml'
+      - '.hlint.yaml'
+      - '.github/workflows/haskell.yml'
 
 permissions: read-all
 
