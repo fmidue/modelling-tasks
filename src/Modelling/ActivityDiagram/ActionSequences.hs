@@ -87,17 +87,16 @@ generateActionSequenceWithPetriAndRepetition
   :: MonadRandom m
   => PetriLike Node PetriKey
   -> (Int, Int)  -- (minLength, maxLength) constraints
-  -> m (Maybe [String])
+  -> Maybe (m [String])
 generateActionSequenceWithPetriAndRepetition petri lengthBounds =
   let allActionSequences = generateSequencesWithLevels levelsWithCycles (Just lengthBounds) petri
       sequencesWithDistances = [(seq', d) | seq' <- allActionSequences, Just d <- [actionRepetitionDistance seq']]
   in if null sequencesWithDistances
-     then return Nothing
-     else do
+     then Nothing
+     else
        let maxDist = maximum $ map snd sequencesWithDistances
            maxDistanceSeqs = [seq' | (seq', d) <- sequencesWithDistances, d == maxDist]
-       selectedSeq <- uniform maxDistanceSeqs
-       return $ Just selectedSeq
+       in Just $ uniform maxDistanceSeqs
 
 isNormalPetriNode :: PetriKey -> Bool
 isNormalPetriNode pk =
