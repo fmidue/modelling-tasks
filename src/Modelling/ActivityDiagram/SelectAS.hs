@@ -82,8 +82,8 @@ import Control.Monad.Random (
   mkStdGen
   )
 import Control.Monad.Trans.Maybe (MaybeT(..), runMaybeT)
-import Data.List (permutations, sortBy, groupBy)
-import Data.List.Extra (nubOrd)
+import Data.List (permutations, sortBy)
+import Data.List.Extra (groupOn, nubOrd)
 import Data.Ord (comparing)
 import Data.Map (Map)
 import Data.Monoid (Sum(..), getSum)
@@ -204,11 +204,12 @@ selectActionSequence withRepetition numberOfWrongSequences lengthBounds ad = May
             (if withRepetition then nubOrd else id) $
             permutations correctSequence
           -- Pair each candidate with its distance
-          candidatesWithDist = map (\actionSeq -> (actionSeq, distToCorrect correctSequence actionSeq)) allWrongCandidates
+          candidatesWithDist = map (\actionSeq ->
+            (actionSeq, getSum $ fst $ leastChanges (asEditDistParams correctSequence) (V.fromList correctSequence) (V.fromList actionSeq))) allWrongCandidates
           -- Sort by distance
           sortedByDist = sortBy (comparing snd) candidatesWithDist
           -- Group by distance
-          groupedByDist = groupBy (\(_, d1) (_, d2) -> d1 == d2) sortedByDist
+          groupedByDist = groupOn snd sortedByDist
           -- Determine how many groups we need to shuffle
           groupsNeeded = takeWhileAccum numberOfWrongSequences groupedByDist
       -- Shuffle only the groups we need
@@ -224,9 +225,6 @@ selectActionSequence withRepetition numberOfWrongSequences lengthBounds ad = May
     takeWhileAccum n (g:gs)
       | n <= 0 = []
       | otherwise = g : takeWhileAccum (n - length g) gs
-    -- Compute distance to correct sequence
-    distToCorrect correct actionSeq =
-      getSum $ fst $ leastChanges (asEditDistParams correct) (V.fromList correct) (V.fromList actionSeq)
 
 asEditDistParams :: [String] -> Params String (String, Int, String) (Sum Int)
 asEditDistParams xs = Params
