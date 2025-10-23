@@ -58,6 +58,7 @@ import Modelling.Auxiliary.Common (
   )
 
 import Control.Applicative (Alternative ((<|>)))
+import qualified Control.Monad as Monad (guard)
 import Control.Monad.Catch              (MonadThrow, throwM)
 import Control.Monad.Trans.Class (lift)
 import Control.Monad.Extra (firstJustM)
@@ -204,7 +205,7 @@ selectActionSequence withRepetition numberOfWrongSequences lengthBounds ad = May
             (if withRepetition then nubOrd else id) $
             permutations correctSequence
       -- Early check: reject if insufficient candidates
-      guard $ length allWrongCandidates >= numberOfWrongSequences
+      Monad.guard $ length allWrongCandidates >= numberOfWrongSequences
       let -- Precompute edit distance parameters
           editDistParams = asEditDistParams correctSequence
           correctSeqVec = V.fromList correctSequence
