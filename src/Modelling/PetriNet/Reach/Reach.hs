@@ -30,7 +30,7 @@ module Modelling.PetriNet.Reach.Reach (
 
   -- * Solutions
   netGoalSolution,
-  netGoalAllSolutionsFor,
+  netGoalAllSolutions,
   reachSolution,
 
   -- * Task creation
@@ -129,7 +129,7 @@ import Data.Bifunctor                   (Bifunctor (second))
 import Data.Either.Combinators          (whenRight)
 import Data.Foldable                    (sequenceA_, traverse_)
 import Data.GraphViz                    (GraphvizCommand (..))
-import Data.List                        (singleton, sortBy)
+import Data.List                        (find, singleton, sortBy)
 import Data.List.Extra                  (groupSort, nubSort)
 import Data.Maybe                       (fromMaybe)
 import Data.Ord                         (comparing)
@@ -334,24 +334,17 @@ netGoalSolution netGoal = reverse $ snd $ head $ concatMap
   (filter $ (== goal netGoal) . fst)
   $ levels' $ petriNet netGoal
 
--- | Get all possible solutions for a 'NetGoal'
-netGoalAllSolutions :: Ord s => NetGoal s t -> [[[t]]]
+{-|
+Get all possible shortest solutions for a 'NetGoal'
+
+Note: This function does not terminate,
+if the goal is not reachable and the net is not bounded.
+-}
+netGoalAllSolutions :: Ord s => NetGoal s t -> [[t]]
 netGoalAllSolutions netGoal =
   let goalState = goal netGoal
-      allPaths = map (filter $ (== goalState) . fst)
-        $ levelsWithAlternatives $ petriNet netGoal
-  in map (concatMap (reverse . snd)) allPaths
-
-{-|
-Get all possible solutions for a 'NetGoal'
-limited to the allowed lengths defined by the provided 'NetGoalConfig'.
--}
-netGoalAllSolutionsFor :: Ord s => NetGoal s t -> NetGoalConfig -> [[t]]
-netGoalAllSolutionsFor netGoal NetGoalConfig {..} = concat
-  $ drop minTransitionLength
-  $ take (maxTransitionLength + 1)
-  $ netGoalAllSolutions netGoal
-
+  in reverse . maybe [] snd $ find ((== goalState) . fst)
+     $ concat $ levelsWithAlternatives $ petriNet netGoal
 
 {-|
 Find all shortest paths to all reachable markings
@@ -599,7 +592,7 @@ generateNetGoal filterConfig config@NetGoalConfig {..} seed =
     checkNetGoal pn = do
       netGoal <- MaybeT $ fmap (toNetGoal . (pn,)) <$>
         findM (Monad.lift . isPetriDrawable (fst pn)) drawCommands
-      let allSolutions = netGoalAllSolutionsFor netGoal config
+      let allSolutions = netGoalAllSolutions netGoal
       guard (not $ any (isTrivialSequence filterConfig) allSolutions)
       pure netGoal
     generate = do
