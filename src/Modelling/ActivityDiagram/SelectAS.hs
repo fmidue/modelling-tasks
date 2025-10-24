@@ -235,19 +235,26 @@ selectActionSequence withRepetition numberOfWrongSequences lengthBounds ad = May
               sortedByDist = sortBy (comparing snd) candidatesWithDist
               -- Group by distance
               groupedByDist = groupOn snd sortedByDist
-              -- Determine how many groups we need to shuffle
-              groupsNeeded = takeWhileAccum numberOfWrongSequences groupedByDist
-          -- Shuffle only the groups we need
-          shuffledGroups <- mapM shuffleM groupsNeeded
-          let wrongSequences = take numberOfWrongSequences $ map fst $ concat shuffledGroups
+              -- Determine how many groups we need
+              (fullGroups, maybePartialGroup) = takeGroupsUntil numberOfWrongSequences groupedByDist
+          -- Only shuffle the last group if it's partial, keep full groups as-is
+          processedGroups <- case maybePartialGroup of
+            Nothing -> return fullGroups
+            Just lastGroup -> do
+              shuffledLast <- shuffleM lastGroup
+              return (fullGroups ++ [shuffledLast])
+          let wrongSequences = take numberOfWrongSequences $ map fst $ concat processedGroups
           return $ Just SelectASSolution {correctSequence = correctSequence, wrongSequences = wrongSequences}
   where
-    -- Helper to take groups until we have accumulated enough elements
-    takeWhileAccum :: Int -> [[a]] -> [[a]]
-    takeWhileAccum _ [] = []
-    takeWhileAccum n (g:gs)
-      | n <= 0 = []
-      | otherwise = g : takeWhileAccum (n - length g) gs
+    -- Helper to take groups until we have enough elements
+    -- Returns (fullGroupsWeNeed, maybePartialGroupToShuffle)
+    takeGroupsUntil :: Int -> [[a]] -> ([[a]], Maybe [a])
+    takeGroupsUntil _ [] = ([], Nothing)
+    takeGroupsUntil n (g:gs)
+      | n <= 0 = ([], Nothing)
+      | length g >= n = ([], Just g)  -- This group is enough, needs shuffling
+      | otherwise = let (rest, partial) = takeGroupsUntil (n - length g) gs
+                    in (g : rest, partial)
 
 asEditDistParams :: [String] -> Params String (String, Int, String) (Sum Int)
 asEditDistParams xs = Params
