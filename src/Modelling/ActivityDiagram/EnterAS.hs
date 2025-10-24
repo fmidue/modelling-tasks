@@ -26,7 +26,7 @@ import Capabilities.Alloy               (MonadAlloy, getInstances)
 import Capabilities.PlantUml            (MonadPlantUml)
 import Capabilities.WriteFile           (MonadWriteFile)
 import Modelling.ActivityDiagram.ActionSequences (
-  generateActionSequenceWithPetri,
+  generateActionSequencesWithPetri,
   computeActionSequenceLevels,
   extractActionLookup,
   isFinalPetriNode,
@@ -191,7 +191,7 @@ newtype EnterASSolution = EnterASSolution {
 
 enterActionSequence :: PetriLike Node PetriKey -> EnterASSolution
 enterActionSequence petri =
-  EnterASSolution {sampleSolution = head $ generateActionSequenceWithPetri petri Nothing}
+  EnterASSolution {sampleSolution = head $ generateActionSequencesWithPetri petri Nothing}
 
 enterASTask
   :: (MonadPlantUml m, MonadWriteFile m, OutputCapable m)

@@ -4,7 +4,7 @@ module Modelling.ActivityDiagram.ActionSequences (
   validActionSequence,
   validActionSequenceWithPetri,
   generateActionSequence,
-  generateActionSequenceWithPetri,
+  generateActionSequencesWithPetri,
   generateActionSequenceWithPetriAndRepetition,
   computeActionSequenceLevels,
   actionRepetitionDistance,
@@ -62,24 +62,24 @@ fromPetriLike petri =
       start = State {unState = M.map initial $ M.filter isPlaceNode $ allNodes petri}
   }
 
---Generate one valid action sequence to each of the final nodes
+-- | Generate a valid action sequence reaching each of the final nodes
 generateActionSequence :: UMLActivityDiagram -> [String]
 generateActionSequence diag =
-  head $ generateActionSequenceWithPetri (convertToPetriNet diag) Nothing
+  head $ generateActionSequencesWithPetri (convertToPetriNet diag) Nothing
 
--- | Generate one valid action sequence, using a pre-computed Petri net.
--- Returns Nothing if no valid sequence can be found within the length constraints.
-generateActionSequenceWithPetri
+-- | Generate valid action sequences, using a pre-computed Petri net.
+-- The returned list may be infinite or some of its tails even diverge,
+-- if no length constraints are passed.
+generateActionSequencesWithPetri
   :: PetriLike Node PetriKey
   -> Maybe (Int, Int)  -- Optional (minLength, maxLength) constraints
   -> [[String]]
-generateActionSequenceWithPetri =
+generateActionSequencesWithPetri =
   generateSequencesWithLevels levels'
 
 -- | Generate one valid action sequence with repetition, using a pre-computed Petri net.
 -- This version allows cycle exploration to generate sequences with repeated actions.
--- Returns Nothing if no sequence with repetition can be found, or if all sequences with repetition
--- violate the length constraints.
+-- Returns Nothing if no sequence with repetition can be found within the length constraints.
 -- Uses randomness to select among sequences with equal maximum repetition distance.
 generateActionSequenceWithPetriAndRepetition
   :: MonadRandom m

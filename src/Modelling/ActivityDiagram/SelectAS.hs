@@ -29,7 +29,7 @@ import Capabilities.Alloy               (MonadAlloy, getInstances)
 import Capabilities.PlantUml            (MonadPlantUml)
 import Capabilities.WriteFile           (MonadWriteFile)
 import Modelling.ActivityDiagram.ActionSequences (
-  generateActionSequenceWithPetri,
+  generateActionSequencesWithPetri,
   generateActionSequenceWithPetriAndRepetition,
   extractActionLookup,
   validActionSequenceWithPetri
@@ -199,7 +199,7 @@ selectActionSequence withRepetition numberOfWrongSequences lengthBounds ad = May
     (True, Nothing) -> return Nothing
     (False, _) ->
       let
-        validSequences = generateActionSequenceWithPetri petri (Just lengthBounds)
+        validSequences = generateActionSequencesWithPetri petri (Just lengthBounds)
       in
         if null validSequences
         then
