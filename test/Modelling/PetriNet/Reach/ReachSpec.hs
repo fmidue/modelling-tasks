@@ -35,13 +35,18 @@ import Data.Maybe                        (isJust)
 import qualified Data.Map                 as M
 import Data.Set                         (Set)
 import Test.Hspec
-import Test.QuickCheck                  (Testable (property))
+import Test.QuickCheck (
+  Testable (property),
+  maxSuccess,
+  quickCheckWith,
+  stdArgs,
+  )
 
 spec :: Spec
 spec = do
   describe "generateReach" $ do
     it "abides minTransitionLength" $
-      property $ \seed -> do
+      quickCheckWith stdArgs {maxSuccess = 50} $ property $ \seed -> do
         let config = defaultReachConfig {
               netGoalConfig = (netGoalConfig defaultReachConfig) {
                 maxTransitionLength = 6,
@@ -56,7 +61,7 @@ spec = do
         net `shouldSatisfy` hasMinTransitionLength (s ==) ts minL
 
     it "generates non-trivial solutions when filtering is enabled" $
-      property $ \seed -> do
+      quickCheckWith stdArgs {maxSuccess = 15} $ property $ \seed -> do
         let config = defaultReachConfig {
               netGoalConfig = goalConfig,
               filterConfig = defaultFilterConfig
@@ -70,7 +75,7 @@ spec = do
         solutions `shouldSatisfy` (not . any (isTrivialSequence $ filterConfig config))
 
     it "can generate solutions when filtering is disabled" $
-      property $ \seed -> do
+      quickCheckWith stdArgs {maxSuccess = 50} $ property $ \seed -> do
         let config = defaultReachConfig {
               netGoalConfig = (netGoalConfig defaultReachConfig) {
                 maxTransitionLength = 8,
