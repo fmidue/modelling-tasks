@@ -102,7 +102,6 @@ isNormalPetriNode pk =
     _ -> False
 
 -- | Helper to generate sequences using a specific levels function
--- Now includes the action name conversion and length bounds filtering
 generateSequencesWithLevels
   :: (Net PetriKey PetriKey -> [[(State PetriKey, [PetriKey])]])
   -> PetriLike Node PetriKey
@@ -137,8 +136,8 @@ validActionSequenceWithPetri input actionLookup petri =
   let (levels, zeroState) = computeActionSequenceLevels input actionLookup petri
   in any (isJust . lookup zeroState) levels
 
--- | Common computation for action sequence validation
--- Returns (levels, zeroState) for checking sequence properties
+-- | Common computation for action sequence validation.
+-- Returns (levels, zeroState) for checking sequence properties.
 computeActionSequenceLevels :: [String] -> BM.Bimap Int String -> PetriLike Node PetriKey -> ([[(State PetriKey, [PetriKey])]], State PetriKey)
 computeActionSequenceLevels input actionLookup petri =
   let petriKeyMap = map
@@ -175,8 +174,8 @@ levelsCheckAS input actions n =
         in union (f as consume) (f (a:as) notConsume)
   in f input [(start n, [])]
 
--- | Variant of levels' that manages visited states per path rather than globally
--- This allows exploring cycles while preventing infinite loops within each path
+-- | Variant of levels' that manages visited states per path rather than globally.
+-- This allows exploring cycles while preventing infinite loops within each path.
 levelsWithCycles :: Ord s => Net s t -> [[(State s, [t])]]
 levelsWithCycles n =
   let f [] = []
