@@ -27,8 +27,6 @@ module Modelling.PetriNet.Reach.Reach (
 
   -- * Generation
   generateReach,
-  generateNetGoalWithFilter,
-  generateNetGoalUnfiltered,
 
   -- * Solutions
   netGoalSolution,
@@ -100,7 +98,7 @@ import Control.Applicative              (Alternative, (<|>))
 import Control.Functor.Trans            (FunctorTrans (lift))
 import Control.Monad                    (forM, guard, msum, unless)
 import Control.Monad.Catch              (MonadCatch, MonadThrow)
-import Control.Monad.Extra              (findM, maybeM, whenJust)
+import Control.Monad.Extra              (findM, whenJust)
 import Control.Monad.State              (put)
 import Control.Monad.Trans.Maybe        (MaybeT (MaybeT, runMaybeT))
 import Modelling.PetriNet.Reach.ConfigValidation (
@@ -131,7 +129,7 @@ import Data.Bifunctor                   (Bifunctor (second))
 import Data.Either.Combinators          (whenRight)
 import Data.Foldable                    (sequenceA_, traverse_)
 import Data.GraphViz                    (GraphvizCommand (..))
-import Data.List                        (minimumBy, singleton, sortBy)
+import Data.List                        (singleton, sortBy)
 import Data.List.Extra                  (groupSort, nubSort)
 import Data.Maybe                       (fromMaybe)
 import Data.Ord                         (comparing)
@@ -547,22 +545,6 @@ defaultReachInstance = ReachInstance {
   withMinLengthHint = False
 }
 
--- | Generate NetGoal without any filtering (backwards compatibility)
-generateNetGoalUnfiltered
-  :: (MonadCatch m, MonadDiagrams m, MonadGraphviz m)
-  => NetGoalConfig
-  -> Int
-  -> m (NetGoal Place Transition)
-generateNetGoalUnfiltered config@NetGoalConfig {..} seed = do
-  let generate = do
-        xs <- possibleNetGoals config
-        let pn = minimumBy (comparing fst) xs
-        maybeM generate (pure . (pn,))
-          $ findM (Monad.lift . isPetriDrawable (fst pn)) drawCommands
-  toNetGoal <$> eval generate
-  where
-    eval f = evalRandT f $ mkStdGen seed
-
 possibleNetGoals
   :: MonadRandom m
   => NetGoalConfig
@@ -605,13 +587,13 @@ toNetGoal ((petri, state), cmd) = NetGoal {
   }
 
 -- | Generate NetGoal with filtering for trivial solutions
-generateNetGoalWithFilter
+generateNetGoal
   :: (MonadCatch m, MonadDiagrams m, MonadGraphviz m)
   => FilterConfig
   -> NetGoalConfig
   -> Int
   -> m (NetGoal Place Transition)
-generateNetGoalWithFilter filterConfig config@NetGoalConfig {..} seed =
+generateNetGoal filterConfig config@NetGoalConfig {..} seed =
   evalRandT generate $ mkStdGen seed
   where
     checkNetGoal pn = do
@@ -648,7 +630,7 @@ generateReach
   -> Int
   -> m (ReachInstance Place Transition)
 generateReach ReachConfig {..} seed = do
-  netGoal <- generateNetGoalWithFilter filterConfig netGoalConfig seed
+  netGoal <- generateNetGoal filterConfig netGoalConfig seed
   pure $ ReachInstance {
     netGoal           = netGoal,
     minLength         = minTransitionLength netGoalConfig,
