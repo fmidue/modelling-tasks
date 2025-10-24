@@ -189,8 +189,8 @@ reportReachFor showInputHelp img noLonger lengthHint minLength showMinLengthHint
           "Geben Sie Ihre Lösung als ", germanConstraint, " ", show maxL,
           "-schrittige Auflistung der folgenden Art an:"]
    let (t1, t2, t3) = (Transition 1, Transition 2, Transition 3)
-      showT = show . ShowTransition
-      (st1, st2, st3) = (showT t1, showT t2, showT t3)
+       showT = show . ShowTransition
+       (st1, st2, st3) = (showT t1, showT t2, showT t3)
    code $ show $ TransitionsList [t1, t2, t3]
    paragraph $ translate $ do
      english $ concat [
