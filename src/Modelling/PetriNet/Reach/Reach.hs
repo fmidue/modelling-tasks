@@ -27,14 +27,12 @@ module Modelling.PetriNet.Reach.Reach (
 
   -- * Generation
   generateReach,
-  generateNetGoal,
   generateNetGoalWithFilter,
   generateNetGoalUnfiltered,
 
   -- * Solutions
   netGoalSolution,
-  netGoalAllSolutions,
-  netGoalSolutionFiltered,
+  netGoalAllSolutionsFor,
   reachSolution,
 
   -- * Task creation
@@ -75,7 +73,6 @@ import Modelling.PetriNet.Reach.Draw    (drawToFile, isPetriDrawable)
 import Modelling.PetriNet.Reach.Filter (
   FilterConfig (..),
   defaultFilterConfig,
-  filterTrivialSolutions,
   isTrivialSequence,
   )
 import Modelling.PetriNet.Reach.Property (
@@ -101,10 +98,11 @@ import Modelling.PetriNet.Reach.Type (
 
 import Control.Applicative              (Alternative, (<|>))
 import Control.Functor.Trans            (FunctorTrans (lift))
-import Control.Monad                    (forM, guard, unless)
+import Control.Monad                    (forM, guard, msum, unless)
 import Control.Monad.Catch              (MonadCatch, MonadThrow)
 import Control.Monad.Extra              (findM, maybeM, whenJust)
 import Control.Monad.State              (put)
+import Control.Monad.Trans.Maybe        (MaybeT (MaybeT, runMaybeT))
 import Modelling.PetriNet.Reach.ConfigValidation (
   checkBasicPetriConfig,
   )
@@ -127,14 +125,14 @@ import Control.OutputCapable.Blocks.Generic (
   ($>>),
   ($>>=),
   )
-import Control.Monad.Random             (mkStdGen)
+import Control.Monad.Random             (MonadRandom, mkStdGen)
 import Control.Monad.Trans.Random       (evalRandT)
 import Data.Bifunctor                   (Bifunctor (second))
 import Data.Either.Combinators          (whenRight)
 import Data.Foldable                    (sequenceA_, traverse_)
 import Data.GraphViz                    (GraphvizCommand (..))
-import Data.List                        (minimumBy, singleton)
-import Data.List.Extra                  (nubSort)
+import Data.List                        (minimumBy, singleton, sortBy)
+import Data.List.Extra                  (groupSort, nubSort)
 import Data.Maybe                       (fromMaybe)
 import Data.Ord                         (comparing)
 import Data.Ratio                       ((%))
@@ -338,50 +336,41 @@ netGoalSolution netGoal = reverse $ snd $ head $ concatMap
   (filter $ (== goal netGoal) . fst)
   $ levels' $ petriNet netGoal
 
--- | Get multiple solutions for a NetGoal to check for trivial permutations
--- This implementation finds a few alternative paths to balance permutation checking with performance
-netGoalAllSolutions :: Ord s => NetGoal s t -> [[t]]
+-- | Get all possible solutions for a 'NetGoal'
+netGoalAllSolutions :: Ord s => NetGoal s t -> [[[t]]]
 netGoalAllSolutions netGoal =
   let goalState = goal netGoal
-      -- Get the standard solution first
-      standardSolution = netGoalSolution netGoal
-      -- Try to find a few more alternative paths (limit to 3 total)
-      alternativePaths = take 2 $ drop 1 $ concatMap (filter $ (== goalState) . fst) $ levelsWithFewAlternatives $ petriNet netGoal
-      allSolutions = standardSolution : map (reverse . snd) alternativePaths
-  in allSolutions
+      allPaths = map (filter $ (== goalState) . fst)
+        $ levelsWithAlternatives $ petriNet netGoal
+  in map (concatMap (reverse . snd)) allPaths
 
--- | Find a few alternative paths without exponential explosion
-levelsWithFewAlternatives :: Ord s => Net s t -> [[(State s, [t])]]
-levelsWithFewAlternatives n =
+{-|
+Get all possible solutions for a 'NetGoal'
+limited to the allowed lengths defined by the provided 'NetGoalConfig'.
+-}
+netGoalAllSolutionsFor :: Ord s => NetGoal s t -> NetGoalConfig -> [[t]]
+netGoalAllSolutionsFor netGoal NetGoalConfig {..} = concat
+  $ drop minTransitionLength
+  $ take (maxTransitionLength + 1)
+  $ netGoalAllSolutions netGoal
+
+
+{-|
+Find all shortest paths to all reachable markings
+segmented by the length of paths starting with 0.
+-}
+levelsWithAlternatives :: Ord s => Net s t -> [[(State s, [[t]])]]
+levelsWithAlternatives n =
   let f _    [] = []
-      f _    xs | length xs > 20 = []  -- Hard limit to prevent explosion
       f done xs =
         let done' = S.union done $ S.fromList $ map fst xs
-            -- Very conservative: keep at most 2 paths per state
-            next = take 15 [ (y, t:p) |
-                (x,p) <- xs,
+            next = map (second concat) $ groupSort [ (y, map (t:) ps) |
+                (x,ps) <- xs,
                 (t,y) <- successors n x,
                 not $ S.member y done'
               ]
          in xs : f done' next
-  in f S.empty [(start n, [])]
-
-
--- | Get a non-trivial solution for a NetGoal, filtering out trivial patterns
-netGoalSolutionFiltered :: (Eq t, Ord s) => FilterConfig -> NetGoal s t -> [t]
-netGoalSolutionFiltered filterConfig netGoal =
-  reverse $ snd $ head $ concatMap
-    (filter $ (== goal netGoal) . fst)
-    $ filterTrivialPaths filterConfig
-    $ levels' $ petriNet netGoal
-  where
-    filterTrivialPaths :: Eq t => FilterConfig -> [[(State s, [t])]] -> [[(State s, [t])]]
-    filterTrivialPaths config = map (filter (not . isTrivialPath config))
-
-    isTrivialPath :: Eq t => FilterConfig -> (State s, [t]) -> Bool
-    isTrivialPath config (_, path) =
-      let reversedPath = reverse path
-      in null (filterTrivialSolutions config [reversedPath])
+  in f S.empty [(start n, [[]])]
 
 reachSolution :: Ord s => ReachInstance s t -> [t]
 reachSolution inst = netGoalSolution (netGoal inst)
@@ -558,20 +547,27 @@ defaultReachInstance = ReachInstance {
   withMinLengthHint = False
 }
 
-generateNetGoal
-  :: (MonadCatch m, MonadDiagrams m, MonadGraphviz m)
-  => NetGoalConfig
-  -> Int
-  -> m (NetGoal Place Transition)
-generateNetGoal = generateNetGoalWithFilter defaultFilterConfig
-
 -- | Generate NetGoal without any filtering (backwards compatibility)
 generateNetGoalUnfiltered
   :: (MonadCatch m, MonadDiagrams m, MonadGraphviz m)
   => NetGoalConfig
   -> Int
   -> m (NetGoal Place Transition)
-generateNetGoalUnfiltered NetGoalConfig {..} seed = do
+generateNetGoalUnfiltered config@NetGoalConfig {..} seed = do
+  let generate = do
+        xs <- possibleNetGoals config
+        let pn = minimumBy (comparing fst) xs
+        maybeM generate (pure . (pn,))
+          $ findM (Monad.lift . isPetriDrawable (fst pn)) drawCommands
+  toNetGoal <$> eval generate
+  where
+    eval f = evalRandT f $ mkStdGen seed
+
+possibleNetGoals
+  :: MonadRandom m
+  => NetGoalConfig
+  -> m [(Net Place Transition, State Place)]
+possibleNetGoals NetGoalConfig {..} =
   let ps = [Place 1 .. Place numPlaces]
       tries = forM [1 :: Int .. 1000] $ const $ do
         n <- netLimits vLow vHigh nLow nHigh
@@ -587,28 +583,26 @@ generateNetGoalUnfiltered NetGoalConfig {..} seed = do
                 return $ abs (mark (start n) p - mark z' p)
           return ((negate l, d), (n, z'))
       out = do
-        xs <- tries
-        let ((l, _), pn) = minimumBy (comparing fst) $ concat xs
-        if negate l >= minTransitionLength
-          then do
-            maybeM out (pure . (pn,))
-            $ findM (Monad.lift . isPetriDrawable (fst pn)) drawCommands
-          else out
-
-  ((petri, state), cmd) <- eval out
-
-  pure $ NetGoal {
-    drawUsing   = cmd,
-    goal        = state,
-    petriNet    = petri
-    }
-
+        xs <- sortBy (comparing fst)
+          . concat
+          . drop (minTransitionLength + 1)
+          <$> tries
+        if null xs
+          then out
+          else pure xs
+  in map snd <$> out
   where
     fixMaximum = second (min numPlaces . fromMaybe maxBound)
     (vLow, vHigh) = fixMaximum preconditionsRange
     (nLow, nHigh) = fixMaximum postconditionsRange
     ts = [Transition 1 .. Transition numTransitions]
-    eval f = evalRandT f $ mkStdGen seed
+
+toNetGoal :: ((Net s t, State s), GraphvizCommand) -> NetGoal s t
+toNetGoal ((petri, state), cmd) = NetGoal {
+  drawUsing   = cmd,
+  goal        = state,
+  petriNet    = petri
+  }
 
 -- | Generate NetGoal with filtering for trivial solutions
 generateNetGoalWithFilter
@@ -617,20 +611,19 @@ generateNetGoalWithFilter
   -> NetGoalConfig
   -> Int
   -> m (NetGoal Place Transition)
-generateNetGoalWithFilter filterConfig config seed = do
-  -- Try up to 5 times to generate a net with non-trivial solutions
-  attemptGeneration filterConfig config seed 5
+generateNetGoalWithFilter filterConfig config@NetGoalConfig {..} seed =
+  evalRandT generate $ mkStdGen seed
   where
-    attemptGeneration :: (MonadCatch m, MonadDiagrams m, MonadGraphviz m)
-                      => FilterConfig -> NetGoalConfig -> Int -> Int -> m (NetGoal Place Transition)
-    attemptGeneration _ cfg s 0 = generateNetGoalUnfiltered cfg s  -- fallback to unfiltered
-    attemptGeneration filterConf cfg s attemptsLeft = do
-      netGoal <- generateNetGoalUnfiltered cfg s
-      let allSolutions = netGoalAllSolutions netGoal
-      -- Check if ANY solution is trivial - if so, reject this netGoal
-      if any (isTrivialSequence filterConf) allSolutions
-        then attemptGeneration filterConf cfg (s + 1) (attemptsLeft - 1)  -- try again with different seed
-        else return netGoal  -- found netGoal where no solution is trivial
+    checkNetGoal pn = do
+      netGoal <- MaybeT $ fmap (toNetGoal . (pn,)) <$>
+        findM (Monad.lift . isPetriDrawable (fst pn)) drawCommands
+      let allSolutions = netGoalAllSolutionsFor netGoal config
+      guard (not $ any (isTrivialSequence filterConfig) allSolutions)
+      pure netGoal
+    generate = do
+      xs <- possibleNetGoals config
+      maybeNetGoal <- runMaybeT $ msum $ map checkNetGoal xs
+      maybe generate pure maybeNetGoal
 
 checkReachConfig :: ReachConfig -> Maybe String
 checkReachConfig ReachConfig {..} =

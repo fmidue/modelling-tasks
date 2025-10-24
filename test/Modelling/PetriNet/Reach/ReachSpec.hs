@@ -12,6 +12,7 @@ import Modelling.PetriNet.Reach.Reach (
   defaultReachConfig,
   generateReach,
   checkReachConfig,
+  netGoalAllSolutionsFor,
   netGoalSolution,
   )
 import Modelling.PetriNet.Reach.Filter (
@@ -57,15 +58,16 @@ spec = do
     it "generates non-trivial solutions when filtering is enabled" $
       property $ \seed -> do
         let config = defaultReachConfig {
-              netGoalConfig = (netGoalConfig defaultReachConfig) {
-                maxTransitionLength = 8,
-                minTransitionLength = 8
-                },
+              netGoalConfig = goalConfig,
               filterConfig = defaultFilterConfig
               }
+            goalConfig = (netGoalConfig defaultReachConfig) {
+              maxTransitionLength = 8,
+              minTransitionLength = 8
+              }
         inst <- generateReach config seed
-        let solution = netGoalSolution (netGoal inst)
-        solution `shouldSatisfy` (not . isTrivialSequence (filterConfig config))
+        let solutions = netGoalAllSolutionsFor (netGoal inst) goalConfig
+        solutions `shouldSatisfy` (not . any (isTrivialSequence $ filterConfig config))
 
     it "can generate solutions when filtering is disabled" $
       property $ \seed -> do
