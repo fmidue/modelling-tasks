@@ -164,10 +164,18 @@ checkSelectASConfig' SelectASConfig {
     The second value of parameter 'answerLength' should be greater or equal to
     its first value.
     |]
+  | fst answerLength > 0 && fst actionLimits < 1
+    = Just "If you want non-empty sequences, there must be action nodes in the first place."
   | withActionRepetition && cycles adConfig < 1
     = Just "Setting 'withActionRepetition' to True requires at least 1 cycle in the activity diagram configuration"
   | withActionRepetition && forkJoinPairs adConfig < 1
     = Just "Setting 'withActionRepetition' to True requires at least 1 fork/join pair in the activity diagram configuration"
+  | withActionRepetition && fst answerLength < 2
+    = Just "Setting 'withActionRepetition' to True requires sequences of at least 2 actions"
+  | not withActionRepetition && snd answerLength > snd actionLimits
+    = Just "Setting 'withActionRepetition' to False prevents sequences that are longer than action nodes exist"
+  | not withActionRepetition && fst answerLength > fst actionLimits
+    = Just "Setting 'withActionRepetition' to False means it doesn't make sense to have fewer action nodes than the minimum desired sequence length"
   | otherwise
     = Nothing
 
