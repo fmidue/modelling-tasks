@@ -28,8 +28,8 @@ import Capabilities.WriteFile           (MonadWriteFile)
 import Modelling.ActivityDiagram.ActionSequences (
   generateActionSequencesWithPetri,
   computeActionSequenceLevels,
-  extractActionLookup,
   isFinalPetriNode,
+  extractActionLookup,
   )
 import Modelling.ActivityDiagram.Auxiliary.ActionSequences (actionSequencesAlloy)
 import Modelling.ActivityDiagram.Config (
@@ -82,7 +82,7 @@ import Control.Monad.Random (
   )
 import Data.List (intercalate, intersect)
 import Data.List.Extra (nubOrd)
-import Data.Maybe (isNothing, isJust)
+import Data.Maybe                       (isNothing, isJust)
 import Data.String.Interpolate (i, iii)
 import GHC.Generics (Generic)
 import Modelling.Auxiliary.Output (

@@ -6,9 +6,9 @@ module Modelling.ActivityDiagram.ActionSequences (
   generateActionSequence,
   generateActionSequencesWithPetri,
   generateActionSequenceWithPetriAndRepetition,
-  computeActionSequenceLevels,
   actionRepetitionDistance,
   extractActionLookup,
+  computeActionSequenceLevels,
   isFinalPetriNode
 ) where
 
@@ -49,7 +49,7 @@ import Control.Monad (guard)
 import Control.Monad.Random (MonadRandom, uniform)
 import Data.List (union)
 import Data.List.Extra (nubOrd)
-import Data.Maybe(mapMaybe, isJust)
+import Data.Maybe (mapMaybe, isJust)
 
 
 fromPetriLike :: Ord a => PetriLike Node a -> Net a a
@@ -101,50 +101,6 @@ isNormalPetriNode pk =
     NormalPetriNode {} -> True
     _ -> False
 
--- | Extract action lookup table from diagram as a Bimap for bidirectional lookups
-extractActionLookup :: UMLActivityDiagram -> BM.Bimap Int String
-extractActionLookup diag = BM.fromList
-  [ (Ad.label n, name n)
-  | n <- nodes diag
-  , isActionNode n
-  ]
-
-{-|
-Calculate the maximum distance between any two occurrences of the same action.
-Returns Nothing if there are no repeated actions.
-
-For example:
-
-immediate repetition:
-
->>> actionRepetitionDistance ["A", "A"]
-Just 0
-
-1 action between repetitions:
-
->>> actionRepetitionDistance ["A", "B", "A"]
-Just 1
-
-2 actions between repetitions:
-
->>> actionRepetitionDistance ["A", "B", "C", "A"]
-Just 2
-
-no repetitions:
-
->>> actionRepetitionDistance ["A", "B", "C"]
-Nothing
--}
-actionRepetitionDistance :: [String] -> Maybe Int
-actionRepetitionDistance actionSequence =
-  let maxDistanceForAction action =
-        let indices = [i | (i, a) <- zip [0..] actionSequence, a == action]
-        in if length indices < 2
-           then Nothing
-           else Just (last indices - head indices - 1)
-      distances = [d | action <- nubOrd actionSequence, Just d <- [maxDistanceForAction action]]
-  in if null distances then Nothing else Just (maximum distances)
-
 -- | Helper to generate sequences using a specific levels function
 -- Now includes the action name conversion and length bounds filtering
 generateSequencesWithLevels
@@ -168,21 +124,6 @@ generateSequencesWithLevels levelsFunction petriLike maybeLengthBounds =
                -> Nothing
              _ -> Just actionSequence
   in [ reverse a | level <- relevantLevels, (s, p) <- level, s == zeroState, Just a <- [convertAndFilterSequence p] ]
-
--- | Variant of levels' that manages visited states per path rather than globally
--- This allows exploring cycles while preventing infinite loops within each path
-levelsWithCycles :: Ord s => Net s t -> [[(State s, [t])]]
-levelsWithCycles n =
-  let f [] = []
-      f xs = xs' : f next'
-        where
-          xs' = map (\(x, p, _) -> (x, p)) xs
-          next' = [ (y, t:p, S.insert y visited)
-                  | (x, p, visited) <- xs
-                  , (t, y) <- successors n x
-                  , y `S.notMember` visited
-                  ]
-  in f [(start n, [], S.singleton (start n))]
 
 
 validActionSequence :: [String] -> UMLActivityDiagram -> Bool
@@ -233,3 +174,62 @@ levelsCheckAS input actions n =
             notConsume = g (`notElem` actions) xs         -- Case: Next transition is not an action, therefore is processed but not removed from input
         in union (f as consume) (f (a:as) notConsume)
   in f input [(start n, [])]
+
+-- | Variant of levels' that manages visited states per path rather than globally
+-- This allows exploring cycles while preventing infinite loops within each path
+levelsWithCycles :: Ord s => Net s t -> [[(State s, [t])]]
+levelsWithCycles n =
+  let f [] = []
+      f xs = xs' : f next'
+        where
+          xs' = map (\(x, p, _) -> (x, p)) xs
+          next' = [ (y, t:p, S.insert y visited)
+                  | (x, p, visited) <- xs
+                  , (t, y) <- successors n x
+                  , y `S.notMember` visited
+                  ]
+  in f [(start n, [], S.singleton (start n))]
+
+-- | Extract action lookup table from diagram as a Bimap for bidirectional lookups
+extractActionLookup :: UMLActivityDiagram -> BM.Bimap Int String
+extractActionLookup diag = BM.fromList
+  [ (Ad.label n, name n)
+  | n <- nodes diag
+  , isActionNode n
+  ]
+
+{-|
+Calculate the maximum distance between any two occurrences of the same action.
+Returns Nothing if there are no repeated actions.
+
+For example:
+
+immediate repetition:
+
+>>> actionRepetitionDistance ["A", "A"]
+Just 0
+
+1 action between repetitions:
+
+>>> actionRepetitionDistance ["A", "B", "A"]
+Just 1
+
+2 actions between repetitions:
+
+>>> actionRepetitionDistance ["A", "B", "C", "A"]
+Just 2
+
+no repetitions:
+
+>>> actionRepetitionDistance ["A", "B", "C"]
+Nothing
+-}
+actionRepetitionDistance :: [String] -> Maybe Int
+actionRepetitionDistance actionSequence =
+  let maxDistanceForAction action =
+        let indices = [i | (i, a) <- zip [0..] actionSequence, a == action]
+        in if length indices < 2
+           then Nothing
+           else Just (last indices - head indices - 1)
+      distances = [d | action <- nubOrd actionSequence, Just d <- [maxDistanceForAction action]]
+  in if null distances then Nothing else Just (maximum distances)
