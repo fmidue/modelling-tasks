@@ -170,40 +170,40 @@ reportReachFor showInputHelp img noLonger lengthHint minLength showMinLengthHint
       paragraph $ either image text g
       pure ()
   when showInputHelp $ do
-    paragraph $ case noLonger of
-      Nothing -> translate $ do
-        english "State your answer as an (arbitrarily short or long) sequence of the following kind:"
-        german "Geben Sie Ihre Lösung als (beliebig kurze oder lange) Auflistung der folgenden Art an:"
-      Just maxL ->
-        let
-          isExactMatch = showMinLengthHint && maxL == minLength
-          (englishConstraint, germanConstraint) =
-            if isExactMatch
-            then ("has exactly", "genau")
-            else ("does not exceed", "maximal")
-        in translate $ do
-          english $ concat [
-            "State your solution as a sequence of the following kind that ",
-            englishConstraint, " ", show maxL, " steps:"]
-          german $ concat [
-            "Geben Sie Ihre Lösung als ", germanConstraint, " ", show maxL,
-            "-schrittige Auflistung der folgenden Art an:"]
-    let (t1, t2, t3) = (Transition 1, Transition 2, Transition 3)
-        showT = show . ShowTransition
-        (st1, st2, st3) = (showT t1, showT t2, showT t3)
-    code $ show $ TransitionsList [t1, t2, t3]
-    paragraph $ translate $ do
-      english $ concat [
-        "Where giving these three steps means that after firing ",
-        st1, ", then ", st2, ", and finally ", st3,
-        " (in exactly this order), the sought marking is reached."
-        ]
-      german $ concat [
-        "Wobei die Angabe dieser drei Schritte bedeuten soll, dass nach dem Schalten von ",
-        st1, ", danach ", st2, ", und schließlich ", st3,
-        " (in genau dieser Reihenfolge), die gesuchte Markierung erreicht wird."
-        ]
-    pure ()
+   paragraph $ case noLonger of
+    Nothing -> translate $ do
+      english "State your answer as an (arbitrarily short or long) sequence of the following kind:"
+      german "Geben Sie Ihre Lösung als (beliebig kurze oder lange) Auflistung der folgenden Art an:"
+    Just maxL ->
+      let
+        isExactMatch = showMinLengthHint && maxL == minLength
+        (englishConstraint, germanConstraint) =
+          if isExactMatch
+          then ("has exactly", "genau")
+          else ("does not exceed", "maximal")
+      in translate $ do
+        english $ concat [
+          "State your solution as a sequence of the following kind that ",
+          englishConstraint, " ", show maxL, " steps:"]
+        german $ concat [
+          "Geben Sie Ihre Lösung als ", germanConstraint, " ", show maxL,
+          "-schrittige Auflistung der folgenden Art an:"]
+   let (t1, t2, t3) = (Transition 1, Transition 2, Transition 3)
+      showT = show . ShowTransition
+      (st1, st2, st3) = (showT t1, showT t2, showT t3)
+   code $ show $ TransitionsList [t1, t2, t3]
+   paragraph $ translate $ do
+     english $ concat [
+       "Where giving these three steps means that after firing ",
+       st1, ", then ", st2, ", and finally ", st3,
+       " (in exactly this order), the sought marking is reached."
+       ]
+     german $ concat [
+       "Wobei die Angabe dieser drei Schritte bedeuten soll, dass nach dem Schalten von ",
+       st1, ", danach ", st2, ", und schließlich ", st3,
+       " (in genau dieser Reihenfolge), die gesuchte Markierung erreicht wird."
+       ]
+   pure ()
   let maxStepsHint = case lengthHint of
         Just maxSteps | showMinLengthHint && maxSteps == minLength -> singleton $ paragraph $ translate $ do
           english [i|The shortest solutions have exactly #{maxSteps} steps.|]
