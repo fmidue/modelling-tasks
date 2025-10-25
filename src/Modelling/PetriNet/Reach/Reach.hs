@@ -169,25 +169,26 @@ reportReachFor showInputHelp img noLonger lengthHint minLength showMinLengthHint
         german "eine Transitionsfolge, durch welche die folgende Markierung erreicht wird:"
       paragraph $ either image text g
       pure ()
-  when showInputHelp $ do
-   paragraph $ case noLonger of
-    Nothing -> translate $ do
-      english "State your answer as an (arbitrarily short or long) sequence of the following kind:"
-      german "Geben Sie Ihre Lösung als (beliebig kurze oder lange) Auflistung der folgenden Art an:"
-    Just maxL ->
+
+  whenJust noLonger $ \maxL ->
       let
         isExactMatch = showMinLengthHint && maxL == minLength
         (englishConstraint, germanConstraint) =
           if isExactMatch
-          then ("has exactly", "genau")
-          else ("does not exceed", "maximal")
-      in translate $ do
+          then ("have exactly", "genau")
+          else ("not exceed", "maximal")
+      in paragraph $ translate $ do
         english $ concat [
-          "State your solution as a sequence of the following kind that ",
-          englishConstraint, " ", show maxL, " steps:"]
+          "Your answer must ",
+          englishConstraint, " ", show maxL, " steps."]
         german $ concat [
           "Geben Sie Ihre Lösung als ", germanConstraint, " ", show maxL,
           "-schrittige Auflistung der folgenden Art an:"]
+
+  when showInputHelp $ do
+   paragraph $ translate $ do
+      english "State your answer as a sequence of the following kind:"
+      german "Geben Sie Ihre Lösung al Auflistung der folgenden Art an:"
    let
       (t1, t2, t3) = (Transition 1, Transition 2, Transition 3)
       showT = show . ShowTransition
