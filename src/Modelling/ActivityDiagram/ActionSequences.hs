@@ -129,10 +129,8 @@ computeActionSequenceLevels :: [String] -> PetriLike Node PetriKey -> ([[(State 
 computeActionSequenceLevels input petri =
   let -- Build map from action name to PetriKey by directly checking sourceNode
       actionNameToPetriKey = mapMaybe
-        (\k -> case k of
-          NormalPetriNode {} -> case sourceNode k of
-            AdActionNode {name = actionName} -> Just (actionName, k)
-            _ -> Nothing
+        (\k -> case (k, sourceNode k) of
+          (NormalPetriNode {}, AdActionNode {name = actionName}) -> Just (actionName, k)
           _ -> Nothing)
         (M.keys $ allNodes petri)
       -- Convert input action names to PetriKeys
