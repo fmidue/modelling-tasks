@@ -247,8 +247,7 @@ enterASEvaluation
   -> [String]
   -> Rated m
 enterASEvaluation task sub = do
-  let diag = activityDiagram task
-      objectNames = map name $ filter isObjectNode $ nodes diag
+  let objectNames = map name $ filter isObjectNode $ nodes $ activityDiagram task
       objectNamesInSubmission = nubOrd $ sub `intersect` objectNames
       (levels, zeroState) = computeActionSequenceLevels sub (petriNet task)
       reachesZeroState = any (isJust . lookup zeroState) levels
