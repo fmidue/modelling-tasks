@@ -356,40 +356,40 @@ pickConflictTask showInputHelp path task = do
       |]
   images show snd $=<< renderPick path task
   when showInputHelp $ do
-    paragraph $ translate $ do
+   paragraph $ translate $ do
+    english [iii|
+      State your answer by giving the number of the Petri net
+      having these conflicting transitions.#{" "}
+      |]
+    german [iii|
+      Geben Sie Ihre Antwort durch Angabe der Nummer des Petrinetzes an,
+      das diese in Konflikt stehenden Transitionen hat.#{" "}
+      |]
+   let plural = wrongInstances task > 1
+   paragraph $ do
+    translate $ do
+      english [i|Stating |]
+      german [i|Die Angabe von |]
+    code "1"
+    translate $ do
       english [iii|
-        State your answer by giving the number of the Petri net
-        having these conflicting transitions.#{" "}
+        #{" "}as answer would indicate that Petri net 1
+        has exactly two transitions that are in conflict
+        under the initial marking (and the other Petri
+        #{if plural then "nets don't" else "net doesn't"}).
         |]
-      german [iii|
-        Geben Sie Ihre Antwort durch Angabe der Nummer des Petrinetzes an,
-        das diese in Konflikt stehenden Transitionen hat.#{" "}
+      german $ [iii|
+        #{" "}als Antwort würde bedeuten, dass Petrinetz 1 genau zwei
+        unter der Startmarkierung
+        in Konflikt stehende Transitionen hat (und
+        #{" "}
         |]
-    let plural = wrongInstances task > 1
-    paragraph $ do
-      translate $ do
-        english [i|Stating |]
-        german [i|Die Angabe von |]
-      code "1"
-      translate $ do
-        english [iii|
-          #{" "}as answer would indicate that Petri net 1
-          has exactly two transitions that are in conflict
-          under the initial marking (and the other Petri
-          #{if plural then "nets don't" else "net doesn't"}).
-          |]
-        german $ [iii|
-          #{" "}als Antwort würde bedeuten, dass Petrinetz 1 genau zwei
-          unter der Startmarkierung
-          in Konflikt stehende Transitionen hat (und
-          #{" "}
-          |]
-          ++ (if plural
-              then "die anderen Petrinetze nicht"
-              else "das andere Petrinetz nicht")
-          ++ ")."
-      pure ()
+        ++ (if plural
+            then "die anderen Petrinetze nicht"
+            else "das andere Petrinetz nicht")
+        ++ ")."
     pure ()
+   pure ()
   hoveringInformation
   extra $ Pick.addText task
   pure ()
@@ -483,7 +483,7 @@ pickConflict = taskInstance
 petriNetPickConflict :: PickConflictConfig -> String
 petriNetPickConflict PickConflictConfig {
   basicConfig,
-  changeConfig,
+ changeConfig,
   conflictConfig,
   prohibitSourceTransitions,
   uniqueConflictPlace

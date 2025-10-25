@@ -302,7 +302,7 @@ pickConcurrencyTask showInputHelp path task = do
       |]
   images show snd
     $=<< renderPick path task
-  when showInputHelp $ paragraph $ do
+  when showInputHelp $ do
    paragraph $ translate $ do
     english [iii|
       State your answer by giving the number of the Petri net
