@@ -7,23 +7,16 @@ module Modelling.ActivityDiagram.ActionSequences (
   generateActionSequencesWithPetri,
   generateActionSequenceWithPetriAndRepetition,
   actionRepetitionDistance,
-  extractActionLookup,
   computeActionSequenceLevels,
   isFinalPetriNode
 ) where
 
-import qualified Modelling.ActivityDiagram.Datatype as Ad (
-  AdNode (label),
-  )
-
 import qualified Data.Set as S (fromList, singleton, insert, notMember)
 import qualified Data.Map as M (filter, map, keys, fromList, toList)
-import qualified Data.Bimap as BM (Bimap, fromList, lookupR, member)
 
 import Modelling.ActivityDiagram.Datatype (
   AdNode (..),
-  UMLActivityDiagram (..),
-  isActionNode
+  UMLActivityDiagram (..)
   )
 
 import Modelling.ActivityDiagram.PetriNet (
@@ -128,18 +121,18 @@ generateSequencesWithLevels levelsFunction petriLike maybeLengthBounds =
 validActionSequence :: [String] -> UMLActivityDiagram -> Bool
 validActionSequence input diag =
   let petri = convertToPetriNet diag
-  in validActionSequenceWithPetri input (extractActionLookup diag) petri
+  in validActionSequenceWithPetri input petri
 
 -- | Check if an action sequence is valid, using a pre-computed Petri net.
-validActionSequenceWithPetri :: [String] -> BM.Bimap Int String -> PetriLike Node PetriKey -> Bool
-validActionSequenceWithPetri input actionLookup petri =
-  let (levels, zeroState) = computeActionSequenceLevels input actionLookup petri
+validActionSequenceWithPetri :: [String] -> PetriLike Node PetriKey -> Bool
+validActionSequenceWithPetri input petri =
+  let (levels, zeroState) = computeActionSequenceLevels input petri
   in any (isJust . lookup zeroState) levels
 
 -- | Common computation for action sequence validation.
 -- Returns (levels, zeroState) for checking sequence properties.
-computeActionSequenceLevels :: [String] -> BM.Bimap Int String -> PetriLike Node PetriKey -> ([[(State PetriKey, [PetriKey])]], State PetriKey)
-computeActionSequenceLevels input _actionLookup petri =
+computeActionSequenceLevels :: [String] -> PetriLike Node PetriKey -> ([[(State PetriKey, [PetriKey])]], State PetriKey)
+computeActionSequenceLevels input petri =
   let allPetriKeys = filter isNormalPetriNode $ M.keys $ allNodes petri
       -- Build map from action name to PetriKey by directly checking sourceNode
       actionNameToPetriKey = mapMaybe
@@ -194,14 +187,6 @@ levelsWithCycles n =
                   , y `S.notMember` visited
                   ]
   in f [(start n, [], S.singleton (start n))]
-
--- | Extract action lookup table from diagram as a Bimap for bidirectional lookups
-extractActionLookup :: UMLActivityDiagram -> BM.Bimap Int String
-extractActionLookup diag = BM.fromList
-  [ (Ad.label n, name n)
-  | n <- nodes diag
-  , isActionNode n
-  ]
 
 {-|
 Calculate the maximum distance between any two occurrences of the same action.

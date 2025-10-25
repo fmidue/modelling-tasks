@@ -31,7 +31,6 @@ import Capabilities.WriteFile           (MonadWriteFile)
 import Modelling.ActivityDiagram.ActionSequences (
   generateActionSequencesWithPetri,
   generateActionSequenceWithPetriAndRepetition,
-  extractActionLookup,
   validActionSequenceWithPetri
   )
 import Modelling.ActivityDiagram.Auxiliary.ActionSequences (actionSequencesAlloy)
@@ -201,7 +200,6 @@ data SelectASSolution = SelectASSolution {
 selectActionSequence :: (Monad m, RandomGen g) => Bool -> Int -> (Int, Int) -> UMLActivityDiagram -> MaybeT (RandT g m) SelectASSolution
 selectActionSequence withRepetition numberOfWrongSequences lengthBounds ad = MaybeT $ do
   let petri = convertToPetriNet ad
-      actionLookup = extractActionLookup ad
   maybeCorrectSequence <- case (withRepetition, generateActionSequenceWithPetriAndRepetition petri lengthBounds) of
     (True, Just genAction) -> Just <$> genAction
     (True, Nothing) -> return Nothing
@@ -218,7 +216,7 @@ selectActionSequence withRepetition numberOfWrongSequences lengthBounds ad = May
     Nothing -> return Nothing
     Just correctSequence -> do
       let allWrongCandidates =
-            filter (not . (\actionSeq -> validActionSequenceWithPetri actionSeq actionLookup petri)) $
+            filter (not . (\actionSeq -> validActionSequenceWithPetri actionSeq petri)) $
             (if withRepetition then nubOrd else id) $
             permutations correctSequence
       -- Early check: reject if insufficient candidates
