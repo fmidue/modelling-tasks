@@ -88,12 +88,6 @@ generateActionSequenceWithPetriAndRepetition petri lengthBounds =
        let maxDist = maximum $ map snd sequencesWithDistances
        in Just $ uniform [seq' | (seq', d) <- sequencesWithDistances, d == maxDist]
 
-isNormalPetriNode :: PetriKey -> Bool
-isNormalPetriNode pk =
-  case pk of
-    NormalPetriNode {} -> True
-    _ -> False
-
 -- | Helper to generate sequences using a specific levels function
 generateSequencesWithLevels
   :: (Net PetriKey PetriKey -> [[(State PetriKey, [PetriKey])]])
@@ -135,11 +129,11 @@ computeActionSequenceLevels :: [String] -> PetriLike Node PetriKey -> ([[(State 
 computeActionSequenceLevels input petri =
   let -- Build map from action name to PetriKey by directly checking sourceNode
       actionNameToPetriKey = mapMaybe
-        (\k -> if isNormalPetriNode k
-          then case sourceNode k of
+        (\k -> case k of
+          NormalPetriNode {} -> case sourceNode k of
             AdActionNode {name = actionName} -> Just (actionName, k)
             _ -> Nothing
-          else Nothing)
+          _ -> Nothing)
         (M.keys $ allNodes petri)
       -- Convert input action names to PetriKeys
       input' = mapMaybe (`lookup` actionNameToPetriKey) input
