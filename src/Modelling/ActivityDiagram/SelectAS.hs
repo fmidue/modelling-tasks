@@ -216,7 +216,7 @@ selectActionSequence withRepetition numberOfWrongSequences lengthBounds ad = May
     Nothing -> return Nothing
     Just correctSequence -> do
       let allWrongCandidates =
-            filter (not . (\actionSeq -> validActionSequenceWithPetri actionSeq petri)) $
+            filter (not . (`validActionSequenceWithPetri` petri)) $
             (if withRepetition then nubOrd else id) $
             permutations correctSequence
       -- Early check: reject if insufficient candidates

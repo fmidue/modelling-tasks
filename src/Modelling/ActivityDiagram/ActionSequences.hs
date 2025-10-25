@@ -133,13 +133,14 @@ validActionSequenceWithPetri input petri =
 -- Returns (levels, zeroState) for checking sequence properties.
 computeActionSequenceLevels :: [String] -> PetriLike Node PetriKey -> ([[(State PetriKey, [PetriKey])]], State PetriKey)
 computeActionSequenceLevels input petri =
-  let allPetriKeys = filter isNormalPetriNode $ M.keys $ allNodes petri
-      -- Build map from action name to PetriKey by directly checking sourceNode
+  let -- Build map from action name to PetriKey by directly checking sourceNode
       actionNameToPetriKey = mapMaybe
-        (\k -> case sourceNode k of
-          AdActionNode {name = actionName} -> Just (actionName, k)
-          _ -> Nothing)
-        allPetriKeys
+        (\k -> if isNormalPetriNode k
+          then case sourceNode k of
+            AdActionNode {name = actionName} -> Just (actionName, k)
+            _ -> Nothing
+          else Nothing)
+        (M.keys $ allNodes petri)
       -- Convert input action names to PetriKeys
       input' = mapMaybe (`lookup` actionNameToPetriKey) input
       -- Extract all action PetriKeys
