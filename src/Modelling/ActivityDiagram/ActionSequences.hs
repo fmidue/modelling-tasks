@@ -139,12 +139,18 @@ validActionSequenceWithPetri input actionLookup petri =
 -- | Common computation for action sequence validation.
 -- Returns (levels, zeroState) for checking sequence properties.
 computeActionSequenceLevels :: [String] -> BM.Bimap Int String -> PetriLike Node PetriKey -> ([[(State PetriKey, [PetriKey])]], State PetriKey)
-computeActionSequenceLevels input actionLookup petri =
-  let petriKeyMap = map
-        (\k -> (Ad.label $ sourceNode k, k))
-        $ filter isNormalPetriNode $ M.keys $ allNodes petri
-      input' = mapMaybe (`lookup` petriKeyMap) (mapMaybe (`BM.lookupR` actionLookup) input)
-      actions = map snd $ filter (\(l,_) -> l `BM.member` actionLookup) petriKeyMap
+computeActionSequenceLevels input _actionLookup petri =
+  let allPetriKeys = filter isNormalPetriNode $ M.keys $ allNodes petri
+      -- Build map from action name to PetriKey by directly checking sourceNode
+      actionNameToPetriKey = mapMaybe
+        (\k -> case sourceNode k of
+          AdActionNode {name = actionName} -> Just (actionName, k)
+          _ -> Nothing)
+        allPetriKeys
+      -- Convert input action names to PetriKeys
+      input' = mapMaybe (`lookup` actionNameToPetriKey) input
+      -- Extract all action PetriKeys
+      actions = map snd actionNameToPetriKey
       net = fromPetriLike petri
       zeroState = State $ M.map (const 0) $ unState $ start net
       levels = levelsCheckAS input' actions net
