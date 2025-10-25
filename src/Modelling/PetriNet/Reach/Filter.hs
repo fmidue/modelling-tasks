@@ -38,9 +38,9 @@ data FilterConfig = FilterConfig {
   filterRepetitiveSubsequences :: Bool,
   -- | Enable filtering of grouped repeats (e.g., [t1,t1,t2,t2,t3,t3,t4,t4])
   filterGroupedRepeats :: Bool,
-  -- | Minimum length of repetitive subsequence to consider trivial (default: 3)
+  -- | Minimum length of repetitive subsequence to consider trivial
   minRepetitiveLength :: Int,
-  -- | Maximum cycle length to check for patterns (default: 4)
+  -- | Maximum cycle length to check for patterns
   maxCycleLength :: Int
   } deriving (Eq, Generic, Ord, Read, Show, Typeable, Data)
 
