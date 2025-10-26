@@ -194,8 +194,8 @@ reportReachFor showInputHelp img noLonger lengthHint minLength showMinLengthHint
 
   when (isNothing noLonger) $
       paragraph $ translate $ do
-        english $ "Your answer can be arbitrarily short or long."
-        german $ "Ihre Lösung kann beliebig kurz oder lang sein."
+        english "Your answer can be arbitrarily short or long."
+        german "Ihre Lösung kann beliebig kurz oder lang sein."
 
   whenJust noLonger $ \maxL ->
       let

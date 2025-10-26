@@ -483,7 +483,7 @@ pickConflict = taskInstance
 petriNetPickConflict :: PickConflictConfig -> String
 petriNetPickConflict PickConflictConfig {
   basicConfig,
- changeConfig,
+  changeConfig,
   conflictConfig,
   prohibitSourceTransitions,
   uniqueConflictPlace
