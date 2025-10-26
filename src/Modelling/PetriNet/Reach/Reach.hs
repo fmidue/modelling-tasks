@@ -170,21 +170,6 @@ reportReachFor showInputHelp img noLonger lengthHint minLength showMinLengthHint
       paragraph $ either image text g
       pure ()
 
-  whenJust noLonger $ \maxL ->
-      let
-        isExactMatch = showMinLengthHint && maxL == minLength
-        (englishConstraint, germanConstraint) =
-          if isExactMatch
-          then ("have exactly", "genau")
-          else ("not exceed", "maximal")
-      in paragraph $ translate $ do
-        english $ concat [
-          "Your answer must ",
-          englishConstraint, " ", show maxL, " steps."]
-        german $ concat [
-          "Ihre Lösung muss eine ", germanConstraint, " ", show maxL,
-          "-schrittige Auflistung sein."]
-
   when showInputHelp $ do
    paragraph $ translate $ do
       english "State your answer as a sequence of the following kind:"
@@ -206,6 +191,22 @@ reportReachFor showInputHelp img noLonger lengthHint minLength showMinLengthHint
       " (in genau dieser Reihenfolge), die gesuchte Markierung erreicht wird."
       ]
    pure ()
+
+  whenJust noLonger $ \maxL ->
+      let
+        isExactMatch = showMinLengthHint && maxL == minLength
+        (englishConstraint, germanConstraint) =
+          if isExactMatch
+          then ("have exactly", "muss genau")
+          else ("not exceed", "darf maximal")
+      in paragraph $ translate $ do
+        english $ concat [
+          "Your answer must ",
+          englishConstraint, " ", show maxL, " steps."]
+        german $ concat [
+          "Ihre Lösung ", germanConstraint, " ", show maxL,
+          "Schritte enthalten."]
+
   let maxStepsHint = case lengthHint of
         Just maxSteps | showMinLengthHint && maxSteps == minLength -> singleton $ paragraph $ translate $ do
           english [i|The shortest solutions have exactly #{maxSteps} steps.|]
