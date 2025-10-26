@@ -1,5 +1,4 @@
 {-# LANGUAGE DuplicateRecordFields #-}
-{-# LANGUAGE LambdaCase #-}
 module Modelling.ActivityDiagram.ActionSequences (
   validActionSequence,
   validActionSequenceWithPetri,
@@ -100,10 +99,7 @@ generateSequencesWithLevels levelsFunction petriLike maybeLengthBounds =
       relevantLevels = maybe id (\(minLength, maxLength) -> take (5 * maxLength) . drop minLength) maybeLengthBounds
                        $ levelsFunction petri
       convertAndFilterSequence transitionSequence =
-        let actionSequence = mapMaybe (\case
-                                          NormalPetriNode {sourceNode = AdActionNode {name = actionName}} -> Just actionName
-                                          _ -> Nothing)
-                             transitionSequence
+        let actionSequence = [ actionName | NormalPetriNode {sourceNode = AdActionNode {name = actionName}} <- transitionSequence ]
             seqLength = length actionSequence
         in case maybeLengthBounds of
              Just (minLength, maxLength) | seqLength < minLength || seqLength > maxLength
@@ -128,11 +124,8 @@ validActionSequenceWithPetri input petri =
 computeActionSequenceLevels :: [String] -> PetriLike Node PetriKey -> ([[(State PetriKey, [PetriKey])]], State PetriKey)
 computeActionSequenceLevels input petri =
   let -- Build map from action name to PetriKey by directly checking sourceNode
-      actionNameToPetriKey = mapMaybe
-        (\k -> case (k, sourceNode k) of
-          (NormalPetriNode {}, AdActionNode {name = actionName}) -> Just (actionName, k)
-          _ -> Nothing)
-        (M.keys $ allNodes petri)
+      actionNameToPetriKey =
+        [ (actionName, k) | k@NormalPetriNode {sourceNode = AdActionNode {name = actionName}} <- M.keys $ allNodes petri ]
       -- Convert input action names to PetriKeys
       input' = mapMaybe (`lookup` actionNameToPetriKey) input
       -- Extract all action PetriKeys
