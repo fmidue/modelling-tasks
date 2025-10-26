@@ -182,13 +182,13 @@ reportReachFor showInputHelp img noLonger lengthHint minLength showMinLengthHint
           "Your answer must ",
           englishConstraint, " ", show maxL, " steps."]
         german $ concat [
-          "Geben Sie Ihre Lösung als ", germanConstraint, " ", show maxL,
-          "-schrittige Auflistung der folgenden Art an:"]
+          "Ihre Lösung muss eine ", germanConstraint, " ", show maxL,
+          "-schrittige Auflistung sein."]
 
   when showInputHelp $ do
    paragraph $ translate $ do
       english "State your answer as a sequence of the following kind:"
-      german "Geben Sie Ihre Lösung al Auflistung der folgenden Art an:"
+      german "Geben Sie Ihre Lösung als Auflistung der folgenden Art an:"
    let
       (t1, t2, t3) = (Transition 1, Transition 2, Transition 3)
       showT = show . ShowTransition
