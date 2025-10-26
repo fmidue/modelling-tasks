@@ -88,7 +88,7 @@ import Data.Foldable                    (sequenceA_, traverse_)
 import Data.GraphViz                    (GraphvizCommand (..))
 import Data.List                        (minimumBy, singleton)
 import Data.List.Extra                  (nubSort)
-import Data.Maybe                       (fromMaybe)
+import Data.Maybe                       (fromMaybe, isNothing)
 import Data.Ord                         (comparing)
 import Data.Ratio                       ((%))
 import Data.String.Interpolate          (i)
@@ -191,6 +191,11 @@ reportReachFor showInputHelp img noLonger lengthHint minLength showMinLengthHint
       " (in genau dieser Reihenfolge), die gesuchte Markierung erreicht wird."
       ]
    pure ()
+
+  when (isNothing noLonger) $
+      paragraph $ translate $ do
+        english $ "Your answer can be arbitrarily short or long."
+        german $ "Ihre Lösung kann beliebig kurz oder lang sein."
 
   whenJust noLonger $ \maxL ->
       let
