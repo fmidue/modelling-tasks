@@ -51,6 +51,37 @@ Then run EditorConfig validation again to confirm fixes:
 - **DO NOT USE `report_progress`**
 - **FIX ALL VIOLATIONS FIRST**
 
+### 🔴 NEVER COMMIT CODE THAT DOESN'T BUILD
+
+**ABSOLUTE REQUIREMENT**: Every commit MUST successfully build with `stack --stack-yaml=stack-apps.yaml test --no-run-tests modelling-tasks`.
+
+**BEFORE ANY COMMIT**: Run `stack --stack-yaml=stack-apps.yaml test --no-run-tests modelling-tasks` to validate the code compiles:
+
+```bash
+stack --stack-yaml=stack-apps.yaml test --no-run-tests modelling-tasks
+```
+
+Or for the full application suite:
+
+```bash
+stack --stack-yaml=stack-apps.yaml test --no-run-tests
+```
+
+**If build fails**: Fix all compilation errors before committing:
+
+- Review the error messages carefully
+- Fix all type errors, missing imports, and syntax issues
+- Re-run `stack --stack-yaml=stack-apps.yaml test --no-run-tests modelling-tasks` until it succeeds
+- Only then proceed with committing
+
+**IF `stack --stack-yaml=stack-apps.yaml test --no-run-tests modelling-tasks` FAILS**:
+
+- **DO NOT COMMIT**
+- **DO NOT USE `report_progress`**
+- **FIX ALL BUILD ERRORS FIRST**
+
+**Build times**: Remember that builds can take 30-45 minutes. Set appropriate timeout values (60+ minutes) and never cancel builds.
+
 ### ⏰ NEVER CANCEL BUILDS OR TESTS
 
 - **Project builds**: 30-45 minutes (set timeout to 60+ minutes)
@@ -130,6 +161,22 @@ runLangMReport (return ()) (>>) (nameCdErrorTask "/tmp/" inst) >>= \(Just (), x)
 ## Validation and Linting
 
 Always run these commands before committing changes:
+
+### Build Success (MANDATORY)
+
+**CRITICAL**: Code must successfully build before any commit:
+
+```bash
+stack --stack-yaml=stack-apps.yaml test --no-run-tests modelling-tasks
+```
+
+For the full application suite:
+
+```bash
+stack --stack-yaml=stack-apps.yaml test --no-run-tests
+```
+
+**Never commit code that doesn't build**. This is a fundamental requirement.
 
 ### EditorConfig Compliance (MANDATORY)
 
@@ -333,9 +380,9 @@ When writing Haskell code for this project, follow these best practices:
 
 After making changes, always validate:
 
-1. **EditorConfig compliance**: `./scripts/check-editorconfig.sh` **MUST PASS**
-2. **HLint does not complain**: `hlint src/ test/ app/`
-3. **Build succeeds**: `stack --stack-yaml=stack-apps.yaml build`
+1. **Build succeeds**: `stack --stack-yaml=stack-apps.yaml test --no-run-tests modelling-tasks` or `stack --stack-yaml=stack-apps.yaml test --no-run-tests` **MUST PASS BEFORE COMMIT**
+2. **EditorConfig compliance**: `./scripts/check-editorconfig.sh` **MUST PASS**
+3. **HLint does not complain**: `hlint src/ test/ app/`
 4. **Tests pass**: `stack --stack-yaml=stack-apps.yaml test` (30+ minutes)
 5. **App execution**: Test at least one app with `stack exec <app-name>`
 6. **GHCi interaction**: Load examples and generate task instances
@@ -356,3 +403,101 @@ Different tasks can be tested by following the naming pattern in GHCi:
 - Change `English` to `German` for German language versions
 - Tasks may require directory arguments (e.g., `"/tmp/"`) - check function signatures
 - Import modules based on task type: `Modelling.CdOd.NameCdError`, `Modelling.ActivityDiagram.MatchAd`
+
+### Test Matching with HSpec
+
+This repository uses **hspec-discover** for automatic test discovery. Tests are organized hierarchically, and matching follows a specific pattern.
+
+**Test Structure Hierarchy**:
+
+Tests are matched using a hierarchical path consisting of:
+
+1. **Module name** (from the file path, e.g., `Modelling.ActivityDiagram.SelectAS`)
+2. **describe blocks** (top-level grouping in specs)
+3. **context blocks** (optional nested grouping)
+4. **it blocks** (individual test names)
+
+**How to Use --match**:
+
+The `--match` (or `-m`) option accepts patterns that match against the full hierarchical test path. Matching is substring-based and case-sensitive.
+
+**CRITICAL QUOTING RULES**: When using `stack test --test-arguments`, the entire argument string is already in double quotes. Therefore:
+
+- **DO NOT** use single quotes around patterns - they become part of the pattern itself
+- For patterns with spaces, use escaped double quotes: `\"`
+- For simple patterns without spaces, no quotes are needed
+
+**IMPORTANT**: When using `stack test --test-arguments`, patterns with spaces MUST be quoted with escaped quotes:
+
+```bash
+# CORRECT - Pattern with spaces requires escaped quotes
+stack test --test-arguments="-m \"is valid\""
+
+# CORRECT - Simple patterns without spaces don't need quotes
+stack test --test-arguments="-m SelectAS"
+
+# WRONG - Do NOT use single quotes around the pattern
+stack test --test-arguments="--match 'SelectAS'"  # This will match 0 tests!
+
+# WRONG - This is also incorrect (single quotes become part of the pattern)
+stack test --test-arguments="-m 'Modelling.CdOd'"  # Will match nothing!
+```
+
+**Examples with actual tests from this repository**:
+
+```bash
+# Match all tests in the SelectAS module (substring match works!)
+stack test --test-arguments="-m SelectAS"
+
+# Match all tests in the MatchCdOd module using full path
+stack test --test-arguments="-m Modelling.CdOd.MatchCdOd"
+
+# Match all tests in the ActivityDiagram category
+stack test --test-arguments="-m Modelling.ActivityDiagram"
+
+# Match all tests in the CdOd category
+stack test --test-arguments="-m Modelling.CdOd"
+
+# Match a specific test description across all modules (needs escaped quotes)
+stack test --test-arguments="-m \"is valid\""
+
+# Combine with other test options
+stack test --test-arguments="-m SelectAS --skip-needs-tuning --maximum-generated-tests=10"
+```
+
+**Common Test Modules**:
+
+Based on the test directory structure, here are the main test modules:
+
+- `Modelling.ActivityDiagram.SelectAS` - SelectAS task tests
+- `Modelling.ActivityDiagram.MatchAd` - MatchAd task tests
+- `Modelling.ActivityDiagram.EnterAS` - EnterAS task tests
+- `Modelling.ActivityDiagram.MatchPetri` - MatchPetri task tests
+- `Modelling.ActivityDiagram.SelectPetri` - SelectPetri task tests
+- `Modelling.CdOd.MatchCdOd` - MatchCdOd task tests
+- `Modelling.CdOd.NameCdError` - NameCdError task tests
+- `Modelling.CdOd.DifferentNames` - DifferentNames task tests
+- `Modelling.CdOd.RepairCd` - RepairCd task tests
+- `Modelling.CdOd.SelectValidCd` - SelectValidCd task tests
+- `Modelling.PetriNet.Types` - Petri net type tests
+- `Modelling.PetriNet.Reach.Reach` - Petri net reachability tests
+
+**Finding Test Names**:
+
+To see available test names and their hierarchy:
+
+```bash
+# List all test specs (shows full tree)
+stack test --test-arguments="--dry-run"
+
+# Filter and view specific category
+stack test --test-arguments="-m Modelling.ActivityDiagram --dry-run"
+```
+
+**Best Practices**:
+
+- **Simple substring matching works**: `SelectAS` will match `Modelling.ActivityDiagram.SelectAS`
+- **Use `--dry-run` to verify**: Always test your pattern with `--dry-run` first to see what will run
+- **Quote patterns with spaces**: Use `-m \"is valid\"` with escaped quotes for multi-word patterns
+- **Be specific to avoid over-matching**: `SelectAS` is better than just `Select` which might match multiple modules
+- **Substring matching is powerful**: `Modelling.CdOd` matches all class/object diagram tests

@@ -26,7 +26,8 @@ import Capabilities.Alloy               (MonadAlloy, getInstances)
 import Capabilities.PlantUml            (MonadPlantUml)
 import Capabilities.WriteFile           (MonadWriteFile)
 import Modelling.ActivityDiagram.ActionSequences (
-  generateActionSequenceWithPetri,
+  generateActionSequencesWithPetri,
+  netAndMap,
   computeActionSequenceLevels,
   getActionsLeadingToActivityFinals,
   isFinalPetriNode,
@@ -57,6 +58,7 @@ import Modelling.ActivityDiagram.PlantUMLConverter (
 import Modelling.ActivityDiagram.Shuffle (shuffleAdNames)
 import Modelling.Auxiliary.Common       (getFirstInstance)
 import Modelling.PetriNet.Types         (Node, PetriLike)
+import Modelling.PetriNet.Reach.Type (State(..), Net(start))
 
 import Control.Applicative (Alternative ((<|>)))
 import Control.Monad (unless, when)
@@ -82,6 +84,7 @@ import Control.Monad.Random (
   )
 import Data.List (intercalate, intersect)
 import Data.List.Extra (nubOrd)
+import qualified Data.Map as M (map)
 import Data.Maybe                       (isNothing, isJust)
 import Data.String.Interpolate (i, iii)
 import GHC.Generics (Generic)
@@ -114,8 +117,8 @@ data EnterASConfig = EnterASConfig {
 defaultEnterASConfig :: EnterASConfig
 defaultEnterASConfig = EnterASConfig {
   adConfig = defaultAdConfig {
-    actionLimits = (6, 8),
-    objectNodeLimits = (1, 5),
+    actionLimits = (6, 6),
+    objectNodeLimits = (1, 1),
     maxNamedNodes = 7,
     activityFinalNodes = 0,
     flowFinalNodes = 2
@@ -171,27 +174,27 @@ checkEnterASInstanceForConfig :: EnterASInstance -> EnterASConfig -> Maybe Strin
 checkEnterASInstanceForConfig inst EnterASConfig {
   answerLength
   }
-  | length solution < fst answerLength
+  | solutionLength < fst answerLength
   = Just [iii|
     Solution should not be shorter than
     the first value of parameter 'answerLength'.
     |]
-  | length solution > snd answerLength
+  | solutionLength > snd answerLength
   = Just [iii|
     Solution should not be longer than
     the second value of parameter 'answerLength'.
     |]
   | otherwise
     = Nothing
-  where solution = sampleSequence inst
+  where solutionLength = length $ sampleSequence inst
 
 newtype EnterASSolution = EnterASSolution {
   sampleSolution :: [String]
 } deriving (Show, Eq)
 
-enterActionSequence :: UMLActivityDiagram -> PetriLike Node PetriKey -> EnterASSolution
-enterActionSequence ad petri =
-  EnterASSolution {sampleSolution=generateActionSequenceWithPetri ad petri}
+enterActionSequence :: PetriLike Node PetriKey -> EnterASSolution
+enterActionSequence petri =
+  EnterASSolution {sampleSolution = head $ generateActionSequencesWithPetri petri Nothing}
 
 enterASTask
   :: (MonadPlantUml m, MonadWriteFile m, OutputCapable m)
@@ -248,9 +251,12 @@ enterASEvaluation
   -> [String]
   -> Rated m
 enterASEvaluation task sub = do
-  let objectNames = map name $ filter isObjectNode $ nodes $ activityDiagram task
+  let let diag = activityDiagram task
+      objectNames = map name $ filter isObjectNode $ nodes diag
       objectNamesInSubmission = nubOrd $ sub `intersect` objectNames
-      (levels, zeroState) = let diag = activityDiagram task in computeActionSequenceLevels sub diag (petriNet task) (getActionsLeadingToActivityFinals diag)
+      (net, actionNameToPetriKey) = netAndMap (petriNet task)
+      zeroState = State $ M.map (const 0) $ unState $ start net
+      levels = computeActionSequenceLevels sub net actionNameToPetriKey (getActionsLeadingToActivityFinals diag)
       reachesZeroState = any (isJust . lookup zeroState) levels
       correct = null objectNamesInSubmission && reachesZeroState
       points = if correct then 1 else 0
@@ -328,7 +334,7 @@ getEnterASTask config = do
           drawSettings = defaultPlantUmlConfig {
             suppressBranchConditions = hideBranchConditions config
             },
-          sampleSequence = sampleSolution $ enterActionSequence x petri,
+          sampleSequence = sampleSolution $ enterActionSequence petri,
           showSolution = printSolution config,
           addText = extraText config
         }) ad
