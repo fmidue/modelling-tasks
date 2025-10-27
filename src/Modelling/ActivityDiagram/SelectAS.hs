@@ -197,7 +197,7 @@ data SelectASSolution = SelectASSolution {
   wrongSequences :: [[String]]
 } deriving (Show, Eq)
 
-selectActionSequence :: (Monad m, RandomGen g) => Bool -> Int -> (Int, Int) -> UMLActivityDiagram -> MaybeT (RandT g m) SelectASSolution
+selectActionSequence :: MonadRandom m => Bool -> Int -> (Int, Int) -> UMLActivityDiagram -> MaybeT m SelectASSolution
 selectActionSequence withRepetition numberOfWrongSequences lengthBounds ad = MaybeT $ do
   let petri = convertToPetriNet ad
   maybeCorrectSequence <- case (withRepetition, generateActionSequenceWithPetriAndRepetition petri lengthBounds) of
