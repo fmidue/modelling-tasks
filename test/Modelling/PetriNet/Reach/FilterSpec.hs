@@ -81,15 +81,15 @@ spec = do
                                Transition 4, Transition 3, Transition 1, Transition 1]
       isTrivialSequence defaultFilterConfig legitimatePattern `shouldBe` False
 
-  describe "filterTrivialSolutions" $ do
-    it "filters out trivial solutions while keeping legitimate ones" $ do
-      let trivial1 = [Transition 1, Transition 2, Transition 3, Transition 4,
-                      Transition 1, Transition 2, Transition 3, Transition 4]
-      let trivial2 = [Transition 4, Transition 4, Transition 4, Transition 4]
+    it "can be used to filter out trivial solutions while keeping legitimate ones" $ do
+      let trivial1 = [Transition 4, Transition 2, Transition 3, Transition 1,
+                      Transition 4, Transition 2, Transition 3, Transition 1]
+      let trivial2 = [Transition 2, Transition 2, Transition 2, Transition 2]
       let legitimate = [Transition 1, Transition 3, Transition 2, Transition 4,
                         Transition 1, Transition 3, Transition 2, Transition 1]
       let solutions = [trivial1, legitimate, trivial2]
-      filterTrivialSolutions defaultFilterConfig solutions `shouldBe` [legitimate]
+      filter (not . isTrivialSequence defaultFilterConfig) solutions
+        `shouldBe` [legitimate]
 
   describe "configuration" $ do
     it "respects filter configuration settings" $ do

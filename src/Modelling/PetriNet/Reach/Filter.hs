@@ -17,9 +17,6 @@ module Modelling.PetriNet.Reach.Filter (
   hasRepetitiveSubsequence,
   hasGroupedRepeats,
 
-  -- * Filtering
-  filterTrivialSolutions,
-
   -- * Configuration
   FilterConfig(..),
   defaultFilterConfig,
@@ -108,7 +105,3 @@ hasGroupedRepeats xs
   where
     allEqual [] = True
     allEqual (y:ys) = all (== y) ys
-
--- | Filter out solutions that match trivial patterns
-filterTrivialSolutions :: Eq a => FilterConfig -> [[a]] -> [[a]]
-filterTrivialSolutions config = filter (not . isTrivialSequence config)
