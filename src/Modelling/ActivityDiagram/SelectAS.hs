@@ -31,7 +31,8 @@ import Capabilities.WriteFile           (MonadWriteFile)
 import Modelling.ActivityDiagram.ActionSequences (
   generateActionSequencesWithPetri,
   generateActionSequenceWithPetriAndRepetition,
-  validActionSequenceWithPetri
+  validActionSequenceWithPetri,
+  netAndMap
   )
 import Modelling.ActivityDiagram.Auxiliary.ActionSequences (actionSequencesAlloy)
 import Modelling.ActivityDiagram.PetriNet (convertToPetriNet)
@@ -229,8 +230,9 @@ selectActionSequence withRepetition numberOfWrongSequences lengthBounds ad = May
   case maybeCorrectSequence of
     Nothing -> return Nothing
     Just correctSequence -> do
-      let allWrongCandidates =
-            filter (not . (`validActionSequenceWithPetri` petri)) $
+      let (net, actionNameToPetriKey) = netAndMap petri
+          allWrongCandidates =
+            filter (\actionSeq -> not (validActionSequenceWithPetri actionSeq net actionNameToPetriKey)) $
             (if withRepetition then nubOrd else id) $
             permutations correctSequence
       -- Early check: reject if insufficient candidates

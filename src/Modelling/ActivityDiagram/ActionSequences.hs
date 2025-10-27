@@ -6,6 +6,7 @@ module Modelling.ActivityDiagram.ActionSequences (
   generateActionSequencesWithPetri,
   generateActionSequenceWithPetriAndRepetition,
   actionRepetitionDistance,
+  netAndMap,
   computeActionSequenceLevels,
   isFinalPetriNode
 ) where
@@ -109,31 +110,32 @@ generateSequencesWithLevels levelsFunction petriLike maybeLengthBounds =
 
 
 validActionSequence :: [String] -> UMLActivityDiagram -> Bool
-validActionSequence input diag =
-  let petri = convertToPetriNet diag
-  in validActionSequenceWithPetri input petri
+validActionSequence input =
+  uncurry (validActionSequenceWithPetri input) . netAndMap . convertToPetriNet
 
 -- | Check if an action sequence is valid, using a pre-computed Petri net.
-validActionSequenceWithPetri :: [String] -> PetriLike Node PetriKey -> Bool
-validActionSequenceWithPetri input petri =
-  let (levels, zeroState) = computeActionSequenceLevels input petri
+validActionSequenceWithPetri :: [String] -> Net PetriKey PetriKey -> [(String, PetriKey)] -> Bool
+validActionSequenceWithPetri input net actionNameToPetriKey =
+  let zeroState = State $ M.map (const 0) $ unState $ start net
+      levels = computeActionSequenceLevels input net actionNameToPetriKey
   in any (isJust . lookup zeroState) levels
 
--- | Common computation for action sequence validation.
--- Returns (levels, zeroState) for checking sequence properties.
-computeActionSequenceLevels :: [String] -> PetriLike Node PetriKey -> ([[(State PetriKey, [PetriKey])]], State PetriKey)
-computeActionSequenceLevels input petri =
+netAndMap :: PetriLike Node PetriKey -> (Net PetriKey PetriKey, [(String, PetriKey)])
+netAndMap petri =
   let -- Build map from action name to PetriKey by directly checking sourceNode
       actionNameToPetriKey =
         [ (actionName, k) | k@NormalPetriNode {sourceNode = AdActionNode {name = actionName}} <- M.keys $ allNodes petri ]
-      -- Convert input action names to PetriKeys
+  in (fromPetriLike petri, actionNameToPetriKey)
+
+-- | Common computation for action sequence validation.
+computeActionSequenceLevels :: [String] -> Net PetriKey PetriKey -> [(String, PetriKey)] -> [[(State PetriKey, [PetriKey])]]
+computeActionSequenceLevels input net actionNameToPetriKey =
+  let -- Convert input action names to PetriKeys
       input' = mapMaybe (`lookup` actionNameToPetriKey) input
       -- Extract all action PetriKeys
       actions = map snd actionNameToPetriKey
-      net = fromPetriLike petri
-      zeroState = State $ M.map (const 0) $ unState $ start net
       levels = levelsCheckAS input' actions net
-  in (levels, zeroState)
+  in levels
 
 -- | Check if a PetriKey represents a final node transition
 isFinalPetriNode :: PetriKey -> Bool
