@@ -197,7 +197,21 @@ data SelectASSolution = SelectASSolution {
   wrongSequences :: [[String]]
 } deriving (Show, Eq)
 
-selectActionSequence :: MonadRandom m => Bool -> Int -> (Int, Int) -> UMLActivityDiagram -> MaybeT m SelectASSolution
+{-|
+Generate a set of one correct and multiple wrong sequences.
+-}
+selectActionSequence
+  :: MonadRandom m
+  => Bool
+  -- ^ if sequences should contain at least one action twice
+  -> Int
+  -- ^ the number of wrong sequences to return
+  -> (Int, Int)
+  -- ^ how long the returned sequences should be
+  -- specified by (lower, upper) bound
+  -> UMLActivityDiagram
+  -- ^ For which AD diagram the correct sequence should be valid
+  -> MaybeT m SelectASSolution
 selectActionSequence withRepetition numberOfWrongSequences lengthBounds ad = MaybeT $ do
   let petri = convertToPetriNet ad
   maybeCorrectSequence <- case (withRepetition, generateActionSequenceWithPetriAndRepetition petri lengthBounds) of
