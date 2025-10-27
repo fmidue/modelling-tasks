@@ -192,9 +192,9 @@ newtype EnterASSolution = EnterASSolution {
   sampleSolution :: [String]
 } deriving (Show, Eq)
 
-enterActionSequence :: PetriLike Node PetriKey -> EnterASSolution
-enterActionSequence petri =
-  EnterASSolution {sampleSolution = head $ generateActionSequencesWithPetri petri Nothing}
+enterActionSequence :: UMLActivityDiagram -> PetriLike Node PetriKey -> EnterASSolution
+enterActionSequence ad petri =
+  EnterASSolution {sampleSolution = head $ generateActionSequencesWithPetri ad petri Nothing}
 
 enterASTask
   :: (MonadPlantUml m, MonadWriteFile m, OutputCapable m)
@@ -251,7 +251,7 @@ enterASEvaluation
   -> [String]
   -> Rated m
 enterASEvaluation task sub = do
-  let let diag = activityDiagram task
+  let diag = activityDiagram task
       objectNames = map name $ filter isObjectNode $ nodes diag
       objectNamesInSubmission = nubOrd $ sub `intersect` objectNames
       (net, actionNameToPetriKey) = netAndMap (petriNet task)
@@ -334,7 +334,7 @@ getEnterASTask config = do
           drawSettings = defaultPlantUmlConfig {
             suppressBranchConditions = hideBranchConditions config
             },
-          sampleSequence = sampleSolution $ enterActionSequence petri,
+          sampleSequence = sampleSolution $ enterActionSequence x petri,
           showSolution = printSolution config,
           addText = extraText config
         }) ad

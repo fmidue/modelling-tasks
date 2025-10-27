@@ -220,7 +220,7 @@ selectActionSequence withRepetition numberOfWrongSequences lengthBounds ad = May
     (True, Nothing) -> return Nothing
     (False, _) ->
       let
-        validSequences = generateActionSequencesWithPetri petri (Just lengthBounds)
+        validSequences = generateActionSequencesWithPetri ad petri (Just lengthBounds)
       in
         if null validSequences
         then
@@ -232,7 +232,7 @@ selectActionSequence withRepetition numberOfWrongSequences lengthBounds ad = May
     Just correctSequence -> do
       let (net, actionNameToPetriKey) = netAndMap petri
           allWrongCandidates =
-            filter (\actionSeq -> not (validActionSequenceWithPetri actionSeq net actionNameToPetriKey)) $
+            filter (\actionSeq -> not (validActionSequenceWithPetri actionSeq ad net actionNameToPetriKey)) $
             (if withRepetition then nubOrd else id) $
             permutations correctSequence
       -- Early check: reject if insufficient candidates

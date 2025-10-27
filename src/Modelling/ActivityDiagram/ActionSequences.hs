@@ -46,12 +46,11 @@ import Modelling.PetriNet.Reach.Type (
 
 import Modelling.PetriNet.Reach.Step (successors)
 
-
 import qualified Control.Monad as Monad (guard)
 import Control.Monad.Random (MonadRandom, uniform)
-import Data.List (find, union)
+import Data.List (union)
 import Data.List.Extra (nubOrd)
-import Data.Maybe (mapMaybe, isJust, fromJust)
+import Data.Maybe (mapMaybe, isJust)
 
 
 fromPetriLike :: Ord a => PetriLike Node a -> Net a a
@@ -160,7 +159,6 @@ getActionsLeadingToActivityFinals (UMLActivityDiagram adNodes adConnections) =
                                         fromLabel `elem` actionNodeLabels]
   in actionsDirectlyToActivityFinals
 
-
 validActionSequence :: [String] -> UMLActivityDiagram -> Bool
 validActionSequence input diag =
   uncurry (validActionSequenceWithPetri input diag) $ netAndMap $ convertToPetriNet diag
@@ -195,6 +193,7 @@ computeActionSequenceLevels input net actionNameToPetriKey actionsLeadingToActiv
 isFinalPetriNode :: PetriKey -> Bool
 isFinalPetriNode (FinalPetriNode {}) = True
 isFinalPetriNode _ = False
+
 
 levelsCheckAS :: [PetriKey] -> [PetriKey] -> Net PetriKey PetriKey -> [Int] -> [[(State PetriKey, [PetriKey])]]
 levelsCheckAS input actions n actionsLeadingToActivityFinals =
