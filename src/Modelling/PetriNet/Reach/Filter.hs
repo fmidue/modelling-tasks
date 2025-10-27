@@ -24,7 +24,6 @@ module Modelling.PetriNet.Reach.Filter (
 
 import Data.Data                        (Data)
 import Data.List                        (group)
-import Data.Typeable                    (Typeable)
 import GHC.Generics                     (Generic)
 
 -- | Configuration for trivial sequence filtering
@@ -39,7 +38,7 @@ data FilterConfig = FilterConfig {
   minRepetitiveLength :: Int,
   -- | Maximum cycle length to check for patterns
   maxCycleLength :: Int
-  } deriving (Eq, Generic, Ord, Read, Show, Typeable, Data)
+  } deriving (Data, Eq, Generic, Ord, Read, Show)
 
 -- | Default filter configuration that enables all filters
 defaultFilterConfig :: FilterConfig
