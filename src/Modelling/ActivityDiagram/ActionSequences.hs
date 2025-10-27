@@ -81,18 +81,6 @@ isNormalPetriNode pk =
     NormalPetriNode {} -> True
     _ -> False
 
--- Get Action nodes that are immediately followed by Activity Final nodes
-getActionsLeadingToActivityFinals :: UMLActivityDiagram -> [Int]
-getActionsLeadingToActivityFinals (UMLActivityDiagram adNodes adConnections) =
-  let activityFinalLabels = map Ad.label $ filter isActivityFinalNode adNodes
-      -- Find action nodes that directly connect to Activity Final nodes
-      directConnections = [(from conn, to conn) | conn <- adConnections,
-                          to conn `elem` activityFinalLabels]
-      actionNodeLabels = map Ad.label $ filter isActionNode adNodes
-      actionsDirectlyToActivityFinals = [fromLabel | (fromLabel, _) <- directConnections,
-                                        fromLabel `elem` actionNodeLabels]
-  in actionsDirectlyToActivityFinals
-
 --Generate at one sequence of transitions to each final node
 generateActionSequence' :: PetriLike Node PetriKey -> [Int] -> [PetriKey]
 generateActionSequence' petriLike actionsLeadingToActivityFinals =
@@ -129,6 +117,18 @@ levelsAS n actionsLeadingToActivityFinals =
               ]
          in xs : f done' next
   in f S.empty [(start n, [])]
+
+-- Get Action nodes that are immediately followed by Activity Final nodes
+getActionsLeadingToActivityFinals :: UMLActivityDiagram -> [Int]
+getActionsLeadingToActivityFinals (UMLActivityDiagram adNodes adConnections) =
+  let activityFinalLabels = map Ad.label $ filter isActivityFinalNode adNodes
+      -- Find action nodes that directly connect to Activity Final nodes
+      directConnections = [(from conn, to conn) | conn <- adConnections,
+                          to conn `elem` activityFinalLabels]
+      actionNodeLabels = map Ad.label $ filter isActionNode adNodes
+      actionsDirectlyToActivityFinals = [fromLabel | (fromLabel, _) <- directConnections,
+                                        fromLabel `elem` actionNodeLabels]
+  in actionsDirectlyToActivityFinals
 
 
 validActionSequence :: [String] -> UMLActivityDiagram -> Bool
