@@ -103,7 +103,7 @@ hasGroupedRepeats xs
       let groups = group xs
           groupSizes = map length groups
       in length groups >= 2 &&  -- At least 2 different groups
-         all (> 1) groupSizes && -- All groups have size > 1
+         (head groupSizes > 1) && -- group size > 1
          allEqual groupSizes     -- All groups have the same size
   where
     allEqual [] = True
