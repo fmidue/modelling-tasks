@@ -337,7 +337,7 @@ netGoalSolution netGoal = reverse $ snd $ head $ concatMap
 {-|
 Get all possible shortest solutions for a 'NetGoal'
 
-Note: This function does not terminate,
+Note: This function does not terminate
 if the goal is not reachable and the net is not bounded.
 -}
 netGoalAllSolutions :: Ord s => NetGoal s t -> [[t]]
