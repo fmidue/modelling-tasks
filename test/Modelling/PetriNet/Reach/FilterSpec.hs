@@ -89,7 +89,7 @@ spec = do
           forAll (genNubSized m) $ \xs ->
             length xs >= 2 ==> hasGroupedRepeats @Int (zipN n xs)
 
-    it "does not detect intersepted grouped repeats" $ do
+    it "does not detect intercepted grouped repeats" $ do
       forAll (chooseInt (2, 9)) $ \m ->
         forAll (chooseInt (2, 7)) $ \n ->
           forAll (chooseInt (0, m * n)) $ \i ->
