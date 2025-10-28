@@ -21,6 +21,7 @@ module Modelling.PetriNet.Reach.Filter (
   -- * Configuration
   FilterConfig(..),
   defaultFilterConfig,
+  noFiltering,
 ) where
 
 import Data.Data                        (Data)
@@ -29,42 +30,47 @@ import GHC.Generics                     (Generic)
 
 -- | Configuration for trivial sequence filtering
 data FilterConfig = FilterConfig {
-  -- | Enable filtering of cyclic patterns (e.g., [t3,t2,t1,t4,t3,t2,t1,t4])
-  filterCyclicPatterns :: Bool,
-  -- | Enable filtering of repetitive subsequences (e.g., [t4,t4,t4,t4] as prefix/suffix)
-  filterRepetitiveSubsequences :: Bool,
-  -- | Enable filtering of grouped repeats (e.g., [t3,t3,t2,t2,t1,t1,t4,t4])
-  filterGroupedRepeats :: Bool,
+  -- | Enable filtering of grouped repeats (e.g., @[t3,t3,t2,t2,t1,t1,t4,t4]@)
+  filterGroupedRepeats :: !Bool,
   -- | Minimum length of repetitive subsequence to consider trivial
-  minRepetitiveLength :: Int,
-  -- | Maximum cycle length to check for patterns
-  maxCycleLength :: Int
+  -- (e.g., @[t4,t4,t4,t4]@ as prefix/suffix)
+  --
+  -- 'Nothing' means no filtering of such repetitive subsequences
+  minRepetitiveLength :: !(Maybe Int),
+  -- | Maximum cycle length to check for cyclic patterns
+  -- (e.g., @[t3,t2,t1,t4,t3,t2,t1,t4]@)
+  --
+  -- 'Nothing' means no filtering of such cyclic patterns
+  maxCycleLength :: !(Maybe Int)
   } deriving (Data, Eq, Generic, Ord, Read, Show)
+
+noFiltering :: FilterConfig
+noFiltering = FilterConfig {
+  filterGroupedRepeats = False,
+  minRepetitiveLength = Nothing,
+  maxCycleLength = Nothing
+  }
 
 -- | Default filter configuration that enables all filters
 defaultFilterConfig :: FilterConfig
 defaultFilterConfig = FilterConfig {
-  filterCyclicPatterns = True,
-  filterRepetitiveSubsequences = True,
   filterGroupedRepeats = True,
-  minRepetitiveLength = 3,
-  maxCycleLength = 4
+  minRepetitiveLength = Just 3,
+  maxCycleLength = Just 4
   }
 
 -- | Check if a sequence is considered trivial according to the given configuration
 isTrivialSequence :: Eq a => FilterConfig -> [a] -> Bool
 isTrivialSequence config xs =
-  (filterCyclicPatterns config && isCyclicPattern (maxCycleLength config) xs) ||
-  (filterRepetitiveSubsequences config && hasRepetitiveSubsequence (minRepetitiveLength config) xs) ||
+  maybe False (`isCyclicPattern` xs) (maxCycleLength config) ||
+  maybe False (`hasRepetitiveSubsequence` xs) (minRepetitiveLength config) ||
   (filterGroupedRepeats config && hasGroupedRepeats xs)
 
--- | Check if a sequence follows a cyclic pattern (e.g., [t3,t2,t1,t4,t3,t2,t1,t4])
+-- | Check if a sequence follows a cyclic pattern (e.g., @[t3,t2,t1,t4,t3,t2,t1,t4]@)
 -- The pattern is considered cyclic if it can be represented as `take n (cycle pattern)`
 -- where `length pattern <= maxCycleLength` and the sequence has at least 2 complete cycles
 isCyclicPattern :: Eq a => Int -> [a] -> Bool
-isCyclicPattern m xs
-  | length xs < 4 = False  -- Need at least 4 elements for a meaningful cycle
-  | otherwise = any (isCyclicWith xs) [1..min m (length xs `div` 2)]
+isCyclicPattern m xs = any (isCyclicWith xs) [1..min m (length xs `div` 2)]
   where
     isCyclicWith :: Eq a => [a] -> Int -> Bool
     isCyclicWith seqToCheck cycleLength =
@@ -81,26 +87,21 @@ hasRepetitiveSubsequence minLength xs
 hasRepetitivePrefix :: Eq a => Int -> [a] -> Bool
 hasRepetitivePrefix minLength xs
   | length xs < minLength = False
-  | otherwise =
-      let prefix = take minLength xs
-          firstElem = head xs
-      in all (== firstElem) prefix
+  | otherwise = allEqual (take minLength xs)
+  where
+    allEqual [] = True
+    allEqual (y:ys) = all (== y) ys
 
 -- | Check if sequence ends with repetitive elements
 hasRepetitiveSuffix :: Eq a => Int -> [a] -> Bool
 hasRepetitiveSuffix minLength xs = hasRepetitivePrefix minLength (reverse xs)
 
--- | Check if a sequence has grouped repeats (e.g., [t3,t3,t2,t2,t1,t1,t4,t4])
+-- | Check if a sequence has grouped repeats (e.g., @[t3,t3,t3,t1,t1,t1,t4,t4]@)
 -- This means each unique element appears in consecutive groups of the same size > 1
 hasGroupedRepeats :: Eq a => [a] -> Bool
-hasGroupedRepeats xs
-  | length xs < 4 = False  -- Need at least 4 elements
-  | otherwise =
-      let groups = group xs
-          groupSizes = map length groups
-      in length groups >= 2 &&  -- At least 2 different groups
-         head groupSizes > 1 && -- Group size is > 1
-         allEqual groupSizes    -- All groups have the same size
+hasGroupedRepeats xs =
+  length groups >= 2      -- At least 2 different groups
+  && all (> 1) groupSizes -- Group sizes are > 1
   where
-    allEqual [] = True
-    allEqual (y:ys) = all (== y) ys
+    groups = group xs
+    groupSizes = map length groups

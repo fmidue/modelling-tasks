@@ -16,8 +16,8 @@ import Modelling.PetriNet.Reach.Reach (
   netGoalSolution,
   )
 import Modelling.PetriNet.Reach.Filter (
-  FilterConfig (..),
   defaultFilterConfig,
+  noFiltering,
   isTrivialSequence,
   )
 import Modelling.PetriNet.Reach.Property (
@@ -81,7 +81,7 @@ spec = do
                 maxTransitionLength = 8,
                 minTransitionLength = 8
                 },
-              filterConfig = FilterConfig False False False 3 4  -- All filtering disabled
+              filterConfig = noFiltering
               }
         inst <- generateReach config seed
         let solution = netGoalSolution (netGoal inst)

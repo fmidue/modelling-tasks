@@ -10,7 +10,6 @@ import Test.Hspec
 import Test.QuickCheck (
   Arbitrary (arbitrary),
   Gen,
-  Testable (property),
   (==>),
   chooseInt,
   forAll,
@@ -44,14 +43,14 @@ spec :: Spec
 spec = do
   describe "isCyclicPattern" $ do
     it "detects cyclic patterns" $
-      forAll (chooseInt (2, 9)) $ \m ->
+      forAll (chooseInt (1, 9)) $ \m ->
         forAll (chooseInt (m, 9)) $ \n ->
           forAll (genNubSized m) $
             isCyclicPattern @Int n . concat . replicate 2
 
     it "does not detect too large cyclic patterns" $
-      forAll (chooseInt (3, 9)) $ \m ->
-        forAll (chooseInt (2, m - 1)) $ \n ->
+      forAll (chooseInt (2, 9)) $ \m ->
+        forAll (chooseInt (1, m - 1)) $ \n ->
           forAll (genNubSized m) $
             not . isCyclicPattern @Int n . concat . replicate 2
 
@@ -87,19 +86,20 @@ spec = do
       forAll (chooseInt (2, 9)) $ \m ->
         forAll (chooseInt (2, 7)) $ \n ->
           forAll (genNubSized m) $ \xs ->
-            length xs >= 2 ==> hasGroupedRepeats @Int (zipN n xs)
+            let (pre, post) = splitAt (min m n) xs
+            in hasGroupedRepeats @Int $ zipN n pre ++ zipN (min (n + 1) 7) post
 
     it "does not detect intercepted grouped repeats" $ do
       forAll (chooseInt (2, 9)) $ \m ->
         forAll (chooseInt (2, 7)) $ \n ->
-          forAll (chooseInt (0, m * n)) $ \i ->
-            forAll (genNubSized m) $ \xs ->
-              property $ \x -> not $ hasGroupedRepeats @Int
+          forAll (chooseInt (0, m * n - 1)) $ \i ->
+            forAll (genNubSized m) $ \(x:xs) ->
+              not $ hasGroupedRepeats @Int
                 (let (front, end) = splitAt i (zipN n xs) in front ++ x : end)
 
   describe "configuration" $ do
     it "respects filter configuration settings" $ do
       let cyclicPattern = [Transition 1, Transition 2, Transition 1, Transition 2]
-      let configNoCyclic = defaultFilterConfig { filterCyclicPatterns = False }
+      let configNoCyclic = defaultFilterConfig {maxCycleLength = Nothing}
       isTrivialSequence configNoCyclic cyclicPattern `shouldBe` False
       isTrivialSequence defaultFilterConfig cyclicPattern `shouldBe` True
