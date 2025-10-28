@@ -69,7 +69,6 @@ isCyclicPattern m xs
     isCyclicWith :: Eq a => [a] -> Int -> Bool
     isCyclicWith seqToCheck cycleLength =
       seqToCheck == take (length seqToCheck) (cycle (take cycleLength seqToCheck))
-      && length seqToCheck >= cycleLength * 2
 
 -- | Check if a sequence has repetitive subsequences as prefix or suffix
 -- (e.g., [t4,t4,t4,t4] at the beginning or end)
