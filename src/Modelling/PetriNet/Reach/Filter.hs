@@ -16,6 +16,7 @@ module Modelling.PetriNet.Reach.Filter (
   isTrivialSequence,
   isCyclicPattern,
   hasRepetitiveSubsequence,
+  hasSpaceballsPrefix,
   hasGroupedRepeats,
 
   -- * Configuration
@@ -37,6 +38,11 @@ data FilterConfig = FilterConfig {
   --
   -- 'Nothing' means no filtering of such repetitive subsequences
   minRepetitiveLength :: !(Maybe Int),
+  -- | Minimum size of Spaceball PIN pattern (e.g., @[t1,t2,t3,t4,t5]@)
+  -- to recognise as trivial prefix
+  --
+  -- 'Nothing' means no filtering of such Spaceballs PIN patterns
+  minSpaceballsLength :: !(Maybe Int),
   -- | Maximum cycle length to check for cyclic patterns
   -- (e.g., @[t3,t2,t1,t4,t3,t2,t1,t4]@)
   --
@@ -48,6 +54,7 @@ noFiltering :: FilterConfig
 noFiltering = FilterConfig {
   filterGroupedRepeats = False,
   minRepetitiveLength = Nothing,
+  minSpaceballsLength = Nothing,
   maxCycleLength = Nothing
   }
 
@@ -56,15 +63,23 @@ defaultFilterConfig :: FilterConfig
 defaultFilterConfig = FilterConfig {
   filterGroupedRepeats = True,
   minRepetitiveLength = Just 3,
+  minSpaceballsLength = Just 4,
   maxCycleLength = Just 4
   }
 
 -- | Check if a sequence is considered trivial according to the given configuration
-isTrivialSequence :: Eq a => FilterConfig -> [a] -> Bool
+isTrivialSequence :: (Enum a, Eq a) => FilterConfig -> [a] -> Bool
 isTrivialSequence config xs =
-  maybe False (`isCyclicPattern` xs) (maxCycleLength config) ||
-  maybe False (`hasRepetitiveSubsequence` xs) (minRepetitiveLength config) ||
-  (filterGroupedRepeats config && hasGroupedRepeats xs)
+  maybe False (`hasSpaceballsPrefix` xs) (minSpaceballsLength config)
+  || maybe False (`isCyclicPattern` xs) (maxCycleLength config)
+  || maybe False (`hasRepetitiveSubsequence` xs) (minRepetitiveLength config)
+  || (filterGroupedRepeats config && hasGroupedRepeats xs)
+
+-- | Check if a sequence begins with a Spaceballs PIN pattern
+hasSpaceballsPrefix :: (Enum a, Eq a) => Int -> [a] -> Bool
+hasSpaceballsPrefix minLength xs
+  | length xs < minLength = False
+  | otherwise = take minLength xs == take minLength [head xs ..]
 
 -- | Check if a sequence follows a cyclic pattern (e.g., @[t3,t2,t1,t4,t3,t2,t1,t4]@)
 -- The pattern is considered cyclic if it can be represented as `take n (cycle pattern)`
@@ -85,9 +100,7 @@ hasRepetitiveSubsequence minLength xs
 
 -- | Check if sequence starts with repetitive elements
 hasRepetitivePrefix :: Eq a => Int -> [a] -> Bool
-hasRepetitivePrefix minLength xs
-  | length xs < minLength = False
-  | otherwise = allEqual (take minLength xs)
+hasRepetitivePrefix minLength xs = allEqual (take minLength xs)
   where
     allEqual [] = True
     allEqual (y:ys) = all (== y) ys

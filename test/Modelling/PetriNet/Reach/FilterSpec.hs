@@ -10,6 +10,7 @@ import Test.Hspec
 import Test.QuickCheck (
   Arbitrary (arbitrary),
   Gen,
+  Testable (property),
   (==>),
   chooseInt,
   forAll,
@@ -61,6 +62,17 @@ spec = do
             forAll (genNubSized n) $ \ys ->
               xs /= ys ==> not $ isCyclicPattern @Int (m + n) $ xs ++ ys
 
+  describe "hasSpaceballsPrefix" $ do
+    it "detects spaceball patterns" $
+      forAll (chooseInt (2, 9)) $ \m ->
+        forAll (chooseInt (m, 9)) $ \n ->
+          property $ \x xs -> hasSpaceballsPrefix @Int m $ take n [x ..] ++ xs
+
+    it "does not detect too small spaceball patterns" $
+      forAll (chooseInt (2, 9)) $ \m ->
+        forAll (chooseInt (0, m - 1)) $ \n ->
+          property $ \x xs -> not $ hasSpaceballsPrefix @Int m $ take n [x ..] ++ x:xs
+
   describe "hasRepetitiveSubsequence" $ do
     it "detects repetitive prefixes" $
       forAll (chooseInt (2, 9)) $ \m ->
@@ -92,7 +104,7 @@ spec = do
     it "does not detect intercepted grouped repeats" $ do
       forAll (chooseInt (2, 9)) $ \m ->
         forAll (chooseInt (2, 7)) $ \n ->
-          forAll (chooseInt (0, m * n - 1)) $ \i ->
+          forAll (chooseInt (0, (m - 1) * n)) $ \i ->
             forAll (genNubSized m) $ \(x:xs) ->
               not $ hasGroupedRepeats @Int
                 (let (front, end) = splitAt i (zipN n xs) in front ++ x : end)
