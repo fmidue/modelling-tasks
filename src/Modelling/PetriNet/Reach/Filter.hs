@@ -5,10 +5,11 @@
 Module for filtering out trivial sequences in Petri net reach tasks.
 
 This module provides functions to detect and filter out "trivial" sequences
-that students might accidentally guess correctly, such as:
-- Cyclic patterns: [t1, t2, t3, t4, t1, t2, t3, t4]
+that students might accidentally guess correctly or that indicate some structure
+in the solution which makes it too simple in some sense, such as:
+- Cyclic patterns: [t3, t2, t1, t4, t3, t2, t1, t4]
 - Repetitive subsequences: [t4, t4, t4, t4] as prefix/suffix
-- Grouped repeats: [t1, t1, t2, t2, t3, t3, t4, t4]
+- Grouped repeats: [t3, t3, t2, t2, t1, t1, t4, t4]
 -}
 module Modelling.PetriNet.Reach.Filter (
   -- * Pattern detection
@@ -28,11 +29,11 @@ import GHC.Generics                     (Generic)
 
 -- | Configuration for trivial sequence filtering
 data FilterConfig = FilterConfig {
-  -- | Enable filtering of cyclic patterns (e.g., [t1,t2,t3,t4,t1,t2,t3,t4])
+  -- | Enable filtering of cyclic patterns (e.g., [t3,t2,t1,t4,t3,t2,t1,t4])
   filterCyclicPatterns :: Bool,
   -- | Enable filtering of repetitive subsequences (e.g., [t4,t4,t4,t4] as prefix/suffix)
   filterRepetitiveSubsequences :: Bool,
-  -- | Enable filtering of grouped repeats (e.g., [t1,t1,t2,t2,t3,t3,t4,t4])
+  -- | Enable filtering of grouped repeats (e.g., [t3,t3,t2,t2,t1,t1,t4,t4])
   filterGroupedRepeats :: Bool,
   -- | Minimum length of repetitive subsequence to consider trivial
   minRepetitiveLength :: Int,
@@ -57,7 +58,7 @@ isTrivialSequence config xs =
   (filterRepetitiveSubsequences config && hasRepetitiveSubsequence (minRepetitiveLength config) xs) ||
   (filterGroupedRepeats config && hasGroupedRepeats xs)
 
--- | Check if a sequence follows a cyclic pattern (e.g., [t1,t2,t3,t4,t1,t2,t3,t4])
+-- | Check if a sequence follows a cyclic pattern (e.g., [t3,t2,t1,t4,t3,t2,t1,t4])
 -- The pattern is considered cyclic if it can be represented as `take n (cycle pattern)`
 -- where `length pattern <= maxCycleLength` and the sequence has at least 2 complete cycles
 isCyclicPattern :: Eq a => Int -> [a] -> Bool
@@ -90,7 +91,7 @@ hasRepetitivePrefix minLength xs
 hasRepetitiveSuffix :: Eq a => Int -> [a] -> Bool
 hasRepetitiveSuffix minLength xs = hasRepetitivePrefix minLength (reverse xs)
 
--- | Check if a sequence has grouped repeats (e.g., [t1,t1,t2,t2,t3,t3,t4,t4])
+-- | Check if a sequence has grouped repeats (e.g., [t3,t3,t2,t2,t1,t1,t4,t4])
 -- This means each unique element appears in consecutive groups of the same size > 1
 hasGroupedRepeats :: Eq a => [a] -> Bool
 hasGroupedRepeats xs
@@ -99,8 +100,8 @@ hasGroupedRepeats xs
       let groups = group xs
           groupSizes = map length groups
       in length groups >= 2 &&  -- At least 2 different groups
-         (head groupSizes > 1) && -- group size > 1
-         allEqual groupSizes     -- All groups have the same size
+         head groupSizes > 1 && -- Group size is > 1
+         allEqual groupSizes    -- All groups have the same size
   where
     allEqual [] = True
     allEqual (y:ys) = all (== y) ys
