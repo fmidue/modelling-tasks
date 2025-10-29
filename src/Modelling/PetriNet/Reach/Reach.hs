@@ -72,6 +72,7 @@ import Modelling.PetriNet.Reach.Filter (
   FilterConfig (..),
   defaultFilterConfig,
   isTrivialSequence,
+  noFiltering,
   )
 import Modelling.PetriNet.Reach.Property (
   Property (Default),
@@ -601,7 +602,7 @@ generateNetGoal filterConfig config@NetGoalConfig {..} seed =
       maybe generate pure maybeNetGoal
 
 checkReachConfig :: ReachConfig -> Maybe String
-checkReachConfig ReachConfig {..} =
+checkReachConfig config@ReachConfig {..} =
   checkBasicPetriConfig
     (numPlaces netGoalConfig)
     (numTransitions netGoalConfig)
@@ -616,6 +617,34 @@ checkReachConfig ReachConfig {..} =
   <|> if showTargetNet || showPlaceNamesInNet
       then Nothing
       else Just "At least one of showTargetNet or showPlaceNamesInNet must be True"
+  <|> checkFilterConfig config
+
+checkFilterConfig :: ReachConfig -> Maybe String
+checkFilterConfig ReachConfig {..}
+  | rejectLongerThan /= Just (minTransitionLength netGoalConfig)
+  , filterConfig /= noFiltering
+  = Just $ "If transition length is not enforced to one value, reachConfig must be set to "
+    ++ show noFiltering
+  | Just repeats <- minRepetitiveLength filterConfig
+  , repeats < 2
+  = Just "minRepetiveLength has to be set to at least 2 if it is enabled"
+  | Just repeats <- minRepetitiveLength filterConfig
+  , repeats > maxTransitionLength netGoalConfig `div` 2
+  = Just "minRepetiveLength must not be higher than half of maxTransitionLength if it is enabled"
+  | Just cycleLength <- maxCycleLength filterConfig
+  , cycleLength < 1
+  = Just "setting maxCycleLength to less than 1 does not make sense"
+  | Just cycleLength <- maxCycleLength filterConfig
+  , cycleLength > maxTransitionLength netGoalConfig `div` 2
+  = Just "maxCycleLength must not be higher than half of maxTransitionLength if it is enabled"
+  | Just spaceballsLength <- minSpaceballsLength filterConfig
+  , spaceballsLength < 2
+  = Just "setting minSpaceballsLength to less than 2 does not make sense"
+  | Just spaceballsLength <- minSpaceballsLength filterConfig
+  , spaceballsLength > maxTransitionLength netGoalConfig
+  = Just "minSpaceballsLength must not be higher than maxTransitionLength if it is enabled"
+  | otherwise
+  = Nothing
 
 generateReach
   :: (MonadCatch m, MonadDiagrams m, MonadGraphviz m)
