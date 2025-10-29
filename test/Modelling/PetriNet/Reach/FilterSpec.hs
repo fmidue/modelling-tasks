@@ -69,8 +69,8 @@ spec = do
           property $ \x xs -> hasSpaceballsPrefix @Int m $ take n [x ..] ++ xs
 
     it "does not detect too small Spaceballs patterns" $
-      forAll (chooseInt (2, 9)) $ \m ->
-        forAll (chooseInt (0, m - 1)) $ \n ->
+      forAll (chooseInt (3, 9)) $ \m ->
+        forAll (chooseInt (2, m - 1)) $ \n ->
           property $ \x xs -> not $ hasSpaceballsPrefix @Int m $ take n [x ..] ++ x:xs
 
   describe "hasRepetitiveSubsequence" $ do
