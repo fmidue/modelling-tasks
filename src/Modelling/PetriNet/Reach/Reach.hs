@@ -627,10 +627,10 @@ checkFilterConfig ReachConfig {..}
     ++ show noFiltering
   | Just repeats <- minRepetitiveLength filterConfig
   , repeats < 2
-  = Just "minRepetiveLength has to be set to at least 2 if it is enabled"
+  = Just "minRepetitiveLength has to be set to at least 2 if it is enabled"
   | Just repeats <- minRepetitiveLength filterConfig
   , repeats > maxTransitionLength netGoalConfig `div` 2
-  = Just "minRepetiveLength must not be higher than half of maxTransitionLength if it is enabled"
+  = Just "minRepetitiveLength must not be higher than half of maxTransitionLength if it is enabled"
   | Just cycleLength <- maxCycleLength filterConfig
   , cycleLength < 1
   = Just "setting maxCycleLength to less than 1 does not make sense"

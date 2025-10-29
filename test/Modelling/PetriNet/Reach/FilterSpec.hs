@@ -63,12 +63,12 @@ spec = do
               xs /= ys ==> not $ isCyclicPattern @Int (m + n) $ xs ++ ys
 
   describe "hasSpaceballsPrefix" $ do
-    it "detects spaceball patterns" $
+    it "detects Spaceballs patterns" $
       forAll (chooseInt (2, 9)) $ \m ->
         forAll (chooseInt (m, 9)) $ \n ->
           property $ \x xs -> hasSpaceballsPrefix @Int m $ take n [x ..] ++ xs
 
-    it "does not detect too small spaceball patterns" $
+    it "does not detect too small Spaceballs patterns" $
       forAll (chooseInt (2, 9)) $ \m ->
         forAll (chooseInt (0, m - 1)) $ \n ->
           property $ \x xs -> not $ hasSpaceballsPrefix @Int m $ take n [x ..] ++ x:xs
