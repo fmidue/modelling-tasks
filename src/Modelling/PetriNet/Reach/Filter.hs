@@ -38,7 +38,7 @@ data FilterConfig = FilterConfig {
   --
   -- 'Nothing' means no filtering of such repetitive subsequences
   minRepetitiveLength :: !(Maybe Int),
-  -- | Minimum size of Spaceball PIN pattern (e.g., @[t1,t2,t3,t4,t5]@)
+  -- | Minimum size of Spaceballs PIN pattern (e.g., @[t1,t2,t3,t4,t5]@)
   -- to recognise as trivial prefix
   --
   -- 'Nothing' means no filtering of such Spaceballs PIN patterns
