@@ -104,6 +104,9 @@ library
     , SHA
     , SVGFonts
     , aeson
+    , autolib-reader
+    , autolib-todoc
+    , autolib-util
     , autotool-capabilities
     , base
     , bifunctors
@@ -195,6 +198,9 @@ test-suite modelling-tasks-test
     , SHA
     , SVGFonts
     , aeson
+    , autolib-reader
+    , autolib-todoc
+    , autolib-util
     , autotool-capabilities
     , autotool-capabilities-io-instances
     , base
