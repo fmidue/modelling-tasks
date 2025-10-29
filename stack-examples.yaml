@@ -10,7 +10,7 @@ flags:
     alloy-use-sat4j: false
 extra-deps:
   - git: https://github.com/fmidue/output-blocks.git
-    commit: af1ac8d1f62cb9f739919de1e9bc7989a2c61c95
+    commit: 59d57264bf926c7733fb65796c9eea75dfc8d2dc
     subdirs:
       - output-blocks
   - git: https://github.com/fmidue/autotool-capabilities.git
@@ -18,6 +18,15 @@ extra-deps:
     subdirs:
       - autotool-capabilities
       - autotool-capabilities-io-instances
+  - git: https://git.uni-due.de/fmi/autotool-dev
+    commit: 9dc2f51b2dc057564445bc8135b3952e72dae42c
+    subdirs:
+      - base
+      - data
+      - reader
+      - todoc
+      - transport
+      - util
   - call-alloy-0.6.0.3
   - call-plantuml-0.0.1.3@sha256:38d04cb6396c61313e77a234830d9215f7c41ccbffbe2549eb521312c12db3e3
   - diagrams-graphviz-1.4.1.1@sha256:e71afa8f89904c2a6a2cb490dba7108c6425779c2174b90bd90dbaf507a9d3dc,1388
