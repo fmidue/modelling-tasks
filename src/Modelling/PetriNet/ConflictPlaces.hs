@@ -134,8 +134,10 @@ findConflictPlacesTask showInputHelp path task = do
     german "Welches Paar von Transitionen steht in Konflikt, und wegen welcher konfliktverursachenden Stelle(n), unter der Startmarkierung?"
   if not showInputHelp then
     paragraph $ translate $ do
-     english [i|You have to indicate all the places that induce the conflict, i.e., all those common places within the preconditions which each separately do not have enough tokens for firing the two transitions at the same time.|]
-     german [i|Sie müssen alle Stellen angeben, die den Konflikt verursachen, also all jene gemeinsamen Stellen in den Vorbedingungen, die jeweils einzeln nicht ausreichend Marken zum gleichzeitigen Feuern der beiden Transitionen haben.|]
+     english [i|You have to indicate all the places that induce the conflict, i.e., all those common places within the
+preconditions which each separately do not have enough tokens for firing the two transitions at the same time.|]
+     german [i|Sie müssen alle Stellen angeben, die den Konflikt verursachen, also all jene gemeinsamen Stellen in den Vorbedingungen,
+die jeweils einzeln nicht ausreichend Marken zum gleichzeitigen Feuern der beiden Transitionen haben.|]
   else paragraph $ do
     translate $ do
       english "State your answer by indicating a pair of conflicting transitions and a list of all the places that induce the conflict. "
