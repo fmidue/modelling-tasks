@@ -192,12 +192,13 @@ reportReachFor showInputHelp img noLonger lengthHint minLength showMinLengthHint
       ]
    pure ()
 
-  when (isNothing noLonger) $
+  case noLonger of
+    Nothing ->
       paragraph $ translate $ do
         english "Your answer can be arbitrarily short or long."
         german "Ihre Lösung kann beliebig kurz oder lang sein."
 
-  whenJust noLonger $ \maxL ->
+    Just maxL ->
       let
         isExactMatch = showMinLengthHint && maxL == minLength
         (englishConstraint, germanConstraint) =
