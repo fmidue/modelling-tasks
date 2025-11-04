@@ -103,12 +103,15 @@ deadlockTask
     Show s,
     Show t
     )
-  => FilePath
+  => Bool
+  -> FilePath
   -> DeadlockInstance s t
   -> LangM m
-deadlockTask path inst = do
+deadlockTask showInputHelp path inst = do
   lift (drawToFile (not $ showPlaceNames inst) path (drawUsing inst) (petriNet inst))
-  $>>= \img -> reportReachFor
+  $>>= \img ->
+    reportReachFor
+    showInputHelp
     img
     (noLongerThan inst)
     (withLengthHint inst)

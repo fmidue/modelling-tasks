@@ -54,7 +54,7 @@ import Modelling.PetriNet.Reach.Type (
 
 import Control.Applicative              (Alternative, (<|>))
 import Control.Functor.Trans            (FunctorTrans (lift))
-import Control.Monad                    (forM, guard, unless)
+import Control.Monad                    (forM, guard, when, unless)
 import Control.Monad.Catch              (MonadCatch, MonadThrow)
 import Control.Monad.Extra              (findM, maybeM, whenJust)
 import Control.Monad.State              (put)
@@ -121,10 +121,11 @@ reachTask
     Show s,
     Show t
     )
-  => FilePath
+  => Bool
+  -> FilePath
   -> ReachInstance s t
   -> LangM m
-reachTask path inst = do
+reachTask showInputHelp path inst = do
   if showGoalNet inst
     then Left
     <$> lift (drawFileWithSettings (n { start = goal (netGoal inst) }))
@@ -132,6 +133,7 @@ reachTask path inst = do
   $>>= \g ->
     lift (drawFileWithSettings n)
   $>>= \img -> reportReachFor
+    showInputHelp
     img
     (noLongerThan inst)
     (withLengthHint inst)
@@ -144,14 +146,15 @@ reachTask path inst = do
 
 reportReachFor
   :: OutputCapable m
-  => FilePath
+  => Bool
+  -> FilePath
   -> Maybe Int
   -> Maybe Int
   -> Int
   -> Bool
   -> Maybe (Either FilePath String)
   -> LangM m
-reportReachFor img noLonger lengthHint minLength showMinLengthHint maybeGoal = do
+reportReachFor showInputHelp img noLonger lengthHint minLength showMinLengthHint maybeGoal = do
   paragraph $ translate $ do
     english "For the Petri net"
     german "Gesucht ist für das Petrinetz"
@@ -166,29 +169,17 @@ reportReachFor img noLonger lengthHint minLength showMinLengthHint maybeGoal = d
         german "eine Transitionsfolge, durch welche die folgende Markierung erreicht wird:"
       paragraph $ either image text g
       pure ()
-  paragraph $ case noLonger of
-    Nothing -> translate $ do
-      english "State your answer as an (arbitrarily short or long) sequence of the following kind:"
-      german "Geben Sie Ihre Lösung als (beliebig kurze oder lange) Auflistung der folgenden Art an:"
-    Just maxL ->
-      let
-        isExactMatch = showMinLengthHint && maxL == minLength
-        (englishConstraint, germanConstraint) =
-          if isExactMatch
-          then ("has exactly", "genau")
-          else ("does not exceed", "maximal")
-      in translate $ do
-        english $ concat [
-          "State your solution as a sequence of the following kind that ",
-          englishConstraint, " ", show maxL, " steps:"]
-        german $ concat [
-          "Geben Sie Ihre Lösung als ", germanConstraint, " ", show maxL,
-          "-schrittige Auflistung der folgenden Art an:"]
-  let (t1, t2, t3) = (Transition 1, Transition 2, Transition 3)
+
+  when showInputHelp $ do
+   paragraph $ translate $ do
+      english "State your answer as a sequence of the following kind:"
+      german "Geben Sie Ihre Lösung als Auflistung der folgenden Art an:"
+   let
+      (t1, t2, t3) = (Transition 1, Transition 2, Transition 3)
       showT = show . ShowTransition
       (st1, st2, st3) = (showT t1, showT t2, showT t3)
-  code $ show $ TransitionsList [t1, t2, t3]
-  paragraph $ translate $ do
+   code $ show $ TransitionsList [t1, t2, t3]
+   paragraph $ translate $ do
     english $ concat [
       "Where giving these three steps means that after firing ",
       st1, ", then ", st2, ", and finally ", st3,
@@ -199,6 +190,29 @@ reportReachFor img noLonger lengthHint minLength showMinLengthHint maybeGoal = d
       st1, ", danach ", st2, ", und schließlich ", st3,
       " (in genau dieser Reihenfolge), die gesuchte Markierung erreicht wird."
       ]
+   pure ()
+
+  paragraph $ case noLonger of
+    Nothing ->
+      translate $ do
+        english "Your answer can be arbitrarily short or long."
+        german "Ihre Lösung kann beliebig kurz oder lang sein."
+
+    Just maxL ->
+      let
+        isExactMatch = showMinLengthHint && maxL == minLength
+        (englishConstraint, germanConstraint) =
+          if isExactMatch
+          then ("have exactly", "muss genau")
+          else ("not exceed", "darf maximal")
+      in translate $ do
+        english $ concat [
+          "Your answer must ",
+          englishConstraint, " ", show maxL, " steps."]
+        german $ concat [
+          "Ihre Lösung ", germanConstraint, " ", show maxL,
+          "Schritte enthalten."]
+
   let maxStepsHint = case lengthHint of
         Just maxSteps | showMinLengthHint && maxSteps == minLength -> singleton $ paragraph $ translate $ do
           english [i|The shortest solutions have exactly #{maxSteps} steps.|]
