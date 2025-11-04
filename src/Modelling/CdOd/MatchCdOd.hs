@@ -1,5 +1,6 @@
 {-# LANGUAGE ApplicativeDo #-}
 {-# LANGUAGE CPP #-}
+{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE LambdaCase #-}
@@ -41,6 +42,9 @@ import qualified Data.Map                         as M (
   traverseWithKey,
   )
 
+import Autolib.Hash                     (Hashable)
+import Autolib.Reader                   (Reader)
+import Autolib.ToDoc                    (ToDoc)
 import Capabilities.Alloy               (MonadAlloy, getInstances)
 import Capabilities.Cache               (MonadCache)
 import Capabilities.Diagrams            (MonadDiagrams)
@@ -181,7 +185,7 @@ data MatchCdOdInstance
     showSolution   :: !Bool,
     taskText       :: !MatchCdOdTaskText,
     addText        :: ExtraText
-  } deriving (Eq, Generic, Read, Show)
+  } deriving (Eq, Generic, Hashable, Read, Reader, Show, ToDoc)
 
 data MatchCdOdConfig
   = MatchCdOdConfig {
@@ -195,7 +199,7 @@ data MatchCdOdConfig
     timeout          :: Maybe Int,
     withNonTrivialInheritance :: Maybe Bool,
     extraText        :: ExtraText
-  } deriving (Generic, Read, Show)
+  } deriving (Generic, Read, Reader, Show, ToDoc)
 
 defaultMatchCdOdConfig :: MatchCdOdConfig
 defaultMatchCdOdConfig
@@ -276,7 +280,7 @@ type MatchCdOdTaskText = [SpecialOutput MatchCdOdTaskTextElement]
 data MatchCdOdTaskTextElement
   = GivenCds
   | GivenOds
-  deriving (Bounded, Enum, Eq, Generic, Ord, Read, Show)
+  deriving (Bounded, Enum, Eq, Generic, Hashable, Ord, Read, Reader, Show, ToDoc)
 
 matchCdOdTask
   :: (

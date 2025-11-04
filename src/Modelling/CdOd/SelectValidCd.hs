@@ -1,4 +1,5 @@
 {-# LANGUAGE ApplicativeDo #-}
+{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE LambdaCase #-}
@@ -33,6 +34,9 @@ import qualified Data.Map                         as M (
   traverseWithKey,
   )
 
+import Autolib.Hash                     (Hashable)
+import Autolib.Reader                   (Reader)
+import Autolib.ToDoc                    (ToDoc)
 import Capabilities.Alloy               (MonadAlloy)
 import Capabilities.Cache               (MonadCache)
 import Capabilities.Diagrams            (MonadDiagrams)
@@ -171,7 +175,7 @@ data SelectValidCdConfig
     shuffleEachCd    :: Bool,
     timeout          :: Maybe Int,
     extraText        :: ExtraText
-  } deriving (Generic, Read, Show)
+  } deriving (Generic, Read, Reader, Show, ToDoc)
 
 defaultSelectValidCdConfig :: SelectValidCdConfig
 defaultSelectValidCdConfig
@@ -245,7 +249,7 @@ data SelectValidCdInstance
     showSolution    :: !Bool,
     taskText        :: !SelectValidCdTaskText,
     addText         :: ExtraText
-  } deriving (Eq, Generic, Read, Show)
+  } deriving (Eq, Generic, Hashable, Read, Reader, Show, ToDoc)
 
 checkSelectValidCdInstance :: SelectValidCdInstance -> Maybe String
 checkSelectValidCdInstance SelectValidCdInstance {..}
@@ -270,7 +274,7 @@ type SelectValidCdTaskText = [SpecialOutput SelectValidCdTaskTextElement]
 
 data SelectValidCdTaskTextElement
   = CdCandidates
-  deriving (Bounded, Enum, Eq, Generic, Ord, Read, Show)
+  deriving (Bounded, Enum, Eq, Generic, Hashable, Ord, Read, Reader, Show, ToDoc)
 
 selectValidCdTask
   :: (MonadCache m, MonadDiagrams m, MonadGraphviz m, OutputCapable m)

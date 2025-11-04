@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE FlexibleContexts #-}
@@ -28,6 +29,7 @@ import qualified Modelling.ActivityDiagram.Datatype as Ad (
   AdConnection (..)
   )
 
+import Autolib.Reader                   (Reader)
 import Modelling.ActivityDiagram.Datatype (
   isActivityFinalNode,
   isFlowFinalNode,
@@ -51,7 +53,7 @@ data PetriKey
     sourceNode :: Ad.AdNode
     }
   | NormalPetriNode {label :: Int, sourceNode :: Ad.AdNode}
-  deriving (Generic, Eq, Read, Show)
+  deriving (Eq, Generic, Read, Reader, Show)
 
 instance Ord PetriKey where
   pk1 `compare` pk2 = label pk1 `compare` label pk2
