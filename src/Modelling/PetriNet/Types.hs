@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# Language DeriveTraversable #-}
@@ -119,6 +120,7 @@ import qualified Data.Map.Lazy                    as M (
   )
 import qualified Data.Set                         as S (empty, union)
 
+import Autolib.Reader                   (Reader)
 import Modelling.Auxiliary.Common       (lensRulesL)
 import Modelling.PetriNet.Reach.Type    (Place, ShowTransition (ShowTransition))
 
@@ -293,7 +295,7 @@ data Node a =
   flowIn  :: Map a Int,
   flowOut :: Map a Int
   }
-  deriving (Data, Eq, Generic, Read, Show)
+  deriving (Data, Eq, Generic, Read, Reader, Show)
 
 instance PetriNode Node where
   initialTokens PlaceNode {initial} = initial
@@ -324,7 +326,7 @@ data SimpleNode a =
   SimpleTransition {
   flowOut           :: Map a Int
   }
-  deriving (Data, Eq, Generic, Read, Show)
+  deriving (Data, Eq, Generic, Read, Reader, Show)
 
 instance PetriNode SimpleNode where
   initialTokens SimplePlace {initial} = initial

@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DeriveTraversable #-}
 
@@ -9,8 +10,6 @@ module Modelling.Types (
   Name (..),
   NameMapping (..),
   fromNameMapping,
-  parseLettersPrec,
-  parseNamePrec,
   showLetters,
   showName,
   toNameMapping,
@@ -20,6 +19,9 @@ import qualified Data.Bimap                       as BM
 
 import Modelling.Auxiliary.Common       (skipSpaces)
 
+import Autolib.Hash                     (Hashable)
+import Autolib.Reader                   (Reader (atomic_readerPrec))
+import Autolib.ToDoc                    (ToDoc (toDocPrec), text)
 import Data.Bimap                       (Bimap)
 import Data.Char                        (isAlpha, isAlphaNum)
 import Data.String                      (IsString (fromString))
@@ -32,7 +34,7 @@ import Text.ParserCombinators.Parsec (
   )
 
 newtype Name = Name { unName :: String }
-  deriving (Eq, Generic, Ord, Read, Show)
+  deriving (Eq, Generic, Hashable, Ord, Read, Show)
 
 instance IsString Name where
   fromString = Name
@@ -45,11 +47,23 @@ parseNamePrec _ = do
   skipSpaces
   Name <$> many1 (satisfy isAlphaNum) <* skipSpaces
 
+instance Reader Name where
+  atomic_readerPrec = parseNamePrec
+
+instance ToDoc Name where
+  toDocPrec _ = text . showName
+
 newtype Letters = Letters { lettersList :: String }
   deriving (Eq, Generic, Ord, Read, Show)
 
 instance IsString Letters where
   fromString = Letters
+
+instance Reader Letters where
+  atomic_readerPrec = parseLettersPrec
+
+instance ToDoc Letters where
+  toDocPrec _ = text . showLetters
 
 showLetters :: Letters -> String
 showLetters = lettersList
@@ -60,7 +74,7 @@ parseLettersPrec _ = do
   Letters <$> endBy (satisfy isAlpha) skipSpaces
 
 newtype NameMapping = NameMapping { nameMapping :: Bimap Name Name }
-  deriving (Eq, Generic)
+  deriving (Eq, Generic, Hashable, Reader, ToDoc)
 
 fromNameMapping :: NameMapping -> Bimap String String
 fromNameMapping = BM.mapMonotonic unName . BM.mapMonotonicR unName . nameMapping
@@ -77,4 +91,5 @@ instance Read NameMapping where
 data Change a = Change {
     add    :: Maybe a,
     remove :: Maybe a
-  } deriving (Eq, Foldable, Functor, Generic, Read, Show, Traversable)
+  }
+  deriving (Eq, Foldable, Functor, Generic, Hashable, Read, Reader, Show, ToDoc, Traversable)

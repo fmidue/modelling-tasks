@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
 module Modelling.ActivityDiagram.Datatype (
   AdConnection (..),
@@ -17,6 +18,7 @@ module Modelling.ActivityDiagram.Datatype (
   adjNodes
 ) where
 
+import Autolib.Reader                   (Reader)
 import GHC.Generics (Generic)
 
 data AdConnection =
@@ -55,7 +57,7 @@ data AdNode =
   }
   | AdInitialNode {
       label :: Int
-  } deriving (Generic, Read, Show, Eq)
+  } deriving (Eq, Generic, Read, Reader, Show)
 
 
 data UMLActivityDiagram =

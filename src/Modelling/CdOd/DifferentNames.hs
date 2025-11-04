@@ -1,4 +1,5 @@
 {-# LANGUAGE ApplicativeDo #-}
+{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DeriveTraversable #-}
 {-# LANGUAGE FlexibleContexts #-}
@@ -42,6 +43,9 @@ import qualified Data.Map                         as M (
   fromAscList,
   )
 
+import Autolib.Hash                     (Hashable)
+import Autolib.Reader                   (Reader)
+import Autolib.ToDoc                    (ToDoc)
 import Capabilities.Alloy               (MonadAlloy, getInstances)
 import Capabilities.Cache               (MonadCache)
 import Capabilities.Diagrams            (MonadDiagrams)
@@ -191,7 +195,7 @@ import System.Random.Shuffle            (shuffleM)
 data ShufflingOption a =
     ConsecutiveNumbers
   | WithAdditionalNames [a]
-  deriving (Eq, Generic, Foldable, Functor, Read, Show, Traversable)
+  deriving (Eq, Generic, Foldable, Functor, Hashable, Read, Reader, Show, ToDoc, Traversable)
 
 data DifferentNamesInstance = DifferentNamesInstance {
     cDiagram :: Cd,
@@ -202,7 +206,7 @@ data DifferentNamesInstance = DifferentNamesInstance {
     linkShuffling :: ShufflingOption String,
     taskText :: !DifferentNamesTaskText,
     addText :: ExtraText
-  } deriving (Eq, Generic, Read, Show)
+  } deriving (Eq, Generic, Hashable, Read, Reader, Show, ToDoc)
 
 checkDifferentNamesInstance :: DifferentNamesInstance -> Maybe String
 checkDifferentNamesInstance DifferentNamesInstance {..}
@@ -244,7 +248,7 @@ data DifferentNamesConfig
     -- can be made without considering other relationships.
     withObviousMapping :: !(Maybe Bool),
     extraText :: ExtraText
-  } deriving (Generic, Read, Show)
+  } deriving (Generic, Read, Reader, Show, ToDoc)
 
 checkDifferentNamesConfig :: DifferentNamesConfig -> Maybe String
 checkDifferentNamesConfig DifferentNamesConfig {..}
@@ -323,7 +327,7 @@ data DifferentNamesTaskTextElement
   = GivenCd
   | GivenOd
   | MappingAdvice
-  deriving (Bounded, Enum, Eq, Generic, Ord, Read, Show)
+  deriving (Bounded, Enum, Eq, Generic, Hashable, Ord, Read, Reader, Show, ToDoc)
 
 differentNamesTask
   :: (MonadCache m, MonadDiagrams m, MonadGraphviz m, MonadThrow m, OutputCapable m)

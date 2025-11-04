@@ -1,5 +1,6 @@
 {-# LANGUAGE ApplicativeDo #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE LambdaCase #-}
@@ -51,6 +52,9 @@ import qualified Data.Map                         as M (
   traverseWithKey,
   )
 
+import Autolib.Hash                     (Hashable)
+import Autolib.Reader                   (Reader)
+import Autolib.ToDoc                    (ToDoc)
 import Capabilities.Alloy               (MonadAlloy, getInstances)
 import Capabilities.Cache               (MonadCache)
 import Capabilities.Diagrams            (MonadDiagrams)
@@ -219,7 +223,7 @@ type RelationshipChange = InValidOption
 data InValidOption option forInvalidity forValidity = InValidOption {
   hint :: Either forInvalidity forValidity,
   option :: option
-  } deriving (Eq, Generic, Read, Show)
+  } deriving (Eq, Generic, Hashable, Read, Reader, Show, ToDoc)
 
 mapInValidOption
   :: (a -> b)
@@ -259,7 +263,7 @@ data RepairCdConfig
     timeout          :: Maybe Int,
     useNames         :: Bool,
     extraText        :: ExtraText
-  } deriving (Generic, Read, Show)
+  } deriving (Generic, Read, Reader, Show, ToDoc)
 
 defaultRepairCdConfig :: RepairCdConfig
 defaultRepairCdConfig
@@ -447,7 +451,7 @@ type RepairCdTaskText = [SpecialOutput RepairCdTaskTextElement]
 data RepairCdTaskTextElement
   = IncorrectCd
   | PotentialFixes
-  deriving (Bounded, Enum, Eq, Generic, Ord, Read, Show)
+  deriving (Bounded, Enum, Eq, Generic, Hashable, Ord, Read, Reader, Show, ToDoc)
 
 toTaskText
   :: (MonadCache m, MonadDiagrams m, MonadGraphviz m, OutputCapable m)
@@ -493,7 +497,7 @@ data RepairCdInstance
     showSolution   :: !Bool,
     taskText       :: !RepairCdTaskText,
     addText        :: ExtraText
-  } deriving (Eq, Generic, Read, Show)
+  } deriving (Eq, Generic, Hashable, Read, Reader, Show, ToDoc)
 
 checkRepairCdInstance :: RepairCdInstance -> Maybe String
 checkRepairCdInstance RepairCdInstance {..}
@@ -908,7 +912,7 @@ data WeakeningKind
   -- ^ a weakening resulting in an invalid class diagram candidate
   | LegalStructuralWeakening
   -- ^ a weakening resulting in a valid class diagram
-  deriving (Generic, Read, Show)
+  deriving (Generic, Read, Reader, Show, ToDoc)
 
 {-|
 Generate one base class diagram candidate and four (one step) changes,

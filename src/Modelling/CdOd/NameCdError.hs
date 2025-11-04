@@ -1,4 +1,5 @@
 {-# LANGUAGE ApplicativeDo #-}
+{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DeriveFoldable #-}
 {-# LANGUAGE DeriveGeneric #-}
@@ -30,15 +31,14 @@ module Modelling.CdOd.NameCdError (
   nameCdErrorSolution,
   nameCdErrorSyntax,
   nameCdErrorTask,
-  parseNameCdErrorAnswer,
   renameInstance,
-  showNameCdErrorAnswer,
   ) where
 
 import qualified Modelling.CdOd.CdAndChanges.Transform as Changes (
   transformGetNextFix,
   )
 
+import qualified Autolib.ToDoc                    as ToDoc (text)
 import qualified Data.Bimap                       as BM (fromList)
 import qualified Data.Map                         as M (
   elems,
@@ -55,6 +55,9 @@ import qualified Data.Set                         as S (
   toList,
   )
 
+import Autolib.Hash                     (Hashable)
+import Autolib.Reader                   (Reader (atomic_readerPrec))
+import Autolib.ToDoc                    (ToDoc (toDocPrec))
 import Capabilities.Alloy               (MonadAlloy, getInstances)
 import Capabilities.Cache               (MonadCache)
 import Capabilities.Diagrams            (MonadDiagrams)
@@ -216,10 +219,16 @@ data NameCdErrorAnswer = NameCdErrorAnswer {
 
 $(deriveJSON defaultOptions {fieldLabelModifier = upperToDash} ''NameCdErrorAnswer)
 
+instance Reader NameCdErrorAnswer where
+  atomic_readerPrec = const parseNameCdErrorAnswer
+
+instance ToDoc NameCdErrorAnswer where
+  toDocPrec _ = ToDoc.text . showNameCdErrorAnswer
+
 data Reason
   = Custom (Map Language String)
   | PreDefined Property
-  deriving (Data, Eq, Generic, Ord, Read, Show)
+  deriving (Data, Eq, Generic, Hashable, Ord, Read, Reader, Show, ToDoc)
 
 isCustom :: Reason -> Bool
 isCustom = \case
@@ -238,7 +247,7 @@ data NumberOfReasons = NumberOfReasons {
   customReasons :: Int,
   preDefinedInvalid :: Int,
   preDefinedValid :: Int
-  } deriving (Generic, Read, Show)
+  } deriving (Generic, Read, Reader, Show, ToDoc)
 
 data NameCdErrorConfig = NameCdErrorConfig {
   allowedProperties           :: AllowedProperties,
@@ -255,7 +264,7 @@ data NameCdErrorConfig = NameCdErrorConfig {
   timeout                     :: Maybe Int,
   useNames                    :: Bool,
   extraText                   :: ExtraText
-  } deriving (Generic, Read, Show)
+  } deriving (Generic, Read, Reader, Show, ToDoc)
 
 defaultNameCdErrorConfig :: NameCdErrorConfig
 defaultNameCdErrorConfig = NameCdErrorConfig {
@@ -377,7 +386,7 @@ data NameCdErrorTaskTextElement =
   IncorrectCd |
   ReasonsList |
   RelationshipsList
-  deriving (Bounded, Data, Enum, Eq, Generic, Ord, Read, Show)
+  deriving (Bounded, Data, Enum, Eq, Generic, Hashable, Ord, Read, Reader, Show, ToDoc)
 
 toTaskText
   :: (MonadCache m, MonadDiagrams m, MonadGraphviz m, OutputCapable m)
@@ -428,7 +437,7 @@ data NameCdErrorInstance = NameCdErrorInstance {
   showSolution                :: Bool,
   taskText                    :: !NameCdErrorTaskText,
   addText                     :: ExtraText
-  } deriving (Data, Eq, Generic, Read, Show)
+  } deriving (Data, Eq, Generic, Hashable, Read, Reader, Show, ToDoc)
 
 relevantRelationships
   :: NameCdErrorInstance
@@ -451,7 +460,7 @@ data Relevance
     listingPriority           :: Int,
     referenceUsing            :: ArticleToUse
     }
-  deriving (Data, Eq, Generic, Read, Show)
+  deriving (Data, Eq, Generic, Hashable, Read, Reader, Show, ToDoc)
 
 isRelevant :: Annotation Relevance annotated -> Bool
 isRelevant =

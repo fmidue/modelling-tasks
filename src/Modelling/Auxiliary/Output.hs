@@ -1,3 +1,5 @@
+{-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE DeriveDataTypeable #-}
@@ -120,4 +122,3 @@ checkTaskText taskText
   where
     usedElements = concatMap (concatMap singleton) taskText
     allElements = [minBound ..]
-
