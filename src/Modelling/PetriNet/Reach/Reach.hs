@@ -192,9 +192,9 @@ reportReachFor showInputHelp img noLonger lengthHint minLength showMinLengthHint
       ]
    pure ()
 
-  case noLonger of
+  paragraph $ case noLonger of
     Nothing ->
-      paragraph $ translate $ do
+      translate $ do
         english "Your answer can be arbitrarily short or long."
         german "Ihre Lösung kann beliebig kurz oder lang sein."
 
@@ -205,7 +205,7 @@ reportReachFor showInputHelp img noLonger lengthHint minLength showMinLengthHint
           if isExactMatch
           then ("have exactly", "muss genau")
           else ("not exceed", "darf maximal")
-      in paragraph $ translate $ do
+      in translate $ do
         english $ concat [
           "Your answer must ",
           englishConstraint, " ", show maxL, " steps."]
