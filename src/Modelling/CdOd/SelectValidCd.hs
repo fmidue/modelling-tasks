@@ -330,9 +330,9 @@ inputHelpText :: [Output]
 inputHelpText = [
   Paragraph [
     Translated $ translations $ do
-      english [i|Please state your answer by giving a list of numbers, indicating all valid class diagrams.
+      english [i|Please state your answer by giving a list of numbers, indicating exactly all valid class diagrams.
 For example,|]
-      german [i|Bitte geben Sie Ihre Antwort in Form einer Liste von Zahlen an, die alle gültigen Klassendiagramme enthält.
+      german [i|Bitte geben Sie Ihre Antwort in Form einer Liste von Zahlen an, die genau alle gültigen Klassendiagramme enthält.
 Zum Beispiel würde|],
     Code $ uniform "[1, 2]",
     Translated $ translations $ do
@@ -404,13 +404,13 @@ selectValidCdFeedback path drawSettings xs x cdChange =
                 withDir
                 relation
           english [iii|
-            If for example #{phrase English} would not be there,
-            it would be valid.
+            But if, for example, #{phrase English} would not be there,
+            the candidate would be valid.
             |]
           german [iii|
-            Wenn es zum Beispiel
+            Aber wenn es zum Beispiel
             #{trailingCommaGerman $ phrase German}
-            nicht gäbe, wäre er gültig.
+            nicht gäbe, wäre der Kandidat gültig.
             |]
       pure ()
     Right od | x `notElem` xs -> do
@@ -426,12 +426,12 @@ selectValidCdFeedback path drawSettings xs x cdChange =
       unless sufficient showNamedCd
       paragraph $ translate $ do
         english [iii|
-          #{if sufficient then "Consider" else "Now consider"} the following object diagram, which is an instance of this
+          #{if sufficient then "Consider" else "Now consider"} the following object diagram, which conforms to this
           class diagram:
           |]
         german [iii|
           #{if sufficient then "Betrachten Sie" else "Betrachten Sie nun"} das folgende Objektdiagramm,
-          welches eine Instanz dieses Klassendiagramms ist:
+          welches zu diesem Klassendiagramm passt:
           |]
       paragraph $ image $=<< cacheOd od dir True path
       pure ()
@@ -443,8 +443,8 @@ selectValidCdFeedback path drawSettings xs x cdChange =
       | withDir = Forward
       | otherwise = NoDir
     notCorrect = paragraph $ translate $ do
-      english [iii|Your answer about class diagram candidate #{x} is not right.|]
-      german [iii|Ihre Antwort zu Klassendiagrammkandidat #{x} ist nicht richtig.|]
+      english [iii|Your answer about class diagram candidate #{x} is not correct.|]
+      german [iii|Ihre Antwort zu Klassendiagrammkandidat #{x} ist nicht korrekt.|]
     isInheritance = \case
       Right Inheritance {} -> True
       Right {} -> False
