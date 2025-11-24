@@ -532,7 +532,7 @@ inputHelpText = [
         Please state your answer by providing a letter for the reason,
         indicating the most specifically expressed reason
         for which you think this class diagram is invalid,
-        and a listing of numbers for those relationships
+        and a listing of numbers for all those relationships
         on whose individual presence the invalidity depends.
         For example,
         |]
@@ -542,7 +542,7 @@ inputHelpText = [
         der Ihrer Meinung nach der am spezifischsten
         ausgedrückte Grund dafür ist,
         dass dieses Klassendiagramm ungültig ist,
-        und eine Auflistung von Zahlen für diejenigen Beziehungen,
+        und eine Auflistung von Zahlen für all diejenigen Beziehungen,
         von deren individueller Präsenz die Ungültigkeit abhängt.
         Zum Beispiel würde
         |],
