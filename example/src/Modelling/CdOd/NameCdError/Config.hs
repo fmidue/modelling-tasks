@@ -380,3 +380,15 @@ task2024_54 = NameCdErrorConfig {
   useNames = True,
   extraText = NoExtraText
   }
+
+{-|
+points: 0.15
+-}
+task2025_08 :: NameCdErrorConfig
+task2025_08 = task2024_10
+
+{-|
+points: 0.15
+-}
+task2025_09 :: NameCdErrorConfig
+task2025_09 = task2024_11
