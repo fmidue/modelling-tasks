@@ -353,12 +353,12 @@ inputHelpText = [
     german [i|Bitte geben Sie Ihre Antwort als Liste aller Zahlen an, deren Änderungen jeweils in einem gültigen Klassendiagramm resultieren.|],
   Paragraph [
     Translated $ translations $ do
-      english [i|Answer by giving a comma separated list of all appropriate options, e.g., |]
-      german [i|Antworten Sie durch Angabe einer durch Komma separierten Liste aller zutreffenden Optionen. Zum Beispiel |],
+      english [i|Answer by giving a list of exactly all appropriate options, e.g., |]
+      german [i|Antworten Sie durch Angabe einer Liste genau aller zutreffenden Optionen. Zum Beispiel |],
     Code $ uniform "[1, 2]",
     Translated $ translations $ do
-      english [i| would indicate that options 1 and 2 each repair the given class diagram.|]
-      german [i| als Angabe würde bedeuten, dass die Optionen 1 und 2 jeweils das gegebene Klassendiagramm reparieren.|]
+      english [i| would indicate that only options 1 and 2 each repair the given class diagram.|]
+      german [i| als Angabe würde bedeuten, dass nur die Optionen 1 und 2 jeweils das gegebene Klassendiagramm reparieren.|]
     ]
   ]
 
@@ -420,10 +420,10 @@ repairCdFeedback path drawSettings xs x cdChange =
   where
     correct = paragraph $ translate $ do
       english [iii|Your answer about change #{x} is correct.|]
-      german [iii|Ihre Antwort zu Änderung #{x} ist richtig.|]
+      german [iii|Ihre Antwort zu Änderung #{x} ist korrekt.|]
     notCorrect = paragraph $ translate $ do
       english [iii|Your answer about change #{x} is not correct.|]
-      german [iii|Ihre Antwort zu Änderung #{x} ist nicht richtig.|]
+      german [iii|Ihre Antwort zu Änderung #{x} ist nicht korrekt.|]
     makesCorrect = paragraph $ translate $ do
       english [iii|The change repairs the class diagram as it results in:|]
       german [iii|
