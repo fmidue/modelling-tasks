@@ -529,7 +529,7 @@ inputHelpText = [
   Paragraph [
     Paragraph $ singleton $ Translated $ translations $ do
       english [iii|
-        Please state your answer by providing a letter for the reason,
+        State your answer by providing a letter for the reason,
         indicating the most specifically expressed reason
         for which you think this class diagram is invalid,
         and a listing of numbers for all those relationships
@@ -537,7 +537,7 @@ inputHelpText = [
         For example,
         |]
       german [iii|
-        Bitte geben Sie Ihre Antwort an, indem Sie Folgendes angeben:
+        Geben Sie Ihre Antwort an, indem Sie Folgendes angeben:
         einen Buchstaben für den Grund,
         der Ihrer Meinung nach der am spezifischsten
         ausgedrückte Grund dafür ist,

@@ -349,8 +349,8 @@ defaultRepairCdTaskText = [
 inputHelpText :: [Output]
 inputHelpText = [
   Paragraph $ singleton $ Translated $ translations $ do
-    english [i|Please state your answer by giving a list of numbers, indicating all changes each resulting in a valid class diagram.|]
-    german [i|Bitte geben Sie Ihre Antwort als Liste aller Zahlen an, deren Änderungen jeweils in einem gültigen Klassendiagramm resultieren.|],
+    english [i|State your answer by giving a list of numbers, indicating all changes each on its own resulting in a valid class diagram.|]
+    german [i|Geben Sie Ihre Antwort als Liste aller Zahlen an, deren Änderungen jeweils für sich genommen in einem gültigen Klassendiagramm resultieren.|],
   Paragraph [
     Translated $ translations $ do
       english [i|Answer by giving a list of exactly all appropriate options, e.g., |]

@@ -330,9 +330,9 @@ inputHelpText :: [Output]
 inputHelpText = [
   Paragraph [
     Translated $ translations $ do
-      english [i|Please state your answer by giving a list of numbers, indicating exactly all valid class diagrams.
+      english [i|State your answer by giving a list of numbers, indicating exactly all valid class diagrams.
 For example,|]
-      german [i|Bitte geben Sie Ihre Antwort in Form einer Liste von Zahlen an, die genau alle gültigen Klassendiagramme enthält.
+      german [i|Geben Sie Ihre Antwort in Form einer Liste von Zahlen an, die genau alle gültigen Klassendiagramme enthält.
 Zum Beispiel würde|],
     Code $ uniform "[1, 2]",
     Translated $ translations $ do
