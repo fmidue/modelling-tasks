@@ -426,12 +426,12 @@ selectValidCdFeedback path drawSettings xs x cdChange =
       unless sufficient showNamedCd
       paragraph $ translate $ do
         english [iii|
-          #{if sufficient then "Consider" else "Now consider"} the following object diagram, which conforms to this
+          The following object diagram #{if sufficient then "" else "then "}conforms to this
           class diagram:
           |]
         german [iii|
-          #{if sufficient then "Betrachten Sie" else "Betrachten Sie nun"} das folgende Objektdiagramm,
-          welches zu diesem Klassendiagramm passt:
+          Das folgende Objektdiagramm
+          passt #{if sufficient then "" else "dann "}zu diesem Klassendiagramm:
           |]
       paragraph $ image $=<< cacheOd od dir True path
       pure ()
