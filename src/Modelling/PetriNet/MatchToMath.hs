@@ -101,6 +101,7 @@ import Modelling.PetriNet.Types (
   )
 
 import Control.Applicative              (Alternative ((<|>)))
+import Control.Monad                    (when)
 import Control.Monad.Catch              (MonadCatch, MonadThrow)
 import Control.OutputCapable.Blocks       (
   ArticleToUse (DefiniteArticle),
@@ -396,10 +397,11 @@ mathInstance config inst = do
 
 graphToMathTask
   :: (MonadCache m, MonadDiagrams m, MonadGraphviz m, MonadThrow m, OutputCapable m)
-  => FilePath
+  => Bool
+  -> FilePath
   -> GraphToMathInstance
   -> LangM m
-graphToMathTask path task = do
+graphToMathTask showInputHelp path task = do
   paragraph $ translate $ do
     english "Consider the following graphical representation of a Petri net:"
     german "Betrachten Sie folgende grafische Darstellung eines Petrinetzes:"
@@ -410,10 +412,11 @@ graphToMathTask path task = do
   enumerateM
     (text . (++ ". ") . show)
     $ map (second (mathToOutput latex . snd)) $ toList (to task)
-  paragraph $ translate $ do
+  when showInputHelp $ do
+   paragraph $ translate $ do
     english [i|Please state your answer by giving the number of the matching representation only.|]
     german [i|Geben Sie Ihre Antwort durch Angabe der Nummer der passenden Repräsentation an.|]
-  paragraph $ do
+   paragraph $ do
     translate $ do
       english [i|Stating |]
       german [i|Die Angabe von |]
@@ -422,6 +425,7 @@ graphToMathTask path task = do
       english [i| as answer would indicate that representation 1 matches the given graphical representation (and the other mathematical representations don't).|]
       german [i| als Antwort würde bedeuten, dass Repräsentation 1 zur gegebenen grafischen Darstellung passt (und die anderen mathematischen Repräsentationen nicht).|]
     pure ()
+   pure ()
   hoveringInformation
   extra $ addText task
   pure ()
@@ -459,10 +463,11 @@ mathToOutput f pm = paragraph $ do
 
 mathToGraphTask
   :: (MonadCache m, MonadDiagrams m, MonadGraphviz m, MonadThrow m, OutputCapable m)
-  => FilePath
+  => Bool
+  -> FilePath
   -> MathToGraphInstance
   -> LangM m
-mathToGraphTask path task = do
+mathToGraphTask showInputHelp path task = do
   paragraph $ translate $ do
     english "Consider the following mathematical representation of a Petri net:"
     german "Betrachten Sie folgende mathematische Repräsentation eines Petrinetzes:"
@@ -471,10 +476,11 @@ mathToGraphTask path task = do
     english "Which of the following diagrams represents this Petri net?"
     german "Welches der folgenden Diagramme stellt dieses Petrinetz dar?"
   images show snd $=<< to <$> writeDias path task
-  paragraph $ translate $ do
+  when showInputHelp $ do
+   paragraph $ translate $ do
     english [i|Please state your answer by giving the number of the matching diagram only.|]
     german [i|Geben Sie Ihre Antwort durch Angabe der Nummer des passenden Diagramms an.|]
-  paragraph $ do
+   paragraph $ do
     translate $ do
       english [i|Stating |]
       german [i|Die Angabe von |]
@@ -483,6 +489,7 @@ mathToGraphTask path task = do
       english [i| as answer would indicate that diagram 1 matches the given mathematical representation (and the other diagrams don't).|]
       german [i| als Antwort würde bedeuten, dass Diagramm 1 zur gegebenen mathematischen Repräsentation passt (und die anderen Diagramme nicht).|]
     pure ()
+   pure ()
   hoveringInformation
   extra $ addText task
   pure ()

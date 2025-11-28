@@ -43,13 +43,13 @@ hoveringInformation = collapsed True (put $ translations $ do
   german "Anmerkung zum Hovern"
   ) $ translate $ do
   english [iii|
-    When hovering over or clicking on edges / nodes or their
-    labels, the respective components that belong together are highlighted.
+    When hovering over or clicking on nodes / edges or their
+    labels, the respective diagram elements that belong together are highlighted.
     |]
   german [iii|
     Beim Bewegen über oder Klicken auf
-    Kanten / Knoten bzw. ihre Beschriftungen
-    werden die jeweils zusammengehörenden Komponenten hervorgehoben.
+    Knoten / Kanten bzw. ihre Beschriftungen
+    werden die jeweils zusammengehörenden Diagrammelemente hervorgehoben.
     |]
 
 directionsAdvice :: OutputCapable m => LangM m
@@ -79,7 +79,7 @@ simplifiedInformation = collapsed True (put $ translations $ do
     That means they consist of a single box containing only the class name
     but no sections for attributes or methods.
     #{endLine}
-    Nevertheless you should treat these simplified class representations
+    Nevertheless, you should treat these simplified class representations
     as valid classes.
     |]
   german [iii|

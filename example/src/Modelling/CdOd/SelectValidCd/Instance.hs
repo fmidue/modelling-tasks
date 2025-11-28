@@ -1167,3 +1167,9 @@ task2024_53 = ShuffleInstance {
   shuffleNames = False,
   shuffleOptions = True
   }
+
+{-|
+points: 0.15
+-}
+task2025_07 :: ShuffleInstance SelectValidCdInstance
+task2025_07 = task2024_09
