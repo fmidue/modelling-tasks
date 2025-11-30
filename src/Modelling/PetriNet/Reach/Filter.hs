@@ -96,18 +96,10 @@ isCyclicPattern m xs = any (isCyclicWith xs) [1..min m (length xs `div` 2)]
 hasRepetitiveSubsequence :: Eq a => Int -> [a] -> Bool
 hasRepetitiveSubsequence minLength xs
   | length xs < minLength = False
-  | otherwise = hasRepetitivePrefix minLength xs || hasRepetitiveSuffix minLength xs
-
--- | Check if sequence starts with repetitive elements
-hasRepetitivePrefix :: Eq a => Int -> [a] -> Bool
-hasRepetitivePrefix minLength xs = allEqual (take minLength xs)
+  | otherwise = allEqual (take minLength xs) || allEqual (take minLength (reverse xs))
   where
     allEqual [] = True
     allEqual (y:ys) = all (== y) ys
-
--- | Check if sequence ends with repetitive elements
-hasRepetitiveSuffix :: Eq a => Int -> [a] -> Bool
-hasRepetitiveSuffix minLength xs = hasRepetitivePrefix minLength (reverse xs)
 
 -- | Check if a sequence has grouped repeats (e.g., @[t3,t3,t3,t1,t1,t1,t4,t4]@)
 -- This means each unique element appears in consecutive groups of the same size > 1
