@@ -31,7 +31,7 @@ import GHC.Generics                     (Generic)
 
 -- | Configuration for trivial sequence filtering
 data FilterConfig = FilterConfig {
-  -- | Enable filtering of grouped repeats (e.g., @[t3,t3,t2,t2,t1,t1,t4,t4]@)
+  -- | Enable filtering of grouped repeats (e.g., @[t3,t3,t3,t2,t2,t2,t1,t1]@)
   filterGroupedRepeats :: !Bool,
   -- | Minimum length of repetitive subsequence to consider trivial
   -- (e.g., @[t4,t4,t4,t4]@ as prefix/suffix)
@@ -102,7 +102,7 @@ hasRepetitiveSubsequence minLength xs
     allEqual (y:ys) = all (== y) ys
 
 -- | Check if a sequence has grouped repeats (e.g., @[t3,t3,t3,t1,t1,t1,t4,t4]@)
--- This means each unique element appears in consecutive groups of the same size > 1
+-- This means each unique element appears in consecutive groups of size > 1
 hasGroupedRepeats :: Eq a => [a] -> Bool
 hasGroupedRepeats xs =
   length groups >= 2      -- At least 2 different groups
