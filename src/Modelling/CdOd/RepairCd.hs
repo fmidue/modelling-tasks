@@ -425,14 +425,14 @@ repairCdFeedback path drawSettings xs x cdChange =
       english [iii|Your answer about change #{x} is not correct.|]
       german [iii|Ihre Antwort zu Änderung #{x} ist nicht korrekt.|]
     makesCorrect = paragraph $ translate $ do
-      english [iii|The change repairs the class diagram as it results in:|]
+      english [iii|The change repairs the class diagram as it results in the following valid one:|]
       german [iii|
-        Die Änderung repariert das Klassendiagramm, da es dann so aussieht:
+        Die Änderung repariert das Klassendiagramm, da es dann so aussieht und gültig ist:
         |]
     makesIncorrect = paragraph $ translate $ do
-      english [iii|The change does not repair the class diagram as it results in:|]
+      english [iii|The change does not repair the class diagram as it results in the following still invalid one:|]
       german [iii|
-        Die Änderung repariert das Klassendiagramm nicht, da es dann so aussieht:
+        Die Änderung repariert das Klassendiagramm nicht, da es dann so aussieht und immer noch ungültig ist:
         |]
     showCd cd = paragraph $
       image $=<< cacheCd drawSettings mempty cd path

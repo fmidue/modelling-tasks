@@ -672,18 +672,18 @@ nameCdErrorEvaluation path inst@NameCdErrorInstance {..} x = addPretext $ do
       | points == Right 1 = do
         english [iii|
           If all relationships you correctly gave as constituting the problem
-          would be removed, the following class diagram would result:
+          would be removed, the following valid class diagram would result:
           |]
         german [iii|
           Wenn alle von Ihnen korrekterweise als das Problem ausmachend angegebenen
           Beziehungen entfernt würden,
-          würde das folgende Klassendiagramm entstehen:
+          würde das folgende gültige Klassendiagramm entstehen:
           |]
       | any (contributingToProblem . annotation . snd) chosenRelevant = do
         english [iii|
           Nevertheless, the removal of all relationships you gave as
           contributing to the problem results in resolving the invalidity
-          as the class diagram then would look like this:
+          as the class diagram would then look like this:
           |]
         german [iii|
           Dennoch behebt das Entfernen aller von Ihnen als zum Problem beitragend
@@ -694,12 +694,12 @@ nameCdErrorEvaluation path inst@NameCdErrorInstance {..} x = addPretext $ do
         english [iii|
           The removal of all relationships you gave as contributing to the problem
           still does not resolve the underlying issue
-          as the class diagram then would look like this:
+          as the class diagram would then look like this and still be invalid:
           |]
         german [iii|
           Das Entfernen aller von Ihnen als zum Problem beitragend angegebenen
           Beziehungen behebt das vorliegende Problem nicht,
-          da das Klassendiagramm dann so aussehen würde:
+          da das Klassendiagramm dann so aussehen würde und immer noch ungültig wäre:
           |]
 
 nameCdErrorSolution :: NameCdErrorInstance -> NameCdErrorAnswer

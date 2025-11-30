@@ -239,7 +239,7 @@ data SelectValidCdInstance
   = SelectValidCdInstance {
     cdDrawSettings  :: !CdDrawSettings,
     classDiagrams   :: Map Int CdChange,
-    -- | when enabled feedback for wrong answers will be shown
+    -- | when enabled, feedback for wrong answers will be shown;
     -- this might include ODs
     showExtendedFeedback :: Bool,
     showSolution    :: !Bool,
@@ -404,13 +404,14 @@ selectValidCdFeedback path drawSettings xs x cdChange =
                 withDir
                 relation
           english [iii|
-            But if, for example, #{phrase English} would not be there,
-            the candidate would be valid.
+            #{if sufficient then "But if" else "If now"} for example
+            #{phrase English} would not be there,
+            the candidate #{if sufficient then "" else "(even without the added names) "}would be a valid class diagram.
             |]
           german [iii|
-            Aber wenn es zum Beispiel
-            #{trailingCommaGerman $ phrase German}
-            nicht gäbe, wäre der Kandidat gültig.
+            #{if sufficient then "Aber wenn es" else "Wenn es nun"} zum Beispiel
+            #{trailingCommaGerman $ phrase German} nicht gäbe,
+            wäre der Kandidat #{if sufficient then "" else "(selbst ohne die hinzugefügten Namen) "}ein gültiges Klassendiagramm.
             |]
       pure ()
     Right od | x `notElem` xs -> do
@@ -453,10 +454,10 @@ selectValidCdFeedback path drawSettings xs x cdChange =
     showNamedCd = do
         paragraph $ translate $ do
           english [iii|
-            The relationships in the class diagram could be named in the following way:
+            The relationships in the diagram could be named in the following way:
             |]
           german [iii|
-            Die Beziehungen in dem Klassendiagramm könnten auf folgende Weise
+            Die Beziehungen in dem Diagramm könnten auf folgende Weise
             mit Namen versehen werden:
             |]
         let withNames = drawSettings {printNames = True}
