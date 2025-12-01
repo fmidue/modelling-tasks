@@ -47,14 +47,13 @@ import Modelling.PetriNet.Reach.Type (
   TransitionsList (TransitionsList),
   bimapNet,
   example,
-  hasIsolatedNodes,
   mapState,
   mark,
   )
 
 import Control.Applicative              (Alternative, (<|>))
 import Control.Functor.Trans            (FunctorTrans (lift))
-import Control.Monad                    (forM, guard, when, unless)
+import Control.Monad                    (forM, MonadPlus, when, unless)
 import Control.Monad.Catch              (MonadCatch, MonadThrow)
 import Control.Monad.Extra              (findM, maybeM, whenJust)
 import Control.Monad.State              (put)
@@ -479,7 +478,7 @@ defaultReachInstance = ReachInstance {
 }
 
 generateNetGoal
-  :: (MonadCatch m, MonadDiagrams m, MonadGraphviz m)
+  :: (MonadPlus m, MonadCatch m, MonadDiagrams m, MonadGraphviz m)
   => NetGoalConfig
   -> Int
   -> m (NetGoal Place Transition)
@@ -491,8 +490,6 @@ generateNetGoal NetGoalConfig {..} seed = do
             ts
             capacity
         return $ do
-          -- Filter out nets with isolated nodes
-          guard $ not $ hasIsolatedNodes n
           (l,zs) <-
             take (maxTransitionLength + 1) $ zip [0 :: Int ..] $ levels n
           z' <- zs
@@ -542,7 +539,7 @@ checkReachConfig ReachConfig {..} =
       else Just "At least one of showTargetNet or showPlaceNamesInNet must be True"
 
 generateReach
-  :: (MonadCatch m, MonadDiagrams m, MonadGraphviz m)
+  :: (MonadPlus m, MonadCatch m, MonadDiagrams m, MonadGraphviz m)
   => ReachConfig
   -> Int
   -> m (ReachInstance Place Transition)

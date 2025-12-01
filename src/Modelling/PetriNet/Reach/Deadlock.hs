@@ -52,7 +52,6 @@ import Modelling.PetriNet.Reach.Type (
   TransitionsList (TransitionsList),
   bimapNet,
   example,
-  hasIsolatedNodes,
   )
 
 import Control.Applicative              (Alternative)
@@ -72,7 +71,7 @@ import Control.OutputCapable.Blocks.Generic (
 import Data.Bifunctor                   (Bifunctor (second))
 import Data.Either.Combinators          (whenRight)
 import Control.Functor.Trans            (FunctorTrans (lift))
-import Control.Monad                    (guard, replicateM)
+import Control.Monad                    (guard, MonadPlus, replicateM)
 import Control.Monad.Catch              (MonadCatch, MonadThrow)
 import Control.Monad.Extra              (findM, maybeM)
 import Control.Monad.Random             (MonadRandom, evalRandT, mkStdGen)
@@ -274,7 +273,7 @@ checkDeadlockConfig DeadlockConfig {..} =
     showLengthHint
 
 generateDeadlock
-  :: (MonadCatch m, MonadDiagrams m, MonadGraphviz m)
+  :: (MonadPlus m, MonadCatch m, MonadDiagrams m, MonadGraphviz m)
   => DeadlockConfig
   -> Int
   -> m (DeadlockInstance Place Transition)
@@ -293,7 +292,7 @@ generateDeadlock conf@DeadlockConfig {..} seed = do
     }
 
 tries
-  :: (MonadCatch m, MonadDiagrams m, MonadGraphviz m)
+  :: (MonadPlus m, MonadCatch m, MonadDiagrams m, MonadGraphviz m)
   => Int
   -> DeadlockConfig
   -> Int
@@ -310,7 +309,7 @@ tries n conf seed = eval out
           $ findM (Monad.lift . isPetriDrawable pn) $ drawCommands conf
         else out
 
-try :: MonadRandom m => DeadlockConfig -> m [(Int, Net Place Transition)]
+try :: (Alternative m, MonadRandom m) => DeadlockConfig -> m [(Int, Net Place Transition)]
 try conf = do
   let ps = [Place 1 .. Place (numPlaces conf)]
       ts = [Transition 1 .. Transition (numTransitions conf)]
@@ -319,8 +318,6 @@ try conf = do
       ts
       (Modelling.PetriNet.Reach.Deadlock.capacity conf)
   return $ do
-    -- Filter out nets with isolated nodes
-    guard $ not $ hasIsolatedNodes n
     let (no,yeah) = span (null . snd)
           $ take (maxTransitionLength conf + 1)
           $ zip [0 :: Int ..]
