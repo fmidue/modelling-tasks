@@ -172,7 +172,7 @@ task2024_14 = ShuffleInstance {
       Paragraph [
         Translated (listToFM [
           (English, "A student received the following scenario:"),
-          (German, "Ein Student hat folgendes Szenario erhalten:")
+          (German, "Ein Studierender hat folgendes Szenario erhalten:")
           ])
         ],
       Paragraph [
@@ -183,8 +183,8 @@ task2024_14 = ShuffleInstance {
         ],
       Paragraph [
         Translated (listToFM [
-          (English, "He solved the task of creating a class diagram for this scenario in the following way:"),
-          (German, "Die Aufgabe, ein Klassendiagramm für dieses Szenario zu entwerfen, hat er folgendermaßen gelöst:")
+          (English, "The student solved the task of creating a class diagram for this scenario in the following way:"),
+          (German, "Die Aufgabe, ein Klassendiagramm für dieses Szenario zu entwerfen, hat der Studierende folgendermaßen gelöst:")
           ])
         ],
       Paragraph [Special IncorrectCd],
@@ -197,8 +197,8 @@ task2024_14 = ShuffleInstance {
       Paragraph [Special RelationshipsList],
       Paragraph [
         Translated (listToFM [
-          (English, "Analyse and take a stance on the created class diagram regarding the scenario task of the student! And name all the specific relationships that would need to be changed on occasion."),
-          (German, "Analysieren Sie und beziehen Sie Stellung zum entworfenen Klassendiagramm hinsichtlich der Szenario-Aufgabe des Studenten! Und nennen Sie alle konkreten Beziehungen, die gegebenenfalls geändert werden müssten.")
+          (English, "Analyse and take a stance on the created class diagram regarding the scenario task of the student! In case, name all the specific relationships that would need to be changed!"),
+          (German, "Analysieren Sie und beziehen Sie Stellung zum entworfenen Klassendiagramm hinsichtlich der Szenario-Aufgabe des Studierenden! Gegebenenfalls, nennen Sie alle konkreten Beziehungen, die geändert werden müssten!")
           ])
         ],
       Paragraph [
