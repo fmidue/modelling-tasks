@@ -107,6 +107,7 @@ import Modelling.CdOd.NameCdError.Config (
   )
 import Modelling.CdOd.NameCdError.Instance (
   task2024_14,
+  task2025_12,
   )
 import Modelling.CdOd.RepairCd (
   checkRepairCdConfig,
@@ -117,6 +118,8 @@ import Modelling.CdOd.RepairCd.Config (
   task2024_12,
   task2024_13,
   task2024_55,
+  task2025_10,
+  task2025_11,
   )
 import Modelling.CdOd.SelectValidCd (
   checkSelectValidCdConfig,
@@ -450,3 +453,10 @@ spec =
         checkNameCdErrorConfig task2025_08 `shouldBe` Nothing
       it "task09" $
         checkNameCdErrorConfig task2025_09 `shouldBe` Nothing
+      it "task10" $
+        checkRepairCdConfig task2025_10 `shouldBe` Nothing
+      it "task11" $
+        checkRepairCdConfig task2025_11 `shouldBe` Nothing
+      it "task12" $
+        checkNameCdErrorInstance (All.taskInstance task2025_12)
+        `shouldBe` Nothing

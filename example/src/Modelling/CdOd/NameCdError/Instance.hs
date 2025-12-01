@@ -215,3 +215,9 @@ task2024_14 = ShuffleInstance {
   shuffleNames = False,
   shuffleOptions = True
   }
+
+{-|
+points: 0.15
+-}
+task2025_12 :: ShuffleInstance NameCdErrorInstance
+task2025_12 = task2024_14
