@@ -1,6 +1,9 @@
 {-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DeriveTraversable #-}
+{-# LANGUAGE StandaloneDeriving #-}
+{-# OPTIONS_GHC -Wwarn=orphans #-}
 
 -- | This module provides basic types
 
@@ -24,6 +27,8 @@ import Autolib.Reader                   (Reader (atomic_readerPrec))
 import Autolib.ToDoc                    (ToDoc (toDocPrec), text)
 import Data.Bimap                       (Bimap)
 import Data.Char                        (isAlpha, isAlphaNum)
+import Data.Data                        (Data)
+import Data.GraphViz                    (GraphvizCommand (..))
 import Data.String                      (IsString (fromString))
 import GHC.Generics                     (Generic)
 import Text.ParserCombinators.Parsec (
@@ -93,3 +98,9 @@ data Change a = Change {
     remove :: Maybe a
   }
   deriving (Eq, Foldable, Functor, Generic, Hashable, Read, Reader, Show, ToDoc, Traversable)
+
+deriving instance Generic GraphvizCommand
+deriving instance Data GraphvizCommand
+instance Hashable GraphvizCommand
+instance Reader GraphvizCommand
+instance ToDoc GraphvizCommand

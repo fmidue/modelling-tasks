@@ -26,7 +26,7 @@ data AdConnection =
     from :: Int,
     to :: Int,
     guard :: String
-  } deriving (Generic, Read, Show, Eq, Ord)
+  } deriving (Eq, Generic, Ord, Read, Show)
 
 data AdNode =
   AdActionNode {
