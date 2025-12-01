@@ -177,7 +177,7 @@ task2024_14 = ShuffleInstance {
         ],
       Paragraph [
         Translated (listToFM [
-          (English, "A university campus consists of different buildings. Facility mangers are responsible for buildings, and each building is cared for by a facility manager. A facility manager is a person. Another kind of persons are the professors, who each have a specific room as own office. A building consists of different rooms, not each of which is a professor's office."),
+          (English, "A university campus consists of different buildings. Facility managers are responsible for buildings, and each building is cared for by a facility manager. A facility manager is a person. Another kind of persons are the professors, who each have a specific room as own office. A building consists of different rooms, not each of which is a professor's office."),
           (German, "Ein Universitätscampus besteht aus verschiedenen Gebäuden. Hausmeister sind für Gebäude zuständig, und es wird jedes Gebäude von einem Hausmeister betreut. Ein Hausmeister ist eine Person. Eine andere Art von Personen sind die Professoren, die jeweils einen bestimmten Raum als eigenes Büro haben. Ein Gebäude besteht aus verschiedenen Räumen, von denen nicht jeder ein Professorenbüro ist.")
           ])
         ],
