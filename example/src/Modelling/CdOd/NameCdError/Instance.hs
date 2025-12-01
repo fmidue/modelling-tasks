@@ -197,8 +197,8 @@ task2024_14 = ShuffleInstance {
       Paragraph [Special RelationshipsList],
       Paragraph [
         Translated (listToFM [
-          (English, "Analyse and take a stance on the created class diagram regarding the scenario task of the student! In case, name all the specific relationships that would need to be changed!"),
-          (German, "Analysieren Sie und beziehen Sie Stellung zum entworfenen Klassendiagramm hinsichtlich der Szenario-Aufgabe des Studierenden! Gegebenenfalls, nennen Sie alle konkreten Beziehungen, die geändert werden müssten!")
+          (English, "Analyse and take a stance on the created class diagram regarding the scenario task of the student! In case, indicate all the specific relationships that would need to be changed!"),
+          (German, "Analysieren Sie und beziehen Sie Stellung zum entworfenen Klassendiagramm hinsichtlich der Szenario-Aufgabe des Studierenden! Gegebenenfalls, geben Sie alle konkreten Beziehungen an, die geändert werden müssten!")
           ])
         ],
       Paragraph [
