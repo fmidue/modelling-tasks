@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE FlexibleContexts #-}
@@ -27,6 +28,9 @@ import qualified Data.Map                         as M (
   insert,
   )
 
+import Autolib.Hash                     (Hashable)
+import Autolib.Reader.Class             (Reader)
+import Autolib.ToDoc                    (ToDoc)
 import Capabilities.Cache               (MonadCache)
 import Capabilities.Diagrams            (MonadDiagrams)
 import Capabilities.Graphviz            (MonadGraphviz)
@@ -92,7 +96,7 @@ data PickInstance n = PickInstance {
   showSolution :: !Bool,
   addText :: !ExtraText
   }
-  deriving (Generic, Read, Show)
+  deriving (Eq, Generic, Hashable, Read, Reader, Show, ToDoc)
 
 -- TODO: replace 'wrong' in 'pickGenerate' by 'wrongInstances'
 -- if this value might be greater than 1 on task generation.

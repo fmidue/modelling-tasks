@@ -1,4 +1,5 @@
 {-# LANGUAGE ApplicativeDo #-}
+{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# Language DuplicateRecordFields #-}
@@ -98,6 +99,8 @@ import Modelling.PetriNet.Types (
   shuffleNames,
   )
 
+import Autolib.Reader.Class             (Reader)
+import Autolib.ToDoc                    (ToDoc)
 import Control.Applicative              (Alternative ((<|>)))
 import Control.Monad                    (when)
 import Control.Monad.Catch              (MonadCatch, MonadThrow)
@@ -172,7 +175,7 @@ data MathConfig = MathConfig {
   wrongInstances :: Int,
   alloyConfig :: AlloyConfig,
   extraText :: ExtraText
-  } deriving (Generic, Read, Show)
+  } deriving (Generic, Read, Reader, Show, ToDoc)
 
 defaultMathConfig :: MathConfig
 defaultMathConfig = MathConfig {
