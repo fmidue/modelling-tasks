@@ -177,14 +177,14 @@ task2024_14 = ShuffleInstance {
         ],
       Paragraph [
         Translated (listToFM [
-          (English, "A university campus consists of different buildings. Facility managers are responsible for buildings, and each building is cared for by a facility manager. A facility manager is a person. Another kind of persons are the professors, who each have a specific room as own office. A building consists of different rooms, not each of which is a professor's office."),
-          (German, "Ein Universitätscampus besteht aus verschiedenen Gebäuden. Hausmeister sind für Gebäude zuständig, und es wird jedes Gebäude von einem Hausmeister betreut. Ein Hausmeister ist eine Person. Eine andere Art von Personen sind die Professoren, die jeweils einen bestimmten Raum als eigenes Büro haben. Ein Gebäude besteht aus verschiedenen Räumen, von denen nicht jeder ein Professorenbüro ist.")
+          (English, "A university campus consists of different buildings. Facility managers are responsible for buildings and each building is cared for by a facility manager. A facility manager is a person. Another kind of persons are the professors, who each have a specific room as own office. A building consists of different rooms, not each of which is a professor's office."),
+          (German, "Ein Universitätscampus besteht aus verschiedenen Gebäuden. Hausmeister sind für Gebäude zuständig und jedes Gebäude wird von einem Hausmeister betreut. Ein Hausmeister ist eine Person. Eine andere Art von Personen sind die Professoren, die jeweils einen bestimmten Raum als eigenes Büro haben. Ein Gebäude besteht aus verschiedenen Räumen, von denen nicht jeder ein Professorenbüro ist.")
           ])
         ],
       Paragraph [
         Translated (listToFM [
           (English, "The student solved the task of creating a class diagram for this scenario in the following way:"),
-          (German, "Die Aufgabe, ein Klassendiagramm für dieses Szenario zu entwerfen, hat der Studierende folgendermaßen gelöst:")
+          (German, "Die Aufgabe, ein Klassendiagramm für dieses Szenario zu erzeugen, hat der Studierende folgendermaßen gelöst:")
           ])
         ],
       Paragraph [Special IncorrectCd],
@@ -198,7 +198,7 @@ task2024_14 = ShuffleInstance {
       Paragraph [
         Translated (listToFM [
           (English, "Analyse and take a stance on the created class diagram regarding the scenario task of the student! In case, indicate all the specific relationships that would need to be changed!"),
-          (German, "Analysieren Sie und beziehen Sie Stellung zum entworfenen Klassendiagramm hinsichtlich der Szenario-Aufgabe des Studierenden! Gegebenenfalls, geben Sie alle konkreten Beziehungen an, die geändert werden müssten!")
+          (German, "Analysieren Sie und beziehen Sie Stellung zum erzeugten Klassendiagramm hinsichtlich der Szenario-Aufgabe des Studierenden! Gegebenenfalls, führen Sie alle konkreten Beziehungen auf, die geändert werden müssten!")
           ])
         ],
       Paragraph [
