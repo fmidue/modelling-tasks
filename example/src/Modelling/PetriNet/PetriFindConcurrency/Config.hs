@@ -2,7 +2,6 @@
 
 module Modelling.PetriNet.PetriFindConcurrency.Config where
 
-import Modelling.Auxiliary.Output       (ExtraText(..))
 import Modelling.PetriNet.Types (
   AdvConfig (..),
   AlloyConfig (..),
@@ -11,6 +10,8 @@ import Modelling.PetriNet.Types (
   GraphConfig (..),
   FindConcurrencyConfig (..),
   )
+
+import Control.OutputCapable.Blocks     (ExtraText (..))
 import Data.GraphViz.Commands           (GraphvizCommand(..))
 
 {-|

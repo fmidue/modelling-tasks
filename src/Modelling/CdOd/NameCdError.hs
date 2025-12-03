@@ -67,13 +67,11 @@ import Modelling.Auxiliary.Common (
   upperToDash,
   )
 import Modelling.Auxiliary.Output (
-  ExtraText(..),
   addPretext,
   checkTaskText,
   hoveringInformation,
   simplifiedInformation,
   uniform,
-  extra,
   )
 import Modelling.Auxiliary.Shuffle.All  (shuffleEverything)
 import Modelling.CdOd.Auxiliary.Util    (alloyInstanceToOd)
@@ -153,6 +151,7 @@ import Control.Monad.Catch              (MonadCatch, MonadThrow)
 import Control.Monad.Except             (runExceptT)
 import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
+  ExtraText (..),
   GenericOutputCapable (..),
   LangM,
   Language (English, German),
@@ -161,6 +160,7 @@ import Control.OutputCapable.Blocks (
   ($=<<),
   english,
   enumerateM,
+  extra,
   german,
   multipleChoice,
   multipleChoiceSyntax,
@@ -646,11 +646,12 @@ nameCdErrorEvaluation path inst@NameCdErrorInstance {..} x = addPretext $ do
         $ map (second (contributingToProblem . annotation))
         relevant
       correctAnswer
-        | showSolution = Just $ toString $ encode $ nameCdErrorSolution inst
+        | showSolution = Just . (DefiniteArticle,)
+          $ toString $ encode $ nameCdErrorSolution inst
         | otherwise = Nothing
   recoverWith 0 (
-    singleChoice DefiniteArticle reasonTranslation Nothing solutionReason (reason x)
-      $>> multipleChoice DefiniteArticle
+    singleChoice reasonTranslation Nothing solutionReason (reason x)
+      $>> multipleChoice
         dueToTranslation
         Nothing
         solutionDueTo
@@ -660,7 +661,7 @@ nameCdErrorEvaluation path inst@NameCdErrorInstance {..} x = addPretext $ do
       paragraph $ translate $ classDiagramDescription points
       paragraph $ image $=<< cacheCd cdDrawSettings mempty changedCd path
       pure ()
-    $>> printSolutionAndAssert DefiniteArticle correctAnswer $ fromEither points
+    $>> printSolutionAndAssert True correctAnswer $ fromEither points
   where
     relevant = relevantRelationships inst
     changedCd = unannotateCd $ classDiagram {

@@ -34,7 +34,6 @@ import Modelling.Auxiliary.Common (
   Object,
   findFittingRandomElements,
   )
-import Modelling.Auxiliary.Output (ExtraText)
 import Modelling.PetriNet.Diagram (
   cacheNet,
   getDefaultNet,
@@ -61,6 +60,7 @@ import Control.Monad.Catch              (MonadCatch, MonadThrow)
 import Control.Monad.Extra              (maybeM)
 import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
+  ExtraText,
   LangM,
   OutputCapable,
   english,
@@ -172,11 +172,11 @@ pickEvaluation task = do
   let what = translations $ do
         english "Petri net"
         german "Petrinetz"
-  singleChoice DefiniteArticle what maybeSolutionString solution
+  singleChoice what maybeSolutionString solution
   where
     maybeSolutionString =
       if withSol
-      then Just $ show solution
+      then Just . (DefiniteArticle,) $ show solution
       else Nothing
     solution = pickSolution task
     withSol = showSolution task

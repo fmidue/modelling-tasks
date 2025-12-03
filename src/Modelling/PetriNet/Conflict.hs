@@ -4,6 +4,7 @@
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE TupleSections #-}
 
 module Modelling.PetriNet.Conflict (
   ConflictPlaces,
@@ -57,9 +58,7 @@ import Modelling.Auxiliary.Common (
   upperFirst,
   )
 import Modelling.Auxiliary.Output (
-  ExtraText(..),
   hoveringInformation,
-  extra,
   )
 import Modelling.PetriNet.Alloy (
   compAdvConstraints,
@@ -137,7 +136,7 @@ import Control.Monad                    (when, unless)
 import Control.Monad.Catch              (MonadCatch, MonadThrow)
 import Control.Monad.Extra              (findM)
 import Control.OutputCapable.Blocks (
-  ArticleToUse (DefiniteArticle),
+  ExtraText (..),
   GenericOutputCapable (..),
   LangM',
   LangM,
@@ -146,6 +145,7 @@ import Control.OutputCapable.Blocks (
   ($=<<),
   continueOrAbort,
   english,
+  extra,
   german,
   printSolutionAndAssert,
   recoverFrom,
@@ -290,7 +290,7 @@ findConflictPlacesEvaluation task (conflict, ps) =
   let result = min
         res
         $ (base - size inducing + size correct - size wrong') % base
-  points <- printSolutionAndAssert DefiniteArticle (fixSolution <$> ms) result
+  points <- printSolutionAndAssert True (fmap fixSolution <$> ms) result
   pure points
   where
     assert = continueOrAbort withSol

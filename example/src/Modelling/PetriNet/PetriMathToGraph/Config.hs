@@ -3,7 +3,6 @@ Configurations might work for @PetriGraphToMath@ and @PetriMathToGraph@ tasks
 -}
 module Modelling.PetriNet.PetriMathToGraph.Config where
 
-import Modelling.Auxiliary.Output       (ExtraText(..))
 import Modelling.PetriNet.MatchToMath (
   MathConfig (..),
   )
@@ -14,6 +13,8 @@ import Modelling.PetriNet.Types (
   ChangeConfig (..),
   GraphConfig (..),
   )
+
+import Control.OutputCapable.Blocks     (ExtraText (..))
 import Data.GraphViz.Commands           (GraphvizCommand(..))
 
 {-|

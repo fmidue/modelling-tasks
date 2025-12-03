@@ -68,9 +68,7 @@ import Modelling.ActivityDiagram.PlantUMLConverter (
   )
 import Modelling.Auxiliary.Common       (getFirstInstance)
 import Modelling.Auxiliary.Output (
-  ExtraText(..),
   addPretext,
-  extra
   )
 import Modelling.PetriNet.Types (
   checkPetriNodeCount,
@@ -87,12 +85,14 @@ import Control.Applicative (Alternative ((<|>)))
 import Control.Monad.Catch              (MonadThrow)
 import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
+  ExtraText (..),
   GenericOutputCapable (..),
   LangM,
   OutputCapable,
   Rated,
   ($=<<),
   english,
+  extra,
   german,
   translate,
   translations,
@@ -261,9 +261,9 @@ findAuxiliaryPetriNodesEvaluation task sub = addPretext $ do
       sub' = M.keys $ findAuxiliaryPetriNodesSolutionMap sub
       maybeSolutionString =
         if showSolution task
-        then Just $ show sol
+        then Just . (DefiniteArticle,) $ show sol
         else Nothing
-  multipleChoice DefiniteArticle as maybeSolutionString solution sub'
+  multipleChoice as maybeSolutionString solution sub'
 
 findAuxiliaryPetriNodesSolutionMap
   :: FindAuxiliaryPetriNodesSolution

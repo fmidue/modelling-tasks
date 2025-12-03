@@ -2,7 +2,6 @@
 
 module Modelling.PetriNet.PetriPickConcurrency.Config where
 
-import Modelling.Auxiliary.Output       (ExtraText(..))
 import Modelling.PetriNet.Types (
   AlloyConfig (..),
   BasicConfig (..),
@@ -10,6 +9,8 @@ import Modelling.PetriNet.Types (
   GraphConfig (..),
   PickConcurrencyConfig (..),
   )
+
+import Control.OutputCapable.Blocks     (ExtraText (..))
 import Data.GraphViz.Commands           (GraphvizCommand(..))
 
 {-|

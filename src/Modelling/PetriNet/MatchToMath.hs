@@ -47,9 +47,7 @@ import Capabilities.Diagrams            (MonadDiagrams)
 import Capabilities.Graphviz            (MonadGraphviz)
 import Modelling.Auxiliary.Common       (Object (oName), findFittingRandomElements)
 import Modelling.Auxiliary.Output       (
-  ExtraText(..),
   hoveringInformation,
-  extra,
   )
 import Modelling.PetriNet.Alloy (
   compAdvConstraints,
@@ -105,12 +103,14 @@ import Control.Monad                    (when)
 import Control.Monad.Catch              (MonadCatch, MonadThrow)
 import Control.OutputCapable.Blocks       (
   ArticleToUse (DefiniteArticle),
+  ExtraText (..),
   GenericOutputCapable (..),
   LangM,
   Language,
   OutputCapable,
   ($=<<),
   english,
+  extra,
   german,
   singleChoice,
   translate,
@@ -549,9 +549,9 @@ evaluation what task = do
   let solution = matchSolution task
       maybeSolution =
         if showSolution task
-        then Just $ show solution
+        then Just . (DefiniteArticle,) $ show solution
         else Nothing
-  singleChoice DefiniteArticle what maybeSolution solution
+  singleChoice what maybeSolution solution
 
 checkGraphToMathConfig :: MathConfig -> Maybe String
 checkGraphToMathConfig c@MathConfig {

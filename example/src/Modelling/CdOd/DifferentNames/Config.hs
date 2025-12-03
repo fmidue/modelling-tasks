@@ -2,7 +2,6 @@
 
 module Modelling.CdOd.DifferentNames.Config where
 
-import Modelling.Auxiliary.Output       (ExtraText(..))
 import Modelling.CdOd.DifferentNames (
   DifferentNamesConfig (..),
   )
@@ -13,6 +12,7 @@ import Modelling.CdOd.Types (
   OmittedDefaultMultiplicities (..),
   )
 
+import Control.OutputCapable.Blocks     (ExtraText (..))
 import Data.Ratio                       ((%))
 
 {-|

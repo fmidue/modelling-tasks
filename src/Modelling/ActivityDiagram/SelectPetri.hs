@@ -72,9 +72,7 @@ import Modelling.Auxiliary.Common (
   weightedShuffle,
   )
 import Modelling.Auxiliary.Output (
-  ExtraText(..),
   addPretext,
-  extra,
   )
 import Modelling.PetriNet.Diagram (cacheNet)
 import Modelling.PetriNet.Types (
@@ -92,11 +90,13 @@ import Control.Monad.Catch              (MonadThrow, throwM)
 import Control.Monad.Extra (loopM, firstJustM)
 import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
+  ExtraText (..),
   GenericOutputCapable (..),
   LangM,
   OutputCapable,
   ($=<<),
   english,
+  extra,
   german,
   reRefuseLangM,
   translate,
@@ -438,9 +438,9 @@ selectPetriEvaluation path task n = addPretext $ do
       (solution, _) = head $ M.toList $ M.map snd $ M.filter fst solMap
       maybeSolutionString =
         if showSolution task
-        then Just $ show solution
+        then Just . (DefiniteArticle,) $ show solution
         else Nothing
-  reRefuseLangM (singleChoice DefiniteArticle as maybeSolutionString solution n) $ do
+  reRefuseLangM (singleChoice as maybeSolutionString solution n) $ do
     when (showSolution task) $ do
 
       when (suppressNodeNames $ plantUMLConf task) $ paragraph $ do

@@ -3,7 +3,6 @@
 {-# LANGUAGE TypeApplications #-}
 module Modelling.PetriNet.ConcurrencySpec where
 
-import Modelling.Auxiliary.Output (ExtraText(..))
 import qualified Modelling.PetriNet.Types         as Find (
   FindConcurrencyConfig (..),
   )
@@ -53,6 +52,7 @@ import Modelling.PetriNet.TestCommon (
 import Settings                         (configDepth, needsTuning)
 
 import Control.Lens.Lens                ((??))
+import Control.OutputCapable.Blocks     (ExtraText (..))
 import Test.Hspec
 
 spec :: Spec

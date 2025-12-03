@@ -63,11 +63,13 @@ import Control.Monad.Trans.Class (lift)
 import Control.Monad.Extra (firstJustM)
 import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
+  ExtraText (..),
   GenericOutputCapable (..),
   LangM,
   OutputCapable,
   ($=<<),
   english,
+  extra,
   german,
   translate,
   translations,
@@ -92,9 +94,7 @@ import Data.String.Interpolate          (i, iii)
 import Data.Vector.Distance (Params(..), leastChanges)
 import GHC.Generics (Generic)
 import Modelling.Auxiliary.Output (
-  ExtraText(..),
   addPretext,
-  extra
   )
 import System.Random.Shuffle (shuffleM)
 
@@ -346,9 +346,9 @@ selectASEvaluation task n = addPretext $ do
       (solution, validAS) = head $ M.toList $ M.map snd $ M.filter fst solMap
       solutionString =
         if showSolution task
-        then Just $ show validAS
+        then Just . (DefiniteArticle,) $ show validAS
         else Nothing
-  singleChoice DefiniteArticle as solutionString solution n
+  singleChoice as solutionString solution n
 
 selectASSolution
   :: SelectASInstance

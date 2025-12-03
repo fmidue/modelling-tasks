@@ -4,7 +4,6 @@ module Modelling.CdOd.NameCdError.Instance where
 
 import qualified Data.Map                         as M (fromList)
 
-import Modelling.Auxiliary.Output  (ExtraText (..))
 import Modelling.Auxiliary.Shuffle.All  (ShuffleInstance (..))
 import Modelling.CdOd.NameCdError (
   NameCdErrorInstance (..),
@@ -24,6 +23,7 @@ import Modelling.CdOd.Types (
 
 import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
+  ExtraText (..),
   Language (English, German),
   )
 import Control.OutputCapable.Blocks.Generic.Type (
