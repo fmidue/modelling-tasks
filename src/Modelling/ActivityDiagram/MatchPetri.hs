@@ -75,9 +75,7 @@ import Modelling.ActivityDiagram.PlantUMLConverter (
   )
 import Modelling.Auxiliary.Common (getFirstInstance, oneOf)
 import Modelling.Auxiliary.Output (
-  ExtraText(..),
   addPretext,
-  extra
   )
 import Modelling.PetriNet.Diagram (cacheNet)
 import Modelling.PetriNet.Types (
@@ -93,12 +91,14 @@ import Control.Applicative (Alternative ((<|>)))
 import Control.Monad.Catch              (MonadThrow)
 import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
+  ExtraText (..),
   GenericOutputCapable (..),
   LangM,
   Rated,
   OutputCapable,
   ($=<<),
   english,
+  extra,
   german,
   translate,
   translations,
@@ -435,11 +435,11 @@ matchPetriEvaluation task sub = addPretext $ do
       sol = matchPetriSolution task
       maybeSolutionString =
         if showSolution task
-        then Just $ show sol
+        then Just . (DefiniteArticle,) $ show sol
         else Nothing
       solution = matchPetriSolutionMap sol
       sub' = M.keys $ matchPetriSolutionMap sub
-  multipleChoice DefiniteArticle as maybeSolutionString solution sub'
+  multipleChoice as maybeSolutionString solution sub'
 
 matchPetriSolutionMap
   :: MatchPetriSolution

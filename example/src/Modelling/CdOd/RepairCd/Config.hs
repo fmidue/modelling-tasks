@@ -2,7 +2,6 @@
 
 module Modelling.CdOd.RepairCd.Config where
 
-import Modelling.Auxiliary.Output       (ExtraText(..))
 import Modelling.CdOd.RepairCd (
   RepairCdConfig (..),
   )
@@ -18,6 +17,7 @@ import Modelling.CdOd.Types (
   RelationshipMutation (..),
   )
 
+import Control.OutputCapable.Blocks     (ExtraText (..))
 import Data.Ratio                       ((%))
 
 {-|

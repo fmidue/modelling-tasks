@@ -3,7 +3,8 @@
 module Modelling.ActivityDiagram.SelectAs.Config where
 import Modelling.ActivityDiagram.Config (AdConfig(..))
 import Modelling.ActivityDiagram.SelectAS (SelectASConfig(..))
-import Modelling.Auxiliary.Output       (ExtraText(..))
+
+import Control.OutputCapable.Blocks     (ExtraText (..))
 
 {-|
 points: 0.15

@@ -2,7 +2,6 @@
 
 module Modelling.CdOd.NameCdError.Config where
 
-import Modelling.Auxiliary.Output       (ExtraText(..))
 import Modelling.CdOd.NameCdError (
   NameCdErrorConfig (..),
   NumberOfReasons (..),
@@ -19,6 +18,7 @@ import Modelling.CdOd.Types (
   Property (..),
   )
 
+import Control.OutputCapable.Blocks     (ExtraText (..))
 import Data.Ratio                       ((%))
 
 {-|

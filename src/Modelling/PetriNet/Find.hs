@@ -23,7 +23,6 @@ import qualified Data.Bimap                       as BM (lookup)
 
 import Modelling.Auxiliary.Common       (Object)
 import Modelling.Auxiliary.Output (
-  ExtraText,
   addPretext,
   )
 import Modelling.PetriNet.Diagram (
@@ -49,6 +48,8 @@ import Control.Applicative              (Alternative ((<|>)))
 import Control.Lens                     (makeLensesFor)
 import Control.Monad.Catch              (MonadThrow)
 import Control.OutputCapable.Blocks (
+  ArticleToUse (DefiniteArticle),
+  ExtraText,
   LangM',
   Language (English, German),
   OutputCapable,
@@ -120,13 +121,13 @@ toFindEvaluation
   -> Bool
   -> (Transition, Transition)
   -> (Transition, Transition)
-  -> LangM' m (Maybe String, a)
+  -> LangM' m (Maybe (ArticleToUse, String), a)
 toFindEvaluation what withSol (ft, st) (fi, si) = do
   let correct = ft == fi && st == si || ft == si && st == fi
       points = if correct then 1 else 0
       maybeSolutionString =
         if withSol
-        then Just $ show $ transitionPairShow (ft, st)
+        then Just . (DefiniteArticle,) $ show $ transitionPairShow (ft, st)
         else Nothing
   assert correct $ translate $ do
     english $ "The indicated transitions " ++ localise English what ++ "?"

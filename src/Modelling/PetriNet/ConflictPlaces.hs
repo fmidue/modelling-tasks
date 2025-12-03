@@ -22,9 +22,7 @@ import Capabilities.Cache               (MonadCache)
 import Capabilities.Diagrams            (MonadDiagrams)
 import Capabilities.Graphviz            (MonadGraphviz)
 import Modelling.Auxiliary.Output (
-  ExtraText(..),
   hoveringInformation,
-  extra,
   )
 import Modelling.PetriNet.Conflict (
   ConflictPlaces,
@@ -69,12 +67,14 @@ import Control.Monad                    (void)
 import Control.Monad.Catch              (MonadThrow)
 import Control.OutputCapable.Blocks (
   GenericOutputCapable (..),
+  ExtraText (..),
   LangM',
   LangM,
   OutputCapable,
   ($=<<),
   continueOrAbort,
   english,
+  extra,
   german,
   translate,
   )

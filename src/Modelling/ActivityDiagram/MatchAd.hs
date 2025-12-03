@@ -50,12 +50,14 @@ import Control.Applicative (Alternative ((<|>)))
 import Control.Monad.Catch              (MonadThrow)
 import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
+  ExtraText (..),
   GenericOutputCapable (..),
   LangM,
   Rated,
   OutputCapable,
   ($=<<),
   english,
+  extra,
   german,
   translate,
   translations,
@@ -73,9 +75,7 @@ import Data.Maybe (isJust, isNothing, fromJust)
 import Data.String.Interpolate (i, iii)
 import GHC.Generics (Generic)
 import Modelling.Auxiliary.Output (
-  ExtraText(..),
   addPretext,
-  extra
   )
 import System.Random.Shuffle (shuffleM)
 
@@ -239,11 +239,11 @@ matchAdEvaluation task sub = addPretext $ do
       sol = matchAdSolution task
       solutionString =
         if showSolution task
-        then Just $ show sol
+        then Just . (DefiniteArticle,) $ show sol
         else Nothing
       solution = matchAdSolutionMap sol
       sub' = M.keys $ matchAdSolutionMap sub
-  multipleChoice DefiniteArticle as solutionString solution sub'
+  multipleChoice as solutionString solution sub'
 
 matchAdSolutionMap
   :: MatchAdSolution

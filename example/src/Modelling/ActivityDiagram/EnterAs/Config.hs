@@ -4,7 +4,8 @@ module Modelling.ActivityDiagram.EnterAs.Config where
 
 import Modelling.ActivityDiagram.Config (AdConfig(..))
 import Modelling.ActivityDiagram.EnterAS (EnterASConfig(..))
-import Modelling.Auxiliary.Output       (ExtraText(..))
+
+import Control.OutputCapable.Blocks     (ExtraText (..))
 
 {-|
 points: 0.15

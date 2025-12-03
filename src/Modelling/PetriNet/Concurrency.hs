@@ -49,9 +49,7 @@ import Modelling.Auxiliary.Common (
   parseWith,
   )
 import Modelling.Auxiliary.Output (
-  ExtraText(..),
   hoveringInformation,
-  extra,
   )
 import Modelling.PetriNet.Alloy (
   compAdvConstraints,
@@ -119,7 +117,7 @@ import Control.Monad                    (when)
 import Control.Monad.Catch              (MonadCatch, MonadThrow)
 import Control.Monad.Extra              (findM)
 import Control.OutputCapable.Blocks (
-  ArticleToUse (DefiniteArticle),
+  ExtraText (..),
   GenericOutputCapable (..),
   LangM',
   LangM,
@@ -127,6 +125,7 @@ import Control.OutputCapable.Blocks (
   Rated,
   ($=<<),
   english,
+  extra,
   german,
   printSolutionAndAssert,
   translate,
@@ -248,7 +247,7 @@ findConcurrencyEvaluation task x = do
   let what = translations $ do
         english "are concurrently activated"
         german "sind nebenläufig aktiviert"
-  uncurry (printSolutionAndAssert DefiniteArticle)
+  uncurry (printSolutionAndAssert True)
     $=<< unLangM $ toFindEvaluation what withSol concur x
   where
     concur = findConcurrencySolution task

@@ -62,12 +62,11 @@ import Modelling.Auxiliary.Common (
   TaskGenerationException (NoInstanceAvailable),
   )
 import Modelling.Auxiliary.Output (
-  ExtraText(..),
   addPretext,
   checkTaskText,
   hoveringInformation,
   simplifiedInformation,
-  uniform, extra,
+  uniform,
   )
 import Modelling.Auxiliary.Shuffle.All  (shuffleEverything)
 import Modelling.CdOd.Auxiliary.Util    (alloyInstanceToOd)
@@ -144,6 +143,7 @@ import Control.Monad                    ((>=>), forM, void, when, zipWithM)
 import Control.Monad.Catch              (MonadCatch, MonadThrow (throwM))
 import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
+  ExtraText (..),
   GenericOutputCapable (..),
   LangM,
   Language (English, German),
@@ -152,6 +152,7 @@ import Control.OutputCapable.Blocks (
   ($=<<),
   english,
   enumerateM,
+  extra,
   german,
   multipleChoice,
   multipleChoiceSyntax,
@@ -392,10 +393,11 @@ repairCdEvaluation path inst xs = addPretext $ do
         ]
       solution = isRight . hint <$> changes inst
       correctAnswer
-        | showSolution inst = Just $ show $ repairCdSolution inst
+        | showSolution inst
+        = Just . (DefiniteArticle,) . show $ repairCdSolution inst
         | otherwise = Nothing
   reRefuse
-    (multipleChoice DefiniteArticle chs correctAnswer solution xs)
+    (multipleChoice chs correctAnswer solution xs)
     $ when (showExtendedFeedback inst)
     $ void $ M.traverseWithKey
       (repairCdFeedback path (cdDrawSettings inst) xs)

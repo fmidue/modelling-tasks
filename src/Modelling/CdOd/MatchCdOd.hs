@@ -51,10 +51,8 @@ import Modelling.Auxiliary.Common (
   RandomiseNames (hasRandomisableNames, randomiseNames),
   )
 import Modelling.Auxiliary.Output (
-  ExtraText(..),
   addPretext,
   directionsAdvice,
-  extra,
   hoveringInformation,
   simplifiedInformation,
   uniform,
@@ -130,12 +128,14 @@ import Control.Monad.Fail               (MonadFail)
 #endif
 import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
+  ExtraText (..),
   GenericOutputCapable (..),
   LangM,
   OutputCapable,
   Rated,
   ($=<<),
   english,
+  extra,
   german,
   multipleChoice,
   translate,
@@ -440,9 +440,10 @@ matchCdOdEvaluation task sub' = do
         german "Instanzen"
       solution =
         if showSolution task
-        then Just . show . matchingShow $ matchCdOdSolution task
+        then Just . (DefiniteArticle,) . show . matchingShow
+          $ matchCdOdSolution task
         else Nothing
-  multipleChoice DefiniteArticle what solution matching sub
+  multipleChoice what solution matching sub
   where
     toMatching' :: Foldable f => f (Int, Letters) -> [(Int, Char)]
     toMatching' =

@@ -120,7 +120,6 @@ import qualified Data.Map.Lazy                    as M (
 import qualified Data.Set                         as S (empty, union)
 
 import Modelling.Auxiliary.Common       (lensRulesL)
-import Modelling.Auxiliary.Output       (ExtraText (..))
 import Modelling.PetriNet.Reach.Type    (Place, ShowTransition (ShowTransition))
 
 import Control.Lens                     (makeLensesWith)
@@ -128,6 +127,7 @@ import Control.Monad                    ((<=<))
 import Control.Monad.Catch              (Exception, MonadThrow (throwM))
 import Control.Monad.Random             (RandT, RandomGen)
 import Control.Monad.Trans              (MonadTrans(lift))
+import Control.OutputCapable.Blocks     (ExtraText (..))
 import Data.Bimap                       (Bimap)
 import Data.Data                        (Data)
 import Data.GraphViz.Attributes.Complete (GraphvizCommand (..))

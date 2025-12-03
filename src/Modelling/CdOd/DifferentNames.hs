@@ -52,13 +52,11 @@ import Modelling.Auxiliary.Common (
   TaskGenerationException (NoInstanceAvailable),
   )
 import Modelling.Auxiliary.Output (
-  ExtraText(..),
   addPretext,
   directionsAdvice,
   hoveringInformation,
   simplifiedInformation,
   uniform,
-  extra,
   )
 import Modelling.Auxiliary.Shuffle.NamesAndLayout (
   shuffleEverything,
@@ -124,6 +122,7 @@ import Control.Monad.Catch              (MonadCatch, MonadThrow, throwM)
 import Control.Monad.Extra              (when, whenJust)
 import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
+  ExtraText (..),
   GenericOutputCapable (..),
   LangM,
   OutputCapable,
@@ -131,6 +130,7 @@ import Control.OutputCapable.Blocks (
   ($=<<),
   collapsed,
   english,
+  extra,
   german,
   multipleChoice,
   translations,
@@ -151,7 +151,6 @@ import Control.Monad.Random (
   evalRandT,
   mkStdGen,
   )
-import Control.Monad.State               (put)
 import Control.Monad.Trans.Except       (runExceptT)
 import Data.Bifunctor                   (Bifunctor (bimap, first))
 import Data.Bimap                       (Bimap)
@@ -359,7 +358,7 @@ toTaskText showInputHelp path task = do
   pure ()
 
 mappingAdvice :: OutputCapable m => LangM m
-mappingAdvice = collapsed True (put $ translations $ do
+mappingAdvice = collapsed True (translations $ do
   english "Note on link grouping"
   german "Anmerkung zur Link-Gruppierung"
   ) $ do
@@ -542,9 +541,10 @@ differentNamesEvaluation task cs = do
       ms = M.fromAscList $ map (,True) $ BM.toAscList mStripped
       solution =
         if showSolution task
-        then Just . show . mappingShow $ differentNamesSolution task
+        then Just . (DefiniteArticle,) . show . mappingShow
+          $ differentNamesSolution task
         else Nothing
-  multipleChoice DefiniteArticle what solution ms (mapMaybe (readMapping mStripped) csStripped)
+  multipleChoice what solution ms (mapMaybe (readMapping mStripped) csStripped)
 
 differentNamesSolution :: DifferentNamesInstance -> [(Name, Name)]
 differentNamesSolution = BM.toAscList . nameMapping . mapping

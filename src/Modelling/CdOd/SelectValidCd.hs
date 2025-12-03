@@ -44,13 +44,11 @@ import Modelling.Auxiliary.Common (
   RandomiseNames (randomiseNames),
   )
 import Modelling.Auxiliary.Output (
-  ExtraText(..),
   addPretext,
   checkTaskText,
   hoveringInformation,
   simplifiedInformation,
   uniform,
-  extra,
   )
 import Modelling.Auxiliary.Shuffle.All  (shuffleEverything)
 import Modelling.CdOd.CdAndChanges.Instance (
@@ -114,6 +112,7 @@ import Control.Monad                    ((>=>), unless, void, when)
 import Control.Monad.Catch              (MonadCatch, MonadThrow (throwM))
 import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
+  ExtraText (..),
   GenericOutputCapable (..),
   LangM,
   Language (English, German),
@@ -121,6 +120,7 @@ import Control.OutputCapable.Blocks (
   Rated,
   ($=<<),
   english,
+  extra,
   german,
   multipleChoice,
   multipleChoiceSyntax,
@@ -361,9 +361,10 @@ selectValidCdEvaluation path inst@SelectValidCdInstance{..} xs = addPretext $ do
         ]
       solution = isRight . hint <$> classDiagrams
       correctAnswer
-        | showSolution = Just $ show $ selectValidCdSolution inst
+        | showSolution
+        = Just . (DefiniteArticle,) $ show $ selectValidCdSolution inst
         | otherwise = Nothing
-  reRefuse (multipleChoice DefiniteArticle cds correctAnswer solution xs)
+  reRefuse (multipleChoice cds correctAnswer solution xs)
     $ when showExtendedFeedback
     $ void $ M.traverseWithKey
       (selectValidCdFeedback path cdDrawSettings xs)
