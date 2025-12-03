@@ -239,7 +239,7 @@ data SelectValidCdInstance
   = SelectValidCdInstance {
     cdDrawSettings  :: !CdDrawSettings,
     classDiagrams   :: Map Int CdChange,
-    -- | when enabled feedback for wrong answers will be shown
+    -- | when enabled, feedback for wrong answers will be shown;
     -- this might include ODs
     showExtendedFeedback :: Bool,
     showSolution    :: !Bool,
@@ -330,9 +330,9 @@ inputHelpText :: [Output]
 inputHelpText = [
   Paragraph [
     Translated $ translations $ do
-      english [i|Please state your answer by giving a list of numbers, indicating all valid class diagrams.
+      english [i|State your answer by giving a list of numbers, indicating exactly all valid class diagrams.
 For example,|]
-      german [i|Bitte geben Sie Ihre Antwort in Form einer Liste von Zahlen an, die alle gültigen Klassendiagramme enthält.
+      german [i|Geben Sie Ihre Antwort in Form einer Liste von Zahlen an, die genau alle gültigen Klassendiagramme enthält.
 Zum Beispiel würde|],
     Code $ uniform "[1, 2]",
     Translated $ translations $ do
@@ -404,13 +404,14 @@ selectValidCdFeedback path drawSettings xs x cdChange =
                 withDir
                 relation
           english [iii|
-            If for example #{phrase English} would not be there,
-            it would be valid.
+            #{if sufficient then "But if" else "If now"} for example
+            #{phrase English} would not be there,
+            the candidate #{if sufficient then "" else "(even without the added names) "}would be a valid class diagram.
             |]
           german [iii|
-            Wenn es zum Beispiel
-            #{trailingCommaGerman $ phrase German}
-            nicht gäbe, wäre er gültig.
+            #{if sufficient then "Aber wenn es" else "Wenn es nun"} zum Beispiel
+            #{trailingCommaGerman $ phrase German} nicht gäbe,
+            wäre der Kandidat #{if sufficient then "" else "(selbst ohne die hinzugefügten Namen) "}ein gültiges Klassendiagramm.
             |]
       pure ()
     Right od | x `notElem` xs -> do
@@ -426,12 +427,12 @@ selectValidCdFeedback path drawSettings xs x cdChange =
       unless sufficient showNamedCd
       paragraph $ translate $ do
         english [iii|
-          #{if sufficient then "Consider" else "Now consider"} the following object diagram, which is an instance of this
+          The following object diagram #{if sufficient then "" else "then "}conforms to this
           class diagram:
           |]
         german [iii|
-          #{if sufficient then "Betrachten Sie" else "Betrachten Sie nun"} das folgende Objektdiagramm,
-          welches eine Instanz dieses Klassendiagramms ist:
+          Das folgende Objektdiagramm
+          passt #{if sufficient then "" else "dann "}zu diesem Klassendiagramm:
           |]
       paragraph $ image $=<< cacheOd od dir True path
       pure ()
@@ -443,8 +444,8 @@ selectValidCdFeedback path drawSettings xs x cdChange =
       | withDir = Forward
       | otherwise = NoDir
     notCorrect = paragraph $ translate $ do
-      english [iii|Your answer about class diagram candidate #{x} is not right.|]
-      german [iii|Ihre Antwort zu Klassendiagrammkandidat #{x} ist nicht richtig.|]
+      english [iii|Your answer about class diagram candidate #{x} is not correct.|]
+      german [iii|Ihre Antwort zu Klassendiagrammkandidat #{x} ist nicht korrekt.|]
     isInheritance = \case
       Right Inheritance {} -> True
       Right {} -> False
@@ -453,10 +454,10 @@ selectValidCdFeedback path drawSettings xs x cdChange =
     showNamedCd = do
         paragraph $ translate $ do
           english [iii|
-            The relationships in the class diagram could be named in the following way:
+            The relationships in the diagram could be named in the following way:
             |]
           german [iii|
-            Die Beziehungen in dem Klassendiagramm könnten auf folgende Weise
+            Die Beziehungen in dem Diagramm könnten auf folgende Weise
             mit Namen versehen werden:
             |]
         let withNames = drawSettings {printNames = True}
