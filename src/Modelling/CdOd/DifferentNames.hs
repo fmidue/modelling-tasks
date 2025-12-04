@@ -249,10 +249,6 @@ data DifferentNamesConfig
 
 checkDifferentNamesConfig :: DifferentNamesConfig -> Maybe String
 checkDifferentNamesConfig DifferentNamesConfig {..}
-  | isJust withObviousMapping
-  = Just [iii|
-    'withObviousMapping' is not yet supported and has to be set to Nothing
-    |]
   | (x, Just y) <- relationshipLimits classConfig, x /= y
   = Just [iii|
       The minimum number of relationships has to equal its maximum number
