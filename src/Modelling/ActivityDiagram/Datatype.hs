@@ -18,7 +18,9 @@ module Modelling.ActivityDiagram.Datatype (
   adjNodes
 ) where
 
+import Autolib.Hash                     (Hashable)
 import Autolib.Reader                   (Reader)
+import Autolib.ToDoc                    (ToDoc)
 import GHC.Generics (Generic)
 
 data AdConnection =
@@ -26,7 +28,8 @@ data AdConnection =
     from :: Int,
     to :: Int,
     guard :: String
-  } deriving (Eq, Generic, Ord, Read, Show)
+  }
+  deriving (Eq, Generic, Hashable, Ord, Read, Reader, Show, ToDoc)
 
 data AdNode =
   AdActionNode {
@@ -57,14 +60,16 @@ data AdNode =
   }
   | AdInitialNode {
       label :: Int
-  } deriving (Eq, Generic, Read, Reader, Show)
+  }
+  deriving (Eq, Generic, Hashable, Read, Reader, Show, ToDoc)
 
 
 data UMLActivityDiagram =
   UMLActivityDiagram {
     nodes :: [AdNode],
     connections :: [AdConnection]
-  } deriving (Generic, Read, Show, Eq)
+  }
+  deriving (Eq, Generic, Hashable, Read, Reader, Show, ToDoc)
 
 
 adjNodes :: AdNode -> UMLActivityDiagram -> [AdNode]

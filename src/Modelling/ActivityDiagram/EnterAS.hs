@@ -1,4 +1,5 @@
 {-# LANGUAGE ApplicativeDo #-}
+{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE NamedFieldPuns #-}
@@ -23,6 +24,9 @@ module Modelling.ActivityDiagram.EnterAS (
   defaultEnterASInstance
 ) where
 
+import Autolib.Hash                     (Hashable)
+import Autolib.Reader                   (Reader)
+import Autolib.ToDoc                    (ToDoc)
 import Capabilities.Alloy               (MonadAlloy, getInstances)
 import Capabilities.PlantUml            (MonadPlantUml)
 import Capabilities.WriteFile           (MonadWriteFile)
@@ -102,7 +106,8 @@ data EnterASInstance = EnterASInstance {
   sampleSequence :: [String],
   showSolution :: Bool,
   addText :: ExtraText
-} deriving (Eq, Generic, Read, Show)
+}
+  deriving (Eq, Generic, Hashable, Read, Reader, Show, ToDoc)
 
 data EnterASConfig = EnterASConfig {
   adConfig :: AdConfig,
@@ -112,7 +117,9 @@ data EnterASConfig = EnterASConfig {
   answerLength :: !(Int, Int),
   printSolution :: Bool,
   extraText :: ExtraText
-} deriving (Generic, Read, Show)
+}
+  deriving (Generic, Read, Reader, Show, ToDoc)
+
 
 defaultEnterASConfig :: EnterASConfig
 defaultEnterASConfig = EnterASConfig {

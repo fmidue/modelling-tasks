@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE NamedFieldPuns #-}
 
@@ -7,6 +8,8 @@ module Modelling.ActivityDiagram.Config (
   checkAdConfig,
 ) where
 
+import Autolib.Reader                   (Reader)
+import Autolib.ToDoc                    (ToDoc)
 import GHC.Generics (Generic)
 
 data AdConfig = AdConfig {
@@ -18,7 +21,8 @@ data AdConfig = AdConfig {
   activityFinalNodes :: Int,
   flowFinalNodes :: Int,
   cycles :: Int
-} deriving (Generic, Read, Show)
+}
+  deriving (Generic, Read, Reader, Show, ToDoc)
 
 defaultAdConfig :: AdConfig
 defaultAdConfig = AdConfig

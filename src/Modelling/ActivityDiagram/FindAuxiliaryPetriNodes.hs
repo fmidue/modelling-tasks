@@ -1,4 +1,5 @@
 {-# LANGUAGE ApplicativeDo #-}
+{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE FlexibleContexts #-}
@@ -33,6 +34,9 @@ import qualified Data.Map as M (
   size,
   )
 
+import Autolib.Hash                     (Hashable)
+import Autolib.Reader                   (Reader)
+import Autolib.ToDoc                    (ToDoc)
 import Capabilities.Alloy               (MonadAlloy, getInstances)
 import Capabilities.PlantUml            (MonadPlantUml)
 import Capabilities.WriteFile           (MonadWriteFile)
@@ -115,7 +119,8 @@ data FindAuxiliaryPetriNodesInstance = FindAuxiliaryPetriNodesInstance {
   plantUMLConf :: PlantUmlConfig,
   showSolution :: Bool,
   addText :: ExtraText
-} deriving (Generic, Read, Show)
+}
+  deriving (Eq, Generic, Hashable, Read, Reader, Show, ToDoc)
 
 data FindAuxiliaryPetriNodesConfig = FindAuxiliaryPetriNodesConfig {
   adConfig :: AdConfig,
@@ -129,7 +134,8 @@ data FindAuxiliaryPetriNodesConfig = FindAuxiliaryPetriNodesConfig {
   presenceOfSinkTransitionsForFinals :: Maybe Bool,
   printSolution :: Bool,
   extraText :: ExtraText
-} deriving (Generic, Read, Show)
+}
+  deriving (Generic, Read, Reader, Show, ToDoc)
 
 defaultFindAuxiliaryPetriNodesConfig :: FindAuxiliaryPetriNodesConfig
 defaultFindAuxiliaryPetriNodesConfig =
@@ -182,7 +188,8 @@ data FindAuxiliaryPetriNodesSolution = FindAuxiliaryPetriNodesSolution {
   countOfNonAuxiliaryNodes :: Int,
   countOfAuxiliaryPlaces :: Int,
   countOfAuxiliaryTransitions :: Int
-} deriving (Generic, Show, Eq, Read)
+}
+  deriving (Eq, Generic, Read, Reader, Show, ToDoc)
 
 findAuxiliaryPetriNodesSolution
   :: FindAuxiliaryPetriNodesInstance

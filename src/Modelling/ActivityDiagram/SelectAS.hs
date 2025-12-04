@@ -1,4 +1,5 @@
 {-# LANGUAGE ApplicativeDo #-}
+{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE NamedFieldPuns #-}
@@ -25,6 +26,9 @@ module Modelling.ActivityDiagram.SelectAS (
 import qualified Data.Map as M (fromList, toList, keys, filter, map)
 import qualified Data.Vector as V (fromList)
 
+import Autolib.Hash                     (Hashable)
+import Autolib.Reader                   (Reader)
+import Autolib.ToDoc                    (ToDoc)
 import Capabilities.Alloy               (MonadAlloy, getInstances)
 import Capabilities.PlantUml            (MonadPlantUml)
 import Capabilities.WriteFile           (MonadWriteFile)
@@ -104,7 +108,8 @@ data SelectASInstance = SelectASInstance {
   drawSettings :: PlantUmlConfig,
   showSolution :: Bool,
   addText :: ExtraText
-} deriving (Eq, Generic, Read, Show)
+}
+  deriving (Eq, Generic, Hashable, Read, Reader, Show, ToDoc)
 
 data SelectASConfig = SelectASConfig {
   adConfig :: AdConfig,
@@ -116,7 +121,8 @@ data SelectASConfig = SelectASConfig {
   printSolution :: Bool,
   withActionRepetition :: Bool,
   extraText :: ExtraText
-} deriving (Generic, Read, Show)
+}
+  deriving (Generic, Read, Reader, Show, ToDoc)
 
 defaultSelectASConfig :: SelectASConfig
 defaultSelectASConfig = SelectASConfig {

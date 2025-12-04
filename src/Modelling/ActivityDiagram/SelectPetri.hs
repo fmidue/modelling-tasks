@@ -1,4 +1,5 @@
 {-# LANGUAGE ApplicativeDo #-}
+{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE FlexibleContexts #-}
@@ -26,6 +27,9 @@ module Modelling.ActivityDiagram.SelectPetri (
   defaultSelectPetriInstance
   ) where
 
+import Autolib.Hash                     (Hashable)
+import Autolib.Reader                   (Reader)
+import Autolib.ToDoc                    (ToDoc)
 import Capabilities.Alloy               (MonadAlloy, getInstances)
 import Capabilities.Cache               (MonadCache)
 import Capabilities.Diagrams            (MonadDiagrams)
@@ -134,7 +138,8 @@ data SelectPetriInstance = SelectPetriInstance {
   petriNets :: Map Int (Bool, SimplePetriLike PetriKey),
   showSolution :: Bool,
   addText :: ExtraText
-} deriving (Generic, Show)
+}
+  deriving (Eq, Generic, Hashable, Read, Reader, Show, ToDoc)
 
 data SelectPetriConfig = SelectPetriConfig {
   adConfig :: AdConfig,
@@ -159,7 +164,8 @@ data SelectPetriConfig = SelectPetriConfig {
   withActivityFinalInForkBlocks :: !(Maybe Bool),
   printSolution :: Bool,
   extraText :: ExtraText
-} deriving (Generic, Show)
+}
+  deriving (Generic, Read, Reader, Show, ToDoc)
 
 pickRandomLayout :: (MonadRandom m) => SelectPetriConfig -> m GraphvizCommand
 pickRandomLayout conf = oneOf (petriLayout conf)
