@@ -1,4 +1,5 @@
 {-# LANGUAGE ApplicativeDo #-}
+{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE NamedFieldPuns #-}
@@ -46,6 +47,9 @@ import Modelling.ActivityDiagram.PlantUMLConverter (
 import Modelling.ActivityDiagram.Shuffle (shuffleAdNames)
 import Modelling.Auxiliary.Common       (getFirstInstance)
 
+import Autolib.Hash                     (Hashable)
+import Autolib.Reader                   (Reader)
+import Autolib.ToDoc                    (ToDoc)
 import Control.Applicative (Alternative ((<|>)))
 import Control.Monad.Catch              (MonadThrow)
 import Control.OutputCapable.Blocks (
@@ -84,7 +88,8 @@ data MatchAdInstance = MatchAdInstance {
   plantUMLConf :: PlantUmlConfig,
   showSolution :: Bool,
   addText :: ExtraText
-} deriving (Generic, Read, Show)
+}
+  deriving (Eq, Generic, Hashable, Read, Reader, Show, ToDoc)
 
 data MatchAdConfig = MatchAdConfig {
   adConfig :: AdConfig,
@@ -93,7 +98,8 @@ data MatchAdConfig = MatchAdConfig {
   withActivityFinalInForkBlocks :: !(Maybe Bool),
   printSolution :: Bool,
   extraText :: ExtraText
-} deriving (Generic, Read, Show)
+}
+  deriving (Generic, Read, Reader, Show, ToDoc)
 
 defaultMatchAdConfig :: MatchAdConfig
 defaultMatchAdConfig = MatchAdConfig {
@@ -154,7 +160,8 @@ data MatchAdSolution = MatchAdSolution {
   countOfInitialNodes :: Int,
   countOfActivityFinalNodes :: Int,
   countOfFlowFinalNodes :: Int
-} deriving (Generic, Eq, Show, Read)
+}
+  deriving (Eq, Generic, Hashable, Read, Reader, Show, ToDoc)
 
 matchAdSolution :: MatchAdInstance -> MatchAdSolution
 matchAdSolution task =
