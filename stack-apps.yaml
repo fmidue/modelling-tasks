@@ -1,5 +1,5 @@
 ---
-resolver: lts-21.25
+resolver: lts-23.28
 packages:
   - .
   - app
@@ -17,12 +17,12 @@ extra-deps:
       - output-blocks
       - output-blocks-latex
   - git: https://github.com/fmidue/autotool-capabilities.git
-    commit: ab7bff15b0666c49c8854671468232c9755659b8
+    commit: 9001e5040f2a48337359c6d93f600420d17b3dcc
     subdirs:
       - autotool-capabilities
       - autotool-capabilities-io-instances
   - git: https://git.uni-due.de/fmi/autotool-dev
-    commit: 9dc2f51b2dc057564445bc8135b3952e72dae42c
+    commit: 56e75cd74d44f81ae52baa3b886025bd4d158bbb
     subdirs:
       - base
       - data
