@@ -29,11 +29,14 @@ import Data.Bimap                       (Bimap)
 import Data.Char                        (isAlpha, isAlphaNum)
 import Data.Data                        (Data)
 import Data.GraphViz                    (GraphvizCommand (..))
+import Data.Maybe                       (maybeToList)
 import Data.String                      (IsString (fromString))
 import GHC.Generics                     (Generic)
 import Text.ParserCombinators.Parsec (
   Parser,
+  char,
   many1,
+  optionMaybe,
   satisfy,
   endBy,
   )
@@ -50,7 +53,10 @@ showName = unName
 parseNamePrec :: Int -> Parser Name
 parseNamePrec _ = do
   skipSpaces
-  Name <$> many1 (satisfy isAlphaNum) <* skipSpaces
+  fmap Name . (++)
+    <$> many1 (satisfy isAlphaNum)
+    <*> (maybeToList <$> optionMaybe (char '.'))
+    <* skipSpaces
 
 instance Reader Name where
   atomic_readerPrec = parseNamePrec
