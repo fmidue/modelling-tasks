@@ -382,7 +382,7 @@ After making changes, always validate:
 
 1. **Build succeeds**: `stack --stack-yaml=stack-apps.yaml test --no-run-tests modelling-tasks` or `stack --stack-yaml=stack-apps.yaml test --no-run-tests` **MUST PASS BEFORE COMMIT**
 2. **EditorConfig compliance**: `./scripts/check-editorconfig.sh` **MUST PASS**
-3. **HLint does not complain**: `hlint src/ test/ app/`
+3. **HLint does not complain**: `hlint src/ test/ app/` **MUST PASS WITHOUT EVEN JUST SUGGESTIONS**
 4. **Tests pass**: `stack --stack-yaml=stack-apps.yaml test` (30+ minutes)
 5. **App execution**: Test at least one app with `stack exec <app-name>`
 6. **GHCi interaction**: Load examples and generate task instances
