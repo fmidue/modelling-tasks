@@ -4,6 +4,7 @@
 {-# LANGUAGE NamedFieldPuns #-}
 {-# Language QuasiQuotes #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE TupleSections #-}
 
 module Modelling.PetriNet.Concurrency (
   checkFindConcurrencyConfig,
@@ -249,7 +250,7 @@ findConcurrencyEvaluation task x = do
         english "are concurrently activated"
         german "sind nebenläufig aktiviert"
   uncurry (printSolutionAndAssert False)
-    . first (fmap (\s -> (DefiniteArticle, s)))
+    . first (fmap (DefiniteArticle,))
     $=<< unLangM $ toFindEvaluation what withSol concur x
   where
     concur = findConcurrencySolution task
