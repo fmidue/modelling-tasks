@@ -8,6 +8,13 @@ import Modelling.PetriNet.Reach.Deadlock (
   defaultDeadlockConfig,
   generateDeadlock,
   checkDeadlockConfig,
+  deadlockAllSolutions,
+  deadlockSolution,
+  )
+import Modelling.PetriNet.Reach.Filter (
+  defaultFilterConfig,
+  noFiltering,
+  isTrivialSequence,
   )
 import Modelling.PetriNet.Reach.Step    (successors)
 import Modelling.PetriNet.Reach.Type    (Net (transitions), Capacity(..), Place(..))
@@ -28,7 +35,7 @@ import Test.QuickCheck (
 
 spec :: Spec
 spec = do
-  describe "generateDeadlock" $
+  describe "generateDeadlock" $ do
     it "abides minTransitionLength" $
       quickCheckWith stdArgs {maxSuccess = 50} $ property $ \seed -> do
         let config = defaultDeadlockConfig {
@@ -41,6 +48,28 @@ spec = do
             ts = transitions net
         net `shouldSatisfy`
           hasMinTransitionLength (null . successors net) ts minL
+
+    it "generates non-trivial solutions when filtering is enabled" $
+      quickCheckWith stdArgs {maxSuccess = 15} $ property $ \seed -> do
+        let config = defaultDeadlockConfig {
+              maxTransitionLength = 8,
+              minTransitionLength = 8,
+              filterConfig = defaultFilterConfig
+              }
+        deadlockInstance <- generateDeadlock config seed
+        let solutions = deadlockAllSolutions (petriNet deadlockInstance)
+        solutions `shouldSatisfy` (not . any (isTrivialSequence $ filterConfig config))
+
+    it "can generate solutions when filtering is disabled" $
+      quickCheckWith stdArgs {maxSuccess = 50} $ property $ \seed -> do
+        let config = defaultDeadlockConfig {
+              maxTransitionLength = 8,
+              minTransitionLength = 8,
+              filterConfig = noFiltering
+              }
+        deadlockInstance <- generateDeadlock config seed
+        let solution = deadlockSolution deadlockInstance
+        length solution `shouldBe` 8
 
   describe "checkDeadlockConfig" $ do
     it "accepts valid configuration" $ do

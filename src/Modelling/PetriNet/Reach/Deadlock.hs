@@ -16,16 +16,51 @@ originally from Autotool (https://gitlab.imn.htwk-leipzig.de/autotool/all0)
 based on revision: ad25a990816a162fdd13941ff889653f22d6ea0a
 based on file: collection/src/Petri/Deadlock.hs
 -}
-module Modelling.PetriNet.Reach.Deadlock where
+module Modelling.PetriNet.Reach.Deadlock (
+  -- * Types
+  DeadlockInstance(..),
+  DeadlockConfig(..),
+  checkDeadlockConfig,
+
+  -- * Generation
+  generateDeadlock,
+
+  -- * Solutions
+  deadlockSolution,
+  deadlockAllSolutions,
+
+  -- * Task creation
+  deadlockTask,
+  verifyDeadlock,
+
+  -- * Evaluation
+  deadlockEvaluation,
+  deadlockSyntax,
+  deadlockInitial,
+
+  -- * Configuration
+  defaultDeadlockConfig,
+  defaultDeadlockInstance,
+
+  -- * Utilities
+  bimapDeadlockInstance,
+  toShowDeadlockInstance,
+  exampleInstance,
+) where
 
 import qualified Control.Monad.Trans              as Monad (lift)
 import qualified Data.Map                         as M (fromList)
-import qualified Data.Set                         as S (fromList, toList)
+import qualified Data.Set                         as S (empty, fromList, member, toList, union)
 
 import Capabilities.Cache               (MonadCache)
 import Capabilities.Diagrams            (MonadDiagrams)
 import Capabilities.Graphviz            (MonadGraphviz)
 import Modelling.PetriNet.Reach.Draw    (drawToFile, isPetriDrawable)
+import Modelling.PetriNet.Reach.Filter (
+  FilterConfig (..),
+  isTrivialSequence,
+  noFiltering,
+  )
 import Modelling.PetriNet.Reach.Property (
   Property (Default),
   validate,
@@ -55,7 +90,7 @@ import Modelling.PetriNet.Reach.Type (
   hasIsolatedNodes,
   )
 
-import Control.Applicative              (Alternative)
+import Control.Applicative              (Alternative, (<|>))
 import Control.OutputCapable.Blocks (
   LangM,
   OutputCapable,
@@ -72,14 +107,15 @@ import Control.OutputCapable.Blocks.Generic (
 import Data.Bifunctor                   (Bifunctor (second))
 import Data.Either.Combinators          (whenRight)
 import Control.Functor.Trans            (FunctorTrans (lift))
-import Control.Monad                    (guard, replicateM)
+import Control.Monad                    (guard, msum, replicateM)
 import Control.Monad.Catch              (MonadCatch, MonadThrow)
-import Control.Monad.Extra              (findM, maybeM)
+import Control.Monad.Extra              (findM)
 import Control.Monad.Random             (MonadRandom, evalRandT, mkStdGen)
+import Control.Monad.Trans.Maybe        (MaybeT (MaybeT, runMaybeT))
 import Data.GraphViz                    (GraphvizCommand (..))
-import Data.List                        (maximumBy)
+import Data.List                        (find)
+import Data.List.Extra                  (groupSort)
 import Data.Maybe                       (fromMaybe)
-import Data.Ord                         (comparing)
 #if !MIN_VERSION_base(4,18,0)
 import Data.Typeable                    (Typeable)
 #endif
@@ -173,6 +209,34 @@ deadlockEvaluation path deadlock ts =
 deadlockSolution :: Ord s => DeadlockInstance s t -> [t]
 deadlockSolution = reverse . snd . head . concat . deadlocks' . petriNet
 
+{-|
+Get all possible shortest solutions for deadlock detection in a given Petri net
+
+Note: This function does not terminate
+if no deadlock is reachable and the net is not bounded.
+-}
+deadlockAllSolutions :: Ord s => Net s t -> [[t]]
+deadlockAllSolutions network =
+  reverse . maybe [] snd $ find (null . successors network . fst)
+    $ concat $ levelsWithAlternatives network
+
+{-|
+Find all shortest paths to all reachable markings
+segmented by the length of paths starting with 0.
+-}
+levelsWithAlternatives :: Ord s => Net s t -> [[(State s, [[t]])]]
+levelsWithAlternatives network =
+  let buildLevels _    [] = []
+      buildLevels done xs =
+        let done' = S.union done $ S.fromList $ map fst xs
+            next = map (second concat) $ groupSort [ (y, map (transition:) pathsSoFar) |
+                (currentState, pathsSoFar) <- xs,
+                (transition, y) <- successors network currentState,
+                not $ S.member y done'
+              ]
+         in xs : buildLevels done' next
+  in buildLevels S.empty [(start network, [[]])]
+
 data DeadlockInstance s t = DeadlockInstance {
   drawUsing         :: GraphvizCommand,
   minLength         :: Int,
@@ -222,7 +286,8 @@ data DeadlockConfig = DeadlockConfig {
   rejectLongerThan    :: Maybe Int,
   showLengthHint      :: Bool,
   showMinLengthHint   :: Bool,
-  showPlaceNamesInNet :: Bool
+  showPlaceNamesInNet :: Bool,
+  filterConfig        :: FilterConfig
   }
   deriving (Generic, Read, Show)
 #if !MIN_VERSION_base(4,18,0)
@@ -244,7 +309,8 @@ defaultDeadlockConfig =
   rejectLongerThan    = Nothing,
   showLengthHint      = True,
   showMinLengthHint   = True,
-  showPlaceNamesInNet = False
+  showPlaceNamesInNet = False,
+  filterConfig        = noFiltering
   }
 
 defaultDeadlockInstance :: DeadlockInstance Place Transition
@@ -260,7 +326,7 @@ defaultDeadlockInstance = DeadlockInstance {
   }
 
 checkDeadlockConfig :: DeadlockConfig -> Maybe String
-checkDeadlockConfig DeadlockConfig {..} =
+checkDeadlockConfig config@DeadlockConfig {..} =
   checkBasicPetriConfig
     numPlaces
     numTransitions
@@ -272,6 +338,34 @@ checkDeadlockConfig DeadlockConfig {..} =
     drawCommands
     rejectLongerThan
     showLengthHint
+  <|> checkFilterConfig config
+
+checkFilterConfig :: DeadlockConfig -> Maybe String
+checkFilterConfig DeadlockConfig {..}
+  | rejectLongerThan /= Just minTransitionLength
+  , filterConfig /= noFiltering
+  = Just $ "If transition length is not enforced to one value, filterConfig must be set to "
+    ++ show noFiltering
+  | Just repeats <- minRepetitiveLength filterConfig
+  , repeats < 2
+  = Just "minRepetitiveLength has to be set to at least 2 if it is enabled"
+  | Just repeats <- minRepetitiveLength filterConfig
+  , repeats > maxTransitionLength `div` 2
+  = Just "minRepetitiveLength must not be higher than half of maxTransitionLength if it is enabled"
+  | Just cycleLength <- maxCycleLength filterConfig
+  , cycleLength < 1
+  = Just "setting maxCycleLength to less than 1 does not make sense"
+  | Just cycleLength <- maxCycleLength filterConfig
+  , cycleLength > maxTransitionLength `div` 2
+  = Just "maxCycleLength must not be higher than half of maxTransitionLength if it is enabled"
+  | Just spaceballsLength <- minSpaceballsLength filterConfig
+  , spaceballsLength < 2
+  = Just "setting minSpaceballsLength to less than 2 does not make sense"
+  | Just spaceballsLength <- minSpaceballsLength filterConfig
+  , spaceballsLength > maxTransitionLength
+  = Just "minSpaceballsLength must not be higher than maxTransitionLength if it is enabled"
+  | otherwise
+  = Nothing
 
 generateDeadlock
   :: (MonadCatch m, MonadDiagrams m, MonadGraphviz m)
@@ -279,7 +373,7 @@ generateDeadlock
   -> Int
   -> m (DeadlockInstance Place Transition)
 generateDeadlock conf@DeadlockConfig {..} seed = do
-  (petri, cmd) <- tries 1000 conf seed
+  (petri, cmd) <- tries 1000 filterConfig conf seed
   pure DeadlockInstance {
     drawUsing         = cmd,
     minLength         = minTransitionLength,
@@ -295,20 +389,23 @@ generateDeadlock conf@DeadlockConfig {..} seed = do
 tries
   :: (MonadCatch m, MonadDiagrams m, MonadGraphviz m)
   => Int
+  -> FilterConfig
   -> DeadlockConfig
   -> Int
   -> m (Net Place Transition, GraphvizCommand)
-tries n conf seed = eval out
+tries n filterConfiguration conf seed = eval out
   where
     eval f = evalRandT f $ mkStdGen seed
     out = do
       xs <- replicateM n $ try conf
-      let (l, pn) = maximumBy (comparing fst) $ concat xs
-      if l >= minTransitionLength conf
-        then
-          maybeM out (pure . (pn,))
-          $ findM (Monad.lift . isPetriDrawable pn) $ drawCommands conf
-        else out
+      let candidates = concat xs
+      maybeResult <- runMaybeT $ msum $ map checkCandidate candidates
+      maybe out pure maybeResult
+    checkCandidate (pathLength, network) = do
+      guard $ pathLength >= minTransitionLength conf
+      let allSolutions = deadlockAllSolutions network
+      guard (not $ any (isTrivialSequence filterConfiguration) allSolutions)
+      MaybeT $ fmap (network,) <$> findM (Monad.lift . isPetriDrawable network) (drawCommands conf)
 
 try :: MonadRandom m => DeadlockConfig -> m [(Int, Net Place Transition)]
 try conf = do
