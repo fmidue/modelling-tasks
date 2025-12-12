@@ -284,8 +284,8 @@ selectValidCdTask
   -> LangM m
 selectValidCdTask showInputHelp path task = do
   toTaskText showInputHelp path task
-  simplifiedInformation
-  hoveringInformation
+  simplifiedInformation True
+  hoveringInformation True
   pure ()
 
 toTaskText

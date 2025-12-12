@@ -375,8 +375,8 @@ repairCdTask
   -> LangM m
 repairCdTask showInputHelp path task = do
   toTaskText showInputHelp path task
-  simplifiedInformation
-  hoveringInformation
+  simplifiedInformation True
+  hoveringInformation True
   extra $ addText task
   pure ()
 

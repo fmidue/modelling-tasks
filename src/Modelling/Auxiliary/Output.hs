@@ -35,8 +35,8 @@ import Data.List                        ((\\), singleton)
 import Data.Map                         (Map)
 import Data.String.Interpolate          (iii)
 
-hoveringInformation :: OutputCapable m => LangM m
-hoveringInformation = collapsed True (translations $ do
+hoveringInformation :: OutputCapable m => Bool -> LangM m
+hoveringInformation isCollapsed = collapsed isCollapsed (translations $ do
   english "Note on hovering"
   german "Anmerkung zum Hovern"
   ) $ translate $ do
@@ -50,8 +50,8 @@ hoveringInformation = collapsed True (translations $ do
     werden die jeweils zusammengehörenden Diagrammelemente hervorgehoben.
     |]
 
-directionsAdvice :: OutputCapable m => LangM m
-directionsAdvice = collapsed True (translations $ do
+directionsAdvice :: OutputCapable m => Bool -> LangM m
+directionsAdvice isCollapsed = collapsed isCollapsed (translations $ do
   english "Note on navigation directions"
   german "Anmerkung zu Navigationsrichtungen"
   ) $ translate $ do
@@ -66,8 +66,8 @@ directionsAdvice = collapsed True (translations $ do
     d.h., sie sind nicht in der entgegengesetzten Richtung navigierbar!
     |]
 
-simplifiedInformation :: OutputCapable m => LangM m
-simplifiedInformation = collapsed True (translations $ do
+simplifiedInformation :: OutputCapable m => Bool -> LangM m
+simplifiedInformation isCollapsed = collapsed isCollapsed (translations $ do
   english "Note on class representation"
   german "Anmerkung zur Klassendarstellung"
   ) $ translate $ do

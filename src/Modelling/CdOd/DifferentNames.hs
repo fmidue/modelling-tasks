@@ -337,9 +337,9 @@ differentNamesTask
   -> LangM m
 differentNamesTask showInputHelp path task = do
   toTaskText showInputHelp path task
-  simplifiedInformation
-  directionsAdvice
-  hoveringInformation
+  directionsAdvice False
+  simplifiedInformation True
+  hoveringInformation True
   pure ()
 
 toTaskText
@@ -361,8 +361,8 @@ toTaskText showInputHelp path task = do
   extra $ addText task
   pure ()
 
-mappingAdvice :: OutputCapable m => LangM m
-mappingAdvice = collapsed True (translations $ do
+mappingAdvice :: OutputCapable m => Bool -> LangM m
+mappingAdvice isCollapsed = collapsed isCollapsed (translations $ do
   english "Note on link grouping"
   german "Anmerkung zur Link-Gruppierung"
   ) $ do
@@ -406,7 +406,7 @@ toTaskSpecificText path DifferentNamesInstance {..} = \case
     paragraph $ image $=<< cacheCd cdDrawSettings mempty cd path
   GivenOd -> paragraph $ image $=<<
     cacheOd oDiagram Forward True path
-  MappingAdvice -> mappingAdvice
+  MappingAdvice -> mappingAdvice False
   where
     cd = fromClassDiagram cDiagram
 

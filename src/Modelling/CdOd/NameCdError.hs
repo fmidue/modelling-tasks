@@ -581,8 +581,8 @@ nameCdErrorTask
   -> LangM m
 nameCdErrorTask showInputHelp path task = do
   toTaskText showInputHelp path task
-  simplifiedInformation
-  hoveringInformation
+  simplifiedInformation False
+  hoveringInformation False
   extra $ addText task
   pure ()
 
