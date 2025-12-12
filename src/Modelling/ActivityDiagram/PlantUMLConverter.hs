@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE NamedFieldPuns #-}
@@ -15,6 +16,9 @@ import Data.List ( delete, intercalate, intersect, union )
 import Data.String.Interpolate ( i, __i )
 import GHC.Generics (Generic)
 
+import Autolib.Hash                     (Hashable)
+import Autolib.Reader                   (Reader)
+import Autolib.ToDoc                    (ToDoc)
 import Capabilities.PlantUml            (MonadPlantUml (drawPlantUmlSvg))
 import Capabilities.WriteFile           (MonadWriteFile (writeToFile))
 import Modelling.ActivityDiagram.Datatype (
@@ -27,7 +31,8 @@ import Modelling.ActivityDiagram.Datatype (
 data PlantUmlConfig = PlantUmlConfig {
   suppressNodeNames :: Bool,
   suppressBranchConditions :: Bool
-} deriving (Generic, Read, Show, Eq)
+}
+  deriving (Eq, Generic, Hashable, Read, Reader, Show, ToDoc)
 
 defaultPlantUmlConfig :: PlantUmlConfig
 defaultPlantUmlConfig = PlantUmlConfig {

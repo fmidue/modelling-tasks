@@ -6,7 +6,6 @@ import Capabilities.Alloy.IO            ()
 import Capabilities.Cache.IO            ()
 import Capabilities.Diagrams.IO         ()
 import Capabilities.Graphviz.IO         ()
-import Modelling.Auxiliary.Output       (ExtraText(..))
 import Modelling.CdOd.Types (
   ClassConfig (..),
   ObjectConfig (..),
@@ -21,7 +20,7 @@ import Modelling.CdOd.MatchCdOd (
   )
 import EvaluateArgs                     (evaluateArgs)
 
-import Control.OutputCapable.Blocks     (Language (English))
+import Control.OutputCapable.Blocks     (ExtraText (..), Language (English))
 import Data.Ratio                       ((%))
 import System.Environment               (getArgs)
 

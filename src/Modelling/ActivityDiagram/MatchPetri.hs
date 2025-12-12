@@ -1,4 +1,5 @@
 {-# LANGUAGE ApplicativeDo #-}
+{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE FlexibleContexts #-}
@@ -34,6 +35,9 @@ import Modelling.ActivityDiagram.Auxiliary.PetriValidation (validatePetriConfig)
 import qualified Modelling.ActivityDiagram.PetriNet as PK (label)
 import qualified Modelling.PetriNet.Types as Petri (Net (nodes))
 
+import Autolib.Hash                     (Hashable)
+import Autolib.Reader                   (Reader)
+import Autolib.ToDoc                    (ToDoc)
 import Capabilities.Alloy               (MonadAlloy, getInstances)
 import Capabilities.Cache               (MonadCache)
 import Capabilities.Diagrams            (MonadDiagrams)
@@ -75,9 +79,7 @@ import Modelling.ActivityDiagram.PlantUMLConverter (
   )
 import Modelling.Auxiliary.Common (getFirstInstance, oneOf)
 import Modelling.Auxiliary.Output (
-  ExtraText(..),
   addPretext,
-  extra
   )
 import Modelling.PetriNet.Diagram (cacheNet)
 import Modelling.PetriNet.Types (
@@ -93,12 +95,14 @@ import Control.Applicative (Alternative ((<|>)))
 import Control.Monad.Catch              (MonadThrow)
 import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
+  ExtraText (..),
   GenericOutputCapable (..),
   LangM,
   Rated,
   OutputCapable,
   ($=<<),
   english,
+  extra,
   german,
   translate,
   translations,
@@ -129,7 +133,8 @@ data MatchPetriInstance = MatchPetriInstance {
   petriDrawConf :: DrawSettings,
   showSolution :: Bool,
   addText :: ExtraText
-} deriving (Generic, Read, Show)
+}
+  deriving (Eq, Generic, Hashable, Read, Reader, Show, ToDoc)
 
 data MatchPetriConfig = MatchPetriConfig {
   adConfig :: AdConfig,
@@ -149,7 +154,8 @@ data MatchPetriConfig = MatchPetriConfig {
   withActivityFinalInForkBlocks :: !(Maybe Bool),
   printSolution :: Bool,
   extraText :: ExtraText
-} deriving (Generic, Read, Show)
+}
+  deriving (Generic, Read, Reader, Show, ToDoc)
 
 pickRandomLayout :: (MonadRandom m) => MatchPetriConfig -> m GraphvizCommand
 pickRandomLayout conf = oneOf (petriLayout conf)
@@ -263,7 +269,8 @@ data MatchPetriSolution = MatchPetriSolution {
   activityFinalNodes :: [Int],
   flowFinalNodes :: [Int],
   auxiliaryPetriNodes :: [Int]
-} deriving (Generic, Show, Eq, Read)
+}
+  deriving (Eq, Generic, Read, Reader, Show, ToDoc)
 
 matchPetriSolution :: MatchPetriInstance -> MatchPetriSolution
 matchPetriSolution task = mapTypesToLabels $ petriNet task
@@ -435,11 +442,11 @@ matchPetriEvaluation task sub = addPretext $ do
       sol = matchPetriSolution task
       maybeSolutionString =
         if showSolution task
-        then Just $ show sol
+        then Just . (DefiniteArticle,) $ show sol
         else Nothing
       solution = matchPetriSolutionMap sol
       sub' = M.keys $ matchPetriSolutionMap sub
-  multipleChoice DefiniteArticle as maybeSolutionString solution sub'
+  multipleChoice as maybeSolutionString solution sub'
 
 matchPetriSolutionMap
   :: MatchPetriSolution

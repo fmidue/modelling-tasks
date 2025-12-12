@@ -4,6 +4,7 @@
 {-# LANGUAGE NamedFieldPuns #-}
 {-# Language QuasiQuotes #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE TupleSections #-}
 
 module Modelling.PetriNet.Concurrency (
   checkFindConcurrencyConfig,
@@ -49,9 +50,7 @@ import Modelling.Auxiliary.Common (
   parseWith,
   )
 import Modelling.Auxiliary.Output (
-  ExtraText(..),
   hoveringInformation,
-  extra,
   )
 import Modelling.PetriNet.Alloy (
   compAdvConstraints,
@@ -115,10 +114,12 @@ import Modelling.PetriNet.Types         (
   )
 
 import Control.Applicative              (Alternative ((<|>)))
+import Control.Monad                    (when)
 import Control.Monad.Catch              (MonadCatch, MonadThrow)
 import Control.Monad.Extra              (findM)
 import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
+  ExtraText (..),
   GenericOutputCapable (..),
   LangM',
   LangM,
@@ -126,6 +127,7 @@ import Control.OutputCapable.Blocks (
   Rated,
   ($=<<),
   english,
+  extra,
   german,
   printSolutionAndAssert,
   translate,
@@ -139,7 +141,7 @@ import Control.Monad.Random (
   mkStdGen,
   )
 import Control.Monad.Trans              (MonadTrans (lift))
-import Data.Bifunctor                   (Bifunctor (bimap))
+import Data.Bifunctor                   (Bifunctor (bimap), first)
 import Data.Data                        (Data, Typeable)
 import Data.Either                      (isLeft)
 import Data.GraphViz.Commands           (GraphvizCommand (Circo, Fdp))
@@ -157,7 +159,8 @@ simpleFindConcurrencyTask
     MonadThrow m,
     OutputCapable m
     )
-  => FilePath
+  => Bool
+  -> FilePath
   -> FindInstance SimplePetriNet (Concurrent Transition)
   -> LangM m
 simpleFindConcurrencyTask = findConcurrencyTask
@@ -175,10 +178,11 @@ findConcurrencyTask
     Typeable n,
     Typeable p
     )
-  => FilePath
+  => Bool
+  -> FilePath
   -> FindInstance (p n String) (Concurrent Transition)
   -> LangM m
-findConcurrencyTask path task = do
+findConcurrencyTask showInputHelp path task = do
   paragraph $ translate $ do
     english "Consider the following Petri net:"
     german "Betrachten Sie folgendes Petrinetz:"
@@ -193,7 +197,7 @@ findConcurrencyTask path task = do
       Welches Paar von Transitionen ist unter der Startmarkierung
       nebenläufig aktiviert?
       |]
-  paragraph $ do
+  when showInputHelp $ paragraph $ do
     translate $ do
       english [iii|
         State your answer by giving a pair
@@ -225,7 +229,7 @@ findConcurrencyTask path task = do
         des Paars spielt hierbei keine Rolle.
         |]
     pure ()
-  hoveringInformation
+  hoveringInformation True
   extra $ Find.addText task
   pure ()
 
@@ -245,7 +249,8 @@ findConcurrencyEvaluation task x = do
   let what = translations $ do
         english "are concurrently activated"
         german "sind nebenläufig aktiviert"
-  uncurry (printSolutionAndAssert DefiniteArticle)
+  uncurry (printSolutionAndAssert False)
+    . first (fmap (DefiniteArticle,))
     $=<< unLangM $ toFindEvaluation what withSol concur x
   where
     concur = findConcurrencySolution task
@@ -263,7 +268,8 @@ simplePickConcurrencyTask
     MonadThrow m,
     OutputCapable m
     )
-  => FilePath
+  => Bool
+  -> FilePath
   -> PickInstance SimplePetriNet
   -> LangM m
 simplePickConcurrencyTask = pickConcurrencyTask
@@ -281,10 +287,11 @@ pickConcurrencyTask
     Typeable n,
     Typeable p
     )
-  => FilePath
+  => Bool
+  -> FilePath
   -> PickInstance (p n String)
   -> LangM m
-pickConcurrencyTask path task = do
+pickConcurrencyTask showInputHelp path task = do
   paragraph $ translate $ do
     english [iii|
       Which of the following Petri nets has exactly
@@ -297,7 +304,8 @@ pickConcurrencyTask path task = do
       |]
   images show snd
     $=<< renderPick path task
-  paragraph $ translate $ do
+  when showInputHelp $ do
+   paragraph $ translate $ do
     english [iii|
       State your answer by giving the number of the Petri net
       having these concurrently activated transitions.
@@ -306,8 +314,8 @@ pickConcurrencyTask path task = do
       Geben Sie Ihre Antwort durch Angabe der Nummer des Petrinetzes an,
       das diese nebenläufig aktivierten Transitionen hat.
       #{" "}|]
-  let plural = wrongInstances task > 1
-  paragraph $ do
+   let plural = wrongInstances task > 1
+   paragraph $ do
     translate $ do
       english [i|Stating |]
       german [i|Die Angabe von |]
@@ -330,7 +338,8 @@ pickConcurrencyTask path task = do
             else "das andere Petrinetz nicht")
         ++ ")."
     pure ()
-  hoveringInformation
+   pure ()
+  hoveringInformation True
   extra $ Pick.addText task
   pure ()
 

@@ -1,4 +1,5 @@
 {-# LANGUAGE ApplicativeDo #-}
+{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE NamedFieldPuns #-}
@@ -46,16 +47,21 @@ import Modelling.ActivityDiagram.PlantUMLConverter (
 import Modelling.ActivityDiagram.Shuffle (shuffleAdNames)
 import Modelling.Auxiliary.Common       (getFirstInstance)
 
+import Autolib.Hash                     (Hashable)
+import Autolib.Reader                   (Reader)
+import Autolib.ToDoc                    (ToDoc)
 import Control.Applicative (Alternative ((<|>)))
 import Control.Monad.Catch              (MonadThrow)
 import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
+  ExtraText (..),
   GenericOutputCapable (..),
   LangM,
   Rated,
   OutputCapable,
   ($=<<),
   english,
+  extra,
   german,
   translate,
   translations,
@@ -73,9 +79,7 @@ import Data.Maybe (isJust, isNothing, fromJust)
 import Data.String.Interpolate (i, iii)
 import GHC.Generics (Generic)
 import Modelling.Auxiliary.Output (
-  ExtraText(..),
   addPretext,
-  extra
   )
 import System.Random.Shuffle (shuffleM)
 
@@ -84,7 +88,8 @@ data MatchAdInstance = MatchAdInstance {
   plantUMLConf :: PlantUmlConfig,
   showSolution :: Bool,
   addText :: ExtraText
-} deriving (Generic, Read, Show)
+}
+  deriving (Eq, Generic, Hashable, Read, Reader, Show, ToDoc)
 
 data MatchAdConfig = MatchAdConfig {
   adConfig :: AdConfig,
@@ -93,7 +98,8 @@ data MatchAdConfig = MatchAdConfig {
   withActivityFinalInForkBlocks :: !(Maybe Bool),
   printSolution :: Bool,
   extraText :: ExtraText
-} deriving (Generic, Read, Show)
+}
+  deriving (Generic, Read, Reader, Show, ToDoc)
 
 defaultMatchAdConfig :: MatchAdConfig
 defaultMatchAdConfig = MatchAdConfig {
@@ -154,7 +160,8 @@ data MatchAdSolution = MatchAdSolution {
   countOfInitialNodes :: Int,
   countOfActivityFinalNodes :: Int,
   countOfFlowFinalNodes :: Int
-} deriving (Generic, Eq, Show, Read)
+}
+  deriving (Eq, Generic, Hashable, Read, Reader, Show, ToDoc)
 
 matchAdSolution :: MatchAdInstance -> MatchAdSolution
 matchAdSolution task =
@@ -239,11 +246,11 @@ matchAdEvaluation task sub = addPretext $ do
       sol = matchAdSolution task
       solutionString =
         if showSolution task
-        then Just $ show sol
+        then Just . (DefiniteArticle,) $ show sol
         else Nothing
       solution = matchAdSolutionMap sol
       sub' = M.keys $ matchAdSolutionMap sub
-  multipleChoice DefiniteArticle as solutionString solution sub'
+  multipleChoice as solutionString solution sub'
 
 matchAdSolutionMap
   :: MatchAdSolution

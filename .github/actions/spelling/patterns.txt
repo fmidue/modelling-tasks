@@ -33,6 +33,7 @@ Int\sInt
 Nothing\sNothing
 String\sString
 True\sTrue
+False\sFalse
 getDoubleAs\slabel\signore\signore
 obj\sobj\ssig
 

@@ -1,10 +1,10 @@
 {-# LANGUAGE CPP #-}
+{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DeriveGeneric #-}
-#if !MIN_VERSION_base(4,18,0)
 {-# LANGUAGE DerivingStrategies #-}
-#endif
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE MonoLocalBinds #-}
 
 {-|
 originally from Autotool (https://gitlab.imn.htwk-leipzig.de/autotool/all0)
@@ -29,14 +29,14 @@ import qualified Data.Set                         as S (
 
 import Modelling.Auxiliary.Common       (parseInt, skipSpaces)
 
+import Autolib.Hash                     (Hashable)
+import Autolib.Reader.Class             (Reader (atomic_readerPrec))
+import Autolib.ToDoc                    (ToDoc (toDocPrec), text)
 import Control.Monad                    (void)
 import Data.Data                        (Data)
 import Data.List                        (intercalate)
 import Data.Map                         (Map)
 import Data.Set                         (Set)
-#if !MIN_VERSION_base(4,18,0)
-import Data.Typeable                    (Typeable)
-#endif
 import GHC.Generics                     (Generic)
 import Text.ParserCombinators.Parsec (
   Parser,
@@ -50,10 +50,8 @@ import Text.ParserCombinators.Parsec (
 type Connection s t = ([s], t, [s])
 
 newtype State s = State {unState :: Map s Int}
-  deriving (Generic, Data)
-#if !MIN_VERSION_base(4,18,0)
-  deriving Typeable
-#endif
+  deriving anyclass (Hashable, Reader, ToDoc)
+  deriving stock (Data, Generic)
 
 mapState :: Ord b => (a -> b) -> State a -> State b
 mapState f (State x) = State { unState = M.mapKeys f x }
@@ -80,10 +78,7 @@ data Capacity s
   = Unbounded
   | AllBounded Int
   | Bounded (Map s Int)
-  deriving (Eq, Generic, Ord, Read, Show, Data)
-#if !MIN_VERSION_base(4,18,0)
-  deriving Typeable
-#endif
+  deriving (Data, Eq, Generic, Hashable, Ord, Read, Reader, Show, ToDoc)
 
 mapCapacity :: Ord a => (s -> a) -> Capacity s -> Capacity a
 mapCapacity _ Unbounded      = Unbounded
@@ -97,7 +92,7 @@ data Net s t = Net {
   capacity :: Capacity s,
   start :: State s
   }
-  deriving (Eq, Generic, Ord, Read, Show, Data)
+  deriving (Eq, Data, Generic, Hashable, Ord, Read, Reader, Show, ToDoc)
 
 bimapNet :: (Ord a, Ord b) => (s -> a) -> (t -> b) -> Net s t -> Net a b
 bimapNet f g x = Net {
@@ -127,16 +122,21 @@ conforms cap (State z) = case cap of
     (M.toList z)
 
 newtype Place = Place Int
-  deriving (Enum, Eq, Generic, Ord, Read, Show, Data)
-#if !MIN_VERSION_base(4,18,0)
-  deriving Typeable
-#endif
+  deriving anyclass Hashable
+  deriving newtype Enum
+  deriving stock (Data, Eq, Generic, Ord, Read, Show)
 
 newtype ShowPlace = ShowPlace Place
   deriving (Eq, Ord)
 
 instance Show ShowPlace where
   show (ShowPlace (Place p)) = "s" ++ show p
+
+instance Reader Place where
+  atomic_readerPrec = parsePlacePrec
+
+instance ToDoc Place where
+  toDocPrec _ = text . showPlace
 
 showPlace :: Place -> String
 showPlace = show . ShowPlace
@@ -148,16 +148,21 @@ parsePlacePrec _ = do
   Place <$> parseInt <* skipMany space
 
 newtype Transition = Transition Int
-  deriving (Enum, Eq, Generic, Ord, Read, Show, Data)
-#if !MIN_VERSION_base(4,18,0)
-  deriving Typeable
-#endif
+  deriving anyclass Hashable
+  deriving newtype Enum
+  deriving stock (Data, Eq, Generic, Ord, Read, Show)
 
 newtype ShowTransition = ShowTransition Transition
   deriving (Eq, Ord)
 
 instance Show ShowTransition where
   show (ShowTransition (Transition t)) = "t" ++ show t
+
+instance Reader Transition where
+  atomic_readerPrec = parseTransitionPrec
+
+instance ToDoc Transition where
+  toDocPrec _ = text . showTransition
 
 showTransition :: Transition -> String
 showTransition = show . ShowTransition
@@ -178,6 +183,12 @@ instance Show TransitionsList where
     '['
     : intercalate ", " (map showTransition ts)
     ++ "]"
+
+instance Reader TransitionsList where
+  atomic_readerPrec = parseTransitionsListPrec
+
+instance ToDoc TransitionsList where
+  toDocPrec _ = text . show
 
 parseTransitionsListPrec :: Int -> Parser TransitionsList
 parseTransitionsListPrec _ = do

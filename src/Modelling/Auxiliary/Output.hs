@@ -1,13 +1,13 @@
+{-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 -- | This module provides common skeletons for printing tasks
 module Modelling.Auxiliary.Output (
-  ExtraText(..),
   addPretext,
   checkTaskText,
   directionsAdvice,
-  extra,
   hoveringInformation,
   simplifiedInformation,
   uniform,
@@ -15,7 +15,6 @@ module Modelling.Auxiliary.Output (
 
 import qualified Data.Map                         as M (empty, insert)
 
-import Control.Monad.State (put)
 import Control.OutputCapable.Blocks     (
   GenericOutputCapable (paragraph),
   Language(..),
@@ -35,25 +34,24 @@ import Control.OutputCapable.Blocks.Type (
 import Data.List                        ((\\), singleton)
 import Data.Map                         (Map)
 import Data.String.Interpolate          (iii)
-import Data.Data (Data)
 
-hoveringInformation :: OutputCapable m => LangM m
-hoveringInformation = collapsed True (put $ translations $ do
+hoveringInformation :: OutputCapable m => Bool -> LangM m
+hoveringInformation isCollapsed = collapsed isCollapsed (translations $ do
   english "Note on hovering"
   german "Anmerkung zum Hovern"
   ) $ translate $ do
   english [iii|
-    When hovering over or clicking on edges / nodes or their
-    labels, the respective components that belong together are highlighted.
+    When hovering over or clicking on nodes / edges or their
+    labels, the respective diagram elements that belong together are highlighted.
     |]
   german [iii|
     Beim Bewegen über oder Klicken auf
-    Kanten / Knoten bzw. ihre Beschriftungen
-    werden die jeweils zusammengehörenden Komponenten hervorgehoben.
+    Knoten / Kanten bzw. ihre Beschriftungen
+    werden die jeweils zusammengehörenden Diagrammelemente hervorgehoben.
     |]
 
-directionsAdvice :: OutputCapable m => LangM m
-directionsAdvice = collapsed True (put $ translations $ do
+directionsAdvice :: OutputCapable m => Bool -> LangM m
+directionsAdvice isCollapsed = collapsed isCollapsed (translations $ do
   english "Note on navigation directions"
   german "Anmerkung zu Navigationsrichtungen"
   ) $ translate $ do
@@ -68,8 +66,8 @@ directionsAdvice = collapsed True (put $ translations $ do
     d.h., sie sind nicht in der entgegengesetzten Richtung navigierbar!
     |]
 
-simplifiedInformation :: OutputCapable m => LangM m
-simplifiedInformation = collapsed True (put $ translations $ do
+simplifiedInformation :: OutputCapable m => Bool -> LangM m
+simplifiedInformation isCollapsed = collapsed isCollapsed (translations $ do
   english "Note on class representation"
   german "Anmerkung zur Klassendarstellung"
   ) $ translate $ do
@@ -79,7 +77,7 @@ simplifiedInformation = collapsed True (put $ translations $ do
     That means they consist of a single box containing only the class name
     but no sections for attributes or methods.
     #{endLine}
-    Nevertheless you should treat these simplified class representations
+    Nevertheless, you should treat these simplified class representations
     as valid classes.
     |]
   german [iii|
@@ -124,23 +122,3 @@ checkTaskText taskText
   where
     usedElements = concatMap (concatMap singleton) taskText
     allElements = [minBound ..]
-
--- | Configuration options for additional text
-data ExtraText
-  = NoExtraText              -- ^ Provide no additional text.
-  | Static                   -- ^ Provide additional text that is always shown.
-      (Map Language String)  -- ^ The text do be displayed.
-  | Collapsible              -- ^ Provide additional text that can be collapsed.
-      Bool                   -- ^ The default collapse status of the text.
-      (Map Language String)  -- ^ The description of the text to be shown.
-      (Map Language String)  -- ^ The text to be shown when not collapsed.
-  deriving (Data, Eq, Read, Show)
-
-extra :: OutputCapable m => ExtraText -> LangM m
-extra NoExtraText = pure ()
-extra (Static textMap) = paragraph $ translate $ put textMap
-extra (Collapsible defaultState titleText contentText) =
-  collapsed
-    defaultState
-    (put titleText)
-    (translate $ put contentText)

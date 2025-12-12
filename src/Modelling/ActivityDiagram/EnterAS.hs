@@ -1,8 +1,10 @@
 {-# LANGUAGE ApplicativeDo #-}
+{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE TupleSections #-}
 
 module Modelling.ActivityDiagram.EnterAS (
   EnterASInstance(..),
@@ -22,6 +24,9 @@ module Modelling.ActivityDiagram.EnterAS (
   defaultEnterASInstance
 ) where
 
+import Autolib.Hash                     (Hashable)
+import Autolib.Reader                   (Reader)
+import Autolib.ToDoc                    (ToDoc)
 import Capabilities.Alloy               (MonadAlloy, getInstances)
 import Capabilities.PlantUml            (MonadPlantUml)
 import Capabilities.WriteFile           (MonadWriteFile)
@@ -65,12 +70,14 @@ import Control.Monad (unless, when)
 import Control.Monad.Catch              (MonadThrow)
 import Control.OutputCapable.Blocks (
   ArticleToUse (IndefiniteArticle),
+  ExtraText(..),
   GenericOutputCapable (..),
   LangM,
   Rated,
   OutputCapable,
   ($=<<),
   english,
+  extra,
   german,
   translate,
   printSolutionAndAssert,
@@ -89,9 +96,7 @@ import Data.Maybe                       (isNothing, isJust)
 import Data.String.Interpolate (i, iii)
 import GHC.Generics (Generic)
 import Modelling.Auxiliary.Output (
-  ExtraText(..),
   addPretext,
-  extra
   )
 import System.Random.Shuffle (shuffleM)
 
@@ -102,7 +107,8 @@ data EnterASInstance = EnterASInstance {
   sampleSequence :: [String],
   showSolution :: Bool,
   addText :: ExtraText
-} deriving (Eq, Generic, Read, Show)
+}
+  deriving (Eq, Generic, Hashable, Read, Reader, Show, ToDoc)
 
 data EnterASConfig = EnterASConfig {
   adConfig :: AdConfig,
@@ -112,7 +118,9 @@ data EnterASConfig = EnterASConfig {
   answerLength :: !(Int, Int),
   printSolution :: Bool,
   extraText :: ExtraText
-} deriving (Generic, Read, Show)
+}
+  deriving (Generic, Read, Reader, Show, ToDoc)
+
 
 defaultEnterASConfig :: EnterASConfig
 defaultEnterASConfig = EnterASConfig {
@@ -262,7 +270,7 @@ enterASEvaluation task sub = do
       points = if correct then 1 else 0
       maybeSolutionString =
         if showSolution task
-        then Just $ show $ sampleSequence task
+        then Just . (IndefiniteArticle,) $ show $ sampleSequence task
         else Nothing
 
   yesNo correct $ translate $ do
@@ -295,7 +303,7 @@ enterASEvaluation task sub = do
     code $ intercalate ", " objectNamesInSubmission
     pure ()
 
-  printSolutionAndAssert IndefiniteArticle maybeSolutionString points
+  printSolutionAndAssert False maybeSolutionString points
 
   pure points
 

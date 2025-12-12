@@ -1,4 +1,5 @@
 {-# LANGUAGE ApplicativeDo #-}
+{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE FlexibleContexts #-}
@@ -26,6 +27,9 @@ module Modelling.ActivityDiagram.SelectPetri (
   defaultSelectPetriInstance
   ) where
 
+import Autolib.Hash                     (Hashable)
+import Autolib.Reader                   (Reader)
+import Autolib.ToDoc                    (ToDoc)
 import Capabilities.Alloy               (MonadAlloy, getInstances)
 import Capabilities.Cache               (MonadCache)
 import Capabilities.Diagrams            (MonadDiagrams)
@@ -72,9 +76,7 @@ import Modelling.Auxiliary.Common (
   weightedShuffle,
   )
 import Modelling.Auxiliary.Output (
-  ExtraText(..),
   addPretext,
-  extra,
   )
 import Modelling.PetriNet.Diagram (cacheNet)
 import Modelling.PetriNet.Types (
@@ -92,11 +94,13 @@ import Control.Monad.Catch              (MonadThrow, throwM)
 import Control.Monad.Extra (loopM, firstJustM)
 import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
+  ExtraText (..),
   GenericOutputCapable (..),
   LangM,
   OutputCapable,
   ($=<<),
   english,
+  extra,
   german,
   reRefuseLangM,
   translate,
@@ -134,7 +138,8 @@ data SelectPetriInstance = SelectPetriInstance {
   petriNets :: Map Int (Bool, SimplePetriLike PetriKey),
   showSolution :: Bool,
   addText :: ExtraText
-} deriving (Generic, Show)
+}
+  deriving (Eq, Generic, Hashable, Read, Reader, Show, ToDoc)
 
 data SelectPetriConfig = SelectPetriConfig {
   adConfig :: AdConfig,
@@ -159,7 +164,8 @@ data SelectPetriConfig = SelectPetriConfig {
   withActivityFinalInForkBlocks :: !(Maybe Bool),
   printSolution :: Bool,
   extraText :: ExtraText
-} deriving (Generic, Show)
+}
+  deriving (Generic, Read, Reader, Show, ToDoc)
 
 pickRandomLayout :: (MonadRandom m) => SelectPetriConfig -> m GraphvizCommand
 pickRandomLayout conf = oneOf (petriLayout conf)
@@ -438,9 +444,9 @@ selectPetriEvaluation path task n = addPretext $ do
       (solution, _) = head $ M.toList $ M.map snd $ M.filter fst solMap
       maybeSolutionString =
         if showSolution task
-        then Just $ show solution
+        then Just . (DefiniteArticle,) $ show solution
         else Nothing
-  reRefuseLangM (singleChoice DefiniteArticle as maybeSolutionString solution n) $ do
+  reRefuseLangM (singleChoice as maybeSolutionString solution n) $ do
     when (showSolution task) $ do
 
       when (suppressNodeNames $ plantUMLConf task) $ paragraph $ do

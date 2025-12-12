@@ -2,7 +2,6 @@
 
 module Modelling.CdOd.RepairCd.Config where
 
-import Modelling.Auxiliary.Output       (ExtraText(..))
 import Modelling.CdOd.RepairCd (
   RepairCdConfig (..),
   )
@@ -18,6 +17,7 @@ import Modelling.CdOd.Types (
   RelationshipMutation (..),
   )
 
+import Control.OutputCapable.Blocks     (ExtraText (..))
 import Data.Ratio                       ((%))
 
 {-|
@@ -321,3 +321,67 @@ task2024_55 = RepairCdConfig {
   useNames = True,
   extraText = NoExtraText
   }
+
+{-|
+points: 0.15
+-}
+task2025_10 :: RepairCdConfig
+task2025_10 = RepairCdConfig {
+  allowedCdMutations = [
+    AddRelationship,
+    MutateRelationship ChangeKind,
+    MutateRelationship Flip
+    ],
+  allowedProperties = AllowedProperties {
+    compositionCycles = False,
+    doubleRelationships = True,
+    inheritanceCycles = False,
+    invalidInheritanceLimits = False,
+    reverseInheritances = False,
+    reverseRelationships = False,
+    selfInheritances = False,
+    selfRelationships = False,
+    wrongAssociationLimits = True,
+    wrongCompositionLimits = False
+    },
+  articleToUse = UseDefiniteArticleWherePossible,
+  cdConstraints = CdConstraints {
+    anyCompositionCyclesInvolveInheritances = Nothing
+    },
+  classConfig = ClassConfig {
+    classLimits = (5, 5),
+    aggregationLimits = (1, Just 2),
+    associationLimits = (2, Just 2),
+    compositionLimits = (1, Just 2),
+    inheritanceLimits = (1, Just 1),
+    relationshipLimits = (5, Just 7)
+    },
+  drawSettings = CdDrawSettings {
+    omittedDefaults = OmittedDefaultMultiplicities {
+      aggregationWholeOmittedDefaultMultiplicity = Just (0, Nothing),
+      associationOmittedDefaultMultiplicity = Just (0, Nothing),
+      compositionWholeOmittedDefaultMultiplicity = Nothing
+      },
+    printNames = True,
+    printNavigations = False
+    },
+  maxInstances = Just 4000,
+  objectProperties = ObjectProperties {
+    anonymousObjectProportion = 1 % 3,
+    completelyInhabited = Just True,
+    hasLimitedIsolatedObjects = False,
+    hasSelfLoops = Nothing,
+    usesEveryRelationshipName = Just True
+    },
+  printExtendedFeedback = True,
+  printSolution = True,
+  timeout = Nothing,
+  useNames = True,
+  extraText = NoExtraText
+  }
+
+{-|
+points: 0.15
+-}
+task2025_11 :: RepairCdConfig
+task2025_11 = task2024_13

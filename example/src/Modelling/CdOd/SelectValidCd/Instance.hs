@@ -9,7 +9,6 @@ import Modelling.CdOd.SelectValidCd (
   SelectValidCdTaskTextElement (..),
   )
 
-import Modelling.Auxiliary.Output  (ExtraText (..))
 import Modelling.Auxiliary.Shuffle.All  (ShuffleInstance (..))
 import Modelling.CdOd.RepairCd          (InValidOption (..))
 import Modelling.CdOd.Types (
@@ -27,6 +26,7 @@ import Modelling.Types                  (Change (..))
 
 import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
+  ExtraText (..),
   Language (English, German),
   )
 import Control.OutputCapable.Blocks.Generic.Type (
@@ -1167,3 +1167,9 @@ task2024_53 = ShuffleInstance {
   shuffleNames = False,
   shuffleOptions = True
   }
+
+{-|
+points: 0.15
+-}
+task2025_07 :: ShuffleInstance SelectValidCdInstance
+task2025_07 = task2024_09

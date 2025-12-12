@@ -1,5 +1,6 @@
 {-# LANGUAGE ApplicativeDo #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE LambdaCase #-}
@@ -51,6 +52,9 @@ import qualified Data.Map                         as M (
   traverseWithKey,
   )
 
+import Autolib.Hash                     (Hashable)
+import Autolib.Reader                   (Reader)
+import Autolib.ToDoc                    (ToDoc)
 import Capabilities.Alloy               (MonadAlloy, getInstances)
 import Capabilities.Cache               (MonadCache)
 import Capabilities.Diagrams            (MonadDiagrams)
@@ -62,12 +66,11 @@ import Modelling.Auxiliary.Common (
   TaskGenerationException (NoInstanceAvailable),
   )
 import Modelling.Auxiliary.Output (
-  ExtraText(..),
   addPretext,
   checkTaskText,
   hoveringInformation,
   simplifiedInformation,
-  uniform, extra,
+  uniform,
   )
 import Modelling.Auxiliary.Shuffle.All  (shuffleEverything)
 import Modelling.CdOd.Auxiliary.Util    (alloyInstanceToOd)
@@ -144,6 +147,7 @@ import Control.Monad                    ((>=>), forM, void, when, zipWithM)
 import Control.Monad.Catch              (MonadCatch, MonadThrow (throwM))
 import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
+  ExtraText (..),
   GenericOutputCapable (..),
   LangM,
   Language (English, German),
@@ -152,6 +156,7 @@ import Control.OutputCapable.Blocks (
   ($=<<),
   english,
   enumerateM,
+  extra,
   german,
   multipleChoice,
   multipleChoiceSyntax,
@@ -218,7 +223,7 @@ type RelationshipChange = InValidOption
 data InValidOption option forInvalidity forValidity = InValidOption {
   hint :: Either forInvalidity forValidity,
   option :: option
-  } deriving (Eq, Generic, Read, Show)
+  } deriving (Eq, Generic, Hashable, Read, Reader, Show, ToDoc)
 
 mapInValidOption
   :: (a -> b)
@@ -258,7 +263,7 @@ data RepairCdConfig
     timeout          :: Maybe Int,
     useNames         :: Bool,
     extraText        :: ExtraText
-  } deriving (Generic, Read, Show)
+  } deriving (Generic, Read, Reader, Show, ToDoc)
 
 defaultRepairCdConfig :: RepairCdConfig
 defaultRepairCdConfig
@@ -349,16 +354,16 @@ defaultRepairCdTaskText = [
 inputHelpText :: [Output]
 inputHelpText = [
   Paragraph $ singleton $ Translated $ translations $ do
-    english [i|Please state your answer by giving a list of numbers, indicating all changes each resulting in a valid class diagram.|]
-    german [i|Bitte geben Sie Ihre Antwort als Liste aller Zahlen an, deren Änderungen jeweils in einem gültigen Klassendiagramm resultieren.|],
+    english [i|State your answer by giving a list of numbers, indicating all changes each on its own resulting in a valid class diagram.|]
+    german [i|Geben Sie Ihre Antwort als Liste aller Zahlen an, deren Änderungen jeweils für sich genommen in einem gültigen Klassendiagramm resultieren.|],
   Paragraph [
     Translated $ translations $ do
-      english [i|Answer by giving a comma separated list of all appropriate options, e.g., |]
-      german [i|Antworten Sie durch Angabe einer durch Komma separierten Liste aller zutreffenden Optionen. Zum Beispiel |],
+      english [i|Answer by giving a list of exactly all appropriate options, e.g., |]
+      german [i|Antworten Sie durch Angabe einer Liste genau aller zutreffenden Optionen. Zum Beispiel |],
     Code $ uniform "[1, 2]",
     Translated $ translations $ do
-      english [i| would indicate that options 1 and 2 each repair the given class diagram.|]
-      german [i| als Angabe würde bedeuten, dass die Optionen 1 und 2 jeweils das gegebene Klassendiagramm reparieren.|]
+      english [i| would indicate that only options 1 and 2 each repair the given class diagram.|]
+      german [i| als Angabe würde bedeuten, dass nur die Optionen 1 und 2 jeweils das gegebene Klassendiagramm reparieren.|]
     ]
   ]
 
@@ -370,8 +375,8 @@ repairCdTask
   -> LangM m
 repairCdTask showInputHelp path task = do
   toTaskText showInputHelp path task
-  simplifiedInformation
-  hoveringInformation
+  simplifiedInformation True
+  hoveringInformation True
   extra $ addText task
   pure ()
 
@@ -392,10 +397,11 @@ repairCdEvaluation path inst xs = addPretext $ do
         ]
       solution = isRight . hint <$> changes inst
       correctAnswer
-        | showSolution inst = Just $ show $ repairCdSolution inst
+        | showSolution inst
+        = Just . (DefiniteArticle,) . show $ repairCdSolution inst
         | otherwise = Nothing
   reRefuse
-    (multipleChoice DefiniteArticle chs correctAnswer solution xs)
+    (multipleChoice chs correctAnswer solution xs)
     $ when (showExtendedFeedback inst)
     $ void $ M.traverseWithKey
       (repairCdFeedback path (cdDrawSettings inst) xs)
@@ -420,19 +426,19 @@ repairCdFeedback path drawSettings xs x cdChange =
   where
     correct = paragraph $ translate $ do
       english [iii|Your answer about change #{x} is correct.|]
-      german [iii|Ihre Antwort zu Änderung #{x} ist richtig.|]
+      german [iii|Ihre Antwort zu Änderung #{x} ist korrekt.|]
     notCorrect = paragraph $ translate $ do
       english [iii|Your answer about change #{x} is not correct.|]
-      german [iii|Ihre Antwort zu Änderung #{x} ist nicht richtig.|]
+      german [iii|Ihre Antwort zu Änderung #{x} ist nicht korrekt.|]
     makesCorrect = paragraph $ translate $ do
-      english [iii|The change repairs the class diagram as it results in:|]
+      english [iii|The change repairs the class diagram as it results in the following valid one:|]
       german [iii|
-        Die Änderung repariert das Klassendiagramm, da es dann so aussieht:
+        Die Änderung repariert das Klassendiagramm, da es dann so aussieht und gültig ist:
         |]
     makesIncorrect = paragraph $ translate $ do
-      english [iii|The change does not repair the class diagram as it results in:|]
+      english [iii|The change does not repair the class diagram as it results in the following still invalid one:|]
       german [iii|
-        Die Änderung repariert das Klassendiagramm nicht, da es dann so aussieht:
+        Die Änderung repariert das Klassendiagramm nicht, da es dann so aussieht und immer noch ungültig ist:
         |]
     showCd cd = paragraph $
       image $=<< cacheCd drawSettings mempty cd path
@@ -445,7 +451,7 @@ type RepairCdTaskText = [SpecialOutput RepairCdTaskTextElement]
 data RepairCdTaskTextElement
   = IncorrectCd
   | PotentialFixes
-  deriving (Bounded, Enum, Eq, Generic, Ord, Read, Show)
+  deriving (Bounded, Enum, Eq, Generic, Hashable, Ord, Read, Reader, Show, ToDoc)
 
 toTaskText
   :: (MonadCache m, MonadDiagrams m, MonadGraphviz m, OutputCapable m)
@@ -491,7 +497,7 @@ data RepairCdInstance
     showSolution   :: !Bool,
     taskText       :: !RepairCdTaskText,
     addText        :: ExtraText
-  } deriving (Eq, Generic, Read, Show)
+  } deriving (Eq, Generic, Hashable, Read, Reader, Show, ToDoc)
 
 checkRepairCdInstance :: RepairCdInstance -> Maybe String
 checkRepairCdInstance RepairCdInstance {..}
@@ -906,7 +912,7 @@ data WeakeningKind
   -- ^ a weakening resulting in an invalid class diagram candidate
   | LegalStructuralWeakening
   -- ^ a weakening resulting in a valid class diagram
-  deriving (Generic, Read, Show)
+  deriving (Generic, Read, Reader, Show, ToDoc)
 
 {-|
 Generate one base class diagram candidate and four (one step) changes,
