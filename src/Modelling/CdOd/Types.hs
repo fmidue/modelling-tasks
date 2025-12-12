@@ -1,4 +1,5 @@
 {-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DeriveTraversable #-}
 {-# LANGUAGE LambdaCase #-}
@@ -99,6 +100,9 @@ import qualified Data.Set                         as S (fromList)
 
 import Modelling.Auxiliary.Common       (lowerFirst)
 
+import Autolib.Hash                     (Hashable)
+import Autolib.Reader                   (Reader)
+import Autolib.ToDoc                    (ToDoc)
 import Control.Applicative              (Alternative ((<|>)))
 import Control.Enumerable               (deriveEnumerable)
 import Control.Enumerable.Values        (allValues)
@@ -143,7 +147,7 @@ data Object objectName className
     objectName                :: objectName,
     objectClass               :: className
     }
-  deriving (Eq, Functor, Generic, Ord, Read, Show)
+  deriving (Eq, Functor, Generic, Hashable, Ord, Read, Reader, Show, ToDoc)
 
 instance Bifunctor Object where
   bimap f g Object {..} = Object {
@@ -174,7 +178,7 @@ data Link objectName linkLabel
     -- | the end point of the link
     linkTo                    :: objectName
     }
-  deriving (Eq, Functor, Generic, Ord, Read, Show)
+  deriving (Eq, Functor, Generic, Hashable, Ord, Read, Reader, Show, ToDoc)
 
 instance Bifunctor Link where
   bimap f g Link {..} = Link {
@@ -207,7 +211,7 @@ data ObjectDiagram objectName className linkLabel
     -- | all links belonging to the object diagram
     links                     :: [Link objectName linkLabel]
     }
-  deriving (Eq, Functor, Generic, Ord, Read, Show)
+  deriving (Eq, Functor, Generic, Hashable, Ord, Read, Reader, Show, ToDoc)
 
 instance Bifunctor (ObjectDiagram a) where
   bimap f g ObjectDiagram {..} = ObjectDiagram {
@@ -252,7 +256,7 @@ data RelationshipMutation
   = ChangeKind
   | ChangeLimit
   | Flip
-  deriving (Bounded, Enum, Eq, Generic, Ord, Read, Show)
+  deriving (Bounded, Enum, Eq, Generic, Ord, Read, Reader, Show, ToDoc)
 
 deriveEnumerable ''RelationshipMutation
 
@@ -260,7 +264,7 @@ data CdMutation
   = AddRelationship
   | MutateRelationship !RelationshipMutation
   | RemoveRelationship
-  deriving (Eq, Generic, Ord, Read, Show)
+  deriving (Eq, Generic, Ord, Read, Reader, Show, ToDoc)
 
 deriveEnumerable ''CdMutation
 
@@ -289,7 +293,7 @@ data LimitedLinking nodeName = LimitedLinking {
   linking                     :: nodeName,
   limits                      :: (Int, Maybe Int)
   }
-  deriving (Data, Eq, Functor, Foldable, Generic, Ord, Read, Show, Traversable)
+  deriving (Data, Eq, Functor, Foldable, Generic, Hashable, Ord, Read, Reader, Show, ToDoc, Traversable)
 
 {-|
 A variation of 'LimitedLinking' that can fallback to a default limit
@@ -384,7 +388,7 @@ data Relationship className relationshipName
     subClass                  :: className,
     superClass                :: className
     }
-  deriving (Data, Eq, Functor, Generic, Ord, Read, Show)
+  deriving (Data, Eq, Functor, Generic, Hashable, Ord, Read, Reader, Show, ToDoc)
 
 instance Bifunctor Relationship where
   bimap f g r = case r of
@@ -445,7 +449,7 @@ data InvalidRelationship className relationshipName
     invalidSubClass :: !(LimitedLinking className),
     invalidSuperClass :: !(LimitedLinking className)
     }
-  deriving (Data, Eq, Functor, Generic, Ord, Read, Show)
+  deriving (Data, Eq, Functor, Generic, Hashable, Ord, Read, Reader, Show, ToDoc)
 
 $(deriveBifunctor ''InvalidRelationship)
 $(deriveBifoldable ''InvalidRelationship)
@@ -498,7 +502,7 @@ data Annotation annotation annotated = Annotation {
   annotated                   :: annotated,
   annotation                  :: annotation
   }
-  deriving (Data, Eq, Foldable, Functor, Generic, Read, Show, Traversable)
+  deriving (Data, Eq, Foldable, Functor, Generic, Hashable, Read, Reader, Show, ToDoc, Traversable)
 
 $(deriveBifunctor ''Annotation)
 $(deriveBifoldable ''Annotation)
@@ -511,7 +515,7 @@ data AnnotatedClassDiagram relationshipAnnotation className relationshipName
     annotatedRelationships
       :: [Annotation relationshipAnnotation (AnyRelationship className relationshipName)]
     }
-  deriving (Data, Eq, Generic, Read, Show)
+  deriving (Data, Eq, Generic, Hashable, Read, Reader, Show, ToDoc)
 
 instance Functor (AnnotatedClassDiagram relationshipAnnotation className) where
   fmap f AnnotatedClassDiagram {..} = AnnotatedClassDiagram {
@@ -537,7 +541,7 @@ data ClassDiagram className relationshipName = ClassDiagram {
   classNames                  :: [className],
   relationships               :: [Relationship className relationshipName]
   }
-  deriving (Eq, Functor, Generic, Read, Show)
+  deriving (Eq, Functor, Generic, Hashable, Read, Reader, Show, ToDoc)
 
 instance Bifunctor ClassDiagram where
   bimap f g ClassDiagram {..} = ClassDiagram {
@@ -558,7 +562,7 @@ data AnyClassDiagram className relationshipName = AnyClassDiagram {
   anyClassNames           :: ![className],
   anyRelationships        :: ![AnyRelationship className relationshipName]
   }
-  deriving (Eq, Generic, Read, Show)
+  deriving (Eq, Generic, Hashable, Read, Reader, Show, ToDoc)
 
 instance Functor (AnyClassDiagram className) where
   fmap f AnyClassDiagram {..} = AnyClassDiagram {
@@ -646,7 +650,7 @@ data ClassConfig = ClassConfig {
     inheritanceLimits         :: (Int, Maybe Int),
     -- | the number of relationships including inheritances
     relationshipLimits        :: (Int, Maybe Int)
-  } deriving (Eq, Generic, Read, Show)
+  } deriving (Eq, Generic, Hashable, Read, Reader, Show, ToDoc)
 
 checkClassConfigWithProperties
   :: ClassConfig
@@ -819,7 +823,7 @@ newtype CdConstraints
     -- ^ if composition cycles have to contain inheritances (@Just True@),
     -- must not contain inheritances (@Just False@),
     -- or could contain inheritances (@Nothing@)
-    } deriving (Eq, Generic, Read, Show)
+    } deriving (Eq, Generic, Read, Reader, Show, ToDoc)
 
 defaultCdConstraints :: CdConstraints
 defaultCdConstraints = CdConstraints {
@@ -903,7 +907,7 @@ data CdDrawSettings
     -- | When set to 'False' association arrows will be omitted
     printNavigations :: !Bool
     }
-  deriving (Data, Eq, Generic, Read, Show)
+  deriving (Data, Eq, Generic, Hashable, Read, Reader, Show, ToDoc)
 
 defaultCdDrawSettings :: CdDrawSettings
 defaultCdDrawSettings = CdDrawSettings {
@@ -942,7 +946,7 @@ data OmittedDefaultMultiplicities
     associationOmittedDefaultMultiplicity :: !(Maybe (Int, Maybe Int)),
     compositionWholeOmittedDefaultMultiplicity :: !(Maybe (Int, Maybe Int))
     }
-  deriving (Data, Eq, Generic, Read, Show)
+  deriving (Data, Eq, Generic, Hashable, Read, Reader, Show, ToDoc)
 
 defaultOmittedDefaultMultiplicities :: OmittedDefaultMultiplicities
 defaultOmittedDefaultMultiplicities = OmittedDefaultMultiplicities {
@@ -987,7 +991,7 @@ data ObjectConfig = ObjectConfig {
   linksPerObjectLimits        :: !(Int, Maybe Int),
   -- | lower and upper limit of objects within the object diagram
   objectLimits                :: !(Int, Int)
-  } deriving (Eq, Generic, Read, Show)
+  } deriving (Eq, Generic, Read, Reader, Show, ToDoc)
 
 {-|
 Defines structural constraints of an object diagram.
@@ -1006,7 +1010,7 @@ data ObjectProperties = ObjectProperties {
   -- | if there is at least one link
   -- for every association, aggregation and composition
   usesEveryRelationshipName   :: !(Maybe Bool)
-  } deriving (Eq, Generic, Read, Show)
+  } deriving (Eq, Generic, Hashable, Read, Reader, Show, ToDoc)
 
 checkObjectProperties :: ObjectProperties -> Maybe String
 checkObjectProperties ObjectProperties {..}
@@ -1158,7 +1162,7 @@ data Property =
   | SelfRelationships
   | WrongAssociationLimits
   | WrongCompositionLimits
-  deriving (Bounded, Data, Enum, Eq, Generic, Ord, Read, Show)
+  deriving (Bounded, Data, Enum, Eq, Generic, Hashable, Ord, Read, Reader, Show, ToDoc)
 
 isIllegal :: Property -> Bool
 isIllegal x = case x of
@@ -1209,7 +1213,7 @@ data AllowedProperties = AllowedProperties {
   selfRelationships           :: Bool,
   wrongAssociationLimits      :: Bool,
   wrongCompositionLimits      :: Bool
-  } deriving (Generic, Read, Show)
+  } deriving (Eq, Generic, Hashable, Read, Reader, Show, ToDoc)
 
 allowEverything :: AllowedProperties
 allowEverything = AllowedProperties {
@@ -1450,7 +1454,7 @@ data ArticlePreference
   -- ^ prefer definite articles
   | UseIndefiniteArticleEverywhere
   -- ^ always use indefinite articles
-  deriving (Eq, Generic, Read, Show)
+  deriving (Eq, Generic, Hashable, Read, Reader, Show, ToDoc)
 
 {-|
 Convert 'ArticlePreference' directly to 'ArticleToUse' (without conditions).

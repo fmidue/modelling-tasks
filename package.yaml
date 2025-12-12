@@ -36,8 +36,11 @@ dependencies:
   - MonadRandom
   - SHA
   - SVGFonts
-  - autotool-capabilities
   - aeson
+  - autolib-reader
+  - autolib-todoc
+  - autolib-util
+  - autotool-capabilities
   - base
   - bimap
   - bifunctors

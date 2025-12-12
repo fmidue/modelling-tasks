@@ -1,4 +1,5 @@
 {-# LANGUAGE ApplicativeDo #-}
+{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE NamedFieldPuns #-}
@@ -25,6 +26,9 @@ module Modelling.ActivityDiagram.SelectAS (
 import qualified Data.Map as M (fromList, toList, keys, filter, map)
 import qualified Data.Vector as V (fromList)
 
+import Autolib.Hash                     (Hashable)
+import Autolib.Reader                   (Reader)
+import Autolib.ToDoc                    (ToDoc)
 import Capabilities.Alloy               (MonadAlloy, getInstances)
 import Capabilities.PlantUml            (MonadPlantUml)
 import Capabilities.WriteFile           (MonadWriteFile)
@@ -63,11 +67,13 @@ import Control.Monad.Trans.Class (lift)
 import Control.Monad.Extra (firstJustM)
 import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
+  ExtraText (..),
   GenericOutputCapable (..),
   LangM,
   OutputCapable,
   ($=<<),
   english,
+  extra,
   german,
   translate,
   translations,
@@ -92,9 +98,7 @@ import Data.String.Interpolate          (i, iii)
 import Data.Vector.Distance (Params(..), leastChanges)
 import GHC.Generics (Generic)
 import Modelling.Auxiliary.Output (
-  ExtraText(..),
   addPretext,
-  extra
   )
 import System.Random.Shuffle (shuffleM)
 
@@ -104,7 +108,8 @@ data SelectASInstance = SelectASInstance {
   drawSettings :: PlantUmlConfig,
   showSolution :: Bool,
   addText :: ExtraText
-} deriving (Eq, Generic, Read, Show)
+}
+  deriving (Eq, Generic, Hashable, Read, Reader, Show, ToDoc)
 
 data SelectASConfig = SelectASConfig {
   adConfig :: AdConfig,
@@ -116,7 +121,8 @@ data SelectASConfig = SelectASConfig {
   printSolution :: Bool,
   withActionRepetition :: Bool,
   extraText :: ExtraText
-} deriving (Generic, Read, Show)
+}
+  deriving (Generic, Read, Reader, Show, ToDoc)
 
 defaultSelectASConfig :: SelectASConfig
 defaultSelectASConfig = SelectASConfig {
@@ -346,9 +352,9 @@ selectASEvaluation task n = addPretext $ do
       (solution, validAS) = head $ M.toList $ M.map snd $ M.filter fst solMap
       solutionString =
         if showSolution task
-        then Just $ show validAS
+        then Just . (DefiniteArticle,) $ show validAS
         else Nothing
-  singleChoice DefiniteArticle as solutionString solution n
+  singleChoice as solutionString solution n
 
 selectASSolution
   :: SelectASInstance

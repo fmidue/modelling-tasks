@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# Language DeriveTraversable #-}
@@ -8,8 +9,6 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE TupleSections #-}
 {-# LANGUAGE TypeApplications #-}
-{-# LANGUAGE DeriveAnyClass #-}
-{-# LANGUAGE StandaloneDeriving #-}
 {-|
 This module provides types to represent Petri nets.
 
@@ -119,15 +118,19 @@ import qualified Data.Map.Lazy                    as M (
   )
 import qualified Data.Set                         as S (empty, union)
 
+import Autolib.Hash                     (Hashable)
+import Autolib.Reader                   (Reader)
+import Autolib.ToDoc                    (ToDoc)
 import Modelling.Auxiliary.Common       (lensRulesL)
-import Modelling.Auxiliary.Output       (ExtraText (..))
 import Modelling.PetriNet.Reach.Type    (Place, ShowTransition (ShowTransition))
+import Modelling.Types                  ()
 
 import Control.Lens                     (makeLensesWith)
 import Control.Monad                    ((<=<))
 import Control.Monad.Catch              (Exception, MonadThrow (throwM))
 import Control.Monad.Random             (RandT, RandomGen)
 import Control.Monad.Trans              (MonadTrans(lift))
+import Control.OutputCapable.Blocks     (ExtraText (..))
 import Data.Bimap                       (Bimap)
 import Data.Data                        (Data)
 import Data.GraphViz.Attributes.Complete (GraphvizCommand (..))
@@ -143,7 +146,7 @@ data AlloyConfig = AlloyConfig {
   maxInstances :: Maybe Integer,
   timeout      :: Maybe Int
   }
-  deriving (Show, Read, Generic)
+  deriving (Generic, Read, Reader, Show, ToDoc)
 
 defaultAlloyConfig :: AlloyConfig
 defaultAlloyConfig = AlloyConfig {
@@ -168,7 +171,7 @@ data PetriChange a = Change {
   --   nodes to the flow change (if any) at the edge between source and target.
   flowChange  :: Map a (Map a Int)
   }
-  deriving (Eq, Generic, Show)
+  deriving (Eq, Generic, Hashable, Read, Reader, Show, ToDoc)
 
 {-|
 This function acts like 'fmap' on other 'Functor's.
@@ -195,7 +198,7 @@ data PetriConflict p t = Conflict {
   -- | The set of source nodes having not enough tokens to fire both transitions.
   conflictPlaces :: [p]
   }
-  deriving (Functor, Generic, Read, Show)
+  deriving (Functor, Generic, Read, Reader, Show, ToDoc)
 
 makeLensesWith lensRulesL ''PetriConflict
 
@@ -230,7 +233,7 @@ instance Bitraversable PetriConflict where
     <*> traverse f as
 
 newtype Concurrent a = Concurrent (a, a)
-  deriving (Foldable, Functor, Generic, Read, Show, Traversable)
+  deriving (Eq, Foldable, Functor, Generic, Hashable, Read, Reader, Show, ToDoc, Traversable)
 
 class Show (n String) => PetriNode n where
   initialTokens     :: n a -> Int
@@ -293,7 +296,7 @@ data Node a =
   flowIn  :: Map a Int,
   flowOut :: Map a Int
   }
-  deriving (Data, Eq, Generic, Read, Show)
+  deriving (Data, Eq, Generic, Hashable, Read, Reader, Show, ToDoc)
 
 instance PetriNode Node where
   initialTokens PlaceNode {initial} = initial
@@ -324,7 +327,7 @@ data SimpleNode a =
   SimpleTransition {
   flowOut           :: Map a Int
   }
-  deriving (Data, Eq, Generic, Read, Show)
+  deriving (Data, Eq, Generic, Hashable, Read, Reader, Show, ToDoc)
 
 instance PetriNode SimpleNode where
   initialTokens SimplePlace {initial} = initial
@@ -465,7 +468,7 @@ The 'PetriLike' graph is a valid Petri net only if
 newtype PetriLike n a = PetriLike {
   -- | the 'Map' of all nodes the Petri net like graph is made of
   allNodes :: Map a (n a)
-  } deriving (Data, Eq, Generic, Read, Show)
+  } deriving (Data, Eq, Generic, Hashable, Read, Reader, Show, ToDoc)
 
 instance Net PetriLike Node where
   emptyNet = PetriLike M.empty
@@ -694,7 +697,8 @@ data PetriMath a = PetriMath {
   initialMarkingMath :: a,
   -- | the order of places used for notation of token changes ('tokenChangeMath')
   placeOrderMath     :: Maybe a
-  } deriving (Data, Foldable, Functor, Generic, Read, Show, Traversable)
+  }
+  deriving (Data, Eq, Foldable, Functor, Generic, Hashable, Read, Reader, Show, ToDoc, Traversable)
 
 data Petri = Petri
   { initialMarking :: Marking
@@ -712,7 +716,8 @@ data BasicConfig = BasicConfig
   , tokensOverall :: (Int, Int)
   -- ^ allowed range of tokens in total (over all places)
   , isConnected :: Maybe Bool
-  } deriving (Generic, Read, Show)
+  }
+  deriving (Generic, Read, Reader, Show, ToDoc)
 
 makeLensesWith lensRulesL ''BasicConfig
 
@@ -733,7 +738,8 @@ data GraphConfig = GraphConfig {
   hidePlaceNames :: Bool,
   hideTransitionNames :: Bool,
   hideWeight1 :: Bool
-  } deriving (Generic, Read, Show)
+  }
+  deriving (Generic, Read, Reader, Show, ToDoc)
 
 defaultGraphConfig :: GraphConfig
 defaultGraphConfig = GraphConfig {
@@ -749,7 +755,8 @@ data AdvConfig = AdvConfig
   { presenceOfSelfLoops :: Maybe Bool
   , presenceOfSinkTransitions :: Maybe Bool
   , presenceOfSourceTransitions :: Maybe Bool
-  } deriving (Generic, Read, Show)
+  }
+  deriving (Generic, Read, Reader, Show, ToDoc)
 
 defaultAdvConfig :: AdvConfig
 defaultAdvConfig = AdvConfig
@@ -763,7 +770,8 @@ data ChangeConfig = ChangeConfig
   , maxTokenChangePerPlace :: Int
   , flowChangeOverall :: Int
   , maxFlowChangePerEdge :: Int
-  } deriving (Generic, Read, Show)
+  }
+  deriving (Generic, Read, Reader, Show, ToDoc)
 
 defaultChangeConfig :: ChangeConfig
 defaultChangeConfig = ChangeConfig
@@ -787,7 +795,7 @@ data ConflictConfig = ConflictConfig {
   -- | to enforce that at least one distractor looks concurrent like
   conflictDistractorOnlyConcurrentLike  :: Bool
   }
-  deriving (Generic, Read, Show)
+  deriving (Generic, Read, Reader, Show, ToDoc)
 
 defaultConflictConfig :: ConflictConfig
 defaultConflictConfig = ConflictConfig {
@@ -808,7 +816,8 @@ data FindConflictConfig = FindConflictConfig
   , uniqueConflictPlace :: Maybe Bool
   , alloyConfig  :: AlloyConfig
   , extraText :: ExtraText
-  } deriving (Generic, Read, Show)
+  }
+  deriving (Generic, Read, Reader, Show, ToDoc)
 
 makeLensesWith lensRulesL ''FindConflictConfig
 
@@ -836,7 +845,8 @@ data PickConflictConfig = PickConflictConfig
   , useDifferentGraphLayouts :: Bool
   , alloyConfig  :: AlloyConfig
   , extraText :: ExtraText
-  } deriving (Generic, Read, Show)
+  }
+  deriving (Generic, Read, Reader, Show, ToDoc)
 
 defaultPickConflictConfig :: PickConflictConfig
 defaultPickConflictConfig = PickConflictConfig
@@ -860,7 +870,8 @@ data FindConcurrencyConfig = FindConcurrencyConfig
   , printSolution :: Bool
   , alloyConfig  :: AlloyConfig
   , extraText :: ExtraText
-  } deriving (Generic, Read, Show)
+  }
+  deriving (Generic, Read, Reader, Show, ToDoc)
 
 defaultFindConcurrencyConfig :: FindConcurrencyConfig
 defaultFindConcurrencyConfig = FindConcurrencyConfig
@@ -882,7 +893,8 @@ data PickConcurrencyConfig = PickConcurrencyConfig
   , useDifferentGraphLayouts :: Bool
   , alloyConfig  :: AlloyConfig
   , extraText :: ExtraText
-  } deriving (Generic, Read, Show)
+  }
+  deriving (Generic, Read, Reader, Show, ToDoc)
 
 defaultPickConcurrencyConfig :: PickConcurrencyConfig
 defaultPickConcurrencyConfig = PickConcurrencyConfig
@@ -902,9 +914,8 @@ data DrawSettings = DrawSettings {
   withTransitionNames  :: Bool,
   with1Weights         :: Bool,
   withGraphvizCommand  :: GraphvizCommand
-  } deriving (Data, Generic, Read, Show)
-
-deriving instance Data GraphvizCommand
+  }
+  deriving (Eq, Generic, Hashable, Read, Reader, Show, ToDoc)
 
 type Drawable n = (n, DrawSettings)
 

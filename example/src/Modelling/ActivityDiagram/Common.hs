@@ -9,8 +9,7 @@ module Modelling.ActivityDiagram.Common (
 
 import qualified Data.Map as M
 
-import Modelling.Auxiliary.Output (ExtraText(..))
-import Control.OutputCapable.Blocks (Language(..))
+import Control.OutputCapable.Blocks (ExtraText (..), Language (..))
 
 -- | Title for the final nodes advice collapsible section.
 finalNodesAdviceTitle :: M.Map Language String

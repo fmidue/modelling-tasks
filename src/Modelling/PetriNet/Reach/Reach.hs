@@ -100,7 +100,6 @@ import Control.Functor.Trans            (FunctorTrans (lift))
 import Control.Monad                    (forM, guard, msum, when, unless)
 import Control.Monad.Catch              (MonadCatch, MonadThrow)
 import Control.Monad.Extra              (findM, whenJust)
-import Control.Monad.State              (put)
 import Control.Monad.Trans.Maybe        (MaybeT (MaybeT, runMaybeT))
 import Modelling.PetriNet.Reach.ConfigValidation (
   checkBasicPetriConfig,
@@ -115,7 +114,7 @@ import Control.OutputCapable.Blocks (
   collapsed,
   english,
   german,
-  printSolutionAndAssertMinimum,
+  printSolutionAndAssertWithMinimum,
   translate,
   translations,
   yesNo,
@@ -278,8 +277,8 @@ reportReachFor showInputHelp img noLonger lengthHint minLength showMinLengthHint
         else translations $ do
           english "Hint on solution length"
           german "Hinweis zur Lösungslänge"
-  unless (null hints) $ collapsed True (put titleText) $ sequenceA_ hints
-  hoveringInformation
+  unless (null hints) $ collapsed True titleText $ sequenceA_ hints
+  hoveringInformation True
   pure ()
 
 reachInitial :: ReachInstance s Transition -> TransitionsList
@@ -395,10 +394,10 @@ assertReachPoints aCorrectSolution p size inst ts eitherOutcome = do
         partly
         (\x -> if p inst x then 1 else partly $ length ts)
         eitherOutcome
-  printSolutionAndAssertMinimum
+  printSolutionAndAssertWithMinimum
     (MinimumThreshold $ 1 % 3)
-    IndefiniteArticle
-    aCorrectSolution
+    False
+    ((IndefiniteArticle,) <$> aCorrectSolution)
     points
   where
     partly x = partiallyCorrect x $ size inst

@@ -2,6 +2,7 @@ ATransition
 AType
 Aeson
 Aggregationen
+Autolib
 Autotool
 Bifoldable
 Bifunctor
@@ -18,6 +19,7 @@ GHCi
 Graphviz
 HUnit
 HXT
+Hashable
 Hovern
 Hspec
 Leftrightarrow
@@ -25,10 +27,10 @@ Lexer
 Linkbeschriftung
 Modellierung
 Multiplizitäten
+NOINLINE
 NTree
 Nachbereich
 Neato
-NOINLINE
 OVERLAPPABLE
 Perim
 Petrinetz
@@ -47,6 +49,7 @@ Verzweigungsknoten
 Vielfachheit
 WColor
 XNode
+anyclass
 apps
 automorphisms
 autotool

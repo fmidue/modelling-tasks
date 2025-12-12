@@ -4,6 +4,7 @@
 {-# LANGUAGE NamedFieldPuns #-}
 {-# Language QuasiQuotes #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE TupleSections #-}
 
 module Modelling.PetriNet.Concurrency (
   checkFindConcurrencyConfig,
@@ -49,9 +50,7 @@ import Modelling.Auxiliary.Common (
   parseWith,
   )
 import Modelling.Auxiliary.Output (
-  ExtraText(..),
   hoveringInformation,
-  extra,
   )
 import Modelling.PetriNet.Alloy (
   compAdvConstraints,
@@ -120,6 +119,7 @@ import Control.Monad.Catch              (MonadCatch, MonadThrow)
 import Control.Monad.Extra              (findM)
 import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
+  ExtraText (..),
   GenericOutputCapable (..),
   LangM',
   LangM,
@@ -127,6 +127,7 @@ import Control.OutputCapable.Blocks (
   Rated,
   ($=<<),
   english,
+  extra,
   german,
   printSolutionAndAssert,
   translate,
@@ -140,7 +141,7 @@ import Control.Monad.Random (
   mkStdGen,
   )
 import Control.Monad.Trans              (MonadTrans (lift))
-import Data.Bifunctor                   (Bifunctor (bimap))
+import Data.Bifunctor                   (Bifunctor (bimap), first)
 import Data.Data                        (Data, Typeable)
 import Data.Either                      (isLeft)
 import Data.GraphViz.Commands           (GraphvizCommand (Circo, Fdp))
@@ -228,7 +229,7 @@ findConcurrencyTask showInputHelp path task = do
         des Paars spielt hierbei keine Rolle.
         |]
     pure ()
-  hoveringInformation
+  hoveringInformation True
   extra $ Find.addText task
   pure ()
 
@@ -248,7 +249,8 @@ findConcurrencyEvaluation task x = do
   let what = translations $ do
         english "are concurrently activated"
         german "sind nebenläufig aktiviert"
-  uncurry (printSolutionAndAssert DefiniteArticle)
+  uncurry (printSolutionAndAssert False)
+    . first (fmap (DefiniteArticle,))
     $=<< unLangM $ toFindEvaluation what withSol concur x
   where
     concur = findConcurrencySolution task
@@ -337,7 +339,7 @@ pickConcurrencyTask showInputHelp path task = do
         ++ ")."
     pure ()
    pure ()
-  hoveringInformation
+  hoveringInformation True
   extra $ Pick.addText task
   pure ()
 

@@ -1,4 +1,5 @@
 {-# LANGUAGE ApplicativeDo #-}
+{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE LambdaCase #-}
@@ -33,6 +34,9 @@ import qualified Data.Map                         as M (
   traverseWithKey,
   )
 
+import Autolib.Hash                     (Hashable)
+import Autolib.Reader                   (Reader)
+import Autolib.ToDoc                    (ToDoc)
 import Capabilities.Alloy               (MonadAlloy)
 import Capabilities.Cache               (MonadCache)
 import Capabilities.Diagrams            (MonadDiagrams)
@@ -44,13 +48,11 @@ import Modelling.Auxiliary.Common (
   RandomiseNames (randomiseNames),
   )
 import Modelling.Auxiliary.Output (
-  ExtraText(..),
   addPretext,
   checkTaskText,
   hoveringInformation,
   simplifiedInformation,
   uniform,
-  extra,
   )
 import Modelling.Auxiliary.Shuffle.All  (shuffleEverything)
 import Modelling.CdOd.CdAndChanges.Instance (
@@ -114,6 +116,7 @@ import Control.Monad                    ((>=>), unless, void, when)
 import Control.Monad.Catch              (MonadCatch, MonadThrow (throwM))
 import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
+  ExtraText (..),
   GenericOutputCapable (..),
   LangM,
   Language (English, German),
@@ -121,6 +124,7 @@ import Control.OutputCapable.Blocks (
   Rated,
   ($=<<),
   english,
+  extra,
   german,
   multipleChoice,
   multipleChoiceSyntax,
@@ -171,7 +175,7 @@ data SelectValidCdConfig
     shuffleEachCd    :: Bool,
     timeout          :: Maybe Int,
     extraText        :: ExtraText
-  } deriving (Generic, Read, Show)
+  } deriving (Generic, Read, Reader, Show, ToDoc)
 
 defaultSelectValidCdConfig :: SelectValidCdConfig
 defaultSelectValidCdConfig
@@ -239,13 +243,13 @@ data SelectValidCdInstance
   = SelectValidCdInstance {
     cdDrawSettings  :: !CdDrawSettings,
     classDiagrams   :: Map Int CdChange,
-    -- | when enabled feedback for wrong answers will be shown
+    -- | when enabled, feedback for wrong answers will be shown;
     -- this might include ODs
     showExtendedFeedback :: Bool,
     showSolution    :: !Bool,
     taskText        :: !SelectValidCdTaskText,
     addText         :: ExtraText
-  } deriving (Eq, Generic, Read, Show)
+  } deriving (Eq, Generic, Hashable, Read, Reader, Show, ToDoc)
 
 checkSelectValidCdInstance :: SelectValidCdInstance -> Maybe String
 checkSelectValidCdInstance SelectValidCdInstance {..}
@@ -270,7 +274,7 @@ type SelectValidCdTaskText = [SpecialOutput SelectValidCdTaskTextElement]
 
 data SelectValidCdTaskTextElement
   = CdCandidates
-  deriving (Bounded, Enum, Eq, Generic, Ord, Read, Show)
+  deriving (Bounded, Enum, Eq, Generic, Hashable, Ord, Read, Reader, Show, ToDoc)
 
 selectValidCdTask
   :: (MonadCache m, MonadDiagrams m, MonadGraphviz m, OutputCapable m)
@@ -280,8 +284,8 @@ selectValidCdTask
   -> LangM m
 selectValidCdTask showInputHelp path task = do
   toTaskText showInputHelp path task
-  simplifiedInformation
-  hoveringInformation
+  simplifiedInformation True
+  hoveringInformation True
   pure ()
 
 toTaskText
@@ -361,9 +365,10 @@ selectValidCdEvaluation path inst@SelectValidCdInstance{..} xs = addPretext $ do
         ]
       solution = isRight . hint <$> classDiagrams
       correctAnswer
-        | showSolution = Just $ show $ selectValidCdSolution inst
+        | showSolution
+        = Just . (DefiniteArticle,) $ show $ selectValidCdSolution inst
         | otherwise = Nothing
-  reRefuse (multipleChoice DefiniteArticle cds correctAnswer solution xs)
+  reRefuse (multipleChoice cds correctAnswer solution xs)
     $ when showExtendedFeedback
     $ void $ M.traverseWithKey
       (selectValidCdFeedback path cdDrawSettings xs)
@@ -404,13 +409,14 @@ selectValidCdFeedback path drawSettings xs x cdChange =
                 withDir
                 relation
           english [iii|
-            But if, for example, #{phrase English} would not be there,
-            the candidate would be valid.
+            #{if sufficient then "But if" else "If now"} for example
+            #{phrase English} would not be there,
+            the candidate #{if sufficient then "" else "(even without the added names) "}would be a valid class diagram.
             |]
           german [iii|
-            Aber wenn es zum Beispiel
-            #{trailingCommaGerman $ phrase German}
-            nicht gäbe, wäre der Kandidat gültig.
+            #{if sufficient then "Aber wenn es" else "Wenn es nun"} zum Beispiel
+            #{trailingCommaGerman $ phrase German} nicht gäbe,
+            wäre der Kandidat #{if sufficient then "" else "(selbst ohne die hinzugefügten Namen) "}ein gültiges Klassendiagramm.
             |]
       pure ()
     Right od | x `notElem` xs -> do
@@ -453,10 +459,10 @@ selectValidCdFeedback path drawSettings xs x cdChange =
     showNamedCd = do
         paragraph $ translate $ do
           english [iii|
-            The relationships in the class diagram could be named in the following way:
+            The relationships in the diagram could be named in the following way:
             |]
           german [iii|
-            Die Beziehungen in dem Klassendiagramm könnten auf folgende Weise
+            Die Beziehungen in dem Diagramm könnten auf folgende Weise
             mit Namen versehen werden:
             |]
         let withNames = drawSettings {printNames = True}

@@ -2,7 +2,6 @@
 
 module Modelling.CdOd.MatchCdOd.Config where
 
-import Modelling.Auxiliary.Output       (ExtraText(..))
 import Modelling.CdOd.MatchCdOd (
   MatchCdOdConfig (..),
   )
@@ -15,6 +14,7 @@ import Modelling.CdOd.Types (
   RelationshipMutation (..),
   )
 
+import Control.OutputCapable.Blocks     (ExtraText (..))
 import Data.Ratio                       ((%))
 
 {-|

@@ -2,7 +2,6 @@
 {-# LANGUAGE TypeApplications #-}
 module Modelling.PetriNet.ConflictSpec where
 
-import Modelling.Auxiliary.Output (ExtraText(..))
 import qualified Modelling.PetriNet.Types         as Find (
   FindConflictConfig (alloyConfig),
   )
@@ -54,6 +53,7 @@ import Modelling.PetriNet.TestCommon (
   )
 import Settings                         (configDepth, needsTuning)
 
+import Control.OutputCapable.Blocks     (ExtraText (..))
 import Data.Maybe                       (isNothing)
 import Test.Hspec
 

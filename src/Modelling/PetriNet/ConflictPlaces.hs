@@ -22,9 +22,7 @@ import Capabilities.Cache               (MonadCache)
 import Capabilities.Diagrams            (MonadDiagrams)
 import Capabilities.Graphviz            (MonadGraphviz)
 import Modelling.Auxiliary.Output (
-  ExtraText(..),
   hoveringInformation,
-  extra,
   )
 import Modelling.PetriNet.Conflict (
   ConflictPlaces,
@@ -69,12 +67,14 @@ import Control.Monad                    (void)
 import Control.Monad.Catch              (MonadThrow)
 import Control.OutputCapable.Blocks (
   GenericOutputCapable (..),
+  ExtraText (..),
   LangM',
   LangM,
   OutputCapable,
   ($=<<),
   continueOrAbort,
   english,
+  extra,
   german,
   translate,
   )
@@ -164,7 +164,7 @@ The order of places within the listing of places inducing the conflict is irrele
       german [i|Die Reihenfolge der Transitionen innerhalb des zuerst angegebenen Paars spielt hierbei keine Rolle.
 Die Reihenfolge von Stellen innerhalb der Auflistung der den Konflikt verursachenden Stellen spielt ebenso keine Rolle.|]
     pure ()
-  hoveringInformation
+  hoveringInformation True
   extra $ addText task
   pure ()
 

@@ -4,6 +4,7 @@
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE TupleSections #-}
 
 module Modelling.PetriNet.Conflict (
   ConflictPlaces,
@@ -57,9 +58,7 @@ import Modelling.Auxiliary.Common (
   upperFirst,
   )
 import Modelling.Auxiliary.Output (
-  ExtraText(..),
   hoveringInformation,
-  extra,
   )
 import Modelling.PetriNet.Alloy (
   compAdvConstraints,
@@ -138,6 +137,7 @@ import Control.Monad.Catch              (MonadCatch, MonadThrow)
 import Control.Monad.Extra              (findM)
 import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
+  ExtraText (..),
   GenericOutputCapable (..),
   LangM',
   LangM,
@@ -146,6 +146,7 @@ import Control.OutputCapable.Blocks (
   ($=<<),
   continueOrAbort,
   english,
+  extra,
   german,
   printSolutionAndAssert,
   recoverFrom,
@@ -235,7 +236,7 @@ findConflictTask showInputHelp path task = do
       english "The order of transitions within the pair does not matter here."
       german "Die Reihenfolge der Transitionen innerhalb des Paars spielt hierbei keine Rolle."
     pure ()
-  hoveringInformation
+  hoveringInformation True
   extra $ Find.addText task
   pure ()
 
@@ -290,7 +291,7 @@ findConflictPlacesEvaluation task (conflict, ps) =
   let result = min
         res
         $ (base - size inducing + size correct - size wrong') % base
-  points <- printSolutionAndAssert DefiniteArticle (fixSolution <$> ms) result
+  points <- printSolutionAndAssert True ((DefiniteArticle,) . fixSolution <$> ms) result
   pure points
   where
     assert = continueOrAbort withSol
@@ -390,7 +391,7 @@ pickConflictTask showInputHelp path task = do
         ++ ")."
     pure ()
    pure ()
-  hoveringInformation
+  hoveringInformation True
   extra $ Pick.addText task
   pure ()
 

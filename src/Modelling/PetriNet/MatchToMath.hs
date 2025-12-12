@@ -1,4 +1,5 @@
 {-# LANGUAGE ApplicativeDo #-}
+{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# Language DuplicateRecordFields #-}
@@ -47,9 +48,7 @@ import Capabilities.Diagrams            (MonadDiagrams)
 import Capabilities.Graphviz            (MonadGraphviz)
 import Modelling.Auxiliary.Common       (Object (oName), findFittingRandomElements)
 import Modelling.Auxiliary.Output       (
-  ExtraText(..),
   hoveringInformation,
-  extra,
   )
 import Modelling.PetriNet.Alloy (
   compAdvConstraints,
@@ -100,17 +99,21 @@ import Modelling.PetriNet.Types (
   shuffleNames,
   )
 
+import Autolib.Reader.Class             (Reader)
+import Autolib.ToDoc                    (ToDoc)
 import Control.Applicative              (Alternative ((<|>)))
 import Control.Monad                    (when)
 import Control.Monad.Catch              (MonadCatch, MonadThrow)
 import Control.OutputCapable.Blocks       (
   ArticleToUse (DefiniteArticle),
+  ExtraText (..),
   GenericOutputCapable (..),
   LangM,
   Language,
   OutputCapable,
   ($=<<),
   english,
+  extra,
   german,
   singleChoice,
   translate,
@@ -172,7 +175,7 @@ data MathConfig = MathConfig {
   wrongInstances :: Int,
   alloyConfig :: AlloyConfig,
   extraText :: ExtraText
-  } deriving (Generic, Read, Show)
+  } deriving (Generic, Read, Reader, Show, ToDoc)
 
 defaultMathConfig :: MathConfig
 defaultMathConfig = MathConfig {
@@ -426,7 +429,7 @@ graphToMathTask showInputHelp path task = do
       german [i| als Antwort würde bedeuten, dass Repräsentation 1 zur gegebenen grafischen Darstellung passt (und die anderen mathematischen Repräsentationen nicht).|]
     pure ()
    pure ()
-  hoveringInformation
+  hoveringInformation True
   extra $ addText task
   pure ()
 
@@ -490,7 +493,7 @@ mathToGraphTask showInputHelp path task = do
       german [i| als Antwort würde bedeuten, dass Diagramm 1 zur gegebenen mathematischen Repräsentation passt (und die anderen Diagramme nicht).|]
     pure ()
    pure ()
-  hoveringInformation
+  hoveringInformation True
   extra $ addText task
   pure ()
 
@@ -549,9 +552,9 @@ evaluation what task = do
   let solution = matchSolution task
       maybeSolution =
         if showSolution task
-        then Just $ show solution
+        then Just . (DefiniteArticle,) $ show solution
         else Nothing
-  singleChoice DefiniteArticle what maybeSolution solution
+  singleChoice what maybeSolution solution
 
 checkGraphToMathConfig :: MathConfig -> Maybe String
 checkGraphToMathConfig c@MathConfig {

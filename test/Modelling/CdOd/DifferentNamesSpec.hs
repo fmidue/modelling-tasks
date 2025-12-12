@@ -25,7 +25,6 @@ import Modelling.CdOd.DifferentNames (
   renameInstance,
   )
 import Modelling.Auxiliary.Common       (lowerFirst, oneOf)
-import Modelling.Auxiliary.Output       (ExtraText(..))
 import Modelling.CdOd.Types (
   Cd,
   ClassDiagram (..),
@@ -51,6 +50,7 @@ import Modelling.Types (
   )
 
 import Control.OutputCapable.Blocks (
+  ExtraText (..),
   Language (English),
   )
 import Control.Monad.Trans.Except       (runExceptT)
