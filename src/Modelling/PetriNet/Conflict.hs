@@ -136,6 +136,7 @@ import Control.Monad                    (when, unless)
 import Control.Monad.Catch              (MonadCatch, MonadThrow)
 import Control.Monad.Extra              (findM)
 import Control.OutputCapable.Blocks (
+  ArticleToUse (DefiniteArticle),
   ExtraText (..),
   GenericOutputCapable (..),
   LangM',
@@ -290,7 +291,7 @@ findConflictPlacesEvaluation task (conflict, ps) =
   let result = min
         res
         $ (base - size inducing + size correct - size wrong') % base
-  points <- printSolutionAndAssert True (fmap fixSolution <$> ms) result
+  points <- printSolutionAndAssert True ((DefiniteArticle,) . fixSolution <$> ms) result
   pure points
   where
     assert = continueOrAbort withSol

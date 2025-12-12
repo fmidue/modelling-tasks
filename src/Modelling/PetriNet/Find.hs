@@ -52,7 +52,6 @@ import Control.Applicative              (Alternative ((<|>)))
 import Control.Lens                     (makeLensesFor)
 import Control.Monad.Catch              (MonadThrow)
 import Control.OutputCapable.Blocks (
-  ArticleToUse (DefiniteArticle),
   ExtraText,
   LangM',
   Language (English, German),
@@ -125,13 +124,13 @@ toFindEvaluation
   -> Bool
   -> (Transition, Transition)
   -> (Transition, Transition)
-  -> LangM' m (Maybe (ArticleToUse, String), a)
+  -> LangM' m (Maybe String, a)
 toFindEvaluation what withSol (ft, st) (fi, si) = do
   let correct = ft == fi && st == si || ft == si && st == fi
       points = if correct then 1 else 0
       maybeSolutionString =
         if withSol
-        then Just . (DefiniteArticle,) $ show $ transitionPairShow (ft, st)
+        then Just $ show $ transitionPairShow (ft, st)
         else Nothing
   assert correct $ translate $ do
     english $ "The indicated transitions " ++ localise English what ++ "?"
