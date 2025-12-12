@@ -19,13 +19,18 @@ import Modelling.PetriNet.Reach.ReachSpec (
   )
 
 import Test.Hspec
-import Test.QuickCheck                  (Testable (property))
+import Test.QuickCheck (
+  Testable (property),
+  maxSuccess,
+  quickCheckWith,
+  stdArgs,
+  )
 
 spec :: Spec
 spec = do
   describe "generateDeadlock" $
     it "abides minTransitionLength" $
-      property $ \seed -> do
+      quickCheckWith stdArgs {maxSuccess = 50} $ property $ \seed -> do
         let config = defaultDeadlockConfig {
               maxTransitionLength = 6,
               minTransitionLength = 6

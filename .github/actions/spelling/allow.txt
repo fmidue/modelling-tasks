@@ -101,6 +101,7 @@ lstset
 mappend
 mathrm
 mempty
+msum
 mul
 multicolumn
 nlabel
@@ -121,6 +122,7 @@ schrittige
 similars
 skolem
 snd
+spaceballs
 startuml
 subpaths
 subsubsection

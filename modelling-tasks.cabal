@@ -77,6 +77,7 @@ library
       Modelling.PetriNet.Pick
       Modelling.PetriNet.Reach.Deadlock
       Modelling.PetriNet.Reach.Draw
+      Modelling.PetriNet.Reach.Filter
       Modelling.PetriNet.Reach.Property
       Modelling.PetriNet.Reach.Reach
       Modelling.PetriNet.Reach.Step
@@ -177,6 +178,7 @@ test-suite modelling-tasks-test
       Modelling.PetriNet.DiagramSpec
       Modelling.PetriNet.MatchToMathSpec
       Modelling.PetriNet.Reach.DeadlockSpec
+      Modelling.PetriNet.Reach.FilterSpec
       Modelling.PetriNet.Reach.ReachSpec
       Modelling.PetriNet.TestCommon
       Modelling.PetriNet.TypesSpec
