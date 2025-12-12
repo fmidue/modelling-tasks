@@ -235,7 +235,7 @@ findConflictTask showInputHelp path task = do
       english "The order of transitions within the pair does not matter here."
       german "Die Reihenfolge der Transitionen innerhalb des Paars spielt hierbei keine Rolle."
     pure ()
-  hoveringInformation
+  hoveringInformation True
   extra $ Find.addText task
   pure ()
 
@@ -390,7 +390,7 @@ pickConflictTask showInputHelp path task = do
         ++ ")."
     pure ()
    pure ()
-  hoveringInformation
+  hoveringInformation True
   extra $ Pick.addText task
   pure ()
 

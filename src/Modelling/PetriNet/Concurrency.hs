@@ -227,7 +227,7 @@ findConcurrencyTask showInputHelp path task = do
         des Paars spielt hierbei keine Rolle.
         |]
     pure ()
-  hoveringInformation
+  hoveringInformation True
   extra $ Find.addText task
   pure ()
 
@@ -336,7 +336,7 @@ pickConcurrencyTask showInputHelp path task = do
         ++ ")."
     pure ()
    pure ()
-  hoveringInformation
+  hoveringInformation True
   extra $ Pick.addText task
   pure ()
 

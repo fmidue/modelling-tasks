@@ -429,7 +429,7 @@ graphToMathTask showInputHelp path task = do
       german [i| als Antwort würde bedeuten, dass Repräsentation 1 zur gegebenen grafischen Darstellung passt (und die anderen mathematischen Repräsentationen nicht).|]
     pure ()
    pure ()
-  hoveringInformation
+  hoveringInformation True
   extra $ addText task
   pure ()
 
@@ -493,7 +493,7 @@ mathToGraphTask showInputHelp path task = do
       german [i| als Antwort würde bedeuten, dass Diagramm 1 zur gegebenen mathematischen Repräsentation passt (und die anderen Diagramme nicht).|]
     pure ()
    pure ()
-  hoveringInformation
+  hoveringInformation True
   extra $ addText task
   pure ()
 

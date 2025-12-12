@@ -296,9 +296,9 @@ matchCdOdTask
   -> LangM m
 matchCdOdTask showInputHelp path task = do
   toTaskText showInputHelp path task
-  simplifiedInformation
-  directionsAdvice
-  hoveringInformation
+  simplifiedInformation True
+  directionsAdvice True
+  hoveringInformation True
   pure ()
 
 toTaskText

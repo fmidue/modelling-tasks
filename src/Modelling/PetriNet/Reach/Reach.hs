@@ -234,7 +234,7 @@ reportReachFor showInputHelp img noLonger lengthHint minLength showMinLengthHint
           english "Hint on solution length"
           german "Hinweis zur Lösungslänge"
   unless (null hints) $ collapsed True titleText $ sequenceA_ hints
-  hoveringInformation
+  hoveringInformation True
   pure ()
 
 reachInitial :: ReachInstance s Transition -> TransitionsList
