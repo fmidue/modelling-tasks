@@ -254,3 +254,86 @@ task2024_56 = DifferentNamesConfig {
   withObviousMapping = Nothing,
   extraText = NoExtraText
   }
+
+{-|
+points: 0.15
+-}
+task2025_13 :: DifferentNamesConfig
+task2025_13 = DifferentNamesConfig {
+  classConfig = ClassConfig {
+    classLimits = (5, 5),
+    aggregationLimits = (2, Just 2),
+    associationLimits = (1, Just 1),
+    compositionLimits = (2, Just 2),
+    inheritanceLimits = (1, Just 1),
+    relationshipLimits = (6, Just 6)
+    },
+  withNonTrivialInheritance = Just False,
+  maxInstances = Just 10000,
+  objectConfig = ObjectConfig {
+    linkLimits = (9, Just 9),
+    linksPerObjectLimits = (0, Just 4),
+    objectLimits = (7, 7)
+    },
+  objectProperties = ObjectProperties {
+    anonymousObjectProportion = 1 % 1,
+    completelyInhabited = Just True,
+    hasLimitedIsolatedObjects = True,
+    hasSelfLoops = Just False,
+    usesEveryRelationshipName = Just False
+    },
+  omittedDefaultMultiplicities = OmittedDefaultMultiplicities {
+    aggregationWholeOmittedDefaultMultiplicity = Just (0, Nothing),
+    associationOmittedDefaultMultiplicity = Just (0, Nothing),
+    compositionWholeOmittedDefaultMultiplicity = Nothing
+    },
+  printSolution = True,
+  timeout = Nothing,
+  withObviousMapping = Just True,
+  extraText = NoExtraText
+  }
+
+{-|
+points: 0.15
+average generation time per instance: 2:28min
+-}
+task2025_14 :: DifferentNamesConfig
+task2025_14 = DifferentNamesConfig {
+  classConfig = ClassConfig {
+    classLimits = (5, 5),
+    aggregationLimits = (1, Just 1),
+    associationLimits = (2, Just 2),
+    compositionLimits = (2, Just 2),
+    inheritanceLimits = (2, Just 2),
+    relationshipLimits = (7, Just 7)
+    },
+  withNonTrivialInheritance = Just True,
+  maxInstances = Just 10000,
+  objectConfig = ObjectConfig {
+    linkLimits = (11, Just 11),
+    linksPerObjectLimits = (1, Just 6),
+    objectLimits = (6, 6)
+    },
+  objectProperties = ObjectProperties {
+    anonymousObjectProportion = 1 % 1,
+    completelyInhabited = Just True,
+    hasLimitedIsolatedObjects = True,
+    hasSelfLoops = Just False,
+    usesEveryRelationshipName = Just True
+    },
+  omittedDefaultMultiplicities = OmittedDefaultMultiplicities {
+    aggregationWholeOmittedDefaultMultiplicity = Just (0, Nothing),
+    associationOmittedDefaultMultiplicity = Just (0, Nothing),
+    compositionWholeOmittedDefaultMultiplicity = Nothing
+    },
+  printSolution = True,
+  timeout = Nothing,
+  withObviousMapping = Just False,
+  extraText = NoExtraText
+  }
+
+task2025_15 :: DifferentNamesConfig
+task2025_15 = task2025_14
+
+task2025_16 :: DifferentNamesConfig
+task2025_16 = task2025_14
