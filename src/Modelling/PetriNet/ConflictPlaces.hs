@@ -22,9 +22,7 @@ import Capabilities.Cache               (MonadCache)
 import Capabilities.Diagrams            (MonadDiagrams)
 import Capabilities.Graphviz            (MonadGraphviz)
 import Modelling.Auxiliary.Output (
-  ExtraText(..),
   hoveringInformation,
-  extra,
   )
 import Modelling.PetriNet.Conflict (
   ConflictPlaces,
@@ -69,12 +67,14 @@ import Control.Monad                    (void)
 import Control.Monad.Catch              (MonadThrow)
 import Control.OutputCapable.Blocks (
   GenericOutputCapable (..),
+  ExtraText (..),
   LangM',
   LangM,
   OutputCapable,
   ($=<<),
   continueOrAbort,
   english,
+  extra,
   german,
   translate,
   )
@@ -101,7 +101,8 @@ simpleFindConflictPlacesTask
     MonadThrow m,
     OutputCapable m
     )
-  => FilePath
+  => Bool
+  -> FilePath
   -> FindInstance SimplePetriNet Conflict
   -> LangM m
 simpleFindConflictPlacesTask = findConflictPlacesTask
@@ -119,10 +120,11 @@ findConflictPlacesTask
     Typeable n,
     Typeable p
     )
-  => FilePath
+  => Bool
+  -> FilePath
   -> FindInstance (p n String) Conflict
   -> LangM m
-findConflictPlacesTask path task = do
+findConflictPlacesTask showInputHelp path task = do
   paragraph $ translate $ do
     english "Consider the following Petri net:"
     german "Betrachten Sie folgendes Petrinetz:"
@@ -130,7 +132,13 @@ findConflictPlacesTask path task = do
   paragraph $ translate $ do
     english "Which pair of transitions is in conflict, and because of which conflict-causing place(s), under the initial marking?"
     german "Welches Paar von Transitionen steht in Konflikt, und wegen welcher konfliktverursachenden Stelle(n), unter der Startmarkierung?"
-  paragraph $ do
+  if not showInputHelp then
+    paragraph $ translate $ do
+     english [i|You have to indicate all the places that induce the conflict, i.e., all those common places within the
+preconditions which each separately do not have enough tokens for firing the two transitions at the same time.|]
+     german [i|Sie müssen alle Stellen angeben, die den Konflikt verursachen, also all jene gemeinsamen Stellen in den Vorbedingungen,
+die jeweils einzeln nicht ausreichend Marken zum gleichzeitigen Feuern der beiden Transitionen haben.|]
+  else paragraph $ do
     translate $ do
       english "State your answer by indicating a pair of conflicting transitions and a list of all the places that induce the conflict. "
       german "Geben Sie Ihre Antwort durch Angabe eines Paars von in Konflikt stehenden Transitionen und einer Liste aller Stellen, die den Konflikt verursachen. "
@@ -156,7 +164,7 @@ The order of places within the listing of places inducing the conflict is irrele
       german [i|Die Reihenfolge der Transitionen innerhalb des zuerst angegebenen Paars spielt hierbei keine Rolle.
 Die Reihenfolge von Stellen innerhalb der Auflistung der den Konflikt verursachenden Stellen spielt ebenso keine Rolle.|]
     pure ()
-  hoveringInformation
+  hoveringInformation True
   extra $ addText task
   pure ()
 

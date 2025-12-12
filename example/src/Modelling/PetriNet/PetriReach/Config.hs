@@ -3,6 +3,7 @@
 module Modelling.PetriNet.PetriReach.Config where
 
 import Modelling.PetriNet.Reach.Reach   (ReachConfig(..), NetGoalConfig(..))
+import Modelling.PetriNet.Reach.Filter  (defaultFilterConfig)
 import Modelling.PetriNet.Reach.Type    (Capacity(..))
 import Data.GraphViz.Commands           (GraphvizCommand(..))
 
@@ -26,7 +27,8 @@ task2023_27 = ReachConfig {
   showLengthHint = True,
   showMinLengthHint = True,
   showTargetNet = True,
-  showPlaceNamesInNet = False
+  showPlaceNamesInNet = False,
+  filterConfig = defaultFilterConfig
   }
 
 {-|
@@ -49,7 +51,8 @@ task2023_28 = ReachConfig {
   showLengthHint = True,
   showMinLengthHint = True,
   showTargetNet = True,
-  showPlaceNamesInNet = False
+  showPlaceNamesInNet = False,
+  filterConfig = defaultFilterConfig
   }
 
 {-|
@@ -84,5 +87,6 @@ task2024_60 = ReachConfig {
   showLengthHint = False,
   showMinLengthHint = True,
   showTargetNet = True,
-  showPlaceNamesInNet = False
+  showPlaceNamesInNet = False,
+  filterConfig = defaultFilterConfig
   }

@@ -4,6 +4,7 @@
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE TupleSections #-}
 
 module Modelling.PetriNet.Conflict (
   ConflictPlaces,
@@ -57,9 +58,7 @@ import Modelling.Auxiliary.Common (
   upperFirst,
   )
 import Modelling.Auxiliary.Output (
-  ExtraText(..),
   hoveringInformation,
-  extra,
   )
 import Modelling.PetriNet.Alloy (
   compAdvConstraints,
@@ -133,11 +132,12 @@ import Modelling.PetriNet.Types         (
 
 import Control.Applicative              (Alternative, (<|>))
 import Control.Lens                     ((.~), over)
-import Control.Monad                    (unless)
+import Control.Monad                    (when, unless)
 import Control.Monad.Catch              (MonadCatch, MonadThrow)
 import Control.Monad.Extra              (findM)
 import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
+  ExtraText (..),
   GenericOutputCapable (..),
   LangM',
   LangM,
@@ -146,6 +146,7 @@ import Control.OutputCapable.Blocks (
   ($=<<),
   continueOrAbort,
   english,
+  extra,
   german,
   printSolutionAndAssert,
   recoverFrom,
@@ -187,7 +188,8 @@ simpleFindConflictTask
     MonadThrow m,
     OutputCapable m
     )
-  => FilePath
+  => Bool
+  -> FilePath
   -> FindInstance SimplePetriNet Conflict
   -> LangM m
 simpleFindConflictTask = findConflictTask
@@ -205,10 +207,11 @@ findConflictTask
     Typeable n,
     Typeable p
     )
-  => FilePath
+  => Bool
+  -> FilePath
   -> FindInstance (p n String) Conflict
   -> LangM m
-findConflictTask path task = do
+findConflictTask showInputHelp path task = do
   paragraph $ translate $ do
     english "Consider the following Petri net:"
     german "Betrachten Sie folgendes Petrinetz:"
@@ -216,7 +219,7 @@ findConflictTask path task = do
   paragraph $ translate $ do
     english "Which pair of transitions is in conflict under the initial marking?"
     german "Welches Paar von Transitionen steht unter der Startmarkierung in Konflikt?"
-  paragraph $ do
+  when showInputHelp $ paragraph $ do
     translate $ do
       english "State your answer by giving a pair of conflicting transitions. "
       german "Geben Sie Ihre Antwort durch Angabe eines Paars von in Konflikt stehenden Transitionen an. "
@@ -233,7 +236,7 @@ findConflictTask path task = do
       english "The order of transitions within the pair does not matter here."
       german "Die Reihenfolge der Transitionen innerhalb des Paars spielt hierbei keine Rolle."
     pure ()
-  hoveringInformation
+  hoveringInformation True
   extra $ Find.addText task
   pure ()
 
@@ -288,7 +291,7 @@ findConflictPlacesEvaluation task (conflict, ps) =
   let result = min
         res
         $ (base - size inducing + size correct - size wrong') % base
-  points <- printSolutionAndAssert DefiniteArticle (fixSolution <$> ms) result
+  points <- printSolutionAndAssert True ((DefiniteArticle,) . fixSolution <$> ms) result
   pure points
   where
     assert = continueOrAbort withSol
@@ -318,7 +321,8 @@ simplePickConflictTask
     MonadThrow m,
     OutputCapable m
     )
-  => FilePath
+  => Bool
+  -> FilePath
   -> PickInstance SimplePetriNet
   -> LangM m
 simplePickConflictTask = pickConflictTask
@@ -336,10 +340,11 @@ pickConflictTask
     Typeable n,
     Typeable p
     )
-  => FilePath
+  => Bool
+  -> FilePath
   -> PickInstance (p n String)
   -> LangM m
-pickConflictTask path task = do
+pickConflictTask showInputHelp path task = do
   paragraph $ translate $ do
     english [iii|
       Which of the following Petri nets has exactly
@@ -351,7 +356,8 @@ pickConflictTask path task = do
       die unter der Startmarkierung in Konflikt stehen?
       |]
   images show snd $=<< renderPick path task
-  paragraph $ translate $ do
+  when showInputHelp $ do
+   paragraph $ translate $ do
     english [iii|
       State your answer by giving the number of the Petri net
       having these conflicting transitions.#{" "}
@@ -360,8 +366,8 @@ pickConflictTask path task = do
       Geben Sie Ihre Antwort durch Angabe der Nummer des Petrinetzes an,
       das diese in Konflikt stehenden Transitionen hat.#{" "}
       |]
-  let plural = wrongInstances task > 1
-  paragraph $ do
+   let plural = wrongInstances task > 1
+   paragraph $ do
     translate $ do
       english [i|Stating |]
       german [i|Die Angabe von |]
@@ -384,7 +390,8 @@ pickConflictTask path task = do
             else "das andere Petrinetz nicht")
         ++ ")."
     pure ()
-  hoveringInformation
+   pure ()
+  hoveringInformation True
   extra $ Pick.addText task
   pure ()
 

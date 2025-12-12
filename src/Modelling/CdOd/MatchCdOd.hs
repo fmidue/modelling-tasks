@@ -1,5 +1,6 @@
 {-# LANGUAGE ApplicativeDo #-}
 {-# LANGUAGE CPP #-}
+{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE LambdaCase #-}
@@ -41,6 +42,9 @@ import qualified Data.Map                         as M (
   traverseWithKey,
   )
 
+import Autolib.Hash                     (Hashable)
+import Autolib.Reader                   (Reader)
+import Autolib.ToDoc                    (ToDoc)
 import Capabilities.Alloy               (MonadAlloy, getInstances)
 import Capabilities.Cache               (MonadCache)
 import Capabilities.Diagrams            (MonadDiagrams)
@@ -51,10 +55,8 @@ import Modelling.Auxiliary.Common (
   RandomiseNames (hasRandomisableNames, randomiseNames),
   )
 import Modelling.Auxiliary.Output (
-  ExtraText(..),
   addPretext,
   directionsAdvice,
-  extra,
   hoveringInformation,
   simplifiedInformation,
   uniform,
@@ -130,12 +132,14 @@ import Control.Monad.Fail               (MonadFail)
 #endif
 import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
+  ExtraText (..),
   GenericOutputCapable (..),
   LangM,
   OutputCapable,
   Rated,
   ($=<<),
   english,
+  extra,
   german,
   multipleChoice,
   translate,
@@ -181,7 +185,7 @@ data MatchCdOdInstance
     showSolution   :: !Bool,
     taskText       :: !MatchCdOdTaskText,
     addText        :: ExtraText
-  } deriving (Eq, Generic, Read, Show)
+  } deriving (Eq, Generic, Hashable, Read, Reader, Show, ToDoc)
 
 data MatchCdOdConfig
   = MatchCdOdConfig {
@@ -195,7 +199,7 @@ data MatchCdOdConfig
     timeout          :: Maybe Int,
     withNonTrivialInheritance :: Maybe Bool,
     extraText        :: ExtraText
-  } deriving (Generic, Read, Show)
+  } deriving (Generic, Read, Reader, Show, ToDoc)
 
 defaultMatchCdOdConfig :: MatchCdOdConfig
 defaultMatchCdOdConfig
@@ -276,7 +280,7 @@ type MatchCdOdTaskText = [SpecialOutput MatchCdOdTaskTextElement]
 data MatchCdOdTaskTextElement
   = GivenCds
   | GivenOds
-  deriving (Bounded, Enum, Eq, Generic, Ord, Read, Show)
+  deriving (Bounded, Enum, Eq, Generic, Hashable, Ord, Read, Reader, Show, ToDoc)
 
 matchCdOdTask
   :: (
@@ -292,9 +296,9 @@ matchCdOdTask
   -> LangM m
 matchCdOdTask showInputHelp path task = do
   toTaskText showInputHelp path task
-  simplifiedInformation
-  directionsAdvice
-  hoveringInformation
+  directionsAdvice True
+  simplifiedInformation True
+  hoveringInformation True
   pure ()
 
 toTaskText
@@ -440,9 +444,10 @@ matchCdOdEvaluation task sub' = do
         german "Instanzen"
       solution =
         if showSolution task
-        then Just . show . matchingShow $ matchCdOdSolution task
+        then Just . (DefiniteArticle,) . show . matchingShow
+          $ matchCdOdSolution task
         else Nothing
-  multipleChoice DefiniteArticle what solution matching sub
+  multipleChoice what solution matching sub
   where
     toMatching' :: Foldable f => f (Int, Letters) -> [(Int, Char)]
     toMatching' =

@@ -4,7 +4,6 @@ module Modelling.CdOd.NameCdError.Instance where
 
 import qualified Data.Map                         as M (fromList)
 
-import Modelling.Auxiliary.Output  (ExtraText (..))
 import Modelling.Auxiliary.Shuffle.All  (ShuffleInstance (..))
 import Modelling.CdOd.NameCdError (
   NameCdErrorInstance (..),
@@ -24,10 +23,11 @@ import Modelling.CdOd.Types (
 
 import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
+  ExtraText (..),
   Language (English, German),
   )
 import Control.OutputCapable.Blocks.Generic.Type (
-  GenericOutput (Code, Paragraph, Special, Translated),
+  GenericOutput (Paragraph, Special, Translated),
   )
 import Data.Map                         (Map)
 
@@ -129,7 +129,7 @@ task2024_14 = ShuffleInstance {
               },
             compositionWhole = LimitedLinking {
               linking = "UniversityCampus",
-              limits = (0, Just 1)
+              limits = (1, Just 1)
               }
             },
           annotation = Relevant {
@@ -172,26 +172,33 @@ task2024_14 = ShuffleInstance {
       Paragraph [
         Translated (listToFM [
           (English, "A student received the following scenario:"),
-          (German, "Ein Student hat folgendes Szenario erhalten:")
+          (German, "Ein Studierender hat folgendes Szenario erhalten:")
           ])
         ],
       Paragraph [
         Translated (listToFM [
-          (English, "A university campus consists of different buildings. Each building is cared for by a facility manager who is responsible for it. A facility manager is a person. Another kind of persons are the professors, who each have a specific room as own office. A building consists of different rooms, not each of which is a professor's office."),
-          (German, "Ein Universitätscampus besteht aus verschiedenen Gebäuden. Jedes Gebäude wird von einem Hausmeister betreut, der für es zuständig ist. Ein Hausmeister ist eine Person. Eine andere Art von Personen sind die Professoren, die jeweils einen bestimmten Raum als eigenes Büro haben. Ein Gebäude besteht aus verschiedenen Räumen, von denen nicht jeder ein Professorenbüro ist.")
+          (English, "A university campus consists of different buildings. Facility managers are responsible for buildings and each building is cared for by a facility manager. A facility manager is a person. Another kind of persons are the professors, who each have a specific room as own office. A building consists of different rooms, not each of which is a professor's office."),
+          (German, "Ein Universitätscampus besteht aus verschiedenen Gebäuden. Hausmeister sind für Gebäude zuständig und jedes Gebäude wird von einem Hausmeister betreut. Ein Hausmeister ist eine Person. Eine andere Art von Personen sind die Professoren, die jeweils einen bestimmten Raum als eigenes Büro haben. Ein Gebäude besteht aus verschiedenen Räumen, von denen nicht jeder ein Professorenbüro ist.")
           ])
         ],
       Paragraph [
         Translated (listToFM [
-          (English, "He solved the task of creating a class diagram for this scenario in the following way:"),
-          (German, "Die Aufgabe, ein Klassendiagramm für dieses Szenario zu entwerfen, hat er folgendermaßen gelöst:")
+          (English, "The student solved the task of creating a class diagram for this scenario in the following way:"),
+          (German, "Die Aufgabe, ein Klassendiagramm für dieses Szenario zu erzeugen, hat der Studierende folgendermaßen gelöst:")
           ])
         ],
       Paragraph [Special IncorrectCd],
       Paragraph [
         Translated (listToFM [
-          (English, "Analyse and take a stance on the created class diagram regarding the scenario task of the student!"),
-          (German, "Analysieren Sie und beziehen Sie Stellung zum entworfenen Klassendiagramm hinsichtlich der Szenario-Aufgabe des Studenten!")
+          (English, "It contains the following relationships between classes:"),
+          (German,"Es enthält die folgenden Beziehungen zwischen Klassen:")
+          ])
+        ],
+      Paragraph [Special RelationshipsList],
+      Paragraph [
+        Translated (listToFM [
+          (English, "Analyse and take a stance on the created class diagram regarding the scenario task of the student! In case, indicate all the specific relationships that would need to be changed!"),
+          (German, "Analysieren Sie und beziehen Sie Stellung zum erzeugten Klassendiagramm hinsichtlich der Szenario-Aufgabe des Studierenden! Gegebenenfalls, führen Sie alle konkreten Beziehungen auf, die geändert werden müssten!")
           ])
         ],
       Paragraph [
@@ -200,34 +207,7 @@ task2024_14 = ShuffleInstance {
           (German, "Das Klassendiagramm ...")
           ])
         ],
-      Paragraph [Special ReasonsList],
-      Paragraph [
-        Translated (listToFM [
-          (English, "Name the specific relationships that would need to be changed on occasion:"),
-          (German, "Nennen Sie die konkreten Beziehungen, die gegebenenfalls geändert werden müssten:")
-          ])
-        ],
-      Paragraph [Special RelationshipsList],
-      Paragraph [
-        Paragraph [
-          Translated (listToFM [
-            (English, "Please state your answer by providing a letter for your conclusion about the class diagram as well as a listing of numbers for those relationships that would need to be adapted in your opinion. For example,"),
-            (German, "Bitte geben Sie Ihre Antwort an, indem Sie Folgendes angeben: einen Buchstaben für Ihre Schlussfolgerung zum Klassendiagramm, und eine Auflistung von Zahlen für diejenigen Beziehungen, die Ihrer Meinung nach angepasst werden müssten. Zum Beispiel würde")
-            ])
-          ],
-        Paragraph [
-          Code (listToFM [
-            (English, "due-to:\n- 3\n- 4\nreason: b\n"),
-            (German, "due-to:\n- 3\n- 4\nreason: b\n")
-            ])
-          ],
-        Paragraph [
-          Translated (listToFM [
-            (English, "would indicate that b is your conclusion about the class diagram and that the 3. and 4. relationship would need to be adapted."),
-            (German, "bedeuten, dass b Ihre Schlussfolgerung zum Klassendiagramm ist und dass die 3. und 4. Beziehung angepasst werden müssten.")
-            ])
-          ]
-        ]
+      Paragraph [Special ReasonsList]
       ],
     addText = NoExtraText
     },
@@ -235,3 +215,9 @@ task2024_14 = ShuffleInstance {
   shuffleNames = False,
   shuffleOptions = True
   }
+
+{-|
+points: 0.15
+-}
+task2025_12 :: ShuffleInstance NameCdErrorInstance
+task2025_12 = task2024_14

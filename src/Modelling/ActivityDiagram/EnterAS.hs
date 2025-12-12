@@ -1,8 +1,10 @@
 {-# LANGUAGE ApplicativeDo #-}
+{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE TupleSections #-}
 
 module Modelling.ActivityDiagram.EnterAS (
   EnterASInstance(..),
@@ -22,11 +24,15 @@ module Modelling.ActivityDiagram.EnterAS (
   defaultEnterASInstance
 ) where
 
+import Autolib.Hash                     (Hashable)
+import Autolib.Reader                   (Reader)
+import Autolib.ToDoc                    (ToDoc)
 import Capabilities.Alloy               (MonadAlloy, getInstances)
 import Capabilities.PlantUml            (MonadPlantUml)
 import Capabilities.WriteFile           (MonadWriteFile)
 import Modelling.ActivityDiagram.ActionSequences (
-  generateActionSequenceWithPetri,
+  generateActionSequencesWithPetri,
+  netAndMap,
   computeActionSequenceLevels,
   isFinalPetriNode,
   )
@@ -56,18 +62,21 @@ import Modelling.ActivityDiagram.PlantUMLConverter (
 import Modelling.ActivityDiagram.Shuffle (shuffleAdNames)
 import Modelling.Auxiliary.Common       (getFirstInstance)
 import Modelling.PetriNet.Types         (Node, PetriLike)
+import Modelling.PetriNet.Reach.Type (State(..), Net(start))
 
 import Control.Applicative (Alternative ((<|>)))
 import Control.Monad (unless, when)
 import Control.Monad.Catch              (MonadThrow)
 import Control.OutputCapable.Blocks (
   ArticleToUse (IndefiniteArticle),
+  ExtraText(..),
   GenericOutputCapable (..),
   LangM,
   Rated,
   OutputCapable,
   ($=<<),
   english,
+  extra,
   german,
   translate,
   printSolutionAndAssert,
@@ -81,13 +90,12 @@ import Control.Monad.Random (
   )
 import Data.List (intercalate, intersect)
 import Data.List.Extra (nubOrd)
+import qualified Data.Map as M (map)
 import Data.Maybe                       (isNothing, isJust)
 import Data.String.Interpolate (i, iii)
 import GHC.Generics (Generic)
 import Modelling.Auxiliary.Output (
-  ExtraText(..),
   addPretext,
-  extra
   )
 import System.Random.Shuffle (shuffleM)
 
@@ -98,7 +106,8 @@ data EnterASInstance = EnterASInstance {
   sampleSequence :: [String],
   showSolution :: Bool,
   addText :: ExtraText
-} deriving (Eq, Generic, Read, Show)
+}
+  deriving (Eq, Generic, Hashable, Read, Reader, Show, ToDoc)
 
 data EnterASConfig = EnterASConfig {
   adConfig :: AdConfig,
@@ -108,7 +117,9 @@ data EnterASConfig = EnterASConfig {
   answerLength :: !(Int, Int),
   printSolution :: Bool,
   extraText :: ExtraText
-} deriving (Generic, Read, Show)
+}
+  deriving (Generic, Read, Reader, Show, ToDoc)
+
 
 defaultEnterASConfig :: EnterASConfig
 defaultEnterASConfig = EnterASConfig {
@@ -170,27 +181,27 @@ checkEnterASInstanceForConfig :: EnterASInstance -> EnterASConfig -> Maybe Strin
 checkEnterASInstanceForConfig inst EnterASConfig {
   answerLength
   }
-  | length solution < fst answerLength
+  | solutionLength < fst answerLength
   = Just [iii|
     Solution should not be shorter than
     the first value of parameter 'answerLength'.
     |]
-  | length solution > snd answerLength
+  | solutionLength > snd answerLength
   = Just [iii|
     Solution should not be longer than
     the second value of parameter 'answerLength'.
     |]
   | otherwise
     = Nothing
-  where solution = sampleSequence inst
+  where solutionLength = length $ sampleSequence inst
 
 newtype EnterASSolution = EnterASSolution {
   sampleSolution :: [String]
 } deriving (Show, Eq)
 
-enterActionSequence :: UMLActivityDiagram -> PetriLike Node PetriKey -> EnterASSolution
-enterActionSequence ad petri =
-  EnterASSolution {sampleSolution=generateActionSequenceWithPetri ad petri}
+enterActionSequence :: PetriLike Node PetriKey -> EnterASSolution
+enterActionSequence petri =
+  EnterASSolution {sampleSolution = head $ generateActionSequencesWithPetri petri Nothing}
 
 enterASTask
   :: (MonadPlantUml m, MonadWriteFile m, OutputCapable m)
@@ -249,13 +260,15 @@ enterASEvaluation
 enterASEvaluation task sub = do
   let objectNames = map name $ filter isObjectNode $ nodes $ activityDiagram task
       objectNamesInSubmission = nubOrd $ sub `intersect` objectNames
-      (levels, zeroState) = computeActionSequenceLevels sub (activityDiagram task) (petriNet task)
+      (net, actionNameToPetriKey) = netAndMap (petriNet task)
+      zeroState = State $ M.map (const 0) $ unState $ start net
+      levels = computeActionSequenceLevels sub net actionNameToPetriKey
       reachesZeroState = any (isJust . lookup zeroState) levels
       correct = null objectNamesInSubmission && reachesZeroState
       points = if correct then 1 else 0
       maybeSolutionString =
         if showSolution task
-        then Just $ show $ sampleSequence task
+        then Just . (IndefiniteArticle,) $ show $ sampleSequence task
         else Nothing
 
   yesNo correct $ translate $ do
@@ -288,7 +301,7 @@ enterASEvaluation task sub = do
     code $ intercalate ", " objectNamesInSubmission
     pure ()
 
-  printSolutionAndAssert IndefiniteArticle maybeSolutionString points
+  printSolutionAndAssert False maybeSolutionString points
 
   pure points
 
@@ -327,7 +340,7 @@ getEnterASTask config = do
           drawSettings = defaultPlantUmlConfig {
             suppressBranchConditions = hideBranchConditions config
             },
-          sampleSequence = sampleSolution $ enterActionSequence x petri,
+          sampleSequence = sampleSolution $ enterActionSequence petri,
           showSolution = printSolution config,
           addText = extraText config
         }) ad

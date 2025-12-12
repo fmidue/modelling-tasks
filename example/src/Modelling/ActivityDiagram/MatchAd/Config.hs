@@ -4,7 +4,8 @@ module Modelling.ActivityDiagram.MatchAd.Config where
 
 import Modelling.ActivityDiagram.Config (AdConfig(..))
 import Modelling.ActivityDiagram.MatchAd (MatchAdConfig(..))
-import Modelling.Auxiliary.Output       (ExtraText(..))
+
+import Control.OutputCapable.Blocks     (ExtraText (..))
 
 {-|
 points: 0.15

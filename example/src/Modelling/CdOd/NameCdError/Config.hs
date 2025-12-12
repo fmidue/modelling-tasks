@@ -2,7 +2,6 @@
 
 module Modelling.CdOd.NameCdError.Config where
 
-import Modelling.Auxiliary.Output       (ExtraText(..))
 import Modelling.CdOd.NameCdError (
   NameCdErrorConfig (..),
   NumberOfReasons (..),
@@ -19,6 +18,7 @@ import Modelling.CdOd.Types (
   Property (..),
   )
 
+import Control.OutputCapable.Blocks     (ExtraText (..))
 import Data.Ratio                       ((%))
 
 {-|
@@ -274,7 +274,7 @@ task2024_11 = NameCdErrorConfig {
       associationOmittedDefaultMultiplicity = Nothing,
       compositionWholeOmittedDefaultMultiplicity = Nothing
       },
-    printNames = True,
+    printNames = True,  -- switch to False next time
     printNavigations = True
     },
   maxInstances = Just 4000,
@@ -380,3 +380,15 @@ task2024_54 = NameCdErrorConfig {
   useNames = True,
   extraText = NoExtraText
   }
+
+{-|
+points: 0.15
+-}
+task2025_08 :: NameCdErrorConfig
+task2025_08 = task2024_10
+
+{-|
+points: 0.15
+-}
+task2025_09 :: NameCdErrorConfig
+task2025_09 = task2024_11

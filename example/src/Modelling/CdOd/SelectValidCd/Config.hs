@@ -2,7 +2,6 @@
 
 module Modelling.CdOd.SelectValidCd.Config where
 
-import Modelling.Auxiliary.Output       (ExtraText(..))
 import Modelling.CdOd.RepairCd (
   WeakeningKind (..),
   )
@@ -21,6 +20,7 @@ import Modelling.CdOd.Types (
   RelationshipMutation (..),
   )
 
+import Control.OutputCapable.Blocks     (ExtraText (..))
 import Data.Ratio                       ((%))
 
 {-|
@@ -452,3 +452,21 @@ task2024_52 = SelectValidCdConfig {
   timeout = Nothing,
   extraText = NoExtraText
   }
+
+{-|
+points: 0.15
+-}
+task2025_04 :: SelectValidCdConfig
+task2025_04 = task2024_06
+
+{-|
+points: 0.15
+-}
+task2025_05 :: SelectValidCdConfig
+task2025_05 = task2024_07
+
+{-|
+points: 0.15
+-}
+task2025_06 :: SelectValidCdConfig
+task2025_06 = task2024_08

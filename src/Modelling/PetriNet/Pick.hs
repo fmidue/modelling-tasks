@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE FlexibleContexts #-}
@@ -27,6 +28,9 @@ import qualified Data.Map                         as M (
   insert,
   )
 
+import Autolib.Hash                     (Hashable)
+import Autolib.Reader.Class             (Reader)
+import Autolib.ToDoc                    (ToDoc)
 import Capabilities.Cache               (MonadCache)
 import Capabilities.Diagrams            (MonadDiagrams)
 import Capabilities.Graphviz            (MonadGraphviz)
@@ -34,7 +38,6 @@ import Modelling.Auxiliary.Common (
   Object,
   findFittingRandomElements,
   )
-import Modelling.Auxiliary.Output (ExtraText)
 import Modelling.PetriNet.Diagram (
   cacheNet,
   getDefaultNet,
@@ -61,6 +64,7 @@ import Control.Monad.Catch              (MonadCatch, MonadThrow)
 import Control.Monad.Extra              (maybeM)
 import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
+  ExtraText,
   LangM,
   OutputCapable,
   english,
@@ -92,7 +96,7 @@ data PickInstance n = PickInstance {
   showSolution :: !Bool,
   addText :: !ExtraText
   }
-  deriving (Generic, Read, Show)
+  deriving (Eq, Generic, Hashable, Read, Reader, Show, ToDoc)
 
 -- TODO: replace 'wrong' in 'pickGenerate' by 'wrongInstances'
 -- if this value might be greater than 1 on task generation.
@@ -172,11 +176,11 @@ pickEvaluation task = do
   let what = translations $ do
         english "Petri net"
         german "Petrinetz"
-  singleChoice DefiniteArticle what maybeSolutionString solution
+  singleChoice what maybeSolutionString solution
   where
     maybeSolutionString =
       if withSol
-      then Just $ show solution
+      then Just . (DefiniteArticle,) $ show solution
       else Nothing
     solution = pickSolution task
     withSol = showSolution task

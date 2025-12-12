@@ -36,8 +36,11 @@ dependencies:
   - MonadRandom
   - SHA
   - SVGFonts
-  - autotool-capabilities
   - aeson
+  - autolib-reader
+  - autolib-todoc
+  - autolib-util
+  - autotool-capabilities
   - base
   - bimap
   - bifunctors
@@ -123,6 +126,7 @@ library:
     - Modelling.PetriNet.Pick
     - Modelling.PetriNet.Reach.Deadlock
     - Modelling.PetriNet.Reach.Draw
+    - Modelling.PetriNet.Reach.Filter
     - Modelling.PetriNet.Reach.Property
     - Modelling.PetriNet.Reach.Reach
     - Modelling.PetriNet.Reach.Step

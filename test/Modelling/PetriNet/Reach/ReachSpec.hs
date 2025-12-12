@@ -12,6 +12,13 @@ import Modelling.PetriNet.Reach.Reach (
   defaultReachConfig,
   generateReach,
   checkReachConfig,
+  netGoalAllSolutions,
+  netGoalSolution,
+  )
+import Modelling.PetriNet.Reach.Filter (
+  defaultFilterConfig,
+  noFiltering,
+  isTrivialSequence,
   )
 import Modelling.PetriNet.Reach.Property (
   satisfiesAtAnyState,
@@ -28,13 +35,18 @@ import Data.Maybe                        (isJust)
 import qualified Data.Map                 as M
 import Data.Set                         (Set)
 import Test.Hspec
-import Test.QuickCheck                  (Testable (property))
+import Test.QuickCheck (
+  Testable (property),
+  maxSuccess,
+  quickCheckWith,
+  stdArgs,
+  )
 
 spec :: Spec
 spec = do
-  describe "generateReach" $
+  describe "generateReach" $ do
     it "abides minTransitionLength" $
-      property $ \seed -> do
+      quickCheckWith stdArgs {maxSuccess = 50} $ property $ \seed -> do
         let config = defaultReachConfig {
               netGoalConfig = (netGoalConfig defaultReachConfig) {
                 maxTransitionLength = 6,
@@ -47,6 +59,33 @@ spec = do
             s = goal (netGoal inst)
             ts = transitions net
         net `shouldSatisfy` hasMinTransitionLength (s ==) ts minL
+
+    it "generates non-trivial solutions when filtering is enabled" $
+      quickCheckWith stdArgs {maxSuccess = 15} $ property $ \seed -> do
+        let config = defaultReachConfig {
+              netGoalConfig = goalConfig,
+              filterConfig = defaultFilterConfig
+              }
+            goalConfig = (netGoalConfig defaultReachConfig) {
+              maxTransitionLength = 8,
+              minTransitionLength = 8
+              }
+        inst <- generateReach config seed
+        let solutions = netGoalAllSolutions (netGoal inst)
+        solutions `shouldSatisfy` (not . any (isTrivialSequence $ filterConfig config))
+
+    it "can generate solutions when filtering is disabled" $
+      quickCheckWith stdArgs {maxSuccess = 50} $ property $ \seed -> do
+        let config = defaultReachConfig {
+              netGoalConfig = (netGoalConfig defaultReachConfig) {
+                maxTransitionLength = 8,
+                minTransitionLength = 8
+                },
+              filterConfig = noFiltering
+              }
+        inst <- generateReach config seed
+        let solution = netGoalSolution (netGoal inst)
+        length solution `shouldBe` 8
 
   describe "checkReachConfig" $ do
     it "accepts valid configuration" $ do

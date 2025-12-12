@@ -17,10 +17,48 @@ originally from Autotool (https://gitlab.imn.htwk-leipzig.de/autotool/all0)
 based on revision: ad25a990816a162fdd13941ff889653f22d6ea0a
 based on file: collection/src/Petri/Reach.hs
 -}
-module Modelling.PetriNet.Reach.Reach where
+module Modelling.PetriNet.Reach.Reach (
+  -- * Types
+  ReachInstance(..),
+  NetGoal(..),
+  ReachConfig(..),
+  NetGoalConfig(..),
+  checkReachConfig,
+
+  -- * Generation
+  generateReach,
+
+  -- * Solutions
+  netGoalSolution,
+  netGoalAllSolutions,
+  reachSolution,
+
+  -- * Task creation
+  reachTask,
+  verifyReach,
+
+  -- * Evaluation
+  reachEvaluation,
+  reachSyntax,
+  reachInitial,
+
+  -- * Configuration
+  defaultReachConfig,
+  defaultReachInstance,
+
+  -- * Utilities
+  bimapReachInstance,
+  bimapNetGoal,
+  toShowReachInstance,
+  toShowNetGoal,
+  assertReachPoints,
+  isNoLonger,
+  reportReachFor,
+  transitionsValid,
+) where
 
 import qualified Control.Monad.Trans              as Monad (lift)
-import qualified Data.Set                         as S (toList)
+import qualified Data.Set                         as S (fromList, member, toList, union, empty)
 
 import Capabilities.Cache               (MonadCache)
 import Capabilities.Diagrams            (MonadDiagrams)
@@ -30,12 +68,18 @@ import Modelling.Auxiliary.Output (
   hoveringInformation,
   )
 import Modelling.PetriNet.Reach.Draw    (drawToFile, isPetriDrawable)
+import Modelling.PetriNet.Reach.Filter (
+  FilterConfig (..),
+  defaultFilterConfig,
+  isTrivialSequence,
+  noFiltering,
+  )
 import Modelling.PetriNet.Reach.Property (
   Property (Default),
   validate,
   )
 import Modelling.PetriNet.Reach.Roll    (netLimits)
-import Modelling.PetriNet.Reach.Step    (executes, levels, levels')
+import Modelling.PetriNet.Reach.Step    (executes, levels, levels', successors)
 import Modelling.PetriNet.Reach.Type (
   Capacity (Unbounded),
   Net (start, transitions),
@@ -54,10 +98,10 @@ import Modelling.PetriNet.Reach.Type (
 
 import Control.Applicative              (Alternative, (<|>))
 import Control.Functor.Trans            (FunctorTrans (lift))
-import Control.Monad                    (forM, guard, unless)
+import Control.Monad                    (forM, guard, msum, when, unless)
 import Control.Monad.Catch              (MonadCatch, MonadThrow)
-import Control.Monad.Extra              (findM, maybeM, whenJust)
-import Control.Monad.State              (put)
+import Control.Monad.Extra              (findM, whenJust)
+import Control.Monad.Trans.Maybe        (MaybeT (MaybeT, runMaybeT))
 import Modelling.PetriNet.Reach.ConfigValidation (
   checkBasicPetriConfig,
   )
@@ -71,7 +115,7 @@ import Control.OutputCapable.Blocks (
   collapsed,
   english,
   german,
-  printSolutionAndAssertMinimum,
+  printSolutionAndAssertWithMinimum,
   translate,
   translations,
   yesNo,
@@ -80,14 +124,14 @@ import Control.OutputCapable.Blocks.Generic (
   ($>>),
   ($>>=),
   )
-import Control.Monad.Random             (mkStdGen)
+import Control.Monad.Random             (MonadRandom, mkStdGen)
 import Control.Monad.Trans.Random       (evalRandT)
 import Data.Bifunctor                   (Bifunctor (second))
 import Data.Either.Combinators          (whenRight)
 import Data.Foldable                    (sequenceA_, traverse_)
 import Data.GraphViz                    (GraphvizCommand (..))
-import Data.List                        (minimumBy, singleton)
-import Data.List.Extra                  (nubSort)
+import Data.List                        (find, singleton, sortBy)
+import Data.List.Extra                  (groupSort, nubSort)
 import Data.Maybe                       (fromMaybe)
 import Data.Ord                         (comparing)
 import Data.Ratio                       ((%))
@@ -121,10 +165,11 @@ reachTask
     Show s,
     Show t
     )
-  => FilePath
+  => Bool
+  -> FilePath
   -> ReachInstance s t
   -> LangM m
-reachTask path inst = do
+reachTask showInputHelp path inst = do
   if showGoalNet inst
     then Left
     <$> lift (drawFileWithSettings (n { start = goal (netGoal inst) }))
@@ -132,6 +177,7 @@ reachTask path inst = do
   $>>= \g ->
     lift (drawFileWithSettings n)
   $>>= \img -> reportReachFor
+    showInputHelp
     img
     (noLongerThan inst)
     (withLengthHint inst)
@@ -144,14 +190,15 @@ reachTask path inst = do
 
 reportReachFor
   :: OutputCapable m
-  => FilePath
+  => Bool
+  -> FilePath
   -> Maybe Int
   -> Maybe Int
   -> Int
   -> Bool
   -> Maybe (Either FilePath String)
   -> LangM m
-reportReachFor img noLonger lengthHint minLength showMinLengthHint maybeGoal = do
+reportReachFor showInputHelp img noLonger lengthHint minLength showMinLengthHint maybeGoal = do
   paragraph $ translate $ do
     english "For the Petri net"
     german "Gesucht ist für das Petrinetz"
@@ -166,29 +213,17 @@ reportReachFor img noLonger lengthHint minLength showMinLengthHint maybeGoal = d
         german "eine Transitionsfolge, durch welche die folgende Markierung erreicht wird:"
       paragraph $ either image text g
       pure ()
-  paragraph $ case noLonger of
-    Nothing -> translate $ do
-      english "State your answer as an (arbitrarily short or long) sequence of the following kind:"
-      german "Geben Sie Ihre Lösung als (beliebig kurze oder lange) Auflistung der folgenden Art an:"
-    Just maxL ->
-      let
-        isExactMatch = showMinLengthHint && maxL == minLength
-        (englishConstraint, germanConstraint) =
-          if isExactMatch
-          then ("has exactly", "genau")
-          else ("does not exceed", "maximal")
-      in translate $ do
-        english $ concat [
-          "State your solution as a sequence of the following kind that ",
-          englishConstraint, " ", show maxL, " steps:"]
-        german $ concat [
-          "Geben Sie Ihre Lösung als ", germanConstraint, " ", show maxL,
-          "-schrittige Auflistung der folgenden Art an:"]
-  let (t1, t2, t3) = (Transition 1, Transition 2, Transition 3)
+
+  when showInputHelp $ do
+   paragraph $ translate $ do
+      english "State your answer as a sequence of the following kind:"
+      german "Geben Sie Ihre Lösung als Auflistung der folgenden Art an:"
+   let
+      (t1, t2, t3) = (Transition 1, Transition 2, Transition 3)
       showT = show . ShowTransition
       (st1, st2, st3) = (showT t1, showT t2, showT t3)
-  code $ show $ TransitionsList [t1, t2, t3]
-  paragraph $ translate $ do
+   code $ show $ TransitionsList [t1, t2, t3]
+   paragraph $ translate $ do
     english $ concat [
       "Where giving these three steps means that after firing ",
       st1, ", then ", st2, ", and finally ", st3,
@@ -199,6 +234,29 @@ reportReachFor img noLonger lengthHint minLength showMinLengthHint maybeGoal = d
       st1, ", danach ", st2, ", und schließlich ", st3,
       " (in genau dieser Reihenfolge), die gesuchte Markierung erreicht wird."
       ]
+   pure ()
+
+  paragraph $ case noLonger of
+    Nothing ->
+      translate $ do
+        english "Your answer can be arbitrarily short or long."
+        german "Ihre Lösung kann beliebig kurz oder lang sein."
+
+    Just maxL ->
+      let
+        isExactMatch = showMinLengthHint && maxL == minLength
+        (englishConstraint, germanConstraint) =
+          if isExactMatch
+          then ("have exactly", "muss genau")
+          else ("not exceed", "darf maximal")
+      in translate $ do
+        english $ concat [
+          "Your answer must ",
+          englishConstraint, " ", show maxL, " steps."]
+        german $ concat [
+          "Ihre Lösung ", germanConstraint, " ", show maxL,
+          "Schritte enthalten."]
+
   let maxStepsHint = case lengthHint of
         Just maxSteps | showMinLengthHint && maxSteps == minLength -> singleton $ paragraph $ translate $ do
           english [i|The shortest solutions have exactly #{maxSteps} steps.|]
@@ -220,8 +278,8 @@ reportReachFor img noLonger lengthHint minLength showMinLengthHint maybeGoal = d
         else translations $ do
           english "Hint on solution length"
           german "Hinweis zur Lösungslänge"
-  unless (null hints) $ collapsed True (put titleText) $ sequenceA_ hints
-  hoveringInformation
+  unless (null hints) $ collapsed True titleText $ sequenceA_ hints
+  hoveringInformation True
   pure ()
 
 reachInitial :: ReachInstance s Transition -> TransitionsList
@@ -291,6 +349,35 @@ netGoalSolution netGoal = reverse $ snd $ head $ concatMap
   (filter $ (== goal netGoal) . fst)
   $ levels' $ petriNet netGoal
 
+{-|
+Get all possible shortest solutions for a 'NetGoal'
+
+Note: This function does not terminate
+if the goal is not reachable and the net is not bounded.
+-}
+netGoalAllSolutions :: Ord s => NetGoal s t -> [[t]]
+netGoalAllSolutions netGoal =
+  let goalState = goal netGoal
+  in reverse . maybe [] snd $ find ((== goalState) . fst)
+     $ concat $ levelsWithAlternatives $ petriNet netGoal
+
+{-|
+Find all shortest paths to all reachable markings
+segmented by the length of paths starting with 0.
+-}
+levelsWithAlternatives :: Ord s => Net s t -> [[(State s, [[t]])]]
+levelsWithAlternatives n =
+  let f _    [] = []
+      f done xs =
+        let done' = S.union done $ S.fromList $ map fst xs
+            next = map (second concat) $ groupSort [ (y, map (t:) ps) |
+                (x,ps) <- xs,
+                (t,y) <- successors n x,
+                not $ S.member y done'
+              ]
+         in xs : f done' next
+  in f S.empty [(start n, [[]])]
+
 reachSolution :: Ord s => ReachInstance s t -> [t]
 reachSolution inst = netGoalSolution (netGoal inst)
 
@@ -308,10 +395,10 @@ assertReachPoints aCorrectSolution p size inst ts eitherOutcome = do
         partly
         (\x -> if p inst x then 1 else partly $ length ts)
         eitherOutcome
-  printSolutionAndAssertMinimum
+  printSolutionAndAssertWithMinimum
     (MinimumThreshold $ 1 % 3)
-    IndefiniteArticle
-    aCorrectSolution
+    False
+    ((IndefiniteArticle,) <$> aCorrectSolution)
     points
   where
     partly x = partiallyCorrect x $ size inst
@@ -406,7 +493,8 @@ data ReachConfig = ReachConfig {
   showLengthHint      :: Bool,
   showMinLengthHint   :: Bool,
   showTargetNet       :: Bool,
-  showPlaceNamesInNet :: Bool
+  showPlaceNamesInNet :: Bool,
+  filterConfig        :: FilterConfig
   }
   deriving (Generic, Read, Show)
 #if !MIN_VERSION_base(4,18,0)
@@ -445,7 +533,8 @@ defaultReachConfig = ReachConfig {
   showLengthHint      = True,
   showMinLengthHint   = True,
   showTargetNet       = True,
-  showPlaceNamesInNet = False
+  showPlaceNamesInNet = False,
+  filterConfig        = defaultFilterConfig
   }
 
 defaultReachInstance :: ReachInstance Place Transition
@@ -464,12 +553,11 @@ defaultReachInstance = ReachInstance {
   withMinLengthHint = False
 }
 
-generateNetGoal
-  :: (MonadCatch m, MonadDiagrams m, MonadGraphviz m)
+possibleNetGoals
+  :: MonadRandom m
   => NetGoalConfig
-  -> Int
-  -> m (NetGoal Place Transition)
-generateNetGoal NetGoalConfig {..} seed = do
+  -> m [(Net Place Transition, State Place)]
+possibleNetGoals NetGoalConfig {..} =
   let ps = [Place 1 .. Place numPlaces]
       tries = forM [1 :: Int .. 1000] $ const $ do
         n <- netLimits vLow vHigh nLow nHigh
@@ -487,31 +575,50 @@ generateNetGoal NetGoalConfig {..} seed = do
                 return $ abs (mark (start n) p - mark z' p)
           return ((negate l, d), (n, z'))
       out = do
-        xs <- tries
-        let ((l, _), pn) = minimumBy (comparing fst) $ concat xs
-        if negate l >= minTransitionLength
-          then do
-            maybeM out (pure . (pn,))
-            $ findM (Monad.lift . isPetriDrawable (fst pn)) drawCommands
-          else out
-
-  ((petri, state), cmd) <- eval out
-
-  pure $ NetGoal {
-    drawUsing   = cmd,
-    goal        = state,
-    petriNet    = petri
-    }
-
+        xs <- sortBy (comparing fst)
+          . concat
+          . drop (minTransitionLength + 1)
+          <$> tries
+        if null xs
+          then out
+          else pure xs
+  in map snd <$> out
   where
     fixMaximum = second (min numPlaces . fromMaybe maxBound)
     (vLow, vHigh) = fixMaximum preconditionsRange
     (nLow, nHigh) = fixMaximum postconditionsRange
     ts = [Transition 1 .. Transition numTransitions]
-    eval f = evalRandT f $ mkStdGen seed
+
+toNetGoal :: ((Net s t, State s), GraphvizCommand) -> NetGoal s t
+toNetGoal ((petri, state), cmd) = NetGoal {
+  drawUsing   = cmd,
+  goal        = state,
+  petriNet    = petri
+  }
+
+-- | Generate NetGoal with filtering for trivial solutions
+generateNetGoal
+  :: (MonadCatch m, MonadDiagrams m, MonadGraphviz m)
+  => FilterConfig
+  -> NetGoalConfig
+  -> Int
+  -> m (NetGoal Place Transition)
+generateNetGoal filterConfig config@NetGoalConfig {..} seed =
+  evalRandT generate $ mkStdGen seed
+  where
+    checkNetGoal pn = do
+      netGoal <- MaybeT $ fmap (toNetGoal . (pn,)) <$>
+        findM (Monad.lift . isPetriDrawable (fst pn)) drawCommands
+      let allSolutions = netGoalAllSolutions netGoal
+      guard (not $ any (isTrivialSequence filterConfig) allSolutions)
+      pure netGoal
+    generate = do
+      xs <- possibleNetGoals config
+      maybeNetGoal <- runMaybeT $ msum $ map checkNetGoal xs
+      maybe generate pure maybeNetGoal
 
 checkReachConfig :: ReachConfig -> Maybe String
-checkReachConfig ReachConfig {..} =
+checkReachConfig config@ReachConfig {..} =
   checkBasicPetriConfig
     (numPlaces netGoalConfig)
     (numTransitions netGoalConfig)
@@ -526,6 +633,34 @@ checkReachConfig ReachConfig {..} =
   <|> if showTargetNet || showPlaceNamesInNet
       then Nothing
       else Just "At least one of showTargetNet or showPlaceNamesInNet must be True"
+  <|> checkFilterConfig config
+
+checkFilterConfig :: ReachConfig -> Maybe String
+checkFilterConfig ReachConfig {..}
+  | rejectLongerThan /= Just (minTransitionLength netGoalConfig)
+  , filterConfig /= noFiltering
+  = Just $ "If transition length is not enforced to one value, reachConfig must be set to "
+    ++ show noFiltering
+  | Just repeats <- minRepetitiveLength filterConfig
+  , repeats < 2
+  = Just "minRepetitiveLength has to be set to at least 2 if it is enabled"
+  | Just repeats <- minRepetitiveLength filterConfig
+  , repeats > maxTransitionLength netGoalConfig `div` 2
+  = Just "minRepetitiveLength must not be higher than half of maxTransitionLength if it is enabled"
+  | Just cycleLength <- maxCycleLength filterConfig
+  , cycleLength < 1
+  = Just "setting maxCycleLength to less than 1 does not make sense"
+  | Just cycleLength <- maxCycleLength filterConfig
+  , cycleLength > maxTransitionLength netGoalConfig `div` 2
+  = Just "maxCycleLength must not be higher than half of maxTransitionLength if it is enabled"
+  | Just spaceballsLength <- minSpaceballsLength filterConfig
+  , spaceballsLength < 2
+  = Just "setting minSpaceballsLength to less than 2 does not make sense"
+  | Just spaceballsLength <- minSpaceballsLength filterConfig
+  , spaceballsLength > maxTransitionLength netGoalConfig
+  = Just "minSpaceballsLength must not be higher than maxTransitionLength if it is enabled"
+  | otherwise
+  = Nothing
 
 generateReach
   :: (MonadCatch m, MonadDiagrams m, MonadGraphviz m)
@@ -533,7 +668,7 @@ generateReach
   -> Int
   -> m (ReachInstance Place Transition)
 generateReach ReachConfig {..} seed = do
-  netGoal <- generateNetGoal netGoalConfig seed
+  netGoal <- generateNetGoal filterConfig netGoalConfig seed
   pure $ ReachInstance {
     netGoal           = netGoal,
     minLength         = minTransitionLength netGoalConfig,
