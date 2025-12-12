@@ -301,7 +301,7 @@ enterASEvaluation task sub = do
     code $ intercalate ", " objectNamesInSubmission
     pure ()
 
-  printSolutionAndAssert True maybeSolutionString points
+  printSolutionAndAssert False maybeSolutionString points
 
   pure points
 
