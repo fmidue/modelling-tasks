@@ -13,26 +13,14 @@ import Modelling.PetriNet.Reach.Type (
   Capacity,
   State (State),
   Connection,
-  hasIsolatedNodes,
   )
 
-import Control.Applicative              (Alternative)
-import Control.Monad                    (forM, guard)
+import Control.Monad                    (forM)
 import Control.Monad.Random.Class       (MonadRandom (getRandomR))
 import System.Random.Shuffle            (shuffleM)
 
-{-
-Generate a Petri net without isolated nodes.
--}
-net :: (Alternative m, MonadRandom m, Ord s, Ord t)
-  => [s]
-  -> [t]
-  -> Capacity s
-  -> m (Net s t)
-net ps ts cap = do
-  n <- netConns conn ps ts cap
-  guard $ not $ hasIsolatedNodes n
-  pure n
+net :: (MonadRandom m, Ord s, Ord t) => [s] -> [t] -> Capacity s -> m (Net s t)
+net = netConns conn
 
 netConns
   :: (MonadRandom m, Ord s, Ord t)
@@ -59,11 +47,10 @@ state ps = do
     p <- ps
     return (p, if p `elem` qs then 1 else 0)
 
-conn :: (Alternative m, MonadRandom m) => [s] -> [t] -> m [Connection s t]
+conn :: MonadRandom m => [s] -> [t] -> m [Connection s t]
 conn ps ts = forM ts $ \t -> do
   vor <- selection ps
   nach <- selection ps
-  guard $ not (null vor) || not (null nach)
   return (vor, t, nach)
 
 {- | pick a non-empty subset,

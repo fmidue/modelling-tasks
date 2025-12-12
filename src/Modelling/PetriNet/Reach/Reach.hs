@@ -91,6 +91,7 @@ import Modelling.PetriNet.Reach.Type (
   TransitionsList (TransitionsList),
   bimapNet,
   example,
+  hasIsolatedNodes,
   mapState,
   mark,
   )
@@ -564,6 +565,8 @@ possibleNetGoals NetGoalConfig {..} =
             ts
             capacity
         return $ do
+          -- Filter out nets with isolated nodes
+          guard $ not $ hasIsolatedNodes n
           (l,zs) <-
             take (maxTransitionLength + 1) $ zip [0 :: Int ..] $ levels n
           z' <- zs
