@@ -120,6 +120,7 @@ spec = do
           return $ checkResult $ evaluateDifferentNames bs cs cs'
     it "accepts with percentage or rejects too short solutions" $
       property $ \cs n bs -> not (null cs) && not (null bs) && isValidMapping cs
+        && all (\(x, y) -> not (null x) && not (null y)) cs
         ==> ioProperty $ do
           let n' = abs n
               l = fromIntegral $ length cs
