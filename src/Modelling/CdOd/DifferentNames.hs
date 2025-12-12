@@ -337,8 +337,8 @@ differentNamesTask
   -> LangM m
 differentNamesTask showInputHelp path task = do
   toTaskText showInputHelp path task
+  directionsAdvice False
   simplifiedInformation True
-  directionsAdvice True
   hoveringInformation True
   pure ()
 
@@ -406,7 +406,7 @@ toTaskSpecificText path DifferentNamesInstance {..} = \case
     paragraph $ image $=<< cacheCd cdDrawSettings mempty cd path
   GivenOd -> paragraph $ image $=<<
     cacheOd oDiagram Forward True path
-  MappingAdvice -> mappingAdvice True
+  MappingAdvice -> mappingAdvice False
   where
     cd = fromClassDiagram cDiagram
 
