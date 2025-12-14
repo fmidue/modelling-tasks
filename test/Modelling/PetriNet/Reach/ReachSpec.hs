@@ -72,7 +72,8 @@ spec = do
               }
         inst <- generateReach config seed
         let solutions = netGoalAllSolutions (netGoal inst)
-        solutions `shouldSatisfy` (not . any (isTrivialSequence $ filterConfig config))
+            availableTransitions = transitions $ petriNet $ netGoal inst
+        solutions `shouldSatisfy` (not . any (isTrivialSequence (filterConfig config) availableTransitions))
 
     it "can generate solutions when filtering is disabled" $
       quickCheckWith stdArgs {maxSuccess = 50} $ property $ \seed -> do

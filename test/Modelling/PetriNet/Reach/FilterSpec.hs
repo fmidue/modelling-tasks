@@ -8,6 +8,7 @@ import qualified Data.Set                         as Set
 
 import Data.List                        (zipWith4, zipWith5, zipWith6, zipWith7)
 import Data.List.Extra                  (nubOrd)
+import Data.Ratio                       ((%))
 import Data.Set                         (Set)
 import Test.Hspec
 import Test.QuickCheck (
@@ -112,41 +113,30 @@ spec = do
               not $ hasGroupedRepeats @Int
                 (let (front, end) = splitAt i (zipN n xs) in front ++ x : end)
 
-  describe "hasTooManySolutions" $ do
-    it "detects when there are too many solutions" $ do
-      let solutions = [[1, 2], [2, 1], [1, 3], [3, 1], [2, 3]] :: [[Int]]
-      hasTooManySolutions 3 solutions `shouldBe` True
-      hasTooManySolutions 5 solutions `shouldBe` False
-      hasTooManySolutions 10 solutions `shouldBe` False
-
-    it "handles empty solution list" $ do
-      hasTooManySolutions 0 ([] :: [[Int]]) `shouldBe` False
-      hasTooManySolutions 1 ([] :: [[Int]]) `shouldBe` False
-
   describe "hasInsufficientTransitionCoverage" $ do
     it "detects insufficient coverage in a sequence" $ do
       let availableTransitions = Set.fromList [Transition 1, Transition 2, Transition 3, Transition 4, Transition 5]
       let fullCoverageSeq = [Transition 1, Transition 2, Transition 3, Transition 4, Transition 5]
       let partialCoverageSeq = [Transition 1, Transition 2]
-      hasInsufficientTransitionCoverage 0.8 availableTransitions partialCoverageSeq `shouldBe` True
-      hasInsufficientTransitionCoverage 0.8 availableTransitions fullCoverageSeq `shouldBe` False
-      hasInsufficientTransitionCoverage 0.5 availableTransitions partialCoverageSeq `shouldBe` True
-      hasInsufficientTransitionCoverage 0.3 availableTransitions partialCoverageSeq `shouldBe` False
+      hasInsufficientTransitionCoverage (4 % 5) availableTransitions partialCoverageSeq `shouldBe` True
+      hasInsufficientTransitionCoverage (4 % 5) availableTransitions fullCoverageSeq `shouldBe` False
+      hasInsufficientTransitionCoverage (1 % 2) availableTransitions partialCoverageSeq `shouldBe` True
+      hasInsufficientTransitionCoverage (3 % 10) availableTransitions partialCoverageSeq `shouldBe` False
 
     it "handles empty available transitions" $ do
       let emptySet = Set.empty :: Set Transition
-      hasInsufficientTransitionCoverage 0.8 emptySet [Transition 1] `shouldBe` False
+      hasInsufficientTransitionCoverage (4 % 5) emptySet [Transition 1] `shouldBe` False
 
-  describe "isTrivialSequenceWithCoverage" $ do
+  describe "isTrivialSequence" $ do
     it "detects trivial sequences with coverage check" $ do
       let availableTransitions = Set.fromList [Transition 1, Transition 2, Transition 3, Transition 4]
-      let configWithCoverage = noFiltering {minTransitionCoverage = Just 0.75}
+      let configWithCoverage = noFiltering {minTransitionCoverage = Just (3 % 4)}
       let configNoCoverage = noFiltering {minTransitionCoverage = Nothing}
       let lowCoverageSeq = [Transition 1, Transition 2]
       let highCoverageSeq = [Transition 4, Transition 2, Transition 3, Transition 1]
-      isTrivialSequenceWithCoverage configWithCoverage availableTransitions lowCoverageSeq `shouldBe` True
-      isTrivialSequenceWithCoverage configWithCoverage availableTransitions highCoverageSeq `shouldBe` False
-      isTrivialSequenceWithCoverage configNoCoverage availableTransitions lowCoverageSeq `shouldBe` False
+      isTrivialSequence configWithCoverage availableTransitions lowCoverageSeq `shouldBe` True
+      isTrivialSequence configWithCoverage availableTransitions highCoverageSeq `shouldBe` False
+      isTrivialSequence configNoCoverage availableTransitions lowCoverageSeq `shouldBe` False
 
   describe "areSolutionsTrivial" $ do
     it "detects when too many solutions exist" $ do
@@ -161,13 +151,14 @@ spec = do
       let availableTransitions = Set.fromList [Transition 1, Transition 2, Transition 3, Transition 4, Transition 5]
       let lowCoverageSolutions = [[Transition 1, Transition 2], [Transition 2, Transition 3]]
       let highCoverageSolutions = [[Transition 5, Transition 3, Transition 1, Transition 4, Transition 2]]
-      let configWithCoverage = noFiltering {minTransitionCoverage = Just 0.8}
+      let configWithCoverage = noFiltering {minTransitionCoverage = Just (4 % 5)}
       areSolutionsTrivial configWithCoverage availableTransitions lowCoverageSolutions `shouldBe` True
       areSolutionsTrivial configWithCoverage availableTransitions highCoverageSolutions `shouldBe` False
 
   describe "configuration" $ do
     it "respects filter configuration settings" $ do
       let cyclicPattern = [Transition 1, Transition 2, Transition 1, Transition 2]
-      let configNoCyclic = defaultFilterConfig {maxCycleLength = Nothing}
-      isTrivialSequence configNoCyclic cyclicPattern `shouldBe` False
-      isTrivialSequence defaultFilterConfig cyclicPattern `shouldBe` True
+      let availableTransitions = Set.fromList [Transition 1, Transition 2]
+      let configNoCyclic = defaultFilterConfig {maxCycleLength = Nothing, minTransitionCoverage = Nothing}
+      isTrivialSequence configNoCyclic availableTransitions cyclicPattern `shouldBe` False
+      isTrivialSequence defaultFilterConfig availableTransitions cyclicPattern `shouldBe` True

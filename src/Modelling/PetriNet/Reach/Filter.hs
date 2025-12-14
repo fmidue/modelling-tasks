@@ -16,12 +16,10 @@ in the solution which makes it too simple in some sense, such as:
 module Modelling.PetriNet.Reach.Filter (
   -- * Pattern detection
   isTrivialSequence,
-  isTrivialSequenceWithCoverage,
   isCyclicPattern,
   hasRepetitiveSubsequence,
   hasSpaceballsPrefix,
   hasGroupedRepeats,
-  hasTooManySolutions,
   hasInsufficientTransitionCoverage,
 
   -- * Solution set validation
@@ -37,6 +35,7 @@ import qualified Data.Set                         as Set
 
 import Data.Data                        (Data)
 import Data.List                        (group)
+import Data.Ratio                       (Ratio, (%))
 import Data.Set                         (Set)
 import GHC.Generics                     (Generic)
 
@@ -65,9 +64,9 @@ data FilterConfig = FilterConfig {
   maxNumberOfSolutions :: !(Maybe Int),
   -- | Minimum fraction of available transitions that must appear in each solution
   --
-  -- For example, @Just 0.8@ requires that each solution uses at least 80% of
+  -- For example, @Just (4 % 5)@ requires that each solution uses at least 80% of
   -- the available transitions. 'Nothing' means no minimum coverage requirement.
-  minTransitionCoverage :: !(Maybe Double)
+  minTransitionCoverage :: !(Maybe (Ratio Int))
   } deriving (Data, Eq, Generic, Ord, Read, Show)
 
 noFiltering :: FilterConfig
@@ -87,37 +86,32 @@ defaultFilterConfig = FilterConfig {
   minRepetitiveLength = Just 3,
   minSpaceballsLength = Just 4,
   maxCycleLength = Just 4,
-  maxNumberOfSolutions = Just 10,
-  minTransitionCoverage = Just 0.8
+  maxNumberOfSolutions = Just 5,
+  minTransitionCoverage = Just (4 % 5)
   }
 
 -- | Check if a sequence is considered trivial according to the given configuration
--- This version does not check transition coverage as it requires knowledge of available transitions
-isTrivialSequence :: (Enum a, Eq a) => FilterConfig -> [a] -> Bool
-isTrivialSequence config xs =
+isTrivialSequence :: (Enum a, Ord a) => FilterConfig -> Set a -> [a] -> Bool
+isTrivialSequence config availableTransitions xs =
   maybe False (`hasSpaceballsPrefix` xs) (minSpaceballsLength config)
   || maybe False (`isCyclicPattern` xs) (maxCycleLength config)
   || maybe False (`hasRepetitiveSubsequence` xs) (minRepetitiveLength config)
   || (filterGroupedRepeats config && hasGroupedRepeats xs)
+  || maybe False (\coverage -> hasInsufficientTransitionCoverage coverage availableTransitions xs)
+       (minTransitionCoverage config)
 
 -- | Check if a sequence has insufficient transition coverage
 -- A sequence is considered to have insufficient coverage if it doesn't use enough
 -- of the available transitions
-hasInsufficientTransitionCoverage :: (Ord a) => Double -> Set a -> [a] -> Bool
+hasInsufficientTransitionCoverage :: (Ord a) => Ratio Int -> Set a -> [a] -> Bool
 hasInsufficientTransitionCoverage minCoverage availableTransitions transitionSequence
   | Set.null availableTransitions = False
   | otherwise =
       let usedTransitions = Set.fromList transitionSequence
-          totalTransitions = fromIntegral $ Set.size availableTransitions
-          coverage = fromIntegral (Set.size usedTransitions) / totalTransitions
+          totalTransitions = Set.size availableTransitions
+          usedCount = Set.size usedTransitions
+          coverage = usedCount % totalTransitions
       in coverage < minCoverage
-
--- | Check if a sequence is trivial, including transition coverage check
-isTrivialSequenceWithCoverage :: (Enum a, Ord a) => FilterConfig -> Set a -> [a] -> Bool
-isTrivialSequenceWithCoverage config availableTransitions xs =
-  isTrivialSequence config xs
-  || maybe False (\cov -> hasInsufficientTransitionCoverage cov availableTransitions xs)
-       (minTransitionCoverage config)
 
 -- | Check if a sequence begins with a Spaceballs PIN pattern
 hasSpaceballsPrefix :: (Enum a, Eq a) => Int -> [a] -> Bool
@@ -155,13 +149,9 @@ hasGroupedRepeats xs =
     groups = group xs
     groupSizes = map length groups
 
--- | Check if there are too many shortest solutions
-hasTooManySolutions :: Int -> [[a]] -> Bool
-hasTooManySolutions maximumNumber solutions = length solutions > maximumNumber
-
 -- | Check if a set of solutions is considered trivial according to the given configuration
 -- This combines both per-sequence checks and the collective check for too many solutions
 areSolutionsTrivial :: (Enum a, Ord a) => FilterConfig -> Set a -> [[a]] -> Bool
 areSolutionsTrivial config availableTransitions solutions =
-  any (isTrivialSequenceWithCoverage config availableTransitions) solutions
-  || maybe False (`hasTooManySolutions` solutions) (maxNumberOfSolutions config)
+  any (isTrivialSequence config availableTransitions) solutions
+  || maybe False (\maximumNumber -> length solutions > maximumNumber) (maxNumberOfSolutions config)
