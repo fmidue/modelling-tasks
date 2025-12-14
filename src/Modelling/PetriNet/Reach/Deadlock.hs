@@ -60,7 +60,6 @@ import Modelling.PetriNet.Reach.Filter (
   FilterConfig (..),
   areSolutionsTrivial,
   defaultFilterConfig,
-  noFiltering,
   )
 import Modelling.PetriNet.Reach.Property (
   Property (Default),
@@ -68,6 +67,7 @@ import Modelling.PetriNet.Reach.Property (
   )
 import Modelling.PetriNet.Reach.ConfigValidation (
   checkBasicPetriConfig,
+  checkFilterConfigWith,
   )
 import Modelling.PetriNet.Reach.Reach   (
   assertReachPoints,
@@ -325,31 +325,8 @@ checkDeadlockConfig config@DeadlockConfig {..} =
   <|> checkFilterConfig config
 
 checkFilterConfig :: DeadlockConfig -> Maybe String
-checkFilterConfig DeadlockConfig {..}
-  | rejectLongerThan /= Just minTransitionLength
-  , filterConfig /= noFiltering
-  = Just $ "If transition length is not enforced to one value, filterConfig must be set to "
-    ++ show noFiltering
-  | Just repeats <- minRepetitiveLength filterConfig
-  , repeats < 2
-  = Just "minRepetitiveLength has to be set to at least 2 if it is enabled"
-  | Just repeats <- minRepetitiveLength filterConfig
-  , repeats > maxTransitionLength `div` 2
-  = Just "minRepetitiveLength must not be higher than half of maxTransitionLength if it is enabled"
-  | Just cycleLength <- maxCycleLength filterConfig
-  , cycleLength < 1
-  = Just "setting maxCycleLength to less than 1 does not make sense"
-  | Just cycleLength <- maxCycleLength filterConfig
-  , cycleLength > maxTransitionLength `div` 2
-  = Just "maxCycleLength must not be higher than half of maxTransitionLength if it is enabled"
-  | Just spaceballsLength <- minSpaceballsLength filterConfig
-  , spaceballsLength < 2
-  = Just "setting minSpaceballsLength to less than 2 does not make sense"
-  | Just spaceballsLength <- minSpaceballsLength filterConfig
-  , spaceballsLength > maxTransitionLength
-  = Just "minSpaceballsLength must not be higher than maxTransitionLength if it is enabled"
-  | otherwise
-  = Nothing
+checkFilterConfig DeadlockConfig {..} =
+  checkFilterConfigWith rejectLongerThan minTransitionLength maxTransitionLength filterConfig
 
 generateDeadlock
   :: (MonadCatch m, MonadDiagrams m, MonadGraphviz m)

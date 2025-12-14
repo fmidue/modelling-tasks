@@ -5,11 +5,16 @@ module Modelling.PetriNet.Reach.ConfigValidation (
   checkPetriNetSizes,
   checkTransitionLengths,
   checkRejectLongerThanConsistency,
-  checkCapacity
+  checkCapacity,
+  checkFilterConfigWith
 ) where
 
 import Control.Applicative (Alternative ((<|>)))
 import Data.GraphViz.Commands (GraphvizCommand)
+import Modelling.PetriNet.Reach.Filter (
+  FilterConfig (..),
+  noFiltering,
+  )
 import Modelling.PetriNet.Reach.Type (Capacity(..))
 
 -- | Check that a range (low, high) is valid
@@ -94,3 +99,42 @@ checkBasicPetriConfig
   where
     checkDrawCommands [] = Just "drawCommands cannot be empty"
     checkDrawCommands _  = Nothing
+
+-- | Check filter configuration constraints given the transition length parameters
+checkFilterConfigWith
+  :: Maybe Int        -- ^ rejectLongerThan
+  -> Int              -- ^ minTransitionLength
+  -> Int              -- ^ maxTransitionLength
+  -> FilterConfig     -- ^ filterConfig
+  -> Maybe String
+checkFilterConfigWith rejectLongerThan minTransitionLength maxTransitionLength filterConfig
+  | rejectLongerThan /= Just minTransitionLength
+  , filterConfig /= noFiltering
+  = Just $ "If transition length is not enforced to one value, filterConfig must be set to "
+    ++ show noFiltering
+  | Just repeats <- minRepetitiveLength filterConfig
+  , repeats < 2
+  = Just "minRepetitiveLength has to be set to at least 2 if it is enabled"
+  | Just repeats <- minRepetitiveLength filterConfig
+  , repeats > maxTransitionLength `div` 2
+  = Just "minRepetitiveLength must not be higher than half of maxTransitionLength if it is enabled"
+  | Just cycleLength <- maxCycleLength filterConfig
+  , cycleLength < 1
+  = Just "setting maxCycleLength to less than 1 does not make sense"
+  | Just cycleLength <- maxCycleLength filterConfig
+  , cycleLength > maxTransitionLength `div` 2
+  = Just "maxCycleLength must not be higher than half of maxTransitionLength if it is enabled"
+  | Just spaceballsLength <- minSpaceballsLength filterConfig
+  , spaceballsLength < 2
+  = Just "setting minSpaceballsLength to less than 2 does not make sense"
+  | Just spaceballsLength <- minSpaceballsLength filterConfig
+  , spaceballsLength > maxTransitionLength
+  = Just "minSpaceballsLength must not be higher than maxTransitionLength if it is enabled"
+  | Just maxSolutions <- maxNumberOfSolutions filterConfig
+  , maxSolutions < 1
+  = Just "setting maxNumberOfSolutions to less than 1 does not make sense"
+  | Just coverage <- minTransitionCoverage filterConfig
+  , coverage <= 0 || coverage > 1
+  = Just "minTransitionCoverage must be greater than 0 and not greater than 1 if it is enabled"
+  | otherwise
+  = Nothing
