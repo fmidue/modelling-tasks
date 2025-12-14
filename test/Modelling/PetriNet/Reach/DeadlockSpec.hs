@@ -59,7 +59,7 @@ spec = do
         deadlockInstance <- generateDeadlock config seed
         let solutions = deadlockAllSolutions (petriNet deadlockInstance)
             availableTransitions = transitions (petriNet deadlockInstance)
-        solutions `shouldSatisfy` (not . areSolutionsTrivial (filterConfig config) availableTransitions)
+        solutions `shouldSatisfy` not . areSolutionsTrivial (filterConfig config) availableTransitions
 
     it "can generate solutions when filtering is disabled" $
       quickCheckWith stdArgs {maxSuccess = 50} $ property $ \seed -> do
