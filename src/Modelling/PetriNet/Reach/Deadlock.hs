@@ -58,6 +58,7 @@ import Capabilities.Graphviz            (MonadGraphviz)
 import Modelling.PetriNet.Reach.Draw    (drawToFile, isPetriDrawable)
 import Modelling.PetriNet.Reach.Filter (
   FilterConfig (..),
+  defaultFilterConfig,
   isTrivialSequence,
   noFiltering,
   )
@@ -293,7 +294,7 @@ defaultDeadlockConfig =
   showLengthHint      = True,
   showMinLengthHint   = True,
   showPlaceNamesInNet = False,
-  filterConfig        = noFiltering
+  filterConfig        = defaultFilterConfig
   }
 
 defaultDeadlockInstance :: DeadlockInstance Place Transition
