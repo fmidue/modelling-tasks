@@ -105,13 +105,10 @@ isTrivialSequence config availableTransitions xs =
 -- of the available transitions
 hasInsufficientTransitionCoverage :: (Ord a) => Set a -> [a] -> Ratio Int -> Bool
 hasInsufficientTransitionCoverage availableTransitions transitionSequence minCoverage
-  | Set.null availableTransitions = False
-  | otherwise =
-      let usedTransitions = Set.fromList transitionSequence
-          totalTransitions = Set.size availableTransitions
-          usedCount = Set.size usedTransitions
-          coverage = usedCount % totalTransitions
-      in coverage < minCoverage
+  = let usedTransitions = Set.fromList transitionSequence
+        totalTransitions = Set.size availableTransitions
+        usedCount = Set.size usedTransitions
+    in fromIntegral usedCount < minCoverage * fromIntegral totalTransitions
 
 -- | Check if a sequence begins with a Spaceballs PIN pattern
 hasSpaceballsPrefix :: (Enum a, Eq a) => Int -> [a] -> Bool
@@ -154,4 +151,4 @@ hasGroupedRepeats xs =
 areSolutionsTrivial :: (Enum a, Ord a) => FilterConfig -> Set a -> [[a]] -> Bool
 areSolutionsTrivial config availableTransitions solutions =
   any (isTrivialSequence config availableTransitions) solutions
-  || maybe False (\maximumNumber -> length solutions > maximumNumber) (maxNumberOfSolutions config)
+  || maybe False ((length solutions) >) (maxNumberOfSolutions config)
