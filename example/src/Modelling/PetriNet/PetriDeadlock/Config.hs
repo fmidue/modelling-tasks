@@ -25,7 +25,7 @@ task2023_29 = DeadlockConfig {
   showLengthHint = False,
   showMinLengthHint = True,
   showPlaceNamesInNet = False,
-  filterConfig = defaultFilterConfig
+  filterConfig = defaultFilterConfig { maxCycleLength = Just 3 }
   }
 
 {-|
