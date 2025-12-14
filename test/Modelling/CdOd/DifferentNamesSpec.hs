@@ -71,6 +71,8 @@ import Test.Hspec
 import Test.QuickCheck (
   (==>),
   Arbitrary (arbitrary),
+  Gen,
+  NonEmptyList (NonEmpty, getNonEmpty),
   Property,
   Testable (property),
   ioProperty,
@@ -80,6 +82,12 @@ import Test.QuickCheck (
   )
 import System.Random                    (getStdGen, setStdGen)
 import System.Random.Shuffle            (shuffleM)
+
+newtype NonEmptyString = NonEmptyString { getNonEmptyString :: String }
+  deriving (Show)
+
+instance Arbitrary NonEmptyString where
+  arbitrary = NonEmptyString . getNonEmpty <$> (arbitrary :: Gen (NonEmptyList Char))
 
 spec :: Spec
 spec = do
@@ -110,29 +118,27 @@ spec = do
   describe "differentNamesEvaluation" $ do
     it "accepts the initial example" $
       let cs = map (bimap unName unName) differentNamesInitial
-      in property $ \bs ->
-        not (null bs) ==> Right 1 == evaluateDifferentNames bs cs cs
+      in property $ \(NonEmpty bs) ->
+        Right 1 == evaluateDifferentNames bs cs cs
     it "accepts correct solutions" $
-      property $ \cs g bs -> not (null cs) && not (null bs)
-        ==> ioProperty $ do
-          let checkResult = if isValidMapping cs then (Right 1 ==) else isLeft
-          cs' <- flipCoin g `mapM` cs >>= shuffleM
-          return $ checkResult $ evaluateDifferentNames bs cs cs'
+      property $ \(NonEmpty cs) g (NonEmpty bs) -> ioProperty $ do
+        let checkResult = if isValidMapping cs then (Right 1 ==) else isLeft
+        cs' <- flipCoin g `mapM` cs >>= shuffleM
+        return $ checkResult $ evaluateDifferentNames bs cs cs'
     it "accepts with percentage or rejects too short solutions" $
-      property $ \cs n bs -> not (null cs) && not (null bs) && isValidMapping cs
-        && all (\(x, y) -> not (null x) && not (null y)) cs
-        ==> ioProperty $ do
+      property $ \(NonEmpty cs') n (NonEmpty bs) ->
+        let cs = map (\(NonEmptyString x, NonEmptyString y) -> (x, y)) cs'
+        in isValidMapping cs ==> ioProperty $ do
           let n' = abs n
               l = fromIntegral $ length cs
               r = (l - fromIntegral n') % l
-          cs' <- drop n' <$> shuffleM cs
+          cs'' <- drop n' <$> shuffleM cs
           return $ (if r >= 0.5 then (Right r ==) else isLeft)
-            $ evaluateDifferentNames bs cs cs'
+            $ evaluateDifferentNames bs cs cs''
     it "rejects too long solutions" $
-      property $ \cs w bs ->
+      property $ \cs (NonEmpty w) (NonEmpty bs) ->
         let cs' = cs ++ w
-        in not (null w) && not (null bs) && isValidMapping cs
-           ==> isLeft $ evaluateDifferentNames bs cs cs'
+        in isValidMapping cs ==> isLeft $ evaluateDifferentNames bs cs cs'
   describe "renameInstance" $ do
     it "is reversable" $ renameProperty $ \inst renamedInstance _ _ ->
         let cd = cDiagram inst
