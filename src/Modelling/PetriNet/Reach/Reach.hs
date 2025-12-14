@@ -524,18 +524,18 @@ defaultReachConfig = ReachConfig {
     numTransitions      = 4,
     Modelling.PetriNet.Reach.Reach.capacity = Unbounded,
     drawCommands        = [Dot, Neato, TwoPi, Circo, Fdp, Sfdp, Osage, Patchwork],
-    maxTransitionLength = 8,
+    maxTransitionLength = 6,
     minTransitionLength = 6,
     postconditionsRange = (0, Nothing),
     preconditionsRange  = (0, Nothing)
     },
   printSolution       = False,
-  rejectLongerThan    = Nothing,
-  showLengthHint      = True,
+  rejectLongerThan    = Just 6,
+  showLengthHint      = False,
   showMinLengthHint   = True,
   showTargetNet       = True,
   showPlaceNamesInNet = False,
-  filterConfig        = defaultFilterConfig
+  filterConfig        = defaultFilterConfig { maxCycleLength = Just 3 }
   }
 
 defaultReachInstance :: ReachInstance Place Transition
@@ -631,10 +631,10 @@ checkReachConfig config@ReachConfig {..} =
     (drawCommands netGoalConfig)
     rejectLongerThan
     showLengthHint
+  <|> checkFilterConfig config
   <|> if showTargetNet || showPlaceNamesInNet
       then Nothing
       else Just "At least one of showTargetNet or showPlaceNamesInNet must be True"
-  <|> checkFilterConfig config
 
 checkFilterConfig :: ReachConfig -> Maybe String
 checkFilterConfig ReachConfig {..}
