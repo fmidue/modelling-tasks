@@ -530,7 +530,7 @@ defaultReachConfig = ReachConfig {
     },
   printSolution       = False,
   rejectLongerThan    = Just 6,
-  showLengthHint      = True,
+  showLengthHint      = False,
   showMinLengthHint   = True,
   showTargetNet       = True,
   showPlaceNamesInNet = False,
