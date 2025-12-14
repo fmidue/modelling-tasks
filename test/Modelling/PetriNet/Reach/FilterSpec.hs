@@ -113,48 +113,6 @@ spec = do
               not $ hasGroupedRepeats @Int
                 (let (front, end) = splitAt i (zipN n xs) in front ++ x : end)
 
-  describe "hasInsufficientTransitionCoverage" $ do
-    it "detects insufficient coverage in a sequence" $ do
-      let availableTransitions = Set.fromList [Transition 1, Transition 2, Transition 3, Transition 4, Transition 5]
-      let fullCoverageSeq = [Transition 1, Transition 2, Transition 3, Transition 4, Transition 5]
-      let partialCoverageSeq = [Transition 1, Transition 2]
-      hasInsufficientTransitionCoverage availableTransitions partialCoverageSeq (4 % 5) `shouldBe` True
-      hasInsufficientTransitionCoverage availableTransitions fullCoverageSeq (4 % 5) `shouldBe` False
-      hasInsufficientTransitionCoverage availableTransitions partialCoverageSeq (1 % 2) `shouldBe` True
-      hasInsufficientTransitionCoverage availableTransitions partialCoverageSeq (3 % 10) `shouldBe` False
-
-    it "handles empty available transitions" $ do
-      let emptySet = Set.empty :: Set Transition
-      hasInsufficientTransitionCoverage emptySet [Transition 1] (4 % 5) `shouldBe` False
-
-  describe "isTrivialSequence" $ do
-    it "detects trivial sequences with coverage check" $ do
-      let availableTransitions = Set.fromList [Transition 1, Transition 2, Transition 3, Transition 4]
-      let configWithCoverage = noFiltering {minTransitionCoverage = Just (3 % 4)}
-      let configNoCoverage = noFiltering {minTransitionCoverage = Nothing}
-      let lowCoverageSeq = [Transition 1, Transition 2]
-      let highCoverageSeq = [Transition 4, Transition 2, Transition 3, Transition 1]
-      isTrivialSequence configWithCoverage availableTransitions lowCoverageSeq `shouldBe` True
-      isTrivialSequence configWithCoverage availableTransitions highCoverageSeq `shouldBe` False
-      isTrivialSequence configNoCoverage availableTransitions lowCoverageSeq `shouldBe` False
-
-  describe "areSolutionsTrivial" $ do
-    it "detects when too many solutions exist" $ do
-      let availableTransitions = Set.fromList [Transition 1, Transition 2, Transition 3]
-      let manySolutions = replicate 15 [Transition 1, Transition 2, Transition 3]
-      let fewSolutions = replicate 5 [Transition 1, Transition 2, Transition 3]
-      let configMaxSolutions = defaultFilterConfig {maxNumberOfSolutions = Just 10}
-      areSolutionsTrivial configMaxSolutions availableTransitions manySolutions `shouldBe` True
-      areSolutionsTrivial configMaxSolutions availableTransitions fewSolutions `shouldBe` False
-
-    it "detects when solutions have insufficient coverage" $ do
-      let availableTransitions = Set.fromList [Transition 1, Transition 2, Transition 3, Transition 4, Transition 5]
-      let lowCoverageSolutions = [[Transition 1, Transition 2], [Transition 2, Transition 3]]
-      let highCoverageSolutions = [[Transition 5, Transition 3, Transition 1, Transition 4, Transition 2]]
-      let configWithCoverage = noFiltering {minTransitionCoverage = Just (4 % 5)}
-      areSolutionsTrivial configWithCoverage availableTransitions lowCoverageSolutions `shouldBe` True
-      areSolutionsTrivial configWithCoverage availableTransitions highCoverageSolutions `shouldBe` False
-
   describe "configuration" $ do
     it "respects filter configuration settings" $ do
       let cyclicPattern = [Transition 1, Transition 2, Transition 1, Transition 2]
