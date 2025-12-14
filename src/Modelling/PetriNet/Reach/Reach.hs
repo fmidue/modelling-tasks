@@ -664,8 +664,8 @@ checkFilterConfig ReachConfig {..}
   , maxSolutions < 1
   = Just "setting maxNumberOfSolutions to less than 1 does not make sense"
   | Just coverage <- minTransitionCoverage filterConfig
-  , coverage < 0 || coverage > 1
-  = Just "minTransitionCoverage must be between 0 and 1 if it is enabled"
+  , coverage <= 0 || coverage > 1
+  = Just "minTransitionCoverage must be greater than 0 and not greater than 1 if it is enabled"
   | otherwise
   = Nothing
 
