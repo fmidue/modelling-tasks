@@ -71,7 +71,7 @@ import Test.Hspec
 import Test.QuickCheck (
   (==>),
   Arbitrary (arbitrary),
-  NonEmptyList (NonEmpty, getNonEmpty),
+  NonEmptyList (NonEmpty),
   Property,
   Testable (property),
   ioProperty,
