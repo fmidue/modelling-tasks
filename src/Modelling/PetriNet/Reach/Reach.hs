@@ -71,8 +71,8 @@ import Modelling.Auxiliary.Output (
 import Modelling.PetriNet.Reach.Draw    (drawToFile, isPetriDrawable)
 import Modelling.PetriNet.Reach.Filter (
   FilterConfig (..),
+  areSolutionsTrivial,
   defaultFilterConfig,
-  isTrivialSequence,
   noFiltering,
   )
 import Modelling.PetriNet.Reach.Property (
@@ -611,7 +611,8 @@ generateNetGoal filterConfig config@NetGoalConfig {..} seed =
       netGoal <- MaybeT $ fmap (toNetGoal . (pn,)) <$>
         findM (Monad.lift . isPetriDrawable (fst pn)) drawCommands
       let allSolutions = netGoalAllSolutions netGoal
-      guard (not $ any (isTrivialSequence filterConfig) allSolutions)
+          availableTransitions = transitions $ petriNet netGoal
+      guard (not $ areSolutionsTrivial filterConfig availableTransitions allSolutions)
       pure netGoal
     generate = do
       xs <- possibleNetGoals config
@@ -660,6 +661,12 @@ checkFilterConfig ReachConfig {..}
   | Just spaceballsLength <- minSpaceballsLength filterConfig
   , spaceballsLength > maxTransitionLength netGoalConfig
   = Just "minSpaceballsLength must not be higher than maxTransitionLength if it is enabled"
+  | Just maxSolutions <- maxNumberOfSolutions filterConfig
+  , maxSolutions < 1
+  = Just "setting maxNumberOfSolutions to less than 1 does not make sense"
+  | Just coverage <- minTransitionCoverage filterConfig
+  , coverage <= 0 || coverage > 1
+  = Just "minTransitionCoverage must be greater than 0 and not greater than 1 if it is enabled"
   | otherwise
   = Nothing
 

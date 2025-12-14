@@ -4,6 +4,8 @@ module Modelling.PetriNet.Reach.FilterSpec where
 import Modelling.PetriNet.Reach.Filter
 import Modelling.PetriNet.Reach.Type (Transition(..))
 
+import qualified Data.Set                         as Set
+
 import Data.List                        (zipWith4, zipWith5, zipWith6, zipWith7)
 import Data.List.Extra                  (nubOrd)
 import Test.Hspec
@@ -112,6 +114,7 @@ spec = do
   describe "configuration" $ do
     it "respects filter configuration settings" $ do
       let cyclicPattern = [Transition 1, Transition 2, Transition 1, Transition 2]
-      let configNoCyclic = defaultFilterConfig {maxCycleLength = Nothing}
-      isTrivialSequence configNoCyclic cyclicPattern `shouldBe` False
-      isTrivialSequence defaultFilterConfig cyclicPattern `shouldBe` True
+      let availableTransitions = Set.fromList [Transition 1, Transition 2]
+      let configNoCyclic = defaultFilterConfig {maxCycleLength = Nothing, minTransitionCoverage = Nothing}
+      isTrivialSequence configNoCyclic availableTransitions cyclicPattern `shouldBe` False
+      isTrivialSequence defaultFilterConfig availableTransitions cyclicPattern `shouldBe` True
