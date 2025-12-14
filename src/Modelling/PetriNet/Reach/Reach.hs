@@ -630,10 +630,10 @@ checkReachConfig config@ReachConfig {..} =
     (drawCommands netGoalConfig)
     rejectLongerThan
     showLengthHint
+  <|> checkFilterConfig config
   <|> if showTargetNet || showPlaceNamesInNet
       then Nothing
       else Just "At least one of showTargetNet or showPlaceNamesInNet must be True"
-  <|> checkFilterConfig config
 
 checkFilterConfig :: ReachConfig -> Maybe String
 checkFilterConfig ReachConfig {..}
