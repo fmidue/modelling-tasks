@@ -97,14 +97,14 @@ isTrivialSequence config availableTransitions xs =
   || maybe False (`isCyclicPattern` xs) (maxCycleLength config)
   || maybe False (`hasRepetitiveSubsequence` xs) (minRepetitiveLength config)
   || (filterGroupedRepeats config && hasGroupedRepeats xs)
-  || maybe False (\coverage -> hasInsufficientTransitionCoverage coverage availableTransitions xs)
+  || maybe False (hasInsufficientTransitionCoverage availableTransitions xs)
        (minTransitionCoverage config)
 
 -- | Check if a sequence has insufficient transition coverage
 -- A sequence is considered to have insufficient coverage if it doesn't use enough
 -- of the available transitions
-hasInsufficientTransitionCoverage :: (Ord a) => Ratio Int -> Set a -> [a] -> Bool
-hasInsufficientTransitionCoverage minCoverage availableTransitions transitionSequence
+hasInsufficientTransitionCoverage :: (Ord a) => Set a -> [a] -> Ratio Int -> Bool
+hasInsufficientTransitionCoverage availableTransitions transitionSequence minCoverage
   | Set.null availableTransitions = False
   | otherwise =
       let usedTransitions = Set.fromList transitionSequence

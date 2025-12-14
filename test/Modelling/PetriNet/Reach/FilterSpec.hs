@@ -118,14 +118,14 @@ spec = do
       let availableTransitions = Set.fromList [Transition 1, Transition 2, Transition 3, Transition 4, Transition 5]
       let fullCoverageSeq = [Transition 1, Transition 2, Transition 3, Transition 4, Transition 5]
       let partialCoverageSeq = [Transition 1, Transition 2]
-      hasInsufficientTransitionCoverage (4 % 5) availableTransitions partialCoverageSeq `shouldBe` True
-      hasInsufficientTransitionCoverage (4 % 5) availableTransitions fullCoverageSeq `shouldBe` False
-      hasInsufficientTransitionCoverage (1 % 2) availableTransitions partialCoverageSeq `shouldBe` True
-      hasInsufficientTransitionCoverage (3 % 10) availableTransitions partialCoverageSeq `shouldBe` False
+      hasInsufficientTransitionCoverage availableTransitions partialCoverageSeq (4 % 5) `shouldBe` True
+      hasInsufficientTransitionCoverage availableTransitions fullCoverageSeq (4 % 5) `shouldBe` False
+      hasInsufficientTransitionCoverage availableTransitions partialCoverageSeq (1 % 2) `shouldBe` True
+      hasInsufficientTransitionCoverage availableTransitions partialCoverageSeq (3 % 10) `shouldBe` False
 
     it "handles empty available transitions" $ do
       let emptySet = Set.empty :: Set Transition
-      hasInsufficientTransitionCoverage (4 % 5) emptySet [Transition 1] `shouldBe` False
+      hasInsufficientTransitionCoverage emptySet [Transition 1] (4 % 5) `shouldBe` False
 
   describe "isTrivialSequence" $ do
     it "detects trivial sequences with coverage check" $ do
