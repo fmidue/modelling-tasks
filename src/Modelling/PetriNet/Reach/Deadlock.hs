@@ -50,7 +50,7 @@ module Modelling.PetriNet.Reach.Deadlock (
 
 import qualified Control.Monad.Trans              as Monad (lift)
 import qualified Data.Map                         as M (fromList)
-import qualified Data.Set                         as S (empty, fromList, member, toList, union)
+import qualified Data.Set                         as S (fromList, toList)
 
 import Capabilities.Cache               (MonadCache)
 import Capabilities.Diagrams            (MonadDiagrams)
@@ -71,6 +71,7 @@ import Modelling.PetriNet.Reach.ConfigValidation (
 import Modelling.PetriNet.Reach.Reach   (
   assertReachPoints,
   isNoLonger,
+  levelsWithAlternatives,
   reportReachFor,
   transitionsValid,
   )
@@ -114,7 +115,6 @@ import Control.Monad.Random             (MonadRandom, evalRandT, mkStdGen)
 import Control.Monad.Trans.Maybe        (MaybeT (MaybeT, runMaybeT))
 import Data.GraphViz                    (GraphvizCommand (..))
 import Data.List                        (find)
-import Data.List.Extra                  (groupSort)
 import Data.Maybe                       (fromMaybe)
 #if !MIN_VERSION_base(4,18,0)
 import Data.Typeable                    (Typeable)
@@ -219,23 +219,6 @@ deadlockAllSolutions :: Ord s => Net s t -> [[t]]
 deadlockAllSolutions network =
   reverse . maybe [] snd $ find (null . successors network . fst)
     $ concat $ levelsWithAlternatives network
-
-{-|
-Find all shortest paths to all reachable markings
-segmented by the length of paths starting with 0.
--}
-levelsWithAlternatives :: Ord s => Net s t -> [[(State s, [[t]])]]
-levelsWithAlternatives network =
-  let buildLevels _    [] = []
-      buildLevels done xs =
-        let done' = S.union done $ S.fromList $ map fst xs
-            next = map (second concat) $ groupSort [ (y, map (transition:) pathsSoFar) |
-                (currentState, pathsSoFar) <- xs,
-                (transition, y) <- successors network currentState,
-                not $ S.member y done'
-              ]
-         in xs : buildLevels done' next
-  in buildLevels S.empty [(start network, [[]])]
 
 data DeadlockInstance s t = DeadlockInstance {
   drawUsing         :: GraphvizCommand,

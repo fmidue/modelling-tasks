@@ -55,6 +55,7 @@ module Modelling.PetriNet.Reach.Reach (
   isNoLonger,
   reportReachFor,
   transitionsValid,
+  levelsWithAlternatives,
 ) where
 
 import qualified Control.Monad.Trans              as Monad (lift)
