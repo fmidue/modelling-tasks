@@ -35,6 +35,7 @@ import qualified Data.Set                         as Set
 
 import Data.Data                        (Data)
 import Data.List                        (group)
+import Data.List.Extra                  (nubOrd)
 import Data.Ratio                       (Ratio, (%))
 import Data.Set                         (Set)
 import GHC.Generics                     (Generic)
@@ -105,9 +106,8 @@ isTrivialSequence config availableTransitions xs =
 -- of the available transitions
 hasInsufficientTransitionCoverage :: (Ord a) => Set a -> [a] -> Ratio Int -> Bool
 hasInsufficientTransitionCoverage availableTransitions transitionSequence minCoverage
-  = let usedTransitions = Set.fromList transitionSequence
+  = let usedCount = length (nubOrd transitionSequence)
         totalTransitions = Set.size availableTransitions
-        usedCount = Set.size usedTransitions
     in fromIntegral usedCount < minCoverage * fromIntegral totalTransitions
 
 -- | Check if a sequence begins with a Spaceballs PIN pattern
@@ -151,4 +151,4 @@ hasGroupedRepeats xs =
 areSolutionsTrivial :: (Enum a, Ord a) => FilterConfig -> Set a -> [[a]] -> Bool
 areSolutionsTrivial config availableTransitions solutions =
   any (isTrivialSequence config availableTransitions) solutions
-  || maybe False ((length solutions) >) (maxNumberOfSolutions config)
+  || maybe False (length solutions >) (maxNumberOfSolutions config)
