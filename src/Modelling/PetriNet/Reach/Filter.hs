@@ -87,7 +87,7 @@ defaultFilterConfig = FilterConfig {
   minRepetitiveLength = Just 3,
   minSpaceballsLength = Just 4,
   maxCycleLength = Just 4,
-  maxNumberOfSolutions = Just 15,
+  maxNumberOfSolutions = Just 10,
   minTransitionCoverage = Just (4 % 5)
   }
 
