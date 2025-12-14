@@ -377,7 +377,7 @@ tries
   -> DeadlockConfig
   -> Int
   -> m (Net Place Transition, GraphvizCommand)
-tries n filterConfiguration conf seed = eval out
+tries n filterConfig conf seed = eval out
   where
     eval f = evalRandT f $ mkStdGen seed
     out = do
@@ -388,7 +388,7 @@ tries n filterConfiguration conf seed = eval out
     checkCandidate (pathLength, network) = do
       guard $ pathLength >= minTransitionLength conf
       let allSolutions = deadlockAllSolutions network
-      guard (not $ any (isTrivialSequence filterConfiguration) allSolutions)
+      guard (not $ any (isTrivialSequence filterConfig) allSolutions)
       MaybeT $ fmap (network,) <$> findM (Monad.lift . isPetriDrawable network) (drawCommands conf)
 
 try :: MonadRandom m => DeadlockConfig -> m [(Int, Net Place Transition)]
