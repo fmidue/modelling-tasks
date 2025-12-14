@@ -8,8 +8,6 @@ import qualified Data.Set                         as Set
 
 import Data.List                        (zipWith4, zipWith5, zipWith6, zipWith7)
 import Data.List.Extra                  (nubOrd)
-import Data.Ratio                       ((%))
-import Data.Set                         (Set)
 import Test.Hspec
 import Test.QuickCheck (
   Arbitrary (arbitrary),

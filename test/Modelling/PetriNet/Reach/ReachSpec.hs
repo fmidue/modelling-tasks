@@ -16,9 +16,9 @@ import Modelling.PetriNet.Reach.Reach (
   netGoalSolution,
   )
 import Modelling.PetriNet.Reach.Filter (
+  areSolutionsTrivial,
   defaultFilterConfig,
   noFiltering,
-  isTrivialSequence,
   )
 import Modelling.PetriNet.Reach.Property (
   satisfiesAtAnyState,
@@ -73,7 +73,7 @@ spec = do
         inst <- generateReach config seed
         let solutions = netGoalAllSolutions (netGoal inst)
             availableTransitions = transitions $ petriNet $ netGoal inst
-        solutions `shouldSatisfy` (not . any (isTrivialSequence (filterConfig config) availableTransitions))
+        solutions `shouldSatisfy` not . areSolutionsTrivial (filterConfig config) availableTransitions
 
     it "can generate solutions when filtering is disabled" $
       quickCheckWith stdArgs {maxSuccess = 50} $ property $ \seed -> do
