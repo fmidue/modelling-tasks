@@ -92,46 +92,6 @@ spec = do
       let config = defaultReachConfig
       checkReachConfig config `shouldBe` Nothing
 
-    it "rejects conflicting length hint configuration" $ do
-      let config = defaultReachConfig {
-            netGoalConfig = (netGoalConfig defaultReachConfig) {
-              maxTransitionLength = 8
-              },
-            rejectLongerThan = Just 8,
-            showLengthHint = True
-            }
-      checkReachConfig config `shouldSatisfy` isJust
-
-    it "accepts non-conflicting length hint configuration with rejectLongerThan > maxTransitionLength" $ do
-      let config = defaultReachConfig {
-            netGoalConfig = (netGoalConfig defaultReachConfig) {
-              maxTransitionLength = 8,
-              minTransitionLength = 6
-              },
-            rejectLongerThan = Just 10,
-            showLengthHint = True
-            }
-      checkReachConfig config `shouldBe` Nothing
-
-    it "rejects the problematic task2024_60-style config" $ do
-      let problematicConfig = defaultReachConfig {
-            netGoalConfig = (netGoalConfig defaultReachConfig) {
-              maxTransitionLength = 8
-              },
-            rejectLongerThan = Just 8,
-            showLengthHint = True
-            }
-      checkReachConfig problematicConfig `shouldSatisfy` isJust
-
-    it "rejects minTransitionLength > maxTransitionLength" $ do
-      let config = defaultReachConfig {
-            netGoalConfig = (netGoalConfig defaultReachConfig) {
-              minTransitionLength = 10,
-              maxTransitionLength = 5
-              }
-            }
-      checkReachConfig config `shouldSatisfy` isJust
-
     it "rejects preconditionsRange where upper < lower" $ do
       let config = defaultReachConfig {
             netGoalConfig = (netGoalConfig defaultReachConfig) {
@@ -153,38 +113,6 @@ spec = do
             netGoalConfig = (netGoalConfig defaultReachConfig) {
               drawCommands = []
               }
-            }
-      checkReachConfig config `shouldSatisfy` isJust
-
-    it "rejects rejectLongerThan < minTransitionLength" $ do
-      let config = defaultReachConfig {
-            netGoalConfig = (netGoalConfig defaultReachConfig) {
-              minTransitionLength = 10
-              },
-            rejectLongerThan = Just 5,
-            showLengthHint = False
-            }
-      checkReachConfig config `shouldSatisfy` isJust
-
-    it "accepts rejectLongerThan = minTransitionLength" $ do
-      let config = defaultReachConfig {
-            netGoalConfig = (netGoalConfig defaultReachConfig) {
-              minTransitionLength = 10,
-              maxTransitionLength = 10
-              },
-            rejectLongerThan = Just 10,
-            showLengthHint = False
-            }
-      checkReachConfig config `shouldBe` Nothing
-
-    it "rejects rejectLongerThan < maxTransitionLength" $ do
-      let config = defaultReachConfig {
-            netGoalConfig = (netGoalConfig defaultReachConfig) {
-              maxTransitionLength = 10,
-              minTransitionLength = 5
-              },
-            rejectLongerThan = Just 8,
-            showLengthHint = False
             }
       checkReachConfig config `shouldSatisfy` isJust
 

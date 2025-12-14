@@ -23,7 +23,7 @@ task2023_27 = ReachConfig {
     preconditionsRange = (2, Just 2)
     },
   printSolution = True,
-  rejectLongerThan = Nothing,
+  rejectLongerThan = Just 8,
   showLengthHint = True,
   showMinLengthHint = True,
   showTargetNet = True,
@@ -47,7 +47,7 @@ task2023_28 = ReachConfig {
     preconditionsRange = (2, Just 2)
     },
   printSolution = True,
-  rejectLongerThan = Nothing,
+  rejectLongerThan = Just 12,
   showLengthHint = True,
   showMinLengthHint = True,
   showTargetNet = True,
