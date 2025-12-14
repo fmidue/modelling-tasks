@@ -58,8 +58,8 @@ import Capabilities.Graphviz            (MonadGraphviz)
 import Modelling.PetriNet.Reach.Draw    (drawToFile, isPetriDrawable)
 import Modelling.PetriNet.Reach.Filter (
   FilterConfig (..),
+  areSolutionsTrivial,
   defaultFilterConfig,
-  isTrivialSequence,
   noFiltering,
   )
 import Modelling.PetriNet.Reach.Property (
@@ -388,7 +388,8 @@ tries n filterConfig conf seed = eval out
     checkCandidate (pathLength, network) = do
       guard $ pathLength >= minTransitionLength conf
       let allSolutions = deadlockAllSolutions network
-      guard (not $ any (isTrivialSequence filterConfig) allSolutions)
+          availableTransitions = transitions network
+      guard (not $ areSolutionsTrivial filterConfig availableTransitions allSolutions)
       MaybeT $ fmap (network,) <$> findM (Monad.lift . isPetriDrawable network) (drawCommands conf)
 
 try :: MonadRandom m => DeadlockConfig -> m [(Int, Net Place Transition)]

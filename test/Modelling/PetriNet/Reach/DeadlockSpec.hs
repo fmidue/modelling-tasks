@@ -12,9 +12,9 @@ import Modelling.PetriNet.Reach.Deadlock (
   deadlockSolution,
   )
 import Modelling.PetriNet.Reach.Filter (
+  areSolutionsTrivial,
   defaultFilterConfig,
   noFiltering,
-  isTrivialSequence,
   )
 import Modelling.PetriNet.Reach.Step    (successors)
 import Modelling.PetriNet.Reach.Type    (Net (transitions), Capacity(..), Place(..))
@@ -58,7 +58,8 @@ spec = do
               }
         deadlockInstance <- generateDeadlock config seed
         let solutions = deadlockAllSolutions (petriNet deadlockInstance)
-        solutions `shouldSatisfy` (not . any (isTrivialSequence $ filterConfig config))
+            availableTransitions = transitions (petriNet deadlockInstance)
+        solutions `shouldSatisfy` (not . areSolutionsTrivial (filterConfig config) availableTransitions)
 
     it "can generate solutions when filtering is disabled" $
       quickCheckWith stdArgs {maxSuccess = 50} $ property $ \seed -> do
