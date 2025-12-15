@@ -23,6 +23,8 @@ import Modelling.PetriNet.Reach.ReachSpec (
   hasMinTransitionLength,
   )
 
+import Settings (needsTuning)
+
 import Test.Hspec
 import Test.QuickCheck (
   Testable (property),
@@ -49,6 +51,7 @@ spec = do
           hasMinTransitionLength (null . successors net) ts minL
 
     it "generates non-trivial solutions when filtering is enabled" $
+     needsTuning $
       quickCheckWith stdArgs {maxSuccess = 15} $ property $ \seed -> do
         let config = defaultDeadlockConfig
         deadlockInstance <- generateDeadlock config seed
