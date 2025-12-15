@@ -400,7 +400,10 @@ levelsWithAlternatives n =
   in f S.empty [(start n, [[]])]
 
 reachSolution :: ReachInstance s t -> [t]
-reachSolution inst = either id head $ solutions inst
+reachSolution inst = case solutions inst of
+  Left singleSolution -> singleSolution
+  Right [] -> []
+  Right (firstSolution : _) -> firstSolution
 
 assertReachPoints
   :: OutputCapable m

@@ -79,7 +79,7 @@ import Modelling.PetriNet.Reach.Reach   (
   transitionsValid,
   )
 import Modelling.PetriNet.Reach.Roll    (netLimits)
-import Modelling.PetriNet.Reach.Step    (deadlocks, executes, successors)
+import Modelling.PetriNet.Reach.Step    (deadlocks, deadlocks', executes, successors)
 import Modelling.PetriNet.Reach.Type (
   Capacity (Unbounded),
   Net (..),
@@ -223,7 +223,10 @@ deadlockEvaluation path deadlock ts =
     aSolution = formatDeadlockSolutionFeedback deadlock
 
 deadlockSolution :: DeadlockInstance s t -> [t]
-deadlockSolution inst = either id head $ solutions inst
+deadlockSolution inst = case solutions inst of
+  Left singleSolution -> singleSolution
+  Right [] -> []
+  Right (firstSolution : _) -> firstSolution
 
 {-|
 Get all possible shortest solutions for deadlock detection in a given Petri net
@@ -364,18 +367,7 @@ generateDeadlock conf@DeadlockConfig {..} seed = do
   (petri, cmd) <- tries 1000 filterConfig conf seed
   let solutionsList =
         if filterConfig == noFiltering
-          then Left $ deadlockSolution DeadlockInstance {
-            drawUsing                     = cmd,
-            minLength                     = minTransitionLength,
-            noLongerThan                  = rejectLongerThan,
-            petriNet                      = petri,
-            showPlaceNames                = showPlaceNamesInNet,
-            showSolution                  = printSolution,
-            withLengthHint                = if showLengthHint then Just maxTransitionLength else Nothing,
-            withMinLengthHint             = showMinLengthHint,
-            solutions                     = Left [],
-            instanceMaxDisplayedSolutions = maxDisplayedSolutions
-            }
+          then Left $ reverse $ snd $ head $ concat $ deadlocks' petri
           else Right $ deadlockAllSolutions petri
   pure DeadlockInstance {
     drawUsing                     = cmd,
