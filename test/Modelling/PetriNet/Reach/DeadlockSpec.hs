@@ -9,7 +9,6 @@ import Modelling.PetriNet.Reach.Deadlock (
   generateDeadlock,
   checkDeadlockConfig,
   deadlockAllSolutions,
-  deadlockSolution,
   )
 import Modelling.PetriNet.Reach.Filter (
   areSolutionsTrivial,
