@@ -73,6 +73,7 @@ import Modelling.PetriNet.Reach.Filter (
   FilterConfig (..),
   areSolutionsTrivial,
   defaultFilterConfig,
+  noFiltering,
   )
 import Modelling.PetriNet.Reach.Property (
   Property (Default),
@@ -105,6 +106,7 @@ import Control.Monad.Trans.Maybe        (MaybeT (MaybeT, runMaybeT))
 import Modelling.PetriNet.Reach.ConfigValidation (
   checkBasicPetriConfig,
   checkFilterConfigWith,
+  checkMaxDisplayedSolutions,
   )
 import Control.OutputCapable.Blocks (
   ArticleToUse (IndefiniteArticle),
@@ -127,7 +129,7 @@ import Control.OutputCapable.Blocks.Generic (
   )
 import Control.Monad.Random             (MonadRandom, mkStdGen)
 import Control.Monad.Trans.Random       (evalRandT)
-import Data.Bifunctor                   (Bifunctor (second))
+import Data.Bifunctor                   (Bifunctor (second), bimap)
 import Data.Either.Combinators          (whenRight)
 import Data.Foldable                    (sequenceA_, traverse_)
 import Data.GraphViz                    (GraphvizCommand (..))
@@ -306,6 +308,24 @@ transitionsValid n =
       german $ t' ++ " ist eine Transition des gegebenen Petrinetzes?"
     isValidTransition =  (`elem` transitions n)
 
+formatSolutionFeedback
+  :: ReachInstance s Transition
+  -> Maybe String
+formatSolutionFeedback inst
+  | not (showSolution inst) = Nothing
+  | otherwise = case solutions inst of
+      Left singleSolution ->
+        Just $ show $ TransitionsList singleSolution
+      Right allSolutions ->
+        let maxDisplay = fromMaybe (length allSolutions) (instanceMaxDisplayedSolutions inst)
+            totalSolutions = length allSolutions
+            displayedSolutions = take maxDisplay allSolutions
+            solutionsText = unlines $ map (show . TransitionsList) displayedSolutions
+        in Just $
+          if totalSolutions <= maxDisplay
+            then solutionsText ++ "\n(These are all solutions.)"
+            else solutionsText ++ "\n(These are possible solutions, but more exist.)"
+
 reachEvaluation
   :: (
     Alternative m,
@@ -341,9 +361,7 @@ reachEvaluation path reach ts =
   where
     reachInstance = toShowReachInstance reach
     n = petriNet (netGoal reachInstance)
-    aSolution
-      | showSolution reach = Just $ show $ TransitionsList $ reachSolution reach
-      | otherwise = Nothing
+    aSolution = formatSolutionFeedback reach
 
 netGoalSolution :: Ord s => NetGoal s t -> [t]
 netGoalSolution netGoal = reverse $ snd $ head $ concatMap
@@ -381,8 +399,8 @@ levelsWithAlternatives n =
          in xs : f done' next
   in f S.empty [(start n, [[]])]
 
-reachSolution :: Ord s => ReachInstance s t -> [t]
-reachSolution inst = netGoalSolution (netGoal inst)
+reachSolution :: ReachInstance s t -> [t]
+reachSolution inst = either id head $ solutions inst
 
 assertReachPoints
   :: OutputCapable m
@@ -426,14 +444,16 @@ isNoLonger maybeMaxLength ts =
         ]
 
 data ReachInstance s t = ReachInstance {
-  netGoal           :: NetGoal s t,
-  minLength         :: Int,
-  noLongerThan      :: Maybe Int,
-  showGoalNet       :: Bool,
-  showPlaceNames    :: Bool,
-  showSolution      :: Bool,
-  withLengthHint    :: Maybe Int,
-  withMinLengthHint :: Bool
+  netGoal                       :: NetGoal s t,
+  minLength                     :: Int,
+  noLongerThan                  :: Maybe Int,
+  showGoalNet                   :: Bool,
+  showPlaceNames                :: Bool,
+  showSolution                  :: Bool,
+  withLengthHint                :: Maybe Int,
+  withMinLengthHint             :: Bool,
+  solutions                     :: Either [t] [[t]],
+  instanceMaxDisplayedSolutions :: Maybe Int
   }
   deriving (Generic, Read, Show, Data)
 #if !MIN_VERSION_base(4,18,0)
@@ -457,14 +477,16 @@ bimapReachInstance
   -> ReachInstance s t
   -> ReachInstance a b
 bimapReachInstance f g ReachInstance {..} = ReachInstance {
-    netGoal           = bimapNetGoal f g netGoal,
-    minLength         = minLength,
-    noLongerThan      = noLongerThan,
-    showGoalNet       = showGoalNet,
-    showPlaceNames    = showPlaceNames,
-    showSolution      = showSolution,
-    withLengthHint    = withLengthHint,
-    withMinLengthHint = withMinLengthHint
+    netGoal                       = bimapNetGoal f g netGoal,
+    minLength                     = minLength,
+    noLongerThan                  = noLongerThan,
+    showGoalNet                   = showGoalNet,
+    showPlaceNames                = showPlaceNames,
+    showSolution                  = showSolution,
+    withLengthHint                = withLengthHint,
+    withMinLengthHint             = withMinLengthHint,
+    solutions                     = bimap (map g) (map (map g)) solutions,
+    instanceMaxDisplayedSolutions = instanceMaxDisplayedSolutions
     }
 
 bimapNetGoal
@@ -497,7 +519,8 @@ data ReachConfig = ReachConfig {
   showMinLengthHint   :: Bool,
   showTargetNet       :: Bool,
   showPlaceNamesInNet :: Bool,
-  filterConfig        :: FilterConfig
+  filterConfig        :: FilterConfig,
+  maxDisplayedSolutions :: Maybe Int
   }
   deriving (Generic, Read, Show)
 #if !MIN_VERSION_base(4,18,0)
@@ -537,7 +560,8 @@ defaultReachConfig = ReachConfig {
   showMinLengthHint   = True,
   showTargetNet       = True,
   showPlaceNamesInNet = False,
-  filterConfig        = defaultFilterConfig { maxCycleLength = Just 3 }
+  filterConfig        = defaultFilterConfig { maxCycleLength = Just 3 },
+  maxDisplayedSolutions = Just 3
   }
 
 defaultReachInstance :: ReachInstance Place Transition
@@ -547,13 +571,15 @@ defaultReachInstance = ReachInstance {
     petriNet          = fst example,
     goal              = snd example
     },
-  minLength         = 12,
-  noLongerThan      = Nothing,
-  showGoalNet       = True,
-  showPlaceNames    = False,
-  showSolution      = False,
-  withLengthHint    = Just 12,
-  withMinLengthHint = False
+  minLength                     = 12,
+  noLongerThan                  = Nothing,
+  showGoalNet                   = True,
+  showPlaceNames                = False,
+  showSolution                  = False,
+  withLengthHint                = Just 12,
+  withMinLengthHint             = False,
+  solutions                     = Left [],
+  instanceMaxDisplayedSolutions = Nothing
 }
 
 possibleNetGoals
@@ -641,6 +667,8 @@ checkReachConfig ReachConfig {..} =
     (maxTransitionLength netGoalConfig)
     filterConfig
   <|>
+  checkMaxDisplayedSolutions maxDisplayedSolutions filterConfig
+  <|>
   if showTargetNet || showPlaceNamesInNet
       then Nothing
       else Just "At least one of showTargetNet or showPlaceNamesInNet must be True"
@@ -652,14 +680,20 @@ generateReach
   -> m (ReachInstance Place Transition)
 generateReach ReachConfig {..} seed = do
   netGoal <- generateNetGoal filterConfig netGoalConfig seed
+  let solutionsList =
+        if filterConfig == noFiltering
+          then Left $ netGoalSolution netGoal
+          else Right $ netGoalAllSolutions netGoal
   pure $ ReachInstance {
-    netGoal           = netGoal,
-    minLength         = minTransitionLength netGoalConfig,
-    noLongerThan      = rejectLongerThan,
-    showGoalNet       = showTargetNet,
-    showPlaceNames    = showPlaceNamesInNet,
-    showSolution      = printSolution,
-    withLengthHint    =
+    netGoal                       = netGoal,
+    minLength                     = minTransitionLength netGoalConfig,
+    noLongerThan                  = rejectLongerThan,
+    showGoalNet                   = showTargetNet,
+    showPlaceNames                = showPlaceNamesInNet,
+    showSolution                  = printSolution,
+    withLengthHint                =
       if showLengthHint then Just $ maxTransitionLength netGoalConfig else Nothing,
-    withMinLengthHint = showMinLengthHint
+    withMinLengthHint             = showMinLengthHint,
+    solutions                     = solutionsList,
+    instanceMaxDisplayedSolutions = maxDisplayedSolutions
     }

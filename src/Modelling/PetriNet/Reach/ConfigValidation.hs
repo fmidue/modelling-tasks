@@ -8,7 +8,8 @@ module Modelling.PetriNet.Reach.ConfigValidation (
   checkTransitionLengths,
   checkRejectLongerThanConsistency,
   checkCapacity,
-  checkFilterConfigWith
+  checkFilterConfigWith,
+  checkMaxDisplayedSolutions
 ) where
 
 import Control.Applicative (Alternative ((<|>)))
@@ -134,5 +135,24 @@ checkFilterConfigWith rejectLongerThan minTransitionLength maxTransitionLength f
   = Just "setting maxNumberOfSolutions to less than 1 does not make sense"
   | minTransitionCoverage < 0 || minTransitionCoverage > 1
   = Just "minTransitionCoverage must be a value from 0 to 1"
+  | otherwise
+  = Nothing
+
+-- | Check maxDisplayedSolutions is consistent with maxNumberOfSolutions and filterConfig
+checkMaxDisplayedSolutions
+  :: Maybe Int       -- ^ maxDisplayedSolutions
+  -> FilterConfig    -- ^ filterConfig
+  -> Maybe String
+checkMaxDisplayedSolutions maxDisplayed filterConfig@FilterConfig{..}
+  | Just displayed <- maxDisplayed
+  , displayed < 1
+  = Just "maxDisplayedSolutions must be at least 1 when set"
+  | Just displayed <- maxDisplayed
+  , Just maxSolutions <- maxNumberOfSolutions
+  , displayed > maxSolutions
+  = Just $ "maxDisplayedSolutions (" ++ show displayed ++ ") cannot be greater than maxNumberOfSolutions (" ++ show maxSolutions ++ ")"
+  | Just _ <- maxDisplayed
+  , filterConfig == noFiltering
+  = Just $ "maxDisplayedSolutions should not be set when filterConfig is " ++ show noFiltering ++ " (only one solution is stored)"
   | otherwise
   = Nothing

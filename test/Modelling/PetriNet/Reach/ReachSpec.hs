@@ -71,9 +71,9 @@ spec = do
               minTransitionLength = 8
               }
         inst <- generateReach config seed
-        let solutions = netGoalAllSolutions (netGoal inst)
+        let allSolutions = netGoalAllSolutions (netGoal inst)
             availableTransitions = transitions $ petriNet $ netGoal inst
-        solutions `shouldSatisfy` not . areSolutionsTrivial (filterConfig config) availableTransitions
+        allSolutions `shouldSatisfy` not . areSolutionsTrivial (filterConfig config) availableTransitions
 
   describe "checkReachConfig" $ do
     it "accepts valid configuration" $ do

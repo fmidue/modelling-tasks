@@ -55,9 +55,9 @@ spec = do
         quickCheckWith stdArgs {maxSuccess = 15} $ property $ \seed -> do
           let config = defaultDeadlockConfig
           deadlockInstance <- generateDeadlock config seed
-          let solutions = deadlockAllSolutions (petriNet deadlockInstance)
+          let allSolutions = deadlockAllSolutions (petriNet deadlockInstance)
               availableTransitions = transitions (petriNet deadlockInstance)
-          solutions `shouldSatisfy` not . areSolutionsTrivial (filterConfig config) availableTransitions
+          allSolutions `shouldSatisfy` not . areSolutionsTrivial (filterConfig config) availableTransitions
 
   describe "checkDeadlockConfig" $ do
     it "accepts valid configuration" $ do

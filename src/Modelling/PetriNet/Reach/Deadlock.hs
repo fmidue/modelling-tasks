@@ -60,6 +60,7 @@ import Modelling.PetriNet.Reach.Filter (
   FilterConfig (..),
   areSolutionsTrivial,
   defaultFilterConfig,
+  noFiltering,
   )
 import Modelling.PetriNet.Reach.Property (
   Property (Default),
@@ -68,6 +69,7 @@ import Modelling.PetriNet.Reach.Property (
 import Modelling.PetriNet.Reach.ConfigValidation (
   checkBasicPetriConfig,
   checkFilterConfigWith,
+  checkMaxDisplayedSolutions,
   )
 import Modelling.PetriNet.Reach.Reach   (
   assertReachPoints,
@@ -77,7 +79,7 @@ import Modelling.PetriNet.Reach.Reach   (
   transitionsValid,
   )
 import Modelling.PetriNet.Reach.Roll    (netLimits)
-import Modelling.PetriNet.Reach.Step    (deadlocks, deadlocks', executes, successors)
+import Modelling.PetriNet.Reach.Step    (deadlocks, executes, successors)
 import Modelling.PetriNet.Reach.Type (
   Capacity (Unbounded),
   Net (..),
@@ -106,7 +108,7 @@ import Control.OutputCapable.Blocks.Generic (
   ($>>),
   ($>>=),
   )
-import Data.Bifunctor                   (Bifunctor (second))
+import Data.Bifunctor                   (Bifunctor (second), bimap)
 import Data.Either.Combinators          (whenRight)
 import Control.Functor.Trans            (FunctorTrans (lift))
 import Control.Monad                    (guard, msum, replicateM)
@@ -168,6 +170,24 @@ deadlockSyntax inst ts =
      isNoLonger (noLongerThan inst) ts
      pure ()
 
+formatDeadlockSolutionFeedback
+  :: DeadlockInstance s Transition
+  -> Maybe String
+formatDeadlockSolutionFeedback inst
+  | not (showSolution inst) = Nothing
+  | otherwise = case solutions inst of
+      Left singleSolution ->
+        Just $ show $ TransitionsList singleSolution
+      Right allSolutions ->
+        let maxDisplay = fromMaybe (length allSolutions) (instanceMaxDisplayedSolutions inst)
+            totalSolutions = length allSolutions
+            displayedSolutions = take maxDisplay allSolutions
+            solutionsText = unlines $ map (show . TransitionsList) displayedSolutions
+        in Just $
+          if totalSolutions <= maxDisplay
+            then solutionsText ++ "\n(These are all solutions.)"
+            else solutionsText ++ "\n(These are possible solutions, but more exist.)"
+
 deadlockEvaluation
   :: (
     Alternative m,
@@ -200,14 +220,10 @@ deadlockEvaluation path deadlock ts =
   where
     deadlockInstance = toShowDeadlockInstance deadlock
     n = petriNet deadlockInstance
-    aSolution
-      | showSolution deadlockInstance
-      = Just $ show $ TransitionsList $ deadlockSolution deadlock
-      | otherwise
-      = Nothing
+    aSolution = formatDeadlockSolutionFeedback deadlock
 
-deadlockSolution :: Ord s => DeadlockInstance s t -> [t]
-deadlockSolution = reverse . snd . head . concat . deadlocks' . petriNet
+deadlockSolution :: DeadlockInstance s t -> [t]
+deadlockSolution inst = either id head $ solutions inst
 
 {-|
 Get all possible shortest solutions for deadlock detection in a given Petri net
@@ -222,14 +238,16 @@ deadlockAllSolutions net =
     $ map (filter (null . successors net . fst)) $ levelsWithAlternatives net
 
 data DeadlockInstance s t = DeadlockInstance {
-  drawUsing         :: GraphvizCommand,
-  minLength         :: Int,
-  noLongerThan      :: Maybe Int,
-  petriNet          :: Net s t,
-  showPlaceNames    :: Bool,
-  showSolution      :: Bool,
-  withLengthHint    :: Maybe Int,
-  withMinLengthHint :: Bool
+  drawUsing                     :: GraphvizCommand,
+  minLength                     :: Int,
+  noLongerThan                  :: Maybe Int,
+  petriNet                      :: Net s t,
+  showPlaceNames                :: Bool,
+  showSolution                  :: Bool,
+  withLengthHint                :: Maybe Int,
+  withMinLengthHint             :: Bool,
+  solutions                     :: Either [t] [[t]],
+  instanceMaxDisplayedSolutions :: Maybe Int
   } deriving (Generic, Read, Show)
 #if !MIN_VERSION_base(4,18,0)
   deriving Typeable
@@ -242,14 +260,16 @@ bimapDeadlockInstance
   -> DeadlockInstance s t
   -> DeadlockInstance a b
 bimapDeadlockInstance f g DeadlockInstance {..} = DeadlockInstance {
-    drawUsing         = drawUsing,
-    minLength         = minLength,
-    noLongerThan      = noLongerThan,
-    petriNet          = bimapNet f g petriNet,
-    showPlaceNames    = showPlaceNames,
-    showSolution      = showSolution,
-    withLengthHint    = withLengthHint,
-    withMinLengthHint = withMinLengthHint
+    drawUsing                     = drawUsing,
+    minLength                     = minLength,
+    noLongerThan                  = noLongerThan,
+    petriNet                      = bimapNet f g petriNet,
+    showPlaceNames                = showPlaceNames,
+    showSolution                  = showSolution,
+    withLengthHint                = withLengthHint,
+    withMinLengthHint             = withMinLengthHint,
+    solutions                     = bimap (map g) (map (map g)) solutions,
+    instanceMaxDisplayedSolutions = instanceMaxDisplayedSolutions
     }
 
 toShowDeadlockInstance
@@ -271,7 +291,8 @@ data DeadlockConfig = DeadlockConfig {
   showLengthHint      :: Bool,
   showMinLengthHint   :: Bool,
   showPlaceNamesInNet :: Bool,
-  filterConfig        :: FilterConfig
+  filterConfig        :: FilterConfig,
+  maxDisplayedSolutions :: Maybe Int
   }
   deriving (Generic, Read, Show)
 #if !MIN_VERSION_base(4,18,0)
@@ -294,19 +315,22 @@ defaultDeadlockConfig =
   showLengthHint      = False,
   showMinLengthHint   = True,
   showPlaceNamesInNet = False,
-  filterConfig        = defaultFilterConfig { maxNumberOfSolutions = Nothing }
+  filterConfig        = defaultFilterConfig { maxNumberOfSolutions = Nothing },
+  maxDisplayedSolutions = Just 3
   }
 
 defaultDeadlockInstance :: DeadlockInstance Place Transition
 defaultDeadlockInstance = DeadlockInstance {
-  drawUsing         = Circo,
-  minLength         = 6,
-  noLongerThan      = Nothing,
-  petriNet          = fst example,
-  showPlaceNames    = False,
-  showSolution      = False,
-  withLengthHint    = Just 9,
-  withMinLengthHint = True
+  drawUsing                     = Circo,
+  minLength                     = 6,
+  noLongerThan                  = Nothing,
+  petriNet                      = fst example,
+  showPlaceNames                = False,
+  showSolution                  = False,
+  withLengthHint                = Just 9,
+  withMinLengthHint             = True,
+  solutions                     = Left [],
+  instanceMaxDisplayedSolutions = Nothing
   }
 
 checkDeadlockConfig :: DeadlockConfig -> Maybe String
@@ -328,6 +352,8 @@ checkDeadlockConfig DeadlockConfig {..} =
     minTransitionLength
     maxTransitionLength
     filterConfig
+  <|>
+  checkMaxDisplayedSolutions maxDisplayedSolutions filterConfig
 
 generateDeadlock
   :: (MonadCatch m, MonadDiagrams m, MonadGraphviz m)
@@ -336,16 +362,33 @@ generateDeadlock
   -> m (DeadlockInstance Place Transition)
 generateDeadlock conf@DeadlockConfig {..} seed = do
   (petri, cmd) <- tries 1000 filterConfig conf seed
+  let solutionsList =
+        if filterConfig == noFiltering
+          then Left $ deadlockSolution DeadlockInstance {
+            drawUsing                     = cmd,
+            minLength                     = minTransitionLength,
+            noLongerThan                  = rejectLongerThan,
+            petriNet                      = petri,
+            showPlaceNames                = showPlaceNamesInNet,
+            showSolution                  = printSolution,
+            withLengthHint                = if showLengthHint then Just maxTransitionLength else Nothing,
+            withMinLengthHint             = showMinLengthHint,
+            solutions                     = Left [],
+            instanceMaxDisplayedSolutions = maxDisplayedSolutions
+            }
+          else Right $ deadlockAllSolutions petri
   pure DeadlockInstance {
-    drawUsing         = cmd,
-    minLength         = minTransitionLength,
-    noLongerThan      = rejectLongerThan,
-    petriNet          = petri,
-    showPlaceNames    = showPlaceNamesInNet,
-    showSolution      = printSolution,
-    withLengthHint    =
+    drawUsing                     = cmd,
+    minLength                     = minTransitionLength,
+    noLongerThan                  = rejectLongerThan,
+    petriNet                      = petri,
+    showPlaceNames                = showPlaceNamesInNet,
+    showSolution                  = printSolution,
+    withLengthHint                =
       if showLengthHint then Just maxTransitionLength else Nothing,
-    withMinLengthHint = showMinLengthHint
+    withMinLengthHint             = showMinLengthHint,
+    solutions                     = solutionsList,
+    instanceMaxDisplayedSolutions = maxDisplayedSolutions
     }
 
 tries
