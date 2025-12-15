@@ -22,14 +22,13 @@ task2023_27 = ReachConfig {
     postconditionsRange = (2, Just 3),
     preconditionsRange = (2, Just 2)
     },
-  printSolution = True,
   rejectLongerThan = Just 8,
   showLengthHint = False,
   showMinLengthHint = True,
   showTargetNet = True,
   showPlaceNamesInNet = False,
   filterConfig = defaultFilterConfig,
-  maxDisplayedSolutions = Just 3
+  printedSolutions = Just 3
   }
 
 {-|
@@ -47,14 +46,13 @@ task2023_28 = ReachConfig {
     postconditionsRange = (2, Just 3),
     preconditionsRange = (2, Just 2)
     },
-  printSolution = True,
   rejectLongerThan = Just 12,
   showLengthHint = False,
   showMinLengthHint = True,
   showTargetNet = True,
   showPlaceNamesInNet = False,
   filterConfig = defaultFilterConfig,
-  maxDisplayedSolutions = Just 3
+  printedSolutions = Just 3
   }
 
 {-|
@@ -84,12 +82,11 @@ task2024_60 = ReachConfig {
     postconditionsRange = (2, Just 3),
     preconditionsRange = (2, Just 2)
     },
-  printSolution = True,
   rejectLongerThan = Just 8,
   showLengthHint = False,
   showMinLengthHint = True,
   showTargetNet = True,
   showPlaceNamesInNet = False,
   filterConfig = defaultFilterConfig,
-  maxDisplayedSolutions = Just 3
+  printedSolutions = Just 3
   }
