@@ -39,7 +39,8 @@ spec = do
       quickCheckWith stdArgs {maxSuccess = 50} $ property $ \seed -> do
         let config = defaultDeadlockConfig {
               maxTransitionLength = 6,
-              minTransitionLength = 6
+              minTransitionLength = 6,
+              filterConfig = noFiltering
               }
             minL = minTransitionLength config
         deadlockInstance <- generateDeadlock config seed
@@ -55,15 +56,6 @@ spec = do
         let solutions = deadlockAllSolutions (petriNet deadlockInstance)
             availableTransitions = transitions (petriNet deadlockInstance)
         solutions `shouldSatisfy` not . areSolutionsTrivial (filterConfig config) availableTransitions
-
-    it "can generate solutions when filtering is disabled" $
-      quickCheckWith stdArgs {maxSuccess = 50} $ property $ \seed -> do
-        let config = defaultDeadlockConfig {
-              filterConfig = noFiltering
-              }
-        deadlockInstance <- generateDeadlock config seed
-        let solution = deadlockSolution deadlockInstance
-        length solution `shouldBe` 8
 
   describe "checkDeadlockConfig" $ do
     it "accepts valid configuration" $ do

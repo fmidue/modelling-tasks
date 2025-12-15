@@ -218,7 +218,7 @@ if no deadlock is reachable and the net is not bounded.
 -}
 deadlockAllSolutions :: Ord s => Net s t -> [[t]]
 deadlockAllSolutions net =
-  maybe [] snd $ find (null . successors net . fst)
+  map reverse . maybe [] snd $ find (null . successors net . fst)
     $ concat $ levelsWithAlternatives net
 
 data DeadlockInstance s t = DeadlockInstance {
@@ -363,12 +363,12 @@ tries n filterConfig conf seed = eval out
       let candidates = concat xs
       maybeResult <- runMaybeT $ msum $ map checkCandidate candidates
       maybe out pure maybeResult
-    checkCandidate (pathLength, network) = do
+    checkCandidate (pathLength, net) = do
       guard $ pathLength >= minTransitionLength conf
-      let allSolutions = deadlockAllSolutions network
-          availableTransitions = transitions network
+      let allSolutions = deadlockAllSolutions net
+          availableTransitions = transitions net
       guard (not $ areSolutionsTrivial filterConfig availableTransitions allSolutions)
-      MaybeT $ fmap (network,) <$> findM (Monad.lift . isPetriDrawable network) (drawCommands conf)
+      MaybeT $ fmap (net,) <$> findM (Monad.lift . isPetriDrawable net) (drawCommands conf)
 
 try :: MonadRandom m => DeadlockConfig -> m [(Int, Net Place Transition)]
 try conf = do
