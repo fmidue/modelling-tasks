@@ -149,5 +149,11 @@ hasGroupedRepeats xs =
 -- This combines both per-sequence checks and the collective check for too many solutions
 areSolutionsTrivial :: (Enum a, Ord a) => FilterConfig -> Set a -> [[a]] -> Bool
 areSolutionsTrivial config availableTransitions solutions =
-  any (isTrivialSequence config availableTransitions) solutions
-  || maybe False (length solutions >) (maxNumberOfSolutions config)
+  maybe False (hasMoreThan solutions) (maxNumberOfSolutions config)
+  || any (isTrivialSequence config availableTransitions) solutions
+  where
+    -- Check if list has more than n elements without forcing full evaluation
+    hasMoreThan :: [b] -> Int -> Bool
+    hasMoreThan [] _ = False
+    hasMoreThan _ n | n < 0 = True
+    hasMoreThan (_:xs) n = hasMoreThan xs (n - 1)
