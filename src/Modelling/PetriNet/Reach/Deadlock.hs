@@ -115,7 +115,6 @@ import Control.Monad.Extra              (findM)
 import Control.Monad.Random             (MonadRandom, evalRandT, mkStdGen)
 import Control.Monad.Trans.Maybe        (MaybeT (MaybeT, runMaybeT))
 import Data.GraphViz                    (GraphvizCommand (..))
-import Data.List                        (find)
 import Data.Maybe                       (fromMaybe)
 #if !MIN_VERSION_base(4,18,0)
 import Data.Typeable                    (Typeable)
@@ -218,8 +217,9 @@ if no deadlock is reachable and the net is not bounded.
 -}
 deadlockAllSolutions :: Ord s => Net s t -> [[t]]
 deadlockAllSolutions net =
-  map reverse . maybe [] snd $ find (null . successors net . fst)
-    $ concat $ levelsWithAlternatives net
+  map reverse . concatMap snd . filter (null . successors net . fst)
+    $ head $ dropWhile (not . any (null . successors net . fst))
+    $ levelsWithAlternatives net
 
 data DeadlockInstance s t = DeadlockInstance {
   drawUsing         :: GraphvizCommand,
