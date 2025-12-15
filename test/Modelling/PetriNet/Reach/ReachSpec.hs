@@ -8,7 +8,7 @@ import Modelling.PetriNet.Reach.Reach (
   ReachConfig (..),
   NetGoalConfig (..),
   ReachInstance (..),
-   (..),
+  NetGoal (..),
   defaultReachConfig,
   generateReach,
   checkReachConfig,
