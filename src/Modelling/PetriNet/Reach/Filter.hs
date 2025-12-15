@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DeriveGeneric #-}
 
@@ -33,6 +34,8 @@ module Modelling.PetriNet.Reach.Filter (
 
 import qualified Data.Set                         as Set
 
+import Autolib.Reader                   (Reader)
+import Autolib.ToDoc                    (ToDoc)
 import Data.Data                        (Data)
 import Data.List                        (group)
 import Data.List.Extra                  (nubOrd)
@@ -68,7 +71,7 @@ data FilterConfig = FilterConfig {
   -- For example, @Just (4 % 5)@ requires that each solution uses at least 80% of
   -- the available transitions. 'Nothing' means no minimum coverage requirement.
   minTransitionCoverage :: !(Maybe (Ratio Int))
-  } deriving (Data, Eq, Generic, Ord, Read, Show)
+  } deriving (Data, Eq, Generic, Ord, Reader, Read, Show, ToDoc)
 
 noFiltering :: FilterConfig
 noFiltering = FilterConfig {
