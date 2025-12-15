@@ -363,12 +363,12 @@ tries n filterConfig conf seed = eval out
       let candidates = concat xs
       maybeResult <- runMaybeT $ msum $ map checkCandidate candidates
       maybe out pure maybeResult
-    checkCandidate (pathLength, net) = do
-      guard $ pathLength >= minTransitionLength conf
-      let allSolutions = deadlockAllSolutions net
-          availableTransitions = transitions net
+    checkCandidate (l, pn) = do
+      guard $ l >= minTransitionLength conf
+      let allSolutions = deadlockAllSolutions pn
+          availableTransitions = transitions pn
       guard (not $ areSolutionsTrivial filterConfig availableTransitions allSolutions)
-      MaybeT $ fmap (net,) <$> findM (Monad.lift . isPetriDrawable net) (drawCommands conf)
+      MaybeT $ fmap (pn,) <$> findM (Monad.lift . isPetriDrawable pn) (drawCommands conf)
 
 try :: MonadRandom m => DeadlockConfig -> m [(Int, Net Place Transition)]
 try conf = do
