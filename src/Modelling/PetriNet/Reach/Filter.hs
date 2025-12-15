@@ -65,9 +65,9 @@ data FilterConfig = FilterConfig {
   maxNumberOfSolutions :: !(Maybe Int),
   -- | Minimum fraction of available transitions that must appear in each solution
   --
-  -- For example, @Just (4 % 5)@ requires that each solution uses at least 80% of
-  -- the available transitions. 'Nothing' means no minimum coverage requirement.
-  minTransitionCoverage :: !(Maybe (Ratio Int))
+  -- For example, @4 % 5@ requires that each solution uses at least 80% of
+  -- the available transitions. Hence, '0' means no minimum coverage requirement.
+  minTransitionCoverage :: !(Ratio Int)
   } deriving (Data, Eq, Generic, Ord, Read, Show)
 
 noFiltering :: FilterConfig
@@ -77,7 +77,7 @@ noFiltering = FilterConfig {
   minSpaceballsLength = Nothing,
   maxCycleLength = Nothing,
   maxNumberOfSolutions = Nothing,
-  minTransitionCoverage = Nothing
+  minTransitionCoverage = 0
   }
 
 -- | Default filter configuration that enables all filters
@@ -88,7 +88,7 @@ defaultFilterConfig = FilterConfig {
   minSpaceballsLength = Just 4,
   maxCycleLength = Just 4,
   maxNumberOfSolutions = Just 15,
-  minTransitionCoverage = Just (4 % 5)
+  minTransitionCoverage = 4 % 5
   }
 
 -- | Check if a sequence is considered trivial according to the given configuration
