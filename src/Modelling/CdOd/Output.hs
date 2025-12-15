@@ -82,6 +82,7 @@ import Data.GraphViz (
   shape,
   toLabel,
   toLabelValue,
+  undirCommand,
   vee,
   )
 import Data.GraphViz.Attributes.Complete (Attribute (..), DPoint (..), Label)
@@ -435,7 +436,7 @@ drawOd ObjectDiagram {..} direction printNames = do
           ++ [ArrowSize 0.4, FontSize 16]
           ++ [toLabel linkLabel | printNames] }
   errorWithoutGraphviz
-  graph' <- layoutGraph' params dirCommand graph
+  graph' <- layoutGraph' params undirCommand graph
   font <- lin
   let (nodes, edges) = GV.getGraph graph'
       graphNodes = M.foldrWithKey
