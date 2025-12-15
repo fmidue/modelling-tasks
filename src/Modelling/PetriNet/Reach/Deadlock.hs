@@ -217,9 +217,9 @@ if no deadlock is reachable and the net is not bounded.
 -}
 deadlockAllSolutions :: Ord s => Net s t -> [[t]]
 deadlockAllSolutions net =
-  map reverse . concatMap snd . filter fst
-    $ head $ dropWhile (not . any fst)
-    $ map (map (first (null . successors net))) $ levelsWithAlternatives net
+  map reverse . concatMap snd
+    $ head $ dropWhile null
+    $ map (filter (null . successors net . fst)) $ levelsWithAlternatives net
 
 data DeadlockInstance s t = DeadlockInstance {
   drawUsing         :: GraphvizCommand,
