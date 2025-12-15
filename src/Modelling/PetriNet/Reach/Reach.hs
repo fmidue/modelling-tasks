@@ -620,7 +620,7 @@ generateNetGoal filterConfig config@NetGoalConfig {..} seed =
       maybe generate pure maybeNetGoal
 
 checkReachConfig :: ReachConfig -> Maybe String
-checkReachConfig config@ReachConfig {..} =
+checkReachConfig ReachConfig {..} =
   checkBasicPetriConfig
     (numPlaces netGoalConfig)
     (numTransitions netGoalConfig)
@@ -632,18 +632,16 @@ checkReachConfig config@ReachConfig {..} =
     (drawCommands netGoalConfig)
     rejectLongerThan
     showLengthHint
-  <|> checkFilterConfig config
-  <|> if showTargetNet || showPlaceNamesInNet
-      then Nothing
-      else Just "At least one of showTargetNet or showPlaceNamesInNet must be True"
-
-checkFilterConfig :: ReachConfig -> Maybe String
-checkFilterConfig ReachConfig {..} =
+  <|>
   checkFilterConfigWith
     rejectLongerThan
     (minTransitionLength netGoalConfig)
     (maxTransitionLength netGoalConfig)
     filterConfig
+  <|>
+  if showTargetNet || showPlaceNamesInNet
+      then Nothing
+      else Just "At least one of showTargetNet or showPlaceNamesInNet must be True"
 
 generateReach
   :: (MonadCatch m, MonadDiagrams m, MonadGraphviz m)

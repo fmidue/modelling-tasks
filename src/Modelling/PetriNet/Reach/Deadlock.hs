@@ -310,7 +310,7 @@ defaultDeadlockInstance = DeadlockInstance {
   }
 
 checkDeadlockConfig :: DeadlockConfig -> Maybe String
-checkDeadlockConfig config@DeadlockConfig {..} =
+checkDeadlockConfig DeadlockConfig {..} =
   checkBasicPetriConfig
     numPlaces
     numTransitions
@@ -322,11 +322,12 @@ checkDeadlockConfig config@DeadlockConfig {..} =
     drawCommands
     rejectLongerThan
     showLengthHint
-  <|> checkFilterConfig config
-
-checkFilterConfig :: DeadlockConfig -> Maybe String
-checkFilterConfig DeadlockConfig {..} =
-  checkFilterConfigWith rejectLongerThan minTransitionLength maxTransitionLength filterConfig
+  <|>
+  checkFilterConfigWith
+    rejectLongerThan
+    minTransitionLength
+    maxTransitionLength
+    filterConfig
 
 generateDeadlock
   :: (MonadCatch m, MonadDiagrams m, MonadGraphviz m)
