@@ -217,9 +217,9 @@ Note: This function does not terminate
 if no deadlock is reachable and the net is not bounded.
 -}
 deadlockAllSolutions :: Ord s => Net s t -> [[t]]
-deadlockAllSolutions network =
-  reverse . maybe [] snd $ find (null . successors network . fst)
-    $ concat $ levelsWithAlternatives network
+deadlockAllSolutions net =
+  maybe [] snd $ find (null . successors net . fst)
+    $ concat $ levelsWithAlternatives net
 
 data DeadlockInstance s t = DeadlockInstance {
   drawUsing         :: GraphvizCommand,

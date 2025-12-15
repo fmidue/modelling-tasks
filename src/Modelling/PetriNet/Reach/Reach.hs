@@ -359,7 +359,7 @@ if the goal is not reachable and the net is not bounded.
 netGoalAllSolutions :: Ord s => NetGoal s t -> [[t]]
 netGoalAllSolutions netGoal =
   let goalState = goal netGoal
-  in reverse . maybe [] snd $ find ((== goalState) . fst)
+  in maybe [] snd $ find ((== goalState) . fst)
      $ concat $ levelsWithAlternatives $ petriNet netGoal
 
 {-|
