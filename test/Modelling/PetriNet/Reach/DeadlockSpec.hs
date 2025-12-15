@@ -13,7 +13,6 @@ import Modelling.PetriNet.Reach.Deadlock (
   )
 import Modelling.PetriNet.Reach.Filter (
   areSolutionsTrivial,
-  defaultFilterConfig,
   noFiltering,
   )
 import Modelling.PetriNet.Reach.Step    (successors)
