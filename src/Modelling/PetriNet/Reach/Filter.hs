@@ -98,8 +98,7 @@ isTrivialSequence config availableTransitions xs =
   || maybe False (`isCyclicPattern` xs) (maxCycleLength config)
   || maybe False (`hasRepetitiveSubsequence` xs) (minRepetitiveLength config)
   || (filterGroupedRepeats config && hasGroupedRepeats xs)
-  || maybe False (hasInsufficientTransitionCoverage availableTransitions xs)
-       (minTransitionCoverage config)
+  || hasInsufficientTransitionCoverage availableTransitions xs (minTransitionCoverage config)
 
 -- | Check if a sequence has insufficient transition coverage
 -- A sequence is considered to have insufficient coverage if it doesn't use enough
