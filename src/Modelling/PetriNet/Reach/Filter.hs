@@ -150,4 +150,4 @@ hasGroupedRepeats xs =
 areSolutionsTrivial :: (Enum a, Ord a) => FilterConfig -> Set a -> [[a]] -> Bool
 areSolutionsTrivial config availableTransitions solutions =
   maybe False (\n -> notNull (drop n solutions)) (maxNumberOfSolutions config)
-  || any (isTrivialSequence config availableTransitions) solutions
+  || config /= noFiltering && any (isTrivialSequence config availableTransitions) solutions
