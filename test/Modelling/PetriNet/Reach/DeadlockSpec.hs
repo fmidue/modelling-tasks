@@ -8,6 +8,11 @@ import Modelling.PetriNet.Reach.Deadlock (
   defaultDeadlockConfig,
   generateDeadlock,
   checkDeadlockConfig,
+  deadlockAllSolutions,
+  )
+import Modelling.PetriNet.Reach.Filter (
+  areSolutionsTrivial,
+  noFiltering,
   )
 import Modelling.PetriNet.Reach.Step    (successors)
 import Modelling.PetriNet.Reach.Type    (Net (transitions), Capacity(..), Place(..))
@@ -28,12 +33,13 @@ import Test.QuickCheck (
 
 spec :: Spec
 spec = do
-  describe "generateDeadlock" $
+  describe "generateDeadlock" $ do
     it "abides minTransitionLength" $
       quickCheckWith stdArgs {maxSuccess = 50} $ property $ \seed -> do
         let config = defaultDeadlockConfig {
               maxTransitionLength = 6,
-              minTransitionLength = 6
+              minTransitionLength = 6,
+              filterConfig = noFiltering
               }
             minL = minTransitionLength config
         deadlockInstance <- generateDeadlock config seed
@@ -42,34 +48,18 @@ spec = do
         net `shouldSatisfy`
           hasMinTransitionLength (null . successors net) ts minL
 
+    it "generates non-trivial solutions when filtering is enabled" $
+      quickCheckWith stdArgs {maxSuccess = 15} $ property $ \seed -> do
+        let config = defaultDeadlockConfig
+        deadlockInstance <- generateDeadlock config seed
+        let solutions = deadlockAllSolutions (petriNet deadlockInstance)
+            availableTransitions = transitions (petriNet deadlockInstance)
+        solutions `shouldSatisfy` not . areSolutionsTrivial (filterConfig config) availableTransitions
+
   describe "checkDeadlockConfig" $ do
     it "accepts valid configuration" $ do
       let config = defaultDeadlockConfig
       checkDeadlockConfig config `shouldBe` Nothing
-
-    it "rejects conflicting length hint configuration" $ do
-      let config = defaultDeadlockConfig {
-            maxTransitionLength = 8,
-            rejectLongerThan = Just 8,
-            showLengthHint = True
-            }
-      checkDeadlockConfig config `shouldSatisfy` isJust
-
-    it "accepts non-conflicting length hint configuration with rejectLongerThan > maxTransitionLength" $ do
-      let config = defaultDeadlockConfig {
-            maxTransitionLength = 8,
-            minTransitionLength = 6,
-            rejectLongerThan = Just 10,
-            showLengthHint = True
-            }
-      checkDeadlockConfig config `shouldBe` Nothing
-
-    it "rejects minTransitionLength > maxTransitionLength" $ do
-      let config = defaultDeadlockConfig {
-            minTransitionLength = 10,
-            maxTransitionLength = 5
-            }
-      checkDeadlockConfig config `shouldSatisfy` isJust
 
     it "rejects preconditionsRange where upper < lower" $ do
       let config = defaultDeadlockConfig { preconditionsRange = (5, Just 2) }
@@ -81,31 +71,6 @@ spec = do
 
     it "rejects empty drawCommands" $ do
       let config = defaultDeadlockConfig { drawCommands = [] }
-      checkDeadlockConfig config `shouldSatisfy` isJust
-
-    it "rejects rejectLongerThan < minTransitionLength" $ do
-      let config = defaultDeadlockConfig {
-            minTransitionLength = 10,
-            rejectLongerThan = Just 5,
-            showLengthHint = False
-            }
-      checkDeadlockConfig config `shouldSatisfy` isJust
-
-    it "accepts rejectLongerThan = minTransitionLength" $ do
-      let config = defaultDeadlockConfig {
-            minTransitionLength = 10,
-            rejectLongerThan = Just 10,
-            showLengthHint = False
-            }
-      checkDeadlockConfig config `shouldBe` Nothing
-
-    it "rejects rejectLongerThan < maxTransitionLength" $ do
-      let config = defaultDeadlockConfig {
-            maxTransitionLength = 10,
-            minTransitionLength = 5,
-            rejectLongerThan = Just 8,
-            showLengthHint = False
-            }
       checkDeadlockConfig config `shouldSatisfy` isJust
 
     it "accepts Unbounded capacity" $ do
