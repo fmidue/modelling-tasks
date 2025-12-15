@@ -82,6 +82,7 @@ import Data.GraphViz (
   shape,
   toLabel,
   toLabelValue,
+  dirCommand,
   vee,
   )
 import Data.GraphViz.Attributes.Complete (Attribute (..), DPoint (..), Label)
