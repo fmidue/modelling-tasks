@@ -8,12 +8,11 @@ import Modelling.PetriNet.Reach.Reach (
   ReachConfig (..),
   NetGoalConfig (..),
   ReachInstance (..),
-  NetGoal (..),
+   (..),
   defaultReachConfig,
   generateReach,
   checkReachConfig,
   netGoalAllSolutions,
-  netGoalSolution,
   )
 import Modelling.PetriNet.Reach.Filter (
   areSolutionsTrivial,
