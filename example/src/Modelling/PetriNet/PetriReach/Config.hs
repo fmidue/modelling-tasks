@@ -28,7 +28,8 @@ task2023_27 = ReachConfig {
   showMinLengthHint = True,
   showTargetNet = True,
   showPlaceNamesInNet = False,
-  filterConfig = defaultFilterConfig
+  filterConfig = defaultFilterConfig,
+  maxDisplayedSolutions = Just 3
   }
 
 {-|
@@ -52,7 +53,8 @@ task2023_28 = ReachConfig {
   showMinLengthHint = True,
   showTargetNet = True,
   showPlaceNamesInNet = False,
-  filterConfig = defaultFilterConfig
+  filterConfig = defaultFilterConfig,
+  maxDisplayedSolutions = Just 3
   }
 
 {-|
@@ -88,5 +90,6 @@ task2024_60 = ReachConfig {
   showMinLengthHint = True,
   showTargetNet = True,
   showPlaceNamesInNet = False,
-  filterConfig = defaultFilterConfig
+  filterConfig = defaultFilterConfig,
+  maxDisplayedSolutions = Just 3
   }
