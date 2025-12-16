@@ -138,7 +138,7 @@ checkFilterConfigWith rejectLongerThan minTransitionLength maxTransitionLength f
   | otherwise
   = Nothing
 
--- | Check maxPrintedSolutions is consistent with maxNumberOfSolutions and filterConfig
+-- | Check maxPrintedSolutions is consistent with filterConfig
 checkMaxDisplayedSolutions
   :: Int             -- ^ maxPrintedSolutions
   -> FilterConfig    -- ^ filterConfig
