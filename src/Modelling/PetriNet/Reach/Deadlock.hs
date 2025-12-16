@@ -343,16 +343,16 @@ generateDeadlock
 generateDeadlock conf@DeadlockConfig {..} seed = do
   (petri, cmd, solutionsList) <- tries 1000 filterConfig conf seed
   pure DeadlockInstance {
-    drawUsing             = cmd,
-    minLength             = minTransitionLength,
-    noLongerThan          = rejectLongerThan,
-    petriNet              = petri,
-    showPlaceNames        = showPlaceNamesInNet,
+    drawUsing         = cmd,
+    minLength         = minTransitionLength,
+    noLongerThan      = rejectLongerThan,
+    petriNet          = petri,
+    showPlaceNames    = showPlaceNamesInNet,
     maxDisplayedSolutions = printedSolutions,
-    solutions             = solutionsList,
-    withLengthHint        =
+    solutions         = solutionsList,
+    withLengthHint    =
       if showLengthHint then Just maxTransitionLength else Nothing,
-    withMinLengthHint     = showMinLengthHint
+    withMinLengthHint = showMinLengthHint
     }
 
 tries
