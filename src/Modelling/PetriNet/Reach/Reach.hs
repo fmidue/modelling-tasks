@@ -55,6 +55,7 @@ module Modelling.PetriNet.Reach.Reach (
   isNoLonger,
   reportReachFor,
   transitionsValid,
+  levelsWithAlternatives,
 ) where
 
 import qualified Control.Monad.Trans              as Monad (lift)
@@ -72,7 +73,6 @@ import Modelling.PetriNet.Reach.Filter (
   FilterConfig (..),
   areSolutionsTrivial,
   defaultFilterConfig,
-  noFiltering,
   )
 import Modelling.PetriNet.Reach.Property (
   Property (Default),
@@ -104,6 +104,7 @@ import Control.Monad.Extra              (findM, whenJust)
 import Control.Monad.Trans.Maybe        (MaybeT (MaybeT, runMaybeT))
 import Modelling.PetriNet.Reach.ConfigValidation (
   checkBasicPetriConfig,
+  checkFilterConfigWith,
   )
 import Control.OutputCapable.Blocks (
   ArticleToUse (IndefiniteArticle),
@@ -358,12 +359,14 @@ if the goal is not reachable and the net is not bounded.
 netGoalAllSolutions :: Ord s => NetGoal s t -> [[t]]
 netGoalAllSolutions netGoal =
   let goalState = goal netGoal
-  in reverse . maybe [] snd $ find ((== goalState) . fst)
+  in map reverse . maybe [] snd $ find ((== goalState) . fst)
      $ concat $ levelsWithAlternatives $ petriNet netGoal
 
 {-|
 Find all shortest paths to all reachable markings
 segmented by the length of paths starting with 0.
+
+Each returned trace for a state is in reversed order.
 -}
 levelsWithAlternatives :: Ord s => Net s t -> [[(State s, [[t]])]]
 levelsWithAlternatives n =
@@ -619,7 +622,7 @@ generateNetGoal filterConfig config@NetGoalConfig {..} seed =
       maybe generate pure maybeNetGoal
 
 checkReachConfig :: ReachConfig -> Maybe String
-checkReachConfig config@ReachConfig {..} =
+checkReachConfig ReachConfig {..} =
   checkBasicPetriConfig
     (numPlaces netGoalConfig)
     (numTransitions netGoalConfig)
@@ -631,43 +634,16 @@ checkReachConfig config@ReachConfig {..} =
     (drawCommands netGoalConfig)
     rejectLongerThan
     showLengthHint
-  <|> checkFilterConfig config
-  <|> if showTargetNet || showPlaceNamesInNet
+  <|>
+  checkFilterConfigWith
+    rejectLongerThan
+    (minTransitionLength netGoalConfig)
+    (maxTransitionLength netGoalConfig)
+    filterConfig
+  <|>
+  if showTargetNet || showPlaceNamesInNet
       then Nothing
       else Just "At least one of showTargetNet or showPlaceNamesInNet must be True"
-
-checkFilterConfig :: ReachConfig -> Maybe String
-checkFilterConfig ReachConfig {..}
-  | rejectLongerThan /= Just (minTransitionLength netGoalConfig)
-  , filterConfig /= noFiltering
-  = Just $ "If transition length is not enforced to one value, reachConfig must be set to "
-    ++ show noFiltering
-  | Just repeats <- minRepetitiveLength filterConfig
-  , repeats < 2
-  = Just "minRepetitiveLength has to be set to at least 2 if it is enabled"
-  | Just repeats <- minRepetitiveLength filterConfig
-  , repeats > maxTransitionLength netGoalConfig `div` 2
-  = Just "minRepetitiveLength must not be higher than half of maxTransitionLength if it is enabled"
-  | Just cycleLength <- maxCycleLength filterConfig
-  , cycleLength < 1
-  = Just "setting maxCycleLength to less than 1 does not make sense"
-  | Just cycleLength <- maxCycleLength filterConfig
-  , cycleLength > maxTransitionLength netGoalConfig `div` 2
-  = Just "maxCycleLength must not be higher than half of maxTransitionLength if it is enabled"
-  | Just spaceballsLength <- minSpaceballsLength filterConfig
-  , spaceballsLength < 2
-  = Just "setting minSpaceballsLength to less than 2 does not make sense"
-  | Just spaceballsLength <- minSpaceballsLength filterConfig
-  , spaceballsLength > maxTransitionLength netGoalConfig
-  = Just "minSpaceballsLength must not be higher than maxTransitionLength if it is enabled"
-  | Just maxSolutions <- maxNumberOfSolutions filterConfig
-  , maxSolutions < 1
-  = Just "setting maxNumberOfSolutions to less than 1 does not make sense"
-  | Just coverage <- minTransitionCoverage filterConfig
-  , coverage <= 0 || coverage > 1
-  = Just "minTransitionCoverage must be greater than 0 and not greater than 1 if it is enabled"
-  | otherwise
-  = Nothing
 
 generateReach
   :: (MonadCatch m, MonadDiagrams m, MonadGraphviz m)

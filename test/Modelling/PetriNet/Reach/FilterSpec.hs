@@ -115,6 +115,6 @@ spec = do
     it "respects filter configuration settings" $ do
       let cyclicPattern = [Transition 1, Transition 2, Transition 1, Transition 2]
       let availableTransitions = Set.fromList [Transition 1, Transition 2]
-      let configNoCyclic = defaultFilterConfig {maxCycleLength = Nothing, minTransitionCoverage = Nothing}
+      let configNoCyclic = defaultFilterConfig {maxCycleLength = Nothing, minTransitionCoverage = 0}
       isTrivialSequence configNoCyclic availableTransitions cyclicPattern `shouldBe` False
       isTrivialSequence defaultFilterConfig availableTransitions cyclicPattern `shouldBe` True

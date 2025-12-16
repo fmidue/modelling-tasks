@@ -3,6 +3,7 @@
 module Modelling.PetriNet.PetriDeadlock.Config where
 
 import Modelling.PetriNet.Reach.Deadlock (DeadlockConfig(..))
+import Modelling.PetriNet.Reach.Filter  (defaultFilterConfig, FilterConfig(..))
 import Modelling.PetriNet.Reach.Type    (Capacity(..))
 import Data.GraphViz.Commands           (GraphvizCommand(..))
 
@@ -23,7 +24,8 @@ task2023_29 = DeadlockConfig {
   rejectLongerThan = Just 7,
   showLengthHint = False,
   showMinLengthHint = True,
-  showPlaceNamesInNet = False
+  showPlaceNamesInNet = False,
+  filterConfig = defaultFilterConfig { maxCycleLength = Just 3 }
   }
 
 {-|
@@ -43,7 +45,8 @@ task2023_30 = DeadlockConfig {
   rejectLongerThan = Just 14,
   showLengthHint = False,
   showMinLengthHint = True,
-  showPlaceNamesInNet = False
+  showPlaceNamesInNet = False,
+  filterConfig = defaultFilterConfig
   }
 
 {-|
@@ -77,5 +80,6 @@ task2024_61 = DeadlockConfig {
   rejectLongerThan = Just 8,
   showLengthHint = False,
   showMinLengthHint = True,
-  showPlaceNamesInNet = False
+  showPlaceNamesInNet = False,
+  filterConfig = defaultFilterConfig
   }

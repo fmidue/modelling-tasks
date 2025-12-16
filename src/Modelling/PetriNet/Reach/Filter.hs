@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DeriveGeneric #-}
 
@@ -33,9 +34,11 @@ module Modelling.PetriNet.Reach.Filter (
 
 import qualified Data.Set                         as Set
 
+import Autolib.Reader                   (Reader)
+import Autolib.ToDoc                    (ToDoc)
 import Data.Data                        (Data)
 import Data.List                        (group)
-import Data.List.Extra                  (nubOrd)
+import Data.List.Extra                  (notNull, nubOrd)
 import Data.Ratio                       (Ratio, (%))
 import Data.Set                         (Set)
 import GHC.Generics                     (Generic)
@@ -65,10 +68,10 @@ data FilterConfig = FilterConfig {
   maxNumberOfSolutions :: !(Maybe Int),
   -- | Minimum fraction of available transitions that must appear in each solution
   --
-  -- For example, @Just (4 % 5)@ requires that each solution uses at least 80% of
-  -- the available transitions. 'Nothing' means no minimum coverage requirement.
-  minTransitionCoverage :: !(Maybe (Ratio Int))
-  } deriving (Data, Eq, Generic, Ord, Read, Show)
+  -- For example, @4 % 5@ requires that each solution uses at least 80% of
+  -- the available transitions. Hence, '0' means no minimum coverage requirement.
+  minTransitionCoverage :: !(Ratio Int)
+  } deriving (Data, Eq, Generic, Ord, Reader, Read, Show, ToDoc)
 
 noFiltering :: FilterConfig
 noFiltering = FilterConfig {
@@ -77,7 +80,7 @@ noFiltering = FilterConfig {
   minSpaceballsLength = Nothing,
   maxCycleLength = Nothing,
   maxNumberOfSolutions = Nothing,
-  minTransitionCoverage = Nothing
+  minTransitionCoverage = 0
   }
 
 -- | Default filter configuration that enables all filters
@@ -88,7 +91,7 @@ defaultFilterConfig = FilterConfig {
   minSpaceballsLength = Just 4,
   maxCycleLength = Just 4,
   maxNumberOfSolutions = Just 15,
-  minTransitionCoverage = Just (4 % 5)
+  minTransitionCoverage = 4 % 5
   }
 
 -- | Check if a sequence is considered trivial according to the given configuration
@@ -98,8 +101,7 @@ isTrivialSequence config availableTransitions xs =
   || maybe False (`isCyclicPattern` xs) (maxCycleLength config)
   || maybe False (`hasRepetitiveSubsequence` xs) (minRepetitiveLength config)
   || (filterGroupedRepeats config && hasGroupedRepeats xs)
-  || maybe False (hasInsufficientTransitionCoverage availableTransitions xs)
-       (minTransitionCoverage config)
+  || hasInsufficientTransitionCoverage availableTransitions xs (minTransitionCoverage config)
 
 -- | Check if a sequence has insufficient transition coverage
 -- A sequence is considered to have insufficient coverage if it doesn't use enough
@@ -150,5 +152,5 @@ hasGroupedRepeats xs =
 -- This combines both per-sequence checks and the collective check for too many solutions
 areSolutionsTrivial :: (Enum a, Ord a) => FilterConfig -> Set a -> [[a]] -> Bool
 areSolutionsTrivial config availableTransitions solutions =
-  any (isTrivialSequence config availableTransitions) solutions
-  || maybe False (length solutions >) (maxNumberOfSolutions config)
+  maybe False (\n -> notNull (drop n solutions)) (maxNumberOfSolutions config)
+  || config { maxNumberOfSolutions = Nothing } /= noFiltering && any (isTrivialSequence config availableTransitions) solutions

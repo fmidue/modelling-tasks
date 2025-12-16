@@ -301,6 +301,105 @@ echo >> filename
 
 When writing Haskell code for this project, follow these best practices:
 
+### Git Diff Management
+
+**CRITICAL**: Always favor minimal Git diffs over code alignment when modifying existing code.
+
+This principle is particularly important when working with Haskell records:
+
+- **When modifying record type definitions**: Only change the lines that need to be changed
+- **When modifying record value assignments**: Only change the lines that need to be changed
+- **NEVER realign existing fields** just to make them line up with new or modified fields
+
+**Examples for record type definitions**:
+
+❌ **BAD** - Realigning all fields (creates large diff):
+
+```haskell
+-- Adding maxDisplayedSolutions field
+-- DO NOT realign other fields like this:
+data DeadlockInstance s t = DeadlockInstance {
+  drawUsing             :: GraphvizCommand,  -- realigned (unnecessary change)
+  minLength             :: Int,              -- realigned (unnecessary change)
+  noLongerThan          :: Maybe Int,        -- realigned (unnecessary change)
+  petriNet              :: Net s t,          -- realigned (unnecessary change)
+  showPlaceNames        :: Bool,             -- realigned (unnecessary change)
+  withLengthHint        :: Maybe Int,        -- realigned (unnecessary change)
+  withMinLengthHint     :: Bool,             -- realigned (unnecessary change)
+  solutions             :: Either [t] [[t]], -- realigned (unnecessary change)
+  maxDisplayedSolutions :: Maybe Int         -- new field
+```
+
+✅ **GOOD** - Minimal diff (only changed lines):
+
+```haskell
+-- Adding maxDisplayedSolutions field
+-- Keep existing alignment, only modify necessary lines:
+data DeadlockInstance s t = DeadlockInstance {
+  drawUsing         :: GraphvizCommand,
+  minLength         :: Int,
+  noLongerThan      :: Maybe Int,
+  petriNet          :: Net s t,
+  showPlaceNames    :: Bool,
+  withLengthHint    :: Maybe Int,
+  withMinLengthHint :: Bool,
+  solutions         :: Either [t] [[t]],
+  maxDisplayedSolutions :: Maybe Int  -- new field (added without realigning others)
+```
+
+**Examples for record value assignments**:
+
+❌ **BAD** - Realigning all fields and changing order (creates large diff):
+
+```haskell
+-- Replacing showSolution field with two new fields: instanceMaxDisplayedSolutions and solutions
+-- DO NOT realign other fields or reorder like this:
+defaultDeadlockInstance = DeadlockInstance {
+  drawUsing                     = Circo,     -- realigned (unnecessary change)
+  minLength                     = 6,         -- realigned (unnecessary change)
+  noLongerThan                  = Nothing,   -- realigned (unnecessary change)
+  petriNet                      = fst example, -- realigned (unnecessary change)
+  showPlaceNames                = False,     -- realigned (unnecessary change)
+  -- THIS IS WHERE the showSolution field was previously
+  withLengthHint                = Just 9,    -- realigned (unnecessary change)
+  withMinLengthHint             = True,      -- realigned (unnecessary change)
+  instanceMaxDisplayedSolutions = Nothing,   -- new field (replacing showSolution)
+  solutions                     = Left []    -- new field (replacing showSolution)
+  }
+```
+
+✅ **GOOD** - Minimal diff (only changed lines):
+
+```haskell
+-- Replacing showSolution field with two new fields: instanceMaxDisplayedSolutions and solutions
+-- Keep existing alignment, replace field at same location, no reordering:
+defaultDeadlockInstance = DeadlockInstance {
+  drawUsing         = Circo,
+  minLength         = 6,
+  noLongerThan      = Nothing,
+  petriNet          = fst example,
+  showPlaceNames    = False,
+  instanceMaxDisplayedSolutions = Nothing,  -- new field (replacing showSolution)
+  solutions         = Left [],              -- new field (replacing showSolution)
+  withLengthHint    = Just 9,
+  withMinLengthHint = True
+  }
+```
+
+**Note**: The `solutions` field uses padding spaces to fit the previous alignment. This is fine because:
+
+- It doesn't change the line count of the diff
+- It maintains consistency with existing field alignment
+- What would be problematic is realigning all existing fields to match the new longer `instanceMaxDisplayedSolutions` field
+
+**Rationale**:
+
+- Smaller diffs are easier to review
+- Smaller diffs reduce merge conflicts
+- Smaller diffs make Git history more meaningful
+- Code alignment is less important than diff clarity
+- The goal is to show what actually changed, not to make everything perfectly aligned
+
 ### Code Reuse and Refactoring
 
 **Always look for refactoring opportunities**: Whenever adding functions, check whether there are opportunities to increase code reuse:

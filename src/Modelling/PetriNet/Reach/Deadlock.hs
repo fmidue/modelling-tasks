@@ -16,7 +16,37 @@ originally from Autotool (https://gitlab.imn.htwk-leipzig.de/autotool/all0)
 based on revision: ad25a990816a162fdd13941ff889653f22d6ea0a
 based on file: collection/src/Petri/Deadlock.hs
 -}
-module Modelling.PetriNet.Reach.Deadlock where
+module Modelling.PetriNet.Reach.Deadlock (
+  -- * Types
+  DeadlockInstance(..),
+  DeadlockConfig(..),
+  checkDeadlockConfig,
+
+  -- * Generation
+  generateDeadlock,
+
+  -- * Solutions
+  deadlockSolution,
+  deadlockAllSolutions,
+
+  -- * Task creation
+  deadlockTask,
+  verifyDeadlock,
+
+  -- * Evaluation
+  deadlockEvaluation,
+  deadlockSyntax,
+  deadlockInitial,
+
+  -- * Configuration
+  defaultDeadlockConfig,
+  defaultDeadlockInstance,
+
+  -- * Utilities
+  bimapDeadlockInstance,
+  toShowDeadlockInstance,
+  exampleInstance,
+) where
 
 import qualified Control.Monad.Trans              as Monad (lift)
 import qualified Data.Map                         as M (fromList)
@@ -26,16 +56,23 @@ import Capabilities.Cache               (MonadCache)
 import Capabilities.Diagrams            (MonadDiagrams)
 import Capabilities.Graphviz            (MonadGraphviz)
 import Modelling.PetriNet.Reach.Draw    (drawToFile, isPetriDrawable)
+import Modelling.PetriNet.Reach.Filter (
+  FilterConfig (..),
+  areSolutionsTrivial,
+  defaultFilterConfig,
+  )
 import Modelling.PetriNet.Reach.Property (
   Property (Default),
   validate,
   )
 import Modelling.PetriNet.Reach.ConfigValidation (
   checkBasicPetriConfig,
+  checkFilterConfigWith,
   )
 import Modelling.PetriNet.Reach.Reach   (
   assertReachPoints,
   isNoLonger,
+  levelsWithAlternatives,
   reportReachFor,
   transitionsValid,
   )
@@ -55,7 +92,7 @@ import Modelling.PetriNet.Reach.Type (
   hasIsolatedNodes,
   )
 
-import Control.Applicative              (Alternative)
+import Control.Applicative              (Alternative, (<|>))
 import Control.OutputCapable.Blocks (
   LangM,
   OutputCapable,
@@ -72,14 +109,13 @@ import Control.OutputCapable.Blocks.Generic (
 import Data.Bifunctor                   (Bifunctor (second))
 import Data.Either.Combinators          (whenRight)
 import Control.Functor.Trans            (FunctorTrans (lift))
-import Control.Monad                    (guard, replicateM)
+import Control.Monad                    (guard, msum, replicateM)
 import Control.Monad.Catch              (MonadCatch, MonadThrow)
-import Control.Monad.Extra              (findM, maybeM)
+import Control.Monad.Extra              (findM)
 import Control.Monad.Random             (MonadRandom, evalRandT, mkStdGen)
+import Control.Monad.Trans.Maybe        (MaybeT (MaybeT, runMaybeT))
 import Data.GraphViz                    (GraphvizCommand (..))
-import Data.List                        (maximumBy)
 import Data.Maybe                       (fromMaybe)
-import Data.Ord                         (comparing)
 #if !MIN_VERSION_base(4,18,0)
 import Data.Typeable                    (Typeable)
 #endif
@@ -173,6 +209,18 @@ deadlockEvaluation path deadlock ts =
 deadlockSolution :: Ord s => DeadlockInstance s t -> [t]
 deadlockSolution = reverse . snd . head . concat . deadlocks' . petriNet
 
+{-|
+Get all possible shortest solutions for deadlock detection in a given Petri net
+
+Note: This function does not terminate
+if no deadlock is reachable and the net is not bounded.
+-}
+deadlockAllSolutions :: Ord s => Net s t -> [[t]]
+deadlockAllSolutions net =
+  map reverse . concatMap snd
+    $ head $ dropWhile null
+    $ map (filter (null . successors net . fst)) $ levelsWithAlternatives net
+
 data DeadlockInstance s t = DeadlockInstance {
   drawUsing         :: GraphvizCommand,
   minLength         :: Int,
@@ -222,7 +270,8 @@ data DeadlockConfig = DeadlockConfig {
   rejectLongerThan    :: Maybe Int,
   showLengthHint      :: Bool,
   showMinLengthHint   :: Bool,
-  showPlaceNamesInNet :: Bool
+  showPlaceNamesInNet :: Bool,
+  filterConfig        :: FilterConfig
   }
   deriving (Generic, Read, Show)
 #if !MIN_VERSION_base(4,18,0)
@@ -236,15 +285,16 @@ defaultDeadlockConfig =
   numTransitions = 4,
   Modelling.PetriNet.Reach.Deadlock.capacity = Unbounded,
   drawCommands        = [Dot, Neato, TwoPi, Circo, Fdp, Sfdp, Osage, Patchwork],
-  maxTransitionLength = 10,
+  maxTransitionLength = 8,
   minTransitionLength = 8,
   postconditionsRange = (0, Nothing),
   preconditionsRange  = (0, Nothing),
   printSolution       = False,
-  rejectLongerThan    = Nothing,
-  showLengthHint      = True,
+  rejectLongerThan    = Just 8,
+  showLengthHint      = False,
   showMinLengthHint   = True,
-  showPlaceNamesInNet = False
+  showPlaceNamesInNet = False,
+  filterConfig        = defaultFilterConfig { maxNumberOfSolutions = Nothing }
   }
 
 defaultDeadlockInstance :: DeadlockInstance Place Transition
@@ -272,6 +322,12 @@ checkDeadlockConfig DeadlockConfig {..} =
     drawCommands
     rejectLongerThan
     showLengthHint
+  <|>
+  checkFilterConfigWith
+    rejectLongerThan
+    minTransitionLength
+    maxTransitionLength
+    filterConfig
 
 generateDeadlock
   :: (MonadCatch m, MonadDiagrams m, MonadGraphviz m)
@@ -279,7 +335,7 @@ generateDeadlock
   -> Int
   -> m (DeadlockInstance Place Transition)
 generateDeadlock conf@DeadlockConfig {..} seed = do
-  (petri, cmd) <- tries 1000 conf seed
+  (petri, cmd) <- tries 1000 filterConfig conf seed
   pure DeadlockInstance {
     drawUsing         = cmd,
     minLength         = minTransitionLength,
@@ -295,20 +351,22 @@ generateDeadlock conf@DeadlockConfig {..} seed = do
 tries
   :: (MonadCatch m, MonadDiagrams m, MonadGraphviz m)
   => Int
+  -> FilterConfig
   -> DeadlockConfig
   -> Int
   -> m (Net Place Transition, GraphvizCommand)
-tries n conf seed = eval out
+tries n filterConfig conf seed = eval out
   where
     eval f = evalRandT f $ mkStdGen seed
     out = do
       xs <- replicateM n $ try conf
-      let (l, pn) = maximumBy (comparing fst) $ concat xs
-      if l >= minTransitionLength conf
-        then
-          maybeM out (pure . (pn,))
-          $ findM (Monad.lift . isPetriDrawable pn) $ drawCommands conf
-        else out
+      maybe out pure =<< runMaybeT (msum $ map checkCandidate $ concat xs)
+    checkCandidate (l, pn) = do
+      guard $ l >= minTransitionLength conf
+      let allSolutions = deadlockAllSolutions pn
+          availableTransitions = transitions pn
+      guard (not $ areSolutionsTrivial filterConfig availableTransitions allSolutions)
+      MaybeT $ fmap (pn,) <$> findM (Monad.lift . isPetriDrawable pn) (drawCommands conf)
 
 try :: MonadRandom m => DeadlockConfig -> m [(Int, Net Place Transition)]
 try conf = do
