@@ -349,7 +349,7 @@ data DeadlockInstance s t = DeadlockInstance {
 
 ❌ **BAD** - Realigning all fields and changing order (creates large diff):
 ```haskell
--- Adding two new fields: solutions and instanceMaxDisplayedSolutions
+-- Replacing showSolution field with two new fields: solutions and instanceMaxDisplayedSolutions
 -- DO NOT realign other fields or reorder like this:
 defaultDeadlockInstance = DeadlockInstance {
   drawUsing                     = Circo,     -- realigned (unnecessary change)
@@ -357,27 +357,25 @@ defaultDeadlockInstance = DeadlockInstance {
   noLongerThan                  = Nothing,   -- realigned (unnecessary change)
   petriNet                      = fst example, -- realigned (unnecessary change)
   showPlaceNames                = False,     -- realigned (unnecessary change)
-  showSolution                  = False,     -- realigned (unnecessary change)
   withLengthHint                = Just 9,    -- realigned (unnecessary change)
   withMinLengthHint             = True,      -- realigned (unnecessary change)
-  solutions                     = Left [],   -- new field
-  instanceMaxDisplayedSolutions = Nothing    -- new field
+  solutions                     = Left [],   -- new field (replacing showSolution)
+  instanceMaxDisplayedSolutions = Nothing    -- new field (replacing showSolution)
   }
 ```
 
-✅ **GOOD** - Minimal diff (only added lines):
+✅ **GOOD** - Minimal diff (only changed lines):
 ```haskell
--- Adding two new fields: solutions and instanceMaxDisplayedSolutions
--- Keep existing alignment and add new fields without changing existing ones:
+-- Replacing showSolution field with two new fields: solutions and instanceMaxDisplayedSolutions
+-- Keep existing alignment, replace field at same location, no reordering:
 defaultDeadlockInstance = DeadlockInstance {
   drawUsing         = Circo,
   minLength         = 6,
   noLongerThan      = Nothing,
   petriNet          = fst example,
   showPlaceNames    = False,
-  showSolution      = False,
-  instanceMaxDisplayedSolutions = Nothing,  -- new field
-  solutions         = Left [],              -- new field
+  instanceMaxDisplayedSolutions = Nothing,  -- new field (replacing showSolution)
+  solutions         = Left [],              -- new field (replacing showSolution)
   withLengthHint    = Just 9,
   withMinLengthHint = True
   }
