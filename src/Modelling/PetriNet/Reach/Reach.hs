@@ -81,7 +81,7 @@ import Modelling.PetriNet.Reach.Property (
   validate,
   )
 import Modelling.PetriNet.Reach.Roll    (netLimits)
-import Modelling.PetriNet.Reach.Step    (executes, levels, levels', successors)
+import Modelling.PetriNet.Reach.Step    (executes, levels', successors)
 import Modelling.PetriNet.Reach.Type (
   Capacity (Unbounded),
   Net (start, transitions),
@@ -328,12 +328,6 @@ formatSolutionsFeedback maxDisplay solutionsList = case maxDisplay of
           else solutionsText ++ "\n(These are possible solutions, but more exist.)"
     Right [] -> error "formatSolutionsFeedback: solutions should never contain an empty list"
 
-formatSolutionFeedback
-  :: ReachInstance s Transition
-  -> Maybe String
-formatSolutionFeedback inst =
-  formatSolutionsFeedback (maxDisplayedSolutions inst) (solutions inst)
-
 reachEvaluation
   :: (
     Alternative m,
@@ -369,7 +363,7 @@ reachEvaluation path reach ts =
   where
     reachInstance = toShowReachInstance reach
     n = petriNet (netGoal reachInstance)
-    aSolution = formatSolutionFeedback reach
+    aSolution = formatSolutionsFeedback (maxDisplayedSolutions reach) (solutions reach)
 
 netGoalSolution :: Ord s => NetGoal s t -> [t]
 netGoalSolution netGoal = reverse $ snd $ head $ concatMap
@@ -591,7 +585,7 @@ defaultReachInstance = ReachInstance {
 possibleNetGoals
   :: MonadRandom m
   => NetGoalConfig
-  -> m [(Net Place Transition, State Place)]
+  -> m [(Net Place Transition, State Place, [Transition])]
 possibleNetGoals NetGoalConfig {..} =
   let ps = [Place 1 .. Place numPlaces]
       tries = forM [1 :: Int .. 1000] $ const $ do
@@ -603,12 +597,13 @@ possibleNetGoals NetGoalConfig {..} =
           -- Filter out nets with isolated nodes
           guard $ not $ hasIsolatedNodes n
           (l,zs) <-
-            take (maxTransitionLength + 1) $ zip [0 :: Int ..] $ levels n
-          z' <- zs
+            take (maxTransitionLength + 1) $ zip [0 :: Int ..] $ levels' n
+          (z', transitions) <- zs
           let d = sum $ do
                 p <- ps
                 return $ abs (mark (start n) p - mark z' p)
-          return ((negate l, d), (n, z'))
+              solutionSequence = reverse transitions
+          return ((negate l, d), (n, z', solutionSequence))
       out = do
         xs <- sortBy (comparing fst)
           . concat
@@ -624,12 +619,13 @@ possibleNetGoals NetGoalConfig {..} =
     (nLow, nHigh) = fixMaximum postconditionsRange
     ts = [Transition 1 .. Transition numTransitions]
 
-toNetGoal :: ((Net s t, State s), GraphvizCommand) -> NetGoal s t
-toNetGoal ((petri, state), cmd) = NetGoal {
-  drawUsing   = cmd,
-  goal        = state,
-  petriNet    = petri
-  }
+toNetGoal :: ((Net s t, State s, [t]), GraphvizCommand) -> (NetGoal s t, [t])
+toNetGoal ((petri, state, solutionSeq), cmd) =
+  (NetGoal {
+    drawUsing   = cmd,
+    goal        = state,
+    petriNet    = petri
+  }, solutionSeq)
 
 -- | Generate NetGoal with filtering for trivial solutions
 generateNetGoal
@@ -642,16 +638,17 @@ generateNetGoal filterConfig config@NetGoalConfig {..} seed =
   evalRandT generate $ mkStdGen seed
   where
     checkNetGoal pn = do
-      netGoal <- MaybeT $ fmap (toNetGoal . (pn,)) <$>
-        findM (Monad.lift . isPetriDrawable (fst pn)) drawCommands
-      let allSolutions = netGoalAllSolutions netGoal
+      cmd <- MaybeT $ findM (Monad.lift . isPetriDrawable (fst3 pn)) drawCommands
+      let (netGoal, singleSolution) = toNetGoal (pn, cmd)
+          allSolutions = netGoalAllSolutions netGoal
           availableTransitions = transitions $ petriNet netGoal
       guard (not $ areSolutionsTrivial filterConfig availableTransitions allSolutions)
       let solutionsList =
             if filterConfig == noFiltering
-              then Left $ netGoalSolution netGoal
+              then Left singleSolution
               else Right allSolutions
       pure (netGoal, solutionsList)
+    fst3 (a, _, _) = a
     generate = do
       xs <- possibleNetGoals config
       maybeNetGoal <- runMaybeT $ msum $ map checkNetGoal xs

@@ -79,7 +79,7 @@ import Modelling.PetriNet.Reach.Reach   (
   formatSolutionsFeedback,
   )
 import Modelling.PetriNet.Reach.Roll    (netLimits)
-import Modelling.PetriNet.Reach.Step    (deadlocks, deadlocks', executes, successors)
+import Modelling.PetriNet.Reach.Step    (deadlocks', executes, successors)
 import Modelling.PetriNet.Reach.Type (
   Capacity (Unbounded),
   Net (..),
@@ -170,12 +170,6 @@ deadlockSyntax inst ts =
      isNoLonger (noLongerThan inst) ts
      pure ()
 
-formatDeadlockSolutionFeedback
-  :: DeadlockInstance s Transition
-  -> Maybe String
-formatDeadlockSolutionFeedback inst =
-  formatSolutionsFeedback (maxDisplayedSolutions inst) (solutions inst)
-
 deadlockEvaluation
   :: (
     Alternative m,
@@ -208,7 +202,7 @@ deadlockEvaluation path deadlock ts =
   where
     deadlockInstance = toShowDeadlockInstance deadlock
     n = petriNet deadlockInstance
-    aSolution = formatDeadlockSolutionFeedback deadlock
+    aSolution = formatSolutionsFeedback (maxDisplayedSolutions deadlock) (solutions deadlock)
 
 deadlockSolution :: DeadlockInstance s t -> [t]
 deadlockSolution inst = case solutions inst of
@@ -374,7 +368,7 @@ tries n filterConfig conf seed = eval out
     out = do
       xs <- replicateM n $ try conf
       maybe out pure =<< runMaybeT (msum $ map checkCandidate $ concat xs)
-    checkCandidate (l, pn) = do
+    checkCandidate (l, pn, singleSolution) = do
       guard $ l >= minTransitionLength conf
       let allSolutions = deadlockAllSolutions pn
           availableTransitions = transitions pn
@@ -382,11 +376,11 @@ tries n filterConfig conf seed = eval out
       cmd <- MaybeT $ findM (Monad.lift . isPetriDrawable pn) (drawCommands conf)
       let solutionsList =
             if filterConfig == noFiltering
-              then Left $ reverse $ snd $ head $ concat $ deadlocks' pn
+              then Left singleSolution
               else Right allSolutions
       pure (pn, cmd, solutionsList)
 
-try :: MonadRandom m => DeadlockConfig -> m [(Int, Net Place Transition)]
+try :: MonadRandom m => DeadlockConfig -> m [(Int, Net Place Transition, [Transition])]
 try conf = do
   let ps = [Place 1 .. Place (numPlaces conf)]
       ts = [Transition 1 .. Transition (numTransitions conf)]
@@ -397,12 +391,15 @@ try conf = do
   return $ do
     -- Filter out nets with isolated nodes
     guard $ not $ hasIsolatedNodes n
-    let (no,yeah) = span (null . snd)
+    let deadlockLevels = deadlocks' n
+        (no,yeah) = span (null . snd)
           $ take (maxTransitionLength conf + 1)
           $ zip [0 :: Int ..]
-          $ deadlocks n
+          deadlockLevels
     guard $ not $ null yeah
-    return (length no, n)
+    let firstDeadlock = head $ snd $ head yeah
+        solutionSequence = reverse $ snd firstDeadlock
+    return (length no, n, solutionSequence)
   where
     fixMaximum = second (min (numPlaces conf) . fromMaybe maxBound)
     (vLow, vHigh) = fixMaximum $ preconditionsRange conf
