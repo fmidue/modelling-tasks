@@ -238,7 +238,7 @@ drawCd config marking cd@AnyClassDiagram {..} = do
         (\(s, t, (isThick, r), p) g -> g # drawEdge font s t isThick r p)
         graphNodes
         edges
-  renderDiagram graphEdges
+  renderDiagram $ frame 10 graphEdges
   where
     getFromToInvalid = \case
       InvalidInheritance {..} -> both linking (invalidSubClass, invalidSuperClass)
@@ -447,7 +447,7 @@ drawOd ObjectDiagram {..} direction printNames = do
            g # drawLink font direction printNames s t l p)
         graphNodes
         edges
-  renderDiagram graphEdges
+  renderDiagram $ frame 10 graphEdges
   where
     arrowHeads = case direction of
       NoDir  -> [edgeEnds NoDir]

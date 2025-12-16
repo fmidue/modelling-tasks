@@ -95,6 +95,10 @@ import Modelling.CdOd.MatchCdOd.Config (
   task2024_57,
   task2024_58,
   task2024_59,
+  task2025_17,
+  task2025_18,
+  task2025_19,
+  task2025_20,
   )
 import Modelling.CdOd.NameCdError (
   checkNameCdErrorConfig,
@@ -472,3 +476,11 @@ spec =
         checkDifferentNamesConfig task2025_15 `shouldBe` Nothing
       it "task16" $
         checkDifferentNamesConfig task2025_16 `shouldBe` Nothing
+      it "task17" $
+        checkMatchCdOdConfig task2025_17 `shouldBe` Nothing
+      it "task18" $
+        checkMatchCdOdConfig task2025_18 `shouldBe` Nothing
+      it "task19" $
+        checkMatchCdOdConfig task2025_19 `shouldBe` Nothing
+      it "task20" $
+        checkMatchCdOdConfig task2025_20 `shouldBe` Nothing
