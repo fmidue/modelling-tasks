@@ -688,14 +688,14 @@ generateReach
 generateReach ReachConfig {..} seed = do
   (netGoal, solutionsList) <- generateNetGoal filterConfig netGoalConfig seed
   pure $ ReachInstance {
-    netGoal               = netGoal,
-    minLength             = minTransitionLength netGoalConfig,
-    noLongerThan          = rejectLongerThan,
-    showGoalNet           = showTargetNet,
-    showPlaceNames        = showPlaceNamesInNet,
-    solutions             = solutionsList,
+    netGoal           = netGoal,
+    minLength         = minTransitionLength netGoalConfig,
+    noLongerThan      = rejectLongerThan,
+    showGoalNet       = showTargetNet,
+    showPlaceNames    = showPlaceNamesInNet,
+    solutions         = solutionsList,
     maxDisplayedSolutions = printedSolutions,
-    withLengthHint        =
+    withLengthHint    =
       if showLengthHint then Just $ maxTransitionLength netGoalConfig else Nothing,
-    withMinLengthHint     = showMinLengthHint
+    withMinLengthHint = showMinLengthHint
     }
