@@ -402,3 +402,15 @@ task2024_59 = MatchCdOdConfig {
   withNonTrivialInheritance = Just False,
   extraText = NoExtraText
   }
+
+task2025_17 :: MatchCdOdConfig
+task2025_17 = task2024_17
+
+task2025_18 :: MatchCdOdConfig
+task2025_18 = task2024_18
+
+task2025_19 :: MatchCdOdConfig
+task2025_19 = task2024_19
+
+task2025_20 :: MatchCdOdConfig
+task2025_20 = task2024_20
