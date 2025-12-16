@@ -315,7 +315,7 @@ This principle is particularly important when working with Haskell records:
 
 ❌ **BAD** - Realigning all fields (creates large diff):
 ```haskell
--- Removing showSolution field and adding maxDisplayedSolutions
+-- Adding maxDisplayedSolutions field
 -- DO NOT realign other fields like this:
 data DeadlockInstance s t = DeadlockInstance {
   drawUsing             :: GraphvizCommand,  -- realigned (unnecessary change)
@@ -331,7 +331,7 @@ data DeadlockInstance s t = DeadlockInstance {
 
 ✅ **GOOD** - Minimal diff (only changed lines):
 ```haskell
--- Removing showSolution field and adding maxDisplayedSolutions
+-- Adding maxDisplayedSolutions field
 -- Keep existing alignment, only modify necessary lines:
 data DeadlockInstance s t = DeadlockInstance {
   drawUsing         :: GraphvizCommand,
@@ -349,7 +349,7 @@ data DeadlockInstance s t = DeadlockInstance {
 
 ❌ **BAD** - Realigning all fields and changing order (creates large diff):
 ```haskell
--- Replacing showSolution field with two new fields: solutions and instanceMaxDisplayedSolutions
+-- Replacing showSolution field with two new fields: instanceMaxDisplayedSolutions and solutions
 -- DO NOT realign other fields or reorder like this:
 defaultDeadlockInstance = DeadlockInstance {
   drawUsing                     = Circo,     -- realigned (unnecessary change)
@@ -357,16 +357,17 @@ defaultDeadlockInstance = DeadlockInstance {
   noLongerThan                  = Nothing,   -- realigned (unnecessary change)
   petriNet                      = fst example, -- realigned (unnecessary change)
   showPlaceNames                = False,     -- realigned (unnecessary change)
+  -- THIS IS WHERE the showSolution field was previously
   withLengthHint                = Just 9,    -- realigned (unnecessary change)
   withMinLengthHint             = True,      -- realigned (unnecessary change)
-  solutions                     = Left [],   -- new field (replacing showSolution)
-  instanceMaxDisplayedSolutions = Nothing    -- new field (replacing showSolution)
+  instanceMaxDisplayedSolutions = Nothing,   -- new field (replacing showSolution)
+  solutions                     = Left []    -- new field (replacing showSolution)
   }
 ```
 
 ✅ **GOOD** - Minimal diff (only changed lines):
 ```haskell
--- Replacing showSolution field with two new fields: solutions and instanceMaxDisplayedSolutions
+-- Replacing showSolution field with two new fields: instanceMaxDisplayedSolutions and solutions
 -- Keep existing alignment, replace field at same location, no reordering:
 defaultDeadlockInstance = DeadlockInstance {
   drawUsing         = Circo,
