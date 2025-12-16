@@ -9,7 +9,6 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE RecordWildCards #-}
-{-# LANGUAGE TupleSections #-}
 
 {-|
 originally from Autotool (https://gitlab.imn.htwk-leipzig.de/autotool/all0)
@@ -77,6 +76,7 @@ import Modelling.PetriNet.Reach.Reach   (
   levelsWithAlternatives,
   reportReachFor,
   transitionsValid,
+  formatSolutionsFeedback,
   )
 import Modelling.PetriNet.Reach.Roll    (netLimits)
 import Modelling.PetriNet.Reach.Step    (deadlocks, deadlocks', executes, successors)
@@ -173,20 +173,8 @@ deadlockSyntax inst ts =
 formatDeadlockSolutionFeedback
   :: DeadlockInstance s Transition
   -> Maybe String
-formatDeadlockSolutionFeedback inst = case maxDisplayedSolutions inst of
-  Nothing -> Nothing
-  Just maxDisplay -> case solutions inst of
-    Left singleSolution ->
-      Just $ show $ TransitionsList singleSolution
-    Right (firstSolution : restSolutions) ->
-      let totalSolutions = 1 + length restSolutions
-          displayedSolutions = take maxDisplay (firstSolution : restSolutions)
-          solutionsText = unlines $ map (show . TransitionsList) displayedSolutions
-      in Just $
-        if totalSolutions <= maxDisplay
-          then solutionsText ++ "\n(These are all solutions.)"
-          else solutionsText ++ "\n(These are possible solutions, but more exist.)"
-    Right [] -> error "formatDeadlockSolutionFeedback: solutions should never contain an empty list"
+formatDeadlockSolutionFeedback inst =
+  formatSolutionsFeedback (maxDisplayedSolutions inst) (solutions inst)
 
 deadlockEvaluation
   :: (
@@ -359,22 +347,18 @@ generateDeadlock
   -> Int
   -> m (DeadlockInstance Place Transition)
 generateDeadlock conf@DeadlockConfig {..} seed = do
-  (petri, cmd) <- tries 1000 filterConfig conf seed
-  let solutionsList =
-        if filterConfig == noFiltering
-          then Left $ reverse $ snd $ head $ concat $ deadlocks' petri
-          else Right $ deadlockAllSolutions petri
+  (petri, cmd, solutionsList) <- tries 1000 filterConfig conf seed
   pure DeadlockInstance {
-    drawUsing         = cmd,
-    minLength         = minTransitionLength,
-    noLongerThan      = rejectLongerThan,
-    petriNet          = petri,
-    showPlaceNames    = showPlaceNamesInNet,
+    drawUsing             = cmd,
+    minLength             = minTransitionLength,
+    noLongerThan          = rejectLongerThan,
+    petriNet              = petri,
+    showPlaceNames        = showPlaceNamesInNet,
     maxDisplayedSolutions = printedSolutions,
-    solutions         = solutionsList,
-    withLengthHint    =
+    solutions             = solutionsList,
+    withLengthHint        =
       if showLengthHint then Just maxTransitionLength else Nothing,
-    withMinLengthHint = showMinLengthHint
+    withMinLengthHint     = showMinLengthHint
     }
 
 tries
@@ -383,7 +367,7 @@ tries
   -> FilterConfig
   -> DeadlockConfig
   -> Int
-  -> m (Net Place Transition, GraphvizCommand)
+  -> m (Net Place Transition, GraphvizCommand, Either [Transition] [[Transition]])
 tries n filterConfig conf seed = eval out
   where
     eval f = evalRandT f $ mkStdGen seed
@@ -395,7 +379,12 @@ tries n filterConfig conf seed = eval out
       let allSolutions = deadlockAllSolutions pn
           availableTransitions = transitions pn
       guard (not $ areSolutionsTrivial filterConfig availableTransitions allSolutions)
-      MaybeT $ fmap (pn,) <$> findM (Monad.lift . isPetriDrawable pn) (drawCommands conf)
+      cmd <- MaybeT $ findM (Monad.lift . isPetriDrawable pn) (drawCommands conf)
+      let solutionsList =
+            if filterConfig == noFiltering
+              then Left $ reverse $ snd $ head $ concat $ deadlocks' pn
+              else Right allSolutions
+      pure (pn, cmd, solutionsList)
 
 try :: MonadRandom m => DeadlockConfig -> m [(Int, Net Place Transition)]
 try conf = do

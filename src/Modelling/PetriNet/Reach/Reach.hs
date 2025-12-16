@@ -56,6 +56,7 @@ module Modelling.PetriNet.Reach.Reach (
   reportReachFor,
   transitionsValid,
   levelsWithAlternatives,
+  formatSolutionsFeedback,
 ) where
 
 import qualified Control.Monad.Trans              as Monad (lift)
@@ -308,23 +309,30 @@ transitionsValid n =
       german $ t' ++ " ist eine Transition des gegebenen Petrinetzes?"
     isValidTransition =  (`elem` transitions n)
 
-formatSolutionFeedback
-  :: ReachInstance s Transition
+formatSolutionsFeedback
+  :: Maybe Int
+  -> Either [Transition] [[Transition]]
   -> Maybe String
-formatSolutionFeedback inst = case maxDisplayedSolutions inst of
+formatSolutionsFeedback maxDisplay solutionsList = case maxDisplay of
   Nothing -> Nothing
-  Just maxDisplay -> case solutions inst of
+  Just maxDisplayValue -> case solutionsList of
     Left singleSolution ->
       Just $ show $ TransitionsList singleSolution
     Right (firstSolution : restSolutions) ->
       let totalSolutions = 1 + length restSolutions
-          displayedSolutions = take maxDisplay (firstSolution : restSolutions)
+          displayedSolutions = take maxDisplayValue (firstSolution : restSolutions)
           solutionsText = unlines $ map (show . TransitionsList) displayedSolutions
       in Just $
-        if totalSolutions <= maxDisplay
+        if totalSolutions <= maxDisplayValue
           then solutionsText ++ "\n(These are all solutions.)"
           else solutionsText ++ "\n(These are possible solutions, but more exist.)"
-    Right [] -> error "formatSolutionFeedback: solutions should never contain an empty list"
+    Right [] -> error "formatSolutionsFeedback: solutions should never contain an empty list"
+
+formatSolutionFeedback
+  :: ReachInstance s Transition
+  -> Maybe String
+formatSolutionFeedback inst =
+  formatSolutionsFeedback (maxDisplayedSolutions inst) (solutions inst)
 
 reachEvaluation
   :: (
@@ -629,7 +637,7 @@ generateNetGoal
   => FilterConfig
   -> NetGoalConfig
   -> Int
-  -> m (NetGoal Place Transition)
+  -> m (NetGoal Place Transition, Either [Transition] [[Transition]])
 generateNetGoal filterConfig config@NetGoalConfig {..} seed =
   evalRandT generate $ mkStdGen seed
   where
@@ -639,7 +647,11 @@ generateNetGoal filterConfig config@NetGoalConfig {..} seed =
       let allSolutions = netGoalAllSolutions netGoal
           availableTransitions = transitions $ petriNet netGoal
       guard (not $ areSolutionsTrivial filterConfig availableTransitions allSolutions)
-      pure netGoal
+      let solutionsList =
+            if filterConfig == noFiltering
+              then Left $ netGoalSolution netGoal
+              else Right allSolutions
+      pure (netGoal, solutionsList)
     generate = do
       xs <- possibleNetGoals config
       maybeNetGoal <- runMaybeT $ msum $ map checkNetGoal xs
@@ -677,20 +689,16 @@ generateReach
   -> Int
   -> m (ReachInstance Place Transition)
 generateReach ReachConfig {..} seed = do
-  netGoal <- generateNetGoal filterConfig netGoalConfig seed
-  let solutionsList =
-        if filterConfig == noFiltering
-          then Left $ netGoalSolution netGoal
-          else Right $ netGoalAllSolutions netGoal
+  (netGoal, solutionsList) <- generateNetGoal filterConfig netGoalConfig seed
   pure $ ReachInstance {
-    netGoal           = netGoal,
-    minLength         = minTransitionLength netGoalConfig,
-    noLongerThan      = rejectLongerThan,
-    showGoalNet       = showTargetNet,
-    showPlaceNames    = showPlaceNamesInNet,
-    solutions         = solutionsList,
+    netGoal               = netGoal,
+    minLength             = minTransitionLength netGoalConfig,
+    noLongerThan          = rejectLongerThan,
+    showGoalNet           = showTargetNet,
+    showPlaceNames        = showPlaceNamesInNet,
+    solutions             = solutionsList,
     maxDisplayedSolutions = printedSolutions,
-    withLengthHint    =
+    withLengthHint        =
       if showLengthHint then Just $ maxTransitionLength netGoalConfig else Nothing,
-    withMinLengthHint = showMinLengthHint
+    withMinLengthHint     = showMinLengthHint
     }
