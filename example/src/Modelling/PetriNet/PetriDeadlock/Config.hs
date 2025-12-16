@@ -20,12 +20,12 @@ task2023_29 = DeadlockConfig {
   minTransitionLength = 7,
   postconditionsRange = (1, Just 2),
   preconditionsRange = (1, Just 2),
+  printedSolutions = Just 10,
   rejectLongerThan = Just 7,
   showLengthHint = False,
   showMinLengthHint = True,
   showPlaceNamesInNet = False,
-  filterConfig = defaultFilterConfig { maxCycleLength = Just 3 },
-  printedSolutions = Just 3
+  filterConfig = defaultFilterConfig { maxCycleLength = Just 3 }
   }
 
 {-|
@@ -41,12 +41,12 @@ task2023_30 = DeadlockConfig {
   minTransitionLength = 14,
   postconditionsRange = (1, Just 2),
   preconditionsRange = (1, Just 2),
+  printedSolutions = Just 10,
   rejectLongerThan = Just 14,
   showLengthHint = False,
   showMinLengthHint = True,
   showPlaceNamesInNet = False,
-  filterConfig = defaultFilterConfig,
-  printedSolutions = Just 3
+  filterConfig = defaultFilterConfig
   }
 
 {-|
@@ -76,10 +76,10 @@ task2024_61 = DeadlockConfig {
   minTransitionLength = 8,
   postconditionsRange = (1, Just 2),
   preconditionsRange = (1, Just 2),
+  printedSolutions = Just 10,
   rejectLongerThan = Just 8,
   showLengthHint = False,
   showMinLengthHint = True,
   showPlaceNamesInNet = False,
-  filterConfig = defaultFilterConfig,
-  printedSolutions = Just 3
+  filterConfig = defaultFilterConfig
   }
