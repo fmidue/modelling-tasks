@@ -223,15 +223,15 @@ deadlockAllSolutions net =
     $ map (filter (null . successors net . fst)) $ levelsWithAlternatives net
 
 data DeadlockInstance s t = DeadlockInstance {
-  drawUsing         :: GraphvizCommand,
-  minLength         :: Int,
-  noLongerThan      :: Maybe Int,
-  petriNet          :: Net s t,
-  showPlaceNames    :: Bool,
-  maxDisplayedSolutions :: Maybe Int,
-  solutions         :: Either [t] [[t]],
-  withLengthHint    :: Maybe Int,
-  withMinLengthHint :: Bool
+  drawUsing             :: GraphvizCommand,
+  minLength             :: Int,
+  noLongerThan          :: Maybe Int,
+  petriNet              :: Net s t,
+  showPlaceNames        :: Bool,
+  maxDisplayedSolutions :: Int,
+  solutions             :: Either [t] [[t]],
+  withLengthHint        :: Maybe Int,
+  withMinLengthHint     :: Bool
   } deriving (Generic, Read, Show)
 #if !MIN_VERSION_base(4,18,0)
   deriving Typeable
@@ -264,17 +264,17 @@ data DeadlockConfig = DeadlockConfig {
   numPlaces :: Int,
   numTransitions :: Int,
   capacity :: Capacity Place,
-  drawCommands        :: [GraphvizCommand],
-  maxTransitionLength :: Int,
-  minTransitionLength :: Int,
-  postconditionsRange :: (Int, Maybe Int),
-  preconditionsRange  :: (Int, Maybe Int),
-  printedSolutions    :: Maybe Int,
-  rejectLongerThan    :: Maybe Int,
-  showLengthHint      :: Bool,
-  showMinLengthHint   :: Bool,
-  showPlaceNamesInNet :: Bool,
-  filterConfig        :: FilterConfig
+  drawCommands          :: [GraphvizCommand],
+  maxTransitionLength   :: Int,
+  minTransitionLength   :: Int,
+  postconditionsRange   :: (Int, Maybe Int),
+  preconditionsRange    :: (Int, Maybe Int),
+  maxPrintedSolutions   :: Int,
+  rejectLongerThan      :: Maybe Int,
+  showLengthHint        :: Bool,
+  showMinLengthHint     :: Bool,
+  showPlaceNamesInNet   :: Bool,
+  filterConfig          :: FilterConfig
   }
   deriving (Generic, Read, Show)
 #if !MIN_VERSION_base(4,18,0)
@@ -287,17 +287,17 @@ defaultDeadlockConfig =
   numPlaces = 4,
   numTransitions = 4,
   Modelling.PetriNet.Reach.Deadlock.capacity = Unbounded,
-  drawCommands        = [Dot, Neato, TwoPi, Circo, Fdp, Sfdp, Osage, Patchwork],
-  maxTransitionLength = 8,
-  minTransitionLength = 8,
-  postconditionsRange = (0, Nothing),
-  preconditionsRange  = (0, Nothing),
-  printedSolutions    = Nothing,
-  rejectLongerThan    = Just 8,
-  showLengthHint      = False,
-  showMinLengthHint   = True,
-  showPlaceNamesInNet = False,
-  filterConfig        = defaultFilterConfig { maxNumberOfSolutions = Nothing }
+  drawCommands          = [Dot, Neato, TwoPi, Circo, Fdp, Sfdp, Osage, Patchwork],
+  maxTransitionLength   = 8,
+  minTransitionLength   = 8,
+  postconditionsRange   = (0, Nothing),
+  preconditionsRange    = (0, Nothing),
+  maxPrintedSolutions   = 0,
+  rejectLongerThan      = Just 8,
+  showLengthHint        = False,
+  showMinLengthHint     = True,
+  showPlaceNamesInNet   = False,
+  filterConfig          = defaultFilterConfig { maxNumberOfSolutions = Nothing }
   }
 
 defaultDeadlockInstance :: DeadlockInstance Place Transition
@@ -307,7 +307,7 @@ defaultDeadlockInstance = DeadlockInstance {
   noLongerThan      = Nothing,
   petriNet          = fst example,
   showPlaceNames    = False,
-  maxDisplayedSolutions = Nothing,
+  maxDisplayedSolutions = 0,
   solutions         = Left [], -- TO DO: add a solution
   withLengthHint    = Just 9,
   withMinLengthHint = True
@@ -333,7 +333,7 @@ checkDeadlockConfig DeadlockConfig {..} =
     maxTransitionLength
     filterConfig
   <|>
-  checkMaxDisplayedSolutions printedSolutions filterConfig
+  checkMaxDisplayedSolutions maxPrintedSolutions filterConfig
 
 generateDeadlock
   :: (MonadCatch m, MonadDiagrams m, MonadGraphviz m)
@@ -348,7 +348,7 @@ generateDeadlock conf@DeadlockConfig {..} seed = do
     noLongerThan      = rejectLongerThan,
     petriNet          = petri,
     showPlaceNames    = showPlaceNamesInNet,
-    maxDisplayedSolutions = printedSolutions,
+    maxDisplayedSolutions = maxPrintedSolutions,
     solutions         = solutionsList,
     withLengthHint    =
       if showLengthHint then Just maxTransitionLength else Nothing,

@@ -138,21 +138,20 @@ checkFilterConfigWith rejectLongerThan minTransitionLength maxTransitionLength f
   | otherwise
   = Nothing
 
--- | Check printedSolutions is consistent with maxNumberOfSolutions and filterConfig
+-- | Check maxPrintedSolutions is consistent with maxNumberOfSolutions and filterConfig
 checkMaxDisplayedSolutions
-  :: Maybe Int       -- ^ printedSolutions
+  :: Int             -- ^ maxPrintedSolutions
   -> FilterConfig    -- ^ filterConfig
   -> Maybe String
-checkMaxDisplayedSolutions printedSolutions filterConfig@FilterConfig{..}
-  | Just displayed <- printedSolutions
-  , displayed < 1
-  = Just "printedSolutions must be at least 1 when set"
-  | Just displayed <- printedSolutions
+checkMaxDisplayedSolutions maxPrintedSolutions filterConfig@FilterConfig{..}
+  | maxPrintedSolutions < 0
+  = Just "maxPrintedSolutions must be non-negative"
+  | maxPrintedSolutions > 0
   , Just maxSolutions <- maxNumberOfSolutions
-  , displayed > maxSolutions
-  = Just $ "printedSolutions (" ++ show displayed ++ ") cannot be greater than maxNumberOfSolutions (" ++ show maxSolutions ++ ")"
-  | Just _ <- printedSolutions
+  , maxPrintedSolutions > maxSolutions
+  = Just $ "maxPrintedSolutions (" ++ show maxPrintedSolutions ++ ") cannot be greater than maxNumberOfSolutions (" ++ show maxSolutions ++ ")"
+  | maxPrintedSolutions > 0
   , filterConfig == noFiltering
-  = Just $ "printedSolutions should not be set when filterConfig is " ++ show noFiltering ++ " (only one solution is stored)"
+  = Just $ "maxPrintedSolutions should be 0 when filterConfig is " ++ show noFiltering ++ " (only one solution is stored)"
   | otherwise
   = Nothing

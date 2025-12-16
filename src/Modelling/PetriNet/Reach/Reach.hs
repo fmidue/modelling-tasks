@@ -310,23 +310,23 @@ transitionsValid n =
     isValidTransition =  (`elem` transitions n)
 
 formatSolutionsFeedback
-  :: Maybe Int
+  :: Int
   -> Either [Transition] [[Transition]]
   -> Maybe String
-formatSolutionsFeedback maxDisplay solutionsList = case maxDisplay of
-  Nothing -> Nothing
-  Just maxDisplayValue -> case solutionsList of
-    Left singleSolution ->
-      Just $ show $ TransitionsList singleSolution
-    Right (firstSolution : restSolutions) ->
-      let totalSolutions = 1 + length restSolutions
-          displayedSolutions = take maxDisplayValue (firstSolution : restSolutions)
-          solutionsText = unlines $ map (show . TransitionsList) displayedSolutions
-      in Just $
-        if totalSolutions <= maxDisplayValue
-          then solutionsText ++ "\n(These are all solutions.)"
-          else solutionsText ++ "\n(These are possible solutions, but more exist.)"
-    Right [] -> error "formatSolutionsFeedback: solutions should never contain an empty list"
+formatSolutionsFeedback maxDisplayValue solutionsList
+  | maxDisplayValue <= 0 = Nothing
+  | otherwise = case solutionsList of
+      Left singleSolution ->
+        Just $ show $ TransitionsList singleSolution
+      Right (firstSolution : restSolutions) ->
+        let totalSolutions = 1 + length restSolutions
+            displayedSolutions = take maxDisplayValue (firstSolution : restSolutions)
+            solutionsText = unlines $ map (show . TransitionsList) displayedSolutions
+        in Just $
+          if totalSolutions <= maxDisplayValue
+            then solutionsText ++ "\n(These are all solutions.)"
+            else solutionsText ++ "\n(These are possible solutions, but more exist.)"
+      Right [] -> error "formatSolutionsFeedback: solutions should never contain an empty list"
 
 reachEvaluation
   :: (
@@ -449,15 +449,15 @@ isNoLonger maybeMaxLength ts =
         ]
 
 data ReachInstance s t = ReachInstance {
-  netGoal           :: NetGoal s t,
-  minLength         :: Int,
-  noLongerThan      :: Maybe Int,
-  showGoalNet       :: Bool,
-  showPlaceNames    :: Bool,
-  maxDisplayedSolutions :: Maybe Int,
-  solutions         :: Either [t] [[t]],
-  withLengthHint    :: Maybe Int,
-  withMinLengthHint :: Bool
+  netGoal               :: NetGoal s t,
+  minLength             :: Int,
+  noLongerThan          :: Maybe Int,
+  showGoalNet           :: Bool,
+  showPlaceNames        :: Bool,
+  maxDisplayedSolutions :: Int,
+  solutions             :: Either [t] [[t]],
+  withLengthHint        :: Maybe Int,
+  withMinLengthHint     :: Bool
   }
   deriving (Generic, Read, Show, Data)
 #if !MIN_VERSION_base(4,18,0)
@@ -515,14 +515,14 @@ toShowNetGoal
 toShowNetGoal = bimapNetGoal ShowPlace ShowTransition
 
 data ReachConfig = ReachConfig {
-  netGoalConfig       :: NetGoalConfig,
-  printedSolutions    :: Maybe Int,
-  rejectLongerThan    :: Maybe Int,
-  showLengthHint      :: Bool,
-  showMinLengthHint   :: Bool,
-  showTargetNet       :: Bool,
-  showPlaceNamesInNet :: Bool,
-  filterConfig        :: FilterConfig
+  netGoalConfig         :: NetGoalConfig,
+  maxPrintedSolutions   :: Int,
+  rejectLongerThan      :: Maybe Int,
+  showLengthHint        :: Bool,
+  showMinLengthHint     :: Bool,
+  showTargetNet         :: Bool,
+  showPlaceNamesInNet   :: Bool,
+  filterConfig          :: FilterConfig
   }
   deriving (Generic, Read, Show)
 #if !MIN_VERSION_base(4,18,0)
@@ -556,7 +556,7 @@ defaultReachConfig = ReachConfig {
     postconditionsRange = (0, Nothing),
     preconditionsRange  = (0, Nothing)
     },
-  printedSolutions    = Nothing,
+  maxPrintedSolutions = 0,
   rejectLongerThan    = Just 6,
   showLengthHint      = False,
   showMinLengthHint   = True,
@@ -576,7 +576,7 @@ defaultReachInstance = ReachInstance {
   noLongerThan      = Nothing,
   showGoalNet       = True,
   showPlaceNames    = False,
-  maxDisplayedSolutions = Nothing,
+  maxDisplayedSolutions = 0,
   solutions         = Left [], -- TO DO: add a solution
   withLengthHint    = Just 12,
   withMinLengthHint = False
@@ -674,7 +674,7 @@ checkReachConfig ReachConfig {..} =
     (maxTransitionLength netGoalConfig)
     filterConfig
   <|>
-  checkMaxDisplayedSolutions printedSolutions filterConfig
+  checkMaxDisplayedSolutions maxPrintedSolutions filterConfig
   <|>
   if showTargetNet || showPlaceNamesInNet
       then Nothing
@@ -694,7 +694,7 @@ generateReach ReachConfig {..} seed = do
     showGoalNet       = showTargetNet,
     showPlaceNames    = showPlaceNamesInNet,
     solutions         = solutionsList,
-    maxDisplayedSolutions = printedSolutions,
+    maxDisplayedSolutions = maxPrintedSolutions,
     withLengthHint    =
       if showLengthHint then Just $ maxTransitionLength netGoalConfig else Nothing,
     withMinLengthHint = showMinLengthHint
