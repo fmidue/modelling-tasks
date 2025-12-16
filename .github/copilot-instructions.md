@@ -303,7 +303,7 @@ When writing Haskell code for this project, follow these best practices:
 
 ### Git Diff Management
 
-**CRITICAL**: Always favor minimal git diffs over code alignment when modifying existing code.
+**CRITICAL**: Always favor minimal Git diffs over code alignment when modifying existing code.
 
 This principle is particularly important when working with Haskell records:
 
@@ -314,6 +314,7 @@ This principle is particularly important when working with Haskell records:
 **Examples for record type definitions**:
 
 ❌ **BAD** - Realigning all fields (creates large diff):
+
 ```haskell
 -- Adding maxDisplayedSolutions field
 -- DO NOT realign other fields like this:
@@ -330,6 +331,7 @@ data DeadlockInstance s t = DeadlockInstance {
 ```
 
 ✅ **GOOD** - Minimal diff (only changed lines):
+
 ```haskell
 -- Adding maxDisplayedSolutions field
 -- Keep existing alignment, only modify necessary lines:
@@ -348,6 +350,7 @@ data DeadlockInstance s t = DeadlockInstance {
 **Examples for record value assignments**:
 
 ❌ **BAD** - Realigning all fields and changing order (creates large diff):
+
 ```haskell
 -- Replacing showSolution field with two new fields: instanceMaxDisplayedSolutions and solutions
 -- DO NOT realign other fields or reorder like this:
@@ -366,6 +369,7 @@ defaultDeadlockInstance = DeadlockInstance {
 ```
 
 ✅ **GOOD** - Minimal diff (only changed lines):
+
 ```haskell
 -- Replacing showSolution field with two new fields: instanceMaxDisplayedSolutions and solutions
 -- Keep existing alignment, replace field at same location, no reordering:
@@ -382,11 +386,17 @@ defaultDeadlockInstance = DeadlockInstance {
   }
 ```
 
+**Note**: The `solutions` field uses padding spaces to fit the previous alignment. This is fine because:
+
+- It doesn't change the line count of the diff
+- It maintains consistency with existing field alignment
+- What would be problematic is realigning all existing fields to match the new longer `instanceMaxDisplayedSolutions` field
+
 **Rationale**:
 
 - Smaller diffs are easier to review
 - Smaller diffs reduce merge conflicts
-- Smaller diffs make git history more meaningful
+- Smaller diffs make Git history more meaningful
 - Code alignment is less important than diff clarity
 - The goal is to show what actually changed, not to make everything perfectly aligned
 
