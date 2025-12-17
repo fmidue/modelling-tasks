@@ -523,9 +523,9 @@ differentNamesSyntax DifferentNamesInstance {..} cs = addPretext $ do
 
 readMapping :: Ord a => Bimap a a -> (a, a) -> Maybe (a, a)
 readMapping m (x, y)
-  | isJust $ BM.lookup x m, isJust $ BM.lookupR y m
+  | isJust (BM.lookup x m) || isJust (BM.lookupR y m)
   = Just (x, y)
-  | isJust $ BM.lookup y m, isJust $ BM.lookupR x m
+  | isJust (BM.lookup y m) || isJust (BM.lookupR x m)
   = Just (y, x)
   | otherwise
   = Nothing
