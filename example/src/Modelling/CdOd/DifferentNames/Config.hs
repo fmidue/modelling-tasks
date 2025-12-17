@@ -315,7 +315,7 @@ task2025_14 = DifferentNamesConfig {
     objectLimits = (6, 6)
     },
   objectProperties = ObjectProperties {
-    anonymousObjectProportion = 1 % 1,
+    anonymousObjectProportion = 1 % 1, -- post processing after generation -> 0 % 1
     completelyInhabited = Just True,
     hasLimitedIsolatedObjects = True,
     hasSelfLoops = Just False,
@@ -333,7 +333,7 @@ task2025_14 = DifferentNamesConfig {
   }
 
 task2025_15 :: DifferentNamesConfig
-task2025_15 = task2025_14
+task2025_15 = task2025_14 -- concept injection (variant 1: concepts are printed in class diagrams) after generation
 
 task2025_16 :: DifferentNamesConfig
-task2025_16 = task2025_14
+task2025_16 = task2025_14 -- concept injection (variant 2: concepts are printed in object diagrams) after generation
