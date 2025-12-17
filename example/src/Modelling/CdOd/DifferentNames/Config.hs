@@ -345,7 +345,7 @@ approximate cost: 48.84 $
 -}
 task2025_15 :: DifferentNamesConfig
 task2025_15 = task2025_14 {
-  objectProperties = (objectProperties task2025_15) {
+  objectProperties = (objectProperties task2025_14) {
     anonymousObjectProportion = 1 % 1
     }
   }
