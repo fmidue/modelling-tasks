@@ -296,7 +296,7 @@ task2025_13 = DifferentNamesConfig {
 {-|
 points: 0.15
 the amount of generated instances: 100
-average generation time per instance on the amplitUDE cluster: 2:28min
+average generation time per instance on the cluster: 2:28min
 -}
 task2025_14 :: DifferentNamesConfig
 task2025_14 = DifferentNamesConfig {
