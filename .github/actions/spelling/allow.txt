@@ -49,7 +49,6 @@ Verzweigungsknoten
 Vielfachheit
 WColor
 XNode
-amplitUDE
 anyclass
 apps
 automorphisms
