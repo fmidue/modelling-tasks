@@ -295,7 +295,8 @@ task2025_13 = DifferentNamesConfig {
 
 {-|
 points: 0.15
-average generation time per instance: 2:28min
+the amount of generated instances: 100
+average generation time per instance on the cluster: 2:28min
 -}
 task2025_14 :: DifferentNamesConfig
 task2025_14 = DifferentNamesConfig {
@@ -315,7 +316,7 @@ task2025_14 = DifferentNamesConfig {
     objectLimits = (6, 6)
     },
   objectProperties = ObjectProperties {
-    anonymousObjectProportion = 1 % 1,
+    anonymousObjectProportion = 0 % 1,
     completelyInhabited = Just True,
     hasLimitedIsolatedObjects = True,
     hasSelfLoops = Just False,
@@ -332,8 +333,28 @@ task2025_14 = DifferentNamesConfig {
   extraText = NoExtraText
   }
 
+{-|
+points: 0.15
+variant 1: concepts are printed in class diagrams
+share same instances as task2025_14
+average concept generation time per instance: 10~15 mins
+used LLM model for generation: gpt-5
+approximate input tokens: 3.575 M (1.25 $ / 1M tokens)
+approximate output tokens: 4.437 M (10 $ / 1M tokens)
+approximate cost: 48.84 $
+-}
 task2025_15 :: DifferentNamesConfig
-task2025_15 = task2025_14
+task2025_15 = task2025_14 {
+  objectProperties = (objectProperties task2025_14) {
+    anonymousObjectProportion = 1 % 1
+    }
+  }
 
+{-|
+points: 0.15
+variant 2: concepts are printed in object diagrams
+share same instances as task2025_14
+share same concept injection as task2025_15
+-}
 task2025_16 :: DifferentNamesConfig
-task2025_16 = task2025_14
+task2025_16 = task2025_15

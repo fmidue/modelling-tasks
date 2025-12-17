@@ -83,6 +83,7 @@ forkend
 fst
 ghci
 github
+gpt
 graphviz
 hspace
 hspec
