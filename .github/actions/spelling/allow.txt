@@ -49,6 +49,7 @@ Verzweigungsknoten
 Vielfachheit
 WColor
 XNode
+amplitUDE
 anyclass
 apps
 automorphisms
@@ -83,6 +84,7 @@ forkend
 fst
 ghci
 github
+gpt
 graphviz
 hspace
 hspec
