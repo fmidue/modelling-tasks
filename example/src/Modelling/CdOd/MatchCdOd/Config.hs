@@ -403,14 +403,42 @@ task2024_59 = MatchCdOdConfig {
   extraText = NoExtraText
   }
 
+{-|
+points: 0.15
+the amount of generated instances: 100
+average generation time per instance on the cluster: 19:18min
+average CPU usage: 175.75%
+average memory usage: 3777 MB
+-}
 task2025_17 :: MatchCdOdConfig
 task2025_17 = task2024_17
 
+{-|
+points: 0.15
+the amount of generated instances: 100
+average generation time per instance on the cluster: 8:20min
+average CPU usage: 107.96%
+average memory usage: 3792 MB
+-}
 task2025_18 :: MatchCdOdConfig
 task2025_18 = task2024_18
 
+{-|
+points: 0.15
+the amount of generated instances: 100
+average generation time per instance on the cluster: 12:07min
+average CPU usage: 106.16%
+average memory usage: 5232.74 MB
+-}
 task2025_19 :: MatchCdOdConfig
 task2025_19 = task2024_19
 
+{-|
+points: 0.15
+the amount of generated instances: 100
+average generation time per instance on the cluster: 7:54min
+average CPU usage: 105.74%
+average memory usage: 3530.61 MB
+-}
 task2025_20 :: MatchCdOdConfig
 task2025_20 = task2024_20
