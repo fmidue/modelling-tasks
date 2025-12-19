@@ -296,7 +296,9 @@ task2025_13 = DifferentNamesConfig {
 {-|
 points: 0.15
 the amount of generated instances: 100
-average generation time per instance on the cluster: 2:28min
+maximum concurrent amount of tasks: 20
+average generation time per instance on the cluster (without considering concurrency): 2:28min
+total run time on the cluster (not including queuing time): 16:14min
 -}
 task2025_14 :: DifferentNamesConfig
 task2025_14 = DifferentNamesConfig {
@@ -337,7 +339,7 @@ task2025_14 = DifferentNamesConfig {
 points: 0.15
 variant 1: concepts are printed in class diagrams
 share same instances as task2025_14
-average concept generation time per instance: 10~15 mins
+average concept generation time per instance (no concurrency): 10~15 mins
 used LLM model for generation: gpt-5
 approximate input tokens: 3.575 M (1.25 $ / 1M tokens)
 approximate output tokens: 4.437 M (10 $ / 1M tokens)
