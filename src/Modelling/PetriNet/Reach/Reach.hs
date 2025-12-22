@@ -78,7 +78,7 @@ import Modelling.PetriNet.Reach.Property (
   validate,
   )
 import Modelling.PetriNet.Reach.Roll    (netLimits)
-import Modelling.PetriNet.Reach.Step    (executes, levels', levelsWithAlternatives)
+import Modelling.PetriNet.Reach.Step    (executes, levelsWithAlternatives)
 import Modelling.PetriNet.Reach.Type (
   Capacity (Unbounded),
   Net (start, transitions),
@@ -134,7 +134,6 @@ import Data.Foldable                    (sequenceA_, traverse_)
 import Data.GraphViz                    (GraphvizCommand (..))
 import Data.List                        (find, singleton, sortBy)
 import Data.List.Extra                  (nubSort)
-import Data.Tuple.Extra                 (fst3)
 import Data.Maybe                       (fromMaybe)
 import Data.Ord                         (comparing)
 import Data.Ratio                       ((%))
@@ -560,7 +559,7 @@ defaultReachInstance = ReachInstance {
 possibleNetGoals
   :: MonadRandom m
   => NetGoalConfig
-  -> m [(Net Place Transition, State Place, [Transition])]
+  -> m [(Net Place Transition, State Place, [Transition], [[Transition]])]
 possibleNetGoals NetGoalConfig {..} =
   let ps = [Place 1 .. Place numPlaces]
       tries = forM [1 :: Int .. 1000] $ const $ do
@@ -571,14 +570,16 @@ possibleNetGoals NetGoalConfig {..} =
         return $ do
           -- Filter out nets with isolated nodes
           guard $ not $ hasIsolatedNodes n
-          (l,zs) <-
-            take (maxTransitionLength + 1) $ zip [0 :: Int ..] $ levels' n
-          (z', transitions) <- zs
+          let levelsWithAlts = levelsWithAlternatives n
+          (l, levelStates) <-
+            take (maxTransitionLength + 1) $ zip [0 :: Int ..] levelsWithAlts
+          (z', transitionsList) <- levelStates
           let d = sum $ do
                 p <- ps
                 return $ abs (mark (start n) p - mark z' p)
-              solutionSequence = reverse transitions
-          return ((negate l, d), (n, z', solutionSequence))
+              solutionSequence = reverse $ head transitionsList
+              allShortestSolutions = map reverse transitionsList
+          return ((negate l, d), (n, z', solutionSequence, allShortestSolutions))
       out = do
         xs <- sortBy (comparing fst)
           . concat
@@ -604,15 +605,13 @@ generateNetGoal
 generateNetGoal filterConfig config@NetGoalConfig {..} seed =
   evalRandT generate $ mkStdGen seed
   where
-    checkNetGoal pn = do
-      cmd <- MaybeT $ findM (Monad.lift . isPetriDrawable (fst3 pn)) drawCommands
-      let (petri, state, singleSolution) = pn
-          netGoal = NetGoal {
+    checkNetGoal (petri, state, singleSolution, allShortestSolutions) = do
+      cmd <- MaybeT $ findM (Monad.lift . isPetriDrawable petri) drawCommands
+      let netGoal = NetGoal {
             drawUsing   = cmd,
             goal        = state,
             petriNet    = petri
           }
-          allShortestSolutions = netGoalAllSolutions netGoal
           availableTransitions = transitions petri
       guard (not $ areSolutionsTrivial filterConfig availableTransitions allShortestSolutions)
       solutionsList <-
