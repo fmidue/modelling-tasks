@@ -310,7 +310,7 @@ transitionsValid n =
     isValidTransition =  (`elem` transitions n)
 
 -- | Format solutions feedback for display to students.
--- The Right case will never contain an empty list because solutions are only
+-- The Right case will never be the empty list because solutions are only
 -- stored as Right when filterConfig /= noFiltering, and in that case
 -- netGoalAllSolutions/deadlockAllSolutions always returns a non-empty list
 -- for valid instances that pass the generation checks.
@@ -330,7 +330,7 @@ formatSolutionsFeedback maxDisplayedSolutions solutionsList
           if length restSolutions < maxDisplayedSolutions
             then "\n(These are all solutions.)"
             else "\n(These are possible solutions, but more exist.)"
-      Right [] -> error "formatSolutionsFeedback: solutions should never contain an empty list"
+      Right [] -> error "formatSolutionsFeedback: solution list should never be empty"
 
 reachEvaluation
   :: (
