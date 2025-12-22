@@ -385,13 +385,11 @@ try conf = do
     -- Filter out nets with isolated nodes
     guard $ not $ hasIsolatedNodes n
     let deadlockLevels = map (filter (null . successors n . fst)) (levels' n)
-        (no,yeah) = span (null . snd)
+        (no, yeah) = span null
           $ take (maxTransitionLength conf + 1)
-          $ zip [0 :: Int ..]
           deadlockLevels
     guard $ not $ null yeah
-    let firstDeadlock = head $ snd $ head yeah
-        solutionSequence = reverse $ snd firstDeadlock
+    let solutionSequence = reverse $ snd $ head $ head yeah
     return (length no, n, solutionSequence)
   where
     fixMaximum = second (min (numPlaces conf) . fromMaybe maxBound)

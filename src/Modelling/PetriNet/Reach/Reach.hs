@@ -319,13 +319,12 @@ formatSolutionsFeedback maxDisplayValue solutionsList
       Left singleSolution ->
         Just $ show $ TransitionsList singleSolution
       Right (firstSolution : restSolutions) ->
-        let totalSolutions = 1 + length restSolutions
-            displayedSolutions = take maxDisplayValue (firstSolution : restSolutions)
+        let displayedSolutions = firstSolution : take (maxDisplayValue - 1) restSolutions
             solutionsText = unlines $ map (show . TransitionsList) displayedSolutions
-        in Just $
-          if totalSolutions <= maxDisplayValue
-            then solutionsText ++ "\n(These are all solutions.)"
-            else solutionsText ++ "\n(These are possible solutions, but more exist.)"
+        in Just $ solutionsText ++ 
+          if length restSolutions < maxDisplayValue
+            then "\n(These are all solutions.)"
+            else "\n(These are possible solutions, but more exist.)"
       Right [] -> error "formatSolutionsFeedback: solutions should never contain an empty list"
 
 reachEvaluation
@@ -625,15 +624,14 @@ generateNetGoal filterConfig config@NetGoalConfig {..} seed =
   where
     checkNetGoal pn = do
       cmd <- MaybeT $ findM (Monad.lift . isPetriDrawable (fst3 pn)) drawCommands
-      let ((petri, state, solutionSeq), _) = (pn, cmd)
+      let (petri, state, singleSolution) = pn
           netGoal = NetGoal {
             drawUsing   = cmd,
             goal        = state,
             petriNet    = petri
           }
-          singleSolution = solutionSeq
           allShortestSolutions = netGoalAllSolutions netGoal
-          availableTransitions = transitions $ petriNet netGoal
+          availableTransitions = transitions petri
       guard (not $ areSolutionsTrivial filterConfig availableTransitions allShortestSolutions)
       let solutionsList =
             if filterConfig == noFiltering
