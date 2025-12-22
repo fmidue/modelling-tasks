@@ -115,6 +115,7 @@ import Control.Monad.Catch              (MonadCatch, MonadThrow)
 import Control.Monad.Extra              (findM)
 import Control.Monad.Random             (MonadRandom, evalRandT, mkStdGen)
 import Control.Monad.Trans.Maybe        (MaybeT (MaybeT, runMaybeT))
+import System.Random.Shuffle            (shuffleM)
 import Data.GraphViz                    (GraphvizCommand (..))
 import Data.Maybe                       (fromMaybe)
 #if !MIN_VERSION_base(4,18,0)
@@ -367,10 +368,10 @@ tries n filterConfig conf seed = eval out
           availableTransitions = transitions pn
       guard (not $ areSolutionsTrivial filterConfig availableTransitions allShortestSolutions)
       cmd <- MaybeT $ findM (Monad.lift . isPetriDrawable pn) (drawCommands conf)
-      let solutionsList =
-            if filterConfig == noFiltering
-              then Left singleSolution
-              else Right allShortestSolutions
+      solutionsList <-
+        if filterConfig == noFiltering
+          then pure $ Left singleSolution
+          else Right <$> Monad.lift (shuffleM allShortestSolutions)
       pure (pn, cmd, solutionsList)
 
 try :: MonadRandom m => DeadlockConfig -> m [(Int, Net Place Transition, [Transition])]

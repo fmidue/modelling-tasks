@@ -129,6 +129,7 @@ import Control.OutputCapable.Blocks.Generic (
   )
 import Control.Monad.Random             (MonadRandom, mkStdGen)
 import Control.Monad.Trans.Random       (evalRandT)
+import System.Random.Shuffle            (shuffleM)
 import Data.Bifunctor                   (Bifunctor (second), bimap)
 import Data.Either.Combinators          (whenRight)
 import Data.Foldable                    (sequenceA_, traverse_)
@@ -638,10 +639,10 @@ generateNetGoal filterConfig config@NetGoalConfig {..} seed =
           allShortestSolutions = netGoalAllSolutions netGoal
           availableTransitions = transitions petri
       guard (not $ areSolutionsTrivial filterConfig availableTransitions allShortestSolutions)
-      let solutionsList =
-            if filterConfig == noFiltering
-              then Left singleSolution
-              else Right allShortestSolutions
+      solutionsList <-
+        if filterConfig == noFiltering
+          then pure $ Left singleSolution
+          else Right <$> Monad.lift (shuffleM allShortestSolutions)
       pure (netGoal, solutionsList)
     generate = do
       xs <- possibleNetGoals config
