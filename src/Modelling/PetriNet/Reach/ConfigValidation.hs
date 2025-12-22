@@ -146,12 +146,11 @@ checkMaxPrintedSolutions
 checkMaxPrintedSolutions maxPrintedSolutions filterConfig@FilterConfig{..}
   | maxPrintedSolutions < 0
   = Just "maxPrintedSolutions must be non-negative"
-  | maxPrintedSolutions > 0
-  , Just maxSolutions <- maxNumberOfSolutions
+  | Just maxSolutions <- maxNumberOfSolutions
   , maxPrintedSolutions > maxSolutions
-  = Just $ "maxPrintedSolutions (" ++ show maxPrintedSolutions ++ ") cannot be greater than maxNumberOfSolutions (" ++ show maxSolutions ++ ")"
+  = Just $ "maxPrintedSolutions cannot be greater than maxNumberOfSolutions"
   | maxPrintedSolutions > 1
   , filterConfig == noFiltering
-  = Just $ "maxPrintedSolutions should be at most 1 when filterConfig is " ++ show noFiltering ++ " (only one solution is stored)"
+  = Just $ "maxPrintedSolutions should be at most 1 when filterConfig is " ++ show noFiltering ++ " (since only one solution is stored then)"
   | otherwise
   = Nothing
