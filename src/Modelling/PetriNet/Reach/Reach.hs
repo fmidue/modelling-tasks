@@ -29,7 +29,6 @@ module Modelling.PetriNet.Reach.Reach (
   generateReach,
 
   -- * Solutions
-  netGoalSolution,
   netGoalAllSolutions,
 
   -- * Task creation
@@ -371,11 +370,6 @@ reachEvaluation path reach ts =
     reachInstance = toShowReachInstance reach
     n = petriNet (netGoal reachInstance)
     aSolution = formatSolutionsFeedback (maxDisplayedSolutions reach) (solutions reach)
-
-netGoalSolution :: Ord s => NetGoal s t -> [t]
-netGoalSolution netGoal = reverse $ snd $ head $ concatMap
-  (filter $ (== goal netGoal) . fst)
-  $ levels' $ petriNet netGoal
 
 {-|
 Get all possible shortest solutions for a 'NetGoal'
