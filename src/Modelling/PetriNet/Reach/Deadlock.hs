@@ -25,7 +25,6 @@ module Modelling.PetriNet.Reach.Deadlock (
   generateDeadlock,
 
   -- * Solutions
-  deadlockSolution,
   deadlockAllSolutions,
 
   -- * Task creation
@@ -68,7 +67,7 @@ import Modelling.PetriNet.Reach.Property (
 import Modelling.PetriNet.Reach.ConfigValidation (
   checkBasicPetriConfig,
   checkFilterConfigWith,
-  checkMaxDisplayedSolutions,
+  checkMaxPrintedSolutions,
   )
 import Modelling.PetriNet.Reach.Reach   (
   assertReachPoints,
@@ -79,7 +78,7 @@ import Modelling.PetriNet.Reach.Reach   (
   formatSolutionsFeedback,
   )
 import Modelling.PetriNet.Reach.Roll    (netLimits)
-import Modelling.PetriNet.Reach.Step    (deadlocks', executes, successors)
+import Modelling.PetriNet.Reach.Step    (executes, levels', successors)
 import Modelling.PetriNet.Reach.Type (
   Capacity (Unbounded),
   Net (..),
@@ -204,12 +203,6 @@ deadlockEvaluation path deadlock ts =
     n = petriNet deadlockInstance
     aSolution = formatSolutionsFeedback (maxDisplayedSolutions deadlock) (solutions deadlock)
 
-deadlockSolution :: DeadlockInstance s t -> [t]
-deadlockSolution inst = case solutions inst of
-  Left singleSolution -> singleSolution
-  Right (firstSolution : _) -> firstSolution
-  Right [] -> error "deadlockSolution: solutions should never contain an empty list"
-
 {-|
 Get all possible shortest solutions for deadlock detection in a given Petri net
 
@@ -333,7 +326,7 @@ checkDeadlockConfig DeadlockConfig {..} =
     maxTransitionLength
     filterConfig
   <|>
-  checkMaxDisplayedSolutions maxPrintedSolutions filterConfig
+  checkMaxPrintedSolutions maxPrintedSolutions filterConfig
 
 generateDeadlock
   :: (MonadCatch m, MonadDiagrams m, MonadGraphviz m)
@@ -370,14 +363,14 @@ tries n filterConfig conf seed = eval out
       maybe out pure =<< runMaybeT (msum $ map checkCandidate $ concat xs)
     checkCandidate (l, pn, singleSolution) = do
       guard $ l >= minTransitionLength conf
-      let allSolutions = deadlockAllSolutions pn
+      let allShortestSolutions = deadlockAllSolutions pn
           availableTransitions = transitions pn
-      guard (not $ areSolutionsTrivial filterConfig availableTransitions allSolutions)
+      guard (not $ areSolutionsTrivial filterConfig availableTransitions allShortestSolutions)
       cmd <- MaybeT $ findM (Monad.lift . isPetriDrawable pn) (drawCommands conf)
       let solutionsList =
             if filterConfig == noFiltering
               then Left singleSolution
-              else Right allSolutions
+              else Right allShortestSolutions
       pure (pn, cmd, solutionsList)
 
 try :: MonadRandom m => DeadlockConfig -> m [(Int, Net Place Transition, [Transition])]
@@ -391,7 +384,7 @@ try conf = do
   return $ do
     -- Filter out nets with isolated nodes
     guard $ not $ hasIsolatedNodes n
-    let deadlockLevels = deadlocks' n
+    let deadlockLevels = map (filter (null . successors n . fst)) (levels' n)
         (no,yeah) = span (null . snd)
           $ take (maxTransitionLength conf + 1)
           $ zip [0 :: Int ..]

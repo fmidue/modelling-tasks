@@ -31,7 +31,6 @@ module Modelling.PetriNet.Reach.Reach (
   -- * Solutions
   netGoalSolution,
   netGoalAllSolutions,
-  reachSolution,
 
   -- * Task creation
   reachTask,
@@ -107,7 +106,7 @@ import Control.Monad.Trans.Maybe        (MaybeT (MaybeT, runMaybeT))
 import Modelling.PetriNet.Reach.ConfigValidation (
   checkBasicPetriConfig,
   checkFilterConfigWith,
-  checkMaxDisplayedSolutions,
+  checkMaxPrintedSolutions,
   )
 import Control.OutputCapable.Blocks (
   ArticleToUse (IndefiniteArticle),
@@ -136,6 +135,7 @@ import Data.Foldable                    (sequenceA_, traverse_)
 import Data.GraphViz                    (GraphvizCommand (..))
 import Data.List                        (find, singleton, sortBy)
 import Data.List.Extra                  (groupSort, nubSort)
+import Data.Tuple.Extra                 (fst3)
 import Data.Maybe                       (fromMaybe)
 import Data.Ord                         (comparing)
 import Data.Ratio                       ((%))
@@ -401,12 +401,6 @@ levelsWithAlternatives n =
          in xs : f done' next
   in f S.empty [(start n, [[]])]
 
-reachSolution :: ReachInstance s t -> [t]
-reachSolution inst = case solutions inst of
-  Left singleSolution -> singleSolution
-  Right (firstSolution : _) -> firstSolution
-  Right [] -> error "reachSolution: solutions should never contain an empty list"
-
 assertReachPoints
   :: OutputCapable m
   => Maybe String
@@ -619,14 +613,6 @@ possibleNetGoals NetGoalConfig {..} =
     (nLow, nHigh) = fixMaximum postconditionsRange
     ts = [Transition 1 .. Transition numTransitions]
 
-toNetGoal :: ((Net s t, State s, [t]), GraphvizCommand) -> (NetGoal s t, [t])
-toNetGoal ((petri, state, solutionSeq), cmd) =
-  (NetGoal {
-    drawUsing   = cmd,
-    goal        = state,
-    petriNet    = petri
-  }, solutionSeq)
-
 -- | Generate NetGoal with filtering for trivial solutions
 generateNetGoal
   :: (MonadCatch m, MonadDiagrams m, MonadGraphviz m)
@@ -639,16 +625,21 @@ generateNetGoal filterConfig config@NetGoalConfig {..} seed =
   where
     checkNetGoal pn = do
       cmd <- MaybeT $ findM (Monad.lift . isPetriDrawable (fst3 pn)) drawCommands
-      let (netGoal, singleSolution) = toNetGoal (pn, cmd)
-          allSolutions = netGoalAllSolutions netGoal
+      let ((petri, state, solutionSeq), _) = (pn, cmd)
+          netGoal = NetGoal {
+            drawUsing   = cmd,
+            goal        = state,
+            petriNet    = petri
+          }
+          singleSolution = solutionSeq
+          allShortestSolutions = netGoalAllSolutions netGoal
           availableTransitions = transitions $ petriNet netGoal
-      guard (not $ areSolutionsTrivial filterConfig availableTransitions allSolutions)
+      guard (not $ areSolutionsTrivial filterConfig availableTransitions allShortestSolutions)
       let solutionsList =
             if filterConfig == noFiltering
               then Left singleSolution
-              else Right allSolutions
+              else Right allShortestSolutions
       pure (netGoal, solutionsList)
-    fst3 (a, _, _) = a
     generate = do
       xs <- possibleNetGoals config
       maybeNetGoal <- runMaybeT $ msum $ map checkNetGoal xs
@@ -674,7 +665,7 @@ checkReachConfig ReachConfig {..} =
     (maxTransitionLength netGoalConfig)
     filterConfig
   <|>
-  checkMaxDisplayedSolutions maxPrintedSolutions filterConfig
+  checkMaxPrintedSolutions maxPrintedSolutions filterConfig
   <|>
   if showTargetNet || showPlaceNamesInNet
       then Nothing

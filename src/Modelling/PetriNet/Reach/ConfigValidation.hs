@@ -9,7 +9,7 @@ module Modelling.PetriNet.Reach.ConfigValidation (
   checkRejectLongerThanConsistency,
   checkCapacity,
   checkFilterConfigWith,
-  checkMaxDisplayedSolutions
+  checkMaxPrintedSolutions
 ) where
 
 import Control.Applicative (Alternative ((<|>)))
@@ -139,19 +139,16 @@ checkFilterConfigWith rejectLongerThan minTransitionLength maxTransitionLength f
   = Nothing
 
 -- | Check maxPrintedSolutions is consistent with filterConfig
-checkMaxDisplayedSolutions
+checkMaxPrintedSolutions
   :: Int             -- ^ maxPrintedSolutions
   -> FilterConfig    -- ^ filterConfig
   -> Maybe String
-checkMaxDisplayedSolutions maxPrintedSolutions filterConfig@FilterConfig{..}
+checkMaxPrintedSolutions maxPrintedSolutions FilterConfig{..}
   | maxPrintedSolutions < 0
   = Just "maxPrintedSolutions must be non-negative"
   | maxPrintedSolutions > 0
   , Just maxSolutions <- maxNumberOfSolutions
   , maxPrintedSolutions > maxSolutions
   = Just $ "maxPrintedSolutions (" ++ show maxPrintedSolutions ++ ") cannot be greater than maxNumberOfSolutions (" ++ show maxSolutions ++ ")"
-  | maxPrintedSolutions > 0
-  , filterConfig == noFiltering
-  = Just $ "maxPrintedSolutions should be 0 when filterConfig is " ++ show noFiltering ++ " (only one solution is stored)"
   | otherwise
   = Nothing

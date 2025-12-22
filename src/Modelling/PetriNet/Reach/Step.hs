@@ -15,11 +15,9 @@ import qualified Data.Map                         as M (
   toList,
   )
 import qualified Data.Set                         as S (
-  difference,
   empty,
   fromList,
   member,
-  toList,
   union,
   )
 
@@ -56,31 +54,6 @@ import Control.OutputCapable.Blocks.Generic (
 import Data.Foldable                    (Foldable (foldl'))
 #endif
 import Data.GraphViz                    (GraphvizCommand)
-
-deadlocks :: Ord s => Net s t -> [[State s]]
-deadlocks n = map (filter (null . successors n)) (levels n)
-
-{-|
-The returned trace for each state is in reversed order,
-i.e., undoing the firing on the returned deadlock state
-in order of the returned transitions list
-leads to the initial state of the net.
-(Only states of and traces to deadlocks are returned.)
--}
-deadlocks' :: Ord s => Net s t -> [[(State s, [t])]]
-deadlocks' n = map (filter (null . successors n . fst)) (levels' n)
-
-levels :: Ord s => Net s t -> [[State s]]
-levels n =
-  let f _    [] = []
-      f done xs =
-        let done' = S.union done $ S.fromList xs
-            next = S.fromList [ y | x <- xs, (_,y) <- successors n x]
-         in xs :
-            f
-              done'
-              (S.toList $ S.difference next done')
-  in f S.empty [start n]
 
 {-|
 The returned trace for each state is in reversed order,
