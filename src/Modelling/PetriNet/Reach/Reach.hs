@@ -53,12 +53,11 @@ module Modelling.PetriNet.Reach.Reach (
   isNoLonger,
   reportReachFor,
   transitionsValid,
-  levelsWithAlternatives,
   formatSolutionsFeedback,
 ) where
 
 import qualified Control.Monad.Trans              as Monad (lift)
-import qualified Data.Set                         as S (fromList, member, toList, union, empty)
+import qualified Data.Set                         as S (toList)
 
 import Capabilities.Cache               (MonadCache)
 import Capabilities.Diagrams            (MonadDiagrams)
@@ -79,7 +78,7 @@ import Modelling.PetriNet.Reach.Property (
   validate,
   )
 import Modelling.PetriNet.Reach.Roll    (netLimits)
-import Modelling.PetriNet.Reach.Step    (executes, levels', successors)
+import Modelling.PetriNet.Reach.Step    (executes, levels', levelsWithAlternatives)
 import Modelling.PetriNet.Reach.Type (
   Capacity (Unbounded),
   Net (start, transitions),
@@ -134,7 +133,7 @@ import Data.Either.Combinators          (whenRight)
 import Data.Foldable                    (sequenceA_, traverse_)
 import Data.GraphViz                    (GraphvizCommand (..))
 import Data.List                        (find, singleton, sortBy)
-import Data.List.Extra                  (groupSort, nubSort)
+import Data.List.Extra                  (nubSort)
 import Data.Tuple.Extra                 (fst3)
 import Data.Maybe                       (fromMaybe)
 import Data.Ord                         (comparing)
@@ -382,25 +381,6 @@ netGoalAllSolutions netGoal =
   let goalState = goal netGoal
   in map reverse . maybe [] snd $ find ((== goalState) . fst)
      $ concat $ levelsWithAlternatives $ petriNet netGoal
-
-{-|
-Find all shortest paths to all reachable markings
-segmented by the length of paths starting with 0.
-
-Each returned trace for a state is in reversed order.
--}
-levelsWithAlternatives :: Ord s => Net s t -> [[(State s, [[t]])]]
-levelsWithAlternatives n =
-  let f _    [] = []
-      f done xs =
-        let done' = S.union done $ S.fromList $ map fst xs
-            next = map (second concat) $ groupSort [ (y, map (t:) ps) |
-                (x,ps) <- xs,
-                (t,y) <- successors n x,
-                not $ S.member y done'
-              ]
-         in xs : f done' next
-  in f S.empty [(start n, [[]])]
 
 assertReachPoints
   :: OutputCapable m

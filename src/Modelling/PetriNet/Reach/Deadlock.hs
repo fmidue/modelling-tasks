@@ -72,13 +72,12 @@ import Modelling.PetriNet.Reach.ConfigValidation (
 import Modelling.PetriNet.Reach.Reach   (
   assertReachPoints,
   isNoLonger,
-  levelsWithAlternatives,
   reportReachFor,
   transitionsValid,
   formatSolutionsFeedback,
   )
 import Modelling.PetriNet.Reach.Roll    (netLimits)
-import Modelling.PetriNet.Reach.Step    (executes, levels', successors)
+import Modelling.PetriNet.Reach.Step    (executes, levels', levelsWithAlternatives, successors)
 import Modelling.PetriNet.Reach.Type (
   Capacity (Unbounded),
   Net (..),
