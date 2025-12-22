@@ -321,7 +321,7 @@ formatSolutionsFeedback maxDisplayValue solutionsList
       Right (firstSolution : restSolutions) ->
         let displayedSolutions = firstSolution : take (maxDisplayValue - 1) restSolutions
             solutionsText = unlines $ map (show . TransitionsList) displayedSolutions
-        in Just $ solutionsText ++ 
+        in Just $ solutionsText ++
           if length restSolutions < maxDisplayValue
             then "\n(These are all solutions.)"
             else "\n(These are possible solutions, but more exist.)"
