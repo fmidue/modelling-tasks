@@ -77,7 +77,7 @@ import Modelling.PetriNet.Reach.Reach   (
   formatSolutionsFeedback,
   )
 import Modelling.PetriNet.Reach.Roll    (netLimits)
-import Modelling.PetriNet.Reach.Step    (executes, levels', levelsWithAlternatives, successors)
+import Modelling.PetriNet.Reach.Step    (executes, levelsWithAlternatives, successors)
 import Modelling.PetriNet.Reach.Type (
   Capacity (Unbounded),
   Net (..),
@@ -361,10 +361,9 @@ tries n filterConfig conf seed = eval out
     out = do
       xs <- replicateM n $ try conf
       maybe out pure =<< runMaybeT (msum $ map checkCandidate $ concat xs)
-    checkCandidate (l, pn, singleSolution) = do
+    checkCandidate (l, pn, singleSolution, allShortestSolutions) = do
       guard $ l >= minTransitionLength conf
-      let allShortestSolutions = deadlockAllSolutions pn
-          availableTransitions = transitions pn
+      let availableTransitions = transitions pn
       guard (not $ areSolutionsTrivial filterConfig availableTransitions allShortestSolutions)
       cmd <- MaybeT $ findM (Monad.lift . isPetriDrawable pn) (drawCommands conf)
       solutionsList <-
@@ -373,7 +372,7 @@ tries n filterConfig conf seed = eval out
           else Right <$> Monad.lift (shuffleM allShortestSolutions)
       pure (pn, cmd, solutionsList)
 
-try :: MonadRandom m => DeadlockConfig -> m [(Int, Net Place Transition, [Transition])]
+try :: MonadRandom m => DeadlockConfig -> m [(Int, Net Place Transition, [Transition], [[Transition]])]
 try conf = do
   let ps = [Place 1 .. Place (numPlaces conf)]
       ts = [Transition 1 .. Transition (numTransitions conf)]
@@ -384,13 +383,16 @@ try conf = do
   return $ do
     -- Filter out nets with isolated nodes
     guard $ not $ hasIsolatedNodes n
-    let deadlockLevels = map (filter (null . successors n . fst)) (levels' n)
+    let levelsWithAlts = levelsWithAlternatives n
+        deadlockLevels = map (filter (null . successors n . fst)) levelsWithAlts
         (no, yeah) = span null
           $ take (maxTransitionLength conf + 1)
           deadlockLevels
     guard $ not $ null yeah
-    let solutionSequence = reverse $ snd $ head $ head yeah
-    return (length no, n, solutionSequence)
+    let firstDeadlock = head $ head yeah
+        solutionSequence = reverse $ head $ snd firstDeadlock
+        allShortestSolutions = map reverse . concatMap snd $ head yeah
+    return (length no, n, solutionSequence, allShortestSolutions)
   where
     fixMaximum = second (min (numPlaces conf) . fromMaybe maxBound)
     (vLow, vHigh) = fixMaximum $ preconditionsRange conf
