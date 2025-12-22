@@ -12,12 +12,6 @@ import qualified Data.Map                         as M (
   insert,
   findWithDefault,
   )
-import qualified Data.Set                         as S (
-  empty,
-  fromList,
-  member,
-  union,
-  )
 
 import Capabilities.Cache               (MonadCache)
 import Capabilities.Diagrams            (MonadDiagrams)
@@ -48,43 +42,10 @@ import Control.OutputCapable.Blocks (
 import Control.OutputCapable.Blocks.Generic (
   ($>>=),
   )
-import Data.Bifunctor                   (second)
 #if !MIN_VERSION_base(4,20,0)
 import Data.Foldable                    (Foldable (foldl'))
 #endif
 import Data.GraphViz                    (GraphvizCommand)
-import Data.List.Extra                  (groupSort)
-
-{-|
-Find all shortest paths to all reachable markings
-segmented by the length of paths starting with 0.
-
-Each returned trace for a state is in reversed order.
--}
-levelsWithAlternatives :: Ord s => Net s t -> [[(State s, [[t]])]]
-levelsWithAlternatives n =
-  let f _    [] = []
-      f done xs =
-        let done' = S.union done $ S.fromList $ map fst xs
-            next = map (second concat) $ groupSort [ (y, map (t:) ps) |
-                (x,ps) <- xs,
-                (t,y) <- successors n x,
-                not $ S.member y done'
-              ]
-         in xs : f done' next
-  in f S.empty [(start n, [[]])]
-
-{-|
-The returned trace for each state is in reversed order,
-i.e., undoing the firing on the returned target state
-in order of the returned transitions list
-leads to the initial state of the net.
--}
-levels'
-  :: Ord s
-  => Net s t
-  -> [[(State s, [t])]]
-levels' = map (map (second head)) . levelsWithAlternatives
 
 equalling :: Eq a => (t -> a) -> t -> t -> Bool
 equalling f x y = f x == f y

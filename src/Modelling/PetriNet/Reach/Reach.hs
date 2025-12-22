@@ -28,9 +28,6 @@ module Modelling.PetriNet.Reach.Reach (
   -- * Generation
   generateReach,
 
-  -- * Solutions
-  netGoalAllSolutions,
-
   -- * Task creation
   reachTask,
   verifyReach,
@@ -53,11 +50,12 @@ module Modelling.PetriNet.Reach.Reach (
   isNoLonger,
   reportReachFor,
   transitionsValid,
+  levelsWithAlternatives,
   formatSolutionsFeedback,
 ) where
 
 import qualified Control.Monad.Trans              as Monad (lift)
-import qualified Data.Set                         as S (toList)
+import qualified Data.Set                         as S (empty, fromList, member, toList, union)
 
 import Capabilities.Cache               (MonadCache)
 import Capabilities.Diagrams            (MonadDiagrams)
@@ -78,7 +76,7 @@ import Modelling.PetriNet.Reach.Property (
   validate,
   )
 import Modelling.PetriNet.Reach.Roll    (netLimits)
-import Modelling.PetriNet.Reach.Step    (executes, levelsWithAlternatives)
+import Modelling.PetriNet.Reach.Step    (executes, successors)
 import Modelling.PetriNet.Reach.Type (
   Capacity (Unbounded),
   Net (start, transitions),
@@ -132,8 +130,8 @@ import Data.Bifunctor                   (Bifunctor (second), bimap)
 import Data.Either.Combinators          (whenRight)
 import Data.Foldable                    (sequenceA_, traverse_)
 import Data.GraphViz                    (GraphvizCommand (..))
-import Data.List                        (find, singleton, sortBy)
-import Data.List.Extra                  (nubSort)
+import Data.List                        (singleton, sortBy)
+import Data.List.Extra                  (groupSort, nubSort)
 import Data.Maybe                       (fromMaybe)
 import Data.Ord                         (comparing)
 import Data.Ratio                       ((%))
@@ -310,8 +308,7 @@ transitionsValid n =
 -- | Format solutions feedback for display to students.
 -- The Right case will never be the empty list because solutions are only
 -- stored as Right when filterConfig /= noFiltering, and in that case
--- netGoalAllSolutions/deadlockAllSolutions always returns a non-empty list
--- for valid instances that pass the generation checks.
+-- the filtering ensures that valid instances have non-empty solution lists.
 formatSolutionsFeedback
   :: Int
   -> Either [Transition] [[Transition]]
@@ -370,16 +367,23 @@ reachEvaluation path reach ts =
     aSolution = formatSolutionsFeedback (maxDisplayedSolutions reach) (solutions reach)
 
 {-|
-Get all possible shortest solutions for a 'NetGoal'
+Find all shortest paths to all reachable markings
+segmented by the length of paths starting with 0.
 
-Note: This function does not terminate
-if the goal is not reachable and the net is not bounded.
+Each returned trace for a state is in reversed order.
 -}
-netGoalAllSolutions :: Ord s => NetGoal s t -> [[t]]
-netGoalAllSolutions netGoal =
-  let goalState = goal netGoal
-  in map reverse . maybe [] snd $ find ((== goalState) . fst)
-     $ concat $ levelsWithAlternatives $ petriNet netGoal
+levelsWithAlternatives :: Ord s => Net s t -> [[(State s, [[t]])]]
+levelsWithAlternatives n =
+  let f _    [] = []
+      f done xs =
+        let done' = S.union done $ S.fromList $ map fst xs
+            next = map (second concat) $ groupSort [ (y, map (t:) ps) |
+                (x,ps) <- xs,
+                (t,y) <- successors n x,
+                not $ S.member y done'
+              ]
+         in xs : f done' next
+  in f S.empty [(start n, [[]])]
 
 assertReachPoints
   :: OutputCapable m
@@ -559,7 +563,7 @@ defaultReachInstance = ReachInstance {
 possibleNetGoals
   :: MonadRandom m
   => NetGoalConfig
-  -> m [(Net Place Transition, State Place, [Transition], [[Transition]])]
+  -> m [(Net Place Transition, State Place, [[Transition]])]
 possibleNetGoals NetGoalConfig {..} =
   let ps = [Place 1 .. Place numPlaces]
       tries = forM [1 :: Int .. 1000] $ const $ do
@@ -570,16 +574,14 @@ possibleNetGoals NetGoalConfig {..} =
         return $ do
           -- Filter out nets with isolated nodes
           guard $ not $ hasIsolatedNodes n
-          let levelsWithAlts = levelsWithAlternatives n
           (l, levelStates) <-
-            take (maxTransitionLength + 1) $ zip [0 :: Int ..] levelsWithAlts
+            take (maxTransitionLength + 1) $ zip [0 :: Int ..] $ levelsWithAlternatives n
           (z', transitionsList) <- levelStates
           let d = sum $ do
                 p <- ps
                 return $ abs (mark (start n) p - mark z' p)
-              solutionSequence = reverse $ head transitionsList
               allShortestSolutions = map reverse transitionsList
-          return ((negate l, d), (n, z', solutionSequence, allShortestSolutions))
+          return ((negate l, d), (n, z', allShortestSolutions))
       out = do
         xs <- sortBy (comparing fst)
           . concat
@@ -605,7 +607,7 @@ generateNetGoal
 generateNetGoal filterConfig config@NetGoalConfig {..} seed =
   evalRandT generate $ mkStdGen seed
   where
-    checkNetGoal (petri, state, singleSolution, allShortestSolutions) = do
+    checkNetGoal (petri, state, allShortestSolutions) = do
       cmd <- MaybeT $ findM (Monad.lift . isPetriDrawable petri) drawCommands
       let netGoal = NetGoal {
             drawUsing   = cmd,
@@ -616,7 +618,7 @@ generateNetGoal filterConfig config@NetGoalConfig {..} seed =
       guard (not $ areSolutionsTrivial filterConfig availableTransitions allShortestSolutions)
       solutionsList <-
         if filterConfig == noFiltering
-          then pure $ Left singleSolution
+          then pure $ Left (head allShortestSolutions)
           else Right <$> Monad.lift (shuffleM allShortestSolutions)
       pure (netGoal, solutionsList)
     generate = do
