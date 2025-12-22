@@ -55,7 +55,7 @@ module Modelling.PetriNet.Reach.Reach (
 ) where
 
 import qualified Control.Monad.Trans              as Monad (lift)
-import qualified Data.Set                         as S (empty, fromList, member, toList, union)
+import qualified Data.Set                         as S (fromList, member, toList, union, empty)
 
 import Capabilities.Cache               (MonadCache)
 import Capabilities.Diagrams            (MonadDiagrams)
@@ -308,7 +308,7 @@ transitionsValid n =
 -- | Format solutions feedback for display to students.
 -- The Right case will never be the empty list because solutions are only
 -- stored as Right when filterConfig /= noFiltering, and in that case
--- the filtering ensures that valid instances have non-empty solution lists.
+-- the computation ensures that valid instances have non-empty solution lists.
 formatSolutionsFeedback
   :: Int
   -> Either [Transition] [[Transition]]
@@ -574,9 +574,9 @@ possibleNetGoals NetGoalConfig {..} =
         return $ do
           -- Filter out nets with isolated nodes
           guard $ not $ hasIsolatedNodes n
-          (l, levelStates) <-
+          (l, zs) <-
             take (maxTransitionLength + 1) $ zip [0 :: Int ..] $ levelsWithAlternatives n
-          (z', transitionsList) <- levelStates
+          (z', transitionsList) <- zs
           let d = sum $ do
                 p <- ps
                 return $ abs (mark (start n) p - mark z' p)
