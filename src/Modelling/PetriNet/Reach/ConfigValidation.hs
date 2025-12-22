@@ -143,12 +143,15 @@ checkMaxPrintedSolutions
   :: Int             -- ^ maxPrintedSolutions
   -> FilterConfig    -- ^ filterConfig
   -> Maybe String
-checkMaxPrintedSolutions maxPrintedSolutions FilterConfig{..}
+checkMaxPrintedSolutions maxPrintedSolutions filterConfig@FilterConfig{..}
   | maxPrintedSolutions < 0
   = Just "maxPrintedSolutions must be non-negative"
   | maxPrintedSolutions > 0
   , Just maxSolutions <- maxNumberOfSolutions
   , maxPrintedSolutions > maxSolutions
   = Just $ "maxPrintedSolutions (" ++ show maxPrintedSolutions ++ ") cannot be greater than maxNumberOfSolutions (" ++ show maxSolutions ++ ")"
+  | maxPrintedSolutions > 1
+  , filterConfig == noFiltering
+  = Just $ "maxPrintedSolutions should be at most 1 when filterConfig is " ++ show noFiltering ++ " (only one solution is stored)"
   | otherwise
   = Nothing
