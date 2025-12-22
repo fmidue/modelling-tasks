@@ -216,15 +216,15 @@ deadlockAllSolutions net =
     $ map (filter (null . successors net . fst)) $ levelsWithAlternatives net
 
 data DeadlockInstance s t = DeadlockInstance {
-  drawUsing             :: GraphvizCommand,
-  minLength             :: Int,
-  noLongerThan          :: Maybe Int,
-  petriNet              :: Net s t,
-  showPlaceNames        :: Bool,
+  drawUsing         :: GraphvizCommand,
+  minLength         :: Int,
+  noLongerThan      :: Maybe Int,
+  petriNet          :: Net s t,
+  showPlaceNames    :: Bool,
   maxDisplayedSolutions :: Int,
-  solutions             :: Either [t] [[t]],
-  withLengthHint        :: Maybe Int,
-  withMinLengthHint     :: Bool
+  solutions         :: Either [t] [[t]],
+  withLengthHint    :: Maybe Int,
+  withMinLengthHint :: Bool
   } deriving (Generic, Read, Show)
 #if !MIN_VERSION_base(4,18,0)
   deriving Typeable
@@ -257,17 +257,17 @@ data DeadlockConfig = DeadlockConfig {
   numPlaces :: Int,
   numTransitions :: Int,
   capacity :: Capacity Place,
-  drawCommands          :: [GraphvizCommand],
-  maxTransitionLength   :: Int,
-  minTransitionLength   :: Int,
-  postconditionsRange   :: (Int, Maybe Int),
-  preconditionsRange    :: (Int, Maybe Int),
-  maxPrintedSolutions   :: Int,
-  rejectLongerThan      :: Maybe Int,
-  showLengthHint        :: Bool,
-  showMinLengthHint     :: Bool,
-  showPlaceNamesInNet   :: Bool,
-  filterConfig          :: FilterConfig
+  drawCommands        :: [GraphvizCommand],
+  maxTransitionLength :: Int,
+  minTransitionLength :: Int,
+  postconditionsRange :: (Int, Maybe Int),
+  preconditionsRange  :: (Int, Maybe Int),
+  maxPrintedSolutions :: Int,
+  rejectLongerThan    :: Maybe Int,
+  showLengthHint      :: Bool,
+  showMinLengthHint   :: Bool,
+  showPlaceNamesInNet :: Bool,
+  filterConfig        :: FilterConfig
   }
   deriving (Generic, Read, Show)
 #if !MIN_VERSION_base(4,18,0)
@@ -280,17 +280,17 @@ defaultDeadlockConfig =
   numPlaces = 4,
   numTransitions = 4,
   Modelling.PetriNet.Reach.Deadlock.capacity = Unbounded,
-  drawCommands          = [Dot, Neato, TwoPi, Circo, Fdp, Sfdp, Osage, Patchwork],
-  maxTransitionLength   = 8,
-  minTransitionLength   = 8,
-  postconditionsRange   = (0, Nothing),
-  preconditionsRange    = (0, Nothing),
-  maxPrintedSolutions   = 0,
-  rejectLongerThan      = Just 8,
-  showLengthHint        = False,
-  showMinLengthHint     = True,
-  showPlaceNamesInNet   = False,
-  filterConfig          = defaultFilterConfig { maxNumberOfSolutions = Nothing }
+  drawCommands        = [Dot, Neato, TwoPi, Circo, Fdp, Sfdp, Osage, Patchwork],
+  maxTransitionLength = 8,
+  minTransitionLength = 8,
+  postconditionsRange = (0, Nothing),
+  preconditionsRange  = (0, Nothing),
+  maxPrintedSolutions = 0,
+  rejectLongerThan    = Just 8,
+  showLengthHint      = False,
+  showMinLengthHint   = True,
+  showPlaceNamesInNet = False,
+  filterConfig        = defaultFilterConfig { maxNumberOfSolutions = Nothing }
   }
 
 defaultDeadlockInstance :: DeadlockInstance Place Transition

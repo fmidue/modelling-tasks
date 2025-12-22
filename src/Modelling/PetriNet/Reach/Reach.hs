@@ -309,20 +309,25 @@ transitionsValid n =
       german $ t' ++ " ist eine Transition des gegebenen Petrinetzes?"
     isValidTransition =  (`elem` transitions n)
 
+-- | Format solutions feedback for display to students.
+-- The Right case will never contain an empty list because solutions are only
+-- stored as Right when filterConfig /= noFiltering, and in that case
+-- netGoalAllSolutions/deadlockAllSolutions always returns a non-empty list
+-- for valid instances that pass the generation checks.
 formatSolutionsFeedback
   :: Int
   -> Either [Transition] [[Transition]]
   -> Maybe String
-formatSolutionsFeedback maxDisplayValue solutionsList
-  | maxDisplayValue <= 0 = Nothing
+formatSolutionsFeedback maxDisplayedSolutions solutionsList
+  | maxDisplayedSolutions <= 0 = Nothing
   | otherwise = case solutionsList of
       Left singleSolution ->
         Just $ show $ TransitionsList singleSolution
       Right (firstSolution : restSolutions) ->
-        let displayedSolutions = firstSolution : take (maxDisplayValue - 1) restSolutions
+        let displayedSolutions = firstSolution : take (maxDisplayedSolutions - 1) restSolutions
             solutionsText = unlines $ map (show . TransitionsList) displayedSolutions
         in Just $ solutionsText ++
-          if length restSolutions < maxDisplayValue
+          if length restSolutions < maxDisplayedSolutions
             then "\n(These are all solutions.)"
             else "\n(These are possible solutions, but more exist.)"
       Right [] -> error "formatSolutionsFeedback: solutions should never contain an empty list"
@@ -442,15 +447,15 @@ isNoLonger maybeMaxLength ts =
         ]
 
 data ReachInstance s t = ReachInstance {
-  netGoal               :: NetGoal s t,
-  minLength             :: Int,
-  noLongerThan          :: Maybe Int,
-  showGoalNet           :: Bool,
-  showPlaceNames        :: Bool,
+  netGoal           :: NetGoal s t,
+  minLength         :: Int,
+  noLongerThan      :: Maybe Int,
+  showGoalNet       :: Bool,
+  showPlaceNames    :: Bool,
   maxDisplayedSolutions :: Int,
-  solutions             :: Either [t] [[t]],
-  withLengthHint        :: Maybe Int,
-  withMinLengthHint     :: Bool
+  solutions         :: Either [t] [[t]],
+  withLengthHint    :: Maybe Int,
+  withMinLengthHint :: Bool
   }
   deriving (Generic, Read, Show, Data)
 #if !MIN_VERSION_base(4,18,0)
@@ -508,14 +513,14 @@ toShowNetGoal
 toShowNetGoal = bimapNetGoal ShowPlace ShowTransition
 
 data ReachConfig = ReachConfig {
-  netGoalConfig         :: NetGoalConfig,
-  maxPrintedSolutions   :: Int,
-  rejectLongerThan      :: Maybe Int,
-  showLengthHint        :: Bool,
-  showMinLengthHint     :: Bool,
-  showTargetNet         :: Bool,
-  showPlaceNamesInNet   :: Bool,
-  filterConfig          :: FilterConfig
+  netGoalConfig       :: NetGoalConfig,
+  maxPrintedSolutions :: Int,
+  rejectLongerThan    :: Maybe Int,
+  showLengthHint      :: Bool,
+  showMinLengthHint   :: Bool,
+  showTargetNet       :: Bool,
+  showPlaceNamesInNet :: Bool,
+  filterConfig        :: FilterConfig
   }
   deriving (Generic, Read, Show)
 #if !MIN_VERSION_base(4,18,0)
