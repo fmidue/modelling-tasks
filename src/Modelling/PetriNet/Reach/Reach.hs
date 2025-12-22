@@ -321,16 +321,18 @@ formatSolutionsFeedback
   -> Maybe String
 formatSolutionsFeedback maxDisplayedSolutions solutionsList
   | maxDisplayedSolutions <= 0 = Nothing
-  | otherwise = case solutionsList of
+  | otherwise = Just $ case solutionsList of
       Left singleSolution ->
-        Just $ show $ TransitionsList singleSolution
+        show (TransitionsList singleSolution)
+      Right [theOnlySolution] ->
+        show (TransitionsList theOnlySolution) ++ "\n\n(This is the only solution.)"
       Right (firstSolution : restSolutions) ->
         let displayedSolutions = firstSolution : take (maxDisplayedSolutions - 1) restSolutions
             solutionsText = unlines $ map (show . TransitionsList) displayedSolutions
-        in Just $ solutionsText ++
+        in solutionsText ++
           if length restSolutions < maxDisplayedSolutions
-            then "\n(These are all solutions.)"
-            else "\n(These are possible solutions, but more exist.)"
+            then "\n(These are all the solutions.)"
+            else "\n(These are solutions, but more exist.)"
       Right [] -> error "formatSolutionsFeedback: solution list should never be empty"
 
 reachEvaluation
