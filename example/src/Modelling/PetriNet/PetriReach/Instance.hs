@@ -45,7 +45,8 @@ task5 = ReachInstance {
   noLongerThan = Nothing,
   showGoalNet = True,
   showPlaceNames = False,
-  showSolution = True,
+  maxDisplayedSolutions = 1,
+  solutions = Left [], -- TO DO: add a solution here
   withLengthHint = Just 12,
   withMinLengthHint = True
   }

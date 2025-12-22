@@ -22,7 +22,7 @@ task2023_27 = ReachConfig {
     postconditionsRange = (2, Just 3),
     preconditionsRange = (2, Just 2)
     },
-  printSolution = True,
+  maxPrintedSolutions = 10,
   rejectLongerThan = Just 8,
   showLengthHint = False,
   showMinLengthHint = True,
@@ -46,7 +46,7 @@ task2023_28 = ReachConfig {
     postconditionsRange = (2, Just 3),
     preconditionsRange = (2, Just 2)
     },
-  printSolution = True,
+  maxPrintedSolutions = 10,
   rejectLongerThan = Just 12,
   showLengthHint = False,
   showMinLengthHint = True,
@@ -82,7 +82,7 @@ task2024_60 = ReachConfig {
     postconditionsRange = (2, Just 3),
     preconditionsRange = (2, Just 2)
     },
-  printSolution = True,
+  maxPrintedSolutions = 10,
   rejectLongerThan = Just 8,
   showLengthHint = False,
   showMinLengthHint = True,

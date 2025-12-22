@@ -31,7 +31,6 @@ module Modelling.PetriNet.Reach.Reach (
   -- * Solutions
   netGoalSolution,
   netGoalAllSolutions,
-  reachSolution,
 
   -- * Task creation
   reachTask,
@@ -56,6 +55,7 @@ module Modelling.PetriNet.Reach.Reach (
   reportReachFor,
   transitionsValid,
   levelsWithAlternatives,
+  formatSolutionsFeedback,
 ) where
 
 import qualified Control.Monad.Trans              as Monad (lift)
@@ -73,13 +73,14 @@ import Modelling.PetriNet.Reach.Filter (
   FilterConfig (..),
   areSolutionsTrivial,
   defaultFilterConfig,
+  noFiltering,
   )
 import Modelling.PetriNet.Reach.Property (
   Property (Default),
   validate,
   )
 import Modelling.PetriNet.Reach.Roll    (netLimits)
-import Modelling.PetriNet.Reach.Step    (executes, levels, levels', successors)
+import Modelling.PetriNet.Reach.Step    (executes, levels', successors)
 import Modelling.PetriNet.Reach.Type (
   Capacity (Unbounded),
   Net (start, transitions),
@@ -105,6 +106,7 @@ import Control.Monad.Trans.Maybe        (MaybeT (MaybeT, runMaybeT))
 import Modelling.PetriNet.Reach.ConfigValidation (
   checkBasicPetriConfig,
   checkFilterConfigWith,
+  checkMaxPrintedSolutions,
   )
 import Control.OutputCapable.Blocks (
   ArticleToUse (IndefiniteArticle),
@@ -127,12 +129,14 @@ import Control.OutputCapable.Blocks.Generic (
   )
 import Control.Monad.Random             (MonadRandom, mkStdGen)
 import Control.Monad.Trans.Random       (evalRandT)
-import Data.Bifunctor                   (Bifunctor (second))
+import System.Random.Shuffle            (shuffleM)
+import Data.Bifunctor                   (Bifunctor (second), bimap)
 import Data.Either.Combinators          (whenRight)
 import Data.Foldable                    (sequenceA_, traverse_)
 import Data.GraphViz                    (GraphvizCommand (..))
 import Data.List                        (find, singleton, sortBy)
 import Data.List.Extra                  (groupSort, nubSort)
+import Data.Tuple.Extra                 (fst3)
 import Data.Maybe                       (fromMaybe)
 import Data.Ord                         (comparing)
 import Data.Ratio                       ((%))
@@ -306,6 +310,31 @@ transitionsValid n =
       german $ t' ++ " ist eine Transition des gegebenen Petrinetzes?"
     isValidTransition =  (`elem` transitions n)
 
+-- | Format solutions feedback for display to students.
+-- The Right case will never be the empty list because solutions are only
+-- stored as Right when filterConfig /= noFiltering, and in that case
+-- netGoalAllSolutions/deadlockAllSolutions always returns a non-empty list
+-- for valid instances that pass the generation checks.
+formatSolutionsFeedback
+  :: Int
+  -> Either [Transition] [[Transition]]
+  -> Maybe String
+formatSolutionsFeedback maxDisplayedSolutions solutionsList
+  | maxDisplayedSolutions <= 0 = Nothing
+  | otherwise = Just $ case solutionsList of
+      Left singleSolution ->
+        show (TransitionsList singleSolution)
+      Right [theOnlySolution] ->
+        show (TransitionsList theOnlySolution) ++ "\n\n(This is the only solution.)"
+      Right (firstSolution : restSolutions) ->
+        let displayedSolutions = firstSolution : take (maxDisplayedSolutions - 1) restSolutions
+            solutionsText = unlines $ map (show . TransitionsList) displayedSolutions
+        in solutionsText ++
+          if length restSolutions < maxDisplayedSolutions
+            then "\n(These are all the solutions.)"
+            else "\n(These are solutions, but more exist.)"
+      Right [] -> error "formatSolutionsFeedback: solution list should never be empty"
+
 reachEvaluation
   :: (
     Alternative m,
@@ -341,9 +370,7 @@ reachEvaluation path reach ts =
   where
     reachInstance = toShowReachInstance reach
     n = petriNet (netGoal reachInstance)
-    aSolution
-      | showSolution reach = Just $ show $ TransitionsList $ reachSolution reach
-      | otherwise = Nothing
+    aSolution = formatSolutionsFeedback (maxDisplayedSolutions reach) (solutions reach)
 
 netGoalSolution :: Ord s => NetGoal s t -> [t]
 netGoalSolution netGoal = reverse $ snd $ head $ concatMap
@@ -380,9 +407,6 @@ levelsWithAlternatives n =
               ]
          in xs : f done' next
   in f S.empty [(start n, [[]])]
-
-reachSolution :: Ord s => ReachInstance s t -> [t]
-reachSolution inst = netGoalSolution (netGoal inst)
 
 assertReachPoints
   :: OutputCapable m
@@ -431,7 +455,8 @@ data ReachInstance s t = ReachInstance {
   noLongerThan      :: Maybe Int,
   showGoalNet       :: Bool,
   showPlaceNames    :: Bool,
-  showSolution      :: Bool,
+  maxDisplayedSolutions :: Int,
+  solutions         :: Either [t] [[t]],
   withLengthHint    :: Maybe Int,
   withMinLengthHint :: Bool
   }
@@ -462,7 +487,8 @@ bimapReachInstance f g ReachInstance {..} = ReachInstance {
     noLongerThan      = noLongerThan,
     showGoalNet       = showGoalNet,
     showPlaceNames    = showPlaceNames,
-    showSolution      = showSolution,
+    maxDisplayedSolutions = maxDisplayedSolutions,
+    solutions         = bimap (map g) (map (map g)) solutions,
     withLengthHint    = withLengthHint,
     withMinLengthHint = withMinLengthHint
     }
@@ -491,7 +517,7 @@ toShowNetGoal = bimapNetGoal ShowPlace ShowTransition
 
 data ReachConfig = ReachConfig {
   netGoalConfig       :: NetGoalConfig,
-  printSolution       :: Bool,
+  maxPrintedSolutions :: Int,
   rejectLongerThan    :: Maybe Int,
   showLengthHint      :: Bool,
   showMinLengthHint   :: Bool,
@@ -531,7 +557,7 @@ defaultReachConfig = ReachConfig {
     postconditionsRange = (0, Nothing),
     preconditionsRange  = (0, Nothing)
     },
-  printSolution       = False,
+  maxPrintedSolutions = 0,
   rejectLongerThan    = Just 6,
   showLengthHint      = False,
   showMinLengthHint   = True,
@@ -551,7 +577,8 @@ defaultReachInstance = ReachInstance {
   noLongerThan      = Nothing,
   showGoalNet       = True,
   showPlaceNames    = False,
-  showSolution      = False,
+  maxDisplayedSolutions = 0,
+  solutions         = Left [], -- TO DO: add a solution
   withLengthHint    = Just 12,
   withMinLengthHint = False
 }
@@ -559,7 +586,7 @@ defaultReachInstance = ReachInstance {
 possibleNetGoals
   :: MonadRandom m
   => NetGoalConfig
-  -> m [(Net Place Transition, State Place)]
+  -> m [(Net Place Transition, State Place, [Transition])]
 possibleNetGoals NetGoalConfig {..} =
   let ps = [Place 1 .. Place numPlaces]
       tries = forM [1 :: Int .. 1000] $ const $ do
@@ -571,12 +598,13 @@ possibleNetGoals NetGoalConfig {..} =
           -- Filter out nets with isolated nodes
           guard $ not $ hasIsolatedNodes n
           (l,zs) <-
-            take (maxTransitionLength + 1) $ zip [0 :: Int ..] $ levels n
-          z' <- zs
+            take (maxTransitionLength + 1) $ zip [0 :: Int ..] $ levels' n
+          (z', transitions) <- zs
           let d = sum $ do
                 p <- ps
                 return $ abs (mark (start n) p - mark z' p)
-          return ((negate l, d), (n, z'))
+              solutionSequence = reverse transitions
+          return ((negate l, d), (n, z', solutionSequence))
       out = do
         xs <- sortBy (comparing fst)
           . concat
@@ -592,30 +620,32 @@ possibleNetGoals NetGoalConfig {..} =
     (nLow, nHigh) = fixMaximum postconditionsRange
     ts = [Transition 1 .. Transition numTransitions]
 
-toNetGoal :: ((Net s t, State s), GraphvizCommand) -> NetGoal s t
-toNetGoal ((petri, state), cmd) = NetGoal {
-  drawUsing   = cmd,
-  goal        = state,
-  petriNet    = petri
-  }
-
 -- | Generate NetGoal with filtering for trivial solutions
 generateNetGoal
   :: (MonadCatch m, MonadDiagrams m, MonadGraphviz m)
   => FilterConfig
   -> NetGoalConfig
   -> Int
-  -> m (NetGoal Place Transition)
+  -> m (NetGoal Place Transition, Either [Transition] [[Transition]])
 generateNetGoal filterConfig config@NetGoalConfig {..} seed =
   evalRandT generate $ mkStdGen seed
   where
     checkNetGoal pn = do
-      netGoal <- MaybeT $ fmap (toNetGoal . (pn,)) <$>
-        findM (Monad.lift . isPetriDrawable (fst pn)) drawCommands
-      let allSolutions = netGoalAllSolutions netGoal
-          availableTransitions = transitions $ petriNet netGoal
-      guard (not $ areSolutionsTrivial filterConfig availableTransitions allSolutions)
-      pure netGoal
+      cmd <- MaybeT $ findM (Monad.lift . isPetriDrawable (fst3 pn)) drawCommands
+      let (petri, state, singleSolution) = pn
+          netGoal = NetGoal {
+            drawUsing   = cmd,
+            goal        = state,
+            petriNet    = petri
+          }
+          allShortestSolutions = netGoalAllSolutions netGoal
+          availableTransitions = transitions petri
+      guard (not $ areSolutionsTrivial filterConfig availableTransitions allShortestSolutions)
+      solutionsList <-
+        if filterConfig == noFiltering
+          then pure $ Left singleSolution
+          else Right <$> Monad.lift (shuffleM allShortestSolutions)
+      pure (netGoal, solutionsList)
     generate = do
       xs <- possibleNetGoals config
       maybeNetGoal <- runMaybeT $ msum $ map checkNetGoal xs
@@ -641,6 +671,8 @@ checkReachConfig ReachConfig {..} =
     (maxTransitionLength netGoalConfig)
     filterConfig
   <|>
+  checkMaxPrintedSolutions maxPrintedSolutions filterConfig
+  <|>
   if showTargetNet || showPlaceNamesInNet
       then Nothing
       else Just "At least one of showTargetNet or showPlaceNamesInNet must be True"
@@ -651,14 +683,15 @@ generateReach
   -> Int
   -> m (ReachInstance Place Transition)
 generateReach ReachConfig {..} seed = do
-  netGoal <- generateNetGoal filterConfig netGoalConfig seed
+  (netGoal, solutionsList) <- generateNetGoal filterConfig netGoalConfig seed
   pure $ ReachInstance {
     netGoal           = netGoal,
     minLength         = minTransitionLength netGoalConfig,
     noLongerThan      = rejectLongerThan,
     showGoalNet       = showTargetNet,
     showPlaceNames    = showPlaceNamesInNet,
-    showSolution      = printSolution,
+    solutions         = solutionsList,
+    maxDisplayedSolutions = maxPrintedSolutions,
     withLengthHint    =
       if showLengthHint then Just $ maxTransitionLength netGoalConfig else Nothing,
     withMinLengthHint = showMinLengthHint

@@ -8,7 +8,6 @@ import Modelling.PetriNet.Reach.Deadlock (
   defaultDeadlockConfig,
   generateDeadlock,
   checkDeadlockConfig,
-  deadlockAllSolutions,
   )
 import Modelling.PetriNet.Reach.Filter (
   areSolutionsTrivial,
@@ -55,9 +54,11 @@ spec = do
         quickCheckWith stdArgs {maxSuccess = 15} $ property $ \seed -> do
           let config = defaultDeadlockConfig
           deadlockInstance <- generateDeadlock config seed
-          let solutions = deadlockAllSolutions (petriNet deadlockInstance)
+          let allSolutions = case solutions deadlockInstance of
+                Left single -> [single]
+                Right multiple -> multiple
               availableTransitions = transitions (petriNet deadlockInstance)
-          solutions `shouldSatisfy` not . areSolutionsTrivial (filterConfig config) availableTransitions
+          allSolutions `shouldSatisfy` not . areSolutionsTrivial (filterConfig config) availableTransitions
 
   describe "checkDeadlockConfig" $ do
     it "accepts valid configuration" $ do
