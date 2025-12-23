@@ -136,5 +136,3 @@ checkFilterConfigWith rejectLongerThan minTransitionLength maxTransitionLength f
   = Just "minTransitionCoverage must be a value from 0 to 1"
   | otherwise
   = Nothing
-
-
