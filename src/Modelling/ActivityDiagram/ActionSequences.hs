@@ -163,8 +163,8 @@ levelsCheckAS input actions n =
         in union (f as consume) (f (a:as) notConsume)
   in f input [(start n, [])]
 
--- | Variant of levelsWithAlternatives that manages visited states per path rather than globally.
--- This allows exploring cycles while preventing infinite loops within each path.
+-- | Variant of levelsWithAlternatives that computes only one path per state, while managing visited states per path rather than globally.
+-- The latter aspect in particular allows exploring cycles while preventing infinite loops within each path.
 levelsWithCycles :: Ord s => Net s t -> [[(State s, [t])]]
 levelsWithCycles n =
   let f [] = []
