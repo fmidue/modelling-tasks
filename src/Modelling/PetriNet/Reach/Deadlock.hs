@@ -354,7 +354,7 @@ tries n filterConfig conf seed = eval out
       cmd <- MaybeT $ findM (Monad.lift . isPetriDrawable pn) (drawCommands conf)
       solutionsList <-
         if filterConfig == noFiltering
-          then pure $ Left (take (maxPrintedSolutions conf) allShortestSolutions)
+          then pure $ Left (take (max 1 (maxPrintedSolutions conf)) allShortestSolutions)
           else if maxPrintedSolutions conf >= length allShortestSolutions
             then pure $ Right allShortestSolutions
             else Right <$> Monad.lift (shuffleM allShortestSolutions)

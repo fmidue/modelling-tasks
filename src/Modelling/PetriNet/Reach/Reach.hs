@@ -306,9 +306,7 @@ transitionsValid n =
     isValidTransition =  (`elem` transitions n)
 
 -- | Format solutions feedback for display to students.
--- The Right case will never be the empty list because solutions are only
--- stored as Right when filterConfig /= noFiltering, and in that case
--- the computation ensures that valid instances have non-empty solution lists.
+-- Neither case will ever be the empty list.
 formatSolutionsFeedback
   :: Int
   -> Either [[Transition]] [[Transition]]
@@ -316,15 +314,18 @@ formatSolutionsFeedback
 formatSolutionsFeedback maxDisplayedSolutions solutionsList
   | maxDisplayedSolutions <= 0 = Nothing
   | otherwise = Just $ case solutionsList of
-      Left [theOnlySolution] ->
-        show (TransitionsList theOnlySolution) ++ "\n\n(This is the only shortest solution.)"
+      Left [] -> error "formatSolutionsFeedback: solution list should never be empty"
+      Left [oneSolution] ->
+        show (TransitionsList oneSolution) ++
+          if 1 < maxDisplayedSolutions
+            then "\n\n(This is the one shortest solution.)"
+            else "\n\n(This is a shortest solution, but more may exist.)"
       Left shortestSolutions ->
-        let displayedSolutions = take maxDisplayedSolutions shortestSolutions
-            solutionsText = unlines $ map (show . TransitionsList) displayedSolutions
+        let solutionsText = unlines $ map (show . TransitionsList) shortestSolutions
         in solutionsText ++
-          if length shortestSolutions <= maxDisplayedSolutions
+          if length shortestSolutions < maxDisplayedSolutions
             then "\n(These are all the shortest solutions.)"
-            else "\n(These are shortest solutions, but more exist.)"
+            else "\n(These are shortest solutions, but more may exist.)"
       Right [theOnlySolution] ->
         show (TransitionsList theOnlySolution) ++ "\n\n(This is the only solution.)"
       Right (firstSolution : restSolutions) ->
@@ -626,7 +627,7 @@ generateNetGoal filterConfig maxPrintedSolutions config@NetGoalConfig {..} seed 
       guard (not $ areSolutionsTrivial filterConfig availableTransitions allShortestSolutions)
       solutionsList <-
         if filterConfig == noFiltering
-          then pure $ Left (take maxPrintedSolutions allShortestSolutions)
+          then pure $ Left (take (max 1 maxPrintedSolutions) allShortestSolutions)
           else if maxPrintedSolutions >= length allShortestSolutions
             then pure $ Right allShortestSolutions
             else Right <$> Monad.lift (shuffleM allShortestSolutions)
