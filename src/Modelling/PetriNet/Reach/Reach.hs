@@ -574,13 +574,13 @@ possibleNetGoals NetGoalConfig {..} =
         return $ do
           -- Filter out nets with isolated nodes
           guard $ not $ hasIsolatedNodes n
-          (l, zs) <-
+          (l,zs) <-
             take (maxTransitionLength + 1) $ zip [0 :: Int ..] $ levelsWithAlternatives n
-          (z', transitionsList) <- zs
+          (z', transitionSequences) <- zs
           let d = sum $ do
                 p <- ps
                 return $ abs (mark (start n) p - mark z' p)
-              allShortestSolutions = map reverse transitionsList
+              allShortestSolutions = map reverse transitionSequences
           return ((negate l, d), (n, z', allShortestSolutions))
       out = do
         xs <- sortBy (comparing fst)
