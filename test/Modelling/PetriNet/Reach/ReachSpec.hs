@@ -70,8 +70,8 @@ spec = do
               minTransitionLength = 8
               }
         inst <- generateReach config seed
-        let allSolutions = case solutions inst of
-              Left single -> [single]
+        let allSolutions = case shortestSolutions inst of
+              Left shortestOnly -> shortestOnly
               Right multiple -> multiple
             availableTransitions = transitions $ petriNet $ netGoal inst
         allSolutions `shouldSatisfy` not . areSolutionsTrivial (filterConfig config) availableTransitions

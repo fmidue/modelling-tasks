@@ -311,13 +311,20 @@ transitionsValid n =
 -- the computation ensures that valid instances have non-empty solution lists.
 formatSolutionsFeedback
   :: Int
-  -> Either [Transition] [[Transition]]
+  -> Either [[Transition]] [[Transition]]
   -> Maybe String
 formatSolutionsFeedback maxDisplayedSolutions solutionsList
   | maxDisplayedSolutions <= 0 = Nothing
   | otherwise = Just $ case solutionsList of
-      Left singleSolution ->
-        show (TransitionsList singleSolution)
+      Left [theOnlySolution] ->
+        show (TransitionsList theOnlySolution) ++ "\n\n(This is the only shortest solution.)"
+      Left shortestSolutions ->
+        let displayedSolutions = take maxDisplayedSolutions shortestSolutions
+            solutionsText = unlines $ map (show . TransitionsList) displayedSolutions
+        in solutionsText ++
+          if length shortestSolutions <= maxDisplayedSolutions
+            then "\n(These are all the shortest solutions.)"
+            else "\n(These are shortest solutions, but more exist.)"
       Right [theOnlySolution] ->
         show (TransitionsList theOnlySolution) ++ "\n\n(This is the only solution.)"
       Right (firstSolution : restSolutions) ->
@@ -364,7 +371,7 @@ reachEvaluation path reach ts =
   where
     reachInstance = toShowReachInstance reach
     n = petriNet (netGoal reachInstance)
-    aSolution = formatSolutionsFeedback (maxDisplayedSolutions reach) (solutions reach)
+    aSolution = formatSolutionsFeedback (maxDisplayedSolutions reach) (shortestSolutions reach)
 
 {-|
 Find all shortest paths to all reachable markings
@@ -433,7 +440,7 @@ data ReachInstance s t = ReachInstance {
   showGoalNet       :: Bool,
   showPlaceNames    :: Bool,
   maxDisplayedSolutions :: Int,
-  solutions         :: Either [t] [[t]],
+  shortestSolutions :: Either [[t]] [[t]],
   withLengthHint    :: Maybe Int,
   withMinLengthHint :: Bool
   }
@@ -465,7 +472,7 @@ bimapReachInstance f g ReachInstance {..} = ReachInstance {
     showGoalNet       = showGoalNet,
     showPlaceNames    = showPlaceNames,
     maxDisplayedSolutions = maxDisplayedSolutions,
-    solutions         = bimap (map g) (map (map g)) solutions,
+    shortestSolutions = bimap (map (map g)) (map (map g)) shortestSolutions,
     withLengthHint    = withLengthHint,
     withMinLengthHint = withMinLengthHint
     }
@@ -555,7 +562,7 @@ defaultReachInstance = ReachInstance {
   showGoalNet       = True,
   showPlaceNames    = False,
   maxDisplayedSolutions = 0,
-  solutions         = Left [], -- TO DO: add a solution
+  shortestSolutions = Left [], -- TO DO: add a solution
   withLengthHint    = Just 12,
   withMinLengthHint = False
 }
@@ -601,10 +608,11 @@ possibleNetGoals NetGoalConfig {..} =
 generateNetGoal
   :: (MonadCatch m, MonadDiagrams m, MonadGraphviz m)
   => FilterConfig
+  -> Int
   -> NetGoalConfig
   -> Int
-  -> m (NetGoal Place Transition, Either [Transition] [[Transition]])
-generateNetGoal filterConfig config@NetGoalConfig {..} seed =
+  -> m (NetGoal Place Transition, Either [[Transition]] [[Transition]])
+generateNetGoal filterConfig maxPrintedSolutions config@NetGoalConfig {..} seed =
   evalRandT generate $ mkStdGen seed
   where
     checkNetGoal (petri, state, allShortestSolutions) = do
@@ -618,8 +626,10 @@ generateNetGoal filterConfig config@NetGoalConfig {..} seed =
       guard (not $ areSolutionsTrivial filterConfig availableTransitions allShortestSolutions)
       solutionsList <-
         if filterConfig == noFiltering
-          then pure $ Left (head allShortestSolutions)
-          else Right <$> Monad.lift (shuffleM allShortestSolutions)
+          then pure $ Left (take maxPrintedSolutions allShortestSolutions)
+          else if maxPrintedSolutions >= length allShortestSolutions
+            then pure $ Right allShortestSolutions
+            else Right <$> Monad.lift (shuffleM allShortestSolutions)
       pure (netGoal, solutionsList)
     generate = do
       xs <- possibleNetGoals config
@@ -658,14 +668,14 @@ generateReach
   -> Int
   -> m (ReachInstance Place Transition)
 generateReach ReachConfig {..} seed = do
-  (netGoal, solutionsList) <- generateNetGoal filterConfig netGoalConfig seed
+  (netGoal, solutionsList) <- generateNetGoal filterConfig maxPrintedSolutions netGoalConfig seed
   pure $ ReachInstance {
     netGoal           = netGoal,
     minLength         = minTransitionLength netGoalConfig,
     noLongerThan      = rejectLongerThan,
     showGoalNet       = showTargetNet,
     showPlaceNames    = showPlaceNamesInNet,
-    solutions         = solutionsList,
+    shortestSolutions = solutionsList,
     maxDisplayedSolutions = maxPrintedSolutions,
     withLengthHint    =
       if showLengthHint then Just $ maxTransitionLength netGoalConfig else Nothing,

@@ -199,7 +199,7 @@ deadlockEvaluation path deadlock ts =
   where
     deadlockInstance = toShowDeadlockInstance deadlock
     n = petriNet deadlockInstance
-    aSolution = formatSolutionsFeedback (maxDisplayedSolutions deadlock) (solutions deadlock)
+    aSolution = formatSolutionsFeedback (maxDisplayedSolutions deadlock) (shortestSolutions deadlock)
 
 data DeadlockInstance s t = DeadlockInstance {
   drawUsing         :: GraphvizCommand,
@@ -208,7 +208,7 @@ data DeadlockInstance s t = DeadlockInstance {
   petriNet          :: Net s t,
   showPlaceNames    :: Bool,
   maxDisplayedSolutions :: Int,
-  solutions         :: Either [t] [[t]],
+  shortestSolutions :: Either [[t]] [[t]],
   withLengthHint    :: Maybe Int,
   withMinLengthHint :: Bool
   } deriving (Generic, Read, Show)
@@ -229,7 +229,7 @@ bimapDeadlockInstance f g DeadlockInstance {..} = DeadlockInstance {
     petriNet          = bimapNet f g petriNet,
     showPlaceNames    = showPlaceNames,
     maxDisplayedSolutions = maxDisplayedSolutions,
-    solutions         = bimap (map g) (map (map g)) solutions,
+    shortestSolutions = bimap (map (map g)) (map (map g)) shortestSolutions,
     withLengthHint    = withLengthHint,
     withMinLengthHint = withMinLengthHint
     }
@@ -287,7 +287,7 @@ defaultDeadlockInstance = DeadlockInstance {
   petriNet          = fst example,
   showPlaceNames    = False,
   maxDisplayedSolutions = 0,
-  solutions         = Left [], -- TO DO: add a solution
+  shortestSolutions = Left [], -- TO DO: add a solution
   withLengthHint    = Just 9,
   withMinLengthHint = True
   }
@@ -328,7 +328,7 @@ generateDeadlock conf@DeadlockConfig {..} seed = do
     petriNet          = petri,
     showPlaceNames    = showPlaceNamesInNet,
     maxDisplayedSolutions = maxPrintedSolutions,
-    solutions         = solutionsList,
+    shortestSolutions = solutionsList,
     withLengthHint    =
       if showLengthHint then Just maxTransitionLength else Nothing,
     withMinLengthHint = showMinLengthHint
@@ -340,7 +340,7 @@ tries
   -> FilterConfig
   -> DeadlockConfig
   -> Int
-  -> m (Net Place Transition, GraphvizCommand, Either [Transition] [[Transition]])
+  -> m (Net Place Transition, GraphvizCommand, Either [[Transition]] [[Transition]])
 tries n filterConfig conf seed = eval out
   where
     eval f = evalRandT f $ mkStdGen seed
@@ -354,8 +354,10 @@ tries n filterConfig conf seed = eval out
       cmd <- MaybeT $ findM (Monad.lift . isPetriDrawable pn) (drawCommands conf)
       solutionsList <-
         if filterConfig == noFiltering
-          then pure $ Left (head allShortestSolutions)
-          else Right <$> Monad.lift (shuffleM allShortestSolutions)
+          then pure $ Left (take (maxPrintedSolutions conf) allShortestSolutions)
+          else if maxPrintedSolutions conf >= length allShortestSolutions
+            then pure $ Right allShortestSolutions
+            else Right <$> Monad.lift (shuffleM allShortestSolutions)
       pure (pn, cmd, solutionsList)
 
 try :: MonadRandom m => DeadlockConfig -> m [(Int, Net Place Transition, [[Transition]])]

@@ -54,8 +54,8 @@ spec = do
         quickCheckWith stdArgs {maxSuccess = 15} $ property $ \seed -> do
           let config = defaultDeadlockConfig
           deadlockInstance <- generateDeadlock config seed
-          let allSolutions = case solutions deadlockInstance of
-                Left single -> [single]
+          let allSolutions = case shortestSolutions deadlockInstance of
+                Left shortestOnly -> shortestOnly
                 Right multiple -> multiple
               availableTransitions = transitions (petriNet deadlockInstance)
           allSolutions `shouldSatisfy` not . areSolutionsTrivial (filterConfig config) availableTransitions
