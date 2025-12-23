@@ -64,7 +64,6 @@ import Modelling.PetriNet.Reach.Property (
 import Modelling.PetriNet.Reach.ConfigValidation (
   checkBasicPetriConfig,
   checkFilterConfigWith,
-  checkMaxPrintedSolutions,
   )
 import Modelling.PetriNet.Reach.Reach   (
   assertReachPoints,
@@ -312,7 +311,12 @@ checkDeadlockConfig DeadlockConfig {..} =
     maxTransitionLength
     filterConfig
   <|>
-  checkMaxPrintedSolutions maxPrintedSolutions filterConfig
+  (if maxPrintedSolutions < 0
+    then Just "maxPrintedSolutions must be non-negative"
+    else case maxNumberOfSolutions filterConfig of
+      Just maxSolutions | maxPrintedSolutions > maxSolutions ->
+        Just "maxPrintedSolutions cannot be greater than maxNumberOfSolutions"
+      _ -> Nothing)
 
 generateDeadlock
   :: (MonadCatch m, MonadDiagrams m, MonadGraphviz m)

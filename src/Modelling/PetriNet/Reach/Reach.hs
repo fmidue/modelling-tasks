@@ -102,7 +102,6 @@ import Control.Monad.Trans.Maybe        (MaybeT (MaybeT, runMaybeT))
 import Modelling.PetriNet.Reach.ConfigValidation (
   checkBasicPetriConfig,
   checkFilterConfigWith,
-  checkMaxPrintedSolutions,
   )
 import Control.OutputCapable.Blocks (
   ArticleToUse (IndefiniteArticle),
@@ -657,7 +656,12 @@ checkReachConfig ReachConfig {..} =
     (maxTransitionLength netGoalConfig)
     filterConfig
   <|>
-  checkMaxPrintedSolutions maxPrintedSolutions filterConfig
+  (if maxPrintedSolutions < 0
+    then Just "maxPrintedSolutions must be non-negative"
+    else case maxNumberOfSolutions filterConfig of
+      Just maxSolutions | maxPrintedSolutions > maxSolutions ->
+        Just "maxPrintedSolutions cannot be greater than maxNumberOfSolutions"
+      _ -> Nothing)
   <|>
   if showTargetNet || showPlaceNamesInNet
       then Nothing
