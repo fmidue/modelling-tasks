@@ -311,12 +311,12 @@ checkDeadlockConfig DeadlockConfig {..} =
     maxTransitionLength
     filterConfig
   <|>
-  (if maxPrintedSolutions < 0
+  if maxPrintedSolutions < 0
     then Just "maxPrintedSolutions must be non-negative"
     else case maxNumberOfSolutions filterConfig of
       Just maxSolutions | maxPrintedSolutions > maxSolutions ->
         Just "maxPrintedSolutions cannot be greater than maxNumberOfSolutions"
-      _ -> Nothing)
+      _ -> Nothing
 
 generateDeadlock
   :: (MonadCatch m, MonadDiagrams m, MonadGraphviz m)
