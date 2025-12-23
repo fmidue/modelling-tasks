@@ -39,7 +39,7 @@ examWs2024 = DeadlockInstance {
     },
   showPlaceNames = False,
   maxDisplayedSolutions = 1,
-  solutions = Left [], -- TO DO: add a solution here
+  shortestSolutions = Left [], -- TO DO: add a solution here
   withLengthHint = Just 14,
   withMinLengthHint = True
   }
