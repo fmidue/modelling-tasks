@@ -7,21 +7,24 @@ import Modelling.PetriNet.Reach.Deadlock (
   DeadlockConfig (..),
   DeadlockInstance (..),
   defaultDeadlockConfig,
+  defaultDeadlockInstance,
   generateDeadlock,
   checkDeadlockConfig,
+  deadlockSyntax,
   )
 import Modelling.PetriNet.Reach.Filter (
   areSolutionsTrivial,
   noFiltering,
   )
 import Modelling.PetriNet.Reach.Step    (successors)
-import Modelling.PetriNet.Reach.Type    (Net (transitions), Capacity(..), Place(..))
+import Modelling.PetriNet.Reach.Type    (Net (transitions), Capacity(..), Place(..), Transition(..))
 
 import Data.Maybe                       (isJust)
 import qualified Data.Map                 as M
 import Modelling.PetriNet.Reach.ReachSpec (
   hasMinTransitionLength,
   )
+import Control.OutputCapable.Blocks.Generic (runLangMReport)
 
 import Settings (needsTuning)
 
@@ -93,3 +96,36 @@ spec = do
             capacity = Bounded (M.fromList [(Place 1, 3), (Place 2, 5)])
             }
       checkDeadlockConfig config `shouldSatisfy` isJust
+
+  describe "deadlockSyntax" $ do
+    it "rejects Spaceballs pattern when minSpaceballsLength is set" $ do
+      let inst = defaultDeadlockInstance { minSpaceballsLength = Just 4 }
+          spaceballsSequence = [Transition 1, Transition 2, Transition 3, Transition 4]
+      result <- testDeadlockSyntax inst spaceballsSequence
+      result `shouldSatisfy` not
+
+    it "accepts non-Spaceballs pattern when minSpaceballsLength is set" $ do
+      let inst = defaultDeadlockInstance { minSpaceballsLength = Just 4 }
+          nonSpaceballsSequence = [Transition 1, Transition 3, Transition 2, Transition 4]
+      result <- testDeadlockSyntax inst nonSpaceballsSequence
+      result `shouldBe` True
+
+    it "accepts Spaceballs pattern when minSpaceballsLength is Nothing" $ do
+      let inst = defaultDeadlockInstance { minSpaceballsLength = Nothing }
+          spaceballsSequence = [Transition 1, Transition 2, Transition 3, Transition 4]
+      result <- testDeadlockSyntax inst spaceballsSequence
+      result `shouldBe` True
+
+    it "rejects Spaceballs prefix when sequence is longer" $ do
+      let inst = defaultDeadlockInstance { minSpaceballsLength = Just 4 }
+          sequenceWithSpaceballsPrefix = [Transition 1, Transition 2, Transition 3, Transition 4, Transition 1, Transition 3]
+      result <- testDeadlockSyntax inst sequenceWithSpaceballsPrefix
+      result `shouldSatisfy` not
+
+testDeadlockSyntax :: DeadlockInstance Place Transition -> [Transition] -> IO Bool
+testDeadlockSyntax inst transitionSequence = do
+  (maybeResult, _output) <- runLangMReport (return () :: IO ()) (>>) (deadlockSyntax inst transitionSequence)
+  return $ case maybeResult of
+    Just () -> True
+    Nothing -> False
+

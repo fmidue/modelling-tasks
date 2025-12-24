@@ -75,6 +75,7 @@ import Modelling.PetriNet.Reach.Filter (
   hasSpaceballsPrefix,
   noFiltering,
   )
+import qualified Modelling.PetriNet.Reach.Filter as Filter
 import Modelling.PetriNet.Reach.Property (
   Property (Default),
   validate,
@@ -296,7 +297,7 @@ reachSyntax
 reachSyntax inst ts =
   do transitionsValid (petriNet (netGoal inst)) ts
      isNoLonger (noLongerThan inst) ts
-     rejectSpaceballsPattern (minSpaceballsLength inst) ts
+     rejectSpaceballsPattern (Modelling.PetriNet.Reach.Reach.minSpaceballsLength inst) ts
      pure ()
 
 transitionsValid :: OutputCapable m => Net s Transition -> [Transition] -> LangM m
@@ -445,7 +446,7 @@ rejectSpaceballsPattern maybeMinSpaceballsLength ts =
   whenJust maybeMinSpaceballsLength $ \minLength ->
     when (hasSpaceballsPrefix minLength ts) $ do
       let spaceballsPrefix = take minLength ts
-          prefixString = show $ TransitionsList spaceballsPrefix
+          prefixString = show spaceballsPrefix
       assertion False $ translate $ do
         english $ concat [
           "The solution (prefix) ",
@@ -720,5 +721,5 @@ generateReach ReachConfig {..} seed = do
     withLengthHint    =
       if showLengthHint then Just $ maxTransitionLength netGoalConfig else Nothing,
     withMinLengthHint = showMinLengthHint,
-    minSpaceballsLength = minSpaceballsLength filterConfig
+    minSpaceballsLength = Filter.minSpaceballsLength filterConfig
     }

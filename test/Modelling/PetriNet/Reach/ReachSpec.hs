@@ -11,8 +11,10 @@ import Modelling.PetriNet.Reach.Reach (
   ReachInstance (..),
   NetGoal (..),
   defaultReachConfig,
+  defaultReachInstance,
   generateReach,
   checkReachConfig,
+  reachSyntax,
   )
 import Modelling.PetriNet.Reach.Filter (
   areSolutionsTrivial,
@@ -40,6 +42,7 @@ import Test.QuickCheck (
   quickCheckWith,
   stdArgs,
   )
+import Control.OutputCapable.Blocks.Generic (runLangMReport)
 
 spec :: Spec
 spec = do
@@ -134,6 +137,38 @@ spec = do
             showPlaceNamesInNet = False
             }
       checkReachConfig config `shouldSatisfy` isJust
+
+  describe "reachSyntax" $ do
+    it "rejects Spaceballs pattern when minSpaceballsLength is set" $ do
+      let inst = defaultReachInstance { minSpaceballsLength = Just 4 }
+          spaceballsSequence = [Transition 1, Transition 2, Transition 3, Transition 4]
+      result <- testSyntax inst spaceballsSequence
+      result `shouldSatisfy` not
+
+    it "accepts non-Spaceballs pattern when minSpaceballsLength is set" $ do
+      let inst = defaultReachInstance { minSpaceballsLength = Just 4 }
+          nonSpaceballsSequence = [Transition 1, Transition 3, Transition 2, Transition 4]
+      result <- testSyntax inst nonSpaceballsSequence
+      result `shouldBe` True
+
+    it "accepts Spaceballs pattern when minSpaceballsLength is Nothing" $ do
+      let inst = defaultReachInstance { minSpaceballsLength = Nothing }
+          spaceballsSequence = [Transition 1, Transition 2, Transition 3, Transition 4]
+      result <- testSyntax inst spaceballsSequence
+      result `shouldBe` True
+
+    it "rejects Spaceballs prefix when sequence is longer" $ do
+      let inst = defaultReachInstance { minSpaceballsLength = Just 4 }
+          sequenceWithSpaceballsPrefix = [Transition 1, Transition 2, Transition 3, Transition 4, Transition 1, Transition 3]
+      result <- testSyntax inst sequenceWithSpaceballsPrefix
+      result `shouldSatisfy` not
+
+testSyntax :: ReachInstance Place Transition -> [Transition] -> IO Bool
+testSyntax inst transitionSequence = do
+  (maybeResult, _output) <- runLangMReport (return () :: IO ()) (>>) (reachSyntax inst transitionSequence)
+  return $ case maybeResult of
+    Just () -> True
+    Nothing -> False
 
 hasMinTransitionLength
   :: (Ord s, Show s)

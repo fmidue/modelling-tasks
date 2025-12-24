@@ -57,9 +57,9 @@ import Modelling.PetriNet.Reach.Filter (
   FilterConfig (..),
   areSolutionsTrivial,
   defaultFilterConfig,
-  hasSpaceballsPrefix,
   noFiltering,
   )
+import qualified Modelling.PetriNet.Reach.Filter as Filter
 import Modelling.PetriNet.Reach.Property (
   Property (Default),
   validate,
@@ -168,7 +168,7 @@ deadlockSyntax
 deadlockSyntax inst ts =
   do transitionsValid (petriNet inst) ts
      isNoLonger (noLongerThan inst) ts
-     rejectSpaceballsPattern (minSpaceballsLength inst) ts
+     rejectSpaceballsPattern (Modelling.PetriNet.Reach.Deadlock.minSpaceballsLength inst) ts
      pure ()
 
 deadlockEvaluation
@@ -350,7 +350,7 @@ generateDeadlock conf@DeadlockConfig {..} seed = do
     withLengthHint    =
       if showLengthHint then Just maxTransitionLength else Nothing,
     withMinLengthHint = showMinLengthHint,
-    minSpaceballsLength = minSpaceballsLength filterConfig
+    minSpaceballsLength = Filter.minSpaceballsLength filterConfig
     }
 
 tries
