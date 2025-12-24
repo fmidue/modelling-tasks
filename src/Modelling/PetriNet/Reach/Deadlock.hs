@@ -55,7 +55,7 @@ import Capabilities.Graphviz            (MonadGraphviz)
 import Modelling.PetriNet.Reach.Draw    (drawToFile, isPetriDrawable)
 import Modelling.PetriNet.Reach.Filter (
   FilterConfig (..),
-  areSolutionsFiltered,
+  shouldDiscardSolutions,
   defaultFilterConfig,
   noFiltering,
   )
@@ -370,7 +370,7 @@ tries n filterConfig conf seed = eval out
     checkCandidate (l, pn, allShortestSolutions) = do
       guard $ l >= minTransitionLength conf
       let availableTransitions = transitions pn
-      guard (not $ areSolutionsFiltered filterConfig availableTransitions allShortestSolutions)
+      guard (not $ shouldDiscardSolutions filterConfig availableTransitions allShortestSolutions)
       cmd <- MaybeT $ findM (Monad.lift . isPetriDrawable pn) (drawCommands conf)
       solutionsList <-
         if filterConfig == noFiltering

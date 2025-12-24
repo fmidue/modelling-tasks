@@ -15,7 +15,7 @@ import Modelling.PetriNet.Reach.Reach (
   checkReachConfig,
   )
 import Modelling.PetriNet.Reach.Filter (
-  areSolutionsTrivial,
+  shouldDiscardSolutions,
   defaultFilterConfig,
   noFiltering,
   )
@@ -73,7 +73,7 @@ spec = do
         inst <- generateReach config seed
         let allSolutions = either undefined toList (shortestSolutions inst)
             availableTransitions = transitions $ petriNet $ netGoal inst
-        allSolutions `shouldSatisfy` not . areSolutionsTrivial (filterConfig config) availableTransitions
+        allSolutions `shouldSatisfy` not . shouldDiscardSolutions (filterConfig config) availableTransitions
 
   describe "checkReachConfig" $ do
     it "accepts valid configuration" $ do

@@ -11,7 +11,7 @@ import Modelling.PetriNet.Reach.Deadlock (
   checkDeadlockConfig,
   )
 import Modelling.PetriNet.Reach.Filter (
-  areSolutionsTrivial,
+  shouldDiscardSolutions,
   noFiltering,
   )
 import Modelling.PetriNet.Reach.Step    (successors)
@@ -57,7 +57,7 @@ spec = do
           deadlockInstance <- generateDeadlock config seed
           let allSolutions = either undefined toList (shortestSolutions deadlockInstance)
               availableTransitions = transitions (petriNet deadlockInstance)
-          allSolutions `shouldSatisfy` not . areSolutionsTrivial (filterConfig config) availableTransitions
+          allSolutions `shouldSatisfy` not . shouldDiscardSolutions (filterConfig config) availableTransitions
 
   describe "checkDeadlockConfig" $ do
     it "accepts valid configuration" $ do

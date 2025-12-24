@@ -70,7 +70,7 @@ import Modelling.Auxiliary.Output (
 import Modelling.PetriNet.Reach.Draw    (drawToFile, isPetriDrawable)
 import Modelling.PetriNet.Reach.Filter (
   FilterConfig (..),
-  areSolutionsFiltered,
+  shouldDiscardSolutions,
   defaultFilterConfig,
   hasSpaceballsPrefix,
   noFiltering,
@@ -664,7 +664,7 @@ generateNetGoal filterConfig maxPrintedSolutions config@NetGoalConfig {..} seed 
             petriNet    = petri
           }
           availableTransitions = transitions petri
-      guard (not $ areSolutionsFiltered filterConfig availableTransitions allShortestSolutions)
+      guard (not $ shouldDiscardSolutions filterConfig availableTransitions allShortestSolutions)
       solutionsList <-
         if filterConfig == noFiltering
           then pure $ Left $ fromList (take (max 1 maxPrintedSolutions) allShortestSolutions)

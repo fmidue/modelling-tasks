@@ -29,8 +29,7 @@ module Modelling.PetriNet.Reach.Filter (
   hasInsufficientTransitionCoverage,
 
   -- * Solution set validation
-  areSolutionsFiltered,
-  areSolutionsTrivial,
+  shouldDiscardSolutions,
 
   -- * Configuration
   FilterConfig(..),
@@ -172,15 +171,10 @@ hasGroupedRepeats xs =
     groups = group xs
     groupSizes = map length groups
 
--- | Check if a set of solutions is considered trivial according to the given configuration
--- This combines both per-sequence checks and the collective check for too many solutions
+-- | Check if a set of solutions should be discarded according to the given configuration
 --
--- @deprecated Use 'areSolutionsFiltered' instead, as filtering now covers both
--- "too simple" and "not too complicated" criteria
-areSolutionsTrivial :: (Enum a, Ord a) => FilterConfig -> Set a -> [[a]] -> Bool
-areSolutionsTrivial = areSolutionsFiltered
-
--- | Check if a set of solutions should be filtered out according to the given configuration
+-- Returns 'True' if the solution set should be discarded (filtered out),
+-- 'False' if it should be kept.
 --
 -- This function filters instances based on multiple criteria:
 --
@@ -193,8 +187,8 @@ areSolutionsTrivial = areSolutionsFiltered
 --
 --     - Insufficient number of transitions absent from all solutions
 --     - All solutions are (or are not) permutations of each other
-areSolutionsFiltered :: (Enum a, Ord a) => FilterConfig -> Set a -> [[a]] -> Bool
-areSolutionsFiltered config availableTransitions solutions =
+shouldDiscardSolutions :: (Enum a, Ord a) => FilterConfig -> Set a -> [[a]] -> Bool
+shouldDiscardSolutions config availableTransitions solutions =
   maybe False (\n -> notNull (drop n solutions)) (maxNumberOfSolutions config)
   || config { maxNumberOfSolutions = Nothing } /= noFiltering && any (isTrivialSequence config availableTransitions) solutions
   || maybe False (\k -> countAbsentTransitions availableTransitions solutions < k) (minAbsentTransitions config)
