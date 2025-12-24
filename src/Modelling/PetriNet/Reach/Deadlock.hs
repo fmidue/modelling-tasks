@@ -47,7 +47,7 @@ import qualified Control.Monad.Trans              as Monad (lift)
 import qualified Data.Map                         as M (fromList)
 import qualified Data.Set                         as S (fromList, toList)
 
-import Data.List.NonEmpty                 (NonEmpty, fromList)
+import Data.List.NonEmpty                 (NonEmpty((:|)), fromList)
 
 import Capabilities.Cache               (MonadCache)
 import Capabilities.Diagrams            (MonadDiagrams)
@@ -292,7 +292,7 @@ defaultDeadlockInstance = DeadlockInstance {
   petriNet          = fst example,
   showPlaceNames    = False,
   maxDisplayedSolutions = 0,
-  shortestSolutions = Left (fromList [[Transition 1]]), -- TO DO: add a solution
+  shortestSolutions = Left ([] :| []), -- TO DO: add a solution
   withLengthHint    = Just 9,
   withMinLengthHint = True
   }

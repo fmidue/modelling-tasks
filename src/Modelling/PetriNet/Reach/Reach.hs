@@ -57,7 +57,7 @@ module Modelling.PetriNet.Reach.Reach (
 import qualified Control.Monad.Trans              as Monad (lift)
 import qualified Data.Set                         as S (fromList, member, toList, union, empty)
 
-import Data.List.NonEmpty                 (NonEmpty, fromList, toList)
+import Data.List.NonEmpty                 (NonEmpty((:|)), fromList, toList)
 
 import Capabilities.Cache               (MonadCache)
 import Capabilities.Diagrams            (MonadDiagrams)
@@ -567,7 +567,7 @@ defaultReachInstance = ReachInstance {
   showGoalNet       = True,
   showPlaceNames    = False,
   maxDisplayedSolutions = 0,
-  shortestSolutions = Left (fromList [[Transition 1]]), -- TO DO: add a solution
+  shortestSolutions = Left ([] :| []), -- TO DO: add a solution
   withLengthHint    = Just 12,
   withMinLengthHint = False
 }

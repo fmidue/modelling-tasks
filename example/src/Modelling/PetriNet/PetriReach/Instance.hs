@@ -5,7 +5,7 @@ module Modelling.PetriNet.PetriReach.Instance where
 import qualified Data.Map                         as M (fromList)
 import qualified Data.Set                         as S (fromList)
 
-import Data.List.NonEmpty                 (fromList)
+import Data.List.NonEmpty                 (NonEmpty((:|)))
 import Modelling.PetriNet.Reach.Reach   (ReachInstance (..), NetGoal(..))
 import Modelling.PetriNet.Reach.Type    (Capacity (..), Net (..), State (..))
 import Data.GraphViz                    (GraphvizCommand (Circo))
@@ -47,7 +47,7 @@ task5 = ReachInstance {
   showGoalNet = True,
   showPlaceNames = False,
   maxDisplayedSolutions = 1,
-  shortestSolutions = Left (fromList [["t1"]]), -- TO DO: add a solution here
+  shortestSolutions = Left ([] :| []), -- TO DO: add a solution here
   withLengthHint = Just 12,
   withMinLengthHint = True
   }
