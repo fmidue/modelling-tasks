@@ -2,6 +2,7 @@ module Modelling.PetriNet.Reach.ReachSpec where
 
 import qualified Data.Set                         as S
 
+import Data.List.NonEmpty                 (toList)
 import Capabilities.Diagrams.IO         ()
 import Capabilities.Graphviz.IO         ()
 import Modelling.PetriNet.Reach.Reach (
@@ -70,9 +71,7 @@ spec = do
               minTransitionLength = 8
               }
         inst <- generateReach config seed
-        let allSolutions = case solutions inst of
-              Left single -> [single]
-              Right multiple -> multiple
+        let allSolutions = either undefined toList (shortestSolutions inst)
             availableTransitions = transitions $ petriNet $ netGoal inst
         allSolutions `shouldSatisfy` not . areSolutionsTrivial (filterConfig config) availableTransitions
 

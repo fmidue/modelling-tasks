@@ -11,14 +11,6 @@ module Modelling.PetriNet.Reach.Step where
 import qualified Data.Map                         as M (
   insert,
   findWithDefault,
-  fromList,
-  toList,
-  )
-import qualified Data.Set                         as S (
-  empty,
-  fromList,
-  member,
-  union,
   )
 
 import Capabilities.Cache               (MonadCache)
@@ -54,28 +46,6 @@ import Control.OutputCapable.Blocks.Generic (
 import Data.Foldable                    (Foldable (foldl'))
 #endif
 import Data.GraphViz                    (GraphvizCommand)
-
-{-|
-The returned trace for each state is in reversed order,
-i.e., undoing the firing on the returned target state
-in order of the returned transitions list
-leads to the initial state of the net.
--}
-levels'
-  :: Ord s
-  => Net s t
-  -> [[(State s, [t])]]
-levels' n =
-  let f _    [] = []
-      f done xs =
-        let done' = S.union done $ S.fromList $ map fst xs
-            next = M.toList $ M.fromList [ (y, t:p) |
-                (x,p) <- xs,
-                (t,y) <- successors n x,
-                not $ S.member y done'
-              ]
-         in xs : f done' next
-  in f S.empty [(start n, [])]
 
 equalling :: Eq a => (t -> a) -> t -> t -> Bool
 equalling f x y = f x == f y
