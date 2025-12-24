@@ -70,7 +70,7 @@ import Modelling.Auxiliary.Output (
 import Modelling.PetriNet.Reach.Draw    (drawToFile, isPetriDrawable)
 import Modelling.PetriNet.Reach.Filter (
   FilterConfig (..),
-  areSolutionsTrivial,
+  areSolutionsFiltered,
   defaultFilterConfig,
   hasSpaceballsPrefix,
   noFiltering,
@@ -664,7 +664,7 @@ generateNetGoal filterConfig maxPrintedSolutions config@NetGoalConfig {..} seed 
             petriNet    = petri
           }
           availableTransitions = transitions petri
-      guard (not $ areSolutionsTrivial filterConfig availableTransitions allShortestSolutions)
+      guard (not $ areSolutionsFiltered filterConfig availableTransitions allShortestSolutions)
       solutionsList <-
         if filterConfig == noFiltering
           then pure $ Left $ fromList (take (max 1 maxPrintedSolutions) allShortestSolutions)
@@ -695,6 +695,7 @@ checkReachConfig ReachConfig {..} =
     rejectLongerThan
     (minTransitionLength netGoalConfig)
     (maxTransitionLength netGoalConfig)
+    (numTransitions netGoalConfig)
     filterConfig
   <|>
   (if maxPrintedSolutions < 0

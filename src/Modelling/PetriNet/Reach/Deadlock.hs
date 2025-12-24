@@ -55,7 +55,7 @@ import Capabilities.Graphviz            (MonadGraphviz)
 import Modelling.PetriNet.Reach.Draw    (drawToFile, isPetriDrawable)
 import Modelling.PetriNet.Reach.Filter (
   FilterConfig (..),
-  areSolutionsTrivial,
+  areSolutionsFiltered,
   defaultFilterConfig,
   noFiltering,
   )
@@ -323,6 +323,7 @@ checkDeadlockConfig DeadlockConfig {..} =
     rejectLongerThan
     minTransitionLength
     maxTransitionLength
+    numTransitions
     filterConfig
   <|>
   if maxPrintedSolutions < 0
@@ -369,7 +370,7 @@ tries n filterConfig conf seed = eval out
     checkCandidate (l, pn, allShortestSolutions) = do
       guard $ l >= minTransitionLength conf
       let availableTransitions = transitions pn
-      guard (not $ areSolutionsTrivial filterConfig availableTransitions allShortestSolutions)
+      guard (not $ areSolutionsFiltered filterConfig availableTransitions allShortestSolutions)
       cmd <- MaybeT $ findM (Monad.lift . isPetriDrawable pn) (drawCommands conf)
       solutionsList <-
         if filterConfig == noFiltering

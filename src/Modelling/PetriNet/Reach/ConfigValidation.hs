@@ -107,9 +107,10 @@ checkFilterConfigWith
   :: Maybe Int        -- ^ rejectLongerThan
   -> Int              -- ^ minTransitionLength
   -> Int              -- ^ maxTransitionLength
+  -> Int              -- ^ numTransitions (total number of transitions)
   -> FilterConfig     -- ^ filterConfig
   -> Maybe String
-checkFilterConfigWith rejectLongerThan minTransitionLength maxTransitionLength filterConfig@FilterConfig{..}
+checkFilterConfigWith rejectLongerThan minTransitionLength maxTransitionLength numTransitions filterConfig@FilterConfig{..}
   | rejectLongerThan /= Just minTransitionLength
   , filterConfig /= noFiltering
   = Just $ "If transition length is not enforced to one value, filterConfig must be set to "
@@ -134,5 +135,17 @@ checkFilterConfigWith rejectLongerThan minTransitionLength maxTransitionLength f
   = Just "setting maxNumberOfSolutions to less than 1 does not make sense"
   | minTransitionCoverage < 0 || minTransitionCoverage > 1
   = Just "minTransitionCoverage must be a value from 0 to 1"
+  | Just minAbsent <- minAbsentTransitions
+  , minAbsent < 0
+  = Just "minAbsentTransitions must be non-negative if it is enabled"
+  | Just minAbsent <- minAbsentTransitions
+  , minAbsent > numTransitions
+  = Just "minAbsentTransitions cannot be greater than the total number of transitions"
+  | Just minAbsent <- minAbsentTransitions
+  , let minUsedTransitions = ceiling (minTransitionCoverage * fromIntegral numTransitions)
+        maxAbsent = numTransitions - minUsedTransitions
+  , minAbsent > maxAbsent
+  = Just $ "minAbsentTransitions (" ++ show minAbsent ++ ") conflicts with minTransitionCoverage (" ++ show minTransitionCoverage ++ "): " ++
+           "at most " ++ show maxAbsent ++ " transitions can be absent given the coverage requirement"
   | otherwise
   = Nothing
