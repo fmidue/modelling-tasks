@@ -75,7 +75,6 @@ import Modelling.PetriNet.Reach.Filter (
   hasSpaceballsPrefix,
   noFiltering,
   )
-import qualified Modelling.PetriNet.Reach.Filter as Filter
 import Modelling.PetriNet.Reach.Property (
   Property (Default),
   validate,
@@ -466,7 +465,6 @@ findLongestSpaceballsPrefix [] = []
 findLongestSpaceballsPrefix (x:xs) =
   x : map snd (takeWhile (uncurry (==)) (zip [succ x ..] xs))
 
-
 data ReachInstance s t = ReachInstance {
   netGoal           :: NetGoal s t,
   minLength         :: Int,
@@ -729,5 +727,5 @@ generateReach ReachConfig {..} seed = do
     withLengthHint    =
       if showLengthHint then Just $ maxTransitionLength netGoalConfig else Nothing,
     withMinLengthHint = showMinLengthHint,
-    rejectSpaceballsLength = Filter.minSpaceballsLength filterConfig
+    rejectSpaceballsLength = minSpaceballsLength filterConfig
     }
