@@ -225,16 +225,16 @@ reportReachFor showInputHelp img noLonger lengthHint minLength showMinLengthHint
       (st1, st2, st3) = (showT t1, showT t2, showT t3)
    code $ show $ TransitionsList [t1, t2, t3]
    paragraph $ translate $ do
-    english $ concat ([
+    english $ concat [
       "Where giving these three steps means that after firing ",
       st1, ", then ", st2, ", and finally ", st3,
       " (in exactly this order), the sought marking is reached."
-      ] :: [String])
-    german $ concat ([
+      ]
+    german $ concat [
       "Wobei die Angabe dieser drei Schritte bedeuten soll, dass nach dem Schalten von ",
       st1, ", danach ", st2, ", und schließlich ", st3,
       " (in genau dieser Reihenfolge), die gesuchte Markierung erreicht wird."
-      ] :: [String])
+      ]
    pure ()
 
   paragraph $ case noLonger of
@@ -251,12 +251,12 @@ reportReachFor showInputHelp img noLonger lengthHint minLength showMinLengthHint
           then ("have exactly", "muss genau")
           else ("not exceed", "darf maximal")
       in translate $ do
-        english $ concat ([
+        english $ concat [
           "Your answer must ",
-          englishConstraint, " ", show maxL, " steps."] :: [String])
-        german $ concat ([
+          englishConstraint, " ", show maxL, " steps."]
+        german $ concat [
           "Ihre Lösung ", germanConstraint, " ", show maxL,
-          "Schritte enthalten."] :: [String])
+          "Schritte enthalten."]
 
   let maxStepsHint = case lengthHint of
         Just maxSteps | showMinLengthHint && maxSteps == minLength -> singleton $ paragraph $ translate $ do
