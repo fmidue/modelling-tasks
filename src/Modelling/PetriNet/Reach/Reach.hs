@@ -8,7 +8,6 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE OverloadedLists #-}
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE TupleSections #-}
@@ -442,6 +441,10 @@ data ReachInstance s t = ReachInstance {
   showGoalNet       :: Bool,
   showPlaceNames    :: Bool,
   maxDisplayedSolutions :: Int,
+  -- | Solutions to the reach task.
+  -- 'Left' contains (some) shortest solutions when no filtering is applied.
+  -- 'Right' contains all solutions when filtering is applied.
+  -- Note: 'Left' may not contain all shortest solutions, only up to 'maxDisplayedSolutions'.
   shortestSolutions :: Either (NonEmpty [t]) (NonEmpty [t]),
   withLengthHint    :: Maybe Int,
   withMinLengthHint :: Bool
@@ -564,7 +567,7 @@ defaultReachInstance = ReachInstance {
   showGoalNet       = True,
   showPlaceNames    = False,
   maxDisplayedSolutions = 0,
-  shortestSolutions = Left [], -- TO DO: add a solution
+  shortestSolutions = Left (fromList [[Transition 1]]), -- TO DO: add a solution
   withLengthHint    = Just 12,
   withMinLengthHint = False
 }
