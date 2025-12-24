@@ -445,16 +445,16 @@ rejectSpaceballsPattern maybeRejectSpaceballsLength ts =
   when (maybe False (`hasSpaceballsPrefix` ts) maybeRejectSpaceballsLength) $ do
     let longestSpaceballsPrefix = findLongestSpaceballsPrefix ts
         prefixString = show longestSpaceballsPrefix
-    assertion False $ translate $ do
+    refuse $ translate $ do
       english $ concat [
-        "The solution (prefix) ",
+        "The solution (or its prefix) ",
         prefixString,
         " that you submitted might have made for a good PIN in the Spaceballs movie, but is not correct here."
         ]
       german $ concat [
-        "Das Lösungspräfix ",
+        "Die Lösung (oder ihr Präfix) ",
         prefixString,
-        ", das Sie eingereicht haben, wäre vielleicht eine gute PIN im Spaceballs-Film gewesen, ist hier aber nicht korrekt."
+        ", die Sie eingereicht haben, wäre vielleicht eine gute PIN im Spaceballs-Film gewesen, ist hier aber nicht korrekt."
         ]
 
 -- | Find the longest Spaceballs-like prefix in a sequence
