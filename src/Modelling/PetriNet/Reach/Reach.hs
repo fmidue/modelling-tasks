@@ -307,7 +307,6 @@ transitionsValid n =
     isValidTransition =  (`elem` transitions n)
 
 -- | Format solutions feedback for display to students.
--- Neither case will ever be the empty list.
 formatSolutionsFeedback
   :: Int
   -> Either (NonEmpty [Transition]) (NonEmpty [Transition])
@@ -335,7 +334,6 @@ formatSolutionsFeedback maxDisplayedSolutions solutionsList
           if length restSolutions < maxDisplayedSolutions
             then "\n(These are all the solutions.)"
             else "\n(These are solutions, but more exist.)"
-      _ -> error "formatSolutionsFeedback: solution list should never be empty"
 
 reachEvaluation
   :: (
