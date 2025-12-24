@@ -48,6 +48,7 @@ module Modelling.PetriNet.Reach.Reach (
   toShowNetGoal,
   assertReachPoints,
   isNoLonger,
+  rejectSpaceballsPattern,
   reportReachFor,
   transitionsValid,
   levelsWithAlternatives,
@@ -71,6 +72,7 @@ import Modelling.PetriNet.Reach.Filter (
   FilterConfig (..),
   areSolutionsTrivial,
   defaultFilterConfig,
+  hasSpaceballsPrefix,
   noFiltering,
   )
 import Modelling.PetriNet.Reach.Property (
@@ -294,6 +296,7 @@ reachSyntax
 reachSyntax inst ts =
   do transitionsValid (petriNet (netGoal inst)) ts
      isNoLonger (noLongerThan inst) ts
+     rejectSpaceballsPattern (minSpaceballsLength inst) ts
      pure ()
 
 transitionsValid :: OutputCapable m => Net s Transition -> [Transition] -> LangM m
@@ -433,6 +436,29 @@ isNoLonger maybeMaxLength ts =
         "Schritte angegeben?"
         ]
 
+rejectSpaceballsPattern
+  :: (Enum t, Eq t, OutputCapable m, Show t)
+  => Maybe Int
+  -> [t]
+  -> LangM m
+rejectSpaceballsPattern maybeMinSpaceballsLength ts =
+  whenJust maybeMinSpaceballsLength $ \minLength ->
+    when (hasSpaceballsPrefix minLength ts) $ do
+      let spaceballsPrefix = take minLength ts
+          prefixString = show $ TransitionsList spaceballsPrefix
+      assertion False $ translate $ do
+        english $ concat [
+          "The solution (prefix) ",
+          prefixString,
+          " that you submitted might have made for a good PIN in the Spaceballs movie, but is not correct here."
+          ]
+        german $ concat [
+          "Das Lösungspräfix ",
+          prefixString,
+          ", das Sie eingereicht haben, wäre vielleicht eine gute PIN im Spaceballs-Film gewesen, ist hier aber nicht korrekt."
+          ]
+
+
 data ReachInstance s t = ReachInstance {
   netGoal           :: NetGoal s t,
   minLength         :: Int,
@@ -446,7 +472,10 @@ data ReachInstance s t = ReachInstance {
   -- Note: 'Left' may not contain all shortest solutions, only up to 'maxDisplayedSolutions'.
   shortestSolutions :: Either (NonEmpty [t]) (NonEmpty [t]),
   withLengthHint    :: Maybe Int,
-  withMinLengthHint :: Bool
+  withMinLengthHint :: Bool,
+  -- | Minimum length of Spaceballs PIN pattern to reject
+  -- (e.g., @[t1,t2,t3,t4,t5]@ for @minSpaceballsLength = Just 4@)
+  minSpaceballsLength :: Maybe Int
   }
   deriving (Generic, Read, Show, Data)
 #if !MIN_VERSION_base(4,18,0)
@@ -478,7 +507,8 @@ bimapReachInstance f g ReachInstance {..} = ReachInstance {
     maxDisplayedSolutions = maxDisplayedSolutions,
     shortestSolutions = bimap (fmap (map g)) (fmap (map g)) shortestSolutions,
     withLengthHint    = withLengthHint,
-    withMinLengthHint = withMinLengthHint
+    withMinLengthHint = withMinLengthHint,
+    minSpaceballsLength = minSpaceballsLength
     }
 
 bimapNetGoal
@@ -568,7 +598,8 @@ defaultReachInstance = ReachInstance {
   maxDisplayedSolutions = 0,
   shortestSolutions = Left ([] :| []), -- TO DO: add a solution
   withLengthHint    = Just 12,
-  withMinLengthHint = False
+  withMinLengthHint = False,
+  minSpaceballsLength = Nothing
 }
 
 possibleNetGoals
@@ -688,5 +719,6 @@ generateReach ReachConfig {..} seed = do
     maxDisplayedSolutions = maxPrintedSolutions,
     withLengthHint    =
       if showLengthHint then Just $ maxTransitionLength netGoalConfig else Nothing,
-    withMinLengthHint = showMinLengthHint
+    withMinLengthHint = showMinLengthHint,
+    minSpaceballsLength = minSpaceballsLength filterConfig
     }
