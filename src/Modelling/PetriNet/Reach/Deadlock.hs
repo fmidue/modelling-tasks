@@ -8,6 +8,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE OverloadedLists #-}
 {-# LANGUAGE RecordWildCards #-}
 
 {-|
@@ -46,6 +47,8 @@ module Modelling.PetriNet.Reach.Deadlock (
 import qualified Control.Monad.Trans              as Monad (lift)
 import qualified Data.Map                         as M (fromList)
 import qualified Data.Set                         as S (fromList, toList)
+
+import Data.List.NonEmpty                 (NonEmpty, fromList)
 
 import Capabilities.Cache               (MonadCache)
 import Capabilities.Diagrams            (MonadDiagrams)
@@ -207,7 +210,7 @@ data DeadlockInstance s t = DeadlockInstance {
   petriNet          :: Net s t,
   showPlaceNames    :: Bool,
   maxDisplayedSolutions :: Int,
-  shortestSolutions :: Either [[t]] [[t]],
+  shortestSolutions :: Either (NonEmpty [t]) (NonEmpty [t]),
   withLengthHint    :: Maybe Int,
   withMinLengthHint :: Bool
   } deriving (Generic, Read, Show)
@@ -228,7 +231,7 @@ bimapDeadlockInstance f g DeadlockInstance {..} = DeadlockInstance {
     petriNet          = bimapNet f g petriNet,
     showPlaceNames    = showPlaceNames,
     maxDisplayedSolutions = maxDisplayedSolutions,
-    shortestSolutions = bimap (map (map g)) (map (map g)) shortestSolutions,
+    shortestSolutions = bimap (fmap (map g)) (fmap (map g)) shortestSolutions,
     withLengthHint    = withLengthHint,
     withMinLengthHint = withMinLengthHint
     }
@@ -344,7 +347,7 @@ tries
   -> FilterConfig
   -> DeadlockConfig
   -> Int
-  -> m (Net Place Transition, GraphvizCommand, Either [[Transition]] [[Transition]])
+  -> m (Net Place Transition, GraphvizCommand, Either (NonEmpty [Transition]) (NonEmpty [Transition]))
 tries n filterConfig conf seed = eval out
   where
     eval f = evalRandT f $ mkStdGen seed
@@ -358,10 +361,10 @@ tries n filterConfig conf seed = eval out
       cmd <- MaybeT $ findM (Monad.lift . isPetriDrawable pn) (drawCommands conf)
       solutionsList <-
         if filterConfig == noFiltering
-          then pure $ Left (take (max 1 (maxPrintedSolutions conf)) allShortestSolutions)
+          then pure $ Left $ fromList (take (max 1 (maxPrintedSolutions conf)) allShortestSolutions)
           else if maxPrintedSolutions conf >= length allShortestSolutions
-            then pure $ Right allShortestSolutions
-            else Right <$> Monad.lift (shuffleM allShortestSolutions)
+            then pure $ Right $ fromList allShortestSolutions
+            else Right . fromList <$> Monad.lift (shuffleM allShortestSolutions)
       pure (pn, cmd, solutionsList)
 
 try :: MonadRandom m => DeadlockConfig -> m [(Int, Net Place Transition, [[Transition]])]

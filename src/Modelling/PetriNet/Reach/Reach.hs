@@ -8,6 +8,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE OverloadedLists #-}
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE TupleSections #-}
@@ -56,6 +57,8 @@ module Modelling.PetriNet.Reach.Reach (
 
 import qualified Control.Monad.Trans              as Monad (lift)
 import qualified Data.Set                         as S (fromList, member, toList, union, empty)
+
+import Data.List.NonEmpty                 (NonEmpty, toList, fromList)
 
 import Capabilities.Cache               (MonadCache)
 import Capabilities.Diagrams            (MonadDiagrams)
@@ -223,16 +226,16 @@ reportReachFor showInputHelp img noLonger lengthHint minLength showMinLengthHint
       (st1, st2, st3) = (showT t1, showT t2, showT t3)
    code $ show $ TransitionsList [t1, t2, t3]
    paragraph $ translate $ do
-    english $ concat [
+    english $ concat ([
       "Where giving these three steps means that after firing ",
       st1, ", then ", st2, ", and finally ", st3,
       " (in exactly this order), the sought marking is reached."
-      ]
-    german $ concat [
+      ] :: [String])
+    german $ concat ([
       "Wobei die Angabe dieser drei Schritte bedeuten soll, dass nach dem Schalten von ",
       st1, ", danach ", st2, ", und schließlich ", st3,
       " (in genau dieser Reihenfolge), die gesuchte Markierung erreicht wird."
-      ]
+      ] :: [String])
    pure ()
 
   paragraph $ case noLonger of
@@ -249,12 +252,12 @@ reportReachFor showInputHelp img noLonger lengthHint minLength showMinLengthHint
           then ("have exactly", "muss genau")
           else ("not exceed", "darf maximal")
       in translate $ do
-        english $ concat [
+        english $ concat ([
           "Your answer must ",
-          englishConstraint, " ", show maxL, " steps."]
-        german $ concat [
+          englishConstraint, " ", show maxL, " steps."] :: [String])
+        german $ concat ([
           "Ihre Lösung ", germanConstraint, " ", show maxL,
-          "Schritte enthalten."]
+          "Schritte enthalten."] :: [String])
 
   let maxStepsHint = case lengthHint of
         Just maxSteps | showMinLengthHint && maxSteps == minLength -> singleton $ paragraph $ translate $ do
@@ -308,33 +311,32 @@ transitionsValid n =
 -- Neither case will ever be the empty list.
 formatSolutionsFeedback
   :: Int
-  -> Either [[Transition]] [[Transition]]
+  -> Either (NonEmpty [Transition]) (NonEmpty [Transition])
   -> Maybe String
 formatSolutionsFeedback maxDisplayedSolutions solutionsList
   | maxDisplayedSolutions <= 0 = Nothing
   | otherwise = Just $ case solutionsList of
-      Left [] -> error "formatSolutionsFeedback: solution list should never be empty"
-      Left [oneSolution] ->
-        show (TransitionsList oneSolution) ++
-          if 1 < maxDisplayedSolutions
-            then "\n\n(This is the one shortest solution.)"
-            else "\n\n(This is a shortest solution, but more may exist.)"
       Left shortestSolutions ->
-        let solutionsText = unlines $ map (show . TransitionsList) shortestSolutions
+        let solutions = toList shortestSolutions
+            solutionsText = unlines $ map (show . TransitionsList) $ take maxDisplayedSolutions solutions
         in solutionsText ++
-          if length shortestSolutions < maxDisplayedSolutions
+          if length solutions == 1 && maxDisplayedSolutions > 1
+            then "\n(This is the one shortest solution.)"
+          else if length solutions == 1
+            then "\n(This is a shortest solution, but more may exist.)"
+          else if length solutions <= maxDisplayedSolutions
             then "\n(These are all the shortest solutions.)"
             else "\n(These are shortest solutions, but more may exist.)"
-      Right [theOnlySolution] ->
-        show (TransitionsList theOnlySolution) ++ "\n\n(This is the only solution.)"
-      Right (firstSolution : restSolutions) ->
-        let displayedSolutions = firstSolution : take (maxDisplayedSolutions - 1) restSolutions
+      Right allSolutions ->
+        let solutions = toList allSolutions
+            displayedSolutions = take maxDisplayedSolutions solutions
             solutionsText = unlines $ map (show . TransitionsList) displayedSolutions
         in solutionsText ++
-          if length restSolutions < maxDisplayedSolutions
+          if length solutions == 1
+            then "\n(This is the only solution.)"
+          else if length solutions <= maxDisplayedSolutions
             then "\n(These are all the solutions.)"
             else "\n(These are solutions, but more exist.)"
-      Right [] -> error "formatSolutionsFeedback: solution list should never be empty"
 
 reachEvaluation
   :: (
@@ -440,7 +442,7 @@ data ReachInstance s t = ReachInstance {
   showGoalNet       :: Bool,
   showPlaceNames    :: Bool,
   maxDisplayedSolutions :: Int,
-  shortestSolutions :: Either [[t]] [[t]],
+  shortestSolutions :: Either (NonEmpty [t]) (NonEmpty [t]),
   withLengthHint    :: Maybe Int,
   withMinLengthHint :: Bool
   }
@@ -472,7 +474,7 @@ bimapReachInstance f g ReachInstance {..} = ReachInstance {
     showGoalNet       = showGoalNet,
     showPlaceNames    = showPlaceNames,
     maxDisplayedSolutions = maxDisplayedSolutions,
-    shortestSolutions = bimap (map (map g)) (map (map g)) shortestSolutions,
+    shortestSolutions = bimap (fmap (map g)) (fmap (map g)) shortestSolutions,
     withLengthHint    = withLengthHint,
     withMinLengthHint = withMinLengthHint
     }
@@ -611,7 +613,7 @@ generateNetGoal
   -> Int
   -> NetGoalConfig
   -> Int
-  -> m (NetGoal Place Transition, Either [[Transition]] [[Transition]])
+  -> m (NetGoal Place Transition, Either (NonEmpty [Transition]) (NonEmpty [Transition]))
 generateNetGoal filterConfig maxPrintedSolutions config@NetGoalConfig {..} seed =
   evalRandT generate $ mkStdGen seed
   where
@@ -626,10 +628,10 @@ generateNetGoal filterConfig maxPrintedSolutions config@NetGoalConfig {..} seed 
       guard (not $ areSolutionsTrivial filterConfig availableTransitions allShortestSolutions)
       solutionsList <-
         if filterConfig == noFiltering
-          then pure $ Left (take (max 1 maxPrintedSolutions) allShortestSolutions)
+          then pure $ Left $ fromList (take (max 1 maxPrintedSolutions) allShortestSolutions)
           else if maxPrintedSolutions >= length allShortestSolutions
-            then pure $ Right allShortestSolutions
-            else Right <$> Monad.lift (shuffleM allShortestSolutions)
+            then pure $ Right $ fromList allShortestSolutions
+            else Right . fromList <$> Monad.lift (shuffleM allShortestSolutions)
       pure (netGoal, solutionsList)
     generate = do
       xs <- possibleNetGoals config
