@@ -306,7 +306,6 @@ transitionsValid n =
       german $ t' ++ " ist eine Transition des gegebenen Petrinetzes?"
     isValidTransition =  (`elem` transitions n)
 
--- | Provide solutions feedback for display to students.
 provideSolutionsFeedback
   :: Int
   -> Either (NonEmpty [Transition]) (NonEmpty [Transition])
@@ -319,15 +318,16 @@ provideSolutionsFeedback maxDisplayedSolutions solutionsList
           if 1 < maxDisplayedSolutions
             then "\n\n(This is the one shortest solution.)"
             else "\n\n(This is a shortest solution, but more may exist.)"
-      Left (firstShortest :| restShortest) ->
-        let shortestSolutions = firstShortest : restShortest
-            solutionsText = unlines $ map (show . TransitionsList) shortestSolutions
+      Left (firstSolution :| restSolutions) ->
+        let displayedSolutions = firstSolution : restSolutions
+            solutionsText = unlines $ map (show . TransitionsList) displayedSolutions
         in solutionsText ++
-          if length shortestSolutions < maxDisplayedSolutions
+          if 1 + length restSolutions < maxDisplayedSolutions
             then "\n(These are all the shortest solutions.)"
             else "\n(These are shortest solutions, but more may exist.)"
       Right (theOnlySolution :| []) ->
-        show (TransitionsList theOnlySolution) ++ "\n\n(This is the only solution.)"
+        show (TransitionsList theOnlySolution) ++
+          "\n\n(This is the only solution.)"
       Right (firstSolution :| restSolutions) ->
         let displayedSolutions = firstSolution : take (maxDisplayedSolutions - 1) restSolutions
             solutionsText = unlines $ map (show . TransitionsList) displayedSolutions
