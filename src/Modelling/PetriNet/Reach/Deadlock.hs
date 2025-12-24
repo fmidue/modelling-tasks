@@ -168,7 +168,7 @@ deadlockSyntax
 deadlockSyntax inst ts =
   do transitionsValid (petriNet inst) ts
      isNoLonger (noLongerThan inst) ts
-     rejectSpaceballsPattern (Modelling.PetriNet.Reach.Deadlock.minSpaceballsLength inst) ts
+     rejectSpaceballsPattern (rejectSpaceballsLength inst) ts
      pure ()
 
 deadlockEvaluation
@@ -219,9 +219,10 @@ data DeadlockInstance s t = DeadlockInstance {
   shortestSolutions :: Either (NonEmpty [t]) (NonEmpty [t]),
   withLengthHint    :: Maybe Int,
   withMinLengthHint :: Bool,
-  -- | Minimum length of Spaceballs PIN pattern to reject
-  -- (e.g., @[t1,t2,t3,t4,t5]@ for @minSpaceballsLength = Just 4@)
-  minSpaceballsLength :: Maybe Int
+  -- | Minimum length of Spaceballs PIN pattern to reject during syntax checking.
+  -- If set to @Just n@, sequences starting with @n@ or more consecutive transitions
+  -- (e.g., @[t1, t2, t3, t4]@) will be rejected.
+  rejectSpaceballsLength :: Maybe Int
   } deriving (Generic, Read, Show)
 #if !MIN_VERSION_base(4,18,0)
   deriving Typeable
@@ -243,7 +244,7 @@ bimapDeadlockInstance f g DeadlockInstance {..} = DeadlockInstance {
     shortestSolutions = bimap (fmap (map g)) (fmap (map g)) shortestSolutions,
     withLengthHint    = withLengthHint,
     withMinLengthHint = withMinLengthHint,
-    minSpaceballsLength = minSpaceballsLength
+    rejectSpaceballsLength = rejectSpaceballsLength
     }
 
 toShowDeadlockInstance
@@ -302,7 +303,7 @@ defaultDeadlockInstance = DeadlockInstance {
   shortestSolutions = Left ([] :| []), -- TO DO: add a solution
   withLengthHint    = Just 9,
   withMinLengthHint = True,
-  minSpaceballsLength = Nothing
+  rejectSpaceballsLength = Nothing
   }
 
 checkDeadlockConfig :: DeadlockConfig -> Maybe String
@@ -350,7 +351,7 @@ generateDeadlock conf@DeadlockConfig {..} seed = do
     withLengthHint    =
       if showLengthHint then Just maxTransitionLength else Nothing,
     withMinLengthHint = showMinLengthHint,
-    minSpaceballsLength = Filter.minSpaceballsLength filterConfig
+    rejectSpaceballsLength = Filter.minSpaceballsLength filterConfig
     }
 
 tries

@@ -297,7 +297,7 @@ reachSyntax
 reachSyntax inst ts =
   do transitionsValid (petriNet (netGoal inst)) ts
      isNoLonger (noLongerThan inst) ts
-     rejectSpaceballsPattern (Modelling.PetriNet.Reach.Reach.minSpaceballsLength inst) ts
+     rejectSpaceballsPattern (rejectSpaceballsLength inst) ts
      pure ()
 
 transitionsValid :: OutputCapable m => Net s Transition -> [Transition] -> LangM m
@@ -442,11 +442,11 @@ rejectSpaceballsPattern
   => Maybe Int
   -> [t]
   -> LangM m
-rejectSpaceballsPattern maybeMinSpaceballsLength ts =
-  whenJust maybeMinSpaceballsLength $ \minLength ->
+rejectSpaceballsPattern maybeRejectSpaceballsLength ts =
+  whenJust maybeRejectSpaceballsLength $ \minLength ->
     when (hasSpaceballsPrefix minLength ts) $ do
-      let spaceballsPrefix = take minLength ts
-          prefixString = show spaceballsPrefix
+      let longestSpaceballsPrefix = findLongestSpaceballsPrefix ts
+          prefixString = show longestSpaceballsPrefix
       assertion False $ translate $ do
         english $ concat [
           "The solution (prefix) ",
@@ -458,6 +458,13 @@ rejectSpaceballsPattern maybeMinSpaceballsLength ts =
           prefixString,
           ", das Sie eingereicht haben, wäre vielleicht eine gute PIN im Spaceballs-Film gewesen, ist hier aber nicht korrekt."
           ]
+
+-- | Find the longest Spaceballs-like prefix in a sequence
+-- A Spaceballs prefix is one where elements follow the pattern [x, x+1, x+2, ...]
+findLongestSpaceballsPrefix :: (Enum a, Eq a) => [a] -> [a]
+findLongestSpaceballsPrefix [] = []
+findLongestSpaceballsPrefix (x:xs) =
+  x : map snd (takeWhile (uncurry (==)) (zip [succ x ..] xs))
 
 
 data ReachInstance s t = ReachInstance {
@@ -474,9 +481,10 @@ data ReachInstance s t = ReachInstance {
   shortestSolutions :: Either (NonEmpty [t]) (NonEmpty [t]),
   withLengthHint    :: Maybe Int,
   withMinLengthHint :: Bool,
-  -- | Minimum length of Spaceballs PIN pattern to reject
-  -- (e.g., @[t1,t2,t3,t4,t5]@ for @minSpaceballsLength = Just 4@)
-  minSpaceballsLength :: Maybe Int
+  -- | Minimum length of Spaceballs PIN pattern to reject during syntax checking.
+  -- If set to @Just n@, sequences starting with @n@ or more consecutive transitions
+  -- (e.g., @[t1, t2, t3, t4]@) will be rejected.
+  rejectSpaceballsLength :: Maybe Int
   }
   deriving (Generic, Read, Show, Data)
 #if !MIN_VERSION_base(4,18,0)
@@ -509,7 +517,7 @@ bimapReachInstance f g ReachInstance {..} = ReachInstance {
     shortestSolutions = bimap (fmap (map g)) (fmap (map g)) shortestSolutions,
     withLengthHint    = withLengthHint,
     withMinLengthHint = withMinLengthHint,
-    minSpaceballsLength = minSpaceballsLength
+    rejectSpaceballsLength = rejectSpaceballsLength
     }
 
 bimapNetGoal
@@ -600,7 +608,7 @@ defaultReachInstance = ReachInstance {
   shortestSolutions = Left ([] :| []), -- TO DO: add a solution
   withLengthHint    = Just 12,
   withMinLengthHint = False,
-  minSpaceballsLength = Nothing
+  rejectSpaceballsLength = Nothing
 }
 
 possibleNetGoals
@@ -721,5 +729,5 @@ generateReach ReachConfig {..} seed = do
     withLengthHint    =
       if showLengthHint then Just $ maxTransitionLength netGoalConfig else Nothing,
     withMinLengthHint = showMinLengthHint,
-    minSpaceballsLength = Filter.minSpaceballsLength filterConfig
+    rejectSpaceballsLength = Filter.minSpaceballsLength filterConfig
     }
