@@ -442,21 +442,20 @@ rejectSpaceballsPattern
   -> [t]
   -> LangM m
 rejectSpaceballsPattern maybeRejectSpaceballsLength ts =
-  whenJust maybeRejectSpaceballsLength $ \minLength ->
-    when (hasSpaceballsPrefix minLength ts) $ do
-      let longestSpaceballsPrefix = findLongestSpaceballsPrefix ts
-          prefixString = show longestSpaceballsPrefix
-      assertion False $ translate $ do
-        english $ concat [
-          "The solution (prefix) ",
-          prefixString,
-          " that you submitted might have made for a good PIN in the Spaceballs movie, but is not correct here."
-          ]
-        german $ concat [
-          "Das Lösungspräfix ",
-          prefixString,
-          ", das Sie eingereicht haben, wäre vielleicht eine gute PIN im Spaceballs-Film gewesen, ist hier aber nicht korrekt."
-          ]
+  when (maybe False (`hasSpaceballsPrefix` ts) maybeRejectSpaceballsLength) $ do
+    let longestSpaceballsPrefix = findLongestSpaceballsPrefix ts
+        prefixString = show longestSpaceballsPrefix
+    assertion False $ translate $ do
+      english $ concat [
+        "The solution (prefix) ",
+        prefixString,
+        " that you submitted might have made for a good PIN in the Spaceballs movie, but is not correct here."
+        ]
+      german $ concat [
+        "Das Lösungspräfix ",
+        prefixString,
+        ", das Sie eingereicht haben, wäre vielleicht eine gute PIN im Spaceballs-Film gewesen, ist hier aber nicht korrekt."
+        ]
 
 -- | Find the longest Spaceballs-like prefix in a sequence
 -- A Spaceballs prefix is one where elements follow the pattern [x, x+1, x+2, ...]
