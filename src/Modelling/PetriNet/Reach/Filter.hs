@@ -203,7 +203,7 @@ countAbsentTransitions availableTransitions solutions =
 
 -- | Check if all solutions are permutations of each other
 --
--- Returns 'True' if all solutions are permutations of the same multiset,
+-- Returns 'True' if all solutions are permutations of the same sequence,
 -- 'False' otherwise. An empty list or single solution returns 'True'.
 areAllPermutationsOfEachOther :: Ord a => [[a]] -> Bool
 areAllPermutationsOfEachOther [] = True
