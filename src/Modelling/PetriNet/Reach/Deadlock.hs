@@ -73,7 +73,7 @@ import Modelling.PetriNet.Reach.Reach   (
   levelsWithAlternatives,
   reportReachFor,
   transitionsValid,
-  formatSolutionsFeedback,
+  provideSolutionsFeedback,
   )
 import Modelling.PetriNet.Reach.Roll    (netLimits)
 import Modelling.PetriNet.Reach.Step    (executes, successors)
@@ -200,7 +200,7 @@ deadlockEvaluation path deadlock ts =
   where
     deadlockInstance = toShowDeadlockInstance deadlock
     n = petriNet deadlockInstance
-    aSolution = formatSolutionsFeedback (maxDisplayedSolutions deadlock) (shortestSolutions deadlock)
+    aSolution = provideSolutionsFeedback (maxDisplayedSolutions deadlock) (shortestSolutions deadlock)
 
 data DeadlockInstance s t = DeadlockInstance {
   drawUsing         :: GraphvizCommand,

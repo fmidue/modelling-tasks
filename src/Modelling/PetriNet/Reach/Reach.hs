@@ -51,13 +51,13 @@ module Modelling.PetriNet.Reach.Reach (
   reportReachFor,
   transitionsValid,
   levelsWithAlternatives,
-  formatSolutionsFeedback,
+  provideSolutionsFeedback,
 ) where
 
 import qualified Control.Monad.Trans              as Monad (lift)
 import qualified Data.Set                         as S (fromList, member, toList, union, empty)
 
-import Data.List.NonEmpty                 (NonEmpty((:|)), fromList, toList)
+import Data.List.NonEmpty                 (NonEmpty((:|)), fromList)
 
 import Capabilities.Cache               (MonadCache)
 import Capabilities.Diagrams            (MonadDiagrams)
@@ -306,28 +306,29 @@ transitionsValid n =
       german $ t' ++ " ist eine Transition des gegebenen Petrinetzes?"
     isValidTransition =  (`elem` transitions n)
 
--- | Format solutions feedback for display to students.
-formatSolutionsFeedback
+-- | Provide solutions feedback for display to students.
+provideSolutionsFeedback
   :: Int
   -> Either (NonEmpty [Transition]) (NonEmpty [Transition])
   -> Maybe String
-formatSolutionsFeedback maxDisplayedSolutions solutionsList
+provideSolutionsFeedback maxDisplayedSolutions solutionsList
   | maxDisplayedSolutions <= 0 = Nothing
-  | otherwise = Just $ case bimap toList toList solutionsList of
-      Left [oneSolution] ->
+  | otherwise = Just $ case solutionsList of
+      Left (oneSolution :| []) ->
         show (TransitionsList oneSolution) ++
           if 1 < maxDisplayedSolutions
             then "\n\n(This is the one shortest solution.)"
             else "\n\n(This is a shortest solution, but more may exist.)"
-      Left shortestSolutions ->
-        let solutionsText = unlines $ map (show . TransitionsList) shortestSolutions
+      Left (firstShortest :| restShortest) ->
+        let shortestSolutions = firstShortest : restShortest
+            solutionsText = unlines $ map (show . TransitionsList) shortestSolutions
         in solutionsText ++
           if length shortestSolutions < maxDisplayedSolutions
             then "\n(These are all the shortest solutions.)"
             else "\n(These are shortest solutions, but more may exist.)"
-      Right [theOnlySolution] ->
+      Right (theOnlySolution :| []) ->
         show (TransitionsList theOnlySolution) ++ "\n\n(This is the only solution.)"
-      Right (firstSolution : restSolutions) ->
+      Right (firstSolution :| restSolutions) ->
         let displayedSolutions = firstSolution : take (maxDisplayedSolutions - 1) restSolutions
             solutionsText = unlines $ map (show . TransitionsList) displayedSolutions
         in solutionsText ++
@@ -370,7 +371,7 @@ reachEvaluation path reach ts =
   where
     reachInstance = toShowReachInstance reach
     n = petriNet (netGoal reachInstance)
-    aSolution = formatSolutionsFeedback (maxDisplayedSolutions reach) (shortestSolutions reach)
+    aSolution = provideSolutionsFeedback (maxDisplayedSolutions reach) (shortestSolutions reach)
 
 {-|
 Find all shortest paths to all reachable markings
