@@ -48,6 +48,7 @@ module Modelling.PetriNet.Reach.Reach (
   toShowNetGoal,
   assertReachPoints,
   isNoLonger,
+  rejectSpaceballsPattern,
   reportReachFor,
   transitionsValid,
   levelsWithAlternatives,
@@ -71,6 +72,7 @@ import Modelling.PetriNet.Reach.Filter (
   FilterConfig (..),
   areSolutionsTrivial,
   defaultFilterConfig,
+  hasSpaceballsPrefix,
   noFiltering,
   )
 import Modelling.PetriNet.Reach.Property (
@@ -107,7 +109,7 @@ import Modelling.PetriNet.Reach.ConfigValidation (
   )
 import Control.OutputCapable.Blocks (
   ArticleToUse (IndefiniteArticle),
-  GenericOutputCapable (assertion, code, image, indent, paragraph, text),
+  GenericOutputCapable (assertion, code, image, indent, refuse, paragraph, text),
   LangM,
   MinimumThreshold (MinimumThreshold),
   OutputCapable,
@@ -294,6 +296,7 @@ reachSyntax
 reachSyntax inst ts =
   do transitionsValid (petriNet (netGoal inst)) ts
      isNoLonger (noLongerThan inst) ts
+     rejectSpaceballsPattern (rejectSpaceballsLength inst) ts
      pure ()
 
 transitionsValid :: OutputCapable m => Net s Transition -> [Transition] -> LangM m
@@ -433,6 +436,34 @@ isNoLonger maybeMaxLength ts =
         "Schritte angegeben?"
         ]
 
+rejectSpaceballsPattern
+  :: (Enum t, Eq t, OutputCapable m, Show t)
+  => Maybe Int
+  -> [t]
+  -> LangM m
+rejectSpaceballsPattern maybeRejectSpaceballsLength ts =
+  when (maybe False (`hasSpaceballsPrefix` ts) maybeRejectSpaceballsLength) $ do
+    let longestSpaceballsPrefix = findLongestSpaceballsPrefix ts
+        prefixString = show longestSpaceballsPrefix
+    refuse $ paragraph $ translate $ do
+      english $ concat [
+        "The solution (or its prefix) ",
+        prefixString,
+        " that you submitted might have made for a good PIN in the Spaceballs movie, but is not correct here."
+        ]
+      german $ concat [
+        "Die Lösung (oder ihr Präfix) ",
+        prefixString,
+        ", die Sie eingereicht haben, wäre vielleicht eine gute PIN im Spaceballs-Film gewesen, ist hier aber nicht korrekt."
+        ]
+
+-- | Find the longest Spaceballs-like prefix in a sequence
+-- A Spaceballs prefix is one where elements follow the pattern [x, x+1, x+2, ...]
+findLongestSpaceballsPrefix :: (Enum a, Eq a) => [a] -> [a]
+findLongestSpaceballsPrefix [] = []
+findLongestSpaceballsPrefix (x:xs) =
+  x : map snd (takeWhile (uncurry (==)) (zip [succ x ..] xs))
+
 data ReachInstance s t = ReachInstance {
   netGoal           :: NetGoal s t,
   minLength         :: Int,
@@ -446,7 +477,11 @@ data ReachInstance s t = ReachInstance {
   -- Note: 'Left' may not contain all shortest solutions, only up to 'maxDisplayedSolutions'.
   shortestSolutions :: Either (NonEmpty [t]) (NonEmpty [t]),
   withLengthHint    :: Maybe Int,
-  withMinLengthHint :: Bool
+  withMinLengthHint :: Bool,
+  -- | Minimum length of Spaceballs PIN pattern to reject during syntax checking.
+  -- If set to @Just n@, sequences starting with @n@ or more consecutive transitions
+  -- (e.g., @[t1, t2, t3, t4]@) will be rejected.
+  rejectSpaceballsLength :: Maybe Int
   }
   deriving (Generic, Read, Show, Data)
 #if !MIN_VERSION_base(4,18,0)
@@ -478,7 +513,8 @@ bimapReachInstance f g ReachInstance {..} = ReachInstance {
     maxDisplayedSolutions = maxDisplayedSolutions,
     shortestSolutions = bimap (fmap (map g)) (fmap (map g)) shortestSolutions,
     withLengthHint    = withLengthHint,
-    withMinLengthHint = withMinLengthHint
+    withMinLengthHint = withMinLengthHint,
+    rejectSpaceballsLength = rejectSpaceballsLength
     }
 
 bimapNetGoal
@@ -568,7 +604,8 @@ defaultReachInstance = ReachInstance {
   maxDisplayedSolutions = 0,
   shortestSolutions = Left ([] :| []), -- TO DO: add a solution
   withLengthHint    = Just 12,
-  withMinLengthHint = False
+  withMinLengthHint = False,
+  rejectSpaceballsLength = Nothing
 }
 
 possibleNetGoals
@@ -688,5 +725,6 @@ generateReach ReachConfig {..} seed = do
     maxDisplayedSolutions = maxPrintedSolutions,
     withLengthHint    =
       if showLengthHint then Just $ maxTransitionLength netGoalConfig else Nothing,
-    withMinLengthHint = showMinLengthHint
+    withMinLengthHint = showMinLengthHint,
+    rejectSpaceballsLength = minSpaceballsLength filterConfig
     }

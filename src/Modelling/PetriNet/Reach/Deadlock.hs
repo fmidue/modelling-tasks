@@ -71,6 +71,7 @@ import Modelling.PetriNet.Reach.Reach   (
   assertReachPoints,
   isNoLonger,
   levelsWithAlternatives,
+  rejectSpaceballsPattern,
   reportReachFor,
   transitionsValid,
   provideSolutionsFeedback,
@@ -166,6 +167,7 @@ deadlockSyntax
 deadlockSyntax inst ts =
   do transitionsValid (petriNet inst) ts
      isNoLonger (noLongerThan inst) ts
+     rejectSpaceballsPattern (rejectSpaceballsLength inst) ts
      pure ()
 
 deadlockEvaluation
@@ -215,7 +217,11 @@ data DeadlockInstance s t = DeadlockInstance {
   -- Note: 'Left' may not contain all shortest solutions, only up to 'maxDisplayedSolutions'.
   shortestSolutions :: Either (NonEmpty [t]) (NonEmpty [t]),
   withLengthHint    :: Maybe Int,
-  withMinLengthHint :: Bool
+  withMinLengthHint :: Bool,
+  -- | Minimum length of Spaceballs PIN pattern to reject during syntax checking.
+  -- If set to @Just n@, sequences starting with @n@ or more consecutive transitions
+  -- (e.g., @[t1, t2, t3, t4]@) will be rejected.
+  rejectSpaceballsLength :: Maybe Int
   } deriving (Generic, Read, Show)
 #if !MIN_VERSION_base(4,18,0)
   deriving Typeable
@@ -236,7 +242,8 @@ bimapDeadlockInstance f g DeadlockInstance {..} = DeadlockInstance {
     maxDisplayedSolutions = maxDisplayedSolutions,
     shortestSolutions = bimap (fmap (map g)) (fmap (map g)) shortestSolutions,
     withLengthHint    = withLengthHint,
-    withMinLengthHint = withMinLengthHint
+    withMinLengthHint = withMinLengthHint,
+    rejectSpaceballsLength = rejectSpaceballsLength
     }
 
 toShowDeadlockInstance
@@ -294,7 +301,8 @@ defaultDeadlockInstance = DeadlockInstance {
   maxDisplayedSolutions = 0,
   shortestSolutions = Left ([] :| []), -- TO DO: add a solution
   withLengthHint    = Just 9,
-  withMinLengthHint = True
+  withMinLengthHint = True,
+  rejectSpaceballsLength = Nothing
   }
 
 checkDeadlockConfig :: DeadlockConfig -> Maybe String
@@ -341,7 +349,8 @@ generateDeadlock conf@DeadlockConfig {..} seed = do
     shortestSolutions = solutionsList,
     withLengthHint    =
       if showLengthHint then Just maxTransitionLength else Nothing,
-    withMinLengthHint = showMinLengthHint
+    withMinLengthHint = showMinLengthHint,
+    rejectSpaceballsLength = minSpaceballsLength filterConfig
     }
 
 tries

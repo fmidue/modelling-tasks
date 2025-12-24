@@ -42,5 +42,6 @@ examWs2024 = DeadlockInstance {
   maxDisplayedSolutions = 1,
   shortestSolutions = Left ([] :| []), -- TO DO: add a solution here
   withLengthHint = Just 14,
-  withMinLengthHint = True
+  withMinLengthHint = True,
+  rejectSpaceballsLength = Nothing
   }

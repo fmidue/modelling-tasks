@@ -49,5 +49,6 @@ task5 = ReachInstance {
   maxDisplayedSolutions = 1,
   shortestSolutions = Left ([] :| []), -- TO DO: add a solution here
   withLengthHint = Just 12,
-  withMinLengthHint = True
+  withMinLengthHint = True,
+  rejectSpaceballsLength = Nothing
   }
