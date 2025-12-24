@@ -109,7 +109,7 @@ import Modelling.PetriNet.Reach.ConfigValidation (
   )
 import Control.OutputCapable.Blocks (
   ArticleToUse (IndefiniteArticle),
-  GenericOutputCapable (assertion, code, image, indent, paragraph, text),
+  GenericOutputCapable (assertion, code, image, indent, refuse, paragraph, text),
   LangM,
   MinimumThreshold (MinimumThreshold),
   OutputCapable,
@@ -445,7 +445,7 @@ rejectSpaceballsPattern maybeRejectSpaceballsLength ts =
   when (maybe False (`hasSpaceballsPrefix` ts) maybeRejectSpaceballsLength) $ do
     let longestSpaceballsPrefix = findLongestSpaceballsPrefix ts
         prefixString = show longestSpaceballsPrefix
-    refuse $ translate $ do
+    refuse $ paragraph $ translate $ do
       english $ concat [
         "The solution (or its prefix) ",
         prefixString,
