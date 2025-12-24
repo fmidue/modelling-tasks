@@ -58,7 +58,7 @@ module Modelling.PetriNet.Reach.Reach (
 import qualified Control.Monad.Trans              as Monad (lift)
 import qualified Data.Set                         as S (fromList, member, toList, union, empty)
 
-import Data.List.NonEmpty                 (NonEmpty, toList, fromList)
+import Data.List.NonEmpty                 (NonEmpty, fromList, toList)
 
 import Capabilities.Cache               (MonadCache)
 import Capabilities.Diagrams            (MonadDiagrams)
@@ -315,28 +315,28 @@ formatSolutionsFeedback
   -> Maybe String
 formatSolutionsFeedback maxDisplayedSolutions solutionsList
   | maxDisplayedSolutions <= 0 = Nothing
-  | otherwise = Just $ case solutionsList of
+  | otherwise = Just $ case bimap toList toList solutionsList of
+      Left [oneSolution] ->
+        show (TransitionsList oneSolution) ++
+          if 1 < maxDisplayedSolutions
+            then "\n\n(This is the one shortest solution.)"
+            else "\n\n(This is a shortest solution, but more may exist.)"
       Left shortestSolutions ->
-        let solutions = toList shortestSolutions
-            solutionsText = unlines $ map (show . TransitionsList) $ take maxDisplayedSolutions solutions
+        let solutionsText = unlines $ map (show . TransitionsList) shortestSolutions
         in solutionsText ++
-          if length solutions == 1 && maxDisplayedSolutions > 1
-            then "\n(This is the one shortest solution.)"
-          else if length solutions == 1
-            then "\n(This is a shortest solution, but more may exist.)"
-          else if length solutions <= maxDisplayedSolutions
+          if length shortestSolutions < maxDisplayedSolutions
             then "\n(These are all the shortest solutions.)"
             else "\n(These are shortest solutions, but more may exist.)"
-      Right allSolutions ->
-        let solutions = toList allSolutions
-            displayedSolutions = take maxDisplayedSolutions solutions
+      Right [theOnlySolution] ->
+        show (TransitionsList theOnlySolution) ++ "\n\n(This is the only solution.)"
+      Right (firstSolution : restSolutions) ->
+        let displayedSolutions = firstSolution : take (maxDisplayedSolutions - 1) restSolutions
             solutionsText = unlines $ map (show . TransitionsList) displayedSolutions
         in solutionsText ++
-          if length solutions == 1
-            then "\n(This is the only solution.)"
-          else if length solutions <= maxDisplayedSolutions
+          if length restSolutions < maxDisplayedSolutions
             then "\n(These are all the solutions.)"
             else "\n(These are solutions, but more exist.)"
+      _ -> error "formatSolutionsFeedback: solution list should never be empty"
 
 reachEvaluation
   :: (

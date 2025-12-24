@@ -1,6 +1,5 @@
 module Modelling.PetriNet.Reach.DeadlockSpec where
 
-import Data.List.NonEmpty                (toList)
 import Capabilities.Diagrams.IO         ()
 import Capabilities.Graphviz.IO         ()
 import Modelling.PetriNet.Reach.Deadlock (
@@ -55,7 +54,7 @@ spec = do
         quickCheckWith stdArgs {maxSuccess = 15} $ property $ \seed -> do
           let config = defaultDeadlockConfig
           deadlockInstance <- generateDeadlock config seed
-          let allSolutions = toList $ either id id (shortestSolutions deadlockInstance)
+          let allSolutions = either undefined id (shortestSolutions deadlockInstance)
               availableTransitions = transitions (petriNet deadlockInstance)
           allSolutions `shouldSatisfy` not . areSolutionsTrivial (filterConfig config) availableTransitions
 
