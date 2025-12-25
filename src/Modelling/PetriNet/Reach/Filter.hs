@@ -170,17 +170,12 @@ shouldDiscardSolutions :: (Enum a, Ord a) => FilterConfig -> Set a -> [[a]] -> B
 shouldDiscardSolutions config availableTransitions solutions =
   maybe False (\n -> notNull (drop n solutions)) (shortestSolutionsLimit config)
   || absentTransitionsRequirement config > 0 && countAbsentTransitions availableTransitions solutions < absentTransitionsRequirement config
-  || config { shortestSolutionsLimit = Nothing, absentTransitionsRequirement = 0, solutionsArePermutations = Nothing } /= noFiltering
-     && any (isTrivialSolution config availableTransitions) solutions
+  || maybe False (\threshold -> any (hasSpaceballsPrefix threshold) solutions) (spaceballsPrefixThreshold config)
+  || maybe False (\limit -> any (isCyclicPattern limit) solutions) (cyclicPatternLengthLimit config)
+  || maybe False (\threshold -> any (hasRepetitiveSubsequence threshold) solutions) (repetitiveSubsequenceThreshold config)
+  || filterGroupedRepeats config && any hasGroupedRepeats solutions
+  || transitionCoverageRequirement config > 0 && any (hasInsufficientTransitionCoverage availableTransitions `flip` transitionCoverageRequirement config) solutions
   || maybe False (areAllPermutationsOfEachOther solutions /=) (solutionsArePermutations config)
-  where
-    isTrivialSolution :: (Enum a, Ord a) => FilterConfig -> Set a -> [a] -> Bool
-    isTrivialSolution cfg avail xs =
-      maybe False (`hasSpaceballsPrefix` xs) (spaceballsPrefixThreshold cfg)
-      || maybe False (`isCyclicPattern` xs) (cyclicPatternLengthLimit cfg)
-      || maybe False (`hasRepetitiveSubsequence` xs) (repetitiveSubsequenceThreshold cfg)
-      || (filterGroupedRepeats cfg && hasGroupedRepeats xs)
-      || hasInsufficientTransitionCoverage avail xs (transitionCoverageRequirement cfg)
 
 -- | Count the number of transitions that appear in none of the solutions
 countAbsentTransitions :: Ord a => Set a -> [[a]] -> Int
