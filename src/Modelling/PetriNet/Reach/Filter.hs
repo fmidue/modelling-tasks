@@ -3,7 +3,7 @@
 {-# LANGUAGE DeriveGeneric #-}
 
 {-|
-Module for filtering sequences in Petri net reach tasks.
+Module for filtering sequences in Petri net reach/deadlock tasks.
 
 This module provides functions to filter out sequences and solution sets
 based on various criteria that make instances too simple or too complicated:
@@ -15,6 +15,8 @@ based on various criteria that make instances too simple or too complicated:
 - Insufficient transition coverage in solutions
 - Insufficient number of transitions absent from all solutions
 - Solutions are (not) all permutations of each other
+
+The filtering only happens on/with minimal solution sequences for a task.
 -}
 module Modelling.PetriNet.Reach.Filter (
   -- * Pattern detection
@@ -68,16 +70,16 @@ data FilterConfig = FilterConfig {
   --
   -- 'Nothing' means no limit on the number of solutions
   maxNumberOfSolutions :: !(Maybe Int),
-  -- | Whether all minimal solutions should be permutations of each other
+  -- | Whether all (shortest) solutions should be permutations of each other
   --
   -- * @Just True@ means filter out instances where solutions are NOT all permutations
   -- * @Just False@ means filter out instances where solutions ARE all permutations
   -- * 'Nothing' means don't care about the permutation property
   solutionsArePermutations :: !(Maybe Bool),
-  -- | Minimum number of transitions that must be absent from all minimal solutions
+  -- | Minimum number of transitions that must be absent from all (shortest) solutions
   --
   -- At least this many transitions from the available transitions
-  -- must appear in none of the minimal solution sequences.
+  -- must appear in none of the solution sequences.
   -- A value of @0@ means no filtering based on absent transitions.
   minAbsentTransitions :: !Int,
   -- | Minimum fraction of available transitions that must appear in each solution
@@ -122,8 +124,6 @@ isTrivialSequence config availableTransitions xs =
   || hasInsufficientTransitionCoverage availableTransitions xs (minTransitionCoverage config)
 
 -- | Check if a sequence has insufficient transition coverage
--- A sequence is considered to have insufficient coverage if it doesn't use enough
--- of the available transitions
 hasInsufficientTransitionCoverage :: (Ord a) => Set a -> [a] -> Ratio Int -> Bool
 hasInsufficientTransitionCoverage _ _ 0 = False
 hasInsufficientTransitionCoverage availableTransitions transitionSequence minCoverage
