@@ -275,7 +275,7 @@ data DeadlockConfig = DeadlockConfig {
 defaultDeadlockConfig :: DeadlockConfig
 defaultDeadlockConfig =
   DeadlockConfig {
-  numPlaces = 4,
+  numPlaces = 6,
   numTransitions = 6,
   Modelling.PetriNet.Reach.Deadlock.capacity = Unbounded,
   drawCommands        = [Dot, Neato, TwoPi, Circo, Fdp, Sfdp, Osage, Patchwork],
