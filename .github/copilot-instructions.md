@@ -393,6 +393,10 @@ defaultDeadlockInstance = DeadlockInstance {
 - It maintains consistency with existing field alignment
 - What would be problematic is realigning all existing fields to match the new longer `instanceMaxDisplayedSolutions` field
 
+**Other cases**:
+
+Also when modifying export or import lists, make sure to cause minimal diffs. For example, prefer to not add new stuff at the very end of such lists, to prevent diffs from trailing commas.
+
 **Rationale**:
 
 - Smaller diffs are easier to review
