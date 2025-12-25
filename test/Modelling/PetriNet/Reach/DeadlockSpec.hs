@@ -50,8 +50,8 @@ spec = do
         net `shouldSatisfy`
           hasMinTransitionLength (null . successors net) ts minL
 
-    needsTuning $
-      it "generates non-trivial solutions when filtering is enabled" $
+    -- needsTuning $
+    it "generates non-trivial solutions when filtering is enabled" $
         quickCheckWith stdArgs {maxSuccess = 15} $ property $ \seed -> do
           let config = defaultDeadlockConfig
           deadlockInstance <- generateDeadlock config seed
