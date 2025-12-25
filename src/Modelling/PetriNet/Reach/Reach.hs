@@ -572,8 +572,8 @@ data NetGoalConfig = NetGoalConfig {
 defaultReachConfig :: ReachConfig
 defaultReachConfig = ReachConfig {
   netGoalConfig = NetGoalConfig {
-    numPlaces           = 5,
-    numTransitions      = 5,
+    numPlaces           = 6,
+    numTransitions      = 6,
     Modelling.PetriNet.Reach.Reach.capacity = Unbounded,
     drawCommands        = [Dot, Neato, TwoPi, Circo, Fdp, Sfdp, Osage, Patchwork],
     maxTransitionLength = 6,
