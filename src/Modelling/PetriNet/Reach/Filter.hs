@@ -76,11 +76,10 @@ data FilterConfig = FilterConfig {
   solutionsArePermutations :: !(Maybe Bool),
   -- | Minimum number of transitions that must be absent from all minimal solutions
   --
-  -- If set to @Just k@, at least @k@ transitions from the available transitions
+  -- At least this many transitions from the available transitions
   -- must appear in none of the minimal solution sequences.
-  --
-  -- 'Nothing' means no filtering based on absent transitions
-  minAbsentTransitions :: !(Maybe Int),
+  -- A value of @0@ means no filtering based on absent transitions.
+  minAbsentTransitions :: !Int,
   -- | Minimum fraction of available transitions that must appear in each solution
   --
   -- For example, @4 % 5@ requires that each solution uses at least 80% of
@@ -96,7 +95,7 @@ noFiltering = FilterConfig {
   maxCycleLength = Nothing,
   maxNumberOfSolutions = Nothing,
   solutionsArePermutations = Nothing,
-  minAbsentTransitions = Nothing,
+  minAbsentTransitions = 0,
   minTransitionCoverage = 0
   }
 
@@ -109,7 +108,7 @@ defaultFilterConfig = FilterConfig {
   maxCycleLength = Just 4,
   maxNumberOfSolutions = Just 15,
   solutionsArePermutations = Just True,
-  minAbsentTransitions = Just 1,
+  minAbsentTransitions = 1,
   minTransitionCoverage = 4 % 5
   }
 
@@ -126,6 +125,7 @@ isTrivialSequence config availableTransitions xs =
 -- A sequence is considered to have insufficient coverage if it doesn't use enough
 -- of the available transitions
 hasInsufficientTransitionCoverage :: (Ord a) => Set a -> [a] -> Ratio Int -> Bool
+hasInsufficientTransitionCoverage _ _ 0 = False
 hasInsufficientTransitionCoverage availableTransitions transitionSequence minCoverage
   = let usedCount = length (nubOrd transitionSequence)
         totalTransitions = Set.size availableTransitions
@@ -174,8 +174,8 @@ hasGroupedRepeats xs =
 shouldDiscardSolutions :: (Enum a, Ord a) => FilterConfig -> Set a -> [[a]] -> Bool
 shouldDiscardSolutions config availableTransitions solutions =
   maybe False (\n -> notNull (drop n solutions)) (maxNumberOfSolutions config)
-  || maybe False (countAbsentTransitions availableTransitions solutions <) (minAbsentTransitions config)
-  || config { maxNumberOfSolutions = Nothing, minAbsentTransitions = Nothing, solutionsArePermutations = Nothing } /= noFiltering
+  || minAbsentTransitions config > 0 && countAbsentTransitions availableTransitions solutions < minAbsentTransitions config
+  || config { maxNumberOfSolutions = Nothing, minAbsentTransitions = 0, solutionsArePermutations = Nothing } /= noFiltering
      && any (isTrivialSequence config availableTransitions) solutions
   || maybe False (areAllPermutationsOfEachOther solutions /=) (solutionsArePermutations config)
 
