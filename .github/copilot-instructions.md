@@ -310,6 +310,7 @@ This principle is particularly important when working with Haskell records:
 - **When modifying record type definitions**: Only change the lines that need to be changed
 - **When modifying record value assignments**: Only change the lines that need to be changed
 - **NEVER realign existing fields** just to make them line up with new or modified fields
+- **AVOID adding fields at the end of records** so as to not create larger diff due to trailing comma at previously last field
 
 **Examples for record type definitions**:
 
