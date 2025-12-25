@@ -175,7 +175,8 @@ shouldDiscardSolutions :: (Enum a, Ord a) => FilterConfig -> Set a -> [[a]] -> B
 shouldDiscardSolutions config availableTransitions solutions =
   maybe False (\n -> notNull (drop n solutions)) (maxNumberOfSolutions config)
   || maybe False (countAbsentTransitions availableTransitions solutions <) (minAbsentTransitions config)
-  || config { maxNumberOfSolutions = Nothing, minAbsentTransitions = Nothing, solutionsArePermutations = Nothing } /= noFiltering && any (isTrivialSequence config availableTransitions) solutions
+  || config { maxNumberOfSolutions = Nothing, minAbsentTransitions = Nothing, solutionsArePermutations = Nothing } /= noFiltering
+     && any (isTrivialSequence config availableTransitions) solutions
   || maybe False (areAllPermutationsOfEachOther solutions /=) (solutionsArePermutations config)
 
 -- | Count the number of transitions that appear in none of the solutions
