@@ -108,7 +108,7 @@ defaultFilterConfig = FilterConfig {
   maxCycleLength = Just 4,
   maxNumberOfSolutions = Just 15,
   solutionsArePermutations = Just True,
-  minAbsentTransitions = 0,
+  minAbsentTransitions = 1,
   minTransitionCoverage = 4 % 5
   }
 
