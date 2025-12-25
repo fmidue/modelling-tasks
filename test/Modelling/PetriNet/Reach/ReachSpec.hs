@@ -43,38 +43,6 @@ import Test.QuickCheck (
 
 spec :: Spec
 spec = do
-  describe "generateReach" $ do
-    it "abides minTransitionLength" $
-      quickCheckWith stdArgs {maxSuccess = 50} $ property $ \seed -> do
-        let config = defaultReachConfig {
-              netGoalConfig = (netGoalConfig defaultReachConfig) {
-                maxTransitionLength = 6,
-                minTransitionLength = 6
-                },
-              filterConfig = noFiltering
-              }
-            minL = minTransitionLength (netGoalConfig config)
-        inst <- generateReach config seed
-        let net = petriNet (netGoal inst)
-            s = goal (netGoal inst)
-            ts = transitions net
-        net `shouldSatisfy` hasMinTransitionLength (s ==) ts minL
-
-    it "generates non-trivial solutions when filtering is enabled" $
-      quickCheckWith stdArgs {maxSuccess = 15} $ property $ \seed -> do
-        let config = defaultReachConfig {
-              netGoalConfig = goalConfig,
-              filterConfig = defaultFilterConfig
-              }
-            goalConfig = (netGoalConfig defaultReachConfig) {
-              maxTransitionLength = 8,
-              minTransitionLength = 8
-              }
-        inst <- generateReach config seed
-        let allSolutions = either undefined toList (shortestSolutions inst)
-            availableTransitions = transitions $ petriNet $ netGoal inst
-        allSolutions `shouldSatisfy` not . shouldDiscardSolutions (filterConfig config) availableTransitions
-
   describe "checkReachConfig" $ do
     it "accepts valid configuration" $ do
       let config = defaultReachConfig
@@ -134,6 +102,38 @@ spec = do
             showPlaceNamesInNet = False
             }
       checkReachConfig config `shouldSatisfy` isJust
+
+  describe "generateReach" $ do
+    it "abides minTransitionLength" $
+      quickCheckWith stdArgs {maxSuccess = 50} $ property $ \seed -> do
+        let config = defaultReachConfig {
+              netGoalConfig = (netGoalConfig defaultReachConfig) {
+                maxTransitionLength = 6,
+                minTransitionLength = 6
+                },
+              filterConfig = noFiltering
+              }
+            minL = minTransitionLength (netGoalConfig config)
+        inst <- generateReach config seed
+        let net = petriNet (netGoal inst)
+            s = goal (netGoal inst)
+            ts = transitions net
+        net `shouldSatisfy` hasMinTransitionLength (s ==) ts minL
+
+    it "generates non-trivial solutions when filtering is enabled" $
+      quickCheckWith stdArgs {maxSuccess = 15} $ property $ \seed -> do
+        let config = defaultReachConfig {
+              netGoalConfig = goalConfig,
+              filterConfig = defaultFilterConfig
+              }
+            goalConfig = (netGoalConfig defaultReachConfig) {
+              maxTransitionLength = 8,
+              minTransitionLength = 8
+              }
+        inst <- generateReach config seed
+        let allSolutions = either undefined toList (shortestSolutions inst)
+            availableTransitions = transitions $ petriNet $ netGoal inst
+        allSolutions `shouldSatisfy` not . shouldDiscardSolutions (filterConfig config) availableTransitions
 
 hasMinTransitionLength
   :: (Ord s, Show s)
