@@ -3,16 +3,20 @@
 {-# LANGUAGE DeriveGeneric #-}
 
 {-|
-Module for filtering out trivial sequences in Petri net reach tasks.
+Module for filtering sequences in Petri net reach/deadlock tasks.
 
-This module provides functions to detect and filter out "trivial" sequences
-that students might accidentally guess correctly or that indicate some structure
-in the solution which makes it too simple in some sense, such as:
+This module provides functions to filter out sequences and solution sets
+based on various criteria that make instances too simple or too complicated:
+
 - Cyclic patterns: [t3, t2, t1, t4, t3, t2, t1, t4]
 - Repetitive subsequences: [t4, t4, t4, t4] as prefix/suffix
 - Grouped repeats: [t3, t3, t2, t2, t1, t1, t4, t4]
 - Too many shortest solutions
 - Insufficient transition coverage in solutions
+- Insufficient number of transitions absent from all solutions
+- Solutions are (not) all permutations of each other
+
+The filtering only happens on/with minimal solution sequences for a task.
 -}
 module Modelling.PetriNet.Reach.Filter (
   -- * Pattern detection
@@ -24,7 +28,7 @@ module Modelling.PetriNet.Reach.Filter (
   hasInsufficientTransitionCoverage,
 
   -- * Solution set validation
-  areSolutionsTrivial,
+  shouldDiscardSolutions,
 
   -- * Configuration
   FilterConfig(..),
@@ -37,13 +41,13 @@ import qualified Data.Set                         as Set
 import Autolib.Reader                   (Reader)
 import Autolib.ToDoc                    (ToDoc)
 import Data.Data                        (Data)
-import Data.List                        (group)
+import Data.List                        (group, sort)
 import Data.List.Extra                  (notNull, nubOrd)
 import Data.Ratio                       (Ratio, (%))
 import Data.Set                         (Set)
 import GHC.Generics                     (Generic)
 
--- | Configuration for trivial sequence filtering
+-- | Configuration for sequence filtering
 data FilterConfig = FilterConfig {
   -- | Enable filtering of grouped repeats (e.g., @[t3,t3,t3,t2,t2,t2,t1,t1]@)
   filterGroupedRepeats :: !Bool,
@@ -66,6 +70,18 @@ data FilterConfig = FilterConfig {
   --
   -- 'Nothing' means no limit on the number of solutions
   maxNumberOfSolutions :: !(Maybe Int),
+  -- | Whether all (shortest) solutions should be permutations of each other
+  --
+  -- * @Just True@ means filter out instances where solutions are NOT all permutations
+  -- * @Just False@ means filter out instances where solutions ARE all permutations
+  -- * 'Nothing' means don't care about the permutation property
+  solutionsArePermutations :: !(Maybe Bool),
+  -- | Minimum number of transitions that must be absent from all (shortest) solutions
+  --
+  -- At least this many transitions from the available transitions
+  -- must appear in none of the solution sequences.
+  -- A value of @0@ means no filtering based on absent transitions.
+  minAbsentTransitions :: !Int,
   -- | Minimum fraction of available transitions that must appear in each solution
   --
   -- For example, @4 % 5@ requires that each solution uses at least 80% of
@@ -80,6 +96,8 @@ noFiltering = FilterConfig {
   minSpaceballsLength = Nothing,
   maxCycleLength = Nothing,
   maxNumberOfSolutions = Nothing,
+  solutionsArePermutations = Nothing,
+  minAbsentTransitions = 0,
   minTransitionCoverage = 0
   }
 
@@ -91,6 +109,8 @@ defaultFilterConfig = FilterConfig {
   minSpaceballsLength = Just 4,
   maxCycleLength = Just 4,
   maxNumberOfSolutions = Just 15,
+  solutionsArePermutations = Just True,
+  minAbsentTransitions = 1,
   minTransitionCoverage = 4 % 5
   }
 
@@ -104,9 +124,8 @@ isTrivialSequence config availableTransitions xs =
   || hasInsufficientTransitionCoverage availableTransitions xs (minTransitionCoverage config)
 
 -- | Check if a sequence has insufficient transition coverage
--- A sequence is considered to have insufficient coverage if it doesn't use enough
--- of the available transitions
 hasInsufficientTransitionCoverage :: (Ord a) => Set a -> [a] -> Ratio Int -> Bool
+hasInsufficientTransitionCoverage _ _ 0 = False
 hasInsufficientTransitionCoverage availableTransitions transitionSequence minCoverage
   = let usedCount = length (nubOrd transitionSequence)
         totalTransitions = Set.size availableTransitions
@@ -148,9 +167,28 @@ hasGroupedRepeats xs =
     groups = group xs
     groupSizes = map length groups
 
--- | Check if a set of solutions is considered trivial according to the given configuration
--- This combines both per-sequence checks and the collective check for too many solutions
-areSolutionsTrivial :: (Enum a, Ord a) => FilterConfig -> Set a -> [[a]] -> Bool
-areSolutionsTrivial config availableTransitions solutions =
+-- | Check if a set of solutions should be discarded according to the given configuration
+--
+-- Returns 'True' if the solution set should be discarded (filtered out),
+-- 'False' if it should be kept.
+shouldDiscardSolutions :: (Enum a, Ord a) => FilterConfig -> Set a -> [[a]] -> Bool
+shouldDiscardSolutions config availableTransitions solutions =
   maybe False (\n -> notNull (drop n solutions)) (maxNumberOfSolutions config)
-  || config { maxNumberOfSolutions = Nothing } /= noFiltering && any (isTrivialSequence config availableTransitions) solutions
+  || minAbsentTransitions config > 0 && countAbsentTransitions availableTransitions solutions < minAbsentTransitions config
+  || config { maxNumberOfSolutions = Nothing, minAbsentTransitions = 0, solutionsArePermutations = Nothing } /= noFiltering
+     && any (isTrivialSequence config availableTransitions) solutions
+  || maybe False (areAllPermutationsOfEachOther solutions /=) (solutionsArePermutations config)
+
+-- | Count the number of transitions that appear in none of the solutions
+countAbsentTransitions :: Ord a => Set a -> [[a]] -> Int
+countAbsentTransitions availableTransitions solutions =
+  let usedTransitions = Set.unions (map Set.fromList solutions)
+      absentTransitions = Set.difference availableTransitions usedTransitions
+  in Set.size absentTransitions
+
+-- | Check if all solutions are permutations of each other
+areAllPermutationsOfEachOther :: Ord a => [[a]] -> Bool
+areAllPermutationsOfEachOther [] = True
+areAllPermutationsOfEachOther (firstSolution:restSolutions) =
+  let sortedFirst = sort firstSolution
+  in all (\solution -> sort solution == sortedFirst) restSolutions

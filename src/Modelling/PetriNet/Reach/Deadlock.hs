@@ -55,7 +55,7 @@ import Capabilities.Graphviz            (MonadGraphviz)
 import Modelling.PetriNet.Reach.Draw    (drawToFile, isPetriDrawable)
 import Modelling.PetriNet.Reach.Filter (
   FilterConfig (..),
-  areSolutionsTrivial,
+  shouldDiscardSolutions,
   defaultFilterConfig,
   noFiltering,
   )
@@ -275,8 +275,8 @@ data DeadlockConfig = DeadlockConfig {
 defaultDeadlockConfig :: DeadlockConfig
 defaultDeadlockConfig =
   DeadlockConfig {
-  numPlaces = 4,
-  numTransitions = 4,
+  numPlaces = 6,
+  numTransitions = 6,
   Modelling.PetriNet.Reach.Deadlock.capacity = Unbounded,
   drawCommands        = [Dot, Neato, TwoPi, Circo, Fdp, Sfdp, Osage, Patchwork],
   maxTransitionLength = 8,
@@ -288,7 +288,7 @@ defaultDeadlockConfig =
   showLengthHint      = False,
   showMinLengthHint   = True,
   showPlaceNamesInNet = False,
-  filterConfig        = defaultFilterConfig { maxNumberOfSolutions = Nothing }
+  filterConfig        = defaultFilterConfig { maxNumberOfSolutions = Nothing, solutionsArePermutations = Just False }
   }
 
 defaultDeadlockInstance :: DeadlockInstance Place Transition
@@ -323,6 +323,7 @@ checkDeadlockConfig DeadlockConfig {..} =
     rejectLongerThan
     minTransitionLength
     maxTransitionLength
+    numTransitions
     filterConfig
   <|>
   if maxPrintedSolutions < 0
@@ -369,7 +370,7 @@ tries n filterConfig conf seed = eval out
     checkCandidate (l, pn, allShortestSolutions) = do
       guard $ l >= minTransitionLength conf
       let availableTransitions = transitions pn
-      guard (not $ areSolutionsTrivial filterConfig availableTransitions allShortestSolutions)
+      guard (not $ shouldDiscardSolutions filterConfig availableTransitions allShortestSolutions)
       cmd <- MaybeT $ findM (Monad.lift . isPetriDrawable pn) (drawCommands conf)
       solutionsList <-
         if filterConfig == noFiltering

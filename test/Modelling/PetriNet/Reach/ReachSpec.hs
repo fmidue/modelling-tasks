@@ -15,8 +15,9 @@ import Modelling.PetriNet.Reach.Reach (
   checkReachConfig,
   )
 import Modelling.PetriNet.Reach.Filter (
-  areSolutionsTrivial,
+  shouldDiscardSolutions,
   defaultFilterConfig,
+  solutionsArePermutations,
   noFiltering,
   )
 import Modelling.PetriNet.Reach.Property (
@@ -64,7 +65,7 @@ spec = do
       quickCheckWith stdArgs {maxSuccess = 15} $ property $ \seed -> do
         let config = defaultReachConfig {
               netGoalConfig = goalConfig,
-              filterConfig = defaultFilterConfig
+              filterConfig = defaultFilterConfig { solutionsArePermutations = Just True }
               }
             goalConfig = (netGoalConfig defaultReachConfig) {
               maxTransitionLength = 8,
@@ -73,7 +74,7 @@ spec = do
         inst <- generateReach config seed
         let allSolutions = either undefined toList (shortestSolutions inst)
             availableTransitions = transitions $ petriNet $ netGoal inst
-        allSolutions `shouldSatisfy` not . areSolutionsTrivial (filterConfig config) availableTransitions
+        allSolutions `shouldSatisfy` not . shouldDiscardSolutions (filterConfig config) availableTransitions
 
   describe "checkReachConfig" $ do
     it "accepts valid configuration" $ do
