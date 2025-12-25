@@ -6,18 +6,15 @@
 Module for filtering sequences in Petri net reach tasks.
 
 This module provides functions to filter out sequences and solution sets
-based on various criteria that make instances either too simple or too complicated:
+based on various criteria that make instances too simple or too complicated:
 
-Too simple criteria (making instances trivial):
 - Cyclic patterns: [t3, t2, t1, t4, t3, t2, t1, t4]
 - Repetitive subsequences: [t4, t4, t4, t4] as prefix/suffix
 - Grouped repeats: [t3, t3, t2, t2, t1, t1, t4, t4]
 - Too many shortest solutions
 - Insufficient transition coverage in solutions
-
-Too complicated criteria (filtering for manageable complexity):
-- Solutions are all permutations of each other
 - Insufficient number of transitions absent from all solutions
+- Solutions are (not) all permutations of each other
 -}
 module Modelling.PetriNet.Reach.Filter (
   -- * Pattern detection
@@ -71,25 +68,24 @@ data FilterConfig = FilterConfig {
   --
   -- 'Nothing' means no limit on the number of solutions
   maxNumberOfSolutions :: !(Maybe Int),
-  -- | Minimum fraction of available transitions that must appear in each solution
-  --
-  -- For example, @4 % 5@ requires that each solution uses at least 80% of
-  -- the available transitions. Hence, '0' means no minimum coverage requirement.
-  minTransitionCoverage :: !(Ratio Int),
-  -- | Minimum number of transitions that must be absent from all minimal solutions
-  --
-  -- If set to @Just k@, at least @k@ transitions from the available transitions
-  -- must appear in none of the minimal solution sequences. This helps ensure
-  -- instances are not too complicated by requiring some transitions to be unused.
-  --
-  -- 'Nothing' means no filtering based on absent transitions
-  minAbsentTransitions :: !(Maybe Int),
   -- | Whether all minimal solutions should be permutations of each other
   --
   -- * @Just True@ means filter out instances where solutions are NOT all permutations
   -- * @Just False@ means filter out instances where solutions ARE all permutations
   -- * 'Nothing' means don't care about the permutation property
-  solutionsArePermutations :: !(Maybe Bool)
+  solutionsArePermutations :: !(Maybe Bool),
+  -- | Minimum number of transitions that must be absent from all minimal solutions
+  --
+  -- If set to @Just k@, at least @k@ transitions from the available transitions
+  -- must appear in none of the minimal solution sequences.
+  --
+  -- 'Nothing' means no filtering based on absent transitions
+  minAbsentTransitions :: !(Maybe Int),
+  -- | Minimum fraction of available transitions that must appear in each solution
+  --
+  -- For example, @4 % 5@ requires that each solution uses at least 80% of
+  -- the available transitions. Hence, '0' means no minimum coverage requirement.
+  minTransitionCoverage :: !(Ratio Int)
   } deriving (Data, Eq, Generic, Ord, Reader, Read, Show, ToDoc)
 
 noFiltering :: FilterConfig
@@ -99,9 +95,9 @@ noFiltering = FilterConfig {
   minSpaceballsLength = Nothing,
   maxCycleLength = Nothing,
   maxNumberOfSolutions = Nothing,
-  minTransitionCoverage = 0,
+  solutionsArePermutations = Nothing,
   minAbsentTransitions = Nothing,
-  solutionsArePermutations = Nothing
+  minTransitionCoverage = 0
   }
 
 -- | Default filter configuration that enables all filters
@@ -112,9 +108,9 @@ defaultFilterConfig = FilterConfig {
   minSpaceballsLength = Just 4,
   maxCycleLength = Just 4,
   maxNumberOfSolutions = Just 15,
-  minTransitionCoverage = 4 % 5,
-  minAbsentTransitions = Nothing,
-  solutionsArePermutations = Nothing
+  solutionsArePermutations = Just False,
+  minAbsentTransitions = Just 1,
+  minTransitionCoverage = 4 % 5
   }
 
 -- | Check if a sequence is considered trivial according to the given configuration
@@ -175,24 +171,12 @@ hasGroupedRepeats xs =
 --
 -- Returns 'True' if the solution set should be discarded (filtered out),
 -- 'False' if it should be kept.
---
--- This function filters instances based on multiple criteria:
---
--- * Too simple criteria (making instances trivial):
---
---     - Too many solutions
---     - Individual sequences with trivial patterns (cyclic, repetitive, etc.)
---
--- * Too complicated criteria (filtering for manageable complexity):
---
---     - Insufficient number of transitions absent from all solutions
---     - All solutions are (or are not) permutations of each other
 shouldDiscardSolutions :: (Enum a, Ord a) => FilterConfig -> Set a -> [[a]] -> Bool
 shouldDiscardSolutions config availableTransitions solutions =
   maybe False (\n -> notNull (drop n solutions)) (maxNumberOfSolutions config)
-  || config { maxNumberOfSolutions = Nothing } /= noFiltering && any (isTrivialSequence config availableTransitions) solutions
-  || maybe False (\k -> countAbsentTransitions availableTransitions solutions < k) (minAbsentTransitions config)
-  || maybe False (\expected -> areAllPermutationsOfEachOther solutions /= expected) (solutionsArePermutations config)
+  || maybe False (countAbsentTransitions availableTransitions solutions <) (minAbsentTransitions config)
+  || config { maxNumberOfSolutions = Nothing, minAbsentTransitions = Nothing, solutionsArePermutations = Nothing } /= noFiltering && any (isTrivialSequence config availableTransitions) solutions
+  || maybe False (areAllPermutationsOfEachOther solutions /=) (solutionsArePermutations config)
 
 -- | Count the number of transitions that appear in none of the solutions
 countAbsentTransitions :: Ord a => Set a -> [[a]] -> Int
@@ -204,10 +188,9 @@ countAbsentTransitions availableTransitions solutions =
 -- | Check if all solutions are permutations of each other
 --
 -- Returns 'True' if all solutions are permutations of the same sequence,
--- 'False' otherwise. An empty list or single solution returns 'True'.
+-- 'False' otherwise.
 areAllPermutationsOfEachOther :: Ord a => [[a]] -> Bool
 areAllPermutationsOfEachOther [] = True
-areAllPermutationsOfEachOther [_] = True
 areAllPermutationsOfEachOther (firstSolution:restSolutions) =
   let sortedFirst = sort firstSolution
   in all (\solution -> sort solution == sortedFirst) restSolutions
