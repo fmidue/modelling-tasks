@@ -133,8 +133,8 @@ checkFilterConfigWith rejectLongerThan minTransitionLength maxTransitionLength n
   | Just maxSolutions <- maxNumberOfSolutions
   , maxSolutions < 1
   = Just "setting maxNumberOfSolutions to less than 1 does not make sense"
-  | minTransitionCoverage <= 0 || minTransitionCoverage > 1
-  = Just "minTransitionCoverage must be positive and at most 1 if it is enabled"
+  | minTransitionCoverage < 0 || minTransitionCoverage > 1
+  = Just "minTransitionCoverage must be a value from 0 to 1"
   | Just minAbsent <- minAbsentTransitions
   , minAbsent < 1 || minAbsent >= numTransitions
   = Just "minAbsentTransitions must be positive and smaller than the total number of transitions if it is enabled"
