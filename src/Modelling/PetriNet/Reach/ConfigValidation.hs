@@ -115,31 +115,31 @@ checkFilterConfigWith rejectLongerThan minTransitionLength maxTransitionLength n
   , filterConfig /= noFiltering
   = Just $ "If transition length is not enforced to one value, filterConfig must be set to "
     ++ show noFiltering
-  | Just repeats <- minRepetitiveLength
+  | Just repeats <- repetitiveSubsequenceThreshold
   , repeats < 2
-  = Just "minRepetitiveLength has to be set to at least 2 if it is enabled"
-  | Just repeats <- minRepetitiveLength
+  = Just "repetitiveSubsequenceThreshold has to be set to at least 2 if it is enabled"
+  | Just repeats <- repetitiveSubsequenceThreshold
   , repeats > maxTransitionLength `div` 2
-  = Just "minRepetitiveLength must not be higher than half of maxTransitionLength"
-  | Just cycleLength <- maxCycleLength
+  = Just "repetitiveSubsequenceThreshold must not be higher than half of maxTransitionLength"
+  | Just cycleLength <- cyclicPatternLengthLimit
   , cycleLength < 1
-  = Just "setting maxCycleLength to less than 1 does not make sense"
-  | Just cycleLength <- maxCycleLength
+  = Just "setting cyclicPatternLengthLimit to less than 1 does not make sense"
+  | Just cycleLength <- cyclicPatternLengthLimit
   , cycleLength > maxTransitionLength `div` 2
-  = Just "maxCycleLength must not be higher than half of maxTransitionLength"
-  | Just spaceballsLength <- minSpaceballsLength
+  = Just "cyclicPatternLengthLimit must not be higher than half of maxTransitionLength"
+  | Just spaceballsLength <- spaceballsPrefixThreshold
   , spaceballsLength < 2 || spaceballsLength > maxTransitionLength
-  = Just "minSpaceballsLength must be a value from 2 to maxTransitionLength if it is enabled"
-  | Just maxSolutions <- maxNumberOfSolutions
+  = Just "spaceballsPrefixThreshold must be a value from 2 to maxTransitionLength if it is enabled"
+  | Just maxSolutions <- shortestSolutionsLimit
   , maxSolutions < 1
-  = Just "setting maxNumberOfSolutions to less than 1 does not make sense"
-  | minTransitionCoverage < 0 || minTransitionCoverage > 1
-  = Just "minTransitionCoverage must be a value from 0 to 1"
-  | minAbsentTransitions < 0 || minAbsentTransitions >= numTransitions
-  = Just "minAbsentTransitions must be non-negative and smaller than the total number of transitions"
-  | let maxAbsent = floor ((1 - minTransitionCoverage) * fromIntegral numTransitions)
-  , minAbsentTransitions > maxAbsent
-  = Just $ "minAbsentTransitions conflicts with minTransitionCoverage: " ++
+  = Just "setting shortestSolutionsLimit to less than 1 does not make sense"
+  | transitionCoverageRequirement < 0 || transitionCoverageRequirement > 1
+  = Just "transitionCoverageRequirement must be a value from 0 to 1"
+  | absentTransitionsRequirement < 0 || absentTransitionsRequirement >= numTransitions
+  = Just "absentTransitionsRequirement must be non-negative and smaller than the total number of transitions"
+  | let maxAbsent = floor ((1 - transitionCoverageRequirement) * fromIntegral numTransitions)
+  , absentTransitionsRequirement > maxAbsent
+  = Just $ "absentTransitionsRequirement conflicts with transitionCoverageRequirement: " ++
            "at most " ++ show maxAbsent ++ " transitions can be absent given the coverage requirement"
   | otherwise
   = Nothing

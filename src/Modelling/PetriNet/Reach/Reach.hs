@@ -587,7 +587,7 @@ defaultReachConfig = ReachConfig {
   showMinLengthHint   = True,
   showTargetNet       = True,
   showPlaceNamesInNet = False,
-  filterConfig        = defaultFilterConfig { maxCycleLength = Just 3 }
+  filterConfig        = defaultFilterConfig { cyclicPatternLengthLimit = Just 3 }
   }
 
 defaultReachInstance :: ReachInstance Place Transition
@@ -700,9 +700,9 @@ checkReachConfig ReachConfig {..} =
   <|>
   (if maxPrintedSolutions < 0
     then Just "maxPrintedSolutions must be non-negative"
-    else case maxNumberOfSolutions filterConfig of
+    else case shortestSolutionsLimit filterConfig of
       Just maxSolutions | maxPrintedSolutions > maxSolutions ->
-        Just "maxPrintedSolutions cannot be greater than maxNumberOfSolutions"
+        Just "maxPrintedSolutions cannot be greater than shortestSolutionsLimit"
       _ -> Nothing)
   <|>
   if showTargetNet || showPlaceNamesInNet
@@ -727,5 +727,5 @@ generateReach ReachConfig {..} seed = do
     withLengthHint    =
       if showLengthHint then Just $ maxTransitionLength netGoalConfig else Nothing,
     withMinLengthHint = showMinLengthHint,
-    rejectSpaceballsLength = minSpaceballsLength filterConfig
+    rejectSpaceballsLength = spaceballsPrefixThreshold filterConfig
     }

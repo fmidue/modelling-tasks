@@ -288,7 +288,7 @@ defaultDeadlockConfig =
   showLengthHint      = False,
   showMinLengthHint   = True,
   showPlaceNamesInNet = False,
-  filterConfig        = defaultFilterConfig { maxNumberOfSolutions = Nothing, solutionsArePermutations = Just False }
+  filterConfig        = defaultFilterConfig { shortestSolutionsLimit = Nothing, solutionsArePermutations = Just False }
   }
 
 defaultDeadlockInstance :: DeadlockInstance Place Transition
@@ -328,9 +328,9 @@ checkDeadlockConfig DeadlockConfig {..} =
   <|>
   if maxPrintedSolutions < 0
     then Just "maxPrintedSolutions must be non-negative"
-    else case maxNumberOfSolutions filterConfig of
+    else case shortestSolutionsLimit filterConfig of
       Just maxSolutions | maxPrintedSolutions > maxSolutions ->
-        Just "maxPrintedSolutions cannot be greater than maxNumberOfSolutions"
+        Just "maxPrintedSolutions cannot be greater than shortestSolutionsLimit"
       _ -> Nothing
 
 generateDeadlock
@@ -351,7 +351,7 @@ generateDeadlock conf@DeadlockConfig {..} seed = do
     withLengthHint    =
       if showLengthHint then Just maxTransitionLength else Nothing,
     withMinLengthHint = showMinLengthHint,
-    rejectSpaceballsLength = minSpaceballsLength filterConfig
+    rejectSpaceballsLength = spaceballsPrefixThreshold filterConfig
     }
 
 tries
