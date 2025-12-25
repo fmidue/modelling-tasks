@@ -23,7 +23,7 @@ import Modelling.PetriNet.Reach.ReachSpec (
   hasMinTransitionLength,
   )
 
-import Settings (needsTuning)
+-- import Settings (needsTuning)
 
 import Test.Hspec
 import Test.QuickCheck (
