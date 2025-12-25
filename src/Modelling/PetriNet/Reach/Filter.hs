@@ -108,7 +108,7 @@ defaultFilterConfig = FilterConfig {
   minSpaceballsLength = Just 4,
   maxCycleLength = Just 4,
   maxNumberOfSolutions = Just 15,
-  solutionsArePermutations = Just False,
+  solutionsArePermutations = Just True,
   minAbsentTransitions = Just 1,
   minTransitionCoverage = 4 % 5
   }
@@ -187,9 +187,6 @@ countAbsentTransitions availableTransitions solutions =
   in Set.size absentTransitions
 
 -- | Check if all solutions are permutations of each other
---
--- Returns 'True' if all solutions are permutations of the same sequence,
--- 'False' otherwise.
 areAllPermutationsOfEachOther :: Ord a => [[a]] -> Bool
 areAllPermutationsOfEachOther [] = True
 areAllPermutationsOfEachOther (firstSolution:restSolutions) =
