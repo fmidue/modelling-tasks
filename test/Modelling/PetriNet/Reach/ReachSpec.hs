@@ -65,7 +65,7 @@ spec = do
       quickCheckWith stdArgs {maxSuccess = 15} $ property $ \seed -> do
         let config = defaultReachConfig {
               netGoalConfig = goalConfig,
-              filterConfig = defaultFilterConfig { solutionsArePermutations = Just False }
+              filterConfig = defaultFilterConfig { solutionsArePermutations = Just True }
               }
             goalConfig = (netGoalConfig defaultReachConfig) {
               maxTransitionLength = 8,
