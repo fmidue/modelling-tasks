@@ -162,20 +162,19 @@ hasGroupedRepeats xs =
 shouldDiscardSolutions :: (Enum a, Ord a) => FilterConfig -> Int -> [[a]] -> Bool
 shouldDiscardSolutions config numTransitions solutions =
   maybe False (\n -> notNull (drop n solutions)) (solutionSetLimit config)
-  || absentTransitionsRequirement config > 0 && countAbsentTransitions numTransitions solutions < absentTransitionsRequirement config
-  || maybe False (\threshold -> any (hasSpaceballsPrefix threshold) solutions) (spaceballsPrefixThreshold config)
-  || maybe False (\limit -> any (isCyclicPattern limit) solutions) (rejectCyclesUpToLength config)
-  || maybe False (\threshold -> any (hasRepetitiveSubsequence threshold) solutions) (repetitiveSubsequenceThreshold config)
+  || maybe False ((`any` solutions) . hasSpaceballsPrefix) (spaceballsPrefixThreshold config)
+  || maybe False ((`any` solutions) . isCyclicPattern) (rejectCyclesUpToLength config)
+  || maybe False ((`any` solutions) . hasRepetitiveSubsequence) (repetitiveSubsequenceThreshold config)
   || rejectGroupedRepeats config && any hasGroupedRepeats solutions
   || transitionCoverageRequirement config > 0 && any (hasInsufficientTransitionCoverage numTransitions `flip` transitionCoverageRequirement config) solutions
+  || absentTransitionsRequirement config > 0 && countAbsentTransitions numTransitions solutions < absentTransitionsRequirement config
   || requireSolutionsArePermutations config && not (areAllPermutationsOfEachOther solutions)
 
 -- | Count the number of transitions that appear in none of the solutions
 countAbsentTransitions :: Ord a => Int -> [[a]] -> Int
 countAbsentTransitions totalTransitions solutions =
   let usedTransitions = Set.unions (map Set.fromList solutions)
-      usedCount = Set.size usedTransitions
-  in totalTransitions - usedCount
+  in totalTransitions - Set.size usedTransitions
 
 -- | Check if all solutions are permutations of each other
 areAllPermutationsOfEachOther :: Ord a => [[a]] -> Bool
