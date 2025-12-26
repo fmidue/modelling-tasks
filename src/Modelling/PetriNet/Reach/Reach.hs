@@ -587,7 +587,7 @@ defaultReachConfig = ReachConfig {
   showMinLengthHint   = True,
   showTargetNet       = True,
   showPlaceNamesInNet = False,
-  filterConfig        = defaultFilterConfig { cyclicPatternLengthLimit = Just 3 }
+  filterConfig        = defaultFilterConfig { rejectCyclesUpToLength = Just 3 }
   }
 
 defaultReachInstance :: ReachInstance Place Transition
@@ -700,9 +700,9 @@ checkReachConfig ReachConfig {..} =
   <|>
   (if maxPrintedSolutions < 0
     then Just "maxPrintedSolutions must be non-negative"
-    else case shortestSolutionsLimit filterConfig of
+    else case maxSolutionSequenceCount filterConfig of
       Just maxSolutions | maxPrintedSolutions > maxSolutions ->
-        Just "maxPrintedSolutions cannot be greater than shortestSolutionsLimit"
+        Just "maxPrintedSolutions cannot be greater than maxSolutionSequenceCount"
       _ -> Nothing)
   <|>
   if showTargetNet || showPlaceNamesInNet

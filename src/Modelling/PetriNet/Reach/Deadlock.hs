@@ -288,7 +288,7 @@ defaultDeadlockConfig =
   showLengthHint      = False,
   showMinLengthHint   = True,
   showPlaceNamesInNet = False,
-  filterConfig        = defaultFilterConfig { shortestSolutionsLimit = Nothing, solutionsArePermutations = Just False }
+  filterConfig        = defaultFilterConfig { maxSolutionSequenceCount = Nothing, solutionsArePermutations = Just False }
   }
 
 defaultDeadlockInstance :: DeadlockInstance Place Transition
@@ -328,9 +328,9 @@ checkDeadlockConfig DeadlockConfig {..} =
   <|>
   if maxPrintedSolutions < 0
     then Just "maxPrintedSolutions must be non-negative"
-    else case shortestSolutionsLimit filterConfig of
+    else case maxSolutionSequenceCount filterConfig of
       Just maxSolutions | maxPrintedSolutions > maxSolutions ->
-        Just "maxPrintedSolutions cannot be greater than shortestSolutionsLimit"
+        Just "maxPrintedSolutions cannot be greater than maxSolutionSequenceCount"
       _ -> Nothing
 
 generateDeadlock

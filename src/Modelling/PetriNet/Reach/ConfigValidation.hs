@@ -121,18 +121,21 @@ checkFilterConfigWith rejectLongerThan minTransitionLength maxTransitionLength n
   | Just repeats <- repetitiveSubsequenceThreshold
   , repeats > maxTransitionLength `div` 2
   = Just "repetitiveSubsequenceThreshold must not be higher than half of maxTransitionLength"
-  | Just cycleLength <- cyclicPatternLengthLimit
+  | Just cycleLength <- rejectCyclesUpToLength
   , cycleLength < 1
-  = Just "setting cyclicPatternLengthLimit to less than 1 does not make sense"
-  | Just cycleLength <- cyclicPatternLengthLimit
+  = Just "setting rejectCyclesUpToLength to less than 1 does not make sense"
+  | Just cycleLength <- rejectCyclesUpToLength
   , cycleLength > maxTransitionLength `div` 2
-  = Just "cyclicPatternLengthLimit must not be higher than half of maxTransitionLength"
+  = Just "rejectCyclesUpToLength must not be higher than half of maxTransitionLength"
   | Just spaceballsLength <- spaceballsPrefixThreshold
   , spaceballsLength < 2 || spaceballsLength > maxTransitionLength
   = Just "spaceballsPrefixThreshold must be a value from 2 to maxTransitionLength if it is enabled"
-  | Just maxSolutions <- shortestSolutionsLimit
+  | Just maxSolutions <- maxSolutionSequenceCount
   , maxSolutions < 1
-  = Just "setting shortestSolutionsLimit to less than 1 does not make sense"
+  = Just "setting maxSolutionSequenceCount to less than 1 does not make sense"
+  | maxSolutionSequenceCount == Just 1
+  , solutionsArePermutations /= Just True
+  = Just "when maxSolutionSequenceCount is 1, solutionsArePermutations should be set to Just True"
   | transitionCoverageRequirement < 0 || transitionCoverageRequirement > 1
   = Just "transitionCoverageRequirement must be a value from 0 to 1"
   | absentTransitionsRequirement < 0 || absentTransitionsRequirement >= numTransitions
