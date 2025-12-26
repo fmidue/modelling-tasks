@@ -131,7 +131,7 @@ hasSpaceballsPrefix minLength xs = take minLength xs == take minLength [head xs 
 -- The pattern is considered cyclic if it can be represented as `take n (cycle pattern)`
 -- where `length pattern <= rejectCyclesUpToLength` and the sequence has at least 2 complete cycles
 isCyclicPattern :: Eq a => Int -> [a] -> Bool
-isCyclicPattern m xs = any (isCyclicWith xs) [1..min m (length xs `div` 2)]
+isCyclicPattern m xs = any (isCyclicWith xs) [1..m]
   where
     isCyclicWith :: Eq a => [a] -> Int -> Bool
     isCyclicWith seqToCheck cycleLength =
