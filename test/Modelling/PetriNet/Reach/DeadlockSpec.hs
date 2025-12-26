@@ -1,6 +1,5 @@
 module Modelling.PetriNet.Reach.DeadlockSpec where
 
-
 import Data.List.NonEmpty                 (toList)
 import Capabilities.Diagrams.IO         ()
 import Capabilities.Graphviz.IO         ()
