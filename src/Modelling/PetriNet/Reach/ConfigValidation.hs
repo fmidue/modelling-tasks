@@ -8,6 +8,7 @@ module Modelling.PetriNet.Reach.ConfigValidation (
   checkTransitionLengths,
   checkRejectLongerThanConsistency,
   checkCapacity,
+  checkMaxPlaceDifference,
   checkFilterConfigWith
 ) where
 
@@ -55,6 +56,17 @@ checkCapacity :: Capacity s -> Maybe String
 checkCapacity Unbounded = Nothing
 checkCapacity _ = Just "Other choices for 'capacity' than 'Unbounded' are not currently supported for this task type."
 
+-- | Check maxPlaceDifference is within valid bounds
+checkMaxPlaceDifference :: Maybe Int -> Int -> Maybe String
+checkMaxPlaceDifference maybeMaxPlaceDifference numPlaces =
+  case maybeMaxPlaceDifference of
+    Nothing -> Nothing
+    Just maxPlaceDiff
+      | maxPlaceDiff < 1 -> Just "maxPlaceDifference must be at least 1 when specified"
+      | maxPlaceDiff > numPlaces -> Just $
+        "maxPlaceDifference (" ++ show maxPlaceDiff ++ ") cannot be greater than numPlaces (" ++ show numPlaces ++ ")"
+      | otherwise -> Nothing
+
 -- | Check consistency between rejectLongerThan and other length parameters
 checkRejectLongerThanConsistency :: Maybe Int -> Int -> Bool -> Maybe String
 checkRejectLongerThanConsistency rejectLongerThan maxTransitionLength showLengthHint =
@@ -79,6 +91,7 @@ checkBasicPetriConfig
   -> [GraphvizCommand]        -- ^ drawCommands
   -> Maybe Int                -- ^ rejectLongerThan
   -> Bool                     -- ^ showLengthHint
+  -> Maybe Int                -- ^ maxPlaceDifference
   -> Maybe String
 checkBasicPetriConfig
   numPlaces
@@ -90,13 +103,15 @@ checkBasicPetriConfig
   postconditionsRange
   drawCommands
   rejectLongerThan
-  showLengthHint =
+  showLengthHint
+  maxPlaceDifference =
     checkPetriNetSizes numPlaces numTransitions
     <|> checkCapacity capacity
     <|> checkTransitionLengths minTransitionLength maxTransitionLength
     <|> checkRange "preconditionsRange" preconditionsRange
     <|> checkRange "postconditionsRange" postconditionsRange
     <|> checkRejectLongerThanConsistency rejectLongerThan maxTransitionLength showLengthHint
+    <|> checkMaxPlaceDifference maxPlaceDifference numPlaces
     <|> checkDrawCommands drawCommands
   where
     checkDrawCommands [] = Just "drawCommands cannot be empty"

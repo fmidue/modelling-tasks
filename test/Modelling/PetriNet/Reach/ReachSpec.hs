@@ -22,11 +22,12 @@ import Modelling.PetriNet.Reach.Property (
   satisfiesAtAnyState,
   )
 import Modelling.PetriNet.Reach.Type (
-  Net (transitions),
+  Net (transitions, start),
   State,
   Transition (..),
   Capacity(..),
   Place(..),
+  mark,
   )
 
 import Data.Maybe                        (isJust)
@@ -61,6 +62,23 @@ spec = do
         inst <- generateReach config seed
         let allSolutions = either undefined toList (shortestSolutions inst)
         allSolutions `shouldSatisfy` not . shouldDiscardSolutions (filterConfig config) (numTransitions $ netGoalConfig config)
+
+    it "adheres to maxPlaceDifference constraint with noFiltering" $
+      quickCheckWith stdArgs {maxSuccess = 50} $ property $ \seed -> do
+        let config = defaultReachConfig {
+              filterConfig = noFiltering,
+              netGoalConfig = (netGoalConfig defaultReachConfig) {
+                maxPlaceDifference = Just 2
+                }
+              }
+        inst <- generateReach config seed
+        let net = petriNet (netGoal inst)
+            startState = start net
+            goalState = goal (netGoal inst)
+            numberOfPlaces = numPlaces $ netGoalConfig config
+            places = [Place 1 .. Place numberOfPlaces]
+            numberOfDifferentPlaces = length $ filter (\p -> mark startState p /= mark goalState p) places
+        numberOfDifferentPlaces `shouldSatisfy` (<= 2)
 
   describe "checkReachConfig" $ do
     it "accepts valid configuration" $ do
@@ -119,6 +137,30 @@ spec = do
       let config = defaultReachConfig {
             showTargetNet = False,
             showPlaceNamesInNet = False
+            }
+      checkReachConfig config `shouldSatisfy` isJust
+
+    it "accepts valid maxPlaceDifference" $ do
+      let config = defaultReachConfig {
+            netGoalConfig = (netGoalConfig defaultReachConfig) {
+              maxPlaceDifference = Just 3
+              }
+            }
+      checkReachConfig config `shouldBe` Nothing
+
+    it "rejects maxPlaceDifference of 0" $ do
+      let config = defaultReachConfig {
+            netGoalConfig = (netGoalConfig defaultReachConfig) {
+              maxPlaceDifference = Just 0
+              }
+            }
+      checkReachConfig config `shouldSatisfy` isJust
+
+    it "rejects maxPlaceDifference greater than numPlaces" $ do
+      let config = defaultReachConfig {
+            netGoalConfig = (netGoalConfig defaultReachConfig) {
+              maxPlaceDifference = Just 10
+              }
             }
       checkReachConfig config `shouldSatisfy` isJust
 

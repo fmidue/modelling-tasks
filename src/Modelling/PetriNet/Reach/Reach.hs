@@ -562,7 +562,8 @@ data NetGoalConfig = NetGoalConfig {
   maxTransitionLength :: Int,
   minTransitionLength :: Int,
   postconditionsRange :: (Int, Maybe Int),
-  preconditionsRange  :: (Int, Maybe Int)
+  preconditionsRange  :: (Int, Maybe Int),
+  maxPlaceDifference  :: Maybe Int
   }
   deriving (Generic, Read, Show)
 #if !MIN_VERSION_base(4,18,0)
@@ -579,7 +580,8 @@ defaultReachConfig = ReachConfig {
     maxTransitionLength = 6,
     minTransitionLength = 6,
     postconditionsRange = (0, Nothing),
-    preconditionsRange  = (0, Nothing)
+    preconditionsRange  = (0, Nothing),
+    maxPlaceDifference  = Nothing
     },
   maxPrintedSolutions = 0,
   rejectLongerThan    = Just 6,
@@ -625,10 +627,14 @@ possibleNetGoals NetGoalConfig {..} =
           (l,zs) <-
             take (maxTransitionLength + 1) $ zip [0 :: Int ..] $ levelsWithAlternatives n
           (z', transitionSequences) <- zs
-          let d = sum $ do
+          let numberOfDifferentPlaces = length $ filter (\p -> mark (start n) p /= mark z' p) ps
+              d = sum $ do
                 p <- ps
                 return $ abs (mark (start n) p - mark z' p)
               allShortestSolutions = map reverse transitionSequences
+          guard $ case maxPlaceDifference of
+            Nothing -> True
+            Just maxDiff -> numberOfDifferentPlaces <= maxDiff
           return ((negate l, d), (n, z', allShortestSolutions))
       out = do
         xs <- sortBy (comparing fst)
@@ -689,6 +695,7 @@ checkReachConfig ReachConfig {..} =
     (drawCommands netGoalConfig)
     rejectLongerThan
     showLengthHint
+    (maxPlaceDifference netGoalConfig)
   <|>
   checkFilterConfigWith
     rejectLongerThan
