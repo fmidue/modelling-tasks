@@ -2,7 +2,6 @@
 module Modelling.PetriNet.Reach.FilterSpec where
 
 import Modelling.PetriNet.Reach.Filter
-import Modelling.PetriNet.Reach.Type (Transition(..))
 
 import Data.List                        (zipWith4, zipWith5, zipWith6, zipWith7)
 import Data.List.Extra                  (nubOrd)
