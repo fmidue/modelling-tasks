@@ -17,7 +17,6 @@ import Modelling.PetriNet.Reach.Reach (
 import Modelling.PetriNet.Reach.Filter (
   shouldDiscardSolutions,
   defaultFilterConfig,
-  requireSolutionsArePermutations,
   noFiltering,
   )
 import Modelling.PetriNet.Reach.Property (
@@ -65,7 +64,7 @@ spec = do
       quickCheckWith stdArgs {maxSuccess = 15} $ property $ \seed -> do
         let config = defaultReachConfig {
               netGoalConfig = goalConfig,
-              filterConfig = defaultFilterConfig { requireSolutionsArePermutations = True }
+              filterConfig = defaultFilterConfig
               }
             goalConfig = (netGoalConfig defaultReachConfig) {
               maxTransitionLength = 8,
