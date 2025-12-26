@@ -47,10 +47,6 @@ spec = do
     it "abides minTransitionLength" $
       quickCheckWith stdArgs {maxSuccess = 50} $ property $ \seed -> do
         let config = defaultReachConfig {
-              netGoalConfig = (netGoalConfig defaultReachConfig) {
-                maxTransitionLength = 6,
-                minTransitionLength = 6
-                },
               filterConfig = noFiltering
               }
             minL = minTransitionLength (netGoalConfig config)
@@ -63,12 +59,7 @@ spec = do
     it "generates non-trivial solutions when filtering is enabled" $
       quickCheckWith stdArgs {maxSuccess = 15} $ property $ \seed -> do
         let config = defaultReachConfig {
-              netGoalConfig = goalConfig,
               filterConfig = defaultFilterConfig
-              }
-            goalConfig = (netGoalConfig defaultReachConfig) {
-              maxTransitionLength = 8,
-              minTransitionLength = 8
               }
         inst <- generateReach config seed
         let allSolutions = either undefined toList (shortestSolutions inst)
