@@ -104,7 +104,7 @@ import Control.Monad.Catch              (MonadCatch, MonadThrow)
 import Control.Monad.Extra              (findM, whenJust)
 import Control.Monad.Trans.Maybe        (MaybeT (MaybeT, runMaybeT))
 import Modelling.PetriNet.Reach.ConfigValidation (
-  checkBasicPetriConfig,
+  checkReachPetriConfig,
   checkFilterConfigWith,
   )
 import Control.OutputCapable.Blocks (
@@ -684,7 +684,7 @@ generateNetGoal filterConfig maxPrintedSolutions config@NetGoalConfig {..} seed 
 
 checkReachConfig :: ReachConfig -> Maybe String
 checkReachConfig ReachConfig {..} =
-  checkBasicPetriConfig
+  checkReachPetriConfig
     (numPlaces netGoalConfig)
     (numTransitions netGoalConfig)
     (capacity netGoalConfig)

@@ -318,7 +318,6 @@ checkDeadlockConfig DeadlockConfig {..} =
     drawCommands
     rejectLongerThan
     showLengthHint
-    numPlaces
   <|>
   checkFilterConfigWith
     rejectLongerThan
