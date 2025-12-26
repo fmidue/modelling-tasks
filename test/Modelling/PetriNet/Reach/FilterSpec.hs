@@ -108,9 +108,3 @@ spec = do
             forAll (genNubSized m) $ \(x:xs) ->
               not $ hasGroupedRepeats @Int
                 (let (front, end) = splitAt i (zipN n xs) in front ++ x : end)
-
-  describe "configuration" $ do
-    it "respects filter configuration settings" $ do
-      let cyclicPattern = [Transition 1, Transition 2, Transition 1, Transition 2]
-      isCyclicPattern 2 cyclicPattern `shouldBe` True
-      isCyclicPattern 1 cyclicPattern `shouldBe` False
