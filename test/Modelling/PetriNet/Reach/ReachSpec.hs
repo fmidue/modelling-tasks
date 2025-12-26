@@ -16,7 +16,6 @@ import Modelling.PetriNet.Reach.Reach (
   )
 import Modelling.PetriNet.Reach.Filter (
   shouldDiscardSolutions,
-  defaultFilterConfig,
   noFiltering,
   )
 import Modelling.PetriNet.Reach.Property (
@@ -58,9 +57,7 @@ spec = do
 
     it "generates non-trivial solutions when filtering is enabled" $
       quickCheckWith stdArgs {maxSuccess = 15} $ property $ \seed -> do
-        let config = defaultReachConfig {
-              filterConfig = defaultFilterConfig
-              }
+        let config = defaultReachConfig
         inst <- generateReach config seed
         let allSolutions = either undefined toList (shortestSolutions inst)
         allSolutions `shouldSatisfy` not . shouldDiscardSolutions (filterConfig config) (numTransitions $ netGoalConfig config)
