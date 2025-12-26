@@ -68,11 +68,11 @@ data FilterConfig = FilterConfig {
   -- Sequences with cyclic patterns of cycle length up to this value are filtered out.
   -- 'Nothing' means no filtering of such cyclic patterns.
   rejectCyclesUpToLength :: !(Maybe Int),
-  -- | Maximum number of shortest solution sequences allowed
+  -- | Maximum number of solution sequences in a solution set
   --
   -- Solution sets with more than this many sequences are filtered out.
   -- 'Nothing' means no limit on the number of solution sequences.
-  maxSolutionSequenceCount :: !(Maybe Int),
+  solutionSetLimit :: !(Maybe Int),
   -- | Whether all (shortest) solutions must be permutations of each other
   --
   -- * @True@ means filter out instances where solutions are NOT all permutations
@@ -98,7 +98,7 @@ noFiltering = FilterConfig {
   repetitiveSubsequenceThreshold = Nothing,
   spaceballsPrefixThreshold = Nothing,
   rejectCyclesUpToLength = Nothing,
-  maxSolutionSequenceCount = Nothing,
+  solutionSetLimit = Nothing,
   requireSolutionsArePermutations = False,
   absentTransitionsRequirement = 0,
   transitionCoverageRequirement = 0
@@ -111,17 +111,16 @@ defaultFilterConfig = FilterConfig {
   repetitiveSubsequenceThreshold = Just 3,
   spaceballsPrefixThreshold = Just 4,
   rejectCyclesUpToLength = Just 4,
-  maxSolutionSequenceCount = Just 15,
+  solutionSetLimit = Just 15,
   requireSolutionsArePermutations = True,
   absentTransitionsRequirement = 1,
   transitionCoverageRequirement = 4 % 5
   }
 
 -- | Check if a sequence has insufficient transition coverage
-hasInsufficientTransitionCoverage :: (Ord a) => Set a -> [a] -> Ratio Int -> Bool
-hasInsufficientTransitionCoverage availableTransitions transitionSequence minCoverage
+hasInsufficientTransitionCoverage :: Ord a => Int -> [a] -> Ratio Int -> Bool
+hasInsufficientTransitionCoverage totalTransitions transitionSequence minCoverage
   = let usedCount = length (nubOrd transitionSequence)
-        totalTransitions = Set.size availableTransitions
     in fromIntegral usedCount < minCoverage * fromIntegral totalTransitions
 
 -- | Check if a sequence begins with a Spaceballs PIN pattern
@@ -163,13 +162,14 @@ hasGroupedRepeats xs =
 -- 'False' if it should be kept.
 shouldDiscardSolutions :: (Enum a, Ord a) => FilterConfig -> Set a -> [[a]] -> Bool
 shouldDiscardSolutions config availableTransitions solutions =
-  maybe False (\n -> notNull (drop n solutions)) (maxSolutionSequenceCount config)
+  let numTransitions = Set.size availableTransitions
+  in maybe False (\n -> notNull (drop n solutions)) (solutionSetLimit config)
   || absentTransitionsRequirement config > 0 && countAbsentTransitions availableTransitions solutions < absentTransitionsRequirement config
   || maybe False (\threshold -> any (hasSpaceballsPrefix threshold) solutions) (spaceballsPrefixThreshold config)
   || maybe False (\limit -> any (isCyclicPattern limit) solutions) (rejectCyclesUpToLength config)
   || maybe False (\threshold -> any (hasRepetitiveSubsequence threshold) solutions) (repetitiveSubsequenceThreshold config)
   || rejectGroupedRepeats config && any hasGroupedRepeats solutions
-  || transitionCoverageRequirement config > 0 && any (hasInsufficientTransitionCoverage availableTransitions `flip` transitionCoverageRequirement config) solutions
+  || transitionCoverageRequirement config > 0 && any (hasInsufficientTransitionCoverage numTransitions `flip` transitionCoverageRequirement config) solutions
   || requireSolutionsArePermutations config && not (areAllPermutationsOfEachOther solutions)
 
 -- | Count the number of transitions that appear in none of the solutions
