@@ -563,6 +563,11 @@ data NetGoalConfig = NetGoalConfig {
   minTransitionLength :: Int,
   postconditionsRange :: (Int, Maybe Int),
   preconditionsRange  :: (Int, Maybe Int),
+  -- | Maximum number of places where token counts may differ between start and goal state.
+  -- If set to @Just k@, only generate instances where at most @k@ places have different
+  -- token counts between the start state and the goal state.
+  -- @Nothing@ means no restriction (any number of places may differ).
+  -- Must be in the range @1..numPlaces@ when specified.
   maxPlaceDifference  :: Maybe Int
   }
   deriving (Generic, Read, Show)
