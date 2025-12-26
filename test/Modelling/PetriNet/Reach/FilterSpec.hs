@@ -60,7 +60,7 @@ spec = do
         forAll (chooseInt (0, 9)) $ \n ->
           forAll (genNubSized m) $ \xs ->
             forAll (genNubSized n) $ \ys ->
-              xs /= ys ==> not $ isCyclicPattern @Int (m + n) $ xs ++ ys
+              xs /= ys ==> not $ isCyclicPattern @Int ((m + n) `div` 2) $ xs ++ ys
 
   describe "hasSpaceballsPrefix" $ do
     it "detects Spaceballs patterns" $

@@ -68,7 +68,7 @@ data FilterConfig = FilterConfig {
   -- Sequences with cyclic patterns of cycle length up to this value are filtered out.
   -- 'Nothing' means no filtering of such cyclic patterns.
   rejectCyclesUpToLength :: !(Maybe Int),
-  -- | Maximum number of solution sequences in a solution set
+  -- | Maximum number of shortest solution sequences in a solution set
   --
   -- Solution sets with more than this many sequences are filtered out.
   -- 'Nothing' means no limit on the number of solution sequences.
@@ -129,7 +129,7 @@ hasSpaceballsPrefix minLength xs = take minLength xs == take minLength [head xs 
 
 -- | Check if a sequence follows a cyclic pattern (e.g., @[t3,t2,t1,t4,t3,t2,t1,t4]@)
 -- The pattern is considered cyclic if it can be represented as `take n (cycle pattern)`
--- where `length pattern <= rejectCyclesUpToLength` and the sequence has at least 2 complete cycles
+-- where `length pattern <= rejectCyclesUpToLength` (and the sequence thus has at least 2 complete cycles)
 isCyclicPattern :: Eq a => Int -> [a] -> Bool
 isCyclicPattern m xs = any (isCyclicWith xs) [1..m]
   where
