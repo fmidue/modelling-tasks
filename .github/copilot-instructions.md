@@ -311,6 +311,10 @@ This principle is particularly important when working with Haskell records:
 - **When modifying record value assignments**: Only change the lines that need to be changed
 - **NEVER realign existing fields** just to make them line up with new or modified fields
 - **AVOID adding fields at the end of records** so as to not create larger diff due to trailing comma at previously last field
+  - **PREFERRED**: Add new fields BEFORE the last field (not at the end) to avoid modifying any existing field lines
+  - When adding at the end, you must add a trailing comma to the previously-last field (1 line changed + new lines added)
+  - When adding before the last field, no existing lines need modification (0 lines changed + new lines added)
+  - Example: If the last field is `preconditionsRange :: (Int, Maybe Int)`, add your new field right before it, not after it
 
 **Examples for record type definitions**:
 

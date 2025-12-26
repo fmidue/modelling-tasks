@@ -3,7 +3,7 @@
 -- | Common validation logic for Petri Net configurations (Deadlock and Reach)
 module Modelling.PetriNet.Reach.ConfigValidation (
   checkBasicPetriConfig,
-  checkReachPetriConfig,
+  checkMaxPlaceDifference,
   checkRange,
   checkPetriNetSizes,
   checkTransitionLengths,
@@ -110,45 +110,6 @@ checkBasicPetriConfig
   where
     checkDrawCommands [] = Just "drawCommands cannot be empty"
     checkDrawCommands _  = Nothing
-
--- | Check Reach-specific Petri net configuration including maxPlaceDifference
-checkReachPetriConfig
-  :: Int                      -- ^ numPlaces
-  -> Int                      -- ^ numTransitions
-  -> Capacity s               -- ^ capacity
-  -> Int                      -- ^ minTransitionLength
-  -> Int                      -- ^ maxTransitionLength
-  -> (Int, Maybe Int)         -- ^ preconditionsRange
-  -> (Int, Maybe Int)         -- ^ postconditionsRange
-  -> [GraphvizCommand]        -- ^ drawCommands
-  -> Maybe Int                -- ^ rejectLongerThan
-  -> Bool                     -- ^ showLengthHint
-  -> Int                      -- ^ maxPlaceDifference
-  -> Maybe String
-checkReachPetriConfig
-  numPlaces
-  numTransitions
-  capacity
-  minTransitionLength
-  maxTransitionLength
-  preconditionsRange
-  postconditionsRange
-  drawCommands
-  rejectLongerThan
-  showLengthHint
-  maxPlaceDifference =
-    checkBasicPetriConfig
-      numPlaces
-      numTransitions
-      capacity
-      minTransitionLength
-      maxTransitionLength
-      preconditionsRange
-      postconditionsRange
-      drawCommands
-      rejectLongerThan
-      showLengthHint
-    <|> checkMaxPlaceDifference maxPlaceDifference numPlaces
 
 -- | Check filter configuration constraints given the transition length parameters
 checkFilterConfigWith

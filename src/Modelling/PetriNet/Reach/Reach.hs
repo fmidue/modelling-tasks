@@ -104,7 +104,8 @@ import Control.Monad.Catch              (MonadCatch, MonadThrow)
 import Control.Monad.Extra              (findM, whenJust)
 import Control.Monad.Trans.Maybe        (MaybeT (MaybeT, runMaybeT))
 import Modelling.PetriNet.Reach.ConfigValidation (
-  checkReachPetriConfig,
+  checkBasicPetriConfig,
+  checkMaxPlaceDifference,
   checkFilterConfigWith,
   )
 import Control.OutputCapable.Blocks (
@@ -684,7 +685,7 @@ generateNetGoal filterConfig maxPrintedSolutions config@NetGoalConfig {..} seed 
 
 checkReachConfig :: ReachConfig -> Maybe String
 checkReachConfig ReachConfig {..} =
-  checkReachPetriConfig
+  checkBasicPetriConfig
     (numPlaces netGoalConfig)
     (numTransitions netGoalConfig)
     (capacity netGoalConfig)
@@ -695,7 +696,7 @@ checkReachConfig ReachConfig {..} =
     (drawCommands netGoalConfig)
     rejectLongerThan
     showLengthHint
-    (maxPlaceDifference netGoalConfig)
+  <|> checkMaxPlaceDifference (maxPlaceDifference netGoalConfig) (numPlaces netGoalConfig)
   <|>
   checkFilterConfigWith
     rejectLongerThan
