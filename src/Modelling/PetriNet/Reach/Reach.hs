@@ -564,11 +564,8 @@ data NetGoalConfig = NetGoalConfig {
   postconditionsRange :: (Int, Maybe Int),
   preconditionsRange  :: (Int, Maybe Int),
   -- | Maximum number of places where token counts may differ between start and goal state.
-  -- If set to @Just k@, only generate instances where at most @k@ places have different
-  -- token counts between the start state and the goal state.
-  -- @Nothing@ means no restriction (any number of places may differ).
-  -- Must be in the range @1..numPlaces@ when specified.
-  maxPlaceDifference  :: Maybe Int
+  -- Must be in the range @1..numPlaces@.
+  maxPlaceDifference  :: Int
   }
   deriving (Generic, Read, Show)
 #if !MIN_VERSION_base(4,18,0)
@@ -586,7 +583,7 @@ defaultReachConfig = ReachConfig {
     minTransitionLength = 6,
     postconditionsRange = (0, Nothing),
     preconditionsRange  = (0, Nothing),
-    maxPlaceDifference  = Nothing
+    maxPlaceDifference  = 6
     },
   maxPrintedSolutions = 0,
   rejectLongerThan    = Just 6,
@@ -637,9 +634,7 @@ possibleNetGoals NetGoalConfig {..} =
                 p <- ps
                 return $ abs (mark (start n) p - mark z' p)
               allShortestSolutions = map reverse transitionSequences
-          guard $ case maxPlaceDifference of
-            Nothing -> True
-            Just maxDiff -> numberOfDifferentPlaces <= maxDiff
+          guard $ numberOfDifferentPlaces <= maxPlaceDifference
           return ((negate l, d), (n, z', allShortestSolutions))
       out = do
         xs <- sortBy (comparing fst)

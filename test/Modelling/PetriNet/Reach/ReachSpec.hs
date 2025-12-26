@@ -68,7 +68,7 @@ spec = do
         let config = defaultReachConfig {
               filterConfig = noFiltering,
               netGoalConfig = (netGoalConfig defaultReachConfig) {
-                maxPlaceDifference = Just 2
+                maxPlaceDifference = 2
                 }
               }
         inst <- generateReach config seed
@@ -137,30 +137,6 @@ spec = do
       let config = defaultReachConfig {
             showTargetNet = False,
             showPlaceNamesInNet = False
-            }
-      checkReachConfig config `shouldSatisfy` isJust
-
-    it "accepts valid maxPlaceDifference" $ do
-      let config = defaultReachConfig {
-            netGoalConfig = (netGoalConfig defaultReachConfig) {
-              maxPlaceDifference = Just 3
-              }
-            }
-      checkReachConfig config `shouldBe` Nothing
-
-    it "rejects maxPlaceDifference of 0" $ do
-      let config = defaultReachConfig {
-            netGoalConfig = (netGoalConfig defaultReachConfig) {
-              maxPlaceDifference = Just 0
-              }
-            }
-      checkReachConfig config `shouldSatisfy` isJust
-
-    it "rejects maxPlaceDifference greater than numPlaces" $ do
-      let config = defaultReachConfig {
-            netGoalConfig = (netGoalConfig defaultReachConfig) {
-              maxPlaceDifference = Just 10
-              }
             }
       checkReachConfig config `shouldSatisfy` isJust
 
