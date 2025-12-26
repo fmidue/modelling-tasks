@@ -45,7 +45,7 @@ module Modelling.PetriNet.Reach.Deadlock (
 
 import qualified Control.Monad.Trans              as Monad (lift)
 import qualified Data.Map                         as M (fromList)
-import qualified Data.Set                         as S (fromList, toList)
+import qualified Data.Set                         as S (fromList, toList, size)
 
 import Data.List.NonEmpty                 (NonEmpty((:|)), fromList)
 
@@ -370,7 +370,7 @@ tries n filterConfig conf seed = eval out
     checkCandidate (l, pn, allShortestSolutions) = do
       guard $ l >= minTransitionLength conf
       let availableTransitions = transitions pn
-      guard (not $ shouldDiscardSolutions filterConfig availableTransitions allShortestSolutions)
+      guard (not $ shouldDiscardSolutions filterConfig (S.size availableTransitions) allShortestSolutions)
       cmd <- MaybeT $ findM (Monad.lift . isPetriDrawable pn) (drawCommands conf)
       solutionsList <-
         if filterConfig == noFiltering

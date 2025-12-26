@@ -43,7 +43,6 @@ import Data.Data                        (Data)
 import Data.List                        (group, sort)
 import Data.List.Extra                  (notNull, nubOrd)
 import Data.Ratio                       (Ratio, (%))
-import Data.Set                         (Set)
 import GHC.Generics                     (Generic)
 
 -- | Configuration for sequence filtering
@@ -160,11 +159,10 @@ hasGroupedRepeats xs =
 --
 -- Returns 'True' if the solution set should be discarded (filtered out),
 -- 'False' if it should be kept.
-shouldDiscardSolutions :: (Enum a, Ord a) => FilterConfig -> Set a -> [[a]] -> Bool
-shouldDiscardSolutions config availableTransitions solutions =
-  let numTransitions = Set.size availableTransitions
-  in maybe False (\n -> notNull (drop n solutions)) (solutionSetLimit config)
-  || absentTransitionsRequirement config > 0 && countAbsentTransitions availableTransitions solutions < absentTransitionsRequirement config
+shouldDiscardSolutions :: (Enum a, Ord a) => FilterConfig -> Int -> [[a]] -> Bool
+shouldDiscardSolutions config numTransitions solutions =
+  maybe False (\n -> notNull (drop n solutions)) (solutionSetLimit config)
+  || absentTransitionsRequirement config > 0 && countAbsentTransitions numTransitions solutions < absentTransitionsRequirement config
   || maybe False (\threshold -> any (hasSpaceballsPrefix threshold) solutions) (spaceballsPrefixThreshold config)
   || maybe False (\limit -> any (isCyclicPattern limit) solutions) (rejectCyclesUpToLength config)
   || maybe False (\threshold -> any (hasRepetitiveSubsequence threshold) solutions) (repetitiveSubsequenceThreshold config)
@@ -173,11 +171,11 @@ shouldDiscardSolutions config availableTransitions solutions =
   || requireSolutionsArePermutations config && not (areAllPermutationsOfEachOther solutions)
 
 -- | Count the number of transitions that appear in none of the solutions
-countAbsentTransitions :: Ord a => Set a -> [[a]] -> Int
-countAbsentTransitions availableTransitions solutions =
+countAbsentTransitions :: Ord a => Int -> [[a]] -> Int
+countAbsentTransitions totalTransitions solutions =
   let usedTransitions = Set.unions (map Set.fromList solutions)
-      absentTransitions = Set.difference availableTransitions usedTransitions
-  in Set.size absentTransitions
+      usedCount = Set.size usedTransitions
+  in totalTransitions - usedCount
 
 -- | Check if all solutions are permutations of each other
 areAllPermutationsOfEachOther :: Ord a => [[a]] -> Bool

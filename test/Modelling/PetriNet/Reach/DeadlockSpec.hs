@@ -1,5 +1,7 @@
 module Modelling.PetriNet.Reach.DeadlockSpec where
 
+import qualified Data.Set                         as S
+
 import Data.List.NonEmpty                 (toList)
 import Capabilities.Diagrams.IO         ()
 import Capabilities.Graphviz.IO         ()
@@ -57,7 +59,7 @@ spec = do
           deadlockInstance <- generateDeadlock config seed
           let allSolutions = either undefined toList (shortestSolutions deadlockInstance)
               availableTransitions = transitions (petriNet deadlockInstance)
-          allSolutions `shouldSatisfy` not . shouldDiscardSolutions (filterConfig config) availableTransitions
+          allSolutions `shouldSatisfy` not . shouldDiscardSolutions (filterConfig config) (S.size availableTransitions)
 
   describe "checkDeadlockConfig" $ do
     it "accepts valid configuration" $ do

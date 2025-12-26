@@ -56,7 +56,7 @@ module Modelling.PetriNet.Reach.Reach (
 ) where
 
 import qualified Control.Monad.Trans              as Monad (lift)
-import qualified Data.Set                         as S (fromList, member, toList, union, empty)
+import qualified Data.Set                         as S (fromList, member, toList, union, empty, size)
 
 import Data.List.NonEmpty                 (NonEmpty((:|)), fromList)
 
@@ -664,7 +664,7 @@ generateNetGoal filterConfig maxPrintedSolutions config@NetGoalConfig {..} seed 
             petriNet    = petri
           }
           availableTransitions = transitions petri
-      guard (not $ shouldDiscardSolutions filterConfig availableTransitions allShortestSolutions)
+      guard (not $ shouldDiscardSolutions filterConfig (S.size availableTransitions) allShortestSolutions)
       solutionsList <-
         if filterConfig == noFiltering
           then pure $ Left $ fromList (take (max 1 maxPrintedSolutions) allShortestSolutions)
