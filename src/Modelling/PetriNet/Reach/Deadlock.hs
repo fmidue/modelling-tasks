@@ -288,7 +288,7 @@ defaultDeadlockConfig =
   showLengthHint      = False,
   showMinLengthHint   = True,
   showPlaceNamesInNet = False,
-  filterConfig        = defaultFilterConfig { maxSolutionSequenceCount = Nothing, solutionsArePermutations = Just False }
+  filterConfig        = defaultFilterConfig { maxSolutionSequenceCount = Nothing, requireSolutionsArePermutations = False }
   }
 
 defaultDeadlockInstance :: DeadlockInstance Place Transition

@@ -134,8 +134,8 @@ checkFilterConfigWith rejectLongerThan minTransitionLength maxTransitionLength n
   , maxSolutions < 1
   = Just "setting maxSolutionSequenceCount to less than 1 does not make sense"
   | maxSolutionSequenceCount == Just 1
-  , solutionsArePermutations /= Just True
-  = Just "when maxSolutionSequenceCount is 1, solutionsArePermutations should be set to Just True"
+  , not requireSolutionsArePermutations
+  = Just "when maxSolutionSequenceCount is 1, requireSolutionsArePermutations should be set to True"
   | transitionCoverageRequirement < 0 || transitionCoverageRequirement > 1
   = Just "transitionCoverageRequirement must be a value from 0 to 1"
   | absentTransitionsRequirement < 0 || absentTransitionsRequirement >= numTransitions

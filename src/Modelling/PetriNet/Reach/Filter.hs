@@ -73,12 +73,11 @@ data FilterConfig = FilterConfig {
   -- Solution sets with more than this many sequences are filtered out.
   -- 'Nothing' means no limit on the number of solution sequences.
   maxSolutionSequenceCount :: !(Maybe Int),
-  -- | Whether all (shortest) solutions should be permutations of each other
+  -- | Whether all (shortest) solutions must be permutations of each other
   --
-  -- * @Just True@ means filter out instances where solutions are NOT all permutations
-  -- * @Just False@ means filter out instances where solutions ARE all permutations
-  -- * 'Nothing' means don't care about the permutation property
-  solutionsArePermutations :: !(Maybe Bool),
+  -- * @True@ means filter out instances where solutions are NOT all permutations
+  -- * @False@ means don't care about the permutation property
+  requireSolutionsArePermutations :: !Bool,
   -- | Minimum number of transitions required to be absent from all solutions
   --
   -- At least this many transitions from the available transitions
@@ -100,7 +99,7 @@ noFiltering = FilterConfig {
   spaceballsPrefixThreshold = Nothing,
   rejectCyclesUpToLength = Nothing,
   maxSolutionSequenceCount = Nothing,
-  solutionsArePermutations = Nothing,
+  requireSolutionsArePermutations = False,
   absentTransitionsRequirement = 0,
   transitionCoverageRequirement = 0
   }
@@ -113,7 +112,7 @@ defaultFilterConfig = FilterConfig {
   spaceballsPrefixThreshold = Just 4,
   rejectCyclesUpToLength = Just 4,
   maxSolutionSequenceCount = Just 15,
-  solutionsArePermutations = Just True,
+  requireSolutionsArePermutations = True,
   absentTransitionsRequirement = 1,
   transitionCoverageRequirement = 4 % 5
   }
@@ -127,9 +126,7 @@ hasInsufficientTransitionCoverage availableTransitions transitionSequence minCov
 
 -- | Check if a sequence begins with a Spaceballs PIN pattern
 hasSpaceballsPrefix :: (Enum a, Eq a) => Int -> [a] -> Bool
-hasSpaceballsPrefix minLength xs
-  | length xs < minLength = False
-  | otherwise = take minLength xs == take minLength [head xs ..]
+hasSpaceballsPrefix minLength xs = take minLength xs == take minLength [head xs ..]
 
 -- | Check if a sequence follows a cyclic pattern (e.g., @[t3,t2,t1,t4,t3,t2,t1,t4]@)
 -- The pattern is considered cyclic if it can be represented as `take n (cycle pattern)`
@@ -144,9 +141,8 @@ isCyclicPattern m xs = any (isCyclicWith xs) [1..min m (length xs `div` 2)]
 -- | Check if a sequence has repetitive subsequences as prefix or suffix
 -- (e.g., [t4,t4,t4,t4] at the beginning or end)
 hasRepetitiveSubsequence :: Eq a => Int -> [a] -> Bool
-hasRepetitiveSubsequence minLength xs
-  | length xs < minLength = False
-  | otherwise = allEqual (take minLength xs) || allEqual (take minLength (reverse xs))
+hasRepetitiveSubsequence minLength xs =
+  allEqual (take minLength xs) || allEqual (take minLength (reverse xs))
   where
     allEqual [] = True
     allEqual (y:ys) = all (== y) ys
@@ -174,7 +170,7 @@ shouldDiscardSolutions config availableTransitions solutions =
   || maybe False (\threshold -> any (hasRepetitiveSubsequence threshold) solutions) (repetitiveSubsequenceThreshold config)
   || rejectGroupedRepeats config && any hasGroupedRepeats solutions
   || transitionCoverageRequirement config > 0 && any (hasInsufficientTransitionCoverage availableTransitions `flip` transitionCoverageRequirement config) solutions
-  || maybe False (areAllPermutationsOfEachOther solutions /=) (solutionsArePermutations config)
+  || requireSolutionsArePermutations config && not (areAllPermutationsOfEachOther solutions)
 
 -- | Count the number of transitions that appear in none of the solutions
 countAbsentTransitions :: Ord a => Set a -> [[a]] -> Int
