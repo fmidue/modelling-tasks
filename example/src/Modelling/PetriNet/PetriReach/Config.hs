@@ -20,8 +20,8 @@ task2023_27 = ReachConfig {
     maxTransitionLength = 8,
     minTransitionLength = 8,
     postconditionsRange = (2, Just 3),
-    preconditionsRange = (2, Just 2),
-    maxPlaceDifference = 4
+    maxPlaceDifference = 4,
+    preconditionsRange = (2, Just 2)
     },
   maxPrintedSolutions = 10,
   rejectLongerThan = Just 8,
@@ -45,8 +45,8 @@ task2023_28 = ReachConfig {
     maxTransitionLength = 12,
     minTransitionLength = 12,
     postconditionsRange = (2, Just 3),
-    preconditionsRange = (2, Just 2),
-    maxPlaceDifference = 6
+    maxPlaceDifference = 6,
+    preconditionsRange = (2, Just 2)
     },
   maxPrintedSolutions = 10,
   rejectLongerThan = Just 12,
@@ -82,8 +82,8 @@ task2024_60 = ReachConfig {
     maxTransitionLength = 8,
     minTransitionLength = 8,
     postconditionsRange = (2, Just 3),
-    preconditionsRange = (2, Just 2),
-    maxPlaceDifference = 4
+    maxPlaceDifference = 4,
+    preconditionsRange = (2, Just 2)
     },
   maxPrintedSolutions = 10,
   rejectLongerThan = Just 8,

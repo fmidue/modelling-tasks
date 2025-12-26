@@ -562,10 +562,10 @@ data NetGoalConfig = NetGoalConfig {
   maxTransitionLength :: Int,
   minTransitionLength :: Int,
   postconditionsRange :: (Int, Maybe Int),
-  preconditionsRange  :: (Int, Maybe Int),
   -- | Maximum number of places where token counts may differ between start and goal state.
   -- Must be in the range @1..numPlaces@.
-  maxPlaceDifference  :: Int
+  maxPlaceDifference  :: Int,
+  preconditionsRange  :: (Int, Maybe Int)
   }
   deriving (Generic, Read, Show)
 #if !MIN_VERSION_base(4,18,0)
@@ -582,8 +582,8 @@ defaultReachConfig = ReachConfig {
     maxTransitionLength = 6,
     minTransitionLength = 6,
     postconditionsRange = (0, Nothing),
-    preconditionsRange  = (0, Nothing),
-    maxPlaceDifference  = 6
+    maxPlaceDifference  = 6,
+    preconditionsRange  = (0, Nothing)
     },
   maxPrintedSolutions = 0,
   rejectLongerThan    = Just 6,
