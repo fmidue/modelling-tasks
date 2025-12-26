@@ -2,9 +2,6 @@
 module Modelling.PetriNet.Reach.FilterSpec where
 
 import Modelling.PetriNet.Reach.Filter
-import Modelling.PetriNet.Reach.Type (Transition(..))
-
-import qualified Data.Set                         as Set
 
 import Data.List                        (zipWith4, zipWith5, zipWith6, zipWith7)
 import Data.List.Extra                  (nubOrd)
@@ -62,7 +59,7 @@ spec = do
         forAll (chooseInt (0, 9)) $ \n ->
           forAll (genNubSized m) $ \xs ->
             forAll (genNubSized n) $ \ys ->
-              xs /= ys ==> not $ isCyclicPattern @Int (m + n) $ xs ++ ys
+              xs /= ys ==> not $ isCyclicPattern @Int ((m + n) `div` 2) $ xs ++ ys
 
   describe "hasSpaceballsPrefix" $ do
     it "detects Spaceballs patterns" $
@@ -110,11 +107,3 @@ spec = do
             forAll (genNubSized m) $ \(x:xs) ->
               not $ hasGroupedRepeats @Int
                 (let (front, end) = splitAt i (zipN n xs) in front ++ x : end)
-
-  describe "configuration" $ do
-    it "respects filter configuration settings" $ do
-      let cyclicPattern = [Transition 1, Transition 2, Transition 1, Transition 2]
-      let availableTransitions = Set.fromList [Transition 1, Transition 2]
-      let configNoCyclic = defaultFilterConfig {maxCycleLength = Nothing, minTransitionCoverage = 0}
-      isTrivialSequence configNoCyclic availableTransitions cyclicPattern `shouldBe` False
-      isTrivialSequence defaultFilterConfig availableTransitions cyclicPattern `shouldBe` True

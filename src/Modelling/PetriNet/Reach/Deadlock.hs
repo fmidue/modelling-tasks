@@ -288,7 +288,7 @@ defaultDeadlockConfig =
   showLengthHint      = False,
   showMinLengthHint   = True,
   showPlaceNamesInNet = False,
-  filterConfig        = defaultFilterConfig { maxNumberOfSolutions = Nothing, solutionsArePermutations = Just False }
+  filterConfig        = defaultFilterConfig { solutionSetLimit = Nothing }
   }
 
 defaultDeadlockInstance :: DeadlockInstance Place Transition
@@ -328,9 +328,9 @@ checkDeadlockConfig DeadlockConfig {..} =
   <|>
   if maxPrintedSolutions < 0
     then Just "maxPrintedSolutions must be non-negative"
-    else case maxNumberOfSolutions filterConfig of
+    else case solutionSetLimit filterConfig of
       Just maxSolutions | maxPrintedSolutions > maxSolutions ->
-        Just "maxPrintedSolutions cannot be greater than maxNumberOfSolutions"
+        Just "maxPrintedSolutions cannot be greater than solutionSetLimit"
       _ -> Nothing
 
 generateDeadlock
@@ -351,7 +351,7 @@ generateDeadlock conf@DeadlockConfig {..} seed = do
     withLengthHint    =
       if showLengthHint then Just maxTransitionLength else Nothing,
     withMinLengthHint = showMinLengthHint,
-    rejectSpaceballsLength = minSpaceballsLength filterConfig
+    rejectSpaceballsLength = spaceballsPrefixThreshold filterConfig
     }
 
 tries
@@ -369,8 +369,7 @@ tries n filterConfig conf seed = eval out
       maybe out pure =<< runMaybeT (msum $ map checkCandidate $ concat xs)
     checkCandidate (l, pn, allShortestSolutions) = do
       guard $ l >= minTransitionLength conf
-      let availableTransitions = transitions pn
-      guard (not $ shouldDiscardSolutions filterConfig availableTransitions allShortestSolutions)
+      guard (not $ shouldDiscardSolutions filterConfig (numTransitions conf) allShortestSolutions)
       cmd <- MaybeT $ findM (Monad.lift . isPetriDrawable pn) (drawCommands conf)
       solutionsList <-
         if filterConfig == noFiltering

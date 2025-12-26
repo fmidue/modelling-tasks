@@ -56,8 +56,7 @@ spec = do
           let config = defaultDeadlockConfig
           deadlockInstance <- generateDeadlock config seed
           let allSolutions = either undefined toList (shortestSolutions deadlockInstance)
-              availableTransitions = transitions (petriNet deadlockInstance)
-          allSolutions `shouldSatisfy` not . shouldDiscardSolutions (filterConfig config) availableTransitions
+          allSolutions `shouldSatisfy` not . shouldDiscardSolutions (filterConfig config) (numTransitions config)
 
   describe "checkDeadlockConfig" $ do
     it "accepts valid configuration" $ do
