@@ -68,7 +68,7 @@ data FilterConfig = FilterConfig {
   -- Sequences with cyclic patterns of cycle length up to this value are filtered out.
   -- 'Nothing' means no filtering of such cyclic patterns.
   rejectCyclesUpToLength :: !(Maybe Int),
-  -- | Maximum number of solution sequences allowed
+  -- | Maximum number of shortest solution sequences allowed
   --
   -- Solution sets with more than this many sequences are filtered out.
   -- 'Nothing' means no limit on the number of solution sequences.
