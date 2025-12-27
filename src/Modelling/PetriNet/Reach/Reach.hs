@@ -618,8 +618,7 @@ possibleNetGoals
   => NetGoalConfig
   -> m [(Net Place Transition, State Place, [[Transition]])]
 possibleNetGoals NetGoalConfig {..} =
-  let ps :: [Place]
-      ps = [Place 1 .. Place numPlaces]
+  let ps = [Place 1 .. Place numPlaces]
       tries :: m [[((Int, Int), (Net Place Transition, State Place, [[Transition]]))]]
       tries = forM [1 :: Int .. 1000] $ const $ do
         n <- netLimits vLow vHigh nLow nHigh
@@ -631,18 +630,14 @@ possibleNetGoals NetGoalConfig {..} =
           guard $ not $ hasIsolatedNodes n
           (l,zs) <-
             take (maxTransitionLength + 1) $ zip [0 :: Int ..] $ levelsWithAlternatives n
-          -- Filter out results where transition length is too short
           guard $ l >= minTransitionLength
           (z', transitionSequences) <- zs
-          let d :: Int
-              d = sum placeDifferences
-              placeDifferences :: [Int]
+          let d = sum placeDifferences
               placeDifferences = do
                 p <- ps
                 let diff = mark (start n) p - mark z' p
                 guard (diff /= 0)
                 return (abs diff)
-              allShortestSolutions :: [[Transition]]
               allShortestSolutions = map reverse transitionSequences
           guard (maxPlacesChanged == numPlaces || maxPlacesChanged >= length placeDifferences)
           return ((negate l, d), (n, z', allShortestSolutions))
@@ -658,15 +653,8 @@ possibleNetGoals NetGoalConfig {..} =
   where
     fixMaximum :: (Int, Maybe Int) -> (Int, Int)
     fixMaximum = second (min numPlaces . fromMaybe maxBound)
-    vLow :: Int
-    vLow = fst (fixMaximum preconditionsRange)
-    vHigh :: Int
-    vHigh = snd (fixMaximum preconditionsRange)
-    nLow :: Int
-    nLow = fst (fixMaximum postconditionsRange)
-    nHigh :: Int
-    nHigh = snd (fixMaximum postconditionsRange)
-    ts :: [Transition]
+    (vLow, vHigh) = fixMaximum preconditionsRange
+    (nLow, nHigh) = fixMaximum postconditionsRange
     ts = [Transition 1 .. Transition numTransitions]
 
 -- | Generate NetGoal with filtering for trivial solutions
