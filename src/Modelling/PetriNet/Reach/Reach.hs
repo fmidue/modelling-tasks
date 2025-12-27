@@ -10,6 +10,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TupleSections #-}
 
 {-|
@@ -561,6 +562,9 @@ data NetGoalConfig = NetGoalConfig {
   drawCommands        :: [GraphvizCommand],
   maxTransitionLength :: Int,
   minTransitionLength :: Int,
+  -- | Maximum number of places where token counts may differ between start and goal state.
+  -- Must be in the range @1..numPlaces@.
+  maxPlacesChanged    :: Int,
   postconditionsRange :: (Int, Maybe Int),
   preconditionsRange  :: (Int, Maybe Int)
   }
@@ -578,6 +582,7 @@ defaultReachConfig = ReachConfig {
     drawCommands        = [Dot, Neato, TwoPi, Circo, Fdp, Sfdp, Osage, Patchwork],
     maxTransitionLength = 6,
     minTransitionLength = 6,
+    maxPlacesChanged    = 3,
     postconditionsRange = (0, Nothing),
     preconditionsRange  = (0, Nothing)
     },
@@ -609,11 +614,12 @@ defaultReachInstance = ReachInstance {
 }
 
 possibleNetGoals
-  :: MonadRandom m
+  :: forall m. MonadRandom m
   => NetGoalConfig
   -> m [(Net Place Transition, State Place, [[Transition]])]
 possibleNetGoals NetGoalConfig {..} =
   let ps = [Place 1 .. Place numPlaces]
+      tries :: m [[((Int, Int), (Net Place Transition, State Place, [[Transition]]))]]
       tries = forM [1 :: Int .. 1000] $ const $ do
         n <- netLimits vLow vHigh nLow nHigh
             ps
@@ -625,10 +631,14 @@ possibleNetGoals NetGoalConfig {..} =
           (l,zs) <-
             take (maxTransitionLength + 1) $ zip [0 :: Int ..] $ levelsWithAlternatives n
           (z', transitionSequences) <- zs
-          let d = sum $ do
+          let d = sum placeDifferences
+              placeDifferences = do
                 p <- ps
-                return $ abs (mark (start n) p - mark z' p)
+                let diff = mark (start n) p - mark z' p
+                guard (diff /= 0)
+                return (abs diff)
               allShortestSolutions = map reverse transitionSequences
+          guard (maxPlacesChanged == numPlaces || maxPlacesChanged >= length placeDifferences)
           return ((negate l, d), (n, z', allShortestSolutions))
       out = do
         xs <- sortBy (comparing fst)
@@ -689,6 +699,13 @@ checkReachConfig ReachConfig {..} =
     (drawCommands netGoalConfig)
     rejectLongerThan
     showLengthHint
+  <|>
+  (let maxPlacesDiff = maxPlacesChanged netGoalConfig
+   in if maxPlacesDiff < 1
+        then Just "maxPlacesChanged must be at least 1"
+        else if maxPlacesDiff > numPlaces netGoalConfig
+             then Just "maxPlacesChanged cannot be greater than numPlaces"
+             else Nothing)
   <|>
   checkFilterConfigWith
     rejectLongerThan
