@@ -134,11 +134,10 @@ import Data.Bifunctor                   (Bifunctor (second), bimap)
 import Data.Either.Combinators          (whenRight)
 import Data.Foldable                    (sequenceA_, traverse_)
 import Data.GraphViz                    (GraphvizCommand (..))
-import Data.List                        (groupBy, singleton, sortBy)
+import Data.List                        (singleton, sortBy)
 import Data.List.Extra                  (groupSort, nubSort)
 import Data.Maybe                       (fromMaybe)
 import Data.Ord                         (comparing)
-import Data.Function                    (on)
 import Data.Ratio                       ((%))
 import Data.String.Interpolate          (i)
 #if !MIN_VERSION_base(4,18,0)
@@ -619,8 +618,7 @@ possibleNetGoals
   => NetGoalConfig
   -> m [(Net Place Transition, State Place, [[Transition]])]
 possibleNetGoals NetGoalConfig {..} =
-  let ps :: [Place]
-      ps = [Place 1 .. Place numPlaces]
+  let ps = [Place 1 .. Place numPlaces]
       tries :: m [[((Int, Int), (Net Place Transition, State Place, [[Transition]]))]]
       tries = forM [1 :: Int .. 1000] $ const $ do
         n <- netLimits vLow vHigh nLow nHigh
@@ -636,22 +634,18 @@ possibleNetGoals NetGoalConfig {..} =
             $ drop minTransitionLength
             $ levelsWithAlternatives n
           (z', transitionSequences) <- zs
-          let d :: Int
-              d = sum placeDifferences
-              placeDifferences :: [Int]
+          let d = sum placeDifferences
               placeDifferences = do
                 p <- ps
                 let diff = mark (start n) p - mark z' p
                 guard (diff /= 0)
                 return (abs diff)
-              allShortestSolutions :: [[Transition]]
               allShortestSolutions = map reverse transitionSequences
           guard (maxPlacesChanged == numPlaces || maxPlacesChanged >= length placeDifferences)
           return ((negate l, d), (n, z', allShortestSolutions))
       out :: m [((Int, Int), (Net Place Transition, State Place, [[Transition]]))]
       out = do
-        xs <- concatMap (sortBy (comparing snd))
-          . groupBy ((==) `on` fst)
+        xs <- sortBy (comparing fst)
           . concat
           <$> tries
         if null xs
@@ -661,15 +655,8 @@ possibleNetGoals NetGoalConfig {..} =
   where
     fixMaximum :: (Int, Maybe Int) -> (Int, Int)
     fixMaximum = second (min numPlaces . fromMaybe maxBound)
-    vLow :: Int
-    vLow = fst (fixMaximum preconditionsRange)
-    vHigh :: Int
-    vHigh = snd (fixMaximum preconditionsRange)
-    nLow :: Int
-    nLow = fst (fixMaximum postconditionsRange)
-    nHigh :: Int
-    nHigh = snd (fixMaximum postconditionsRange)
-    ts :: [Transition]
+    (vLow, vHigh) = fixMaximum preconditionsRange
+    (nLow, nHigh) = fixMaximum postconditionsRange
     ts = [Transition 1 .. Transition numTransitions]
 
 -- | Generate NetGoal with filtering for trivial solutions
