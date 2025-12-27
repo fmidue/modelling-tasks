@@ -581,7 +581,7 @@ defaultReachConfig = ReachConfig {
     drawCommands        = [Dot, Neato, TwoPi, Circo, Fdp, Sfdp, Osage, Patchwork],
     maxTransitionLength = 6,
     minTransitionLength = 6,
-    maxPlaceDifference  = 1,
+    maxPlaceDifference  = 3,
     postconditionsRange = (0, Nothing),
     preconditionsRange  = (0, Nothing)
     },
@@ -633,10 +633,10 @@ possibleNetGoals NetGoalConfig {..} =
                 p <- ps
                 let diff = mark (start n) p - mark z' p
                 guard (diff /= 0)
-                return diff
-              d = sum $ map abs placeDifferences
+                return (abs diff)
+              d = sum placeDifferences
               allShortestSolutions = map reverse transitionSequences
-          guard (maxPlaceDifference == numPlaces || length placeDifferences <= maxPlaceDifference)
+          guard (maxPlaceDifference == numPlaces || maxPlaceDifference >= length placeDifferences)
           return ((negate l, d), (n, z', allShortestSolutions))
       out = do
         xs <- sortBy (comparing fst)
