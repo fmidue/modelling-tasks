@@ -116,7 +116,9 @@ import Control.Monad.Random             (MonadRandom, evalRandT, mkStdGen)
 import Control.Monad.Trans.Maybe        (MaybeT (MaybeT, runMaybeT))
 import System.Random.Shuffle            (shuffleM)
 import Data.GraphViz                    (GraphvizCommand (..))
+import Data.List                        (sortBy, transpose)
 import Data.Maybe                       (fromMaybe)
+import Data.Ord                         (comparing)
 #if !MIN_VERSION_base(4,18,0)
 import Data.Typeable                    (Typeable)
 #endif
@@ -366,7 +368,9 @@ tries n filterConfig conf seed = eval out
     eval f = evalRandT f $ mkStdGen seed
     out = do
       xs <- replicateM n $ try conf
-      maybe out pure =<< runMaybeT (msum $ map checkCandidate $ concat xs)
+      let grouped = reverse $ transpose xs
+          candidates = concatMap (sortBy (comparing (\(l, _, _) -> l))) grouped
+      maybe out pure =<< runMaybeT (msum $ map checkCandidate candidates)
     checkCandidate (l, pn, allShortestSolutions) = do
       guard $ l >= minTransitionLength conf
       guard (not $ shouldDiscardSolutions filterConfig (numTransitions conf) allShortestSolutions)
