@@ -561,10 +561,10 @@ data NetGoalConfig = NetGoalConfig {
   drawCommands        :: [GraphvizCommand],
   maxTransitionLength :: Int,
   minTransitionLength :: Int,
-  postconditionsRange :: (Int, Maybe Int),
   -- | Maximum number of places where token counts may differ between start and goal state.
   -- Must be in the range @1..numPlaces@.
   maxPlaceDifference  :: Int,
+  postconditionsRange :: (Int, Maybe Int),
   preconditionsRange  :: (Int, Maybe Int)
   }
   deriving (Generic, Read, Show)
@@ -581,8 +581,8 @@ defaultReachConfig = ReachConfig {
     drawCommands        = [Dot, Neato, TwoPi, Circo, Fdp, Sfdp, Osage, Patchwork],
     maxTransitionLength = 6,
     minTransitionLength = 6,
+    maxPlaceDifference  = 1,
     postconditionsRange = (0, Nothing),
-    maxPlaceDifference  = 6,
     preconditionsRange  = (0, Nothing)
     },
   maxPrintedSolutions = 0,
@@ -629,12 +629,12 @@ possibleNetGoals NetGoalConfig {..} =
           (l,zs) <-
             take (maxTransitionLength + 1) $ zip [0 :: Int ..] $ levelsWithAlternatives n
           (z', transitionSequences) <- zs
-          let numberOfDifferentPlaces = length $ filter (\p -> mark (start n) p /= mark z' p) ps
-              d = sum $ do
+          let d = sum $ do
                 p <- ps
                 return $ abs (mark (start n) p - mark z' p)
+              numberOfDifferentPlaces = length $ filter (\p -> mark (start n) p /= mark z' p) ps
               allShortestSolutions = map reverse transitionSequences
-          guard $ numberOfDifferentPlaces <= maxPlaceDifference
+          guard (maxPlaceDifference == numPlaces || numberOfDifferentPlaces <= maxPlaceDifference)
           return ((negate l, d), (n, z', allShortestSolutions))
       out = do
         xs <- sortBy (comparing fst)
@@ -697,12 +697,11 @@ checkReachConfig ReachConfig {..} =
     showLengthHint
   <|>
   (let maxPlaceDiff = maxPlaceDifference netGoalConfig
-       numPlaces' = numPlaces netGoalConfig
    in if maxPlaceDiff < 1
-         then Just "maxPlaceDifference must be at least 1"
-         else if maxPlaceDiff > numPlaces'
-              then Just $ "maxPlaceDifference (" ++ show maxPlaceDiff ++ ") cannot be greater than numPlaces (" ++ show numPlaces' ++ ")"
-              else Nothing)
+        then Just "maxPlaceDifference must be at least 1"
+        else if maxPlaceDiff > numPlaces netGoalConfig
+             then Just "maxPlaceDifference cannot be greater than numPlaces"
+             else Nothing)
   <|>
   checkFilterConfigWith
     rejectLongerThan
