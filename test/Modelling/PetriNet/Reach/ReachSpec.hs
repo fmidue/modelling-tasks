@@ -63,12 +63,12 @@ spec = do
         let allSolutions = either undefined toList (shortestSolutions inst)
         allSolutions `shouldSatisfy` not . shouldDiscardSolutions (filterConfig config) (numTransitions $ netGoalConfig config)
 
-    it "adheres to maxPlaceDifference constraint with noFiltering" $
+    it "adheres to maxPlacesChanged constraint with noFiltering" $
       quickCheckWith stdArgs {maxSuccess = 50} $ property $ \seed -> do
         let config = defaultReachConfig {
               filterConfig = noFiltering,
               netGoalConfig = (netGoalConfig defaultReachConfig) {
-                maxPlaceDifference = 2
+                maxPlacesChanged = 2
                 }
               }
         inst <- generateReach config seed

@@ -563,7 +563,7 @@ data NetGoalConfig = NetGoalConfig {
   minTransitionLength :: Int,
   -- | Maximum number of places where token counts may differ between start and goal state.
   -- Must be in the range @1..numPlaces@.
-  maxPlaceDifference  :: Int,
+  maxPlacesChanged    :: Int,
   postconditionsRange :: (Int, Maybe Int),
   preconditionsRange  :: (Int, Maybe Int)
   }
@@ -581,7 +581,7 @@ defaultReachConfig = ReachConfig {
     drawCommands        = [Dot, Neato, TwoPi, Circo, Fdp, Sfdp, Osage, Patchwork],
     maxTransitionLength = 6,
     minTransitionLength = 6,
-    maxPlaceDifference  = 3,
+    maxPlacesChanged    = 3,
     postconditionsRange = (0, Nothing),
     preconditionsRange  = (0, Nothing)
     },
@@ -636,7 +636,7 @@ possibleNetGoals NetGoalConfig {..} =
                 return (abs diff)
               d = sum placeDifferences
               allShortestSolutions = map reverse transitionSequences
-          guard (maxPlaceDifference == numPlaces || maxPlaceDifference >= length placeDifferences)
+          guard (maxPlacesChanged == numPlaces || maxPlacesChanged >= length placeDifferences)
           return ((negate l, d), (n, z', allShortestSolutions))
       out = do
         xs <- sortBy (comparing fst)
@@ -698,11 +698,12 @@ checkReachConfig ReachConfig {..} =
     rejectLongerThan
     showLengthHint
   <|>
-  (let maxPlaceDiff = maxPlaceDifference netGoalConfig
-   in if maxPlaceDiff < 1
-        then Just "maxPlaceDifference must be at least 1"
-        else if maxPlaceDiff > numPlaces netGoalConfig
-             then Just "maxPlaceDifference cannot be greater than numPlaces"
+  (let maxPlacesChanged' = maxPlacesChanged netGoalConfig
+       numPlaces' = numPlaces netGoalConfig
+   in if maxPlacesChanged' < 1
+        then Just "maxPlacesChanged must be at least 1"
+        else if maxPlacesChanged' > numPlaces'
+             then Just "maxPlacesChanged cannot be greater than numPlaces"
              else Nothing)
   <|>
   checkFilterConfigWith
