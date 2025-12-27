@@ -626,24 +626,23 @@ possibleNetGoals NetGoalConfig {..} =
             ts
             capacity
         return $ do
-          -- Filter out nets with isolated nodes
-          guard $ not $ hasIsolatedNodes n
-          (_,zs) <-
-            take (maxTransitionLength - minTransitionLength + 1)
-            $ zip [minTransitionLength :: Int ..]
-            $ drop minTransitionLength
-            $ levelsWithAlternatives n
-          return $ do
-            (z', transitionSequences) <- zs
-            let d = sum placeDifferences
-                placeDifferences = do
-                  p <- ps
-                  let diff = mark (start n) p - mark z' p
-                  guard (diff /= 0)
-                  return (abs diff)
-                allShortestSolutions = map reverse transitionSequences
-            guard (maxPlacesChanged == numPlaces || maxPlacesChanged >= length placeDifferences)
-            return (d, (n, z', allShortestSolutions))
+         -- Filter out nets with isolated nodes
+         guard $ not $ hasIsolatedNodes n
+         zs <-
+           take (maxTransitionLength - minTransitionLength + 1)
+           $ drop minTransitionLength
+           $ levelsWithAlternatives n
+         return $ do
+          (z', transitionSequences) <- zs
+          let d = sum placeDifferences
+              placeDifferences = do
+                p <- ps
+                let diff = mark (start n) p - mark z' p
+                guard (diff /= 0)
+                return (abs diff)
+              allShortestSolutions = map reverse transitionSequences
+          guard (maxPlacesChanged == numPlaces || maxPlacesChanged >= length placeDifferences)
+          return (d, (n, z', allShortestSolutions))
       out :: m [(Int, (Net Place Transition, State Place, [[Transition]]))]
       out = do
         xss <- tries
