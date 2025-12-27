@@ -629,12 +629,14 @@ possibleNetGoals NetGoalConfig {..} =
           (l,zs) <-
             take (maxTransitionLength + 1) $ zip [0 :: Int ..] $ levelsWithAlternatives n
           (z', transitionSequences) <- zs
-          let d = sum $ do
+          let placeDifferences = do
                 p <- ps
-                return $ abs (mark (start n) p - mark z' p)
-              numberOfDifferentPlaces = length $ filter (\p -> mark (start n) p /= mark z' p) ps
+                let diff = mark (start n) p - mark z' p
+                guard (diff /= 0)
+                return diff
+              d = sum $ map abs placeDifferences
               allShortestSolutions = map reverse transitionSequences
-          guard (maxPlaceDifference == numPlaces || numberOfDifferentPlaces <= maxPlaceDifference)
+          guard (maxPlaceDifference == numPlaces || length placeDifferences <= maxPlaceDifference)
           return ((negate l, d), (n, z', allShortestSolutions))
       out = do
         xs <- sortBy (comparing fst)
