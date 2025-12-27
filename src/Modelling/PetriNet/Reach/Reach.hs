@@ -649,7 +649,7 @@ possibleNetGoals NetGoalConfig {..} =
         xss <- tries
         let grouped = transpose xss
             sorted = map (sortBy (comparing fst) . concat) grouped
-            xs = concat sorted
+            xs = concat $ reverse sorted
         if null xs
           then out
           else pure xs
