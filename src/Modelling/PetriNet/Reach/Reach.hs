@@ -629,7 +629,10 @@ possibleNetGoals NetGoalConfig {..} =
           -- Filter out nets with isolated nodes
           guard $ not $ hasIsolatedNodes n
           (l,zs) <-
-            take (maxTransitionLength + 1) $ zip [0 :: Int ..] $ levelsWithAlternatives n
+            take (maxTransitionLength - minTransitionLength + 1)
+            $ zip [minTransitionLength :: Int ..]
+            $ drop minTransitionLength
+            $ levelsWithAlternatives n
           (z', transitionSequences) <- zs
           let d = sum placeDifferences
               placeDifferences = do
@@ -640,16 +643,17 @@ possibleNetGoals NetGoalConfig {..} =
               allShortestSolutions = map reverse transitionSequences
           guard (maxPlacesChanged == numPlaces || maxPlacesChanged >= length placeDifferences)
           return ((negate l, d), (n, z', allShortestSolutions))
+      out :: m [((Int, Int), (Net Place Transition, State Place, [[Transition]]))]
       out = do
         xs <- sortBy (comparing fst)
           . concat
-          . drop (minTransitionLength + 1)
           <$> tries
         if null xs
           then out
           else pure xs
   in map snd <$> out
   where
+    fixMaximum :: (Int, Maybe Int) -> (Int, Int)
     fixMaximum = second (min numPlaces . fromMaybe maxBound)
     (vLow, vHigh) = fixMaximum preconditionsRange
     (nLow, nHigh) = fixMaximum postconditionsRange
