@@ -10,6 +10,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TupleSections #-}
 
 {-|
@@ -613,11 +614,12 @@ defaultReachInstance = ReachInstance {
 }
 
 possibleNetGoals
-  :: MonadRandom m
+  :: forall m. MonadRandom m
   => NetGoalConfig
   -> m [(Net Place Transition, State Place, [[Transition]])]
 possibleNetGoals NetGoalConfig {..} =
   let ps = [Place 1 .. Place numPlaces]
+      tries :: m [[((Int, Int), (Net Place Transition, State Place, [[Transition]]))]]
       tries = forM [1 :: Int .. 1000] $ const $ do
         n <- netLimits vLow vHigh nLow nHigh
             ps
