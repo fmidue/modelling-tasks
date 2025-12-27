@@ -619,7 +619,7 @@ possibleNetGoals
   -> m [(Net Place Transition, State Place, [[Transition]])]
 possibleNetGoals NetGoalConfig {..} =
   let ps = [Place 1 .. Place numPlaces]
-      tries :: m [[ [((Int, Int), (Net Place Transition, State Place, [[Transition]]))] ]]
+      tries :: m [[ [(Int, (Net Place Transition, State Place, [[Transition]]))] ]]
       tries = forM [1 :: Int .. 1000] $ const $ do
         n <- netLimits vLow vHigh nLow nHigh
             ps
@@ -628,7 +628,7 @@ possibleNetGoals NetGoalConfig {..} =
         return $ do
           -- Filter out nets with isolated nodes
           guard $ not $ hasIsolatedNodes n
-          (l,zs) <-
+          (_,zs) <-
             take (maxTransitionLength - minTransitionLength + 1)
             $ zip [minTransitionLength :: Int ..]
             $ drop minTransitionLength
@@ -643,8 +643,8 @@ possibleNetGoals NetGoalConfig {..} =
                   return (abs diff)
                 allShortestSolutions = map reverse transitionSequences
             guard (maxPlacesChanged == numPlaces || maxPlacesChanged >= length placeDifferences)
-            return ((negate l, d), (n, z', allShortestSolutions))
-      out :: m [((Int, Int), (Net Place Transition, State Place, [[Transition]]))]
+            return (d, (n, z', allShortestSolutions))
+      out :: m [(Int, (Net Place Transition, State Place, [[Transition]]))]
       out = do
         xss <- tries
         let grouped = transpose xss
