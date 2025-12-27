@@ -134,7 +134,7 @@ import Data.Bifunctor                   (Bifunctor (second), bimap)
 import Data.Either.Combinators          (whenRight)
 import Data.Foldable                    (sequenceA_, traverse_)
 import Data.GraphViz                    (GraphvizCommand (..))
-import Data.List                        (singleton, sortBy)
+import Data.List                        (singleton, sortBy, transpose)
 import Data.List.Extra                  (groupSort, nubSort)
 import Data.Maybe                       (fromMaybe)
 import Data.Ord                         (comparing)
@@ -619,20 +619,20 @@ possibleNetGoals
   -> m [(Net Place Transition, State Place, [[Transition]])]
 possibleNetGoals NetGoalConfig {..} =
   let ps = [Place 1 .. Place numPlaces]
-      tries :: m [[((Int, Int), (Net Place Transition, State Place, [[Transition]]))]]
+      tries :: m [[ [(Int, (Net Place Transition, State Place, [[Transition]]))] ]]
       tries = forM [1 :: Int .. 1000] $ const $ do
         n <- netLimits vLow vHigh nLow nHigh
             ps
             ts
             capacity
         return $ do
-          -- Filter out nets with isolated nodes
-          guard $ not $ hasIsolatedNodes n
-          (l,zs) <-
+         -- Filter out nets with isolated nodes
+         guard $ not $ hasIsolatedNodes n
+         zs <-
             take (maxTransitionLength - minTransitionLength + 1)
-            $ zip [minTransitionLength :: Int ..]
             $ drop minTransitionLength
             $ levelsWithAlternatives n
+         return $ do
           (z', transitionSequences) <- zs
           let d = sum placeDifferences
               placeDifferences = do
@@ -642,12 +642,12 @@ possibleNetGoals NetGoalConfig {..} =
                 return (abs diff)
               allShortestSolutions = map reverse transitionSequences
           guard (maxPlacesChanged == numPlaces || maxPlacesChanged >= length placeDifferences)
-          return ((negate l, d), (n, z', allShortestSolutions))
-      out :: m [((Int, Int), (Net Place Transition, State Place, [[Transition]]))]
+          return (d, (n, z', allShortestSolutions))
+      out :: m [(Int, (Net Place Transition, State Place, [[Transition]]))]
       out = do
-        xs <- sortBy (comparing fst)
-          . concat
-          <$> tries
+        xss <- tries
+        let grouped = reverse $ transpose xss
+            xs = concatMap (sortBy (comparing fst) . concat) grouped
         if null xs
           then out
           else pure xs
