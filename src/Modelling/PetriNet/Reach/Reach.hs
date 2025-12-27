@@ -642,8 +642,7 @@ possibleNetGoals NetGoalConfig {..} =
           return ((negate l, d), (n, z', allShortestSolutions))
       out = do
         xs <- sortBy (comparing fst)
-          . concat
-          . drop (minTransitionLength + 1)
+          . concatMap (filter (\((negativeLength, _), _) -> negativeLength <= negate minTransitionLength))
           <$> tries
         if null xs
           then out
