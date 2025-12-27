@@ -695,13 +695,14 @@ checkReachConfig ReachConfig {..} =
     (drawCommands netGoalConfig)
     rejectLongerThan
     showLengthHint
-  <|> let maxPlaceDiff = maxPlaceDifference netGoalConfig
-          numPlaces' = numPlaces netGoalConfig
-      in if maxPlaceDiff < 1
+  <|>
+  (let maxPlaceDiff = maxPlaceDifference netGoalConfig
+       numPlaces' = numPlaces netGoalConfig
+   in if maxPlaceDiff < 1
          then Just "maxPlaceDifference must be at least 1"
          else if maxPlaceDiff > numPlaces'
               then Just $ "maxPlaceDifference (" ++ show maxPlaceDiff ++ ") cannot be greater than numPlaces (" ++ show numPlaces' ++ ")"
-              else Nothing
+              else Nothing)
   <|>
   checkFilterConfigWith
     rejectLongerThan
