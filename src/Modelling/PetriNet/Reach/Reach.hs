@@ -134,8 +134,7 @@ import Data.Bifunctor                   (Bifunctor (second), bimap)
 import Data.Either.Combinators          (whenRight)
 import Data.Foldable                    (sequenceA_, traverse_)
 import Data.GraphViz                    (GraphvizCommand (..))
-import Data.Function                    (on)
-import Data.List                        (groupBy, singleton, sortBy, transpose)
+import Data.List                        (singleton, sortBy, transpose)
 import Data.List.Extra                  (groupSort, nubSort)
 import Data.Maybe                       (fromMaybe)
 import Data.Ord                         (comparing)
@@ -626,7 +625,7 @@ possibleNetGoals NetGoalConfig {..} =
             ps
             ts
             capacity
-        return $ groupBy ((==) `on` (fst . fst)) $ do
+        return $ do
           -- Filter out nets with isolated nodes
           guard $ not $ hasIsolatedNodes n
           (l,zs) <-
@@ -634,16 +633,17 @@ possibleNetGoals NetGoalConfig {..} =
             $ zip [minTransitionLength :: Int ..]
             $ drop minTransitionLength
             $ levelsWithAlternatives n
-          (z', transitionSequences) <- zs
-          let d = sum placeDifferences
-              placeDifferences = do
-                p <- ps
-                let diff = mark (start n) p - mark z' p
-                guard (diff /= 0)
-                return (abs diff)
-              allShortestSolutions = map reverse transitionSequences
-          guard (maxPlacesChanged == numPlaces || maxPlacesChanged >= length placeDifferences)
-          return ((negate l, d), (n, z', allShortestSolutions))
+          return $ do
+            (z', transitionSequences) <- zs
+            let d = sum placeDifferences
+                placeDifferences = do
+                  p <- ps
+                  let diff = mark (start n) p - mark z' p
+                  guard (diff /= 0)
+                  return (abs diff)
+                allShortestSolutions = map reverse transitionSequences
+            guard (maxPlacesChanged == numPlaces || maxPlacesChanged >= length placeDifferences)
+            return ((negate l, d), (n, z', allShortestSolutions))
       out :: m [((Int, Int), (Net Place Transition, State Place, [[Transition]]))]
       out = do
         xss <- tries
