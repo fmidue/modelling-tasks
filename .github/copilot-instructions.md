@@ -310,11 +310,12 @@ This principle is particularly important when working with Haskell records:
 - **When modifying record type definitions**: Only change the lines that need to be changed
 - **When modifying record value assignments**: Only change the lines that need to be changed
 - **NEVER realign existing fields** just to make them line up with new or modified fields
-- **AVOID adding fields at the end of records** so as to not create larger diff due to trailing comma at previously last field
-  - **PREFERRED**: Add new fields BEFORE the last field (not at the end) to avoid modifying any existing field lines
-  - When adding at the end, you must add a trailing comma to the previously-last field (1 line changed + new lines added)
-  - When adding before the last field, no existing lines need modification (0 lines changed + new lines added)
+- **When adding new fields to records**:
+  - **PREFERRED**: Add new fields BEFORE the last field (not at the end) to minimize the diff
+  - Adding at the end requires modifying the previously-last field to add a trailing comma (1 existing line changed + new lines added)
+  - Adding before the last field requires no modifications to existing lines (0 existing lines changed + new lines added)
   - Example: If the last field is `preconditionsRange :: (Int, Maybe Int)`, add your new field right before it, not after it
+  - This same principle applies to export lists, import lists, and other comma-separated lists
 
 **Examples for record type definitions**:
 
@@ -396,10 +397,6 @@ defaultDeadlockInstance = DeadlockInstance {
 - It doesn't change the line count of the diff
 - It maintains consistency with existing field alignment
 - What would be problematic is realigning all existing fields to match the new longer `instanceMaxDisplayedSolutions` field
-
-**Other cases**:
-
-Also when modifying export or import lists, make sure to cause minimal diffs. For example, prefer to not add new stuff at the very end of such lists, to prevent diffs from trailing commas.
 
 **Rationale**:
 

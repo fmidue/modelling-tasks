@@ -105,7 +105,6 @@ import Control.Monad.Extra              (findM, whenJust)
 import Control.Monad.Trans.Maybe        (MaybeT (MaybeT, runMaybeT))
 import Modelling.PetriNet.Reach.ConfigValidation (
   checkBasicPetriConfig,
-  checkMaxPlaceDifference,
   checkFilterConfigWith,
   )
 import Control.OutputCapable.Blocks (
@@ -696,7 +695,13 @@ checkReachConfig ReachConfig {..} =
     (drawCommands netGoalConfig)
     rejectLongerThan
     showLengthHint
-  <|> checkMaxPlaceDifference (maxPlaceDifference netGoalConfig) (numPlaces netGoalConfig)
+  <|> let maxPlaceDiff = maxPlaceDifference netGoalConfig
+          numPlaces' = numPlaces netGoalConfig
+      in if maxPlaceDiff < 1
+         then Just "maxPlaceDifference must be at least 1"
+         else if maxPlaceDiff > numPlaces'
+              then Just $ "maxPlaceDifference (" ++ show maxPlaceDiff ++ ") cannot be greater than numPlaces (" ++ show numPlaces' ++ ")"
+              else Nothing
   <|>
   checkFilterConfigWith
     rejectLongerThan

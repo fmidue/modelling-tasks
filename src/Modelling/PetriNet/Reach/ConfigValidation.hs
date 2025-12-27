@@ -3,7 +3,6 @@
 -- | Common validation logic for Petri Net configurations (Deadlock and Reach)
 module Modelling.PetriNet.Reach.ConfigValidation (
   checkBasicPetriConfig,
-  checkMaxPlaceDifference,
   checkRange,
   checkPetriNetSizes,
   checkTransitionLengths,
@@ -55,14 +54,6 @@ checkTransitionLengths minTransitionLength maxTransitionLength
 checkCapacity :: Capacity s -> Maybe String
 checkCapacity Unbounded = Nothing
 checkCapacity _ = Just "Other choices for 'capacity' than 'Unbounded' are not currently supported for this task type."
-
--- | Check maxPlaceDifference is within valid bounds
-checkMaxPlaceDifference :: Int -> Int -> Maybe String
-checkMaxPlaceDifference maxPlaceDiff numPlaces
-  | maxPlaceDiff < 1 = Just "maxPlaceDifference must be at least 1"
-  | maxPlaceDiff > numPlaces = Just $
-    "maxPlaceDifference (" ++ show maxPlaceDiff ++ ") cannot be greater than numPlaces (" ++ show numPlaces ++ ")"
-  | otherwise = Nothing
 
 -- | Check consistency between rejectLongerThan and other length parameters
 checkRejectLongerThanConsistency :: Maybe Int -> Int -> Bool -> Maybe String
