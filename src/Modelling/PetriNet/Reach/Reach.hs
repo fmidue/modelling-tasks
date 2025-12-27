@@ -629,9 +629,9 @@ possibleNetGoals NetGoalConfig {..} =
          -- Filter out nets with isolated nodes
          guard $ not $ hasIsolatedNodes n
          zs <-
-           take (maxTransitionLength - minTransitionLength + 1)
-           $ drop minTransitionLength
-           $ levelsWithAlternatives n
+            take (maxTransitionLength - minTransitionLength + 1)
+            $ drop minTransitionLength
+            $ levelsWithAlternatives n
          return $ do
           (z', transitionSequences) <- zs
           let d = sum placeDifferences
@@ -646,9 +646,8 @@ possibleNetGoals NetGoalConfig {..} =
       out :: m [(Int, (Net Place Transition, State Place, [[Transition]]))]
       out = do
         xss <- tries
-        let grouped = transpose xss
-            sorted = map (sortBy (comparing fst) . concat) grouped
-            xs = concat $ reverse sorted
+        let grouped = reverse $ transpose xss
+            xs = concatMap (sortBy (comparing fst) . concat) grouped
         if null xs
           then out
           else pure xs
