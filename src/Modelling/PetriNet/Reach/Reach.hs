@@ -629,12 +629,12 @@ possibleNetGoals NetGoalConfig {..} =
           (l,zs) <-
             take (maxTransitionLength + 1) $ zip [0 :: Int ..] $ levelsWithAlternatives n
           (z', transitionSequences) <- zs
-          let placeDifferences = do
+          let d = sum placeDifferences
+              placeDifferences = do
                 p <- ps
                 let diff = mark (start n) p - mark z' p
                 guard (diff /= 0)
                 return (abs diff)
-              d = sum placeDifferences
               allShortestSolutions = map reverse transitionSequences
           guard (maxPlacesChanged == numPlaces || maxPlacesChanged >= length placeDifferences)
           return ((negate l, d), (n, z', allShortestSolutions))
@@ -698,11 +698,10 @@ checkReachConfig ReachConfig {..} =
     rejectLongerThan
     showLengthHint
   <|>
-  (let maxPlacesChanged' = maxPlacesChanged netGoalConfig
-       numPlaces' = numPlaces netGoalConfig
-   in if maxPlacesChanged' < 1
+  (let maxPlacesDiff = maxPlacesChanged netGoalConfig
+   in if maxPlacesDiff < 1
         then Just "maxPlacesChanged must be at least 1"
-        else if maxPlacesChanged' > numPlaces'
+        else if maxPlacesDiff > numPlaces netGoalConfig
              then Just "maxPlacesChanged cannot be greater than numPlaces"
              else Nothing)
   <|>
