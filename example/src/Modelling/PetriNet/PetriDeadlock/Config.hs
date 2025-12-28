@@ -4,7 +4,7 @@ module Modelling.PetriNet.PetriDeadlock.Config where
 
 import Modelling.PetriNet.Reach.Deadlock (DeadlockConfig(..))
 import Modelling.PetriNet.Reach.Filter  (defaultFilterConfig, FilterConfig(absentTransitionsRequirement, rejectCyclesUpToLength))
-import Modelling.PetriNet.Reach.Type    (Capacity(..))
+import Modelling.PetriNet.Reach.Type    (Capacity(..), noTransitionBehaviorConstraints)
 import Data.GraphViz.Commands           (GraphvizCommand(..))
 
 {-|
@@ -18,6 +18,7 @@ task2023_29 = DeadlockConfig {
   drawCommands = [Circo],
   maxTransitionLength = 7,
   minTransitionLength = 7,
+  transitionBehaviorConstraints = noTransitionBehaviorConstraints,
   postconditionsRange = (1, Just 2),
   preconditionsRange = (1, Just 2),
   maxPrintedSolutions = 10,
@@ -39,6 +40,7 @@ task2023_30 = DeadlockConfig {
   drawCommands = [Circo],
   maxTransitionLength = 14,
   minTransitionLength = 14,
+  transitionBehaviorConstraints = noTransitionBehaviorConstraints,
   postconditionsRange = (1, Just 2),
   preconditionsRange = (1, Just 2),
   maxPrintedSolutions = 10,
@@ -74,6 +76,7 @@ task2024_61 = DeadlockConfig {
   drawCommands = [Circo],
   maxTransitionLength = 8,
   minTransitionLength = 8,
+  transitionBehaviorConstraints = noTransitionBehaviorConstraints,
   postconditionsRange = (1, Just 2),
   preconditionsRange = (1, Just 2),
   maxPrintedSolutions = 10,

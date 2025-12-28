@@ -4,7 +4,7 @@ module Modelling.PetriNet.PetriReach.Config where
 
 import Modelling.PetriNet.Reach.Reach   (ReachConfig(..), NetGoalConfig(..))
 import Modelling.PetriNet.Reach.Filter  (defaultFilterConfig, FilterConfig(absentTransitionsRequirement))
-import Modelling.PetriNet.Reach.Type    (Capacity(..))
+import Modelling.PetriNet.Reach.Type    (Capacity(..), noTransitionBehaviorConstraints)
 import Data.GraphViz.Commands           (GraphvizCommand(..))
 
 {-|
@@ -21,6 +21,7 @@ task2023_27 = ReachConfig {
     minTransitionLength = 8,
     postconditionsRange = (2, Just 3),
     maxPlacesChanged = 4,
+    transitionBehaviorConstraints = noTransitionBehaviorConstraints,
     preconditionsRange = (2, Just 2)
     },
   maxPrintedSolutions = 10,
@@ -46,6 +47,7 @@ task2023_28 = ReachConfig {
     minTransitionLength = 12,
     postconditionsRange = (2, Just 3),
     maxPlacesChanged = 6,
+    transitionBehaviorConstraints = noTransitionBehaviorConstraints,
     preconditionsRange = (2, Just 2)
     },
   maxPrintedSolutions = 10,
@@ -83,6 +85,7 @@ task2024_60 = ReachConfig {
     minTransitionLength = 8,
     postconditionsRange = (2, Just 3),
     maxPlacesChanged = 4,
+    transitionBehaviorConstraints = noTransitionBehaviorConstraints,
     preconditionsRange = (2, Just 2)
     },
   maxPrintedSolutions = 10,
