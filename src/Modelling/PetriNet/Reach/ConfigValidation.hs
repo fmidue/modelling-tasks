@@ -8,7 +8,8 @@ module Modelling.PetriNet.Reach.ConfigValidation (
   checkTransitionLengths,
   checkRejectLongerThanConsistency,
   checkCapacity,
-  checkFilterConfigWith
+  checkFilterConfigWith,
+  checkTransitionBehaviorConstraints
 ) where
 
 import Control.Applicative (Alternative ((<|>)))
@@ -17,7 +18,7 @@ import Modelling.PetriNet.Reach.Filter (
   FilterConfig (..),
   noFiltering,
   )
-import Modelling.PetriNet.Reach.Type (Capacity(..))
+import Modelling.PetriNet.Reach.Type (Capacity(..), TransitionBehaviorConstraints(..))
 
 -- | Check that a range (low, high) is valid
 checkRange
@@ -144,5 +145,21 @@ checkFilterConfigWith rejectLongerThan minTransitionLength maxTransitionLength n
   , absentTransitionsRequirement > maxAbsent
   = Just $ "absentTransitionsRequirement conflicts with transitionCoverageRequirement: " ++
            "at most " ++ show maxAbsent ++ " transitions can be absent given the coverage requirement"
+  | otherwise
+  = Nothing
+
+-- | Check transition behavior constraints for validity
+checkTransitionBehaviorConstraints
+  :: Int                               -- ^ numTransitions
+  -> TransitionBehaviorConstraints     -- ^ constraints
+  -> Maybe String
+checkTransitionBehaviorConstraints numTransitions TransitionBehaviorConstraints {..}
+  | Just numberOfNonPreserving <- exactlyNonPreserving
+  , numberOfNonPreserving < 0
+  = Just "exactlyNonPreserving must be non-negative when specified"
+  | Just numberOfNonPreserving <- exactlyNonPreserving
+  , numberOfNonPreserving > numTransitions
+  = Just $ "exactlyNonPreserving (" ++ show numberOfNonPreserving ++
+           ") cannot be greater than numTransitions (" ++ show numTransitions ++ ")"
   | otherwise
   = Nothing

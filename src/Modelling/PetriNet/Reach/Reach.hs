@@ -90,12 +90,15 @@ import Modelling.PetriNet.Reach.Type (
   ShowTransition (ShowTransition),
   State,
   Transition (..),
+  TransitionBehaviorConstraints,
   TransitionsList (TransitionsList),
   bimapNet,
   example,
   hasIsolatedNodes,
   mapState,
   mark,
+  noTransitionBehaviorConstraints,
+  satisfiesTransitionBehaviorConstraints,
   )
 
 import Control.Applicative              (Alternative, (<|>))
@@ -107,6 +110,7 @@ import Control.Monad.Trans.Maybe        (MaybeT (MaybeT, runMaybeT))
 import Modelling.PetriNet.Reach.ConfigValidation (
   checkBasicPetriConfig,
   checkFilterConfigWith,
+  checkTransitionBehaviorConstraints,
   )
 import Control.OutputCapable.Blocks (
   ArticleToUse (IndefiniteArticle),
@@ -565,6 +569,7 @@ data NetGoalConfig = NetGoalConfig {
   -- | Maximum number of places where token counts may differ between start and goal state.
   -- Must be in the range @1..numPlaces@.
   maxPlacesChanged    :: Int,
+  transitionBehaviorConstraints :: TransitionBehaviorConstraints,
   postconditionsRange :: (Int, Maybe Int),
   preconditionsRange  :: (Int, Maybe Int)
   }
@@ -583,6 +588,7 @@ defaultReachConfig = ReachConfig {
     maxTransitionLength = 6,
     minTransitionLength = 6,
     maxPlacesChanged    = 3,
+    transitionBehaviorConstraints = noTransitionBehaviorConstraints,
     postconditionsRange = (0, Nothing),
     preconditionsRange  = (0, Nothing)
     },
@@ -628,6 +634,8 @@ possibleNetGoals NetGoalConfig {..} =
         return $ do
          -- Filter out nets with isolated nodes
          guard $ not $ hasIsolatedNodes n
+         -- Filter out nets that don't satisfy transition behavior constraints
+         guard $ satisfiesTransitionBehaviorConstraints n transitionBehaviorConstraints
          zs <-
             take (maxTransitionLength - minTransitionLength + 1)
             $ drop minTransitionLength
@@ -724,6 +732,10 @@ checkReachConfig ReachConfig {..} =
       Just maxSolutions | maxPrintedSolutions > maxSolutions ->
         Just "maxPrintedSolutions cannot be greater than solutionSetLimit"
       _ -> Nothing)
+  <|>
+  checkTransitionBehaviorConstraints
+    (numTransitions netGoalConfig)
+    (transitionBehaviorConstraints netGoalConfig)
   <|>
   if showTargetNet || showPlaceNamesInNet
       then Nothing

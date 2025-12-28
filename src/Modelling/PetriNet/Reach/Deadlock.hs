@@ -66,6 +66,7 @@ import Modelling.PetriNet.Reach.Property (
 import Modelling.PetriNet.Reach.ConfigValidation (
   checkBasicPetriConfig,
   checkFilterConfigWith,
+  checkTransitionBehaviorConstraints,
   )
 import Modelling.PetriNet.Reach.Reach   (
   assertReachPoints,
@@ -86,10 +87,13 @@ import Modelling.PetriNet.Reach.Type (
   ShowTransition (ShowTransition),
   State (State),
   Transition (..),
+  TransitionBehaviorConstraints,
   TransitionsList (TransitionsList),
   bimapNet,
   example,
   hasIsolatedNodes,
+  noTransitionBehaviorConstraints,
+  satisfiesTransitionBehaviorConstraints,
   )
 
 import Control.Applicative              (Alternative, (<|>))
@@ -258,6 +262,7 @@ data DeadlockConfig = DeadlockConfig {
   drawCommands        :: [GraphvizCommand],
   maxTransitionLength :: Int,
   minTransitionLength :: Int,
+  transitionBehaviorConstraints :: TransitionBehaviorConstraints,
   postconditionsRange :: (Int, Maybe Int),
   preconditionsRange  :: (Int, Maybe Int),
   maxPrintedSolutions :: Int,
@@ -281,6 +286,7 @@ defaultDeadlockConfig =
   drawCommands        = [Dot, Neato, TwoPi, Circo, Fdp, Sfdp, Osage, Patchwork],
   maxTransitionLength = 8,
   minTransitionLength = 8,
+  transitionBehaviorConstraints = noTransitionBehaviorConstraints,
   postconditionsRange = (0, Nothing),
   preconditionsRange  = (0, Nothing),
   maxPrintedSolutions = 0,
@@ -325,6 +331,10 @@ checkDeadlockConfig DeadlockConfig {..} =
     maxTransitionLength
     numTransitions
     filterConfig
+  <|>
+  checkTransitionBehaviorConstraints
+    numTransitions
+    transitionBehaviorConstraints
   <|>
   if maxPrintedSolutions < 0
     then Just "maxPrintedSolutions must be non-negative"
@@ -390,6 +400,8 @@ try conf = do
   return $ do
     -- Filter out nets with isolated nodes
     guard $ not $ hasIsolatedNodes n
+    -- Filter out nets that don't satisfy transition behavior constraints
+    guard $ satisfiesTransitionBehaviorConstraints n (transitionBehaviorConstraints conf)
     let deadlockLevels = map (filter (null . successors n . fst)) (levelsWithAlternatives n)
         (no, yeah) = span null
           $ take (maxTransitionLength conf + 1)

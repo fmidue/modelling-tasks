@@ -5,6 +5,7 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE MonoLocalBinds #-}
+{-# LANGUAGE RecordWildCards #-}
 
 {-|
 originally from Autotool (https://gitlab.imn.htwk-leipzig.de/autotool/all0)
@@ -84,6 +85,25 @@ mapCapacity :: Ord a => (s -> a) -> Capacity s -> Capacity a
 mapCapacity _ Unbounded      = Unbounded
 mapCapacity _ (AllBounded x) = AllBounded x
 mapCapacity f (Bounded m)    = Bounded $ M.mapKeys f m
+
+-- | Constraints on transition token behavior in the net
+data TransitionBehaviorConstraints = TransitionBehaviorConstraints {
+  -- | If @Just True@, forbid token-increasing transitions.
+  -- If @Just False@, forbid token-decreasing transitions.
+  -- If @Nothing@, no restriction on increasing/decreasing transitions.
+  forbidTokenChangeType :: Maybe Bool,
+  -- | Require exactly this many transitions to not be token-preserving.
+  -- If @Nothing@, no restriction on number of non-preserving transitions.
+  exactlyNonPreserving :: Maybe Int
+  }
+  deriving (Data, Eq, Generic, Hashable, Ord, Read, Show)
+
+-- | No transition behavior constraints
+noTransitionBehaviorConstraints :: TransitionBehaviorConstraints
+noTransitionBehaviorConstraints = TransitionBehaviorConstraints {
+  forbidTokenChangeType = Nothing,
+  exactlyNonPreserving = Nothing
+  }
 
 data Net s t = Net {
   places :: Set s,
@@ -223,3 +243,53 @@ hasIsolatedNodes (Net ps ts cs _ _) =
   let connectedPlaces = S.fromList $ concatMap (\(pre, _, post) -> pre ++ post) cs
       connectedTransitions = S.fromList $ map (\(_, t, _) -> t) cs
   in not (S.isSubsetOf ps connectedPlaces && S.isSubsetOf ts connectedTransitions)
+
+-- | Determine the token behavior of a connection
+-- Returns: (consumed, produced)
+connectionTokenBehavior :: Connection s t -> (Int, Int)
+connectionTokenBehavior (prePlaces, _, postPlaces) =
+  (length prePlaces, length postPlaces)
+
+-- | Check if a connection is token-preserving (consumes == produces)
+isTokenPreserving :: Connection s t -> Bool
+isTokenPreserving connection =
+  let (consumed, produced) = connectionTokenBehavior connection
+  in consumed == produced
+
+-- | Check if a connection is token-increasing (produces > consumes)
+isTokenIncreasing :: Connection s t -> Bool
+isTokenIncreasing connection =
+  let (consumed, produced) = connectionTokenBehavior connection
+  in produced > consumed
+
+-- | Check if a connection is token-decreasing (consumes > produces)
+isTokenDecreasing :: Connection s t -> Bool
+isTokenDecreasing connection =
+  let (consumed, produced) = connectionTokenBehavior connection
+  in consumed > produced
+
+-- | Count transitions in a net with specific token behavior
+countTransitionsByBehavior
+  :: Net s t
+  -> (Connection s t -> Bool)
+  -> Int
+countTransitionsByBehavior net predicate =
+  length $ filter predicate $ connections net
+
+-- | Check if a net satisfies the given transition behavior constraints
+satisfiesTransitionBehaviorConstraints
+  :: Net s t
+  -> TransitionBehaviorConstraints
+  -> Bool
+satisfiesTransitionBehaviorConstraints net TransitionBehaviorConstraints {..} =
+  checkForbiddenType && checkExactlyNonPreserving
+  where
+    checkForbiddenType = case forbidTokenChangeType of
+      Nothing -> True
+      Just True -> countTransitionsByBehavior net isTokenIncreasing == 0
+      Just False -> countTransitionsByBehavior net isTokenDecreasing == 0
+    checkExactlyNonPreserving = case exactlyNonPreserving of
+      Nothing -> True
+      Just expected ->
+        let nonPreserving = countTransitionsByBehavior net (not . isTokenPreserving)
+        in nonPreserving == expected

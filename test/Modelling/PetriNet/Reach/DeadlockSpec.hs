@@ -15,7 +15,15 @@ import Modelling.PetriNet.Reach.Filter (
   noFiltering,
   )
 import Modelling.PetriNet.Reach.Step    (successors)
-import Modelling.PetriNet.Reach.Type    (Net (transitions), Capacity(..), Place(..))
+import Modelling.PetriNet.Reach.Type (
+  Net (transitions, connections),
+  Capacity(..),
+  Place(..),
+  TransitionBehaviorConstraints(..),
+  isTokenPreserving,
+  isTokenIncreasing,
+  isTokenDecreasing,
+  )
 
 import Data.Maybe                       (isJust)
 import qualified Data.Map                 as M
@@ -92,3 +100,72 @@ spec = do
             capacity = Bounded (M.fromList [(Place 1, 3), (Place 2, 5)])
             }
       checkDeadlockConfig config `shouldSatisfy` isJust
+
+    it "accepts valid transitionBehaviorConstraints with exactlyNonPreserving" $ do
+      let config = defaultDeadlockConfig {
+            transitionBehaviorConstraints = TransitionBehaviorConstraints {
+              forbidTokenChangeType = Nothing,
+              exactlyNonPreserving = Just 2
+              }
+            }
+      checkDeadlockConfig config `shouldBe` Nothing
+
+    it "rejects negative exactlyNonPreserving" $ do
+      let config = defaultDeadlockConfig {
+            transitionBehaviorConstraints = TransitionBehaviorConstraints {
+              forbidTokenChangeType = Nothing,
+              exactlyNonPreserving = Just (-1)
+              }
+            }
+      checkDeadlockConfig config `shouldSatisfy` isJust
+
+    it "rejects exactlyNonPreserving greater than numTransitions" $ do
+      let config = defaultDeadlockConfig {
+            transitionBehaviorConstraints = TransitionBehaviorConstraints {
+              forbidTokenChangeType = Nothing,
+              exactlyNonPreserving = Just 10
+              }
+            }
+      checkDeadlockConfig config `shouldSatisfy` isJust
+
+    it "respects forbidTokenChangeType = Just True (no token-increasing)" $
+      quickCheckWith stdArgs {maxSuccess = 50} $ property $ \seed -> do
+        let config = defaultDeadlockConfig {
+              filterConfig = noFiltering,
+              transitionBehaviorConstraints = TransitionBehaviorConstraints {
+                forbidTokenChangeType = Just True,
+                exactlyNonPreserving = Nothing
+                }
+              }
+        inst <- generateDeadlock config seed
+        let net = petriNet inst
+            increasingCount = length $ filter isTokenIncreasing $ connections net
+        increasingCount `shouldBe` 0
+
+    it "respects forbidTokenChangeType = Just False (no token-decreasing)" $
+      quickCheckWith stdArgs {maxSuccess = 50} $ property $ \seed -> do
+        let config = defaultDeadlockConfig {
+              filterConfig = noFiltering,
+              transitionBehaviorConstraints = TransitionBehaviorConstraints {
+                forbidTokenChangeType = Just False,
+                exactlyNonPreserving = Nothing
+                }
+              }
+        inst <- generateDeadlock config seed
+        let net = petriNet inst
+            decreasingCount = length $ filter isTokenDecreasing $ connections net
+        decreasingCount `shouldBe` 0
+
+    it "respects exactlyNonPreserving constraint" $
+      quickCheckWith stdArgs {maxSuccess = 50} $ property $ \seed -> do
+        let config = defaultDeadlockConfig {
+              filterConfig = noFiltering,
+              transitionBehaviorConstraints = TransitionBehaviorConstraints {
+                forbidTokenChangeType = Nothing,
+                exactlyNonPreserving = Just 2
+                }
+              }
+        inst <- generateDeadlock config seed
+        let net = petriNet inst
+            nonPreservingCount = length $ filter (not . isTokenPreserving) $ connections net
+        nonPreservingCount `shouldBe` 2

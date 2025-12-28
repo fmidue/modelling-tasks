@@ -22,11 +22,15 @@ import Modelling.PetriNet.Reach.Property (
   satisfiesAtAnyState,
   )
 import Modelling.PetriNet.Reach.Type (
-  Net (transitions, start),
+  Net (transitions, start, connections),
   State,
   Transition (..),
   Capacity(..),
   Place(..),
+  TransitionBehaviorConstraints(..),
+  isTokenPreserving,
+  isTokenIncreasing,
+  isTokenDecreasing,
   mark,
   )
 
@@ -139,6 +143,87 @@ spec = do
             showPlaceNamesInNet = False
             }
       checkReachConfig config `shouldSatisfy` isJust
+
+    it "accepts valid transitionBehaviorConstraints with exactlyNonPreserving" $ do
+      let config = defaultReachConfig {
+            netGoalConfig = (netGoalConfig defaultReachConfig) {
+              transitionBehaviorConstraints = TransitionBehaviorConstraints {
+                forbidTokenChangeType = Nothing,
+                exactlyNonPreserving = Just 2
+                }
+              }
+            }
+      checkReachConfig config `shouldBe` Nothing
+
+    it "rejects negative exactlyNonPreserving" $ do
+      let config = defaultReachConfig {
+            netGoalConfig = (netGoalConfig defaultReachConfig) {
+              transitionBehaviorConstraints = TransitionBehaviorConstraints {
+                forbidTokenChangeType = Nothing,
+                exactlyNonPreserving = Just (-1)
+                }
+              }
+            }
+      checkReachConfig config `shouldSatisfy` isJust
+
+    it "rejects exactlyNonPreserving greater than numTransitions" $ do
+      let config = defaultReachConfig {
+            netGoalConfig = (netGoalConfig defaultReachConfig) {
+              transitionBehaviorConstraints = TransitionBehaviorConstraints {
+                forbidTokenChangeType = Nothing,
+                exactlyNonPreserving = Just 10
+                }
+              }
+            }
+      checkReachConfig config `shouldSatisfy` isJust
+
+    it "respects forbidTokenChangeType = Just True (no token-increasing)" $
+      quickCheckWith stdArgs {maxSuccess = 50} $ property $ \seed -> do
+        let config = defaultReachConfig {
+              filterConfig = noFiltering,
+              netGoalConfig = (netGoalConfig defaultReachConfig) {
+                transitionBehaviorConstraints = TransitionBehaviorConstraints {
+                  forbidTokenChangeType = Just True,
+                  exactlyNonPreserving = Nothing
+                  }
+                }
+              }
+        inst <- generateReach config seed
+        let net = petriNet (netGoal inst)
+            increasingCount = length $ filter isTokenIncreasing $ connections net
+        increasingCount `shouldBe` 0
+
+    it "respects forbidTokenChangeType = Just False (no token-decreasing)" $
+      quickCheckWith stdArgs {maxSuccess = 50} $ property $ \seed -> do
+        let config = defaultReachConfig {
+              filterConfig = noFiltering,
+              netGoalConfig = (netGoalConfig defaultReachConfig) {
+                transitionBehaviorConstraints = TransitionBehaviorConstraints {
+                  forbidTokenChangeType = Just False,
+                  exactlyNonPreserving = Nothing
+                  }
+                }
+              }
+        inst <- generateReach config seed
+        let net = petriNet (netGoal inst)
+            decreasingCount = length $ filter isTokenDecreasing $ connections net
+        decreasingCount `shouldBe` 0
+
+    it "respects exactlyNonPreserving constraint" $
+      quickCheckWith stdArgs {maxSuccess = 50} $ property $ \seed -> do
+        let config = defaultReachConfig {
+              filterConfig = noFiltering,
+              netGoalConfig = (netGoalConfig defaultReachConfig) {
+                transitionBehaviorConstraints = TransitionBehaviorConstraints {
+                  forbidTokenChangeType = Nothing,
+                  exactlyNonPreserving = Just 2
+                  }
+                }
+              }
+        inst <- generateReach config seed
+        let net = petriNet (netGoal inst)
+            nonPreservingCount = length $ filter (not . isTokenPreserving) $ connections net
+        nonPreservingCount `shouldBe` 2
 
 hasMinTransitionLength
   :: (Ord s, Show s)
