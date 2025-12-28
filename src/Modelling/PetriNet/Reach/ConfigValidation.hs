@@ -131,8 +131,8 @@ checkFilterConfigWith rejectLongerThan minTransitionLength maxTransitionLength n
   , not (all (\cycleLength -> maxTransitionLength `mod` cycleLength == 0 && cycleLength /= maxTransitionLength) forbiddenCycleLengths)
   = Just "forbiddenCycleLengths must contain only true divisors of the target sequence length"
   | minTransitionLength == maxTransitionLength
-  , let minPossibleCycle = ceiling (fromIntegral maxTransitionLength * transitionCoverageRequirement)
-  , any (< minPossibleCycle) forbiddenCycleLengths
+  , let minRequiredTransitions = ceiling (fromIntegral maxTransitionLength * transitionCoverageRequirement)
+  , any (< minRequiredTransitions) forbiddenCycleLengths
   = Just "forbiddenCycleLengths contains values that are already impossible due to transitionCoverageRequirement"
   | hasRedundantMultiples forbiddenCycleLengths
   = Just "forbiddenCycleLengths contains redundant multiples (if n is forbidden, k*n for k>1 is also implicitly forbidden)"
