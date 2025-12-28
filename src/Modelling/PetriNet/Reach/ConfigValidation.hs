@@ -8,8 +8,8 @@ module Modelling.PetriNet.Reach.ConfigValidation (
   checkTransitionLengths,
   checkRejectLongerThanConsistency,
   checkCapacity,
-  checkFilterConfigWith,
-  checkTransitionBehaviorConstraints
+  checkTransitionBehaviorConstraints,
+  checkFilterConfigWith
 ) where
 
 import Control.Applicative (Alternative ((<|>)))
