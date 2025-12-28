@@ -162,4 +162,10 @@ checkFilterConfigWith rejectLongerThan minTransitionLength maxTransitionLength n
     isSorted (x:y:rest) = x < y && isSorted (y:rest)
 
     hasRedundantMultiples :: [Int] -> Bool
-    hasRedundantMultiples xs = any (\x -> any (\y -> y > x && y `mod` x == 0) xs) xs
+    hasRedundantMultiples = go []
+      where
+        go :: [Int] -> [Int] -> Bool
+        go _ [] = False
+        go smallerElements (currentElement : remainingElements)
+          | any (\smallerElement -> currentElement `mod` smallerElement == 0) smallerElements = True
+          | otherwise = go (currentElement : smallerElements) remainingElements
