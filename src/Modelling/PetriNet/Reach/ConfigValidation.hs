@@ -154,6 +154,8 @@ checkTransitionBehaviorConstraints
   -> TransitionBehaviorConstraints     -- ^ constraints
   -> Maybe String
 checkTransitionBehaviorConstraints numTransitions TransitionBehaviorConstraints {..}
+  | Just EQ <- forbidTokenChangeType
+  = Just "forbidTokenChangeType = Just EQ is meaningless (would only allow token-preserving transitions)"
   | Just numberOfNonPreserving <- exactlyNonPreserving
   , numberOfNonPreserving < 0
   = Just "exactlyNonPreserving must be non-negative when specified"
@@ -161,5 +163,13 @@ checkTransitionBehaviorConstraints numTransitions TransitionBehaviorConstraints 
   , numberOfNonPreserving > numTransitions
   = Just $ "exactlyNonPreserving (" ++ show numberOfNonPreserving ++
            ") cannot be greater than numTransitions (" ++ show numTransitions ++ ")"
+  | Just numberOfNonPreserving <- exactlyNonPreserving
+  , numberOfNonPreserving == 0
+  , Just _ <- forbidTokenChangeType
+  = Just "When exactlyNonPreserving = 0 (all transitions token-preserving), forbidTokenChangeType is meaningless"
+  | Just numberOfNonPreserving <- exactlyNonPreserving
+  , numberOfNonPreserving == numTransitions
+  , Just _ <- forbidTokenChangeType
+  = Just "When exactlyNonPreserving = numTransitions (no token-preserving transitions), forbidTokenChangeType is redundant"
   | otherwise
   = Nothing

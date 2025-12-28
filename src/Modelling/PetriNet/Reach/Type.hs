@@ -88,10 +88,13 @@ mapCapacity f (Bounded m)    = Bounded $ M.mapKeys f m
 
 -- | Constraints on transition token behavior in the net
 data TransitionBehaviorConstraints = TransitionBehaviorConstraints {
-  -- | If @Just True@, forbid token-increasing transitions.
-  -- If @Just False@, forbid token-decreasing transitions.
-  -- If @Nothing@, no restriction on increasing/decreasing transitions.
-  forbidTokenChangeType :: Maybe Bool,
+  -- | Forbid certain types of token-changing transitions.
+  -- @Just LT@: forbid token-decreasing transitions (only increasing or preserving allowed)
+  -- @Just GT@: forbid token-increasing transitions (only decreasing or preserving allowed)
+  -- @Nothing@: no restriction on transition types
+  -- Note: @Just EQ@ is rejected during config validation as meaningless
+  -- (would only allow preserving transitions, conflicting with exactlyNonPreserving)
+  forbidTokenChangeType :: Maybe Ordering,
   -- | Require exactly this many transitions to not be token-preserving.
   -- If @Nothing@, no restriction on number of non-preserving transitions.
   exactlyNonPreserving :: Maybe Int
@@ -286,8 +289,9 @@ satisfiesTransitionBehaviorConstraints net TransitionBehaviorConstraints {..} =
   where
     checkForbiddenType = case forbidTokenChangeType of
       Nothing -> True
-      Just True -> countTransitionsByBehavior net isTokenIncreasing == 0
-      Just False -> countTransitionsByBehavior net isTokenDecreasing == 0
+      Just LT -> countTransitionsByBehavior net isTokenDecreasing == 0
+      Just GT -> countTransitionsByBehavior net isTokenIncreasing == 0
+      Just EQ -> error "satisfiesTransitionBehaviorConstraints: Just EQ should be rejected by config validation"
     checkExactlyNonPreserving = case exactlyNonPreserving of
       Nothing -> True
       Just expected ->

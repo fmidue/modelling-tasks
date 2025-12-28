@@ -128,12 +128,39 @@ spec = do
             }
       checkDeadlockConfig config `shouldSatisfy` isJust
 
-    it "respects forbidTokenChangeType = Just True (no token-increasing)" $
+    it "rejects forbidTokenChangeType = Just EQ (meaningless)" $ do
+      let config = defaultDeadlockConfig {
+            transitionBehaviorConstraints = TransitionBehaviorConstraints {
+              forbidTokenChangeType = Just EQ,
+              exactlyNonPreserving = Nothing
+              }
+            }
+      checkDeadlockConfig config `shouldSatisfy` isJust
+
+    it "rejects meaningless combination: exactlyNonPreserving = 0 with forbidTokenChangeType" $ do
+      let config = defaultDeadlockConfig {
+            transitionBehaviorConstraints = TransitionBehaviorConstraints {
+              forbidTokenChangeType = Just GT,
+              exactlyNonPreserving = Just 0
+              }
+            }
+      checkDeadlockConfig config `shouldSatisfy` isJust
+
+    it "rejects redundant combination: exactlyNonPreserving = numTransitions with forbidTokenChangeType" $ do
+      let config = defaultDeadlockConfig {
+            transitionBehaviorConstraints = TransitionBehaviorConstraints {
+              forbidTokenChangeType = Just GT,
+              exactlyNonPreserving = Just 6
+              }
+            }
+      checkDeadlockConfig config `shouldSatisfy` isJust
+
+    it "respects forbidTokenChangeType = Just GT (no token-increasing)" $
       quickCheckWith stdArgs {maxSuccess = 50} $ property $ \seed -> do
         let config = defaultDeadlockConfig {
               filterConfig = noFiltering,
               transitionBehaviorConstraints = TransitionBehaviorConstraints {
-                forbidTokenChangeType = Just True,
+                forbidTokenChangeType = Just GT,
                 exactlyNonPreserving = Nothing
                 }
               }
@@ -142,12 +169,12 @@ spec = do
             increasingCount = length $ filter isTokenIncreasing $ connections net
         increasingCount `shouldBe` 0
 
-    it "respects forbidTokenChangeType = Just False (no token-decreasing)" $
+    it "respects forbidTokenChangeType = Just LT (no token-decreasing)" $
       quickCheckWith stdArgs {maxSuccess = 50} $ property $ \seed -> do
         let config = defaultDeadlockConfig {
               filterConfig = noFiltering,
               transitionBehaviorConstraints = TransitionBehaviorConstraints {
-                forbidTokenChangeType = Just False,
+                forbidTokenChangeType = Just LT,
                 exactlyNonPreserving = Nothing
                 }
               }
