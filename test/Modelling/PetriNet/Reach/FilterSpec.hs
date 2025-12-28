@@ -55,7 +55,7 @@ spec = do
     it "requires at least 2 complete cycles to detect" $
       forAll (chooseInt (1, 9)) $ \m ->
         forAll (genNubSized m) $ \xs ->
-          not $ isCyclicPattern @Int [m] $ xs
+          not $ isCyclicPattern @Int [m] xs
 
   describe "hasSpaceballsPrefix" $ do
     it "detects Spaceballs patterns" $
