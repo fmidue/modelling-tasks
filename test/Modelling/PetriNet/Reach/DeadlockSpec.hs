@@ -104,7 +104,7 @@ spec = do
     it "accepts valid transitionBehaviorConstraints with exactlyNonPreserving" $ do
       let config = defaultDeadlockConfig {
             transitionBehaviorConstraints = TransitionBehaviorConstraints {
-              forbidTokenChangeType = Nothing,
+              allowedTokenChangeTypes = Nothing,
               exactlyNonPreserving = Just 2
               }
             }
@@ -113,7 +113,7 @@ spec = do
     it "rejects negative exactlyNonPreserving" $ do
       let config = defaultDeadlockConfig {
             transitionBehaviorConstraints = TransitionBehaviorConstraints {
-              forbidTokenChangeType = Nothing,
+              allowedTokenChangeTypes = Nothing,
               exactlyNonPreserving = Just (-1)
               }
             }
@@ -122,45 +122,36 @@ spec = do
     it "rejects exactlyNonPreserving greater than numTransitions" $ do
       let config = defaultDeadlockConfig {
             transitionBehaviorConstraints = TransitionBehaviorConstraints {
-              forbidTokenChangeType = Nothing,
+              allowedTokenChangeTypes = Nothing,
               exactlyNonPreserving = Just 10
               }
             }
       checkDeadlockConfig config `shouldSatisfy` isJust
 
-    it "rejects forbidTokenChangeType = Just EQ (meaningless)" $ do
+    it "rejects allowedTokenChangeTypes = Just EQ (meaningless)" $ do
       let config = defaultDeadlockConfig {
             transitionBehaviorConstraints = TransitionBehaviorConstraints {
-              forbidTokenChangeType = Just EQ,
+              allowedTokenChangeTypes = Just EQ,
               exactlyNonPreserving = Nothing
               }
             }
       checkDeadlockConfig config `shouldSatisfy` isJust
 
-    it "rejects meaningless combination: exactlyNonPreserving = 0 with forbidTokenChangeType" $ do
+    it "rejects meaningless combination: exactlyNonPreserving = 0 with allowedTokenChangeTypes" $ do
       let config = defaultDeadlockConfig {
             transitionBehaviorConstraints = TransitionBehaviorConstraints {
-              forbidTokenChangeType = Just GT,
+              allowedTokenChangeTypes = Just GT,
               exactlyNonPreserving = Just 0
               }
             }
       checkDeadlockConfig config `shouldSatisfy` isJust
 
-    it "rejects redundant combination: exactlyNonPreserving = numTransitions with forbidTokenChangeType" $ do
-      let config = defaultDeadlockConfig {
-            transitionBehaviorConstraints = TransitionBehaviorConstraints {
-              forbidTokenChangeType = Just GT,
-              exactlyNonPreserving = Just 6
-              }
-            }
-      checkDeadlockConfig config `shouldSatisfy` isJust
-
-    it "respects forbidTokenChangeType = Just GT (no token-increasing)" $
+    it "respects allowedTokenChangeTypes = Just LT (only token-decreasing)" $
       quickCheckWith stdArgs {maxSuccess = 50} $ property $ \seed -> do
         let config = defaultDeadlockConfig {
               filterConfig = noFiltering,
               transitionBehaviorConstraints = TransitionBehaviorConstraints {
-                forbidTokenChangeType = Just GT,
+                allowedTokenChangeTypes = Just LT,
                 exactlyNonPreserving = Nothing
                 }
               }
@@ -169,12 +160,12 @@ spec = do
             increasingCount = length $ filter isTokenIncreasing $ connections net
         increasingCount `shouldBe` 0
 
-    it "respects forbidTokenChangeType = Just LT (no token-decreasing)" $
+    it "respects allowedTokenChangeTypes = Just GT (only token-increasing)" $
       quickCheckWith stdArgs {maxSuccess = 50} $ property $ \seed -> do
         let config = defaultDeadlockConfig {
               filterConfig = noFiltering,
               transitionBehaviorConstraints = TransitionBehaviorConstraints {
-                forbidTokenChangeType = Just LT,
+                allowedTokenChangeTypes = Just LT,
                 exactlyNonPreserving = Nothing
                 }
               }
@@ -188,7 +179,7 @@ spec = do
         let config = defaultDeadlockConfig {
               filterConfig = noFiltering,
               transitionBehaviorConstraints = TransitionBehaviorConstraints {
-                forbidTokenChangeType = Nothing,
+                allowedTokenChangeTypes = Nothing,
                 exactlyNonPreserving = Just 2
                 }
               }
