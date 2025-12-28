@@ -10,7 +10,6 @@ import Test.QuickCheck (
   Arbitrary (arbitrary),
   Gen,
   Testable (property),
-  (==>),
   chooseInt,
   forAll,
   suchThat,
@@ -44,22 +43,19 @@ spec = do
   describe "isCyclicPattern" $ do
     it "detects cyclic patterns" $
       forAll (chooseInt (1, 9)) $ \m ->
-        forAll (chooseInt (m, 9)) $ \n ->
-          forAll (genNubSized m) $
-            isCyclicPattern @Int n . concat . replicate 2
+        forAll (genNubSized m) $
+          isCyclicPattern @Int [m] . concat . replicate 2
 
-    it "does not detect too large cyclic patterns" $
+    it "does not detect patterns with forbidden lengths not in list" $
       forAll (chooseInt (2, 9)) $ \m ->
         forAll (chooseInt (1, m - 1)) $ \n ->
           forAll (genNubSized m) $
-            not . isCyclicPattern @Int n . concat . replicate 2
+            not . isCyclicPattern @Int [n] . concat . replicate 2
 
-    it "does only detect complete cyclic patterns" $
-      forAll (chooseInt (0, 9)) $ \m ->
-        forAll (chooseInt (0, 9)) $ \n ->
-          forAll (genNubSized m) $ \xs ->
-            forAll (genNubSized n) $ \ys ->
-              xs /= ys ==> not $ isCyclicPattern @Int ((m + n) `div` 2) $ xs ++ ys
+    it "requires at least 2 complete cycles to detect" $
+      forAll (chooseInt (1, 9)) $ \m ->
+        forAll (genNubSized m) $ \xs ->
+          not $ isCyclicPattern @Int [m] $ xs
 
   describe "hasSpaceballsPrefix" $ do
     it "detects Spaceballs patterns" $

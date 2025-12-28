@@ -61,12 +61,13 @@ data FilterConfig = FilterConfig {
   -- Sequences with Spaceballs prefix patterns of at least this length are filtered out.
   -- 'Nothing' means no filtering of such Spaceballs PIN prefix patterns.
   spaceballsPrefixThreshold :: !(Maybe Int),
-  -- | Maximum cycle length for cyclic patterns to reject
+  -- | Forbidden cycle lengths for cyclic patterns to reject
   -- (e.g., @[t3,t2,t1,t4,t3,t2,t1,t4]@)
   --
-  -- Sequences with cyclic patterns of cycle length up to this value are filtered out.
-  -- 'Nothing' means no filtering of such cyclic patterns.
-  rejectCyclesUpToLength :: !(Maybe Int),
+  -- Sequences with cyclic patterns having one of these cycle lengths are filtered out.
+  -- The list should be sorted and contain only true divisors of the target sequence length.
+  -- An empty list means no filtering of such cyclic patterns.
+  forbiddenCycleLengths :: ![Int],
   -- | Maximum number of shortest solution sequences in a solution set
   --
   -- Solution sets with more than this many sequences are filtered out.
@@ -96,7 +97,7 @@ noFiltering = FilterConfig {
   rejectGroupedRepeats = False,
   repetitiveSubsequenceThreshold = Nothing,
   spaceballsPrefixThreshold = Nothing,
-  rejectCyclesUpToLength = Nothing,
+  forbiddenCycleLengths = [],
   solutionSetLimit = Nothing,
   requireSolutionsArePermutations = False,
   absentTransitionsRequirement = 0,
@@ -109,7 +110,7 @@ defaultFilterConfig = FilterConfig {
   rejectGroupedRepeats = True,
   repetitiveSubsequenceThreshold = Just 3,
   spaceballsPrefixThreshold = Just 4,
-  rejectCyclesUpToLength = Just 4,
+  forbiddenCycleLengths = [2, 3, 4],
   solutionSetLimit = Just 15,
   requireSolutionsArePermutations = True,
   absentTransitionsRequirement = 1,
@@ -128,12 +129,13 @@ hasSpaceballsPrefix minLength xs = take minLength xs == take minLength [head xs 
 
 -- | Check if a sequence follows a cyclic pattern (e.g., @[t3,t2,t1,t4,t3,t2,t1,t4]@)
 -- The pattern is considered cyclic if it can be represented as `take n (cycle pattern)`
--- where `length pattern <= rejectCyclesUpToLength` (and the sequence thus has at least 2 complete cycles)
-isCyclicPattern :: Eq a => Int -> [a] -> Bool
-isCyclicPattern m xs = any (isCyclicWith xs) [1..m]
+-- where `length pattern` is in the list of forbidden cycle lengths and the sequence has at least 2 complete cycles
+isCyclicPattern :: Eq a => [Int] -> [a] -> Bool
+isCyclicPattern forbiddenLengths xs = any (isCyclicWith xs) forbiddenLengths
   where
     isCyclicWith :: Eq a => [a] -> Int -> Bool
     isCyclicWith seqToCheck cycleLength =
+      length seqToCheck >= 2 * cycleLength &&
       seqToCheck == take (length seqToCheck) (cycle (take cycleLength seqToCheck))
 
 -- | Check if a sequence has repetitive subsequences as prefix or suffix
@@ -163,7 +165,7 @@ shouldDiscardSolutions :: (Enum a, Ord a) => FilterConfig -> Int -> [[a]] -> Boo
 shouldDiscardSolutions config numTransitions solutions =
   maybe False (\n -> notNull (drop n solutions)) (solutionSetLimit config)
   || maybe False ((`any` solutions) . hasSpaceballsPrefix) (spaceballsPrefixThreshold config)
-  || maybe False ((`any` solutions) . isCyclicPattern) (rejectCyclesUpToLength config)
+  || (not (null (forbiddenCycleLengths config)) && any (isCyclicPattern (forbiddenCycleLengths config)) solutions)
   || maybe False ((`any` solutions) . hasRepetitiveSubsequence) (repetitiveSubsequenceThreshold config)
   || rejectGroupedRepeats config && any hasGroupedRepeats solutions
   || transitionCoverageRequirement config > 0 && any (hasInsufficientTransitionCoverage numTransitions `flip` transitionCoverageRequirement config) solutions

@@ -121,12 +121,24 @@ checkFilterConfigWith rejectLongerThan minTransitionLength maxTransitionLength n
   | Just repeats <- repetitiveSubsequenceThreshold
   , repeats > maxTransitionLength `div` 2
   = Just "repetitiveSubsequenceThreshold must not be higher than half of maxTransitionLength"
-  | Just cycleLength <- rejectCyclesUpToLength
-  , cycleLength < 1
-  = Just "setting rejectCyclesUpToLength to less than 1 does not make sense"
-  | Just cycleLength <- rejectCyclesUpToLength
-  , cycleLength > maxTransitionLength `div` 2
-  = Just "rejectCyclesUpToLength must not be higher than half of maxTransitionLength"
+  | not (null forbiddenCycleLengths)
+  , not (isSorted forbiddenCycleLengths)
+  = Just "forbiddenCycleLengths must be sorted in ascending order"
+  | not (null forbiddenCycleLengths)
+  , any (<= 0) forbiddenCycleLengths
+  = Just "forbiddenCycleLengths must contain only positive values"
+  | not (null forbiddenCycleLengths)
+  , any (> maxTransitionLength `div` 2) forbiddenCycleLengths
+  = Just "forbiddenCycleLengths must not contain values higher than half of maxTransitionLength"
+  | not (null forbiddenCycleLengths)
+  , minTransitionLength == maxTransitionLength
+  , not (all (\cycleLength -> maxTransitionLength `mod` cycleLength == 0 && cycleLength /= maxTransitionLength) forbiddenCycleLengths)
+  = Just "forbiddenCycleLengths must contain only true divisors of the target sequence length"
+  | not (null forbiddenCycleLengths)
+  , minTransitionLength == maxTransitionLength
+  , let minPossibleCycle = ceiling (fromIntegral maxTransitionLength * transitionCoverageRequirement)
+  , any (< minPossibleCycle) forbiddenCycleLengths
+  = Just "forbiddenCycleLengths contains values that are already impossible due to transitionCoverageRequirement"
   | Just spaceballsLength <- spaceballsPrefixThreshold
   , spaceballsLength < 2 || spaceballsLength > maxTransitionLength
   = Just "spaceballsPrefixThreshold must be a value from 2 to maxTransitionLength if it is enabled"
@@ -146,3 +158,8 @@ checkFilterConfigWith rejectLongerThan minTransitionLength maxTransitionLength n
            "at most " ++ show maxAbsent ++ " transitions can be absent given the coverage requirement"
   | otherwise
   = Nothing
+  where
+    isSorted :: Ord a => [a] -> Bool
+    isSorted [] = True
+    isSorted [_] = True
+    isSorted (x:y:rest) = x < y && isSorted (y:rest)
