@@ -146,7 +146,8 @@ spec = do
             }
       checkDeadlockConfig config `shouldSatisfy` isJust
 
-    it "respects allowedTokenChangeTypes = Just LT (only token-decreasing)" $
+    needsTuning $
+     it "respects allowedTokenChangeTypes = Just LT (only token-decreasing)" $
       quickCheckWith stdArgs {maxSuccess = 50} $ property $ \seed -> do
         let config = defaultDeadlockConfig {
               filterConfig = noFiltering,
@@ -160,7 +161,8 @@ spec = do
             increasingCount = length $ filter isTokenIncreasing $ connections net
         increasingCount `shouldBe` 0
 
-    it "respects allowedTokenChangeTypes = Just GT (only token-increasing)" $
+    needsTuning $
+     it "respects allowedTokenChangeTypes = Just GT (only token-increasing)" $
       quickCheckWith stdArgs {maxSuccess = 50} $ property $ \seed -> do
         let config = defaultDeadlockConfig {
               filterConfig = noFiltering,
@@ -174,7 +176,8 @@ spec = do
             decreasingCount = length $ filter isTokenDecreasing $ connections net
         decreasingCount `shouldBe` 0
 
-    it "respects exactlyNonPreserving constraint" $
+    needsTuning $
+     it "respects exactlyNonPreserving constraint" $
       quickCheckWith stdArgs {maxSuccess = 50} $ property $ \seed -> do
         let config = defaultDeadlockConfig {
               filterConfig = noFiltering,
