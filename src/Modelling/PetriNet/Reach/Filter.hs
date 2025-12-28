@@ -110,7 +110,7 @@ defaultFilterConfig = FilterConfig {
   rejectGroupedRepeats = True,
   repetitiveSubsequenceThreshold = Just 3,
   spaceballsPrefixThreshold = Just 4,
-  forbiddenCycleLengths = [2, 3, 4],
+  forbiddenCycleLengths = [],
   solutionSetLimit = Just 15,
   requireSolutionsArePermutations = True,
   absentTransitionsRequirement = 1,
@@ -129,13 +129,12 @@ hasSpaceballsPrefix minLength xs = take minLength xs == take minLength [head xs 
 
 -- | Check if a sequence follows a cyclic pattern (e.g., @[t3,t2,t1,t4,t3,t2,t1,t4]@)
 -- The pattern is considered cyclic if it can be represented as `take n (cycle pattern)`
--- where `length pattern` is in the list of forbidden cycle lengths and the sequence has at least 2 complete cycles
+-- where `length pattern` is in the list of forbidden cycle lengths
 isCyclicPattern :: Eq a => [Int] -> [a] -> Bool
 isCyclicPattern forbiddenLengths xs = any (isCyclicWith xs) forbiddenLengths
   where
     isCyclicWith :: Eq a => [a] -> Int -> Bool
     isCyclicWith seqToCheck cycleLength =
-      length seqToCheck >= 2 * cycleLength &&
       seqToCheck == take (length seqToCheck) (cycle (take cycleLength seqToCheck))
 
 -- | Check if a sequence has repetitive subsequences as prefix or suffix

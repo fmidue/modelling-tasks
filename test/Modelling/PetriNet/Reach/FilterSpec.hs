@@ -52,10 +52,10 @@ spec = do
           forAll (genNubSized m) $
             not . isCyclicPattern @Int [n] . concat . replicate 2
 
-    it "requires at least 2 complete cycles to detect" $
+    it "detects single and partial cycles" $
       forAll (chooseInt (1, 9)) $ \m ->
         forAll (genNubSized m) $ \xs ->
-          not $ isCyclicPattern @Int [m] xs
+          isCyclicPattern @Int [m] xs
 
   describe "hasSpaceballsPrefix" $ do
     it "detects Spaceballs patterns" $

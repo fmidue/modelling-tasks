@@ -288,7 +288,7 @@ defaultDeadlockConfig =
   showLengthHint      = False,
   showMinLengthHint   = True,
   showPlaceNamesInNet = False,
-  filterConfig        = defaultFilterConfig { solutionSetLimit = Nothing }
+  filterConfig        = defaultFilterConfig { solutionSetLimit = Nothing, forbiddenCycleLengths = [2], transitionCoverageRequirement = 0 }
   }
 
 defaultDeadlockInstance :: DeadlockInstance Place Transition
