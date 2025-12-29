@@ -9,6 +9,7 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 {-|
 originally from Autotool (https://gitlab.imn.htwk-leipzig.de/autotool/all0)
@@ -114,7 +115,9 @@ import Control.Monad.Catch              (MonadCatch, MonadThrow)
 import Control.Monad.Extra              (findM)
 import Control.Monad.Random             (MonadRandom, evalRandT, mkStdGen)
 import Control.Monad.Trans.Maybe        (MaybeT (MaybeT, runMaybeT))
+import Control.Monad.Trans.Random       (RandT)
 import System.Random.Shuffle            (shuffleM)
+import System.Random.Internal           (StdGen)
 import Data.GraphViz                    (GraphvizCommand (..))
 import Data.Maybe                       (fromMaybe)
 #if !MIN_VERSION_base(4,18,0)
@@ -355,7 +358,7 @@ generateDeadlock conf@DeadlockConfig {..} seed = do
     }
 
 tries
-  :: (MonadCatch m, MonadDiagrams m, MonadGraphviz m)
+  :: forall m. (MonadCatch m, MonadDiagrams m, MonadGraphviz m)
   => Int
   -> FilterConfig
   -> DeadlockConfig
@@ -364,9 +367,14 @@ tries
 tries n filterConfig conf seed = eval out
   where
     eval f = evalRandT f $ mkStdGen seed
+    out
+      :: RandT StdGen m (Net Place Transition, GraphvizCommand, Either (NonEmpty [Transition]) (NonEmpty [Transition]))
     out = do
       xs <- replicateM n $ try conf
       maybe out pure =<< runMaybeT (msum $ map checkCandidate $ concat xs)
+    checkCandidate
+      :: (Net Place Transition, [[Transition]])
+      -> MaybeT (RandT StdGen m) (Net Place Transition, GraphvizCommand, Either (NonEmpty [Transition]) (NonEmpty [Transition]))
     checkCandidate (pn, allShortestSolutions) = do
       guard (not $ shouldDiscardSolutions filterConfig (numTransitions conf) allShortestSolutions)
       cmd <- MaybeT $ findM (Monad.lift . isPetriDrawable pn) (drawCommands conf)

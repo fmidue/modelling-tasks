@@ -100,7 +100,7 @@ import Modelling.PetriNet.Reach.Type (
 
 import Control.Applicative              (Alternative, (<|>))
 import Control.Functor.Trans            (FunctorTrans (lift))
-import Control.Monad                    (forM, guard, msum, when, unless)
+import Control.Monad                    (guard, msum, replicateM, when, unless)
 import Control.Monad.Catch              (MonadCatch, MonadThrow)
 import Control.Monad.Extra              (findM, whenJust)
 import Control.Monad.Trans.Maybe        (MaybeT (MaybeT, runMaybeT))
@@ -128,8 +128,9 @@ import Control.OutputCapable.Blocks.Generic (
   ($>>=),
   )
 import Control.Monad.Random             (MonadRandom, mkStdGen)
-import Control.Monad.Trans.Random       (evalRandT)
+import Control.Monad.Trans.Random       (RandT, evalRandT)
 import System.Random.Shuffle            (shuffleM)
+import System.Random.Internal           (StdGen)
 import Data.Bifunctor                   (Bifunctor (second), bimap)
 import Data.Either.Combinators          (whenRight)
 import Data.Foldable                    (sequenceA_, traverse_)
@@ -620,7 +621,7 @@ possibleNetGoals
 possibleNetGoals NetGoalConfig {..} =
   let ps = [Place 1 .. Place numPlaces]
       tries :: m [[ [(Int, (Net Place Transition, State Place, [[Transition]]))] ]]
-      tries = forM [1 :: Int .. 1000] $ const $ do
+      tries = replicateM 1000 $ do
         n <- netLimits vLow vHigh nLow nHigh
             ps
             ts
@@ -661,7 +662,7 @@ possibleNetGoals NetGoalConfig {..} =
 
 -- | Generate NetGoal with filtering for trivial solutions
 generateNetGoal
-  :: (MonadCatch m, MonadDiagrams m, MonadGraphviz m)
+  :: forall m. (MonadCatch m, MonadDiagrams m, MonadGraphviz m)
   => FilterConfig
   -> Int
   -> NetGoalConfig
@@ -670,6 +671,9 @@ generateNetGoal
 generateNetGoal filterConfig maxPrintedSolutions config@NetGoalConfig {..} seed =
   evalRandT generate $ mkStdGen seed
   where
+    checkNetGoal
+      :: (Net Place Transition, State Place, [[Transition]])
+      -> MaybeT (RandT StdGen m) (NetGoal Place Transition, Either (NonEmpty [Transition]) (NonEmpty [Transition]))
     checkNetGoal (petri, state, allShortestSolutions) = do
       cmd <- MaybeT $ findM (Monad.lift . isPetriDrawable petri) drawCommands
       let netGoal = NetGoal {
@@ -685,6 +689,8 @@ generateNetGoal filterConfig maxPrintedSolutions config@NetGoalConfig {..} seed 
             then pure $ Right $ fromList allShortestSolutions
             else Right . fromList <$> Monad.lift (shuffleM allShortestSolutions)
       pure (netGoal, solutionsList)
+    generate
+      :: RandT StdGen m (NetGoal Place Transition, Either (NonEmpty [Transition]) (NonEmpty [Transition]))
     generate = do
       xs <- possibleNetGoals config
       maybeNetGoal <- runMaybeT $ msum $ map checkNetGoal xs
