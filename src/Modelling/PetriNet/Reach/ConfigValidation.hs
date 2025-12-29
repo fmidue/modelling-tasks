@@ -122,9 +122,9 @@ checkFilterConfigWith rejectLongerThan theTransitionLength@minTransitionLength n
   = Just "repetitiveSubsequenceThreshold must not be higher than half of maxTransitionLength"
   | not (isSorted forbiddenCycleLengths)
   = Just "forbiddenCycleLengths must be sorted in ascending order"
-  | not (null forbiddenCycleLengths) && head forbiddenCycleLengths < 2
+  | notNull forbiddenCycleLengths && head forbiddenCycleLengths < 2
   = Just "forbiddenCycleLengths must contain only values greater than 1"
-  | not (null forbiddenCycleLengths) && last forbiddenCycleLengths > theTransitionLength `div` 2
+  | notNull forbiddenCycleLengths && last forbiddenCycleLengths > theTransitionLength `div` 2
   = Just "forbiddenCycleLengths must not contain values higher than half of maxTransitionLength"
   | any ((0 /=) . mod theTransitionLength) forbiddenCycleLengths
   = Just "forbiddenCycleLengths must contain only true divisors of the target sequence length"
