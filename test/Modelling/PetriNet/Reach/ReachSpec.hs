@@ -33,6 +33,9 @@ import Modelling.PetriNet.Reach.Type (
 import Data.Maybe                        (isJust)
 import qualified Data.Map                 as M
 import Data.Set                         (Set)
+
+import Settings (needsTuning)
+
 import Test.Hspec
 import Test.QuickCheck (
   Testable (property),
@@ -56,7 +59,8 @@ spec = do
             ts = transitions net
         net `shouldSatisfy` hasMinTransitionLength (s ==) ts minL
 
-    it "generates non-trivial solutions when filtering is enabled" $
+    needsTuning $
+     it "generates non-trivial solutions when filtering is enabled" $
       quickCheckWith stdArgs {maxSuccess = 15} $ property $ \seed -> do
         let config = defaultReachConfig
         inst <- generateReach config seed
