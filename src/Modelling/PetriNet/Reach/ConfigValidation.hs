@@ -13,6 +13,7 @@ module Modelling.PetriNet.Reach.ConfigValidation (
 
 import Control.Applicative (Alternative ((<|>)))
 import Data.GraphViz.Commands (GraphvizCommand)
+import Data.List.Extra (notNull)
 import Modelling.PetriNet.Reach.Filter (
   FilterConfig (..),
   noFiltering,
@@ -128,8 +129,7 @@ checkFilterConfigWith rejectLongerThan theTransitionLength@minTransitionLength n
   = Just "forbiddenCycleLengths must not contain values higher than half of maxTransitionLength"
   | any ((0 /=) . mod theTransitionLength) forbiddenCycleLengths
   = Just "forbiddenCycleLengths must contain only true divisors of the target sequence length"
-  | let minRequiredTransitions = ceiling (transitionCoverageRequirement * fromIntegral numTransitions)
-  , any (< minRequiredTransitions) forbiddenCycleLengths
+  | any (< minRequiredTransitions) forbiddenCycleLengths
   = Just "forbiddenCycleLengths contains values that are already impossible due to transitionCoverageRequirement"
   | hasRedundantMultiples forbiddenCycleLengths
   = Just "forbiddenCycleLengths contains redundant multiples (no need to forbid n if k*n for some k>1 is already forbidden)"
@@ -146,14 +146,15 @@ checkFilterConfigWith rejectLongerThan theTransitionLength@minTransitionLength n
   = Just "transitionCoverageRequirement must be a value from 0 to 1"
   | absentTransitionsRequirement < 0 || absentTransitionsRequirement >= numTransitions
   = Just "absentTransitionsRequirement must be non-negative and smaller than the total number of transitions"
-  | let minRequiredTransitions = ceiling (transitionCoverageRequirement * fromIntegral numTransitions)
-        maxAbsent = numTransitions - minRequiredTransitions
-  , absentTransitionsRequirement > maxAbsent
+  | absentTransitionsRequirement > maxAbsent
   = Just $ "absentTransitionsRequirement conflicts with transitionCoverageRequirement: " ++
            "at most " ++ show maxAbsent ++ " transitions can be absent given the coverage requirement"
   | otherwise
   = Nothing
   where
+    minRequiredTransitions = ceiling (transitionCoverageRequirement * fromIntegral numTransitions)
+    maxAbsent = numTransitions - minRequiredTransitions
+
     isSorted :: Ord a => [a] -> Bool
     isSorted [] = True
     isSorted [_] = True

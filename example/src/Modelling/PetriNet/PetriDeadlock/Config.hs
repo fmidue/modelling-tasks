@@ -46,7 +46,7 @@ task2023_30 = DeadlockConfig {
   showLengthHint = False,
   showMinLengthHint = True,
   showPlaceNamesInNet = False,
-  filterConfig = defaultFilterConfig
+  filterConfig = defaultFilterConfig { forbiddenCycleLengths = [] }
   }
 
 {-|
@@ -81,5 +81,5 @@ task2024_61 = DeadlockConfig {
   showLengthHint = False,
   showMinLengthHint = True,
   showPlaceNamesInNet = False,
-  filterConfig = defaultFilterConfig { absentTransitionsRequirement = 0 }
+  filterConfig = defaultFilterConfig { absentTransitionsRequirement = 0, forbiddenCycleLengths = [] }
   }
