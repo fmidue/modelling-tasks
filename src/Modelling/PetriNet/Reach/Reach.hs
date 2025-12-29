@@ -714,7 +714,6 @@ checkReachConfig ReachConfig {..} =
   checkFilterConfigWith
     rejectLongerThan
     (minTransitionLength netGoalConfig)
-    (maxTransitionLength netGoalConfig)
     (numTransitions netGoalConfig)
     filterConfig
   <|>

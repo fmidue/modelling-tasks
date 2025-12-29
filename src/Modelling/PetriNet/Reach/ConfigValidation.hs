@@ -106,11 +106,10 @@ checkBasicPetriConfig
 checkFilterConfigWith
   :: Maybe Int        -- ^ rejectLongerThan
   -> Int              -- ^ minTransitionLength
-  -> Int              -- ^ maxTransitionLength
   -> Int              -- ^ numTransitions (total number of transitions)
   -> FilterConfig     -- ^ filterConfig
   -> Maybe String
-checkFilterConfigWith rejectLongerThan minTransitionLength maxTransitionLength numTransitions filterConfig@FilterConfig{..}
+checkFilterConfigWith rejectLongerThan theTransitionLength@minTransitionLength numTransitions filterConfig@FilterConfig{..}
   | rejectLongerThan /= Just minTransitionLength
   , filterConfig /= noFiltering
   = Just $ "If transition length is not enforced to one value, filterConfig must be set to "
@@ -119,15 +118,15 @@ checkFilterConfigWith rejectLongerThan minTransitionLength maxTransitionLength n
   , repeats < 2
   = Just "repetitiveSubsequenceThreshold has to be set to at least 2 if it is enabled"
   | Just repeats <- repetitiveSubsequenceThreshold
-  , repeats > maxTransitionLength `div` 2
+  , repeats > theTransitionLength `div` 2
   = Just "repetitiveSubsequenceThreshold must not be higher than half of maxTransitionLength"
   | not (isSorted forbiddenCycleLengths)
   = Just "forbiddenCycleLengths must be sorted in ascending order"
-  | any (< 2) (take 1 forbiddenCycleLengths)
+  | not (null forbiddenCycleLengths) && head forbiddenCycleLengths < 2
   = Just "forbiddenCycleLengths must contain only values greater than 1"
-  | any (> maxTransitionLength `div` 2) (take 1 (reverse forbiddenCycleLengths))
+  | not (null forbiddenCycleLengths) && last forbiddenCycleLengths > theTransitionLength `div` 2
   = Just "forbiddenCycleLengths must not contain values higher than half of maxTransitionLength"
-  | any ((0 /=) . mod maxTransitionLength) forbiddenCycleLengths
+  | any ((0 /=) . mod theTransitionLength) forbiddenCycleLengths
   = Just "forbiddenCycleLengths must contain only true divisors of the target sequence length"
   | let minRequiredTransitions = ceiling (transitionCoverageRequirement * fromIntegral numTransitions)
   , any (< minRequiredTransitions) forbiddenCycleLengths
@@ -135,7 +134,7 @@ checkFilterConfigWith rejectLongerThan minTransitionLength maxTransitionLength n
   | hasRedundantMultiples forbiddenCycleLengths
   = Just "forbiddenCycleLengths contains redundant multiples (no need to forbid n if k*n for some k>1 is already forbidden)"
   | Just spaceballsLength <- spaceballsPrefixThreshold
-  , spaceballsLength < 2 || spaceballsLength > maxTransitionLength
+  , spaceballsLength < 2 || spaceballsLength > theTransitionLength
   = Just "spaceballsPrefixThreshold must be a value from 2 to maxTransitionLength if it is enabled"
   | Just maxSolutions <- solutionSetLimit
   , maxSolutions < 1
@@ -147,7 +146,8 @@ checkFilterConfigWith rejectLongerThan minTransitionLength maxTransitionLength n
   = Just "transitionCoverageRequirement must be a value from 0 to 1"
   | absentTransitionsRequirement < 0 || absentTransitionsRequirement >= numTransitions
   = Just "absentTransitionsRequirement must be non-negative and smaller than the total number of transitions"
-  | let maxAbsent = floor ((1 - transitionCoverageRequirement) * fromIntegral numTransitions)
+  | let minRequiredTransitions = ceiling (transitionCoverageRequirement * fromIntegral numTransitions)
+        maxAbsent = numTransitions - minRequiredTransitions
   , absentTransitionsRequirement > maxAbsent
   = Just $ "absentTransitionsRequirement conflicts with transitionCoverageRequirement: " ++
            "at most " ++ show maxAbsent ++ " transitions can be absent given the coverage requirement"

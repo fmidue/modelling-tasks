@@ -1,6 +1,7 @@
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE RecordWildCards #-}
 
 {-|
 Module for filtering sequences in Petri net reach/deadlock tasks.
@@ -161,15 +162,15 @@ hasGroupedRepeats xs =
 -- Returns 'True' if the solution set should be discarded (filtered out),
 -- 'False' if it should be kept.
 shouldDiscardSolutions :: (Enum a, Ord a) => FilterConfig -> Int -> [[a]] -> Bool
-shouldDiscardSolutions config numTransitions solutions =
-  maybe False (\n -> notNull (drop n solutions)) (solutionSetLimit config)
-  || maybe False ((`any` solutions) . hasSpaceballsPrefix) (spaceballsPrefixThreshold config)
-  || notNull (forbiddenCycleLengths config) && any (isCyclicPattern (forbiddenCycleLengths config)) solutions
-  || maybe False ((`any` solutions) . hasRepetitiveSubsequence) (repetitiveSubsequenceThreshold config)
-  || rejectGroupedRepeats config && any hasGroupedRepeats solutions
-  || transitionCoverageRequirement config > 0 && any (hasInsufficientTransitionCoverage numTransitions `flip` transitionCoverageRequirement config) solutions
-  || absentTransitionsRequirement config > 0 && countAbsentTransitions numTransitions solutions < absentTransitionsRequirement config
-  || requireSolutionsArePermutations config && not (areAllPermutationsOfEachOther solutions)
+shouldDiscardSolutions FilterConfig{..} numTransitions solutions =
+  maybe False (\n -> notNull (drop n solutions)) solutionSetLimit
+  || maybe False ((`any` solutions) . hasSpaceballsPrefix) spaceballsPrefixThreshold
+  || any (isCyclicPattern forbiddenCycleLengths) solutions
+  || maybe False ((`any` solutions) . hasRepetitiveSubsequence) repetitiveSubsequenceThreshold
+  || rejectGroupedRepeats && any hasGroupedRepeats solutions
+  || transitionCoverageRequirement > 0 && any (hasInsufficientTransitionCoverage numTransitions `flip` transitionCoverageRequirement) solutions
+  || absentTransitionsRequirement > 0 && countAbsentTransitions numTransitions solutions < absentTransitionsRequirement
+  || requireSolutionsArePermutations && not (areAllPermutationsOfEachOther solutions)
 
 -- | Count the number of transitions that appear in none of the solutions
 countAbsentTransitions :: Ord a => Int -> [[a]] -> Int

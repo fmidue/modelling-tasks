@@ -102,6 +102,8 @@ import Control.OutputCapable.Blocks (
   translate,
   yesNo,
   )
+import Data.Ratio                       ((%))
+
 import Control.OutputCapable.Blocks.Generic (
   ($>>),
   ($>>=),
@@ -322,7 +324,6 @@ checkDeadlockConfig DeadlockConfig {..} =
   checkFilterConfigWith
     rejectLongerThan
     minTransitionLength
-    maxTransitionLength
     numTransitions
     filterConfig
   <|>
