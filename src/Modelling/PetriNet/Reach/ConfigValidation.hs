@@ -121,30 +121,24 @@ checkFilterConfigWith rejectLongerThan theTransitionLength@minTransitionLength n
   | Just repeats <- repetitiveSubsequenceThreshold
   , repeats > theTransitionLength `div` 2
   = Just "repetitiveSubsequenceThreshold must not be higher than half of maxTransitionLength"
-  | not (isSorted forbiddenCycleLengths)
-  = Just "forbiddenCycleLengths must be sorted in ascending order"
+  | not (isSorted forbiddenCycleLengths) || not (isSorted requiredCycleLengths)
+  = Just "forbiddenCycleLengths and requiredCycleLengths must each be sorted in ascending order"
   | notNull forbiddenCycleLengths && head forbiddenCycleLengths < 2
   = Just "forbiddenCycleLengths must contain only values greater than 1"
+  | notNull requiredCycleLengths && head requiredCycleLengths < 1
+  = Just "requiredCycleLengths must contain only positive values"
   | notNull forbiddenCycleLengths && last forbiddenCycleLengths > theTransitionLength `div` 2
   = Just "forbiddenCycleLengths must not contain values higher than half of maxTransitionLength"
-  | any ((0 /=) . mod theTransitionLength) forbiddenCycleLengths
-  = Just "forbiddenCycleLengths must contain only true divisors of the target sequence length"
-  | any (< minRequiredTransitions) forbiddenCycleLengths
-  = Just "forbiddenCycleLengths contains values that are already impossible due to transitionCoverageRequirement"
-  | hasRedundantMultiples forbiddenCycleLengths
-  = Just "forbiddenCycleLengths contains redundant multiples (no need to forbid n if k*n for some k>1 is already forbidden)"
-  | not (isSorted requiredCycleLengths)
-  = Just "requiredCycleLengths must be sorted in ascending order"
-  | notNull requiredCycleLengths && head requiredCycleLengths < 2
-  = Just "requiredCycleLengths must contain only values greater than 1"
   | notNull requiredCycleLengths && last requiredCycleLengths > theTransitionLength `div` 2
   = Just "requiredCycleLengths must not contain values higher than half of maxTransitionLength"
-  | any ((0 /=) . mod theTransitionLength) requiredCycleLengths
-  = Just "requiredCycleLengths must contain only true divisors of the target sequence length"
-  | any (< minRequiredTransitions) requiredCycleLengths
-  = Just "requiredCycleLengths contains values that are already impossible due to transitionCoverageRequirement"
+  | any ((0 /=) . mod theTransitionLength) (forbiddenCycleLengths ++ requiredCycleLengths)
+  = Just "forbiddenCycleLengths and requiredCycleLengths must each contain only divisors of the target sequence length"
+  | any (< minRequiredTransitions) (forbiddenCycleLengths ++ requiredCycleLengths)
+  = Just "forbiddenCycleLengths or requiredCycleLengths contains values that are already impossible due to transitionCoverageRequirement"
+  | hasRedundantMultiples forbiddenCycleLengths
+  = Just "forbiddenCycleLengths contains redundant multiples (no need to forbid n if k*n for some k>1 is already forbidden)"
   | hasRedundantMultiples requiredCycleLengths
-  = Just "requiredCycleLengths contains redundant multiples (no need to require n if k*n for some k>1 is already required)"
+  = Just "requiredCycleLengths contains redundant multiples (no need to ask e.g. for 'n or 2*n', since asking for '2*n' would suffice)"
   | hasConflictBetweenForbiddenAndRequired forbiddenCycleLengths requiredCycleLengths
   = Just "requiredCycleLengths and forbiddenCycleLengths must not have overlapping values"
   | Just spaceballsLength <- spaceballsPrefixThreshold
