@@ -40,17 +40,17 @@ zipN n xs = concat $ case n of
 
 spec :: Spec
 spec = do
-  describe "isCyclicPattern" $ do
+  describe "isCyclicPatternWithAnyOf" $ do
     it "detects cyclic patterns" $
       forAll (chooseInt (1, 9)) $ \m ->
         forAll (genNubSized m) $
-          isCyclicPattern @Int [m] . concat . replicate 2
+          isCyclicPatternWithAnyOf @Int [m] . concat . replicate 2
 
     it "ignores cycles with lengths not in the forbidden list" $
       forAll (chooseInt (2, 9)) $ \m ->
         forAll (chooseInt (1, m - 1)) $ \n ->
           forAll (genNubSized m) $
-            not . isCyclicPattern @Int [n] . concat . replicate 2
+            not . isCyclicPatternWithAnyOf @Int [n] . concat . replicate 2
 
   describe "hasSpaceballsPrefix" $ do
     it "detects Spaceballs patterns" $
