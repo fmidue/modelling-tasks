@@ -116,9 +116,7 @@ import Control.Monad.Random             (MonadRandom, evalRandT, mkStdGen)
 import Control.Monad.Trans.Maybe        (MaybeT (MaybeT, runMaybeT))
 import System.Random.Shuffle            (shuffleM)
 import Data.GraphViz                    (GraphvizCommand (..))
-import Data.List                        (sortBy, transpose)
 import Data.Maybe                       (fromMaybe)
-import Data.Ord                         (comparing)
 #if !MIN_VERSION_base(4,18,0)
 import Data.Typeable                    (Typeable)
 #endif
@@ -368,11 +366,8 @@ tries n filterConfig conf seed = eval out
     eval f = evalRandT f $ mkStdGen seed
     out = do
       xs <- replicateM n $ try conf
-      let grouped = reverse $ transpose xs
-          candidates = concatMap (sortBy (comparing (\(l, _, _) -> l))) grouped
-      maybe out pure =<< runMaybeT (msum $ map checkCandidate candidates)
-    checkCandidate (l, pn, allShortestSolutions) = do
-      guard $ l >= minTransitionLength conf
+      maybe out pure =<< runMaybeT (msum $ map checkCandidate $ concat xs)
+    checkCandidate (pn, allShortestSolutions) = do
       guard (not $ shouldDiscardSolutions filterConfig (numTransitions conf) allShortestSolutions)
       cmd <- MaybeT $ findM (Monad.lift . isPetriDrawable pn) (drawCommands conf)
       solutionsList <-
@@ -383,7 +378,7 @@ tries n filterConfig conf seed = eval out
             else Right . fromList <$> Monad.lift (shuffleM allShortestSolutions)
       pure (pn, cmd, solutionsList)
 
-try :: MonadRandom m => DeadlockConfig -> m [(Int, Net Place Transition, [[Transition]])]
+try :: MonadRandom m => DeadlockConfig -> m [(Net Place Transition, [[Transition]])]
 try conf = do
   let ps = [Place 1 .. Place (numPlaces conf)]
       ts = [Transition 1 .. Transition (numTransitions conf)]
@@ -400,8 +395,10 @@ try conf = do
           deadlockLevels
     guard $ not $ null yeah
     let allShortestSolutions = map reverse . concatMap snd $ head yeah
-    return (length no, n, allShortestSolutions)
+    guard $ length no >= minTransitionLength conf
+    return (n, allShortestSolutions)
   where
+    fixMaximum :: (Int, Maybe Int) -> (Int, Int)
     fixMaximum = second (min (numPlaces conf) . fromMaybe maxBound)
     (vLow, vHigh) = fixMaximum $ preconditionsRange conf
     (nLow, nHigh) = fixMaximum $ postconditionsRange conf
