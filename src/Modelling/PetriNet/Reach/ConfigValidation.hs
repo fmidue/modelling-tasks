@@ -184,4 +184,4 @@ checkFilterConfigWith rejectLongerThan theTransitionLength@minTransitionLength n
 
     hasConflictBetweenForbiddenAndRequired :: [Int] -> [Int] -> Bool
     hasConflictBetweenForbiddenAndRequired forbidden =
-      any (\r -> any (\f -> r == f || f `mod` r == 0) forbidden)
+      any (\r -> any (\f -> f `mod` r == 0) forbidden)
