@@ -165,7 +165,7 @@ shouldDiscardSolutions :: (Enum a, Ord a) => FilterConfig -> Int -> [[a]] -> Boo
 shouldDiscardSolutions FilterConfig{..} numTransitions solutions =
   maybe False (\n -> notNull (drop n solutions)) solutionSetLimit
   || maybe False ((`any` solutions) . hasSpaceballsPrefix) spaceballsPrefixThreshold
-  || any (isCyclicPattern forbiddenCycleLengths) solutions
+  || notNull forbiddenCycleLengths && any (isCyclicPattern forbiddenCycleLengths) solutions
   || maybe False ((`any` solutions) . hasRepetitiveSubsequence) repetitiveSubsequenceThreshold
   || rejectGroupedRepeats && any hasGroupedRepeats solutions
   || transitionCoverageRequirement > 0 && any (hasInsufficientTransitionCoverage numTransitions `flip` transitionCoverageRequirement) solutions
