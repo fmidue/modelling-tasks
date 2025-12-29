@@ -67,14 +67,13 @@ data FilterConfig = FilterConfig {
   --
   -- Sequences with cyclic patterns having one of these cycle lengths are filtered out.
   -- The list should be sorted and contain only true divisors of the target sequence length.
-  -- An empty list means no filtering of such cyclic patterns.
+  -- An empty list means no rejection filtering of such cyclic patterns.
   forbiddenCycleLengths :: ![Int],
-  -- | Required cycle lengths for cyclic patterns to accept
-  -- (e.g., @[t3,t2,t1,t4,t3,t2,t1,t4]@; always full cycles checked)
+  -- | If nonempty, cycle lengths one of which is required for acceptance
   --
   -- Solution sets where no solution has a cyclic pattern with one of these cycle lengths are filtered out.
-  -- The list should be sorted and contain only true divisors of the target sequence length.
-  -- An empty list means no requirement for cyclic patterns.
+  -- The list should be sorted and contain only divisors of the target sequence length.
+  -- An empty list means no acceptance requirement for cyclic patterns.
   requiredCycleLengths :: ![Int],
   -- | Maximum number of shortest solution sequences in a solution set
   --
@@ -120,7 +119,7 @@ defaultFilterConfig = FilterConfig {
   repetitiveSubsequenceThreshold = Just 3,
   spaceballsPrefixThreshold = Just 4,
   forbiddenCycleLengths = [2, 3],
-  requiredCycleLengths = [],
+  requiredCycleLengths = [5],
   solutionSetLimit = Just 15,
   requireSolutionsArePermutations = True,
   absentTransitionsRequirement = 1,
