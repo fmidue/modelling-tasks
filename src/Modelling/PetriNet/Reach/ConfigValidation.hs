@@ -119,28 +119,28 @@ checkFilterConfigWith rejectLongerThan theTransitionLength@minTransitionLength n
   , repeats < 2
   = Just "repetitiveSubsequenceThreshold has to be set to at least 2 if it is enabled"
   | Just repeats <- repetitiveSubsequenceThreshold
-  , repeats > theTransitionLength `div` 2
+  , repeats > halfTransitionLength
   = Just "repetitiveSubsequenceThreshold must not be higher than half of maxTransitionLength"
-  | not (isSorted forbiddenCycleLengths) || not (isSorted requiredCycleLengths)
-  = Just "forbiddenCycleLengths and requiredCycleLengths must each be sorted in ascending order"
+  | not (isSorted forbiddenCycleLengths) || not (isSorted requireOneOfCycleLengths)
+  = Just "forbiddenCycleLengths and requireOneOfCycleLengths must each be sorted in ascending order"
   | notNull forbiddenCycleLengths && head forbiddenCycleLengths < 2
   = Just "forbiddenCycleLengths must contain only values greater than 1"
-  | notNull requiredCycleLengths && head requiredCycleLengths < 1
-  = Just "requiredCycleLengths must contain only positive values"
-  | notNull forbiddenCycleLengths && last forbiddenCycleLengths > theTransitionLength `div` 2
+  | notNull requireOneOfCycleLengths && head requireOneOfCycleLengths < 1
+  = Just "requireOneOfCycleLengths must contain only positive values"
+  | notNull forbiddenCycleLengths && last forbiddenCycleLengths > halfTransitionLength
   = Just "forbiddenCycleLengths must not contain values higher than half of maxTransitionLength"
-  | notNull requiredCycleLengths && last requiredCycleLengths > theTransitionLength `div` 2
-  = Just "requiredCycleLengths must not contain values higher than half of maxTransitionLength"
-  | any ((0 /=) . mod theTransitionLength) (forbiddenCycleLengths ++ requiredCycleLengths)
-  = Just "forbiddenCycleLengths and requiredCycleLengths must each contain only divisors of the target sequence length"
-  | any (< minRequiredTransitions) (forbiddenCycleLengths ++ requiredCycleLengths)
-  = Just "forbiddenCycleLengths or requiredCycleLengths contains values that are already impossible due to transitionCoverageRequirement"
+  | notNull requireOneOfCycleLengths && last requireOneOfCycleLengths > halfTransitionLength
+  = Just "requireOneOfCycleLengths must not contain values higher than half of maxTransitionLength"
+  | any ((0 /=) . mod theTransitionLength) (forbiddenCycleLengths ++ requireOneOfCycleLengths)
+  = Just "forbiddenCycleLengths and requireOneOfCycleLengths must each contain only divisors of the target sequence length"
+  | any (< minRequiredTransitions) (forbiddenCycleLengths ++ requireOneOfCycleLengths)
+  = Just "forbiddenCycleLengths or requireOneOfCycleLengths contains values that are already impossible due to transitionCoverageRequirement"
   | hasRedundantMultiples forbiddenCycleLengths
   = Just "forbiddenCycleLengths contains redundant multiples (no need to forbid n if k*n for some k>1 is already forbidden)"
-  | hasRedundantMultiples requiredCycleLengths
-  = Just "requiredCycleLengths contains redundant multiples (no need to ask e.g. for 'n or 2*n', since asking for '2*n' would suffice)"
-  | hasConflictBetweenForbiddenAndRequired forbiddenCycleLengths requiredCycleLengths
-  = Just "requiredCycleLengths and forbiddenCycleLengths must not have overlapping values"
+  | hasRedundantMultiples requireOneOfCycleLengths
+  = Just "requireOneOfCycleLengths contains redundant multiples (no need to ask e.g. for 'n or 2*n', since asking for '2*n' would suffice)"
+  | hasConflictBetweenForbiddenAndRequired forbiddenCycleLengths requireOneOfCycleLengths
+  = Just "requireOneOfCycleLengths and forbiddenCycleLengths must not have overlapping or conflicting values"
   | Just spaceballsLength <- spaceballsPrefixThreshold
   , spaceballsLength < 2 || spaceballsLength > theTransitionLength
   = Just "spaceballsPrefixThreshold must be a value from 2 to maxTransitionLength if it is enabled"
@@ -160,6 +160,7 @@ checkFilterConfigWith rejectLongerThan theTransitionLength@minTransitionLength n
   | otherwise
   = Nothing
   where
+    halfTransitionLength = theTransitionLength `div` 2
     minRequiredTransitions = ceiling (transitionCoverageRequirement * fromIntegral numTransitions)
     maxAbsent = numTransitions - minRequiredTransitions
 
@@ -179,4 +180,4 @@ checkFilterConfigWith rejectLongerThan theTransitionLength@minTransitionLength n
 
     hasConflictBetweenForbiddenAndRequired :: [Int] -> [Int] -> Bool
     hasConflictBetweenForbiddenAndRequired forbidden =
-      any (`elem` forbidden)
+      any (\r -> any (\f -> r == f || r `mod` f == 0) forbidden)

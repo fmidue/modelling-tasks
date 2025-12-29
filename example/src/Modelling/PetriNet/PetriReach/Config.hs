@@ -3,7 +3,7 @@
 module Modelling.PetriNet.PetriReach.Config where
 
 import Modelling.PetriNet.Reach.Reach   (ReachConfig(..), NetGoalConfig(..))
-import Modelling.PetriNet.Reach.Filter  (defaultFilterConfig, FilterConfig(absentTransitionsRequirement, forbiddenCycleLengths, requiredCycleLengths))
+import Modelling.PetriNet.Reach.Filter  (defaultFilterConfig, FilterConfig(absentTransitionsRequirement, forbiddenCycleLengths, requireOneOfCycleLengths))
 import Modelling.PetriNet.Reach.Type    (Capacity(..))
 import Data.GraphViz.Commands           (GraphvizCommand(..))
 
@@ -29,7 +29,7 @@ task2023_27 = ReachConfig {
   showMinLengthHint = True,
   showTargetNet = True,
   showPlaceNamesInNet = False,
-  filterConfig = defaultFilterConfig { absentTransitionsRequirement = 0, forbiddenCycleLengths = [] }
+  filterConfig = defaultFilterConfig { absentTransitionsRequirement = 0, forbiddenCycleLengths = [], requireOneOfCycleLengths = [] }
   }
 
 {-|
@@ -54,7 +54,7 @@ task2023_28 = ReachConfig {
   showMinLengthHint = True,
   showTargetNet = True,
   showPlaceNamesInNet = False,
-  filterConfig = defaultFilterConfig { forbiddenCycleLengths = [] }
+  filterConfig = defaultFilterConfig { forbiddenCycleLengths = [], requireOneOfCycleLengths = [] }
   }
 
 {-|
@@ -91,5 +91,5 @@ task2024_60 = ReachConfig {
   showMinLengthHint = True,
   showTargetNet = True,
   showPlaceNamesInNet = False,
-  filterConfig = defaultFilterConfig { absentTransitionsRequirement = 0, forbiddenCycleLengths = [] }
+  filterConfig = defaultFilterConfig { absentTransitionsRequirement = 0, forbiddenCycleLengths = [], requireOneOfCycleLengths = [] }
   }

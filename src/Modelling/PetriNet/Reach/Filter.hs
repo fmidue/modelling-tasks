@@ -21,7 +21,7 @@ The filtering only happens on/with minimal solution sequences for a task.
 -}
 module Modelling.PetriNet.Reach.Filter (
   -- * Pattern detection
-  isCyclicPattern,
+  isCyclicPatternWithAnyOf,
   hasRepetitiveSubsequence,
   hasSpaceballsPrefix,
   hasGroupedRepeats,
@@ -74,7 +74,7 @@ data FilterConfig = FilterConfig {
   -- Solution sets where no solution has a cyclic pattern with one of these cycle lengths are filtered out.
   -- The list should be sorted and contain only divisors of the target sequence length.
   -- An empty list means no acceptance requirement for cyclic patterns.
-  requiredCycleLengths :: ![Int],
+  requireOneOfCycleLengths :: ![Int],
   -- | Maximum number of shortest solution sequences in a solution set
   --
   -- Solution sets with more than this many sequences are filtered out.
@@ -105,7 +105,7 @@ noFiltering = FilterConfig {
   repetitiveSubsequenceThreshold = Nothing,
   spaceballsPrefixThreshold = Nothing,
   forbiddenCycleLengths = [],
-  requiredCycleLengths = [],
+  requireOneOfCycleLengths = [],
   solutionSetLimit = Nothing,
   requireSolutionsArePermutations = False,
   absentTransitionsRequirement = 0,
@@ -119,7 +119,7 @@ defaultFilterConfig = FilterConfig {
   repetitiveSubsequenceThreshold = Just 3,
   spaceballsPrefixThreshold = Just 4,
   forbiddenCycleLengths = [2, 3],
-  requiredCycleLengths = [5],
+  requireOneOfCycleLengths = [],
   solutionSetLimit = Just 15,
   requireSolutionsArePermutations = True,
   absentTransitionsRequirement = 1,
@@ -138,9 +138,9 @@ hasSpaceballsPrefix minLength xs = take minLength xs == take minLength [head xs 
 
 -- | Check if a sequence follows a cyclic pattern (e.g., @[t3,t2,t1,t4,t3,t2,t1,t4]@)
 -- The pattern is considered cyclic if it can be represented as `take n (cycle pattern)`
--- where `length pattern` is in the list of forbidden cycle lengths
-isCyclicPattern :: Eq a => [Int] -> [a] -> Bool
-isCyclicPattern forbiddenLengths xs = any (isCyclicWith (length xs) xs) forbiddenLengths
+-- where `length pattern` is one of the given cycle lengths
+isCyclicPatternWithAnyOf :: Eq a => [Int] -> [a] -> Bool
+isCyclicPatternWithAnyOf cycleLengths xs = any (isCyclicWith (length xs) xs) cycleLengths
   where
     isCyclicWith :: Eq a => Int -> [a] -> Int -> Bool
     isCyclicWith n seqToCheck cycleLength =
@@ -173,8 +173,8 @@ shouldDiscardSolutions :: (Enum a, Ord a) => FilterConfig -> Int -> [[a]] -> Boo
 shouldDiscardSolutions FilterConfig{..} numTransitions solutions =
   maybe False (\n -> notNull (drop n solutions)) solutionSetLimit
   || maybe False ((`any` solutions) . hasSpaceballsPrefix) spaceballsPrefixThreshold
-  || notNull forbiddenCycleLengths && any (isCyclicPattern forbiddenCycleLengths) solutions
-  || notNull requiredCycleLengths && not (any (isCyclicPattern requiredCycleLengths) solutions)
+  || notNull forbiddenCycleLengths && any (isCyclicPatternWithAnyOf forbiddenCycleLengths) solutions
+  || notNull requireOneOfCycleLengths && not (any (isCyclicPatternWithAnyOf requireOneOfCycleLengths) solutions)
   || maybe False ((`any` solutions) . hasRepetitiveSubsequence) repetitiveSubsequenceThreshold
   || rejectGroupedRepeats && any hasGroupedRepeats solutions
   || transitionCoverageRequirement > 0 && any (hasInsufficientTransitionCoverage numTransitions `flip` transitionCoverageRequirement) solutions
