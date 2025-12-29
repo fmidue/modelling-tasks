@@ -121,7 +121,7 @@ import Control.Monad.Trans.Random       (RandT)
 import System.Random.Shuffle            (shuffleM)
 import System.Random.Internal           (StdGen)
 import Data.GraphViz                    (GraphvizCommand (..))
-import Data.Maybe                       (fromMaybe)
+import Data.Maybe                       (fromMaybe, catMaybes)
 #if !MIN_VERSION_base(4,18,0)
 import Data.Typeable                    (Typeable)
 #endif
@@ -372,7 +372,7 @@ tries n filterConfig conf seed = eval out
       :: RandT StdGen m (Net Place Transition, GraphvizCommand, Either (NonEmpty [Transition]) (NonEmpty [Transition]))
     out = do
       xs <- replicateM n $ try conf
-      maybe out pure =<< runMaybeT (msum $ map checkCandidate $ concat xs)
+      maybe out pure =<< runMaybeT (msum $ map checkCandidate $ catMaybes xs)
     checkCandidate
       :: (Net Place Transition, [[Transition]])
       -> MaybeT (RandT StdGen m) (Net Place Transition, GraphvizCommand, Either (NonEmpty [Transition]) (NonEmpty [Transition]))
@@ -387,7 +387,7 @@ tries n filterConfig conf seed = eval out
             else Right . fromList <$> Monad.lift (shuffleM allShortestSolutions)
       pure (pn, cmd, solutionsList)
 
-try :: MonadRandom m => DeadlockConfig -> m [(Net Place Transition, [[Transition]])]
+try :: MonadRandom m => DeadlockConfig -> m (Maybe (Net Place Transition, [[Transition]]))
 try conf = do
   let ps = [Place 1 .. Place (numPlaces conf)]
       ts = [Transition 1 .. Transition (numTransitions conf)]
