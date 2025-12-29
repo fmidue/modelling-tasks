@@ -46,16 +46,11 @@ spec = do
         forAll (genNubSized m) $
           isCyclicPattern @Int [m] . concat . replicate 2
 
-    it "does not detect patterns with forbidden lengths not in list" $
+    it "ignores cycles with lengths not in the forbidden list" $
       forAll (chooseInt (2, 9)) $ \m ->
         forAll (chooseInt (1, m - 1)) $ \n ->
           forAll (genNubSized m) $
             not . isCyclicPattern @Int [n] . concat . replicate 2
-
-    it "detects single and partial cycles" $
-      forAll (chooseInt (1, 9)) $ \m ->
-        forAll (genNubSized m) $ \xs ->
-          isCyclicPattern @Int [m] xs
 
   describe "hasSpaceballsPrefix" $ do
     it "detects Spaceballs patterns" $

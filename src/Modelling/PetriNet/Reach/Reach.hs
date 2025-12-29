@@ -592,7 +592,7 @@ defaultReachConfig = ReachConfig {
   showMinLengthHint   = True,
   showTargetNet       = True,
   showPlaceNamesInNet = False,
-  filterConfig        = defaultFilterConfig { forbiddenCycleLengths = [], transitionCoverageRequirement = 0 }
+  filterConfig        = defaultFilterConfig { forbiddenCycleLengths = [3], transitionCoverageRequirement = 1 % 2 }
   }
 
 defaultReachInstance :: ReachInstance Place Transition

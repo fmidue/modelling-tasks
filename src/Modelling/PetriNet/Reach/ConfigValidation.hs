@@ -123,19 +123,17 @@ checkFilterConfigWith rejectLongerThan minTransitionLength maxTransitionLength n
   = Just "repetitiveSubsequenceThreshold must not be higher than half of maxTransitionLength"
   | not (isSorted forbiddenCycleLengths)
   = Just "forbiddenCycleLengths must be sorted in ascending order"
-  | any (<= 0) forbiddenCycleLengths
-  = Just "forbiddenCycleLengths must contain only positive values"
-  | any (> maxTransitionLength `div` 2) forbiddenCycleLengths
+  | any (< 2) (take 1 forbiddenCycleLengths)
+  = Just "forbiddenCycleLengths must contain only values greater than 1"
+  | any (> maxTransitionLength `div` 2) (take 1 (reverse forbiddenCycleLengths))
   = Just "forbiddenCycleLengths must not contain values higher than half of maxTransitionLength"
-  | minTransitionLength == maxTransitionLength
-  , not (all (\cycleLength -> maxTransitionLength `mod` cycleLength == 0 && cycleLength /= maxTransitionLength) forbiddenCycleLengths)
+  | any ((0 /=) . mod maxTransitionLength) forbiddenCycleLengths
   = Just "forbiddenCycleLengths must contain only true divisors of the target sequence length"
-  | minTransitionLength == maxTransitionLength
-  , let minRequiredTransitions = ceiling (fromIntegral maxTransitionLength * transitionCoverageRequirement)
+  | let minRequiredTransitions = ceiling (transitionCoverageRequirement * fromIntegral numTransitions)
   , any (< minRequiredTransitions) forbiddenCycleLengths
   = Just "forbiddenCycleLengths contains values that are already impossible due to transitionCoverageRequirement"
   | hasRedundantMultiples forbiddenCycleLengths
-  = Just "forbiddenCycleLengths contains redundant multiples (if n is forbidden, k*n for k>1 is also implicitly forbidden)"
+  = Just "forbiddenCycleLengths contains redundant multiples (no need to forbid n if k*n for some k>1 is already forbidden)"
   | Just spaceballsLength <- spaceballsPrefixThreshold
   , spaceballsLength < 2 || spaceballsLength > maxTransitionLength
   = Just "spaceballsPrefixThreshold must be a value from 2 to maxTransitionLength if it is enabled"
@@ -159,7 +157,7 @@ checkFilterConfigWith rejectLongerThan minTransitionLength maxTransitionLength n
     isSorted :: Ord a => [a] -> Bool
     isSorted [] = True
     isSorted [_] = True
-    isSorted (x:y:rest) = x < y && isSorted (y:rest)
+    isSorted (x:rest@(y:_)) = x < y && isSorted rest
 
     hasRedundantMultiples :: [Int] -> Bool
     hasRedundantMultiples = go []
@@ -167,5 +165,5 @@ checkFilterConfigWith rejectLongerThan minTransitionLength maxTransitionLength n
         go :: [Int] -> [Int] -> Bool
         go _ [] = False
         go smallerElements (currentElement : remainingElements)
-          | any (\smallerElement -> currentElement `mod` smallerElement == 0) smallerElements = True
+          | any ((0 ==) . mod currentElement) smallerElements = True
           | otherwise = go (currentElement : smallerElements) remainingElements
