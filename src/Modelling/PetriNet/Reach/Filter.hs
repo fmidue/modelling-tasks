@@ -69,12 +69,12 @@ data FilterConfig = FilterConfig {
   -- The list should be sorted and contain only true divisors of the target sequence length.
   -- An empty list means no rejection filtering of such cyclic patterns.
   forbiddenCycleLengths :: ![Int],
-  -- | If nonempty, cycle lengths one of which is required for acceptance
+  -- | If nonempty, cycle lengths any of which is required for acceptance
   --
   -- Solution sets where no solution has a cyclic pattern with one of these cycle lengths are filtered out.
   -- The list should be sorted and contain only divisors of the target sequence length.
   -- An empty list means no acceptance requirement for cyclic patterns.
-  requireOneOfCycleLengths :: ![Int],
+  requireCycleLengthsAny :: ![Int],
   -- | Maximum number of shortest solution sequences in a solution set
   --
   -- Solution sets with more than this many sequences are filtered out.
@@ -105,7 +105,7 @@ noFiltering = FilterConfig {
   repetitiveSubsequenceThreshold = Nothing,
   spaceballsPrefixThreshold = Nothing,
   forbiddenCycleLengths = [],
-  requireOneOfCycleLengths = [],
+  requireCycleLengthsAny = [],
   solutionSetLimit = Nothing,
   requireSolutionsArePermutations = False,
   absentTransitionsRequirement = 0,
@@ -119,7 +119,7 @@ defaultFilterConfig = FilterConfig {
   repetitiveSubsequenceThreshold = Just 3,
   spaceballsPrefixThreshold = Just 4,
   forbiddenCycleLengths = [2, 3],
-  requireOneOfCycleLengths = [],
+  requireCycleLengthsAny = [],
   solutionSetLimit = Just 15,
   requireSolutionsArePermutations = True,
   absentTransitionsRequirement = 1,
@@ -174,7 +174,7 @@ shouldDiscardSolutions FilterConfig{..} numTransitions solutions =
   maybe False (\n -> notNull (drop n solutions)) solutionSetLimit
   || maybe False ((`any` solutions) . hasSpaceballsPrefix) spaceballsPrefixThreshold
   || notNull forbiddenCycleLengths && any (isCyclicPatternWithAnyOf forbiddenCycleLengths) solutions
-  || notNull requireOneOfCycleLengths && not (any (isCyclicPatternWithAnyOf requireOneOfCycleLengths) solutions)
+  || notNull requireCycleLengthsAny && not (any (isCyclicPatternWithAnyOf requireCycleLengthsAny) solutions)
   || maybe False ((`any` solutions) . hasRepetitiveSubsequence) repetitiveSubsequenceThreshold
   || rejectGroupedRepeats && any hasGroupedRepeats solutions
   || transitionCoverageRequirement > 0 && any (hasInsufficientTransitionCoverage numTransitions `flip` transitionCoverageRequirement) solutions
