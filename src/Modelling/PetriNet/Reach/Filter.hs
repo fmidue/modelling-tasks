@@ -69,6 +69,13 @@ data FilterConfig = FilterConfig {
   -- The list should be sorted and contain only true divisors of the target sequence length.
   -- An empty list means no filtering of such cyclic patterns.
   forbiddenCycleLengths :: ![Int],
+  -- | Required cycle lengths for cyclic patterns to accept
+  -- (e.g., @[t3,t2,t1,t4,t3,t2,t1,t4]@; always full cycles checked)
+  --
+  -- Solution sets where no solution has a cyclic pattern with one of these cycle lengths are filtered out.
+  -- The list should be sorted and contain only true divisors of the target sequence length.
+  -- An empty list means no requirement for cyclic patterns.
+  requiredCycleLengths :: ![Int],
   -- | Maximum number of shortest solution sequences in a solution set
   --
   -- Solution sets with more than this many sequences are filtered out.
@@ -99,6 +106,7 @@ noFiltering = FilterConfig {
   repetitiveSubsequenceThreshold = Nothing,
   spaceballsPrefixThreshold = Nothing,
   forbiddenCycleLengths = [],
+  requiredCycleLengths = [],
   solutionSetLimit = Nothing,
   requireSolutionsArePermutations = False,
   absentTransitionsRequirement = 0,
@@ -112,6 +120,7 @@ defaultFilterConfig = FilterConfig {
   repetitiveSubsequenceThreshold = Just 3,
   spaceballsPrefixThreshold = Just 4,
   forbiddenCycleLengths = [2, 3],
+  requiredCycleLengths = [],
   solutionSetLimit = Just 15,
   requireSolutionsArePermutations = True,
   absentTransitionsRequirement = 1,
@@ -166,6 +175,7 @@ shouldDiscardSolutions FilterConfig{..} numTransitions solutions =
   maybe False (\n -> notNull (drop n solutions)) solutionSetLimit
   || maybe False ((`any` solutions) . hasSpaceballsPrefix) spaceballsPrefixThreshold
   || notNull forbiddenCycleLengths && any (isCyclicPattern forbiddenCycleLengths) solutions
+  || notNull requiredCycleLengths && not (any (isCyclicPattern requiredCycleLengths) solutions)
   || maybe False ((`any` solutions) . hasRepetitiveSubsequence) repetitiveSubsequenceThreshold
   || rejectGroupedRepeats && any hasGroupedRepeats solutions
   || transitionCoverageRequirement > 0 && any (hasInsufficientTransitionCoverage numTransitions `flip` transitionCoverageRequirement) solutions

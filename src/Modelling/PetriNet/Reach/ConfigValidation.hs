@@ -133,6 +133,20 @@ checkFilterConfigWith rejectLongerThan theTransitionLength@minTransitionLength n
   = Just "forbiddenCycleLengths contains values that are already impossible due to transitionCoverageRequirement"
   | hasRedundantMultiples forbiddenCycleLengths
   = Just "forbiddenCycleLengths contains redundant multiples (no need to forbid n if k*n for some k>1 is already forbidden)"
+  | not (isSorted requiredCycleLengths)
+  = Just "requiredCycleLengths must be sorted in ascending order"
+  | notNull requiredCycleLengths && head requiredCycleLengths < 2
+  = Just "requiredCycleLengths must contain only values greater than 1"
+  | notNull requiredCycleLengths && last requiredCycleLengths > theTransitionLength `div` 2
+  = Just "requiredCycleLengths must not contain values higher than half of maxTransitionLength"
+  | any ((0 /=) . mod theTransitionLength) requiredCycleLengths
+  = Just "requiredCycleLengths must contain only true divisors of the target sequence length"
+  | any (< minRequiredTransitions) requiredCycleLengths
+  = Just "requiredCycleLengths contains values that are already impossible due to transitionCoverageRequirement"
+  | hasRedundantMultiples requiredCycleLengths
+  = Just "requiredCycleLengths contains redundant multiples (no need to require n if k*n for some k>1 is already required)"
+  | hasConflictBetweenForbiddenAndRequired forbiddenCycleLengths requiredCycleLengths
+  = Just "requiredCycleLengths and forbiddenCycleLengths must not have overlapping values"
   | Just spaceballsLength <- spaceballsPrefixThreshold
   , spaceballsLength < 2 || spaceballsLength > theTransitionLength
   = Just "spaceballsPrefixThreshold must be a value from 2 to maxTransitionLength if it is enabled"
@@ -168,3 +182,7 @@ checkFilterConfigWith rejectLongerThan theTransitionLength@minTransitionLength n
         go smallerElements (currentElement : remainingElements)
           | any ((0 ==) . mod currentElement) smallerElements = True
           | otherwise = go (currentElement : smallerElements) remainingElements
+
+    hasConflictBetweenForbiddenAndRequired :: [Int] -> [Int] -> Bool
+    hasConflictBetweenForbiddenAndRequired forbidden =
+      any (`elem` forbidden)
