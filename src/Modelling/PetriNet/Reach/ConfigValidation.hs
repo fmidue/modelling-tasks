@@ -143,9 +143,8 @@ checkFilterConfigWith rejectLongerThan theTransitionLength@minTransitionLength n
   | hasConflictBetweenForbiddenAndRequired forbiddenCycleLengths requireCycleLengthsAny
   = Just "requireCycleLengthsAny and forbiddenCycleLengths must not have overlapping or conflicting values"
   | 1 `elem` requireCycleLengthsAny && isJust repetitiveSubsequenceThreshold
-  = Just "if requireCycleLengthsAny contains 1, repetitiveSubsequenceThreshold should be Nothing (forbidding repetitive subsequences does not make sense when requiring cycle length 1)"
-  | 1 `elem` requireCycleLengthsAny && rejectGroupedRepeats
-  = Just "if requireCycleLengthsAny contains 1, rejectGroupedRepeats should be False (a cycle of length 1 is inherently a grouped repeat pattern)"
+  = Just "if requireCycleLengthsAny contains 1, repetitiveSubsequenceThreshold should be Nothing \
+         \(forbidding repetitive subsequences does not make sense when requiring cycle length 1)"
   | Just spaceballsLength <- spaceballsPrefixThreshold
   , spaceballsLength < 2 || spaceballsLength > theTransitionLength
   = Just "spaceballsPrefixThreshold must be a value from 2 to maxTransitionLength if it is enabled"
