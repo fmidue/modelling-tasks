@@ -102,6 +102,8 @@ import Control.OutputCapable.Blocks (
   translate,
   yesNo,
   )
+import Data.Ratio                       ((%))
+
 import Control.OutputCapable.Blocks.Generic (
   ($>>),
   ($>>=),
@@ -288,7 +290,7 @@ defaultDeadlockConfig =
   showLengthHint      = False,
   showMinLengthHint   = True,
   showPlaceNamesInNet = False,
-  filterConfig        = defaultFilterConfig { solutionSetLimit = Nothing }
+  filterConfig        = defaultFilterConfig { solutionSetLimit = Nothing, forbiddenCycleLengths = [4], transitionCoverageRequirement = 1 % 2 }
   }
 
 defaultDeadlockInstance :: DeadlockInstance Place Transition
@@ -322,7 +324,6 @@ checkDeadlockConfig DeadlockConfig {..} =
   checkFilterConfigWith
     rejectLongerThan
     minTransitionLength
-    maxTransitionLength
     numTransitions
     filterConfig
   <|>
