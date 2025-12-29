@@ -593,7 +593,7 @@ defaultReachConfig = ReachConfig {
   showMinLengthHint   = True,
   showTargetNet       = True,
   showPlaceNamesInNet = False,
-  filterConfig        = defaultFilterConfig { rejectCyclesUpToLength = Just 3 }
+  filterConfig        = defaultFilterConfig { forbiddenCycleLengths = [], requireCycleLengthsAny = [3], transitionCoverageRequirement = 1 % 2 }
   }
 
 defaultReachInstance :: ReachInstance Place Transition
@@ -720,7 +720,6 @@ checkReachConfig ReachConfig {..} =
   checkFilterConfigWith
     rejectLongerThan
     (minTransitionLength netGoalConfig)
-    (maxTransitionLength netGoalConfig)
     (numTransitions netGoalConfig)
     filterConfig
   <|>
