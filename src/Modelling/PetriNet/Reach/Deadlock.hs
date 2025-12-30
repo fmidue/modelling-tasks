@@ -377,31 +377,30 @@ try
   => DeadlockConfig
   -> MaybeT (RandT StdGen m) (Net Place Transition, GraphvizCommand, Either (NonEmpty [Transition]) (NonEmpty [Transition]))
 try conf = do
-  let ps = [Place 1 .. Place (numPlaces conf)]
-      ts = [Transition 1 .. Transition (numTransitions conf)]
-  n <- Monad.lift $ netLimits vLow vHigh nLow nHigh
+    let ps = [Place 1 .. Place (numPlaces conf)]
+        ts = [Transition 1 .. Transition (numTransitions conf)]
+    n <- Monad.lift $ netLimits vLow vHigh nLow nHigh
       ps
       ts
       (Modelling.PetriNet.Reach.Deadlock.capacity conf)
-  -- Filter out nets with isolated nodes
-  guard $ not $ hasIsolatedNodes n
-  let deadlockLevels = map (filter (null . successors n . fst)) (levelsWithAlternatives n)
-      (no, yeah) = span null
-        $ take (maxTransitionLength conf + 1)
-        deadlockLevels
-  guard $ not $ null yeah
-  let allShortestSolutions = map reverse . concatMap snd $ head yeah
-  guard $ length no >= minTransitionLength conf
-  -- Now do the checkCandidate logic
-  guard (not $ shouldDiscardSolutions (filterConfig conf) (numTransitions conf) allShortestSolutions)
-  cmd <- MaybeT $ findM (Monad.lift . isPetriDrawable n) (drawCommands conf)
-  solutionsList <-
-    if filterConfig conf == noFiltering
-      then pure $ Left $ fromList (take (max 1 (maxPrintedSolutions conf)) allShortestSolutions)
-      else if maxPrintedSolutions conf >= length allShortestSolutions
-        then pure $ Right $ fromList allShortestSolutions
-        else Right . fromList <$> Monad.lift (shuffleM allShortestSolutions)
-  pure (n, cmd, solutionsList)
+    -- Filter out nets with isolated nodes
+    guard $ not $ hasIsolatedNodes n
+    let deadlockLevels = map (filter (null . successors n . fst)) (levelsWithAlternatives n)
+        (no, yeah) = span null
+          $ take (maxTransitionLength conf + 1)
+          deadlockLevels
+    guard $ not $ null yeah
+    let allShortestSolutions = map reverse . concatMap snd $ head yeah
+    guard $ length no >= minTransitionLength conf
+    guard (not $ shouldDiscardSolutions (filterConfig conf) (numTransitions conf) allShortestSolutions)
+    cmd <- MaybeT $ findM (Monad.lift . isPetriDrawable n) (drawCommands conf)
+    solutionsList <-
+      if filterConfig conf == noFiltering
+        then pure $ Left $ fromList (take (max 1 (maxPrintedSolutions conf)) allShortestSolutions)
+        else if maxPrintedSolutions conf >= length allShortestSolutions
+          then pure $ Right $ fromList allShortestSolutions
+          else Right . fromList <$> Monad.lift (shuffleM allShortestSolutions)
+    pure (n, cmd, solutionsList)
   where
     fixMaximum :: (Int, Maybe Int) -> (Int, Int)
     fixMaximum = second (min (numPlaces conf) . fromMaybe maxBound)
