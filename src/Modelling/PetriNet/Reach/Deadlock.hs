@@ -368,12 +368,11 @@ tries conf seed = eval out
     eval f = evalRandT f $ mkStdGen seed
     out
       :: RandT StdGen m (Net Place Transition, GraphvizCommand, Either (NonEmpty [Transition]) (NonEmpty [Transition]))
-    out = do
-      result <- runMaybeT $ try conf
-      maybe out pure result
+    out =
+      maybe out pure =<< runMaybeT (try conf)
 
 try
-  :: forall m. (MonadCatch m, MonadDiagrams m, MonadGraphviz m)
+  :: (MonadCatch m, MonadDiagrams m, MonadGraphviz m)
   => DeadlockConfig
   -> MaybeT (RandT StdGen m) (Net Place Transition, GraphvizCommand, Either (NonEmpty [Transition]) (NonEmpty [Transition]))
 try conf = do
