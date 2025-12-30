@@ -371,7 +371,7 @@ tries filterConfig conf seed = eval out
       :: RandT StdGen m (Net Place Transition, GraphvizCommand, Either (NonEmpty [Transition]) (NonEmpty [Transition]))
     out = do
       x <- try conf
-      maybe out pure =<< maybe (runMaybeT mzero) (runMaybeT . checkCandidate) x
+      maybe out pure =<< runMaybeT (maybe mzero checkCandidate x)
     checkCandidate
       :: (Net Place Transition, [[Transition]])
       -> MaybeT (RandT StdGen m) (Net Place Transition, GraphvizCommand, Either (NonEmpty [Transition]) (NonEmpty [Transition]))
