@@ -112,7 +112,7 @@ import Control.OutputCapable.Blocks.Generic (
 import Data.Bifunctor                   (Bifunctor (second), bimap)
 import Data.Either.Combinators          (whenRight)
 import Control.Functor.Trans            (FunctorTrans (lift))
-import Control.Monad                    (guard, mzero)
+import Control.Monad                    (guard)
 import Control.Monad.Catch              (MonadCatch, MonadThrow)
 import Control.Monad.Extra              (findM)
 import Control.Monad.Random             (MonadRandom, evalRandT, mkStdGen)
@@ -370,21 +370,21 @@ tries filterConfig conf seed = eval out
     out
       :: RandT StdGen m (Net Place Transition, GraphvizCommand, Either (NonEmpty [Transition]) (NonEmpty [Transition]))
     out = do
-      x <- try conf
-      maybe out pure =<< runMaybeT (maybe mzero checkCandidate x)
+      x <- fmap runMaybeT <$> fmap checkCandidate <$> try conf
+      maybe out (maybe out pure =<<) x
     checkCandidate
       :: (Net Place Transition, [[Transition]])
       -> MaybeT (RandT StdGen m) (Net Place Transition, GraphvizCommand, Either (NonEmpty [Transition]) (NonEmpty [Transition]))
-    checkCandidate (pn, allShortestSolutions) = do
+    checkCandidate (n, allShortestSolutions) = do
       guard (not $ shouldDiscardSolutions filterConfig (numTransitions conf) allShortestSolutions)
-      cmd <- MaybeT $ findM (Monad.lift . isPetriDrawable pn) (drawCommands conf)
+      cmd <- MaybeT $ findM (Monad.lift . isPetriDrawable n) (drawCommands conf)
       solutionsList <-
         if filterConfig == noFiltering
           then pure $ Left $ fromList (take (max 1 (maxPrintedSolutions conf)) allShortestSolutions)
           else if maxPrintedSolutions conf >= length allShortestSolutions
             then pure $ Right $ fromList allShortestSolutions
             else Right . fromList <$> Monad.lift (shuffleM allShortestSolutions)
-      pure (pn, cmd, solutionsList)
+      pure (n, cmd, solutionsList)
 
 try :: MonadRandom m => DeadlockConfig -> m (Maybe (Net Place Transition, [[Transition]]))
 try conf = do
