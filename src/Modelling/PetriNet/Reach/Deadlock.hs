@@ -9,6 +9,7 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 {-|
 originally from Autotool (https://gitlab.imn.htwk-leipzig.de/autotool/all0)
@@ -106,6 +107,8 @@ import Control.OutputCapable.Blocks (
   translate,
   yesNo,
   )
+import Data.Ratio                       ((%))
+
 import Control.OutputCapable.Blocks.Generic (
   ($>>),
   ($>>=),
@@ -118,9 +121,11 @@ import Control.Monad.Catch              (MonadCatch, MonadThrow)
 import Control.Monad.Extra              (findM)
 import Control.Monad.Random             (MonadRandom, evalRandT, mkStdGen)
 import Control.Monad.Trans.Maybe        (MaybeT (MaybeT, runMaybeT))
+import Control.Monad.Trans.Random       (RandT)
 import System.Random.Shuffle            (shuffleM)
+import System.Random.Internal           (StdGen)
 import Data.GraphViz                    (GraphvizCommand (..))
-import Data.Maybe                       (fromMaybe)
+import Data.Maybe                       (fromMaybe, catMaybes)
 #if !MIN_VERSION_base(4,18,0)
 import Data.Typeable                    (Typeable)
 #endif
@@ -294,7 +299,7 @@ defaultDeadlockConfig =
   showLengthHint      = False,
   showMinLengthHint   = True,
   showPlaceNamesInNet = False,
-  filterConfig        = defaultFilterConfig { solutionSetLimit = Nothing }
+  filterConfig        = defaultFilterConfig { solutionSetLimit = Nothing, forbiddenCycleLengths = [4], requireCycleLengthsAny = [], transitionCoverageRequirement = 1 % 2 }
   }
 
 defaultDeadlockInstance :: DeadlockInstance Place Transition
@@ -328,7 +333,6 @@ checkDeadlockConfig DeadlockConfig {..} =
   checkFilterConfigWith
     rejectLongerThan
     minTransitionLength
-    maxTransitionLength
     numTransitions
     filterConfig
   <|>
@@ -365,7 +369,7 @@ generateDeadlock conf@DeadlockConfig {..} seed = do
     }
 
 tries
-  :: (MonadCatch m, MonadDiagrams m, MonadGraphviz m)
+  :: forall m. (MonadCatch m, MonadDiagrams m, MonadGraphviz m)
   => Int
   -> FilterConfig
   -> DeadlockConfig
@@ -374,11 +378,15 @@ tries
 tries n filterConfig conf seed = eval out
   where
     eval f = evalRandT f $ mkStdGen seed
+    out
+      :: RandT StdGen m (Net Place Transition, GraphvizCommand, Either (NonEmpty [Transition]) (NonEmpty [Transition]))
     out = do
       xs <- replicateM n $ try conf
-      maybe out pure =<< runMaybeT (msum $ map checkCandidate $ concat xs)
-    checkCandidate (l, pn, allShortestSolutions) = do
-      guard $ l >= minTransitionLength conf
+      maybe out pure =<< runMaybeT (msum $ map checkCandidate $ catMaybes xs)
+    checkCandidate
+      :: (Net Place Transition, [[Transition]])
+      -> MaybeT (RandT StdGen m) (Net Place Transition, GraphvizCommand, Either (NonEmpty [Transition]) (NonEmpty [Transition]))
+    checkCandidate (pn, allShortestSolutions) = do
       guard (not $ shouldDiscardSolutions filterConfig (numTransitions conf) allShortestSolutions)
       cmd <- MaybeT $ findM (Monad.lift . isPetriDrawable pn) (drawCommands conf)
       solutionsList <-
@@ -389,7 +397,7 @@ tries n filterConfig conf seed = eval out
             else Right . fromList <$> Monad.lift (shuffleM allShortestSolutions)
       pure (pn, cmd, solutionsList)
 
-try :: MonadRandom m => DeadlockConfig -> m [(Int, Net Place Transition, [[Transition]])]
+try :: MonadRandom m => DeadlockConfig -> m (Maybe (Net Place Transition, [[Transition]]))
 try conf = do
   let ps = [Place 1 .. Place (numPlaces conf)]
       ts = [Transition 1 .. Transition (numTransitions conf)]
@@ -408,8 +416,10 @@ try conf = do
           deadlockLevels
     guard $ not $ null yeah
     let allShortestSolutions = map reverse . concatMap snd $ head yeah
-    return (length no, n, allShortestSolutions)
+    guard $ length no >= minTransitionLength conf
+    return (n, allShortestSolutions)
   where
+    fixMaximum :: (Int, Maybe Int) -> (Int, Int)
     fixMaximum = second (min (numPlaces conf) . fromMaybe maxBound)
     (vLow, vHigh) = fixMaximum $ preconditionsRange conf
     (nLow, nHigh) = fixMaximum $ postconditionsRange conf

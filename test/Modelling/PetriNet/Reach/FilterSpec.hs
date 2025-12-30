@@ -10,7 +10,6 @@ import Test.QuickCheck (
   Arbitrary (arbitrary),
   Gen,
   Testable (property),
-  (==>),
   chooseInt,
   forAll,
   suchThat,
@@ -41,25 +40,17 @@ zipN n xs = concat $ case n of
 
 spec :: Spec
 spec = do
-  describe "isCyclicPattern" $ do
+  describe "isCyclicPatternWithAnyOf" $ do
     it "detects cyclic patterns" $
       forAll (chooseInt (1, 9)) $ \m ->
-        forAll (chooseInt (m, 9)) $ \n ->
-          forAll (genNubSized m) $
-            isCyclicPattern @Int n . concat . replicate 2
+        forAll (genNubSized m) $
+          isCyclicPatternWithAnyOf @Int [m] . concat . replicate 2
 
-    it "does not detect too large cyclic patterns" $
+    it "ignores cycles with lengths not in the forbidden list" $
       forAll (chooseInt (2, 9)) $ \m ->
         forAll (chooseInt (1, m - 1)) $ \n ->
           forAll (genNubSized m) $
-            not . isCyclicPattern @Int n . concat . replicate 2
-
-    it "does only detect complete cyclic patterns" $
-      forAll (chooseInt (0, 9)) $ \m ->
-        forAll (chooseInt (0, 9)) $ \n ->
-          forAll (genNubSized m) $ \xs ->
-            forAll (genNubSized n) $ \ys ->
-              xs /= ys ==> not $ isCyclicPattern @Int ((m + n) `div` 2) $ xs ++ ys
+            not . isCyclicPatternWithAnyOf @Int [n] . concat . replicate 2
 
   describe "hasSpaceballsPrefix" $ do
     it "detects Spaceballs patterns" $
