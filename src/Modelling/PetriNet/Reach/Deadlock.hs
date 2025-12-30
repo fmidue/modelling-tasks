@@ -116,16 +116,16 @@ import Control.OutputCapable.Blocks.Generic (
 import Data.Bifunctor                   (Bifunctor (second), bimap)
 import Data.Either.Combinators          (whenRight)
 import Control.Functor.Trans            (FunctorTrans (lift))
-import Control.Monad                    (guard, msum, replicateM)
+import Control.Monad                    (guard)
 import Control.Monad.Catch              (MonadCatch, MonadThrow)
 import Control.Monad.Extra              (findM)
-import Control.Monad.Random             (MonadRandom, evalRandT, mkStdGen)
+import Control.Monad.Random             (evalRandT, mkStdGen)
 import Control.Monad.Trans.Maybe        (MaybeT (MaybeT, runMaybeT))
 import Control.Monad.Trans.Random       (RandT)
 import System.Random.Shuffle            (shuffleM)
 import System.Random.Internal           (StdGen)
 import Data.GraphViz                    (GraphvizCommand (..))
-import Data.Maybe                       (fromMaybe, catMaybes)
+import Data.Maybe                       (fromMaybe)
 #if !MIN_VERSION_base(4,18,0)
 import Data.Typeable                    (Typeable)
 #endif
@@ -353,7 +353,7 @@ generateDeadlock
   -> Int
   -> m (DeadlockInstance Place Transition)
 generateDeadlock conf@DeadlockConfig {..} seed = do
-  (petri, cmd, solutionsList) <- tries 1000 filterConfig conf seed
+  (petri, cmd, solutionsList) <- tries conf seed
   pure DeadlockInstance {
     drawUsing         = cmd,
     minLength         = minTransitionLength,
@@ -370,42 +370,28 @@ generateDeadlock conf@DeadlockConfig {..} seed = do
 
 tries
   :: forall m. (MonadCatch m, MonadDiagrams m, MonadGraphviz m)
-  => Int
-  -> FilterConfig
-  -> DeadlockConfig
+  => DeadlockConfig
   -> Int
   -> m (Net Place Transition, GraphvizCommand, Either (NonEmpty [Transition]) (NonEmpty [Transition]))
-tries n filterConfig conf seed = eval out
+tries conf seed = eval out
   where
     eval f = evalRandT f $ mkStdGen seed
     out
       :: RandT StdGen m (Net Place Transition, GraphvizCommand, Either (NonEmpty [Transition]) (NonEmpty [Transition]))
-    out = do
-      xs <- replicateM n $ try conf
-      maybe out pure =<< runMaybeT (msum $ map checkCandidate $ catMaybes xs)
-    checkCandidate
-      :: (Net Place Transition, [[Transition]])
-      -> MaybeT (RandT StdGen m) (Net Place Transition, GraphvizCommand, Either (NonEmpty [Transition]) (NonEmpty [Transition]))
-    checkCandidate (pn, allShortestSolutions) = do
-      guard (not $ shouldDiscardSolutions filterConfig (numTransitions conf) allShortestSolutions)
-      cmd <- MaybeT $ findM (Monad.lift . isPetriDrawable pn) (drawCommands conf)
-      solutionsList <-
-        if filterConfig == noFiltering
-          then pure $ Left $ fromList (take (max 1 (maxPrintedSolutions conf)) allShortestSolutions)
-          else if maxPrintedSolutions conf >= length allShortestSolutions
-            then pure $ Right $ fromList allShortestSolutions
-            else Right . fromList <$> Monad.lift (shuffleM allShortestSolutions)
-      pure (pn, cmd, solutionsList)
+    out =
+      maybe out pure =<< runMaybeT (try conf)
 
-try :: MonadRandom m => DeadlockConfig -> m (Maybe (Net Place Transition, [[Transition]]))
+try
+  :: (MonadCatch m, MonadDiagrams m, MonadGraphviz m)
+  => DeadlockConfig
+  -> MaybeT (RandT StdGen m) (Net Place Transition, GraphvizCommand, Either (NonEmpty [Transition]) (NonEmpty [Transition]))
 try conf = do
-  let ps = [Place 1 .. Place (numPlaces conf)]
-      ts = [Transition 1 .. Transition (numTransitions conf)]
-  n <- netLimits vLow vHigh nLow nHigh
+    let ps = [Place 1 .. Place (numPlaces conf)]
+        ts = [Transition 1 .. Transition (numTransitions conf)]
+    n <- Monad.lift $ netLimits vLow vHigh nLow nHigh
       ps
       ts
       (Modelling.PetriNet.Reach.Deadlock.capacity conf)
-  return $ do
     -- Filter out nets with isolated nodes
     guard $ not $ hasIsolatedNodes n
     -- Filter out nets that don't satisfy transition behavior constraints
@@ -417,7 +403,15 @@ try conf = do
     guard $ not $ null yeah
     let allShortestSolutions = map reverse . concatMap snd $ head yeah
     guard $ length no >= minTransitionLength conf
-    return (n, allShortestSolutions)
+    guard (not $ shouldDiscardSolutions (filterConfig conf) (numTransitions conf) allShortestSolutions)
+    cmd <- MaybeT $ findM (Monad.lift . isPetriDrawable n) (drawCommands conf)
+    solutionsList <-
+      if filterConfig conf == noFiltering
+        then pure $ Left $ fromList (take (max 1 (maxPrintedSolutions conf)) allShortestSolutions)
+        else if maxPrintedSolutions conf >= length allShortestSolutions
+          then pure $ Right $ fromList allShortestSolutions
+          else Right . fromList <$> Monad.lift (shuffleM allShortestSolutions)
+    pure (n, cmd, solutionsList)
   where
     fixMaximum :: (Int, Maybe Int) -> (Int, Int)
     fixMaximum = second (min (numPlaces conf) . fromMaybe maxBound)
