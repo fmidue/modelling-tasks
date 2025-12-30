@@ -343,7 +343,7 @@ generateDeadlock
   -> Int
   -> m (DeadlockInstance Place Transition)
 generateDeadlock conf@DeadlockConfig {..} seed = do
-  (petri, cmd, solutionsList) <- tries 1000 filterConfig conf seed
+  (petri, cmd, solutionsList) <- tries filterConfig conf seed
   pure DeadlockInstance {
     drawUsing         = cmd,
     minLength         = minTransitionLength,
@@ -360,18 +360,17 @@ generateDeadlock conf@DeadlockConfig {..} seed = do
 
 tries
   :: forall m. (MonadCatch m, MonadDiagrams m, MonadGraphviz m)
-  => Int
-  -> FilterConfig
+  => FilterConfig
   -> DeadlockConfig
   -> Int
   -> m (Net Place Transition, GraphvizCommand, Either (NonEmpty [Transition]) (NonEmpty [Transition]))
-tries n filterConfig conf seed = eval out
+tries filterConfig conf seed = eval out
   where
     eval f = evalRandT f $ mkStdGen seed
     out
       :: RandT StdGen m (Net Place Transition, GraphvizCommand, Either (NonEmpty [Transition]) (NonEmpty [Transition]))
     out = do
-      xs <- replicateM n $ try conf
+      xs <- replicateM 1 $ try conf
       maybe out pure =<< runMaybeT (msum $ map checkCandidate $ catMaybes xs)
     checkCandidate
       :: (Net Place Transition, [[Transition]])
