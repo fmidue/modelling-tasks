@@ -112,7 +112,7 @@ import Control.OutputCapable.Blocks.Generic (
 import Data.Bifunctor                   (Bifunctor (second), bimap)
 import Data.Either.Combinators          (whenRight)
 import Control.Functor.Trans            (FunctorTrans (lift))
-import Control.Monad                    (guard, msum, replicateM)
+import Control.Monad                    (guard, mzero)
 import Control.Monad.Catch              (MonadCatch, MonadThrow)
 import Control.Monad.Extra              (findM)
 import Control.Monad.Random             (MonadRandom, evalRandT, mkStdGen)
@@ -121,7 +121,7 @@ import Control.Monad.Trans.Random       (RandT)
 import System.Random.Shuffle            (shuffleM)
 import System.Random.Internal           (StdGen)
 import Data.GraphViz                    (GraphvizCommand (..))
-import Data.Maybe                       (fromMaybe, catMaybes)
+import Data.Maybe                       (fromMaybe)
 #if !MIN_VERSION_base(4,18,0)
 import Data.Typeable                    (Typeable)
 #endif
@@ -370,8 +370,8 @@ tries filterConfig conf seed = eval out
     out
       :: RandT StdGen m (Net Place Transition, GraphvizCommand, Either (NonEmpty [Transition]) (NonEmpty [Transition]))
     out = do
-      xs <- replicateM 1 $ try conf
-      maybe out pure =<< runMaybeT (msum $ map checkCandidate $ catMaybes xs)
+      x <- try conf
+      maybe out pure =<< runMaybeT (maybe mzero checkCandidate x)
     checkCandidate
       :: (Net Place Transition, [[Transition]])
       -> MaybeT (RandT StdGen m) (Net Place Transition, GraphvizCommand, Either (NonEmpty [Transition]) (NonEmpty [Transition]))
