@@ -257,7 +257,8 @@ data DeadlockConfig = DeadlockConfig {
   numPlaces :: Int,
   numTransitions :: Int,
   capacity :: Capacity Place,
-  drawCommands        :: [GraphvizCommand],
+  -- | Draw commands in order of preference
+  drawCommandsPreference :: [GraphvizCommand],
   maxTransitionLength :: Int,
   minTransitionLength :: Int,
   postconditionsRange :: (Int, Maybe Int),
@@ -280,7 +281,7 @@ defaultDeadlockConfig =
   numPlaces = 6,
   numTransitions = 6,
   Modelling.PetriNet.Reach.Deadlock.capacity = Unbounded,
-  drawCommands        = [Dot, Neato, TwoPi, Circo, Fdp, Sfdp, Osage, Patchwork],
+  drawCommandsPreference = [Dot, Neato, TwoPi, Circo, Fdp, Sfdp, Osage, Patchwork],
   maxTransitionLength = 8,
   minTransitionLength = 8,
   postconditionsRange = (0, Nothing),
@@ -317,7 +318,7 @@ checkDeadlockConfig DeadlockConfig {..} =
     maxTransitionLength
     preconditionsRange
     postconditionsRange
-    drawCommands
+    drawCommandsPreference
     rejectLongerThan
     showLengthHint
   <|>
@@ -389,7 +390,7 @@ try conf = do
     let allShortestSolutions = map reverse . concatMap snd $ head yeah
     guard $ length no >= minTransitionLength conf
     (cmd, solutionsList) <- validateDrawableNetGoal
-      n (drawCommands conf) allShortestSolutions
+      n (drawCommandsPreference conf) allShortestSolutions
       (filterConfig conf) (numTransitions conf) (maxPrintedSolutions conf)
     pure (n, cmd, solutionsList)
   where
