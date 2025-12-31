@@ -389,8 +389,8 @@ try conf = do
     let allShortestSolutions = map reverse . concatMap snd $ head yeah
     guard $ length no >= minTransitionLength conf
     (cmd, solutionsList) <- validateDrawableNetGoal
-      (filterConfig conf) (numTransitions conf) n (drawCommands conf)
-      (maxPrintedSolutions conf) allShortestSolutions
+      n (drawCommands conf) allShortestSolutions
+      (filterConfig conf) (numTransitions conf) (maxPrintedSolutions conf)
     pure (n, cmd, solutionsList)
   where
     fixMaximum :: (Int, Maybe Int) -> (Int, Int)

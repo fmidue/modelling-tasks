@@ -561,7 +561,8 @@ data NetGoalConfig = NetGoalConfig {
   numPlaces :: Int,
   numTransitions :: Int,
   capacity :: Capacity Place,
-  drawCommands        :: [GraphvizCommand],
+  -- | Draw commands in order of preference
+  drawCommandsPreference :: [GraphvizCommand],
   maxTransitionLength :: Int,
   minTransitionLength :: Int,
   -- | Maximum number of places where token counts may differ between start and goal state.
@@ -581,7 +582,7 @@ defaultReachConfig = ReachConfig {
     numPlaces           = 6,
     numTransitions      = 6,
     Modelling.PetriNet.Reach.Reach.capacity = Unbounded,
-    drawCommands        = [Dot, Neato, TwoPi, Circo, Fdp, Sfdp, Osage, Patchwork],
+    drawCommandsPreference = [Dot, Neato, TwoPi, Circo, Fdp, Sfdp, Osage, Patchwork],
     maxTransitionLength = 6,
     minTransitionLength = 6,
     maxPlacesChanged    = 3,
@@ -622,7 +623,8 @@ findNetGoalWithSolutions
   -> NetGoalConfig
   -> MaybeT (RandT StdGen m) (NetGoal Place Transition, Either (NonEmpty [Transition]) (NonEmpty [Transition]))
 findNetGoalWithSolutions filterConfig maxPrintedSolutions NetGoalConfig {..} =
-  let ps = [Place 1 .. Place numPlaces]
+  let drawCommands = drawCommandsPreference
+      ps = [Place 1 .. Place numPlaces]
       tries :: RandT StdGen m [[ [(Int, MaybeT (RandT StdGen m) (NetGoal Place Transition, Either (NonEmpty [Transition]) (NonEmpty [Transition])))] ]]
       tries = replicateM 1000 $ do
         n <- netLimits vLow vHigh nLow nHigh
@@ -648,7 +650,7 @@ findNetGoalWithSolutions filterConfig maxPrintedSolutions NetGoalConfig {..} =
           guard (maxPlacesChanged == numPlaces || maxPlacesChanged >= length placeDifferences)
           return (d, do
             (cmd, solutionsList) <- validateDrawableNetGoal
-              filterConfig numTransitions n drawCommands maxPrintedSolutions allShortestSolutions
+              n drawCommands allShortestSolutions filterConfig numTransitions maxPrintedSolutions
             let netGoal = NetGoal {
                   drawUsing   = cmd,
                   goal        = z',
@@ -659,7 +661,11 @@ findNetGoalWithSolutions filterConfig maxPrintedSolutions NetGoalConfig {..} =
       out = do
         xss <- tries
         let grouped = reverse $ transpose xss
-            xs = map (msum . map snd . sortBy (comparing fst) . concat) grouped
+            sortByDistance
+              :: [[(Int, MaybeT (RandT StdGen m) (NetGoal Place Transition, Either (NonEmpty [Transition]) (NonEmpty [Transition])))]]
+              -> [(Int, MaybeT (RandT StdGen m) (NetGoal Place Transition, Either (NonEmpty [Transition]) (NonEmpty [Transition])))]
+            sortByDistance = sortBy (comparing fst) . concat
+            xs = map (msum . map snd . sortByDistance) grouped
         if null xs
           then out
           else runMaybeT (msum xs)
@@ -674,15 +680,15 @@ findNetGoalWithSolutions filterConfig maxPrintedSolutions NetGoalConfig {..} =
 -- | Validate drawability and filter criteria, then prepare solutions for output
 validateDrawableNetGoal
   :: (Enum t, MonadCatch m, MonadDiagrams m, MonadGraphviz m, Ord p, Ord t, Show p, Show t)
-  => FilterConfig
-  -> Int
-  -> Net p t
+  => Net p t
   -> [GraphvizCommand]
-  -> Int
   -> [[t]]
+  -> FilterConfig
+  -> Int
+  -> Int
   -> MaybeT (RandT StdGen m)
        (GraphvizCommand, Either (NonEmpty [t]) (NonEmpty [t]))
-validateDrawableNetGoal filterConfig numTransitions petri drawCommands maxPrintedSolutions allShortestSolutions = do
+validateDrawableNetGoal petri drawCommands allShortestSolutions filterConfig numTransitions maxPrintedSolutions = do
   guard (not $ shouldDiscardSolutions filterConfig numTransitions allShortestSolutions)
   cmd <- MaybeT $ findM (Monad.lift . isPetriDrawable petri) drawCommands
   solutionsList <-
@@ -701,13 +707,13 @@ generateNetGoal
   -> NetGoalConfig
   -> Int
   -> m (NetGoal Place Transition, Either (NonEmpty [Transition]) (NonEmpty [Transition]))
-generateNetGoal filterConfig maxPrintedSolutions config seed =
+generateNetGoal filterConfig maxPrintedSolutions netGoalConfig seed =
   evalRandT generate $ mkStdGen seed
   where
     generate
       :: RandT StdGen m (NetGoal Place Transition, Either (NonEmpty [Transition]) (NonEmpty [Transition]))
     generate =
-      maybe generate pure =<< runMaybeT (findNetGoalWithSolutions filterConfig maxPrintedSolutions config)
+      maybe generate pure =<< runMaybeT (findNetGoalWithSolutions filterConfig maxPrintedSolutions netGoalConfig)
 
 checkReachConfig :: ReachConfig -> Maybe String
 checkReachConfig ReachConfig {..} =
@@ -719,7 +725,7 @@ checkReachConfig ReachConfig {..} =
     (maxTransitionLength netGoalConfig)
     (preconditionsRange netGoalConfig)
     (postconditionsRange netGoalConfig)
-    (drawCommands netGoalConfig)
+    (drawCommandsPreference netGoalConfig)
     rejectLongerThan
     showLengthHint
   <|>
