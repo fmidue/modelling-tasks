@@ -646,7 +646,14 @@ findNetGoalWithSolutions filterConfig maxPrintedSolutions NetGoalConfig {..} =
                 return (abs diff)
               allShortestSolutions = map reverse transitionSequences
           guard (maxPlacesChanged == numPlaces || maxPlacesChanged >= length placeDifferences)
-          return (d, findDrawableNetGoal (n, z', allShortestSolutions))
+          return (d, do
+            (cmd, solutionsList) <- checkNetGoalWithDrawCommand filterConfig numTransitions n drawCommands (filterConfig == noFiltering) maxPrintedSolutions allShortestSolutions
+            let netGoal = NetGoal {
+                  drawUsing   = cmd,
+                  goal        = z',
+                  petriNet    = n
+                }
+            pure (netGoal, solutionsList))
       out :: RandT StdGen m (Maybe (NetGoal Place Transition, Either (NonEmpty [Transition]) (NonEmpty [Transition])))
       out = do
         xss <- tries
@@ -662,17 +669,6 @@ findNetGoalWithSolutions filterConfig maxPrintedSolutions NetGoalConfig {..} =
     (vLow, vHigh) = fixMaximum preconditionsRange
     (nLow, nHigh) = fixMaximum postconditionsRange
     ts = [Transition 1 .. Transition numTransitions]
-    findDrawableNetGoal
-      :: (Net Place Transition, State Place, [[Transition]])
-      -> MaybeT (RandT StdGen m) (NetGoal Place Transition, Either (NonEmpty [Transition]) (NonEmpty [Transition]))
-    findDrawableNetGoal (petri, state, allShortestSolutions) = do
-      (cmd, solutionsList) <- checkNetGoalWithDrawCommand filterConfig numTransitions petri drawCommands (filterConfig == noFiltering) maxPrintedSolutions allShortestSolutions
-      let netGoal = NetGoal {
-            drawUsing   = cmd,
-            goal        = state,
-            petriNet    = petri
-          }
-      pure (netGoal, solutionsList)
 
 -- | Check net goal validity and prepare solutions list with draw command
 checkNetGoalWithDrawCommand
