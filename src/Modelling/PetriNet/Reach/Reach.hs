@@ -127,7 +127,7 @@ import Control.OutputCapable.Blocks.Generic (
   ($>>),
   ($>>=),
   )
-import Control.Monad.Random             (MonadRandom, mkStdGen)
+import Control.Monad.Random             (mkStdGen)
 import Control.Monad.Trans.Random       (RandT, evalRandT)
 import System.Random.Shuffle            (shuffleM)
 import System.Random.Internal           (StdGen)
@@ -615,13 +615,14 @@ defaultReachInstance = ReachInstance {
 }
 
 findNetGoalWithSolutions
-  :: forall m a. MonadRandom m
-  => ((Net Place Transition, State Place, [[Transition]]) -> MaybeT m a)
+  :: forall m. (MonadCatch m, MonadDiagrams m, MonadGraphviz m)
+  => FilterConfig
+  -> Int
   -> NetGoalConfig
-  -> MaybeT m a
-findNetGoalWithSolutions checkNetGoal NetGoalConfig {..} =
+  -> MaybeT (RandT StdGen m) (NetGoal Place Transition, Either (NonEmpty [Transition]) (NonEmpty [Transition]))
+findNetGoalWithSolutions filterConfig maxPrintedSolutions NetGoalConfig {..} =
   let ps = [Place 1 .. Place numPlaces]
-      tries :: m [[ [(Int, (Net Place Transition, State Place, [[Transition]]))] ]]
+      tries :: RandT StdGen m [[ [(Int, (Net Place Transition, State Place, [[Transition]]))] ]]
       tries = replicateM 1000 $ do
         n <- netLimits vLow vHigh nLow nHigh
             ps
@@ -645,7 +646,7 @@ findNetGoalWithSolutions checkNetGoal NetGoalConfig {..} =
               allShortestSolutions = map reverse transitionSequences
           guard (maxPlacesChanged == numPlaces || maxPlacesChanged >= length placeDifferences)
           return (d, (n, z', allShortestSolutions))
-      out :: MaybeT m a
+      out :: MaybeT (RandT StdGen m) (NetGoal Place Transition, Either (NonEmpty [Transition]) (NonEmpty [Transition]))
       out = MaybeT $ do
         xss <- tries
         let grouped = reverse $ transpose xss
@@ -660,18 +661,6 @@ findNetGoalWithSolutions checkNetGoal NetGoalConfig {..} =
     (vLow, vHigh) = fixMaximum preconditionsRange
     (nLow, nHigh) = fixMaximum postconditionsRange
     ts = [Transition 1 .. Transition numTransitions]
-
--- | Generate NetGoal with filtering for trivial solutions
-generateNetGoal
-  :: forall m. (MonadCatch m, MonadDiagrams m, MonadGraphviz m)
-  => FilterConfig
-  -> Int
-  -> NetGoalConfig
-  -> Int
-  -> m (NetGoal Place Transition, Either (NonEmpty [Transition]) (NonEmpty [Transition]))
-generateNetGoal filterConfig maxPrintedSolutions config@NetGoalConfig {..} seed =
-  evalRandT generate $ mkStdGen seed
-  where
     checkNetGoal
       :: (Net Place Transition, State Place, [[Transition]])
       -> MaybeT (RandT StdGen m) (NetGoal Place Transition, Either (NonEmpty [Transition]) (NonEmpty [Transition]))
@@ -690,10 +679,22 @@ generateNetGoal filterConfig maxPrintedSolutions config@NetGoalConfig {..} seed 
             then pure $ Right $ fromList allShortestSolutions
             else Right . fromList <$> Monad.lift (shuffleM allShortestSolutions)
       pure (netGoal, solutionsList)
+
+-- | Generate NetGoal with filtering for trivial solutions
+generateNetGoal
+  :: forall m. (MonadCatch m, MonadDiagrams m, MonadGraphviz m)
+  => FilterConfig
+  -> Int
+  -> NetGoalConfig
+  -> Int
+  -> m (NetGoal Place Transition, Either (NonEmpty [Transition]) (NonEmpty [Transition]))
+generateNetGoal filterConfig maxPrintedSolutions config seed =
+  evalRandT generate $ mkStdGen seed
+  where
     generate
       :: RandT StdGen m (NetGoal Place Transition, Either (NonEmpty [Transition]) (NonEmpty [Transition]))
     generate = do
-      try <- runMaybeT $ findNetGoalWithSolutions checkNetGoal config
+      try <- runMaybeT $ findNetGoalWithSolutions filterConfig maxPrintedSolutions config
       maybe generate pure try
 
 checkReachConfig :: ReachConfig -> Maybe String
