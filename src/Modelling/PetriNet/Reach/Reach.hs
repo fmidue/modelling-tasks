@@ -614,11 +614,12 @@ defaultReachInstance = ReachInstance {
   rejectSpaceballsLength = Nothing
 }
 
-possibleNetGoals
-  :: forall m. MonadRandom m
-  => NetGoalConfig
-  -> m [(Net Place Transition, State Place, [[Transition]])]
-possibleNetGoals NetGoalConfig {..} =
+findNetGoalWithSolutions
+  :: forall m a. MonadRandom m
+  => ((Net Place Transition, State Place, [[Transition]]) -> MaybeT m a)
+  -> NetGoalConfig
+  -> MaybeT m a
+findNetGoalWithSolutions checkNetGoal NetGoalConfig {..} =
   let ps = [Place 1 .. Place numPlaces]
       tries :: m [[ [(Int, (Net Place Transition, State Place, [[Transition]]))] ]]
       tries = replicateM 1000 $ do
@@ -644,14 +645,14 @@ possibleNetGoals NetGoalConfig {..} =
               allShortestSolutions = map reverse transitionSequences
           guard (maxPlacesChanged == numPlaces || maxPlacesChanged >= length placeDifferences)
           return (d, (n, z', allShortestSolutions))
-      out :: m [(Net Place Transition, State Place, [[Transition]])]
-      out = do
+      out :: MaybeT m a
+      out = MaybeT $ do
         xss <- tries
         let grouped = reverse $ transpose xss
             xs = concatMap (map snd . sortBy (comparing fst) . concat) grouped
         if null xs
-          then out
-          else pure xs
+          then runMaybeT out
+          else runMaybeT $ msum $ map checkNetGoal xs
   in out
   where
     fixMaximum :: (Int, Maybe Int) -> (Int, Int)
@@ -692,8 +693,8 @@ generateNetGoal filterConfig maxPrintedSolutions config@NetGoalConfig {..} seed 
     generate
       :: RandT StdGen m (NetGoal Place Transition, Either (NonEmpty [Transition]) (NonEmpty [Transition]))
     generate = do
-      try <- msum . map checkNetGoal <$> possibleNetGoals config
-      maybe generate pure =<< runMaybeT try
+      try <- runMaybeT $ findNetGoalWithSolutions checkNetGoal config
+      maybe generate pure try
 
 checkReachConfig :: ReachConfig -> Maybe String
 checkReachConfig ReachConfig {..} =
