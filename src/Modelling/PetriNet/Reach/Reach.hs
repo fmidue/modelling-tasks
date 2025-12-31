@@ -644,15 +644,15 @@ possibleNetGoals NetGoalConfig {..} =
               allShortestSolutions = map reverse transitionSequences
           guard (maxPlacesChanged == numPlaces || maxPlacesChanged >= length placeDifferences)
           return (d, (n, z', allShortestSolutions))
-      out :: m [(Int, (Net Place Transition, State Place, [[Transition]]))]
+      out :: m [(Net Place Transition, State Place, [[Transition]])]
       out = do
         xss <- tries
         let grouped = reverse $ transpose xss
-            xs = concatMap (sortBy (comparing fst) . concat) grouped
+            xs = concatMap (map snd . sortBy (comparing fst) . concat) grouped
         if null xs
           then out
           else pure xs
-  in map snd <$> out
+  in out
   where
     fixMaximum :: (Int, Maybe Int) -> (Int, Int)
     fixMaximum = second (min numPlaces . fromMaybe maxBound)
@@ -675,13 +675,13 @@ generateNetGoal filterConfig maxPrintedSolutions config@NetGoalConfig {..} seed 
       :: (Net Place Transition, State Place, [[Transition]])
       -> MaybeT (RandT StdGen m) (NetGoal Place Transition, Either (NonEmpty [Transition]) (NonEmpty [Transition]))
     checkNetGoal (petri, state, allShortestSolutions) = do
+      guard (not $ shouldDiscardSolutions filterConfig numTransitions allShortestSolutions)
       cmd <- MaybeT $ findM (Monad.lift . isPetriDrawable petri) drawCommands
       let netGoal = NetGoal {
             drawUsing   = cmd,
             goal        = state,
             petriNet    = petri
           }
-      guard (not $ shouldDiscardSolutions filterConfig numTransitions allShortestSolutions)
       solutionsList <-
         if filterConfig == noFiltering
           then pure $ Left $ fromList (take (max 1 maxPrintedSolutions) allShortestSolutions)
@@ -692,9 +692,8 @@ generateNetGoal filterConfig maxPrintedSolutions config@NetGoalConfig {..} seed 
     generate
       :: RandT StdGen m (NetGoal Place Transition, Either (NonEmpty [Transition]) (NonEmpty [Transition]))
     generate = do
-      xs <- possibleNetGoals config
-      maybeNetGoal <- runMaybeT $ msum $ map checkNetGoal xs
-      maybe generate pure maybeNetGoal
+      try <- msum . map checkNetGoal <$> possibleNetGoals config
+      maybe generate pure =<< runMaybeT try
 
 checkReachConfig :: ReachConfig -> Maybe String
 checkReachConfig ReachConfig {..} =
