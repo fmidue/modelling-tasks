@@ -646,7 +646,6 @@ findNetGoalWithSolutions filterConfig maxPrintedSolutions NetGoalConfig {..} =
                 return (abs diff)
               allShortestSolutions = map reverse transitionSequences
           guard (maxPlacesChanged == numPlaces || maxPlacesChanged >= length placeDifferences)
-          guard (not $ shouldDiscardSolutions filterConfig numTransitions allShortestSolutions)
           return (d, (n, z', allShortestSolutions))
       out :: RandT StdGen m (Maybe (NetGoal Place Transition, Either (NonEmpty [Transition]) (NonEmpty [Transition])))
       out = do
@@ -667,6 +666,7 @@ findNetGoalWithSolutions filterConfig maxPrintedSolutions NetGoalConfig {..} =
       :: (Net Place Transition, State Place, [[Transition]])
       -> MaybeT (RandT StdGen m) (NetGoal Place Transition, Either (NonEmpty [Transition]) (NonEmpty [Transition]))
     findDrawableNetGoal (petri, state, allShortestSolutions) = do
+      guard (not $ shouldDiscardSolutions filterConfig numTransitions allShortestSolutions)
       (cmd, solutionsList) <- prepareSolutionsListWithDrawCommand petri drawCommands (filterConfig == noFiltering) maxPrintedSolutions allShortestSolutions
       let netGoal = NetGoal {
             drawUsing   = cmd,
