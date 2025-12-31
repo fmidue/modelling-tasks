@@ -57,7 +57,6 @@ import Modelling.PetriNet.Reach.Draw    (drawToFile)
 import Modelling.PetriNet.Reach.Filter (
   FilterConfig (..),
   defaultFilterConfig,
-  noFiltering,
   )
 import Modelling.PetriNet.Reach.Property (
   Property (Default),
@@ -75,7 +74,7 @@ import Modelling.PetriNet.Reach.Reach   (
   reportReachFor,
   transitionsValid,
   provideSolutionsFeedback,
-  checkNetGoalWithDrawCommand,
+  validateDrawCommandAndSolutions,
   )
 import Modelling.PetriNet.Reach.Roll    (netLimits)
 import Modelling.PetriNet.Reach.Step    (executes, successors)
@@ -389,7 +388,9 @@ try conf = do
     guard $ not $ null yeah
     let allShortestSolutions = map reverse . concatMap snd $ head yeah
     guard $ length no >= minTransitionLength conf
-    (cmd, solutionsList) <- checkNetGoalWithDrawCommand (filterConfig conf) (numTransitions conf) n (drawCommands conf) (filterConfig conf == noFiltering) (maxPrintedSolutions conf) allShortestSolutions
+    (cmd, solutionsList) <- validateDrawCommandAndSolutions
+      (filterConfig conf) (numTransitions conf) n (drawCommands conf)
+      (maxPrintedSolutions conf) allShortestSolutions
     pure (n, cmd, solutionsList)
   where
     fixMaximum :: (Int, Maybe Int) -> (Int, Int)

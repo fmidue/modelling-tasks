@@ -54,7 +54,7 @@ module Modelling.PetriNet.Reach.Reach (
   transitionsValid,
   levelsWithAlternatives,
   provideSolutionsFeedback,
-  checkNetGoalWithDrawCommand,
+  validateDrawCommandAndSolutions,
 ) where
 
 import qualified Control.Monad.Trans              as Monad (lift)
@@ -647,7 +647,8 @@ findNetGoalWithSolutions filterConfig maxPrintedSolutions NetGoalConfig {..} =
               allShortestSolutions = map reverse transitionSequences
           guard (maxPlacesChanged == numPlaces || maxPlacesChanged >= length placeDifferences)
           return (d, do
-            (cmd, solutionsList) <- checkNetGoalWithDrawCommand filterConfig numTransitions n drawCommands (filterConfig == noFiltering) maxPrintedSolutions allShortestSolutions
+            (cmd, solutionsList) <- validateDrawCommandAndSolutions
+              filterConfig numTransitions n drawCommands maxPrintedSolutions allShortestSolutions
             let netGoal = NetGoal {
                   drawUsing   = cmd,
                   goal        = z',
@@ -670,21 +671,21 @@ findNetGoalWithSolutions filterConfig maxPrintedSolutions NetGoalConfig {..} =
     (nLow, nHigh) = fixMaximum postconditionsRange
     ts = [Transition 1 .. Transition numTransitions]
 
--- | Check net goal validity and prepare solutions list with draw command
-checkNetGoalWithDrawCommand
+-- | Validate solutions, find drawable command, and prepare solutions list
+validateDrawCommandAndSolutions
   :: (Enum t, MonadCatch m, MonadDiagrams m, MonadGraphviz m, Ord p, Ord t, Show p, Show t)
   => FilterConfig
   -> Int
   -> Net p t
   -> [GraphvizCommand]
-  -> Bool
   -> Int
   -> [[t]]
   -> MaybeT (RandT StdGen m)
        (GraphvizCommand, Either (NonEmpty [t]) (NonEmpty [t]))
-checkNetGoalWithDrawCommand filterConfig numTransitions petri drawCommands isNoFiltering maxPrintedSolutions allShortestSolutions = do
+validateDrawCommandAndSolutions filterConfig numTransitions petri drawCommands maxPrintedSolutions allShortestSolutions = do
   guard (not $ shouldDiscardSolutions filterConfig numTransitions allShortestSolutions)
   cmd <- MaybeT $ findM (Monad.lift . isPetriDrawable petri) drawCommands
+  let isNoFiltering = filterConfig == noFiltering
   solutionsList <-
     if isNoFiltering
       then pure $ Left $ fromList (take (max 1 maxPrintedSolutions) allShortestSolutions)
