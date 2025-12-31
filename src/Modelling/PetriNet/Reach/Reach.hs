@@ -677,15 +677,14 @@ findNetGoalWithSolutions filterConfig maxPrintedSolutions NetGoalConfig {..} =
 
 -- | Prepare solutions list with draw command based on filtering configuration
 prepareSolutionsListWithDrawCommand
-  :: forall m p t transition.
-     (MonadCatch m, MonadDiagrams m, MonadGraphviz m, Ord p, Ord t, Show p, Show t)
+  :: (MonadCatch m, MonadDiagrams m, MonadGraphviz m, Ord p, Ord t, Show p, Show t)
   => Net p t
   -> [GraphvizCommand]
   -> Bool
   -> Int
-  -> [[transition]]
+  -> [[t]]
   -> MaybeT (RandT StdGen m)
-       (GraphvizCommand, Either (NonEmpty [transition]) (NonEmpty [transition]))
+       (GraphvizCommand, Either (NonEmpty [t]) (NonEmpty [t]))
 prepareSolutionsListWithDrawCommand petri drawCommands isNoFiltering maxPrintedSolutions allShortestSolutions = do
   cmd <- MaybeT $ findM (Monad.lift . isPetriDrawable petri) drawCommands
   solutionsList <-
