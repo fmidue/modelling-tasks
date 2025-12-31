@@ -646,15 +646,15 @@ findNetGoalWithSolutions filterConfig maxPrintedSolutions NetGoalConfig {..} =
               allShortestSolutions = map reverse transitionSequences
           guard (maxPlacesChanged == numPlaces || maxPlacesChanged >= length placeDifferences)
           return (d, (n, z', allShortestSolutions))
-      out :: MaybeT (RandT StdGen m) (NetGoal Place Transition, Either (NonEmpty [Transition]) (NonEmpty [Transition]))
-      out = MaybeT $ do
+      out :: RandT StdGen m (Maybe (NetGoal Place Transition, Either (NonEmpty [Transition]) (NonEmpty [Transition])))
+      out =  do
         xss <- tries
         let grouped = reverse $ transpose xss
             xs = concatMap (map snd . sortBy (comparing fst) . concat) grouped
         if null xs
-          then runMaybeT out
+          then out
           else runMaybeT $ msum $ map checkNetGoal xs
-  in out
+  in MaybeT out
   where
     fixMaximum :: (Int, Maybe Int) -> (Int, Int)
     fixMaximum = second (min numPlaces . fromMaybe maxBound)
@@ -693,9 +693,8 @@ generateNetGoal filterConfig maxPrintedSolutions config seed =
   where
     generate
       :: RandT StdGen m (NetGoal Place Transition, Either (NonEmpty [Transition]) (NonEmpty [Transition]))
-    generate = do
-      try <- runMaybeT $ findNetGoalWithSolutions filterConfig maxPrintedSolutions config
-      maybe generate pure try
+    generate =
+      maybe generate pure =<< runMaybeT (findNetGoalWithSolutions filterConfig maxPrintedSolutions config)
 
 checkReachConfig :: ReachConfig -> Maybe String
 checkReachConfig ReachConfig {..} =
