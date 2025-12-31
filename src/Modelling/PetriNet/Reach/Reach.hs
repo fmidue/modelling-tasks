@@ -647,13 +647,13 @@ findNetGoalWithSolutions filterConfig maxPrintedSolutions NetGoalConfig {..} =
           guard (maxPlacesChanged == numPlaces || maxPlacesChanged >= length placeDifferences)
           return (d, (n, z', allShortestSolutions))
       out :: RandT StdGen m (Maybe (NetGoal Place Transition, Either (NonEmpty [Transition]) (NonEmpty [Transition])))
-      out =  do
+      out = do
         xss <- tries
         let grouped = reverse $ transpose xss
-            xs = concatMap (map snd . sortBy (comparing fst) . concat) grouped
+            xs = concatMap (map (checkNetGoal . snd) . sortBy (comparing fst) . concat) grouped
         if null xs
           then out
-          else runMaybeT $ msum $ map checkNetGoal xs
+          else runMaybeT (msum xs)
   in MaybeT out
   where
     fixMaximum :: (Int, Maybe Int) -> (Int, Int)
