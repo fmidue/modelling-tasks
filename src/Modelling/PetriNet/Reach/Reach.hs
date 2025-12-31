@@ -54,7 +54,7 @@ module Modelling.PetriNet.Reach.Reach (
   transitionsValid,
   levelsWithAlternatives,
   provideSolutionsFeedback,
-  validateDrawCommandAndSolutions,
+  validateDrawableNetGoal,
 ) where
 
 import qualified Control.Monad.Trans              as Monad (lift)
@@ -647,7 +647,7 @@ findNetGoalWithSolutions filterConfig maxPrintedSolutions NetGoalConfig {..} =
               allShortestSolutions = map reverse transitionSequences
           guard (maxPlacesChanged == numPlaces || maxPlacesChanged >= length placeDifferences)
           return (d, do
-            (cmd, solutionsList) <- validateDrawCommandAndSolutions
+            (cmd, solutionsList) <- validateDrawableNetGoal
               filterConfig numTransitions n drawCommands maxPrintedSolutions allShortestSolutions
             let netGoal = NetGoal {
                   drawUsing   = cmd,
@@ -671,8 +671,8 @@ findNetGoalWithSolutions filterConfig maxPrintedSolutions NetGoalConfig {..} =
     (nLow, nHigh) = fixMaximum postconditionsRange
     ts = [Transition 1 .. Transition numTransitions]
 
--- | Validate solutions, find drawable command, and prepare solutions list
-validateDrawCommandAndSolutions
+-- | Validate drawability and filter criteria, then prepare solutions for output
+validateDrawableNetGoal
   :: (Enum t, MonadCatch m, MonadDiagrams m, MonadGraphviz m, Ord p, Ord t, Show p, Show t)
   => FilterConfig
   -> Int
@@ -682,12 +682,11 @@ validateDrawCommandAndSolutions
   -> [[t]]
   -> MaybeT (RandT StdGen m)
        (GraphvizCommand, Either (NonEmpty [t]) (NonEmpty [t]))
-validateDrawCommandAndSolutions filterConfig numTransitions petri drawCommands maxPrintedSolutions allShortestSolutions = do
+validateDrawableNetGoal filterConfig numTransitions petri drawCommands maxPrintedSolutions allShortestSolutions = do
   guard (not $ shouldDiscardSolutions filterConfig numTransitions allShortestSolutions)
   cmd <- MaybeT $ findM (Monad.lift . isPetriDrawable petri) drawCommands
-  let isNoFiltering = filterConfig == noFiltering
   solutionsList <-
-    if isNoFiltering
+    if filterConfig == noFiltering
       then pure $ Left $ fromList (take (max 1 maxPrintedSolutions) allShortestSolutions)
       else if maxPrintedSolutions >= length allShortestSolutions
         then pure $ Right $ fromList allShortestSolutions
