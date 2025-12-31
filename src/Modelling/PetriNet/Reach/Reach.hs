@@ -623,7 +623,7 @@ findNetGoalWithSolutions
   -> MaybeT (RandT StdGen m) (NetGoal Place Transition, Either (NonEmpty [Transition]) (NonEmpty [Transition]))
 findNetGoalWithSolutions filterConfig maxPrintedSolutions NetGoalConfig {..} =
   let ps = [Place 1 .. Place numPlaces]
-      tries :: RandT StdGen m [[ [(Int, (Net Place Transition, State Place, [[Transition]]))] ]]
+      tries :: RandT StdGen m [[ [(Int, MaybeT (RandT StdGen m) (NetGoal Place Transition, Either (NonEmpty [Transition]) (NonEmpty [Transition])))] ]]
       tries = replicateM 1000 $ do
         n <- netLimits vLow vHigh nLow nHigh
             ps
@@ -646,12 +646,12 @@ findNetGoalWithSolutions filterConfig maxPrintedSolutions NetGoalConfig {..} =
                 return (abs diff)
               allShortestSolutions = map reverse transitionSequences
           guard (maxPlacesChanged == numPlaces || maxPlacesChanged >= length placeDifferences)
-          return (d, (n, z', allShortestSolutions))
+          return (d, findDrawableNetGoal (n, z', allShortestSolutions))
       out :: RandT StdGen m (Maybe (NetGoal Place Transition, Either (NonEmpty [Transition]) (NonEmpty [Transition])))
       out = do
         xss <- tries
         let grouped = reverse $ transpose xss
-            xs = map (msum . map (findDrawableNetGoal . snd) . sortBy (comparing fst) . concat) grouped
+            xs = map (msum . map snd . sortBy (comparing fst) . concat) grouped
         if null xs
           then out
           else runMaybeT (msum xs)
