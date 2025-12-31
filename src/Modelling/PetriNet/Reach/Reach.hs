@@ -623,8 +623,7 @@ findNetGoalWithSolutions
   -> NetGoalConfig
   -> MaybeT (RandT StdGen m) (NetGoal Place Transition, Either (NonEmpty [Transition]) (NonEmpty [Transition]))
 findNetGoalWithSolutions filterConfig maxPrintedSolutions NetGoalConfig {..} =
-  let drawCommands = drawPreferenceOrder
-      ps = [Place 1 .. Place numPlaces]
+  let ps = [Place 1 .. Place numPlaces]
       tries :: RandT StdGen m [[ [(Int, MaybeT (RandT StdGen m) (NetGoal Place Transition, Either (NonEmpty [Transition]) (NonEmpty [Transition])))] ]]
       tries = replicateM 1000 $ do
         n <- netLimits vLow vHigh nLow nHigh
@@ -650,7 +649,7 @@ findNetGoalWithSolutions filterConfig maxPrintedSolutions NetGoalConfig {..} =
           guard (maxPlacesChanged == numPlaces || maxPlacesChanged >= length placeDifferences)
           return (d, do
             (cmd, solutionsList) <- validateDrawableNetGoal
-              n drawCommands allShortestSolutions filterConfig numTransitions maxPrintedSolutions
+              n drawPreferenceOrder allShortestSolutions filterConfig numTransitions maxPrintedSolutions
             let netGoal = NetGoal {
                   drawUsing   = cmd,
                   goal        = z',
