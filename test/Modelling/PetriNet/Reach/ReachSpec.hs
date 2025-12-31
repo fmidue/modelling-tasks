@@ -105,10 +105,10 @@ spec = do
             }
       checkReachConfig config `shouldSatisfy` isJust
 
-    it "rejects empty drawCommandsPreference" $ do
+    it "rejects empty drawPreferenceOrder" $ do
       let config = defaultReachConfig {
             netGoalConfig = (netGoalConfig defaultReachConfig) {
-              drawCommandsPreference = []
+              drawPreferenceOrder = []
               }
             }
       checkReachConfig config `shouldSatisfy` isJust

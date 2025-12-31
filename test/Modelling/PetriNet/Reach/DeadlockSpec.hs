@@ -71,8 +71,8 @@ spec = do
       let config = defaultDeadlockConfig { postconditionsRange = (5, Just 2) }
       checkDeadlockConfig config `shouldSatisfy` isJust
 
-    it "rejects empty drawCommandsPreference" $ do
-      let config = defaultDeadlockConfig { drawCommandsPreference = [] }
+    it "rejects empty drawPreferenceOrder" $ do
+      let config = defaultDeadlockConfig { drawPreferenceOrder = [] }
       checkDeadlockConfig config `shouldSatisfy` isJust
 
     it "accepts Unbounded capacity" $ do

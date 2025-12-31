@@ -562,7 +562,7 @@ data NetGoalConfig = NetGoalConfig {
   numTransitions :: Int,
   capacity :: Capacity Place,
   -- | Draw commands in order of preference
-  drawCommandsPreference :: [GraphvizCommand],
+  drawPreferenceOrder :: [GraphvizCommand],
   maxTransitionLength :: Int,
   minTransitionLength :: Int,
   -- | Maximum number of places where token counts may differ between start and goal state.
@@ -582,7 +582,7 @@ defaultReachConfig = ReachConfig {
     numPlaces           = 6,
     numTransitions      = 6,
     Modelling.PetriNet.Reach.Reach.capacity = Unbounded,
-    drawCommandsPreference = [Dot, Neato, TwoPi, Circo, Fdp, Sfdp, Osage, Patchwork],
+    drawPreferenceOrder = [Dot, Neato, TwoPi, Circo, Fdp, Sfdp, Osage, Patchwork],
     maxTransitionLength = 6,
     minTransitionLength = 6,
     maxPlacesChanged    = 3,
@@ -623,7 +623,7 @@ findNetGoalWithSolutions
   -> NetGoalConfig
   -> MaybeT (RandT StdGen m) (NetGoal Place Transition, Either (NonEmpty [Transition]) (NonEmpty [Transition]))
 findNetGoalWithSolutions filterConfig maxPrintedSolutions NetGoalConfig {..} =
-  let drawCommands = drawCommandsPreference
+  let drawCommands = drawPreferenceOrder
       ps = [Place 1 .. Place numPlaces]
       tries :: RandT StdGen m [[ [(Int, MaybeT (RandT StdGen m) (NetGoal Place Transition, Either (NonEmpty [Transition]) (NonEmpty [Transition])))] ]]
       tries = replicateM 1000 $ do
@@ -725,7 +725,7 @@ checkReachConfig ReachConfig {..} =
     (maxTransitionLength netGoalConfig)
     (preconditionsRange netGoalConfig)
     (postconditionsRange netGoalConfig)
-    (drawCommandsPreference netGoalConfig)
+    (drawPreferenceOrder netGoalConfig)
     rejectLongerThan
     showLengthHint
   <|>
