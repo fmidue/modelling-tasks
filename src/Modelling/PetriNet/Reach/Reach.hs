@@ -54,6 +54,7 @@ module Modelling.PetriNet.Reach.Reach (
   transitionsValid,
   levelsWithAlternatives,
   provideSolutionsFeedback,
+  prepareSolutionsList,
 ) where
 
 import qualified Control.Monad.Trans              as Monad (lift)
@@ -127,7 +128,7 @@ import Control.OutputCapable.Blocks.Generic (
   ($>>),
   ($>>=),
   )
-import Control.Monad.Random             (mkStdGen)
+import Control.Monad.Random             (MonadRandom, mkStdGen)
 import Control.Monad.Trans.Random       (RandT, evalRandT)
 import System.Random.Shuffle            (shuffleM)
 import System.Random.Internal           (StdGen)
@@ -645,12 +646,13 @@ findNetGoalWithSolutions filterConfig maxPrintedSolutions NetGoalConfig {..} =
                 return (abs diff)
               allShortestSolutions = map reverse transitionSequences
           guard (maxPlacesChanged == numPlaces || maxPlacesChanged >= length placeDifferences)
+          guard (not $ shouldDiscardSolutions filterConfig numTransitions allShortestSolutions)
           return (d, (n, z', allShortestSolutions))
       out :: RandT StdGen m (Maybe (NetGoal Place Transition, Either (NonEmpty [Transition]) (NonEmpty [Transition])))
       out = do
         xss <- tries
         let grouped = reverse $ transpose xss
-            xs = map (msum . map (checkNetGoal . snd) . sortBy (comparing fst) . concat) grouped
+            xs = map (msum . map (findDrawableNetGoal . snd) . sortBy (comparing fst) . concat) grouped
         if null xs
           then out
           else runMaybeT (msum xs)
@@ -661,24 +663,30 @@ findNetGoalWithSolutions filterConfig maxPrintedSolutions NetGoalConfig {..} =
     (vLow, vHigh) = fixMaximum preconditionsRange
     (nLow, nHigh) = fixMaximum postconditionsRange
     ts = [Transition 1 .. Transition numTransitions]
-    checkNetGoal
+    findDrawableNetGoal
       :: (Net Place Transition, State Place, [[Transition]])
       -> MaybeT (RandT StdGen m) (NetGoal Place Transition, Either (NonEmpty [Transition]) (NonEmpty [Transition]))
-    checkNetGoal (petri, state, allShortestSolutions) = do
-      guard (not $ shouldDiscardSolutions filterConfig numTransitions allShortestSolutions)
+    findDrawableNetGoal (petri, state, allShortestSolutions) = do
       cmd <- MaybeT $ findM (Monad.lift . isPetriDrawable petri) drawCommands
       let netGoal = NetGoal {
             drawUsing   = cmd,
             goal        = state,
             petriNet    = petri
           }
-      solutionsList <-
-        if filterConfig == noFiltering
-          then pure $ Left $ fromList (take (max 1 maxPrintedSolutions) allShortestSolutions)
-          else if maxPrintedSolutions >= length allShortestSolutions
-            then pure $ Right $ fromList allShortestSolutions
-            else Right . fromList <$> Monad.lift (shuffleM allShortestSolutions)
+      solutionsList <- Monad.lift $ prepareSolutionsList (filterConfig == noFiltering) maxPrintedSolutions allShortestSolutions
       pure (netGoal, solutionsList)
+
+-- | Prepare solutions list based on filtering configuration
+prepareSolutionsList
+  :: MonadRandom m
+  => Bool
+  -> Int
+  -> [[t]]
+  -> m (Either (NonEmpty [t]) (NonEmpty [t]))
+prepareSolutionsList isNoFiltering maxPrintedSolutions allShortestSolutions
+  | isNoFiltering = pure $ Left $ fromList (take (max 1 maxPrintedSolutions) allShortestSolutions)
+  | maxPrintedSolutions >= length allShortestSolutions = pure $ Right $ fromList allShortestSolutions
+  | otherwise = Right . fromList <$> shuffleM allShortestSolutions
 
 -- | Generate NetGoal with filtering for trivial solutions
 generateNetGoal

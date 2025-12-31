@@ -48,7 +48,7 @@ import qualified Control.Monad.Trans              as Monad (lift)
 import qualified Data.Map                         as M (fromList)
 import qualified Data.Set                         as S (fromList, toList)
 
-import Data.List.NonEmpty                 (NonEmpty((:|)), fromList)
+import Data.List.NonEmpty                 (NonEmpty((:|)))
 
 import Capabilities.Cache               (MonadCache)
 import Capabilities.Diagrams            (MonadDiagrams)
@@ -76,6 +76,7 @@ import Modelling.PetriNet.Reach.Reach   (
   reportReachFor,
   transitionsValid,
   provideSolutionsFeedback,
+  prepareSolutionsList,
   )
 import Modelling.PetriNet.Reach.Roll    (netLimits)
 import Modelling.PetriNet.Reach.Step    (executes, successors)
@@ -118,7 +119,6 @@ import Control.Monad.Extra              (findM)
 import Control.Monad.Random             (evalRandT, mkStdGen)
 import Control.Monad.Trans.Maybe        (MaybeT (MaybeT, runMaybeT))
 import Control.Monad.Trans.Random       (RandT)
-import System.Random.Shuffle            (shuffleM)
 import System.Random.Internal           (StdGen)
 import Data.GraphViz                    (GraphvizCommand (..))
 import Data.Maybe                       (fromMaybe)
@@ -393,12 +393,7 @@ try conf = do
     guard $ length no >= minTransitionLength conf
     guard (not $ shouldDiscardSolutions (filterConfig conf) (numTransitions conf) allShortestSolutions)
     cmd <- MaybeT $ findM (Monad.lift . isPetriDrawable n) (drawCommands conf)
-    solutionsList <-
-      if filterConfig conf == noFiltering
-        then pure $ Left $ fromList (take (max 1 (maxPrintedSolutions conf)) allShortestSolutions)
-        else if maxPrintedSolutions conf >= length allShortestSolutions
-          then pure $ Right $ fromList allShortestSolutions
-          else Right . fromList <$> Monad.lift (shuffleM allShortestSolutions)
+    solutionsList <- Monad.lift $ prepareSolutionsList (filterConfig conf == noFiltering) (maxPrintedSolutions conf) allShortestSolutions
     pure (n, cmd, solutionsList)
   where
     fixMaximum :: (Int, Maybe Int) -> (Int, Int)
