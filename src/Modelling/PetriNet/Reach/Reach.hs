@@ -650,7 +650,7 @@ findNetGoalWithSolutions filterConfig maxPrintedSolutions NetGoalConfig {..} =
       out = do
         xss <- tries
         let grouped = reverse $ transpose xss
-            xs = concatMap (map (checkNetGoal . snd) . sortBy (comparing fst) . concat) grouped
+            xs = map (msum . map (checkNetGoal . snd) . sortBy (comparing fst) . concat) grouped
         if null xs
           then out
           else runMaybeT (msum xs)
