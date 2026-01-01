@@ -667,7 +667,7 @@ findNetGoalWithSolutions filterConfig maxPrintedSolutions NetGoalConfig {..} =
     (nLow, nHigh) = fixMaximum postconditionsRange
     ts = [Transition 1 .. Transition numTransitions]
 
--- | Validate drawability and solution filtering
+-- | Validate drawability and solution filter criteria, then prepare solutions for output
 validateDrawabilityAndSolutionFiltering
   :: (Enum t, MonadCatch m, MonadDiagrams m, MonadGraphviz m, Ord p, Ord t, Show p, Show t)
   => Net p t
