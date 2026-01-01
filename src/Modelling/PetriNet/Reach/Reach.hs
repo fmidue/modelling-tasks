@@ -100,7 +100,7 @@ import Modelling.PetriNet.Reach.Type (
   mark,
   )
 
-import Control.Applicative              (Alternative, (<|>))
+import Control.Applicative              (Alternative, empty, (<|>))
 import Control.Functor.Trans            (FunctorTrans (lift))
 import Control.Monad                    (guard, msum, replicateM, when, unless)
 import Control.Monad.Catch              (MonadCatch, MonadThrow)
@@ -666,10 +666,7 @@ findNetGoalWithSolutions filterConfig maxPrintedSolutions NetGoalConfig {..} =
             shuffleAndTry
               :: [[MaybeT (RandT StdGen m) (NetGoal Place Transition, Either (NonEmpty [Transition]) (NonEmpty [Transition]))]]
               -> MaybeT (RandT StdGen m) (NetGoal Place Transition, Either (NonEmpty [Transition]) (NonEmpty [Transition]))
-            shuffleAndTry [] = MaybeT (pure Nothing)
-            shuffleAndTry (innerList : rest) = do
-              shuffledList <- Monad.lift (shuffleM innerList)
-              msum shuffledList <|> shuffleAndTry rest
+            shuffleAndTry = foldr (\innerList rest -> (Monad.lift (shuffleM innerList) >>= msum) <|> rest) empty
         runMaybeT (msum (map (shuffleAndTry . groupSortByDistance) groupedByLevel))
   in MaybeT out
   where
