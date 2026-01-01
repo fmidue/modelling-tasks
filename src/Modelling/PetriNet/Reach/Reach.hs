@@ -663,7 +663,14 @@ findNetGoalWithSolutions filterConfig maxPrintedSolutions NetGoalConfig {..} =
               :: [[(Int, MaybeT (RandT StdGen m) (NetGoal Place Transition, Either (NonEmpty [Transition]) (NonEmpty [Transition])))]]
               -> [[MaybeT (RandT StdGen m) (NetGoal Place Transition, Either (NonEmpty [Transition]) (NonEmpty [Transition]))]]
             groupSortByDistance = M.elems . foldr (M.unionWith (++) . M.fromAscList . groupSort) M.empty
-        runMaybeT (msum (map (msum . map msum . groupSortByDistance) groupedByLevel))
+            shuffleAndTry
+              :: [[MaybeT (RandT StdGen m) (NetGoal Place Transition, Either (NonEmpty [Transition]) (NonEmpty [Transition]))]]
+              -> MaybeT (RandT StdGen m) (NetGoal Place Transition, Either (NonEmpty [Transition]) (NonEmpty [Transition]))
+            shuffleAndTry [] = MaybeT (pure Nothing)
+            shuffleAndTry (innerList : rest) = do
+              shuffledList <- Monad.lift (shuffleM innerList)
+              msum shuffledList <|> shuffleAndTry rest
+        runMaybeT (msum (map (shuffleAndTry . groupSortByDistance) groupedByLevel))
   in MaybeT out
   where
     fixMaximum :: (Int, Maybe Int) -> (Int, Int)
