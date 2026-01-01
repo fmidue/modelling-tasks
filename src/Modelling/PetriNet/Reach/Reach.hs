@@ -58,7 +58,7 @@ module Modelling.PetriNet.Reach.Reach (
 ) where
 
 import qualified Control.Monad.Trans              as Monad (lift)
-import qualified Data.Map                         as M (elems, empty, fromAscList, map, unionWith)
+import qualified Data.Map                         as M (elems, empty, fromDistinctAscList, map, unionWith)
 import qualified Data.Set                         as S (fromList, member, toList, union, empty)
 
 import Data.List.NonEmpty                 (NonEmpty((:|)), fromList)
@@ -660,11 +660,11 @@ findNetGoalWithSolutions filterConfig maxPrintedSolutions NetGoalConfig {..} =
         groupedByLevel <- reverse . transpose <$> replicateM 1000 try
         let groupSortByDistanceM :: [[(Int, a)]] -> RandT StdGen m [[a]]
             groupSortByDistanceM ys = do
-              let mapsWithActions = map (M.map shuffleM . M.fromAscList . groupSort) ys
+              let mapsWithActions = map (M.map shuffleM . M.fromDistinctAscList . groupSort) ys
                   finalMapWithActions = foldr (M.unionWith (\a b -> (++) <$> a <*> b)) M.empty mapsWithActions
               finalMap <- sequenceA finalMapWithActions
               pure (M.elems finalMap)
-        runMaybeT (msum (map (\level -> foldr (\sameDistance -> (msum sameDistance <|>)) empty =<< Monad.lift (groupSortByDistanceM level)) groupedByLevel))
+        runMaybeT (msum (map (\sameLevel -> foldr (\sameDistance -> (msum sameDistance <|>)) empty =<< Monad.lift (groupSortByDistanceM sameLevel)) groupedByLevel))
   where
     fixMaximum :: (Int, Maybe Int) -> (Int, Int)
     fixMaximum = second (min numPlaces . fromMaybe maxBound)
