@@ -681,7 +681,7 @@ validateDrawabilityAndSolutionFiltering
   -> Int
        -- ^ Total number of transitions in the Petri net, used in filtering decisions.
   -> Int
-       -- ^ Maximum number of solutions that may be included in the printed or returned set.
+       -- ^ Maximum number of solutions meant to be displayed to students.
   -> MaybeT (RandT StdGen m)
        (GraphvizCommand, Either (NonEmpty [t]) (NonEmpty [t]))
 validateDrawabilityAndSolutionFiltering petri drawCommands allShortestSolutions filterConfig numTransitions maxPrintedSolutions = do
