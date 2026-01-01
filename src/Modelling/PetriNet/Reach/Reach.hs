@@ -621,7 +621,7 @@ findNetGoalWithSolutions
   => FilterConfig
   -> Int
   -> NetGoalConfig
-  -> MaybeT (RandT StdGen m) (NetGoal Place Transition, Either (NonEmpty [Transition]) (NonEmpty [Transition]))
+  -> RandT StdGen m (Maybe (NetGoal Place Transition, Either (NonEmpty [Transition]) (NonEmpty [Transition])))
 findNetGoalWithSolutions filterConfig maxPrintedSolutions NetGoalConfig {..} =
   let ps = [Place 1 .. Place numPlaces]
       try :: RandT StdGen m [[(Int, MaybeT (RandT StdGen m) (NetGoal Place Transition, Either (NonEmpty [Transition]) (NonEmpty [Transition])))]]
@@ -656,19 +656,10 @@ findNetGoalWithSolutions filterConfig maxPrintedSolutions NetGoalConfig {..} =
                   petriNet    = n
                 }
             pure (netGoal, solutionsList))
-      out :: RandT StdGen m (Maybe (NetGoal Place Transition, Either (NonEmpty [Transition]) (NonEmpty [Transition])))
-      out = do
+  in do
         groupedByLevel <- reverse . transpose <$> replicateM 1000 try
-        let groupSortByDistance
-              :: [[(Int, MaybeT (RandT StdGen m) (NetGoal Place Transition, Either (NonEmpty [Transition]) (NonEmpty [Transition])))]]
-              -> [[MaybeT (RandT StdGen m) (NetGoal Place Transition, Either (NonEmpty [Transition]) (NonEmpty [Transition]))]]
-            groupSortByDistance = M.elems . foldr (M.unionWith (++) . M.fromAscList . groupSort) M.empty
-            shuffleAndTry
-              :: [[MaybeT (RandT StdGen m) (NetGoal Place Transition, Either (NonEmpty [Transition]) (NonEmpty [Transition]))]]
-              -> MaybeT (RandT StdGen m) (NetGoal Place Transition, Either (NonEmpty [Transition]) (NonEmpty [Transition]))
-            shuffleAndTry = foldr (\innerList rest -> (Monad.lift (shuffleM innerList) >>= msum) <|> rest) empty
-        runMaybeT (msum (map (shuffleAndTry . groupSortByDistance) groupedByLevel))
-  in MaybeT out
+        let groupSortByDistance = M.elems . foldr (M.unionWith (++) . M.fromAscList . groupSort) M.empty
+        runMaybeT (msum (map (foldr (\sameDistance -> ((Monad.lift (shuffleM sameDistance) >>= msum) <|>)) empty . groupSortByDistance) groupedByLevel))
   where
     fixMaximum :: (Int, Maybe Int) -> (Int, Int)
     fixMaximum = second (min numPlaces . fromMaybe maxBound)
