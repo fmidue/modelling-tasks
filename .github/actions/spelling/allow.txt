@@ -103,6 +103,7 @@ mappend
 mathrm
 mempty
 msum
+asum
 mul
 multicolumn
 nlabel
