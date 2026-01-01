@@ -100,9 +100,9 @@ import Modelling.PetriNet.Reach.Type (
   mark,
   )
 
-import Control.Applicative              (Alternative, empty, (<|>))
+import Control.Applicative              (Alternative, (<|>))
 import Control.Functor.Trans            (FunctorTrans (lift))
-import Control.Monad                    (guard, msum, replicateM, when, unless)
+import Control.Monad                    (guard, msum, replicateM, when, unless, (<=<))
 import Control.Monad.Catch              (MonadCatch, MonadThrow)
 import Control.Monad.Extra              (findM, whenJust)
 import Control.Monad.Trans.Maybe        (MaybeT (MaybeT, runMaybeT))
@@ -135,7 +135,7 @@ import System.Random.Shuffle            (shuffleM)
 import System.Random.Internal           (StdGen)
 import Data.Bifunctor                   (Bifunctor (second), bimap)
 import Data.Either.Combinators          (whenRight)
-import Data.Foldable                    (sequenceA_, traverse_)
+import Data.Foldable                    (asum, sequenceA_, traverse_)
 import Data.GraphViz                    (GraphvizCommand (..))
 import Data.List                        (singleton, transpose)
 import Data.List.Extra                  (groupSort, nubSort)
@@ -658,9 +658,8 @@ findNetGoalWithSolutions filterConfig maxPrintedSolutions NetGoalConfig {..} =
             pure (netGoal, solutionsList))
   in do
         groupedByLevel <- reverse . transpose <$> replicateM 1000 try
-        let groupSortByDistanceShuffled :: [[(Int, a)]] -> [RandT StdGen m [a]]
-            groupSortByDistanceShuffled = M.elems . foldr (M.unionWith (liftA2 (++)) . M.map shuffleM . M.fromDistinctAscList . groupSort) M.empty
-        runMaybeT (msum (map (foldr (\sameDistance -> (MaybeT (runMaybeT . msum =<< sameDistance) <|>)) empty . groupSortByDistanceShuffled) groupedByLevel))
+        let groupSortByDistanceShuffled = M.elems . foldr (M.unionWith (<|>) . M.map (MaybeT . ((runMaybeT . msum) <=< shuffleM)) . M.fromDistinctAscList . groupSort) M.empty
+        runMaybeT (msum (map (asum . groupSortByDistanceShuffled) groupedByLevel))
   where
     fixMaximum :: (Int, Maybe Int) -> (Int, Int)
     fixMaximum = second (min numPlaces . fromMaybe maxBound)
