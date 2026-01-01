@@ -658,13 +658,12 @@ findNetGoalWithSolutions filterConfig maxPrintedSolutions NetGoalConfig {..} =
             pure (netGoal, solutionsList))
   in do
         groupedByLevel <- reverse . transpose <$> replicateM 1000 try
-        let groupSortByDistanceM :: [[(Int, a)]] -> RandT StdGen m [[a]]
-            groupSortByDistanceM ys = do
+        let groupSortByDistanceM :: [[(Int, a)]] -> [RandT StdGen m [a]]
+            groupSortByDistanceM ys =
               let mapsWithActions = map (M.map shuffleM . M.fromDistinctAscList . groupSort) ys
                   finalMapWithActions = foldr (M.unionWith (\a b -> (++) <$> a <*> b)) M.empty mapsWithActions
-              finalMap <- sequenceA finalMapWithActions
-              pure (M.elems finalMap)
-        runMaybeT (msum (map (\sameLevel -> foldr (\sameDistance -> (msum sameDistance <|>)) empty =<< Monad.lift (groupSortByDistanceM sameLevel)) groupedByLevel))
+              in M.elems finalMapWithActions
+        runMaybeT (msum (map (foldr (\sameDistance -> ((Monad.lift sameDistance >>= msum) <|>)) empty . groupSortByDistanceM) groupedByLevel))
   where
     fixMaximum :: (Int, Maybe Int) -> (Int, Int)
     fixMaximum = second (min numPlaces . fromMaybe maxBound)
