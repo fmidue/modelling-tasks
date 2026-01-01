@@ -703,7 +703,7 @@ generateNetGoal filterConfig maxPrintedSolutions netGoalConfig seed =
     generate
       :: RandT StdGen m (NetGoal Place Transition, Either (NonEmpty [Transition]) (NonEmpty [Transition]))
     generate =
-      maybe generate pure =<< runMaybeT (findNetGoalWithSolutions filterConfig maxPrintedSolutions netGoalConfig)
+      maybe generate pure =<< findNetGoalWithSolutions filterConfig maxPrintedSolutions netGoalConfig
 
 checkReachConfig :: ReachConfig -> Maybe String
 checkReachConfig ReachConfig {..} =
