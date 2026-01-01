@@ -58,8 +58,8 @@ module Modelling.PetriNet.Reach.Reach (
 ) where
 
 import qualified Control.Monad.Trans              as Monad (lift)
+import qualified Data.Map                         as M (elems, empty, fromAscList, unionWith)
 import qualified Data.Set                         as S (fromList, member, toList, union, empty)
-import qualified Data.Map                         as M
 
 import Data.List.NonEmpty                 (NonEmpty((:|)), fromList)
 
@@ -663,7 +663,7 @@ findNetGoalWithSolutions filterConfig maxPrintedSolutions NetGoalConfig {..} =
         let groupSortByDistance
               :: [[(Int, MaybeT (RandT StdGen m) (NetGoal Place Transition, Either (NonEmpty [Transition]) (NonEmpty [Transition])))]]
               -> [[MaybeT (RandT StdGen m) (NetGoal Place Transition, Either (NonEmpty [Transition]) (NonEmpty [Transition]))]]
-            groupSortByDistance = M.elems . foldr (M.unionWith (++)) M.empty . map (M.fromAscList . groupSort)
+            groupSortByDistance = M.elems . foldr (M.unionWith (++) . M.fromAscList . groupSort) M.empty
         runMaybeT (msum (map (msum . map msum . groupSortByDistance) groupedByLevel))
   in MaybeT out
   where
