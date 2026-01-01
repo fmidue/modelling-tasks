@@ -74,7 +74,7 @@ import Modelling.PetriNet.Reach.Reach   (
   reportReachFor,
   transitionsValid,
   provideSolutionsFeedback,
-  validateFilterAndPrepareSolutions,
+  validateDrawabilityAndSolutionFiltering,
   )
 import Modelling.PetriNet.Reach.Roll    (netLimits)
 import Modelling.PetriNet.Reach.Step    (executes, successors)
@@ -389,7 +389,7 @@ try conf = do
     guard $ not $ null yeah
     let allShortestSolutions = map reverse . concatMap snd $ head yeah
     guard $ length no >= minTransitionLength conf
-    (cmd, solutionsList) <- validateFilterAndPrepareSolutions
+    (cmd, solutionsList) <- validateDrawabilityAndSolutionFiltering
       n (drawPreferenceOrder conf) allShortestSolutions
       (filterConfig conf) (numTransitions conf) (maxPrintedSolutions conf)
     pure (n, cmd, solutionsList)

@@ -54,7 +54,7 @@ module Modelling.PetriNet.Reach.Reach (
   transitionsValid,
   levelsWithAlternatives,
   provideSolutionsFeedback,
-  validateFilterAndPrepareSolutions,
+  validateDrawabilityAndSolutionFiltering,
 ) where
 
 import qualified Control.Monad.Trans              as Monad (lift)
@@ -648,7 +648,7 @@ findNetGoalWithSolutions filterConfig maxPrintedSolutions NetGoalConfig {..} =
               allShortestSolutions = map reverse transitionSequences
           guard (maxPlacesChanged == numPlaces || maxPlacesChanged >= length placeDifferences)
           return (d, do
-            (cmd, solutionsList) <- validateFilterAndPrepareSolutions
+            (cmd, solutionsList) <- validateDrawabilityAndSolutionFiltering
               n drawPreferenceOrder allShortestSolutions filterConfig numTransitions maxPrintedSolutions
             let netGoal = NetGoal {
                   drawUsing   = cmd,
@@ -667,8 +667,8 @@ findNetGoalWithSolutions filterConfig maxPrintedSolutions NetGoalConfig {..} =
     (nLow, nHigh) = fixMaximum postconditionsRange
     ts = [Transition 1 .. Transition numTransitions]
 
--- | Validate drawability, filter solutions, and prepare them for output
-validateFilterAndPrepareSolutions
+-- | Validate drawability and solution filtering
+validateDrawabilityAndSolutionFiltering
   :: (Enum t, MonadCatch m, MonadDiagrams m, MonadGraphviz m, Ord p, Ord t, Show p, Show t)
   => Net p t
   -> [GraphvizCommand]
@@ -678,7 +678,7 @@ validateFilterAndPrepareSolutions
   -> Int
   -> MaybeT (RandT StdGen m)
        (GraphvizCommand, Either (NonEmpty [t]) (NonEmpty [t]))
-validateFilterAndPrepareSolutions petri drawCommands allShortestSolutions filterConfig numTransitions maxPrintedSolutions = do
+validateDrawabilityAndSolutionFiltering petri drawCommands allShortestSolutions filterConfig numTransitions maxPrintedSolutions = do
   guard (not $ shouldDiscardSolutions filterConfig numTransitions allShortestSolutions)
   cmd <- MaybeT $ findM (Monad.lift . isPetriDrawable petri) drawCommands
   solutionsList <-
