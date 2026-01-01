@@ -59,6 +59,7 @@ module Modelling.PetriNet.Reach.Reach (
 
 import qualified Control.Monad.Trans              as Monad (lift)
 import qualified Data.Set                         as S (fromList, member, toList, union, empty)
+import qualified Data.Map                         as M
 
 import Data.List.NonEmpty                 (NonEmpty((:|)), fromList)
 
@@ -658,13 +659,12 @@ findNetGoalWithSolutions filterConfig maxPrintedSolutions NetGoalConfig {..} =
             pure (netGoal, solutionsList))
       out :: RandT StdGen m (Maybe (NetGoal Place Transition, Either (NonEmpty [Transition]) (NonEmpty [Transition])))
       out = do
-        xss <- replicateM 1000 try
-        let grouped = reverse $ transpose xss
-            sortByDistance
+        groupedByLevel <- reverse . transpose <$> replicateM 1000 try
+        let groupSortByDistance
               :: [[(Int, MaybeT (RandT StdGen m) (NetGoal Place Transition, Either (NonEmpty [Transition]) (NonEmpty [Transition])))]]
-              -> [(Int, MaybeT (RandT StdGen m) (NetGoal Place Transition, Either (NonEmpty [Transition]) (NonEmpty [Transition])))]
-            sortByDistance = sortBy (comparing fst) . concat
-        runMaybeT (msum (map (msum . map snd . sortByDistance) grouped))
+              -> [[MaybeT (RandT StdGen m) (NetGoal Place Transition, Either (NonEmpty [Transition]) (NonEmpty [Transition]))]]
+            groupSortByDistance = M.elems . foldr (M.unionWith (++)) M.empty . map (M.fromAscList . groupSort)
+        runMaybeT (msum (map (msum . map msum . groupSortByDistance) groupedByLevel))
   in MaybeT out
   where
     fixMaximum :: (Int, Maybe Int) -> (Int, Int)
