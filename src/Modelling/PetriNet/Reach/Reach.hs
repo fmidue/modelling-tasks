@@ -659,7 +659,7 @@ findNetGoalWithSolutions filterConfig maxPrintedSolutions NetGoalConfig {..} =
   in do
         groupedByLevel <- reverse . transpose <$> replicateM 1000 try
         let groupSortByDistanceM :: [[(Int, a)]] -> [RandT StdGen m [a]]
-            groupSortByDistanceM = M.elems . foldr (M.unionWith (\a b -> (++) <$> a <*> b)) M.empty . map (M.map shuffleM . M.fromDistinctAscList . groupSort)
+            groupSortByDistanceM = M.elems . foldr (M.unionWith (liftA2 (++)) . M.map shuffleM . M.fromDistinctAscList . groupSort) M.empty
         runMaybeT (msum (map (foldr (\sameDistance -> ((Monad.lift sameDistance >>= msum) <|>)) empty . groupSortByDistanceM) groupedByLevel))
   where
     fixMaximum :: (Int, Maybe Int) -> (Int, Int)
