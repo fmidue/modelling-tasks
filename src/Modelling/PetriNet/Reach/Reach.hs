@@ -663,7 +663,7 @@ findNetGoalWithSolutions filterConfig maxPrintedSolutions NetGoalConfig {..} =
               shuffledMaps <- traverse (traverse shuffleM . M.fromAscList . groupSort) ys
               let finalMap = foldr (M.unionWith (++)) M.empty shuffledMaps
               pure (M.elems finalMap)
-        runMaybeT (msum (map (\level -> do sameDistanceGroups <- Monad.lift (groupSortByDistanceM level); foldr (\sameDistance -> (msum sameDistance <|>)) empty sameDistanceGroups) groupedByLevel))
+        runMaybeT (msum (map (\level -> foldr (\sameDistance -> (msum sameDistance <|>)) empty =<< Monad.lift (groupSortByDistanceM level)) groupedByLevel))
   where
     fixMaximum :: (Int, Maybe Int) -> (Int, Int)
     fixMaximum = second (min numPlaces . fromMaybe maxBound)
