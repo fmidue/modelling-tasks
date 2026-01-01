@@ -624,8 +624,8 @@ findNetGoalWithSolutions
   -> MaybeT (RandT StdGen m) (NetGoal Place Transition, Either (NonEmpty [Transition]) (NonEmpty [Transition]))
 findNetGoalWithSolutions filterConfig maxPrintedSolutions NetGoalConfig {..} =
   let ps = [Place 1 .. Place numPlaces]
-      tries :: RandT StdGen m [[ [(Int, MaybeT (RandT StdGen m) (NetGoal Place Transition, Either (NonEmpty [Transition]) (NonEmpty [Transition])))] ]]
-      tries = replicateM 1000 $ do
+      try :: RandT StdGen m [[(Int, MaybeT (RandT StdGen m) (NetGoal Place Transition, Either (NonEmpty [Transition]) (NonEmpty [Transition])))]]
+      try = do
         n <- netLimits vLow vHigh nLow nHigh
             ps
             ts
@@ -658,16 +658,13 @@ findNetGoalWithSolutions filterConfig maxPrintedSolutions NetGoalConfig {..} =
             pure (netGoal, solutionsList))
       out :: RandT StdGen m (Maybe (NetGoal Place Transition, Either (NonEmpty [Transition]) (NonEmpty [Transition])))
       out = do
-        xss <- tries
+        xss <- replicateM 1000 try
         let grouped = reverse $ transpose xss
             sortByDistance
               :: [[(Int, MaybeT (RandT StdGen m) (NetGoal Place Transition, Either (NonEmpty [Transition]) (NonEmpty [Transition])))]]
               -> [(Int, MaybeT (RandT StdGen m) (NetGoal Place Transition, Either (NonEmpty [Transition]) (NonEmpty [Transition])))]
             sortByDistance = sortBy (comparing fst) . concat
-            xs = map (msum . map snd . sortByDistance) grouped
-        if null xs
-          then out
-          else runMaybeT (msum xs)
+        runMaybeT (msum (map (msum . map snd . sortByDistance) grouped))
   in MaybeT out
   where
     fixMaximum :: (Int, Maybe Int) -> (Int, Int)
