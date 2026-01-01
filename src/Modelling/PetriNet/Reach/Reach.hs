@@ -671,11 +671,17 @@ findNetGoalWithSolutions filterConfig maxPrintedSolutions NetGoalConfig {..} =
 validateDrawabilityAndSolutionFiltering
   :: (Enum t, MonadCatch m, MonadDiagrams m, MonadGraphviz m, Ord p, Ord t, Show p, Show t)
   => Net p t
+       -- ^ Petri net to validate for drawability and from which the solutions were derived.
   -> [GraphvizCommand]
+       -- ^ Ordered list of Graphviz commands (drawing backends) to try for rendering the net.
   -> [[t]]
+       -- ^ All shortest solutions found, represented as sequences of transitions.
   -> FilterConfig
+       -- ^ Configuration describing how to filter or discard solutions before output.
   -> Int
+       -- ^ Total number of transitions in the Petri net, used in filtering decisions.
   -> Int
+       -- ^ Maximum number of solutions that may be included in the printed or returned set.
   -> MaybeT (RandT StdGen m)
        (GraphvizCommand, Either (NonEmpty [t]) (NonEmpty [t]))
 validateDrawabilityAndSolutionFiltering petri drawCommands allShortestSolutions filterConfig numTransitions maxPrintedSolutions = do
