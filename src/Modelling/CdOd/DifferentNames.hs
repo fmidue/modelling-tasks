@@ -327,7 +327,6 @@ data DifferentNamesTaskTextElement
   = GivenCd
   | GivenOd
   | DirectionsAdvice
-  | HoveringInformation
   | MappingAdvice
   | SimplifiedInformation
   deriving (Bounded, Enum, Eq, Generic, Hashable, Ord, Read, Reader, Show, ToDoc)
@@ -340,6 +339,7 @@ differentNamesTask
   -> LangM m
 differentNamesTask showInputHelp path task = do
   toTaskText showInputHelp path task
+  hoveringInformation True
   pure ()
 
 toTaskText
@@ -408,7 +408,6 @@ toTaskSpecificText path DifferentNamesInstance {..} = \case
     cacheOd oDiagram Forward True path
   MappingAdvice -> mappingAdvice False
   DirectionsAdvice -> directionsAdvice False
-  HoveringInformation -> hoveringInformation True
   SimplifiedInformation -> simplifiedInformation True
   where
     cd = fromClassDiagram cDiagram
@@ -434,8 +433,7 @@ defaultDifferentNamesTaskText = [
       |],
   Special MappingAdvice,
   Special DirectionsAdvice,
-  Special SimplifiedInformation,
-  Special HoveringInformation
+  Special SimplifiedInformation
   ]
 
 inputHelpText :: Output
