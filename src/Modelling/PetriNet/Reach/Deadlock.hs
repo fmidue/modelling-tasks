@@ -115,7 +115,7 @@ import Control.Functor.Trans            (FunctorTrans (lift))
 import Control.Monad                    (guard)
 import Control.Monad.Catch              (MonadCatch, MonadThrow)
 import Control.Monad.Random             (evalRandT, mkStdGen)
-import Control.Monad.Trans.Maybe        (MaybeT (MaybeT), runMaybeT)
+import Control.Monad.Trans.Maybe        (MaybeT, runMaybeT)
 import Control.Monad.Trans.Random       (RandT)
 import System.Random.Internal           (StdGen)
 import Data.GraphViz                    (GraphvizCommand (..))
@@ -382,7 +382,7 @@ try
 try conf = do
     let ps = [Place 1 .. Place (numPlaces conf)]
         ts = [Transition 1 .. Transition (numTransitions conf)]
-    maybeNet <- netLimitsFiltered
+    n <- netLimitsFiltered
       (preconditionsRange conf)
       (postconditionsRange conf)
       (numPlaces conf)
@@ -390,7 +390,6 @@ try conf = do
       ts
       (Modelling.PetriNet.Reach.Deadlock.capacity conf)
       (transitionBehaviorConstraints conf)
-    n <- MaybeT $ pure maybeNet
     let deadlockLevels = map (filter (null . successors n . fst)) (levelsWithAlternatives n)
         (no, yeah) = span null
           $ take (maxTransitionLength conf + 1)
