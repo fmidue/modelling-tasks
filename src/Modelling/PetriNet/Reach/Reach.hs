@@ -58,7 +58,7 @@ module Modelling.PetriNet.Reach.Reach (
 ) where
 
 import qualified Control.Monad.Trans              as Monad (lift)
-import qualified Data.Map                         as M (elems, empty, fromAscList, unionWith)
+import qualified Data.Map                         as M (elems, empty, fromDistinctAscList, map, unionWith)
 import qualified Data.Set                         as S (fromList, member, toList, union, empty)
 
 import Data.List.NonEmpty                 (NonEmpty((:|)), fromList)
@@ -100,9 +100,9 @@ import Modelling.PetriNet.Reach.Type (
   mark,
   )
 
-import Control.Applicative              (Alternative, empty, (<|>))
+import Control.Applicative              (Alternative, (<|>))
 import Control.Functor.Trans            (FunctorTrans (lift))
-import Control.Monad                    (guard, msum, replicateM, when, unless)
+import Control.Monad                    (guard, msum, replicateM, when, unless, (>=>))
 import Control.Monad.Catch              (MonadCatch, MonadThrow)
 import Control.Monad.Extra              (findM, whenJust)
 import Control.Monad.Trans.Maybe        (MaybeT (MaybeT, runMaybeT))
@@ -658,8 +658,9 @@ findNetGoalWithSolutions filterConfig maxPrintedSolutions NetGoalConfig {..} =
             pure (netGoal, solutionsList))
   in do
         groupedByLevel <- reverse . transpose <$> replicateM 1000 try
-        let groupSortByDistance = M.elems . foldr (M.unionWith (++) . M.fromAscList . groupSort) M.empty
-        runMaybeT (msum (map (foldr (\sameDistance -> ((Monad.lift (shuffleM sameDistance) >>= msum) <|>)) empty . groupSortByDistance) groupedByLevel))
+        let choosePerDistance :: [[(Int, MaybeT (RandT StdGen m) a)]] -> [MaybeT (RandT StdGen m) a]
+            choosePerDistance = M.elems . foldr (M.unionWith (<|>) . M.map (shuffleM >=> msum) . M.fromDistinctAscList . groupSort) M.empty
+        runMaybeT (msum (map (msum . choosePerDistance) groupedByLevel))
   where
     fixMaximum :: (Int, Maybe Int) -> (Int, Int)
     fixMaximum = second (min numPlaces . fromMaybe maxBound)
@@ -692,7 +693,7 @@ validateDrawabilityAndSolutionFiltering petri drawCommands allShortestSolutions 
       then pure $ Left $ fromList (take (max 1 maxPrintedSolutions) allShortestSolutions)
       else if maxPrintedSolutions >= length allShortestSolutions
         then pure $ Right $ fromList allShortestSolutions
-        else Monad.lift $ Right . fromList <$> shuffleM allShortestSolutions
+        else Right . fromList <$> shuffleM allShortestSolutions
   pure (cmd, solutionsList)
 
 -- | Generate NetGoal with filtering for trivial solutions
