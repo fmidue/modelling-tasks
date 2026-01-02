@@ -658,15 +658,15 @@ findNetGoalWithSolutions filterConfig maxPrintedSolutions NetGoalConfig {..} =
             pure (netGoal, solutionsList))
   in do
         groupedByLevel <- reverse . transpose <$> replicateM 1000 try
-        let groupSortByDistanceShuffled :: [[(Int, MaybeT (RandT StdGen m) (NetGoal Place Transition, Either (NonEmpty [Transition]) (NonEmpty [Transition])))]]
-                                        -> [MaybeT (RandT StdGen m) (NetGoal Place Transition, Either (NonEmpty [Transition]) (NonEmpty [Transition]))]
+        let groupSortByDistanceShuffled :: [[(Int, MaybeT (RandT StdGen m) ne)]]
+                                        -> [MaybeT (RandT StdGen m) ne]
             groupSortByDistanceShuffled = M.elems . foldr (M.unionWith (<|>) . M.map (msum' <=< shuffleM') . M.fromDistinctAscList . groupSort) M.empty
               where
-                shuffleM' :: [MaybeT (RandT StdGen m) (NetGoal Place Transition, Either (NonEmpty [Transition]) (NonEmpty [Transition]))]
-                          -> MaybeT (RandT StdGen m) [MaybeT (RandT StdGen m) (NetGoal Place Transition, Either (NonEmpty [Transition]) (NonEmpty [Transition]))]
+                shuffleM' :: [MaybeT (RandT StdGen m) ne]
+                          -> MaybeT (RandT StdGen m) [MaybeT (RandT StdGen m) ne]
                 shuffleM' = shuffleM
-                msum' :: [MaybeT (RandT StdGen m) (NetGoal Place Transition, Either (NonEmpty [Transition]) (NonEmpty [Transition]))]
-                      -> MaybeT (RandT StdGen m) (NetGoal Place Transition, Either (NonEmpty [Transition]) (NonEmpty [Transition]))
+                msum' :: [MaybeT (RandT StdGen m) ne]
+                      -> MaybeT (RandT StdGen m) ne
                 msum' = msum
         runMaybeT (msum (map (msum . groupSortByDistanceShuffled) groupedByLevel))
   where
