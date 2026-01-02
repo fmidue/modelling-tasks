@@ -44,7 +44,6 @@ module Modelling.PetriNet.Reach.Deadlock (
   exampleInstance,
 ) where
 
-import qualified Control.Monad.Trans              as Monad (lift)
 import qualified Data.Map                         as M (fromList)
 import qualified Data.Set                         as S (fromList, toList)
 
@@ -386,7 +385,7 @@ try
 try conf = do
     let ps = [Place 1 .. Place (numPlaces conf)]
         ts = [Transition 1 .. Transition (numTransitions conf)]
-    n <- Monad.lift $ netLimits vLow vHigh nLow nHigh
+    n <- netLimits vLow vHigh nLow nHigh
       ps
       ts
       (Modelling.PetriNet.Reach.Deadlock.capacity conf)
