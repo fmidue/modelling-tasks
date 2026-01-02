@@ -272,12 +272,12 @@ isTokenDecreasing connection =
   in consumed > produced
 
 -- | Count transitions in a net with specific token behavior
-countTransitionsByBehavior
+transitionsByBehavior
   :: Net s t
   -> (Connection s t -> Bool)
-  -> Int
-countTransitionsByBehavior net predicate =
-  length $ filter predicate $ connections net
+  -> [Connection s t]
+transitionsByBehavior net predicate =
+  filter predicate $ connections net
 
 -- | Check if a net satisfies the given transition behavior constraints
 satisfiesTransitionBehaviorConstraints
@@ -289,11 +289,11 @@ satisfiesTransitionBehaviorConstraints net TransitionBehaviorConstraints {..} =
   where
     checkAllowedTypes = case allowedTokenChangeTypes of
       Nothing -> True
-      Just LT -> countTransitionsByBehavior net isTokenIncreasing == 0
-      Just GT -> countTransitionsByBehavior net isTokenDecreasing == 0
+      Just LT -> null (transitionsByBehavior net isTokenIncreasing)
+      Just GT -> null (transitionsByBehavior net isTokenDecreasing)
       Just EQ -> error "satisfiesTransitionBehaviorConstraints: Just EQ should be rejected by config validation"
     checkExactlyNonPreserving = case exactlyNonPreserving of
       Nothing -> True
       Just expected ->
-        let nonPreserving = countTransitionsByBehavior net (not . isTokenPreserving)
+        let nonPreserving = length $ transitionsByBehavior net (not . isTokenPreserving)
         in nonPreserving == expected
