@@ -102,8 +102,8 @@ lstset
 mappend
 mathrm
 mempty
-msum
 asum
+msum
 mul
 multicolumn
 nlabel
