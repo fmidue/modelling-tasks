@@ -102,7 +102,7 @@ import Modelling.PetriNet.Reach.Type (
 
 import Control.Applicative              (Alternative, (<|>))
 import Control.Functor.Trans            (FunctorTrans (lift))
-import Control.Monad                    (guard, msum, replicateM, when, unless, (<=<))
+import Control.Monad                    (guard, msum, replicateM, when, unless, (>=>))
 import Control.Monad.Catch              (MonadCatch, MonadThrow)
 import Control.Monad.Extra              (findM, whenJust)
 import Control.Monad.Trans.Maybe        (MaybeT (MaybeT, runMaybeT))
@@ -658,17 +658,9 @@ findNetGoalWithSolutions filterConfig maxPrintedSolutions NetGoalConfig {..} =
             pure (netGoal, solutionsList))
   in do
         groupedByLevel <- reverse . transpose <$> replicateM 1000 try
-        let groupSortByDistanceShuffled :: [[(Int, MaybeT (RandT StdGen m) ne)]]
-                                        -> [MaybeT (RandT StdGen m) ne]
-            groupSortByDistanceShuffled = M.elems . foldr (M.unionWith (<|>) . M.map (msum' <=< shuffleM') . M.fromDistinctAscList . groupSort) M.empty
-              where
-                shuffleM' :: [MaybeT (RandT StdGen m) ne]
-                          -> MaybeT (RandT StdGen m) [MaybeT (RandT StdGen m) ne]
-                shuffleM' = shuffleM
-                msum' :: [MaybeT (RandT StdGen m) ne]
-                      -> MaybeT (RandT StdGen m) ne
-                msum' = msum
-        runMaybeT (msum (map (msum . groupSortByDistanceShuffled) groupedByLevel))
+        let groupSortByDistanceRandomlyChosen :: [[(Int, MaybeT (RandT StdGen m) a)]] -> [MaybeT (RandT StdGen m) a]
+            groupSortByDistanceRandomlyChosen = M.elems . foldr (M.unionWith (<|>) . M.map (shuffleM >=> msum) . M.fromDistinctAscList . groupSort) M.empty
+        runMaybeT (msum (map (msum . groupSortByDistanceRandomlyChosen) groupedByLevel))
   where
     fixMaximum :: (Int, Maybe Int) -> (Int, Int)
     fixMaximum = second (min numPlaces . fromMaybe maxBound)
