@@ -432,7 +432,10 @@ defaultDifferentNamesTaskText = [
       Welche Beziehung im Klassendiagramm (CD)
       entspricht welchen Links im Objektdiagramm (OD)?
       |],
-  Special MappingAdvice
+  Special MappingAdvice,
+  Special DirectionsAdvice,
+  Special SimplifiedInformation,
+  Special HoveringInformation
   ]
 
 inputHelpText :: Output
