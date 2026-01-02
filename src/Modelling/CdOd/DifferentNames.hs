@@ -326,7 +326,10 @@ type DifferentNamesTaskText = [SpecialOutput DifferentNamesTaskTextElement]
 data DifferentNamesTaskTextElement
   = GivenCd
   | GivenOd
+  | DirectionsAdvice
+  | HoveringInformation
   | MappingAdvice
+  | SimplifiedInformation
   deriving (Bounded, Enum, Eq, Generic, Hashable, Ord, Read, Reader, Show, ToDoc)
 
 differentNamesTask
@@ -337,9 +340,6 @@ differentNamesTask
   -> LangM m
 differentNamesTask showInputHelp path task = do
   toTaskText showInputHelp path task
-  directionsAdvice False
-  simplifiedInformation True
-  hoveringInformation True
   pure ()
 
 toTaskText
@@ -407,6 +407,9 @@ toTaskSpecificText path DifferentNamesInstance {..} = \case
   GivenOd -> paragraph $ image $=<<
     cacheOd oDiagram Forward True path
   MappingAdvice -> mappingAdvice False
+  DirectionsAdvice -> directionsAdvice False
+  HoveringInformation -> hoveringInformation True
+  SimplifiedInformation -> simplifiedInformation True
   where
     cd = fromClassDiagram cDiagram
 
