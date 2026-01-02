@@ -3,7 +3,10 @@ originally from Autotool (https://gitlab.imn.htwk-leipzig.de/autotool/all0)
 based on revision: ad25a990816a162fdd13941ff889653f22d6ea0a
 based on file: collection/src/Petri/Roll.hs
 -}
-module Modelling.PetriNet.Reach.Roll (netLimits) where
+module Modelling.PetriNet.Reach.Roll (
+  netLimits,
+  netLimitsFiltered
+  ) where
 
 import qualified Data.Map                         as M (fromList)
 import qualified Data.Set                         as S (fromList)
@@ -13,10 +16,14 @@ import Modelling.PetriNet.Reach.Type (
   Capacity,
   State (State),
   Connection,
+  TransitionBehaviorConstraints,
+  hasIsolatedNodes,
+  satisfiesTransitionBehaviorConstraints,
   )
 
-import Control.Monad                    (forM)
+import Control.Monad                    (forM, guard)
 import Control.Monad.Random.Class       (MonadRandom (getRandomR))
+import Data.Maybe                       (fromMaybe)
 import System.Random.Shuffle            (shuffleM)
 
 netConns
@@ -86,3 +93,29 @@ takeRandom :: MonadRandom m => Int -> Int -> [a] -> m [a]
 takeRandom low high xs  = take
   <$> getRandomR (low, high)
   <*> shuffleM xs
+
+-- | Generate a net with limits and apply standard filters
+-- This combines net generation with filtering for isolated nodes and transition behavior constraints
+netLimitsFiltered
+  :: (MonadRandom m, Ord s, Ord t)
+  => (Int, Maybe Int)                  -- ^ preconditionsRange
+  -> (Int, Maybe Int)                  -- ^ postconditionsRange
+  -> Int                               -- ^ numPlaces
+  -> [s]                               -- ^ places
+  -> [t]                               -- ^ transitions
+  -> Capacity s                        -- ^ capacityConstraint
+  -> TransitionBehaviorConstraints     -- ^ transition behavior constraints
+  -> m (Maybe (Net s t))
+netLimitsFiltered preconditionsRange postconditionsRange numPlaces ps ts capacityConstraint transitionBehaviorConstraints = do
+  n <- netLimits vLow vHigh nLow nHigh ps ts capacityConstraint
+  return $ do
+    -- Filter out nets with isolated nodes
+    guard $ not $ hasIsolatedNodes n
+    -- Filter out nets that don't satisfy transition behavior constraints
+    guard $ satisfiesTransitionBehaviorConstraints n transitionBehaviorConstraints
+    return n
+  where
+    fixMaximum :: (Int, Maybe Int) -> (Int, Int)
+    fixMaximum (low, high) = (low, min numPlaces $ fromMaybe maxBound high)
+    (vLow, vHigh) = fixMaximum preconditionsRange
+    (nLow, nHigh) = fixMaximum postconditionsRange
