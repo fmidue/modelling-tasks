@@ -271,7 +271,7 @@ isTokenDecreasing connection =
   let (consumed, produced) = connectionTokenBehavior connection
   in consumed > produced
 
--- | Count transitions in a net with specific token behavior
+-- | Filter connections in a net by a token behavior predicate
 transitionsByBehavior
   :: Net s t
   -> (Connection s t -> Bool)
