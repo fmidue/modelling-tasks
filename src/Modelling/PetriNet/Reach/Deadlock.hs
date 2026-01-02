@@ -48,17 +48,15 @@ import qualified Control.Monad.Trans              as Monad (lift)
 import qualified Data.Map                         as M (fromList)
 import qualified Data.Set                         as S (fromList, toList)
 
-import Data.List.NonEmpty                 (NonEmpty((:|)), fromList)
+import Data.List.NonEmpty                 (NonEmpty((:|)))
 
 import Capabilities.Cache               (MonadCache)
 import Capabilities.Diagrams            (MonadDiagrams)
 import Capabilities.Graphviz            (MonadGraphviz)
-import Modelling.PetriNet.Reach.Draw    (drawToFile, isPetriDrawable)
+import Modelling.PetriNet.Reach.Draw    (drawToFile)
 import Modelling.PetriNet.Reach.Filter (
   FilterConfig (..),
-  shouldDiscardSolutions,
   defaultFilterConfig,
-  noFiltering,
   )
 import Modelling.PetriNet.Reach.Property (
   Property (Default),
@@ -77,6 +75,7 @@ import Modelling.PetriNet.Reach.Reach   (
   reportReachFor,
   transitionsValid,
   provideSolutionsFeedback,
+  validateDrawabilityAndSolutionFiltering,
   )
 import Modelling.PetriNet.Reach.Roll    (netLimits)
 import Modelling.PetriNet.Reach.Step    (executes, successors)
@@ -118,11 +117,9 @@ import Data.Either.Combinators          (whenRight)
 import Control.Functor.Trans            (FunctorTrans (lift))
 import Control.Monad                    (guard)
 import Control.Monad.Catch              (MonadCatch, MonadThrow)
-import Control.Monad.Extra              (findM)
 import Control.Monad.Random             (evalRandT, mkStdGen)
-import Control.Monad.Trans.Maybe        (MaybeT (MaybeT, runMaybeT))
+import Control.Monad.Trans.Maybe        (MaybeT, runMaybeT)
 import Control.Monad.Trans.Random       (RandT)
-import System.Random.Shuffle            (shuffleM)
 import System.Random.Internal           (StdGen)
 import Data.GraphViz                    (GraphvizCommand (..))
 import Data.Maybe                       (fromMaybe)
@@ -264,7 +261,8 @@ data DeadlockConfig = DeadlockConfig {
   numPlaces :: Int,
   numTransitions :: Int,
   capacity :: Capacity Place,
-  drawCommands        :: [GraphvizCommand],
+  -- | Draw commands in order of preference
+  drawPreferenceOrder :: [GraphvizCommand],
   maxTransitionLength :: Int,
   minTransitionLength :: Int,
   transitionBehaviorConstraints :: TransitionBehaviorConstraints,
@@ -288,7 +286,7 @@ defaultDeadlockConfig =
   numPlaces = 6,
   numTransitions = 6,
   Modelling.PetriNet.Reach.Deadlock.capacity = Unbounded,
-  drawCommands        = [Dot, Neato, TwoPi, Circo, Fdp, Sfdp, Osage, Patchwork],
+  drawPreferenceOrder = [Dot, Neato, TwoPi, Circo, Fdp, Sfdp, Osage, Patchwork],
   maxTransitionLength = 8,
   minTransitionLength = 8,
   transitionBehaviorConstraints = noTransitionBehaviorConstraints,
@@ -326,7 +324,7 @@ checkDeadlockConfig DeadlockConfig {..} =
     maxTransitionLength
     preconditionsRange
     postconditionsRange
-    drawCommands
+    drawPreferenceOrder
     rejectLongerThan
     showLengthHint
   <|>
@@ -403,14 +401,9 @@ try conf = do
     guard $ not $ null yeah
     let allShortestSolutions = map reverse . concatMap snd $ head yeah
     guard $ length no >= minTransitionLength conf
-    guard (not $ shouldDiscardSolutions (filterConfig conf) (numTransitions conf) allShortestSolutions)
-    cmd <- MaybeT $ findM (Monad.lift . isPetriDrawable n) (drawCommands conf)
-    solutionsList <-
-      if filterConfig conf == noFiltering
-        then pure $ Left $ fromList (take (max 1 (maxPrintedSolutions conf)) allShortestSolutions)
-        else if maxPrintedSolutions conf >= length allShortestSolutions
-          then pure $ Right $ fromList allShortestSolutions
-          else Right . fromList <$> Monad.lift (shuffleM allShortestSolutions)
+    (cmd, solutionsList) <- validateDrawabilityAndSolutionFiltering
+      n (drawPreferenceOrder conf) allShortestSolutions
+      (filterConfig conf) (numTransitions conf) (maxPrintedSolutions conf)
     pure (n, cmd, solutionsList)
   where
     fixMaximum :: (Int, Maybe Int) -> (Int, Int)
