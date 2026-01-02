@@ -3,10 +3,7 @@ originally from Autotool (https://gitlab.imn.htwk-leipzig.de/autotool/all0)
 based on revision: ad25a990816a162fdd13941ff889653f22d6ea0a
 based on file: collection/src/Petri/Roll.hs
 -}
-module Modelling.PetriNet.Reach.Roll (
-  netLimits,
-  netLimitsFiltered
-  ) where
+module Modelling.PetriNet.Reach.Roll (netLimitsFiltered) where
 
 import qualified Data.Map                         as M (fromList)
 import qualified Data.Set                         as S (fromList)
