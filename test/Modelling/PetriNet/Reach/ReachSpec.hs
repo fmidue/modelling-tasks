@@ -251,6 +251,71 @@ spec = do
             nonPreservingCount = length $ filter (not . isTokenPreserving) $ connections net
         nonPreservingCount `shouldBe` 2
 
+    it "rejects allowedTokenChangeTypes = Just LT with impossible range (vHigh <= nLow)" $ do
+      let config = defaultReachConfig {
+            netGoalConfig = (netGoalConfig defaultReachConfig) {
+              preconditionsRange = (1, Just 2),
+              postconditionsRange = (3, Just 5),
+              transitionBehaviorConstraints = TransitionBehaviorConstraints {
+                allowedTokenChangeTypes = Just LT,
+                exactlyNonPreserving = Nothing
+                }
+              }
+            }
+      checkReachConfig config `shouldSatisfy` isJust
+
+    it "rejects allowedTokenChangeTypes = Just GT with impossible range (nHigh <= vLow)" $ do
+      let config = defaultReachConfig {
+            netGoalConfig = (netGoalConfig defaultReachConfig) {
+              preconditionsRange = (3, Just 5),
+              postconditionsRange = (1, Just 2),
+              transitionBehaviorConstraints = TransitionBehaviorConstraints {
+                allowedTokenChangeTypes = Just GT,
+                exactlyNonPreserving = Nothing
+                }
+              }
+            }
+      checkReachConfig config `shouldSatisfy` isJust
+
+    it "rejects exactlyNonPreserving > 0 with fixed equal ranges" $ do
+      let config = defaultReachConfig {
+            netGoalConfig = (netGoalConfig defaultReachConfig) {
+              preconditionsRange = (2, Just 2),
+              postconditionsRange = (2, Just 2),
+              transitionBehaviorConstraints = TransitionBehaviorConstraints {
+                allowedTokenChangeTypes = Nothing,
+                exactlyNonPreserving = Just 1
+                }
+              }
+            }
+      checkReachConfig config `shouldSatisfy` isJust
+
+    it "accepts allowedTokenChangeTypes = Just LT with valid range" $ do
+      let config = defaultReachConfig {
+            netGoalConfig = (netGoalConfig defaultReachConfig) {
+              preconditionsRange = (2, Just 5),
+              postconditionsRange = (0, Just 3),
+              transitionBehaviorConstraints = TransitionBehaviorConstraints {
+                allowedTokenChangeTypes = Just LT,
+                exactlyNonPreserving = Nothing
+                }
+              }
+            }
+      checkReachConfig config `shouldBe` Nothing
+
+    it "accepts allowedTokenChangeTypes = Just GT with valid range" $ do
+      let config = defaultReachConfig {
+            netGoalConfig = (netGoalConfig defaultReachConfig) {
+              preconditionsRange = (0, Just 3),
+              postconditionsRange = (2, Just 5),
+              transitionBehaviorConstraints = TransitionBehaviorConstraints {
+                allowedTokenChangeTypes = Just GT,
+                exactlyNonPreserving = Nothing
+                }
+              }
+            }
+      checkReachConfig config `shouldBe` Nothing
+
 hasMinTransitionLength
   :: (Ord s, Show s)
   => (State s -> Bool)

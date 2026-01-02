@@ -15,7 +15,7 @@ module Modelling.PetriNet.Reach.ConfigValidation (
 import Control.Applicative (Alternative ((<|>)))
 import Data.GraphViz.Commands (GraphvizCommand)
 import Data.List.Extra (notNull)
-import Data.Maybe (isJust)
+import Data.Maybe (fromMaybe, isJust)
 import Modelling.PetriNet.Reach.Filter (
   FilterConfig (..),
   noFiltering,
@@ -189,10 +189,12 @@ checkFilterConfigWith rejectLongerThan theTransitionLength@minTransitionLength n
 
 -- | Check transition behavior constraints for validity
 checkTransitionBehaviorConstraints
-  :: Int                               -- ^ numTransitions
+  :: (Int, Maybe Int)                  -- ^ preconditionsRange
+  -> (Int, Maybe Int)                  -- ^ postconditionsRange
+  -> Int                               -- ^ numTransitions
   -> TransitionBehaviorConstraints     -- ^ constraints
   -> Maybe String
-checkTransitionBehaviorConstraints numTransitions TransitionBehaviorConstraints {..}
+checkTransitionBehaviorConstraints preconditionsRange postconditionsRange numTransitions TransitionBehaviorConstraints {..}
   | Just EQ <- allowedTokenChangeTypes
   = Just "allowedTokenChangeTypes = Just EQ is meaningless; use exactlyNonPreserving = Just 0 instead"
   | Just numberOfNonPreserving <- exactlyNonPreserving
@@ -201,5 +203,24 @@ checkTransitionBehaviorConstraints numTransitions TransitionBehaviorConstraints 
   | exactlyNonPreserving == Just 0
   , isJust allowedTokenChangeTypes
   = Just "When exactlyNonPreserving = 0 (all transitions token-preserving), allowedTokenChangeTypes must be Nothing"
+  | Just LT <- allowedTokenChangeTypes
+  , vHigh <= nLow
+  = Just "allowedTokenChangeTypes = Just LT (only token-decreasing) is impossible with the given ranges: \
+         \all transitions would have consumed <= produced"
+  | Just GT <- allowedTokenChangeTypes
+  , nHigh <= vLow
+  = Just "allowedTokenChangeTypes = Just GT (only token-increasing) is impossible with the given ranges: \
+         \all transitions would have produced <= consumed"
+  | Just numberOfNonPreserving <- exactlyNonPreserving
+  , numberOfNonPreserving > 0
+  , vLow == vHigh && nLow == nHigh && vLow == nLow
+  = Just $ "exactlyNonPreserving = " ++ show numberOfNonPreserving ++ " is impossible: \
+           \with preconditionsRange and postconditionsRange both fixed at " ++ show vLow ++ ", \
+           \all transitions are token-preserving"
   | otherwise
   = Nothing
+  where
+    (vLow, vHighMaybe) = preconditionsRange
+    (nLow, nHighMaybe) = postconditionsRange
+    vHigh = fromMaybe maxBound vHighMaybe
+    nHigh = fromMaybe maxBound nHighMaybe
