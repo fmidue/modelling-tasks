@@ -102,7 +102,7 @@ import Modelling.PetriNet.Reach.Type (
 
 import Control.Applicative              (Alternative, (<|>))
 import Control.Functor.Trans            (FunctorTrans (lift))
-import Control.Monad                    (guard, msum, replicateM, when, unless, (>=>))
+import Control.Monad                    (guard, msum, replicateM, when, unless, (<=<))
 import Control.Monad.Catch              (MonadCatch, MonadThrow)
 import Control.Monad.Extra              (findM, whenJust)
 import Control.Monad.Trans.Maybe        (MaybeT (MaybeT, runMaybeT))
@@ -135,7 +135,7 @@ import System.Random.Shuffle            (shuffleM)
 import System.Random.Internal           (StdGen)
 import Data.Bifunctor                   (Bifunctor (second), bimap)
 import Data.Either.Combinators          (whenRight)
-import Data.Foldable                    (asum, sequenceA_, traverse_)
+import Data.Foldable                    (sequenceA_, traverse_)
 import Data.GraphViz                    (GraphvizCommand (..))
 import Data.List                        (singleton, transpose)
 import Data.List.Extra                  (groupSort, nubSort)
@@ -660,8 +660,15 @@ findNetGoalWithSolutions filterConfig maxPrintedSolutions NetGoalConfig {..} =
         groupedByLevel <- reverse . transpose <$> replicateM 1000 try
         let groupSortByDistanceShuffled :: [[(Int, MaybeT (RandT StdGen m) (NetGoal Place Transition, Either (NonEmpty [Transition]) (NonEmpty [Transition])))]]
                                         -> [MaybeT (RandT StdGen m) (NetGoal Place Transition, Either (NonEmpty [Transition]) (NonEmpty [Transition]))]
-            groupSortByDistanceShuffled = M.elems . foldr (M.unionWith (<|>) . M.map (shuffleM >=> msum) . M.fromDistinctAscList . groupSort) M.empty
-        runMaybeT (asum (map (asum . groupSortByDistanceShuffled) groupedByLevel))
+            groupSortByDistanceShuffled = M.elems . foldr (M.unionWith (<|>) . M.map (msum' <=< shuffleM') . M.fromDistinctAscList . groupSort) M.empty
+              where
+                shuffleM' :: [MaybeT (RandT StdGen m) (NetGoal Place Transition, Either (NonEmpty [Transition]) (NonEmpty [Transition]))]
+                          -> MaybeT (RandT StdGen m) [MaybeT (RandT StdGen m) (NetGoal Place Transition, Either (NonEmpty [Transition]) (NonEmpty [Transition]))]
+                shuffleM' = Monad.lift . shuffleM
+                msum' :: [MaybeT (RandT StdGen m) (NetGoal Place Transition, Either (NonEmpty [Transition]) (NonEmpty [Transition]))]
+                      -> MaybeT (RandT StdGen m) (NetGoal Place Transition, Either (NonEmpty [Transition]) (NonEmpty [Transition]))
+                msum' = msum
+        runMaybeT (msum (map (msum . groupSortByDistanceShuffled) groupedByLevel))
   where
     fixMaximum :: (Int, Maybe Int) -> (Int, Int)
     fixMaximum = second (min numPlaces . fromMaybe maxBound)

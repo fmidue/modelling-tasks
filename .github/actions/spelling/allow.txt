@@ -102,7 +102,6 @@ lstset
 mappend
 mathrm
 mempty
-asum
 msum
 mul
 multicolumn
