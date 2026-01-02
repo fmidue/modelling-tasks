@@ -701,7 +701,7 @@ validateDrawabilityAndSolutionFiltering petri drawCommands allShortestSolutions 
       then pure $ Left $ fromList (take (max 1 maxPrintedSolutions) allShortestSolutions)
       else if maxPrintedSolutions >= length allShortestSolutions
         then pure $ Right $ fromList allShortestSolutions
-        else Monad.lift $ Right . fromList <$> shuffleM allShortestSolutions
+        else Right . fromList <$> shuffleM allShortestSolutions
   pure (cmd, solutionsList)
 
 -- | Generate NetGoal with filtering for trivial solutions
