@@ -167,7 +167,7 @@ spec = do
         let config = defaultDeadlockConfig {
               filterConfig = noFiltering,
               transitionBehaviorConstraints = TransitionBehaviorConstraints {
-                allowedTokenChangeTypes = Just LT,
+                allowedTokenChangeTypes = Just GT,
                 exactlyNonPreserving = Nothing
                 }
               }
