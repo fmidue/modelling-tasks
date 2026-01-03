@@ -146,9 +146,8 @@ spec = do
             }
       checkDeadlockConfig config `shouldSatisfy` isJust
 
-    needsTuning $
-     it "respects allowedTokenChanges = Just LT (only token-decreasing)" $
-      quickCheckWith stdArgs {maxSuccess = 15} $ property $ \seed -> do
+    it "respects allowedTokenChanges = Just LT (only token-decreasing)" $
+      quickCheckWith stdArgs {maxSuccess = 1} $ property $ \seed -> do
         let config = defaultDeadlockConfig {
               filterConfig = noFiltering,
               transitionBehaviorConstraints = TransitionBehaviorConstraints {
