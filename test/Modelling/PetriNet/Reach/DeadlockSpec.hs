@@ -175,8 +175,7 @@ spec = do
             decreasingCount = length $ filter isTokenDecreasing $ connections net
         decreasingCount `shouldBe` 0
 
-    needsTuning $
-     it "respects areNonPreserving constraint" $
+    it "respects areNonPreserving constraint" $
       quickCheckWith stdArgs {maxSuccess = 15} $ property $ \seed -> do
         let config = defaultDeadlockConfig {
               filterConfig = noFiltering,
