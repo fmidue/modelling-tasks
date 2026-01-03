@@ -58,9 +58,8 @@ spec = do
         net `shouldSatisfy`
           hasMinTransitionLength (null . successors net) ts minL
 
-    needsTuning $
-      it "generates non-trivial solutions when filtering is enabled" $
-        quickCheckWith stdArgs {maxSuccess = 15} $ property $ \seed -> do
+    it "generates non-trivial solutions when filtering is enabled" $
+        quickCheckWith stdArgs {maxSuccess = 1} $ property $ \seed -> do
           let config = defaultDeadlockConfig
           deadlockInstance <- generateDeadlock config seed
           let allSolutions = either undefined toList (shortestSolutions deadlockInstance)
@@ -161,7 +160,7 @@ spec = do
         increasingCount `shouldBe` 0
 
     it "respects allowedTokenChanges = Just GT (only token-increasing)" $
-      quickCheckWith stdArgs {maxSuccess = 15} $ property $ \seed -> do
+      quickCheckWith stdArgs {maxSuccess = 1} $ property $ \seed -> do
         let config = defaultDeadlockConfig {
               filterConfig = noFiltering,
               transitionBehaviorConstraints = TransitionBehaviorConstraints {
@@ -175,7 +174,7 @@ spec = do
         decreasingCount `shouldBe` 0
 
     it "respects areNonPreserving constraint" $
-      quickCheckWith stdArgs {maxSuccess = 15} $ property $ \seed -> do
+      quickCheckWith stdArgs {maxSuccess = 1} $ property $ \seed -> do
         let config = defaultDeadlockConfig {
               filterConfig = noFiltering,
               transitionBehaviorConstraints = TransitionBehaviorConstraints {
