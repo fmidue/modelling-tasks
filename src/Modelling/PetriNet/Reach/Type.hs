@@ -93,19 +93,19 @@ data TransitionBehaviorConstraints = TransitionBehaviorConstraints {
   -- @Just GT@: allow only token-increasing transitions (forbid decreasing)
   -- @Nothing@: allow both increasing and decreasing transitions
   -- Note: @Just EQ@ is rejected during config validation as meaningless
-  -- (would only allow preserving transitions, conflicting with exactlyNonPreserving)
-  allowedTokenChangeTypes :: Maybe Ordering,
+  -- (would only allow preserving transitions, conflicting with areNonPreserving)
+  allowedTokenChanges :: Maybe Ordering,
   -- | Require exactly this many transitions to not be token-preserving.
   -- If @Nothing@, no restriction on number of non-preserving transitions.
-  exactlyNonPreserving :: Maybe Int
+  areNonPreserving :: Maybe Int
   }
   deriving (Data, Eq, Generic, Hashable, Ord, Read, Show)
 
 -- | No transition behavior constraints
 noTransitionBehaviorConstraints :: TransitionBehaviorConstraints
 noTransitionBehaviorConstraints = TransitionBehaviorConstraints {
-  allowedTokenChangeTypes = Nothing,
-  exactlyNonPreserving = Nothing
+  allowedTokenChanges = Nothing,
+  areNonPreserving = Nothing
   }
 
 data Net s t = Net {
@@ -285,14 +285,14 @@ satisfiesTransitionBehaviorConstraints
   -> TransitionBehaviorConstraints
   -> Bool
 satisfiesTransitionBehaviorConstraints net TransitionBehaviorConstraints {..} =
-  checkAllowedTypes && checkExactlyNonPreserving
+  checkAllowedTypes && checkAreNonPreserving
   where
-    checkAllowedTypes = case allowedTokenChangeTypes of
+    checkAllowedTypes = case allowedTokenChanges of
       Nothing -> True
       Just LT -> null (transitionsByBehavior net isTokenIncreasing)
       Just GT -> null (transitionsByBehavior net isTokenDecreasing)
       Just EQ -> error "satisfiesTransitionBehaviorConstraints: Just EQ should be rejected by config validation"
-    checkExactlyNonPreserving = case exactlyNonPreserving of
+    checkAreNonPreserving = case areNonPreserving of
       Nothing -> True
       Just expected ->
         let nonPreserving = length $ transitionsByBehavior net (not . isTokenPreserving)

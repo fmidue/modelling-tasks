@@ -195,26 +195,26 @@ checkTransitionBehaviorConstraints
   -> TransitionBehaviorConstraints     -- ^ constraints
   -> Maybe String
 checkTransitionBehaviorConstraints preconditionsRange postconditionsRange numTransitions TransitionBehaviorConstraints {..}
-  | Just EQ <- allowedTokenChangeTypes
-  = Just "allowedTokenChangeTypes = Just EQ is meaningless; use exactlyNonPreserving = Just 0 instead"
-  | Just numberOfNonPreserving <- exactlyNonPreserving
+  | Just EQ <- allowedTokenChanges
+  = Just "allowedTokenChanges = Just EQ is meaningless; use areNonPreserving = Just 0 instead"
+  | Just numberOfNonPreserving <- areNonPreserving
   , numberOfNonPreserving < 0 || numberOfNonPreserving > numTransitions
-  = Just "exactlyNonPreserving must be non-negative and not greater than numTransitions when specified"
-  | exactlyNonPreserving == Just 0
-  , isJust allowedTokenChangeTypes
-  = Just "When exactlyNonPreserving = 0 (all transitions token-preserving), allowedTokenChangeTypes must be Nothing"
-  | Just LT <- allowedTokenChangeTypes
+  = Just "areNonPreserving must be non-negative and not greater than numTransitions when specified"
+  | areNonPreserving == Just 0
+  , isJust allowedTokenChanges
+  = Just "When areNonPreserving = 0 (all transitions token-preserving), allowedTokenChanges must be Nothing"
+  | Just LT <- allowedTokenChanges
   , vHigh <= nLow
-  = Just "allowedTokenChangeTypes = Just LT (only token-decreasing) is impossible with the given ranges: \
+  = Just "allowedTokenChanges = Just LT (only token-decreasing) is impossible with the given ranges: \
          \all transitions would have consumed <= produced"
-  | Just GT <- allowedTokenChangeTypes
+  | Just GT <- allowedTokenChanges
   , nHigh <= vLow
-  = Just "allowedTokenChangeTypes = Just GT (only token-increasing) is impossible with the given ranges: \
+  = Just "allowedTokenChanges = Just GT (only token-increasing) is impossible with the given ranges: \
          \all transitions would have produced <= consumed"
-  | Just numberOfNonPreserving <- exactlyNonPreserving
+  | Just numberOfNonPreserving <- areNonPreserving
   , numberOfNonPreserving > 0
   , vLow == vHigh && nLow == nHigh && vLow == nLow
-  = Just $ "exactlyNonPreserving = " ++ show numberOfNonPreserving ++ " is impossible: \
+  = Just $ "areNonPreserving = " ++ show numberOfNonPreserving ++ " is impossible: \
            \with preconditionsRange and postconditionsRange both fixed at " ++ show vLow ++ ", \
            \all transitions are token-preserving"
   | otherwise
