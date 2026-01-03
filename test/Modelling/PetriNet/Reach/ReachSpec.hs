@@ -65,7 +65,7 @@ spec = do
 
     -- needsTuning $
     it "generates non-trivial solutions when filtering is enabled" $
-      quickCheckWith stdArgs {maxSuccess = 1} $ property $ \seed -> do
+      quickCheckWith stdArgs {maxSuccess = 3} $ property $ \seed -> do
         let config = defaultReachConfig
         inst <- generateReach config seed
         let allSolutions = either undefined toList (shortestSolutions inst)
