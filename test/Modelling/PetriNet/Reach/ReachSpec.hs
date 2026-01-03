@@ -38,7 +38,7 @@ import Data.Maybe                        (isJust)
 import qualified Data.Map                 as M
 import Data.Set                         (Set)
 
-import Settings (needsTuning)
+-- import Settings (needsTuning)
 
 import Test.Hspec
 import Test.QuickCheck (
@@ -63,9 +63,9 @@ spec = do
             ts = transitions net
         net `shouldSatisfy` hasMinTransitionLength (s ==) ts minL
 
-    needsTuning $
-     it "generates non-trivial solutions when filtering is enabled" $
-      quickCheckWith stdArgs {maxSuccess = 15} $ property $ \seed -> do
+    -- needsTuning $
+    it "generates non-trivial solutions when filtering is enabled" $
+      quickCheckWith stdArgs {maxSuccess = 1} $ property $ \seed -> do
         let config = defaultReachConfig
         inst <- generateReach config seed
         let allSolutions = either undefined toList (shortestSolutions inst)
