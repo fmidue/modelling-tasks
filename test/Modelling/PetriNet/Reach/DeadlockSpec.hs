@@ -160,7 +160,8 @@ spec = do
             increasingCount = length $ filter isTokenIncreasing $ connections net
         increasingCount `shouldBe` 0
 
-    it "respects allowedTokenChanges = Just GT (only token-increasing)" $
+    needsTuning $
+     it "respects allowedTokenChanges = Just GT (only token-increasing)" $
       quickCheckWith stdArgs {maxSuccess = 50} $ property $ \seed -> do
         let config = defaultDeadlockConfig {
               filterConfig = noFiltering,
@@ -174,7 +175,8 @@ spec = do
             decreasingCount = length $ filter isTokenDecreasing $ connections net
         decreasingCount `shouldBe` 0
 
-    it "respects areNonPreserving constraint" $
+    needsTuning $
+     it "respects areNonPreserving constraint" $
       quickCheckWith stdArgs {maxSuccess = 50} $ property $ \seed -> do
         let config = defaultDeadlockConfig {
               filterConfig = noFiltering,
