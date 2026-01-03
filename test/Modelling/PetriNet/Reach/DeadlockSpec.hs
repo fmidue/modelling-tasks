@@ -160,7 +160,7 @@ spec = do
         increasingCount `shouldBe` 0
 
     it "respects allowedTokenChanges = Just GT (only token-increasing)" $
-      quickCheckWith stdArgs {maxSuccess = 1} $ property $ \seed -> do
+      quickCheckWith stdArgs {maxSuccess = 3} $ property $ \seed -> do
         let config = defaultDeadlockConfig {
               filterConfig = noFiltering,
               transitionBehaviorConstraints = TransitionBehaviorConstraints {
@@ -174,7 +174,7 @@ spec = do
         decreasingCount `shouldBe` 0
 
     it "respects areNonPreserving constraint" $
-      quickCheckWith stdArgs {maxSuccess = 1} $ property $ \seed -> do
+      quickCheckWith stdArgs {maxSuccess = 3} $ property $ \seed -> do
         let config = defaultDeadlockConfig {
               filterConfig = noFiltering,
               transitionBehaviorConstraints = TransitionBehaviorConstraints {
