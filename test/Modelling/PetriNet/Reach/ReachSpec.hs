@@ -240,14 +240,14 @@ spec = do
               netGoalConfig = (netGoalConfig defaultReachConfig) {
                 transitionBehaviorConstraints = TransitionBehaviorConstraints {
                   allowedTokenChanges = Nothing,
-                  areNonPreserving = Just 2
+                  areNonPreserving = Just 1
                   }
                 }
               }
         inst <- generateReach config seed
         let net = petriNet (netGoal inst)
             nonPreservingCount = length $ filter (not . uncurry (==) . connectionTokenBehavior) $ connections net
-        nonPreservingCount `shouldBe` 2
+        nonPreservingCount `shouldBe` 1
 
     it "rejects allowedTokenChanges = Just LT with impossible range (vHigh <= nLow)" $ do
       let config = defaultReachConfig {
