@@ -255,21 +255,15 @@ connectionTokenBehavior (prePlaces, _, postPlaces) =
 
 -- | Check if a connection is token-preserving (consumes == produces)
 isTokenPreserving :: Connection s t -> Bool
-isTokenPreserving connection =
-  let (consumed, produced) = connectionTokenBehavior connection
-  in consumed == produced
+isTokenPreserving = uncurry (==) . connectionTokenBehavior
 
 -- | Check if a connection is token-increasing (produces > consumes)
 isTokenIncreasing :: Connection s t -> Bool
-isTokenIncreasing connection =
-  let (consumed, produced) = connectionTokenBehavior connection
-  in produced > consumed
+isTokenIncreasing = uncurry (<) . connectionTokenBehavior
 
 -- | Check if a connection is token-decreasing (consumes > produces)
 isTokenDecreasing :: Connection s t -> Bool
-isTokenDecreasing connection =
-  let (consumed, produced) = connectionTokenBehavior connection
-  in consumed > produced
+isTokenDecreasing = uncurry (>) . connectionTokenBehavior
 
 -- | Filter connections in a net by a token behavior predicate
 transitionsByBehavior

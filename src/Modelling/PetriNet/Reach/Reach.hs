@@ -141,7 +141,6 @@ import Data.Foldable                    (sequenceA_, traverse_)
 import Data.GraphViz                    (GraphvizCommand (..))
 import Data.List                        (singleton, transpose)
 import Data.List.Extra                  (groupSort, nubSort)
-import Data.Maybe                       (maybeToList)
 import Data.Ratio                       ((%))
 import Data.String.Interpolate          (i)
 #if !MIN_VERSION_base(4,18,0)
@@ -630,16 +629,18 @@ findNetGoalWithSolutions filterConfig maxPrintedSolutions NetGoalConfig {..} =
   let ps = [Place 1 .. Place numPlaces]
       try :: RandT StdGen m [[(Int, MaybeT (RandT StdGen m) (NetGoal Place Transition, Either (NonEmpty [Transition]) (NonEmpty [Transition])))]]
       try = do
-        maybeNet <- netLimitsFiltered
-          preconditionsRange
-          postconditionsRange
-          numPlaces
-          ps
-          ts
-          capacity
-          transitionBehaviorConstraints
+        let generateNet = do
+              maybeNet <- netLimitsFiltered
+                preconditionsRange
+                postconditionsRange
+                numPlaces
+                ps
+                ts
+                capacity
+                transitionBehaviorConstraints
+              maybe generateNet return maybeNet
+        n <- generateNet
         return $ do
-         n <- maybeToList maybeNet
          zs <-
             take (maxTransitionLength - minTransitionLength + 1)
             $ drop minTransitionLength
