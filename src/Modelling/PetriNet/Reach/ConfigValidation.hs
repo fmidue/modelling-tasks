@@ -106,8 +106,12 @@ checkBasicPetriConfig
   where
     checkDrawCommands [] = Just "drawCommands cannot be empty"
     checkDrawCommands _  = Nothing
-    checkRangeVersusPlaces what (_, h) places = case h of
-      Nothing -> Nothing
+    checkRangeVersusPlaces what (low, h) places = case h of
+      Nothing ->
+        if low > places
+        then Just $ "The lower limit for " ++ what ++ " (currently " ++ show low ++
+                   ") cannot exceed numPlaces (currently " ++ show places ++ ")"
+        else Nothing
       Just high ->
         if high > places
         then Just $ "The upper limit for " ++ what ++ " (currently " ++ show high ++

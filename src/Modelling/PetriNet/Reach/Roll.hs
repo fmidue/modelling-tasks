@@ -113,6 +113,6 @@ netLimitsFiltered preconditionsRange postconditionsRange numPlaces ps ts capacit
     return n
   where
     fixMaximum :: (Int, Maybe Int) -> (Int, Int)
-    fixMaximum (low, high) = (low, min numPlaces $ fromMaybe maxBound high)
+    fixMaximum (low, high) = (low, fromMaybe numPlaces high)
     (vLow, vHigh) = fixMaximum preconditionsRange
     (nLow, nHigh) = fixMaximum postconditionsRange
