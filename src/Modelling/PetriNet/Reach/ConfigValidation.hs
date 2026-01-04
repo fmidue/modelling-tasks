@@ -216,19 +216,16 @@ checkTransitionBehaviorConstraints numPlaces preconditionsRange postconditionsRa
   = Just "areNonPreserving must be non-negative and at most numTransitions when specified"
   | areNonPreserving == Just 0
   , isJust allowedTokenChanges
-  = Just "When areNonPreserving = Just 0 (all transitions token-preserving), allowedTokenChanges must be Nothing"
+  = Just "when areNonPreserving = Just 0 (all transitions token-preserving), allowedTokenChanges = Just ... makes no sense"
   | allowedTokenChanges == Just LT
-  , vHigh <= nLow
-  = Just "allowedTokenChanges = Just LT (only token-decreasing) would make no sense with the given ranges: \
-         \all transitions would have consumed <= produced"
+  , vLow < nLow || vHigh < nHigh
+  = Just "with allowedTokenChanges = Just LT, the combination of preconditionsRange and postconditionsRange is too lax"
   | allowedTokenChanges == Just GT
-  , nHigh <= vLow
-  = Just "allowedTokenChanges = Just GT (only token-increasing) would make no sense with the given ranges: \
-         \all transitions would have produced <= consumed"
+  , vLow > nLow || vHigh > nHigh
+  = Just "with allowedTokenChanges = Just GT, the combination of preconditionsRange and postconditionsRange is too lax"
   | areNonPreserving /= Just 0
   , vLow == vHigh && nLow == nHigh && vLow == nLow
-  = Just "only areNonPreserving = Just 0 makes sense when \
-         \preconditionsRange and postconditionsRange are all fixed to one value anyway"
+  = Just "only areNonPreserving = Just 0 makes sense when preconditionsRange and postconditionsRange are all fixed to one value anyway"
   | otherwise
   = Nothing
   where
