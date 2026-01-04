@@ -629,7 +629,7 @@ findNetGoalWithSolutions filterConfig maxPrintedSolutions NetGoalConfig {..} =
   let ps = [Place 1 .. Place numPlaces]
       try :: RandT StdGen m [[(Int, MaybeT (RandT StdGen m) (NetGoal Place Transition, Either (NonEmpty [Transition]) (NonEmpty [Transition])))]]
       try = do
-        let generateNet = do
+        let generateNet =
               maybe generateNet return =<< netLimitsFiltered
                 preconditionsRange
                 postconditionsRange

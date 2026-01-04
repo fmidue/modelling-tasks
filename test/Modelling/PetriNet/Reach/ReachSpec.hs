@@ -28,9 +28,7 @@ import Modelling.PetriNet.Reach.Type (
   Capacity(..),
   Place(..),
   TransitionBehaviorConstraints(..),
-  isTokenPreserving,
-  isTokenIncreasing,
-  isTokenDecreasing,
+  connectionTokenBehavior,
   mark,
   )
 
@@ -216,7 +214,7 @@ spec = do
               }
         inst <- generateReach config seed
         let net = petriNet (netGoal inst)
-            increasingCount = length $ filter isTokenIncreasing $ connections net
+            increasingCount = length $ filter (uncurry (<) . connectionTokenBehavior) $ connections net
         increasingCount `shouldBe` 0
 
     it "respects allowedTokenChanges = Just GT (only token-increasing)" $
@@ -232,7 +230,7 @@ spec = do
               }
         inst <- generateReach config seed
         let net = petriNet (netGoal inst)
-            decreasingCount = length $ filter isTokenDecreasing $ connections net
+            decreasingCount = length $ filter (uncurry (>) . connectionTokenBehavior) $ connections net
         decreasingCount `shouldBe` 0
 
     it "respects areNonPreserving constraint" $
@@ -248,7 +246,7 @@ spec = do
               }
         inst <- generateReach config seed
         let net = petriNet (netGoal inst)
-            nonPreservingCount = length $ filter (not . isTokenPreserving) $ connections net
+            nonPreservingCount = length $ filter (not . uncurry (==) . connectionTokenBehavior) $ connections net
         nonPreservingCount `shouldBe` 2
 
     it "rejects allowedTokenChanges = Just LT with impossible range (vHigh <= nLow)" $ do

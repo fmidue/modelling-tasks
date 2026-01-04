@@ -253,18 +253,6 @@ connectionTokenBehavior :: Connection s t -> (Int, Int)
 connectionTokenBehavior (prePlaces, _, postPlaces) =
   (length prePlaces, length postPlaces)
 
--- | Check if a connection is token-preserving (consumes == produces)
-isTokenPreserving :: Connection s t -> Bool
-isTokenPreserving = uncurry (==) . connectionTokenBehavior
-
--- | Check if a connection is token-increasing (produces > consumes)
-isTokenIncreasing :: Connection s t -> Bool
-isTokenIncreasing = uncurry (<) . connectionTokenBehavior
-
--- | Check if a connection is token-decreasing (consumes > produces)
-isTokenDecreasing :: Connection s t -> Bool
-isTokenDecreasing = uncurry (>) . connectionTokenBehavior
-
 -- | Filter connections in a net by a token behavior predicate
 transitionsByBehavior
   :: Net s t
@@ -283,11 +271,11 @@ satisfiesTransitionBehaviorConstraints net TransitionBehaviorConstraints {..} =
   where
     checkAllowedTypes = case allowedTokenChanges of
       Nothing -> True
-      Just LT -> null (transitionsByBehavior net isTokenIncreasing)
-      Just GT -> null (transitionsByBehavior net isTokenDecreasing)
+      Just LT -> null (transitionsByBehavior net (uncurry (<) . connectionTokenBehavior))
+      Just GT -> null (transitionsByBehavior net (uncurry (>) . connectionTokenBehavior))
       Just EQ -> error "satisfiesTransitionBehaviorConstraints: Just EQ should be rejected by config validation"
     checkAreNonPreserving = case areNonPreserving of
       Nothing -> True
       Just expected ->
-        let nonPreserving = length $ transitionsByBehavior net (not . isTokenPreserving)
+        let nonPreserving = length $ transitionsByBehavior net (not . uncurry (==) . connectionTokenBehavior)
         in nonPreserving == expected
