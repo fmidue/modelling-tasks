@@ -253,14 +253,6 @@ connectionTokenBehavior :: Connection s t -> (Int, Int)
 connectionTokenBehavior (prePlaces, _, postPlaces) =
   (length prePlaces, length postPlaces)
 
--- | Filter connections in a net by a token behavior predicate
-transitionsByBehavior
-  :: Net s t
-  -> (Connection s t -> Bool)
-  -> [Connection s t]
-transitionsByBehavior net predicate =
-  filter predicate $ connections net
-
 -- | Check if a net satisfies the given transition behavior constraints
 satisfiesTransitionBehaviorConstraints
   :: Net s t
@@ -271,11 +263,12 @@ satisfiesTransitionBehaviorConstraints net TransitionBehaviorConstraints {..} =
   where
     checkAllowedTypes = case allowedTokenChanges of
       Nothing -> True
-      Just LT -> null (transitionsByBehavior net (uncurry (<) . connectionTokenBehavior))
-      Just GT -> null (transitionsByBehavior net (uncurry (>) . connectionTokenBehavior))
+      Just LT -> not (any (uncurry (<) . connectionTokenBehavior) (connections net))
+      Just GT -> not (any (uncurry (>) . connectionTokenBehavior) (connections net))
       Just EQ -> error "satisfiesTransitionBehaviorConstraints: Just EQ should be rejected by config validation"
     checkAreNonPreserving = case areNonPreserving of
       Nothing -> True
+      Just 0 -> all (uncurry (==) . connectionTokenBehavior) $ connections net
       Just expected ->
-        let nonPreserving = length $ transitionsByBehavior net (uncurry (/=) . connectionTokenBehavior)
+        let nonPreserving = length $ filter (uncurry (/=) . connectionTokenBehavior) $ connections net
         in nonPreserving == expected
