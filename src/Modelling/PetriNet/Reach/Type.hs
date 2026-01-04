@@ -277,5 +277,5 @@ satisfiesTransitionBehaviorConstraints net TransitionBehaviorConstraints {..} =
     checkAreNonPreserving = case areNonPreserving of
       Nothing -> True
       Just expected ->
-        let nonPreserving = length $ transitionsByBehavior net (not . uncurry (==) . connectionTokenBehavior)
+        let nonPreserving = length $ transitionsByBehavior net (uncurry (/=) . connectionTokenBehavior)
         in nonPreserving == expected
