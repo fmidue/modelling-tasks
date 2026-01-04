@@ -91,8 +91,7 @@ takeRandom low high xs  = take
   <$> getRandomR (low, high)
   <*> shuffleM xs
 
--- | Generate a net with limits and apply standard filters
--- This combines net generation with filtering for isolated nodes and transition behavior constraints
+-- | Generate a net with limits and filtering for isolated nodes and transition behavior constraints
 netLimitsFiltered
   :: (MonadRandom m, Ord s, Ord t)
   => (Int, Maybe Int)                  -- ^ preconditionsRange
