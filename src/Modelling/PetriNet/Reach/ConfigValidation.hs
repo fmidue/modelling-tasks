@@ -213,8 +213,8 @@ checkTransitionBehaviorConstraints preconditionsRange postconditionsRange numTra
          \all transitions would have produced <= consumed"
   | areNonPreserving /= Just 0
   , vLow == vHigh && nLow == nHigh && vLow == nLow
-  = Just $ "only areNonPreserving = Just 0 makes sense when \
-           \preconditionsRange and postconditionsRange are all fixed to one value anyway"
+  = Just "only areNonPreserving = Just 0 makes sense when \
+         \preconditionsRange and postconditionsRange are all fixed to one value anyway"
   | otherwise
   = Nothing
   where
