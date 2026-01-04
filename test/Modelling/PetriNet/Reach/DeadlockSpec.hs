@@ -57,7 +57,7 @@ spec = do
           hasMinTransitionLength (null . successors net) ts minL
 
     it "generates non-trivial solutions when filtering is enabled" $
-        quickCheckWith stdArgs {maxSuccess = 1} $ property $ \seed -> do
+        quickCheckWith stdArgs {maxSuccess = 3} $ property $ \seed -> do
           let config = defaultDeadlockConfig
           deadlockInstance <- generateDeadlock config seed
           let allSolutions = either undefined toList (shortestSolutions deadlockInstance)
