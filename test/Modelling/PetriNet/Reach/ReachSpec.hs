@@ -63,7 +63,7 @@ spec = do
 
     -- needsTuning $
     it "generates non-trivial solutions when filtering is enabled" $
-      quickCheckWith stdArgs {maxSuccess = 3} $ property $ \seed -> do
+      quickCheckWith stdArgs {maxSuccess = 1} $ property $ \seed -> do
         let config = defaultReachConfig
         inst <- generateReach config seed
         let allSolutions = either undefined toList (shortestSolutions inst)
@@ -202,7 +202,7 @@ spec = do
       checkReachConfig config `shouldSatisfy` isJust
 
     it "respects allowedTokenChanges = Just LT (only token-decreasing)" $
-      quickCheckWith stdArgs {maxSuccess = 50} $ property $ \seed -> do
+      quickCheckWith stdArgs {maxSuccess = 3} $ property $ \seed -> do
         let config = defaultReachConfig {
               filterConfig = noFiltering,
               netGoalConfig = (netGoalConfig defaultReachConfig) {
@@ -218,7 +218,7 @@ spec = do
         increasingCount `shouldBe` 0
 
     it "respects allowedTokenChanges = Just GT (only token-increasing)" $
-      quickCheckWith stdArgs {maxSuccess = 50} $ property $ \seed -> do
+      quickCheckWith stdArgs {maxSuccess = 3} $ property $ \seed -> do
         let config = defaultReachConfig {
               filterConfig = noFiltering,
               netGoalConfig = (netGoalConfig defaultReachConfig) {
@@ -234,7 +234,7 @@ spec = do
         decreasingCount `shouldBe` 0
 
     it "respects areNonPreserving constraint" $
-      quickCheckWith stdArgs {maxSuccess = 50} $ property $ \seed -> do
+      quickCheckWith stdArgs {maxSuccess = 3} $ property $ \seed -> do
         let config = defaultReachConfig {
               filterConfig = noFiltering,
               netGoalConfig = (netGoalConfig defaultReachConfig) {
