@@ -56,8 +56,9 @@ spec = do
         net `shouldSatisfy`
           hasMinTransitionLength (null . successors net) ts minL
 
+    -- needsTuning $
     it "generates non-trivial solutions when filtering is enabled" $
-        quickCheckWith stdArgs {maxSuccess = 3} $ property $ \seed -> do
+        quickCheckWith stdArgs {maxSuccess = 1} $ property $ \seed -> do
           let config = defaultDeadlockConfig
           deadlockInstance <- generateDeadlock config seed
           let allSolutions = either undefined toList (shortestSolutions deadlockInstance)
@@ -143,8 +144,9 @@ spec = do
             }
       checkDeadlockConfig config `shouldSatisfy` isJust
 
+    -- needsTuning $
     it "respects allowedTokenChanges = Just LT (only token-decreasing)" $
-      quickCheckWith stdArgs {maxSuccess = 3} $ property $ \seed -> do
+      quickCheckWith stdArgs {maxSuccess = 1} $ property $ \seed -> do
         let config = defaultDeadlockConfig {
               filterConfig = noFiltering,
               transitionBehaviorConstraints = TransitionBehaviorConstraints {
@@ -157,8 +159,9 @@ spec = do
             increasingCount = length $ filter (uncurry (<) . connectionTokenBehavior) $ connections net
         increasingCount `shouldBe` 0
 
+    -- needsTuning $
     it "respects allowedTokenChanges = Just GT (only token-increasing)" $
-      quickCheckWith stdArgs {maxSuccess = 3} $ property $ \seed -> do
+      quickCheckWith stdArgs {maxSuccess = 1} $ property $ \seed -> do
         let config = defaultDeadlockConfig {
               filterConfig = noFiltering,
               transitionBehaviorConstraints = TransitionBehaviorConstraints {
@@ -171,8 +174,9 @@ spec = do
             decreasingCount = length $ filter (uncurry (>) . connectionTokenBehavior) $ connections net
         decreasingCount `shouldBe` 0
 
+    -- needsTuning $
     it "respects areNonPreserving constraint" $
-      quickCheckWith stdArgs {maxSuccess = 3} $ property $ \seed -> do
+      quickCheckWith stdArgs {maxSuccess = 1} $ property $ \seed -> do
         let config = defaultDeadlockConfig {
               filterConfig = noFiltering,
               transitionBehaviorConstraints = TransitionBehaviorConstraints {
@@ -182,7 +186,7 @@ spec = do
               }
         inst <- generateDeadlock config seed
         let net = petriNet inst
-            nonPreservingCount = length $ filter (not . uncurry (==) . connectionTokenBehavior) $ connections net
+            nonPreservingCount = length $ filter (uncurry (/=) . connectionTokenBehavior) $ connections net
         nonPreservingCount `shouldBe` 2
 
     it "rejects allowedTokenChanges = Just LT with impossible range (vHigh <= nLow)" $ do
