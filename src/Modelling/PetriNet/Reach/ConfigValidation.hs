@@ -99,11 +99,20 @@ checkBasicPetriConfig
     <|> checkTransitionLengths minTransitionLength maxTransitionLength
     <|> checkRange "preconditionsRange" preconditionsRange
     <|> checkRange "postconditionsRange" postconditionsRange
+    <|> checkRangeVersusPlaces "preconditionsRange" preconditionsRange numPlaces
+    <|> checkRangeVersusPlaces "postconditionsRange" postconditionsRange numPlaces
     <|> checkRejectLongerThanConsistency rejectLongerThan maxTransitionLength showLengthHint
     <|> checkDrawCommands drawCommands
   where
     checkDrawCommands [] = Just "drawCommands cannot be empty"
     checkDrawCommands _  = Nothing
+    checkRangeVersusPlaces what (_, h) places = case h of
+      Nothing -> Nothing
+      Just high ->
+        if high > places
+        then Just $ "The upper limit for " ++ what ++ " (currently " ++ show high ++
+                   ") cannot exceed numPlaces (currently " ++ show places ++ ")"
+        else Nothing
 
 -- | Check filter configuration constraints given the transition length parameters
 checkFilterConfigWith
@@ -189,12 +198,13 @@ checkFilterConfigWith rejectLongerThan theTransitionLength@minTransitionLength n
 
 -- | Check transition behavior constraints for validity
 checkTransitionBehaviorConstraints
-  :: (Int, Maybe Int)                  -- ^ preconditionsRange
+  :: Int                               -- ^ numPlaces
+  -> (Int, Maybe Int)                  -- ^ preconditionsRange
   -> (Int, Maybe Int)                  -- ^ postconditionsRange
   -> Int                               -- ^ numTransitions
   -> TransitionBehaviorConstraints     -- ^ constraints
   -> Maybe String
-checkTransitionBehaviorConstraints preconditionsRange postconditionsRange numTransitions TransitionBehaviorConstraints {..}
+checkTransitionBehaviorConstraints numPlaces preconditionsRange postconditionsRange numTransitions TransitionBehaviorConstraints {..}
   | Just EQ <- allowedTokenChanges
   = Just "allowedTokenChanges = Just EQ is meaningless; use areNonPreserving = Just 0 instead"
   | Just numberOfNonPreserving <- areNonPreserving
@@ -220,5 +230,6 @@ checkTransitionBehaviorConstraints preconditionsRange postconditionsRange numTra
   where
     (vLow, vHighMaybe) = preconditionsRange
     (nLow, nHighMaybe) = postconditionsRange
-    vHigh = fromMaybe maxBound vHighMaybe
-    nHigh = fromMaybe maxBound nHighMaybe
+    -- Since checkBasicPetriConfig guarantees upper bounds don't exceed numPlaces, we can use numPlaces as the default
+    vHigh = fromMaybe numPlaces vHighMaybe
+    nHigh = fromMaybe numPlaces nHighMaybe

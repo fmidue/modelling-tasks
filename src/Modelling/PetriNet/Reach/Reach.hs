@@ -750,6 +750,7 @@ checkReachConfig ReachConfig {..} =
       _ -> Nothing)
   <|>
   checkTransitionBehaviorConstraints
+    (numPlaces netGoalConfig)
     (preconditionsRange netGoalConfig)
     (postconditionsRange netGoalConfig)
     (numTransitions netGoalConfig)

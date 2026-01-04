@@ -331,6 +331,7 @@ checkDeadlockConfig DeadlockConfig {..} =
     filterConfig
   <|>
   checkTransitionBehaviorConstraints
+    numPlaces
     preconditionsRange
     postconditionsRange
     numTransitions
