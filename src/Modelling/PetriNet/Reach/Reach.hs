@@ -92,13 +92,12 @@ import Modelling.PetriNet.Reach.Type (
   ShowTransition (ShowTransition),
   State,
   Transition (..),
-  TransitionBehaviorConstraints,
+  TransitionBehaviorConstraints (..),
   TransitionsList (TransitionsList),
   bimapNet,
   example,
   mapState,
   mark,
-  noTransitionBehaviorConstraints,
   )
 
 import Control.Applicative              (Alternative, (<|>))
@@ -588,11 +587,14 @@ defaultReachConfig = ReachConfig {
     maxTransitionLength = 6,
     minTransitionLength = 6,
     maxPlacesChanged    = 3,
-    transitionBehaviorConstraints = noTransitionBehaviorConstraints,
-    postconditionsRange = (0, Nothing),
-    preconditionsRange  = (0, Nothing)
+    transitionBehaviorConstraints = TransitionBehaviorConstraints {
+      allowedTokenChanges = Nothing,
+      areNonPreserving = Just 2
+      },
+    postconditionsRange = (0, Just 3),
+    preconditionsRange  = (0, Just 3)
     },
-  maxPrintedSolutions = 0,
+  maxPrintedSolutions = 1,
   rejectLongerThan    = Just 6,
   showLengthHint      = False,
   showMinLengthHint   = True,
