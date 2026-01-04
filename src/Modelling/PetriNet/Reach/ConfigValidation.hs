@@ -199,24 +199,22 @@ checkTransitionBehaviorConstraints preconditionsRange postconditionsRange numTra
   = Just "allowedTokenChanges = Just EQ is meaningless; use areNonPreserving = Just 0 instead"
   | Just numberOfNonPreserving <- areNonPreserving
   , numberOfNonPreserving < 0 || numberOfNonPreserving > numTransitions
-  = Just "areNonPreserving must be non-negative and not greater than numTransitions when specified"
+  = Just "areNonPreserving must be non-negative and at most numTransitions when specified"
   | areNonPreserving == Just 0
   , isJust allowedTokenChanges
-  = Just "When areNonPreserving = 0 (all transitions token-preserving), allowedTokenChanges must be Nothing"
-  | Just LT <- allowedTokenChanges
+  = Just "When areNonPreserving = Just 0 (all transitions token-preserving), allowedTokenChanges must be Nothing"
+  | allowedTokenChanges == Just LT
   , vHigh <= nLow
-  = Just "allowedTokenChanges = Just LT (only token-decreasing) is impossible with the given ranges: \
+  = Just "allowedTokenChanges = Just LT (only token-decreasing) would make no sense with the given ranges: \
          \all transitions would have consumed <= produced"
-  | Just GT <- allowedTokenChanges
+  | allowedTokenChanges == Just GT
   , nHigh <= vLow
-  = Just "allowedTokenChanges = Just GT (only token-increasing) is impossible with the given ranges: \
+  = Just "allowedTokenChanges = Just GT (only token-increasing) would make no sense with the given ranges: \
          \all transitions would have produced <= consumed"
-  | Just numberOfNonPreserving <- areNonPreserving
-  , numberOfNonPreserving > 0
+  | areNonPreserving /= Just 0
   , vLow == vHigh && nLow == nHigh && vLow == nLow
-  = Just $ "areNonPreserving = " ++ show numberOfNonPreserving ++ " is impossible: \
-           \with preconditionsRange and postconditionsRange both fixed at " ++ show vLow ++ ", \
-           \all transitions are token-preserving"
+  = Just $ "only areNonPreserving = Just 0 makes sense when \
+           \preconditionsRange and postconditionsRange are all fixed to one value anyway"
   | otherwise
   = Nothing
   where
