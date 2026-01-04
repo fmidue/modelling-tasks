@@ -263,9 +263,9 @@ satisfiesTransitionBehaviorConstraints net TransitionBehaviorConstraints {..} =
   where
     checkAllowedTypes = case allowedTokenChanges of
       Nothing -> True
-      Just LT -> not (any (uncurry (<) . connectionTokenBehavior) (connections net))
-      Just GT -> not (any (uncurry (>) . connectionTokenBehavior) (connections net))
-      Just EQ -> error "satisfiesTransitionBehaviorConstraints: Just EQ should be rejected by config validation"
+      Just LT -> all (uncurry (>=) . connectionTokenBehavior) (connections net)
+      Just GT -> all (uncurry (<=) . connectionTokenBehavior) (connections net)
+      Just EQ -> error "satisfiesTransitionBehaviorConstraints: Just EQ should be rejected already by config validation"
     checkAreNonPreserving = case areNonPreserving of
       Nothing -> True
       Just 0 -> all (uncurry (==) . connectionTokenBehavior) $ connections net
