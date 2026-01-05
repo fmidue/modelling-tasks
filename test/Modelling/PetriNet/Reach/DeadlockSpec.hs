@@ -103,7 +103,7 @@ spec = do
       let config = defaultDeadlockConfig {
             transitionBehaviorConstraints = TransitionBehaviorConstraints {
               allowedTokenChanges = Nothing,
-              areNonPreserving = Just 2
+              areNonPreserving = Just 1
               }
             }
       checkDeadlockConfig config `shouldBe` Nothing
