@@ -62,7 +62,7 @@ spec = do
         net `shouldSatisfy` hasMinTransitionLength (s ==) ts minL
 
     -- needsTuning $
-    it "generates non-trivial solutions when filtering is enabled" $
+    it "generates non-trivial solutions when filtering is enabled (as in the default configuration)" $
       quickCheckWith stdArgs {maxSuccess = 1} $ property $ \seed -> do
         let config = defaultReachConfig
         inst <- generateReach config seed
@@ -240,14 +240,14 @@ spec = do
               netGoalConfig = (netGoalConfig defaultReachConfig) {
                 transitionBehaviorConstraints = TransitionBehaviorConstraints {
                   allowedTokenChanges = Nothing,
-                  areNonPreserving = Just 1
+                  areNonPreserving = Just 2
                   }
                 }
               }
         inst <- generateReach config seed
         let net = petriNet (netGoal inst)
             nonPreservingCount = length $ filter (not . uncurry (==) . connectionTokenBehavior) $ connections net
-        nonPreservingCount `shouldBe` 1
+        nonPreservingCount `shouldBe` 2
 
     it "rejects allowedTokenChanges = Just LT with impossible range (vHigh <= nLow)" $ do
       let config = defaultReachConfig {
