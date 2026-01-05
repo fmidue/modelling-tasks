@@ -337,10 +337,16 @@ differentNamesTask
   -> FilePath
   -> DifferentNamesInstance
   -> LangM m
-differentNamesTask showInputHelp path task = do
-  toTaskText showInputHelp path task
+differentNamesTask showInputHelp path task@DifferentNamesInstance {..} = do
+  toTaskText (hasGivenCd && showInputHelp) path task
   hoveringInformation True
   pure ()
+  where
+    hasGivenCd =
+      any (\case
+              Special GivenCd -> True
+              _ -> False)
+          taskText
 
 toTaskText
   :: (
