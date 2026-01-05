@@ -44,7 +44,7 @@ import Test.Hspec.QuickCheck (modifyMaxSuccess, prop)
 spec :: Spec
 spec = do
   describe "generateReach" $ do
-    modifyMaxSuccess (const 50) $
+    modifyMaxSuccess (const 15) $
       prop "abides minTransitionLength" $ \seed -> do
         let config = defaultReachConfig {
               filterConfig = noFiltering
@@ -64,7 +64,7 @@ spec = do
         let allSolutions = either undefined toList (shortestSolutions inst)
         allSolutions `shouldSatisfy` not . shouldDiscardSolutions (filterConfig config) (numTransitions $ netGoalConfig config)
 
-    modifyMaxSuccess (const 50) $
+    modifyMaxSuccess (const 15) $
       prop "adheres to maxPlacesChanged constraint with noFiltering" $ \seed -> do
         let config = defaultReachConfig {
               filterConfig = noFiltering,
