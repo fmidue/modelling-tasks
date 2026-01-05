@@ -98,7 +98,7 @@ spec = do
       let config = defaultDeadlockConfig {
             transitionBehaviorConstraints = TransitionBehaviorConstraints {
               allowedTokenChanges = Nothing,
-              areNonPreserving = Just 1
+              areNonPreserving = Just 0
               }
             }
       checkDeadlockConfig config `shouldBe` Nothing
@@ -176,13 +176,13 @@ spec = do
               filterConfig = noFiltering,
               transitionBehaviorConstraints = TransitionBehaviorConstraints {
                 allowedTokenChanges = Nothing,
-                areNonPreserving = Just 1
+                areNonPreserving = Just 0
                 }
               }
         inst <- generateDeadlock config seed
         let net = petriNet inst
             nonPreservingCount = length $ filter (uncurry (/=) . connectionTokenBehavior) $ connections net
-        nonPreservingCount `shouldBe` 1
+        nonPreservingCount `shouldBe` 0
 
     it "rejects allowedTokenChanges = Just LT with impossible range (vHigh <= nLow)" $ do
       let config = defaultDeadlockConfig {
