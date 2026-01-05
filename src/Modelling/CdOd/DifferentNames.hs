@@ -342,11 +342,7 @@ differentNamesTask showInputHelp path task@DifferentNamesInstance {..} = do
   hoveringInformation True
   pure ()
   where
-    hasGivenCd =
-      any (\case
-              Special GivenCd -> True
-              _ -> False)
-          taskText
+    hasGivenCd = Special GivenCd `elem` taskText
 
 toTaskText
   :: (
