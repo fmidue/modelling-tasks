@@ -30,6 +30,7 @@ import Modelling.PetriNet.Reach.Type (
   TransitionBehaviorConstraints(..),
   connectionTokenBehavior,
   mark,
+  noTransitionBehaviorConstraints,
   )
 
 import Data.Maybe                        (isJust)
@@ -47,7 +48,10 @@ spec = do
     modifyMaxSuccess (const 15) $
       prop "abides minTransitionLength" $ \seed -> do
         let config = defaultReachConfig {
-              filterConfig = noFiltering
+              filterConfig = noFiltering,
+              netGoalConfig = (netGoalConfig defaultReachConfig) {
+                transitionBehaviorConstraints = noTransitionBehaviorConstraints
+                }
               }
             minL = minTransitionLength (netGoalConfig config)
         inst <- generateReach config seed
@@ -69,7 +73,8 @@ spec = do
         let config = defaultReachConfig {
               filterConfig = noFiltering,
               netGoalConfig = (netGoalConfig defaultReachConfig) {
-                maxPlacesChanged = 2
+                maxPlacesChanged = 2,
+                transitionBehaviorConstraints = noTransitionBehaviorConstraints
                 }
               }
         inst <- generateReach config seed
