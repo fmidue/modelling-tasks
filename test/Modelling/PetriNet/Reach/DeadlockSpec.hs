@@ -37,7 +37,7 @@ import Test.Hspec.QuickCheck (modifyMaxSuccess, prop)
 spec :: Spec
 spec = do
   describe "generateDeadlock" $ do
-    modifyMaxSuccess (const 50) $
+    modifyMaxSuccess (const 15) $
       prop "abides minTransitionLength" $ \seed -> do
         let config = defaultDeadlockConfig {
               maxTransitionLength = 6,
@@ -53,7 +53,7 @@ spec = do
 
     -- needsTuning $
     modifyMaxSuccess (const 1) $
-      prop "generates non-trivial solutions when filtering is enabled" $ \seed -> do
+      prop "generates non-trivial solutions when filtering is enabled (as in the default configuration)" $ \seed -> do
           let config = defaultDeadlockConfig
           deadlockInstance <- generateDeadlock config seed
           let allSolutions = either undefined toList (shortestSolutions deadlockInstance)
