@@ -32,18 +32,13 @@ import Modelling.PetriNet.Reach.ReachSpec (
 -- import Settings (needsTuning)
 
 import Test.Hspec
-import Test.QuickCheck (
-  Testable (property),
-  maxSuccess,
-  quickCheckWith,
-  stdArgs,
-  )
+import Test.Hspec.QuickCheck (modifyMaxSuccess, prop)
 
 spec :: Spec
 spec = do
   describe "generateDeadlock" $ do
-    it "abides minTransitionLength" $
-      quickCheckWith stdArgs {maxSuccess = 50} $ property $ \seed -> do
+    modifyMaxSuccess (const 50) $
+      prop "abides minTransitionLength" $ \seed -> do
         let config = defaultDeadlockConfig {
               maxTransitionLength = 6,
               minTransitionLength = 6,
@@ -57,8 +52,8 @@ spec = do
           hasMinTransitionLength (null . successors net) ts minL
 
     -- needsTuning $
-    it "generates non-trivial solutions when filtering is enabled" $
-        quickCheckWith stdArgs {maxSuccess = 1} $ property $ \seed -> do
+    modifyMaxSuccess (const 1) $
+      prop "generates non-trivial solutions when filtering is enabled" $ \seed -> do
           let config = defaultDeadlockConfig
           deadlockInstance <- generateDeadlock config seed
           let allSolutions = either undefined toList (shortestSolutions deadlockInstance)
@@ -145,8 +140,8 @@ spec = do
       checkDeadlockConfig config `shouldSatisfy` isJust
 
     -- needsTuning $
-    it "respects allowedTokenChanges = Just LT (only token-decreasing)" $
-      quickCheckWith stdArgs {maxSuccess = 1} $ property $ \seed -> do
+    modifyMaxSuccess (const 1) $
+      prop "respects allowedTokenChanges = Just LT (only token-decreasing)" $ \seed -> do
         let config = defaultDeadlockConfig {
               filterConfig = noFiltering,
               transitionBehaviorConstraints = TransitionBehaviorConstraints {
@@ -160,8 +155,8 @@ spec = do
         increasingCount `shouldBe` 0
 
     -- needsTuning $
-    it "respects allowedTokenChanges = Just GT (only token-increasing)" $
-      quickCheckWith stdArgs {maxSuccess = 1} $ property $ \seed -> do
+    modifyMaxSuccess (const 1) $
+      prop "respects allowedTokenChanges = Just GT (only token-increasing)" $ \seed -> do
         let config = defaultDeadlockConfig {
               filterConfig = noFiltering,
               transitionBehaviorConstraints = TransitionBehaviorConstraints {
@@ -175,8 +170,8 @@ spec = do
         decreasingCount `shouldBe` 0
 
     -- needsTuning $
-    it "respects areNonPreserving constraint" $
-      quickCheckWith stdArgs {maxSuccess = 1} $ property $ \seed -> do
+    modifyMaxSuccess (const 1) $
+      prop "respects areNonPreserving constraint" $ \seed -> do
         let config = defaultDeadlockConfig {
               filterConfig = noFiltering,
               transitionBehaviorConstraints = TransitionBehaviorConstraints {

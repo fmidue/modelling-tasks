@@ -39,18 +39,13 @@ import Data.Set                         (Set)
 -- import Settings (needsTuning)
 
 import Test.Hspec
-import Test.QuickCheck (
-  Testable (property),
-  maxSuccess,
-  quickCheckWith,
-  stdArgs,
-  )
+import Test.Hspec.QuickCheck (modifyMaxSuccess, prop)
 
 spec :: Spec
 spec = do
   describe "generateReach" $ do
-    it "abides minTransitionLength" $
-      quickCheckWith stdArgs {maxSuccess = 50} $ property $ \seed -> do
+    modifyMaxSuccess (const 50) $
+      prop "abides minTransitionLength" $ \seed -> do
         let config = defaultReachConfig {
               filterConfig = noFiltering
               }
@@ -62,15 +57,15 @@ spec = do
         net `shouldSatisfy` hasMinTransitionLength (s ==) ts minL
 
     -- needsTuning $
-    it "generates non-trivial solutions when filtering is enabled (as in the default configuration)" $
-      quickCheckWith stdArgs {maxSuccess = 1} $ property $ \seed -> do
+    modifyMaxSuccess (const 1) $
+      prop "generates non-trivial solutions when filtering is enabled (as in the default configuration)" $ \seed -> do
         let config = defaultReachConfig
         inst <- generateReach config seed
         let allSolutions = either undefined toList (shortestSolutions inst)
         allSolutions `shouldSatisfy` not . shouldDiscardSolutions (filterConfig config) (numTransitions $ netGoalConfig config)
 
-    it "adheres to maxPlacesChanged constraint with noFiltering" $
-      quickCheckWith stdArgs {maxSuccess = 50} $ property $ \seed -> do
+    modifyMaxSuccess (const 50) $
+      prop "adheres to maxPlacesChanged constraint with noFiltering" $ \seed -> do
         let config = defaultReachConfig {
               filterConfig = noFiltering,
               netGoalConfig = (netGoalConfig defaultReachConfig) {
@@ -201,8 +196,8 @@ spec = do
             }
       checkReachConfig config `shouldSatisfy` isJust
 
-    it "respects allowedTokenChanges = Just LT (only token-decreasing)" $
-      quickCheckWith stdArgs {maxSuccess = 3} $ property $ \seed -> do
+    modifyMaxSuccess (const 3) $
+      prop "respects allowedTokenChanges = Just LT (only token-decreasing)" $ \seed -> do
         let config = defaultReachConfig {
               filterConfig = noFiltering,
               netGoalConfig = (netGoalConfig defaultReachConfig) {
@@ -217,8 +212,8 @@ spec = do
             increasingCount = length $ filter (uncurry (<) . connectionTokenBehavior) $ connections net
         increasingCount `shouldBe` 0
 
-    it "respects allowedTokenChanges = Just GT (only token-increasing)" $
-      quickCheckWith stdArgs {maxSuccess = 3} $ property $ \seed -> do
+    modifyMaxSuccess (const 3) $
+      prop "respects allowedTokenChanges = Just GT (only token-increasing)" $ \seed -> do
         let config = defaultReachConfig {
               filterConfig = noFiltering,
               netGoalConfig = (netGoalConfig defaultReachConfig) {
@@ -233,8 +228,8 @@ spec = do
             decreasingCount = length $ filter (uncurry (>) . connectionTokenBehavior) $ connections net
         decreasingCount `shouldBe` 0
 
-    it "respects areNonPreserving constraint" $
-      quickCheckWith stdArgs {maxSuccess = 3} $ property $ \seed -> do
+    modifyMaxSuccess (const 3) $
+      prop "respects areNonPreserving constraint" $ \seed -> do
         let config = defaultReachConfig {
               filterConfig = noFiltering,
               netGoalConfig = (netGoalConfig defaultReachConfig) {
