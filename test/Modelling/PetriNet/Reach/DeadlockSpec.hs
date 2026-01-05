@@ -181,7 +181,7 @@ spec = do
               filterConfig = noFiltering,
               transitionBehaviorConstraints = TransitionBehaviorConstraints {
                 allowedTokenChanges = Nothing,
-                areNonPreserving = Just 0
+                areNonPreserving = Just 2
                 }
               }
         inst <- generateDeadlock config seed
