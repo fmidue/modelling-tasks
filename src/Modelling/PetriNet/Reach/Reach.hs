@@ -589,7 +589,7 @@ defaultReachConfig = ReachConfig {
     maxPlacesChanged    = 3,
     transitionBehaviorConstraints = TransitionBehaviorConstraints {
       allowedTokenChanges = Nothing,
-      areNonPreserving = Just 2
+      areNonPreserving = Just 0
       },
     postconditionsRange = (0, Just 3),
     preconditionsRange  = (0, Just 3)
