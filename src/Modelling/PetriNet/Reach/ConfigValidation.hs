@@ -130,27 +130,20 @@ checkBasicPetriConfig
   where
     checkDrawCommands [] = Just "drawCommands cannot be empty"
     checkDrawCommands _  = Nothing
-    checkRangeVersusPlaces what (low, h) places = case h of
+    checkRangeVersusPlaces what range =
+      checkRangeVersusCount what range "numPlaces"
+    checkRangeVersusTransitions what range =
+      checkRangeVersusCount what range "numTransitions"
+    checkRangeVersusCount what (low, h) countName count = case h of
       Nothing ->
-        if low > places
+        if low > count
         then Just $ "The lower limit for " ++ what ++ " (currently " ++ show low ++
-                   ") cannot exceed numPlaces (currently " ++ show places ++ ")"
+                   ") cannot exceed " ++ countName ++ " (currently " ++ show count ++ ")"
         else Nothing
       Just high ->
-        if high > places
+        if high > count
         then Just $ "The upper limit for " ++ what ++ " (currently " ++ show high ++
-                   ") cannot exceed numPlaces (currently " ++ show places ++ ")"
-        else Nothing
-    checkRangeVersusTransitions what (low, h) transitions = case h of
-      Nothing ->
-        if low > transitions
-        then Just $ "The lower limit for " ++ what ++ " (currently " ++ show low ++
-                   ") cannot exceed numTransitions (currently " ++ show transitions ++ ")"
-        else Nothing
-      Just high ->
-        if high > transitions
-        then Just $ "The upper limit for " ++ what ++ " (currently " ++ show high ++
-                   ") cannot exceed numTransitions (currently " ++ show transitions ++ ")"
+                   ") cannot exceed " ++ countName ++ " (currently " ++ show count ++ ")"
         else Nothing
 
 -- | Check filter configuration constraints given the transition length parameters
@@ -301,6 +294,19 @@ checkArrowDensityCrossValidation
   = Just $ "totalArrowsFromPlacesToTransitions upper bound (" ++ show totalHigh ++
            ") is less than minimum required arrows based on incomingArrowsPerTransition (" ++
            show (incomingPerTransLow * numTransitions) ++ ")"
+  -- Aggressive narrowing: if per-transition lower bound implies higher total, require it
+  | totalPlacesToTransLow < incomingPerTransLow * numTransitions
+  = Just $ "totalArrowsFromPlacesToTransitions lower bound (" ++ show totalPlacesToTransLow ++
+           ") should be at least " ++ show (incomingPerTransLow * numTransitions) ++
+           " to match incomingArrowsPerTransition lower bound of " ++ show incomingPerTransLow ++
+           " per transition across " ++ show numTransitions ++ " transitions"
+  -- Aggressive narrowing: if per-transition upper bound implies tighter total, require it
+  | Just totalHigh <- totalPlacesToTransHigh
+  , totalHigh > incomingPerTransHighBound * numTransitions
+  = Just $ "totalArrowsFromPlacesToTransitions upper bound (" ++ show totalHigh ++
+           ") should be at most " ++ show (incomingPerTransHighBound * numTransitions) ++
+           " to match incomingArrowsPerTransition upper bound of " ++ show incomingPerTransHighBound ++
+           " per transition across " ++ show numTransitions ++ " transitions"
   -- totalArrowsFromTransitionsToPlaces relates to outgoingArrowsPerTransition
   -- Check that totalArrowsFromTransitionsToPlaces is consistent with per-transition bounds
   | totalTransToPlacesLow > outgoingPerTransHighBound * numTransitions
@@ -312,6 +318,19 @@ checkArrowDensityCrossValidation
   = Just $ "totalArrowsFromTransitionsToPlaces upper bound (" ++ show totalHigh ++
            ") is less than minimum required arrows based on outgoingArrowsPerTransition (" ++
            show (outgoingPerTransLow * numTransitions) ++ ")"
+  -- Aggressive narrowing: if per-transition lower bound implies higher total, require it
+  | totalTransToPlacesLow < outgoingPerTransLow * numTransitions
+  = Just $ "totalArrowsFromTransitionsToPlaces lower bound (" ++ show totalTransToPlacesLow ++
+           ") should be at least " ++ show (outgoingPerTransLow * numTransitions) ++
+           " to match outgoingArrowsPerTransition lower bound of " ++ show outgoingPerTransLow ++
+           " per transition across " ++ show numTransitions ++ " transitions"
+  -- Aggressive narrowing: if per-transition upper bound implies tighter total, require it
+  | Just totalHigh <- totalTransToPlacesHigh
+  , totalHigh > outgoingPerTransHighBound * numTransitions
+  = Just $ "totalArrowsFromTransitionsToPlaces upper bound (" ++ show totalHigh ++
+           ") should be at most " ++ show (outgoingPerTransHighBound * numTransitions) ++
+           " to match outgoingArrowsPerTransition upper bound of " ++ show outgoingPerTransHighBound ++
+           " per transition across " ++ show numTransitions ++ " transitions"
   -- totalArrowsFromPlacesToTransitions relates to outgoingArrowsPerPlace
   -- Check that totalArrowsFromPlacesToTransitions is consistent with per-place bounds
   | totalPlacesToTransLow > outgoingPerPlaceHighBound * numPlaces
@@ -323,6 +342,19 @@ checkArrowDensityCrossValidation
   = Just $ "totalArrowsFromPlacesToTransitions upper bound (" ++ show totalHigh ++
            ") is less than minimum required arrows based on outgoingArrowsPerPlace (" ++
            show (outgoingPerPlaceLow * numPlaces) ++ ")"
+  -- Aggressive narrowing: if per-place lower bound implies higher total, require it
+  | totalPlacesToTransLow < outgoingPerPlaceLow * numPlaces
+  = Just $ "totalArrowsFromPlacesToTransitions lower bound (" ++ show totalPlacesToTransLow ++
+           ") should be at least " ++ show (outgoingPerPlaceLow * numPlaces) ++
+           " to match outgoingArrowsPerPlace lower bound of " ++ show outgoingPerPlaceLow ++
+           " per place across " ++ show numPlaces ++ " places"
+  -- Aggressive narrowing: if per-place upper bound implies tighter total, require it
+  | Just totalHigh <- totalPlacesToTransHigh
+  , totalHigh > outgoingPerPlaceHighBound * numPlaces
+  = Just $ "totalArrowsFromPlacesToTransitions upper bound (" ++ show totalHigh ++
+           ") should be at most " ++ show (outgoingPerPlaceHighBound * numPlaces) ++
+           " to match outgoingArrowsPerPlace upper bound of " ++ show outgoingPerPlaceHighBound ++
+           " per place across " ++ show numPlaces ++ " places"
   -- totalArrowsFromTransitionsToPlaces relates to incomingArrowsPerPlace
   -- Check that totalArrowsFromTransitionsToPlaces is consistent with per-place bounds
   | totalTransToPlacesLow > incomingPerPlaceHighBound * numPlaces
@@ -334,6 +366,19 @@ checkArrowDensityCrossValidation
   = Just $ "totalArrowsFromTransitionsToPlaces upper bound (" ++ show totalHigh ++
            ") is less than minimum required arrows based on incomingArrowsPerPlace (" ++
            show (incomingPerPlaceLow * numPlaces) ++ ")"
+  -- Aggressive narrowing: if per-place lower bound implies higher total, require it
+  | totalTransToPlacesLow < incomingPerPlaceLow * numPlaces
+  = Just $ "totalArrowsFromTransitionsToPlaces lower bound (" ++ show totalTransToPlacesLow ++
+           ") should be at least " ++ show (incomingPerPlaceLow * numPlaces) ++
+           " to match incomingArrowsPerPlace lower bound of " ++ show incomingPerPlaceLow ++
+           " per place across " ++ show numPlaces ++ " places"
+  -- Aggressive narrowing: if per-place upper bound implies tighter total, require it
+  | Just totalHigh <- totalTransToPlacesHigh
+  , totalHigh > incomingPerPlaceHighBound * numPlaces
+  = Just $ "totalArrowsFromTransitionsToPlaces upper bound (" ++ show totalHigh ++
+           ") should be at most " ++ show (incomingPerPlaceHighBound * numPlaces) ++
+           " to match incomingArrowsPerPlace upper bound of " ++ show incomingPerPlaceHighBound ++
+           " per place across " ++ show numPlaces ++ " places"
   -- Check that per-transition and per-place bounds are mutually consistent
   -- incomingArrowsPerTransition and outgoingArrowsPerPlace refer to the same arrows (places to transitions)
   | incomingPerTransLow * numTransitions > outgoingPerPlaceHighBound * numPlaces

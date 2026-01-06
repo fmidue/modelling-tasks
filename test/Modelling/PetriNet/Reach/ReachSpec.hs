@@ -95,6 +95,7 @@ spec = do
                 transitionBehaviorConstraints = noTransitionBehaviorConstraints
                 }
               }
+        checkReachConfig config `shouldBe` Nothing
         inst <- generateReach config seed
         let net = petriNet (netGoal inst)
             places = [Place 1 .. Place (numPlaces $ netGoalConfig config)]
@@ -110,6 +111,7 @@ spec = do
                 transitionBehaviorConstraints = noTransitionBehaviorConstraints
                 }
               }
+        checkReachConfig config `shouldBe` Nothing
         inst <- generateReach config seed
         let net = petriNet (netGoal inst)
             places = [Place 1 .. Place (numPlaces $ netGoalConfig config)]
@@ -125,6 +127,7 @@ spec = do
                 transitionBehaviorConstraints = noTransitionBehaviorConstraints
                 }
               }
+        checkReachConfig config `shouldBe` Nothing
         inst <- generateReach config seed
         let net = petriNet (netGoal inst)
             totalArrows = sum [length pre | (pre, _, _) <- connections net]
@@ -139,6 +142,7 @@ spec = do
                 transitionBehaviorConstraints = noTransitionBehaviorConstraints
                 }
               }
+        checkReachConfig config `shouldBe` Nothing
         inst <- generateReach config seed
         let net = petriNet (netGoal inst)
             totalArrows = sum [length post | (_, _, post) <- connections net]
@@ -351,6 +355,8 @@ spec = do
             netGoalConfig = (netGoalConfig defaultReachConfig) {
               incomingArrowsPerTransition = (2, Just 5),
               outgoingArrowsPerTransition = (0, Just 3),
+              totalArrowsFromPlacesToTransitions = (12, Just 30),
+              totalArrowsFromTransitionsToPlaces = (0, Just 18),
               transitionBehaviorConstraints = TransitionBehaviorConstraints {
                 allowedTokenChanges = Just LT,
                 areNonPreserving = Nothing
@@ -364,6 +370,8 @@ spec = do
             netGoalConfig = (netGoalConfig defaultReachConfig) {
               incomingArrowsPerTransition = (0, Just 3),
               outgoingArrowsPerTransition = (2, Just 5),
+              totalArrowsFromPlacesToTransitions = (0, Just 18),
+              totalArrowsFromTransitionsToPlaces = (12, Just 30),
               transitionBehaviorConstraints = TransitionBehaviorConstraints {
                 allowedTokenChanges = Just GT,
                 areNonPreserving = Nothing
@@ -404,6 +412,24 @@ spec = do
             netGoalConfig = (netGoalConfig defaultReachConfig) {
               outgoingArrowsPerTransition = (2, Just 3),
               totalArrowsFromTransitionsToPlaces = (0, Just 5)
+              }
+            }
+      checkReachConfig config `shouldSatisfy` isJust
+
+    it "rejects configuration when totalArrowsFromPlacesToTransitions lower bound is less than minimum from incomingArrowsPerTransition (aggressive narrowing)" $ do
+      let config = defaultReachConfig {
+            netGoalConfig = (netGoalConfig defaultReachConfig) {
+              incomingArrowsPerTransition = (2, Just 3),
+              totalArrowsFromPlacesToTransitions = (5, Just 20)
+              }
+            }
+      checkReachConfig config `shouldSatisfy` isJust
+
+    it "rejects configuration when totalArrowsFromPlacesToTransitions upper bound is greater than maximum from incomingArrowsPerTransition (aggressive narrowing)" $ do
+      let config = defaultReachConfig {
+            netGoalConfig = (netGoalConfig defaultReachConfig) {
+              incomingArrowsPerTransition = (1, Just 2),
+              totalArrowsFromPlacesToTransitions = (6, Just 20)
               }
             }
       checkReachConfig config `shouldSatisfy` isJust

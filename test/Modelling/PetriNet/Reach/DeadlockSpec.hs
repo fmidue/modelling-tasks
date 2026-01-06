@@ -67,6 +67,7 @@ spec = do
               incomingArrowsPerPlace = (1, Just 2),
               filterConfig = noFiltering
               }
+        checkDeadlockConfig config `shouldBe` Nothing
         deadlockInstance <- generateDeadlock config seed
         let net = petriNet deadlockInstance
             places = [Place 1 .. Place (numPlaces config)]
@@ -81,6 +82,7 @@ spec = do
               outgoingArrowsPerPlace = (1, Just 2),
               filterConfig = noFiltering
               }
+        checkDeadlockConfig config `shouldBe` Nothing
         deadlockInstance <- generateDeadlock config seed
         let net = petriNet deadlockInstance
             places = [Place 1 .. Place (numPlaces config)]
@@ -95,6 +97,7 @@ spec = do
               totalArrowsFromPlacesToTransitions = (8, Just 15),
               filterConfig = noFiltering
               }
+        checkDeadlockConfig config `shouldBe` Nothing
         deadlockInstance <- generateDeadlock config seed
         let net = petriNet deadlockInstance
             totalArrows = sum [length pre | (pre, _, _) <- connections net]
@@ -108,6 +111,7 @@ spec = do
               totalArrowsFromTransitionsToPlaces = (8, Just 15),
               filterConfig = noFiltering
               }
+        checkDeadlockConfig config `shouldBe` Nothing
         deadlockInstance <- generateDeadlock config seed
         let net = petriNet deadlockInstance
             totalArrows = sum [length post | (_, _, post) <- connections net]
@@ -275,6 +279,8 @@ spec = do
       let config = defaultDeadlockConfig {
             incomingArrowsPerTransition = (2, Just 5),
             outgoingArrowsPerTransition = (0, Just 3),
+            totalArrowsFromPlacesToTransitions = (12, Just 30),
+            totalArrowsFromTransitionsToPlaces = (0, Just 18),
             transitionBehaviorConstraints = TransitionBehaviorConstraints {
               allowedTokenChanges = Just LT,
               areNonPreserving = Nothing
@@ -286,6 +292,8 @@ spec = do
       let config = defaultDeadlockConfig {
             incomingArrowsPerTransition = (0, Just 3),
             outgoingArrowsPerTransition = (2, Just 5),
+            totalArrowsFromPlacesToTransitions = (0, Just 18),
+            totalArrowsFromTransitionsToPlaces = (12, Just 30),
             transitionBehaviorConstraints = TransitionBehaviorConstraints {
               allowedTokenChanges = Just GT,
               areNonPreserving = Nothing
@@ -318,6 +326,20 @@ spec = do
       let config = defaultDeadlockConfig {
             outgoingArrowsPerTransition = (2, Just 3),
             totalArrowsFromTransitionsToPlaces = (0, Just 5)
+            }
+      checkDeadlockConfig config `shouldSatisfy` isJust
+
+    it "rejects configuration when totalArrowsFromPlacesToTransitions lower bound is less than minimum from incomingArrowsPerTransition (aggressive narrowing)" $ do
+      let config = defaultDeadlockConfig {
+            incomingArrowsPerTransition = (2, Just 3),
+            totalArrowsFromPlacesToTransitions = (5, Just 20)
+            }
+      checkDeadlockConfig config `shouldSatisfy` isJust
+
+    it "rejects configuration when totalArrowsFromPlacesToTransitions upper bound is greater than maximum from incomingArrowsPerTransition (aggressive narrowing)" $ do
+      let config = defaultDeadlockConfig {
+            incomingArrowsPerTransition = (1, Just 2),
+            totalArrowsFromPlacesToTransitions = (6, Just 20)
             }
       checkDeadlockConfig config `shouldSatisfy` isJust
 
