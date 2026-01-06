@@ -364,7 +364,7 @@ toTaskText showInputHelp path task@DifferentNamesInstance {..} = do
     hasGivenCd = Special GivenCd `elem` taskText
 
 mappingAdvice :: OutputCapable m => Bool -> LangM m
-mappingAdvice isCollapsed = collapsed isCollapsed (translations $ do
+mappingAdvice hasGivenCd = collapsed (not hasGivenCd) (translations $ do
   english "Note on link grouping"
   german "Anmerkung zur Link-Gruppierung"
   ) $ do
@@ -372,13 +372,13 @@ mappingAdvice isCollapsed = collapsed isCollapsed (translations $ do
     english [iii|
       Links are already grouped correctly and fully,
       i.e., all links with the same label (and only links with the same label!)
-      in the OD correspond to exactly the same relationship#{if isCollapsed then "" else " in the CD"}.
+      in the OD correspond to exactly the same relationship#{if hasGivenCd then " in the CD" else ""}.
       |]
     german [iii|
       Links sind bereits vollständig und korrekt gruppiert,
       d.h., alle Links mit der selben Beschriftung
       (and auch nur Links mit der selben Beschriftung!)
-      im OD entsprechen genau der selben Beziehung#{if isCollapsed then "" else " im CD"}.
+      im OD entsprechen genau der selben Beziehung#{if hasGivenCd then " im CD" else ""}.
       |]
   paragraph $ translate $ do
     english [iii|
@@ -408,7 +408,7 @@ toTaskSpecificText path DifferentNamesInstance {..} = \case
     paragraph $ image $=<< cacheCd cdDrawSettings mempty cd path
   GivenOd -> paragraph $ image $=<<
     cacheOd oDiagram Forward True path
-  MappingAdvice -> mappingAdvice (not hasGivenCd)
+  MappingAdvice -> mappingAdvice hasGivenCd
   DirectionsAdvice -> directionsAdvice False
   SimplifiedInformation -> simplifiedInformation True
   where
