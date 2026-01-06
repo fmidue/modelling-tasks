@@ -37,7 +37,7 @@ import Data.Maybe                        (isJust)
 import qualified Data.Map                 as M
 import Data.Set                         (Set)
 
--- import Settings (nightly)
+import Settings (nightly)
 
 import Test.Hspec
 import Test.Hspec.QuickCheck (modifyMaxSuccess, prop)
@@ -60,8 +60,8 @@ spec = do
             ts = transitions net
         net `shouldSatisfy` hasMinTransitionLength (s ==) ts minL
 
-    -- nightly $
-    modifyMaxSuccess (const 1) $
+    nightly $
+     modifyMaxSuccess (const 3) $
       prop "generates non-trivial solutions when filtering is enabled (as in the default configuration)" $ \seed -> do
         let config = defaultReachConfig
         inst <- generateReach config seed
@@ -246,7 +246,7 @@ spec = do
               }
         inst <- generateReach config seed
         let net = petriNet (netGoal inst)
-            nonPreservingCount = length $ filter (not . uncurry (==) . connectionTokenBehavior) $ connections net
+            nonPreservingCount = length $ filter (uncurry (/=) . connectionTokenBehavior) $ connections net
         nonPreservingCount `shouldBe` 0
 
     it "rejects allowedTokenChanges = Just LT with impossible range (vHigh <= nLow)" $ do
