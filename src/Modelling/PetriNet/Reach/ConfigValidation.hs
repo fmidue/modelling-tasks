@@ -110,18 +110,16 @@ checkBasicPetriConfig
     <|> checkRange "outgoingArrowsPerPlace" (outgoingArrowsPerPlace arrowDensityConstraints)
     <|> checkRange "totalArrowsFromPlacesToTransitions" (totalArrowsFromPlacesToTransitions arrowDensityConstraints)
     <|> checkRange "totalArrowsFromTransitionsToPlaces" (totalArrowsFromTransitionsToPlaces arrowDensityConstraints)
-    <|> checkRangeVersusPlaces "incomingArrowsPerTransition" (incomingArrowsPerTransition arrowDensityConstraints) numPlaces
-    <|> checkRangeVersusPlaces "outgoingArrowsPerTransition" (outgoingArrowsPerTransition arrowDensityConstraints) numPlaces
-    <|> checkRangeVersusTransitions "incomingArrowsPerPlace" (incomingArrowsPerPlace arrowDensityConstraints) numTransitions
-    <|> checkRangeVersusTransitions "outgoingArrowsPerPlace" (outgoingArrowsPerPlace arrowDensityConstraints) numTransitions
+    <|> checkRangeVersusCount "numPlaces" "incomingArrowsPerTransition" (incomingArrowsPerTransition arrowDensityConstraints) numPlaces
+    <|> checkRangeVersusCount "numPlaces" "outgoingArrowsPerTransition" (outgoingArrowsPerTransition arrowDensityConstraints) numPlaces
+    <|> checkRangeVersusCount "numTransitions" "incomingArrowsPerPlace" (incomingArrowsPerPlace arrowDensityConstraints) numTransitions
+    <|> checkRangeVersusCount "numTransitions" "outgoingArrowsPerPlace" (outgoingArrowsPerPlace arrowDensityConstraints) numTransitions
     <|> checkRejectLongerThanConsistency rejectLongerThan maxTransitionLength showLengthHint
     <|> checkDrawCommands drawCommands
     <|> checkArrowDensityCrossValidation numPlaces numTransitions arrowDensityConstraints
   where
     checkDrawCommands [] = Just "drawCommands cannot be empty"
     checkDrawCommands _  = Nothing
-    checkRangeVersusPlaces = checkRangeVersusCount "numPlaces"
-    checkRangeVersusTransitions = checkRangeVersusCount "numTransitions"
     checkRangeVersusCount countName what (low, h) count = case h of
       Nothing ->
         if low > count
