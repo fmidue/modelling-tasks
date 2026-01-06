@@ -26,6 +26,7 @@ import qualified Data.Set                         as S (
   fromList,
   isSubsetOf,
   map,
+  toList,
   )
 
 import Modelling.Auxiliary.Common       (parseInt, skipSpaces)
@@ -305,9 +306,10 @@ satisfiesTransitionBehaviorConstraints net TransitionBehaviorConstraints {..} =
 satisfiesPerPlaceConstraints
   :: Ord s
   => Net s t
-  -> ArrowDensityConstraints
+  -> (Int, Maybe Int)  -- ^ incomingArrowsPerPlace
+  -> (Int, Maybe Int)  -- ^ outgoingArrowsPerPlace
   -> Bool
-satisfiesPerPlaceConstraints net ArrowDensityConstraints {..}
+satisfiesPerPlaceConstraints net incomingArrowsPerPlace outgoingArrowsPerPlace
   | incomingArrowsPerPlace == (0, Nothing) && outgoingArrowsPerPlace == (0, Nothing) = True
   | otherwise = all checkPlace (S.toList $ places net)
   where
@@ -328,9 +330,10 @@ satisfiesPerPlaceConstraints net ArrowDensityConstraints {..}
 -- | Check if a net satisfies total arrow constraints
 satisfiesTotalArrowConstraints
   :: Net s t
-  -> ArrowDensityConstraints
+  -> (Int, Maybe Int)  -- ^ totalArrowsFromPlacesToTransitions
+  -> (Int, Maybe Int)  -- ^ totalArrowsFromTransitionsToPlaces
   -> Bool
-satisfiesTotalArrowConstraints net ArrowDensityConstraints {..}
+satisfiesTotalArrowConstraints net totalArrowsFromPlacesToTransitions totalArrowsFromTransitionsToPlaces
   | totalArrowsFromPlacesToTransitions == (0, Nothing) && totalArrowsFromTransitionsToPlaces == (0, Nothing) = True
   | otherwise =
       checkBounds totalArrowsFromPlacesToTransitions placesToTrans &&

@@ -84,6 +84,7 @@ import Modelling.PetriNet.Reach.Property (
   )
 import Modelling.PetriNet.Reach.Roll    (netLimitsFiltered)
 import Modelling.PetriNet.Reach.Step    (executes, successors)
+import qualified Modelling.PetriNet.Reach.Type as Type
 import Modelling.PetriNet.Reach.Type (
   Capacity (Unbounded),
   Net (start, transitions),
@@ -639,14 +640,17 @@ findNetGoalWithSolutions filterConfig maxPrintedSolutions NetGoalConfig {..} =
   let ps = [Place 1 .. Place numPlaces]
       try :: RandT StdGen m [[(Int, MaybeT (RandT StdGen m) (NetGoal Place Transition, Either (NonEmpty [Transition]) (NonEmpty [Transition])))]]
       try = do
-        let generateNet =
+        let arrowConstraints = Type.ArrowDensityConstraints {
+              Type.incomingArrowsPerTransition = incomingArrowsPerTransition,
+              Type.outgoingArrowsPerTransition = outgoingArrowsPerTransition,
+              Type.incomingArrowsPerPlace = incomingArrowsPerPlace,
+              Type.outgoingArrowsPerPlace = outgoingArrowsPerPlace,
+              Type.totalArrowsFromPlacesToTransitions = totalArrowsFromPlacesToTransitions,
+              Type.totalArrowsFromTransitionsToPlaces = totalArrowsFromTransitionsToPlaces
+              }
+            generateNet =
               maybe generateNet return =<< netLimitsFiltered
-                incomingArrowsPerTransition
-                outgoingArrowsPerTransition
-                incomingArrowsPerPlace
-                outgoingArrowsPerPlace
-                totalArrowsFromPlacesToTransitions
-                totalArrowsFromTransitionsToPlaces
+                arrowConstraints
                 numPlaces
                 ps
                 ts

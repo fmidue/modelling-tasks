@@ -6,7 +6,7 @@ based on file: collection/src/Petri/Roll.hs
 module Modelling.PetriNet.Reach.Roll (netLimitsFiltered) where
 
 import qualified Data.Map                         as M (fromList)
-import qualified Data.Set                         as S (fromList, toList)
+import qualified Data.Set                         as S (fromList)
 
 import Modelling.PetriNet.Reach.Type (
   Net (..),
@@ -14,7 +14,14 @@ import Modelling.PetriNet.Reach.Type (
   State (State),
   Connection,
   TransitionBehaviorConstraints,
-  ArrowDensityConstraints,
+  ArrowDensityConstraints (
+    incomingArrowsPerTransition,
+    outgoingArrowsPerTransition,
+    incomingArrowsPerPlace,
+    outgoingArrowsPerPlace,
+    totalArrowsFromPlacesToTransitions,
+    totalArrowsFromTransitionsToPlaces
+    ),
   hasIsolatedNodes,
   satisfiesTransitionBehaviorConstraints,
   satisfiesPerPlaceConstraints,
@@ -118,23 +125,16 @@ netLimitsFiltered
     -- Filter out nets that don't satisfy transition behavior constraints
     guard $ satisfiesTransitionBehaviorConstraints n transitionBehaviorConstraints
     -- Filter out nets that don't satisfy per-place arrow constraints
-    guard $ satisfiesPerPlaceConstraints n arrowConstraints
+    guard $ satisfiesPerPlaceConstraints n
+      (incomingArrowsPerPlace arrowConstraints)
+      (outgoingArrowsPerPlace arrowConstraints)
     -- Filter out nets that don't satisfy total arrow constraints
-    guard $ satisfiesTotalArrowConstraints n arrowConstraints
+    guard $ satisfiesTotalArrowConstraints n
+      (totalArrowsFromPlacesToTransitions arrowConstraints)
+      (totalArrowsFromTransitionsToPlaces arrowConstraints)
     return n
   where
     fixMaximum :: (Int, Maybe Int) -> (Int, Int)
     fixMaximum (low, high) = (low, fromMaybe numPlaces high)
     (vLow, vHigh) = fixMaximum (incomingArrowsPerTransition arrowConstraints)
     (nLow, nHigh) = fixMaximum (outgoingArrowsPerTransition arrowConstraints)
-
--- | Check if a net satisfies per-place arrow constraints
-satisfiesPerPlaceConstraints
-  :: Ord s
-  => Net s t
-  -> (Int, Maybe Int)  -- ^ incomingArrowsPerPlace
-  -> (Int, Maybe Int)  -- ^ outgoingArrowsPerPlace
-  -> Bool
-satisfiesPerPlaceConstraints net (incomingLow, incomingHigh) (outgoingLow, outgoingHigh)
-  -- Special case: if both lower bounds are 0 and both upper bounds are Nothing, no checking needed
-  | incomingLow == 0 && isNothing incomingHigh && outgoingLow == 0 && isNothing outgoingHigh = True

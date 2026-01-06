@@ -78,6 +78,7 @@ import Modelling.PetriNet.Reach.Reach   (
   )
 import Modelling.PetriNet.Reach.Roll    (netLimitsFiltered)
 import Modelling.PetriNet.Reach.Step    (executes, successors)
+import qualified Modelling.PetriNet.Reach.Type as Type
 import Modelling.PetriNet.Reach.Type (
   Capacity (Unbounded),
   Net (..),
@@ -397,13 +398,16 @@ try
 try conf = do
     let ps = [Place 1 .. Place (numPlaces conf)]
         ts = [Transition 1 .. Transition (numTransitions conf)]
+        arrowConstraints = Type.ArrowDensityConstraints {
+          Type.incomingArrowsPerTransition = incomingArrowsPerTransition conf,
+          Type.outgoingArrowsPerTransition = outgoingArrowsPerTransition conf,
+          Type.incomingArrowsPerPlace = incomingArrowsPerPlace conf,
+          Type.outgoingArrowsPerPlace = outgoingArrowsPerPlace conf,
+          Type.totalArrowsFromPlacesToTransitions = totalArrowsFromPlacesToTransitions conf,
+          Type.totalArrowsFromTransitionsToPlaces = totalArrowsFromTransitionsToPlaces conf
+          }
     n <- MaybeT $ netLimitsFiltered
-      (incomingArrowsPerTransition conf)
-      (outgoingArrowsPerTransition conf)
-      (incomingArrowsPerPlace conf)
-      (outgoingArrowsPerPlace conf)
-      (totalArrowsFromPlacesToTransitions conf)
-      (totalArrowsFromTransitionsToPlaces conf)
+      arrowConstraints
       (numPlaces conf)
       ps
       ts
