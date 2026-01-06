@@ -408,11 +408,12 @@ toTaskSpecificText path DifferentNamesInstance {..} = \case
     paragraph $ image $=<< cacheCd cdDrawSettings mempty cd path
   GivenOd -> paragraph $ image $=<<
     cacheOd oDiagram Forward True path
-  MappingAdvice -> mappingAdvice False
+  MappingAdvice -> mappingAdvice (not hasGivenCd)
   DirectionsAdvice -> directionsAdvice False
   SimplifiedInformation -> simplifiedInformation True
   where
     cd = fromClassDiagram cDiagram
+    hasGivenCd = Special GivenCd `elem` taskText
 
 defaultDifferentNamesTaskText :: DifferentNamesTaskText
 defaultDifferentNamesTaskText = [
