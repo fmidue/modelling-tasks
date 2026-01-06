@@ -4,6 +4,7 @@ module Modelling.PetriNet.PetriReach.Config where
 
 import Modelling.PetriNet.Reach.Reach   (ReachConfig(..), NetGoalConfig(..))
 import Modelling.PetriNet.Reach.Filter  (defaultFilterConfig, FilterConfig(absentTransitionsRequirement, forbiddenCycleLengths, requireCycleLengthsAny))
+import qualified Modelling.PetriNet.Reach.Type as Type
 import Modelling.PetriNet.Reach.Type    (Capacity(..), noTransitionBehaviorConstraints)
 import Data.GraphViz.Commands           (GraphvizCommand(..))
 
@@ -19,12 +20,12 @@ task2023_27 = ReachConfig {
     drawPreferenceOrder = [Circo],
     maxTransitionLength = 8,
     minTransitionLength = 8,
-    incomingArrowsPerTransition = (2, Just 2),
-    outgoingArrowsPerTransition = (2, Just 3),
-    incomingArrowsPerPlace = (0, Nothing),
-    outgoingArrowsPerPlace = (0, Nothing),
-    totalArrowsFromPlacesToTransitions = (8, Just 8),
-    totalArrowsFromTransitionsToPlaces = (8, Just 12),
+    arrowDensityConstraints = Type.noArrowDensityConstraints {
+      Type.incomingArrowsPerTransition = (2, Just 2),
+      Type.outgoingArrowsPerTransition = (2, Just 3),
+      Type.totalArrowsFromPlacesToTransitions = (8, Just 8),
+      Type.totalArrowsFromTransitionsToPlaces = (8, Just 12)
+      },
     maxPlacesChanged = 4,
     transitionBehaviorConstraints = noTransitionBehaviorConstraints
     },
@@ -49,12 +50,12 @@ task2023_28 = ReachConfig {
     drawPreferenceOrder = [Circo],
     maxTransitionLength = 12,
     minTransitionLength = 12,
-    incomingArrowsPerTransition = (2, Just 2),
-    outgoingArrowsPerTransition = (2, Just 3),
-    incomingArrowsPerPlace = (0, Nothing),
-    outgoingArrowsPerPlace = (0, Nothing),
-    totalArrowsFromPlacesToTransitions = (12, Just 12),
-    totalArrowsFromTransitionsToPlaces = (12, Just 18),
+    arrowDensityConstraints = Type.noArrowDensityConstraints {
+      Type.incomingArrowsPerTransition = (2, Just 2),
+      Type.outgoingArrowsPerTransition = (2, Just 3),
+      Type.totalArrowsFromPlacesToTransitions = (12, Just 12),
+      Type.totalArrowsFromTransitionsToPlaces = (12, Just 18)
+      },
     maxPlacesChanged = 6,
     transitionBehaviorConstraints = noTransitionBehaviorConstraints
     },
@@ -91,12 +92,12 @@ task2024_60 = ReachConfig {
     drawPreferenceOrder = [Circo],
     maxTransitionLength = 8,
     minTransitionLength = 8,
-    incomingArrowsPerTransition = (2, Just 2),
-    outgoingArrowsPerTransition = (2, Just 3),
-    incomingArrowsPerPlace = (0, Nothing),
-    outgoingArrowsPerPlace = (0, Nothing),
-    totalArrowsFromPlacesToTransitions = (8, Just 8),
-    totalArrowsFromTransitionsToPlaces = (8, Just 12),
+    arrowDensityConstraints = Type.noArrowDensityConstraints {
+      Type.incomingArrowsPerTransition = (2, Just 2),
+      Type.outgoingArrowsPerTransition = (2, Just 3),
+      Type.totalArrowsFromPlacesToTransitions = (8, Just 8),
+      Type.totalArrowsFromTransitionsToPlaces = (8, Just 12)
+      },
     maxPlacesChanged = 4,
     transitionBehaviorConstraints = noTransitionBehaviorConstraints
     },

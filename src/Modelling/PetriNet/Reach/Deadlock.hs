@@ -263,12 +263,7 @@ data DeadlockConfig = DeadlockConfig {
   maxTransitionLength :: Int,
   minTransitionLength :: Int,
   transitionBehaviorConstraints :: TransitionBehaviorConstraints,
-  incomingArrowsPerTransition :: (Int, Maybe Int),
-  outgoingArrowsPerTransition :: (Int, Maybe Int),
-  incomingArrowsPerPlace :: (Int, Maybe Int),
-  outgoingArrowsPerPlace :: (Int, Maybe Int),
-  totalArrowsFromPlacesToTransitions :: (Int, Maybe Int),
-  totalArrowsFromTransitionsToPlaces :: (Int, Maybe Int),
+  arrowDensityConstraints :: Type.ArrowDensityConstraints,
   maxPrintedSolutions :: Int,
   rejectLongerThan    :: Maybe Int,
   showLengthHint      :: Bool,
@@ -291,12 +286,7 @@ defaultDeadlockConfig =
   maxTransitionLength = 8,
   minTransitionLength = 8,
   transitionBehaviorConstraints = noTransitionBehaviorConstraints,
-  incomingArrowsPerTransition = (0, Nothing),
-  outgoingArrowsPerTransition = (0, Nothing),
-  incomingArrowsPerPlace = (0, Nothing),
-  outgoingArrowsPerPlace = (0, Nothing),
-  totalArrowsFromPlacesToTransitions = (0, Nothing),
-  totalArrowsFromTransitionsToPlaces = (0, Nothing),
+  arrowDensityConstraints = Type.noArrowDensityConstraints,
   maxPrintedSolutions = 0,
   rejectLongerThan    = Just 8,
   showLengthHint      = False,
@@ -321,7 +311,8 @@ defaultDeadlockInstance = DeadlockInstance {
 
 checkDeadlockConfig :: DeadlockConfig -> Maybe String
 checkDeadlockConfig DeadlockConfig {..} =
-  checkBasicPetriConfig
+  let Type.ArrowDensityConstraints {..} = arrowDensityConstraints
+  in checkBasicPetriConfig
     numPlaces
     numTransitions
     capacity
@@ -398,16 +389,8 @@ try
 try conf = do
     let ps = [Place 1 .. Place (numPlaces conf)]
         ts = [Transition 1 .. Transition (numTransitions conf)]
-        arrowConstraints = Type.ArrowDensityConstraints {
-          Type.incomingArrowsPerTransition = incomingArrowsPerTransition conf,
-          Type.outgoingArrowsPerTransition = outgoingArrowsPerTransition conf,
-          Type.incomingArrowsPerPlace = incomingArrowsPerPlace conf,
-          Type.outgoingArrowsPerPlace = outgoingArrowsPerPlace conf,
-          Type.totalArrowsFromPlacesToTransitions = totalArrowsFromPlacesToTransitions conf,
-          Type.totalArrowsFromTransitionsToPlaces = totalArrowsFromTransitionsToPlaces conf
-          }
     n <- MaybeT $ netLimitsFiltered
-      arrowConstraints
+      (arrowDensityConstraints conf)
       (numPlaces conf)
       ps
       ts

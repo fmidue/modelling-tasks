@@ -1,5 +1,3 @@
-{-# LANGUAGE RecordWildCards #-}
-
 -- | Common validation logic for Petri Net configurations (Deadlock and Reach)
 module Modelling.PetriNet.Reach.ConfigValidation (
   checkBasicPetriConfig,
@@ -21,7 +19,8 @@ import Modelling.PetriNet.Reach.Filter (
   FilterConfig (..),
   noFiltering,
   )
-import Modelling.PetriNet.Reach.Type (Capacity(..), TransitionBehaviorConstraints(..))
+import qualified Modelling.PetriNet.Reach.Type as Type
+import Modelling.PetriNet.Reach.Type (Capacity(..), TransitionBehaviorConstraints(..), ArrowDensityConstraints(..))
 
 -- | Check that a range (low, high) is valid
 checkRange
@@ -121,12 +120,14 @@ checkBasicPetriConfig
     <|> checkArrowDensityCrossValidation
           numPlaces
           numTransitions
-          incomingArrowsPerTransition
-          outgoingArrowsPerTransition
-          incomingArrowsPerPlace
-          outgoingArrowsPerPlace
-          totalArrowsFromPlacesToTransitions
-          totalArrowsFromTransitionsToPlaces
+          (Type.ArrowDensityConstraints {
+            Type.incomingArrowsPerTransition = incomingArrowsPerTransition,
+            Type.outgoingArrowsPerTransition = outgoingArrowsPerTransition,
+            Type.incomingArrowsPerPlace = incomingArrowsPerPlace,
+            Type.outgoingArrowsPerPlace = outgoingArrowsPerPlace,
+            Type.totalArrowsFromPlacesToTransitions = totalArrowsFromPlacesToTransitions,
+            Type.totalArrowsFromTransitionsToPlaces = totalArrowsFromTransitionsToPlaces
+          })
   where
     checkDrawCommands [] = Just "drawCommands cannot be empty"
     checkDrawCommands _  = Nothing
@@ -265,22 +266,19 @@ checkTransitionBehaviorConstraints numPlaces incomingArrowsPerTransition outgoin
 checkArrowDensityCrossValidation
   :: Int              -- ^ numPlaces
   -> Int              -- ^ numTransitions
-  -> (Int, Maybe Int) -- ^ incomingArrowsPerTransition
-  -> (Int, Maybe Int) -- ^ outgoingArrowsPerTransition
-  -> (Int, Maybe Int) -- ^ incomingArrowsPerPlace
-  -> (Int, Maybe Int) -- ^ outgoingArrowsPerPlace
-  -> (Int, Maybe Int) -- ^ totalArrowsFromPlacesToTransitions
-  -> (Int, Maybe Int) -- ^ totalArrowsFromTransitionsToPlaces
+  -> ArrowDensityConstraints
   -> Maybe String
 checkArrowDensityCrossValidation
   numPlaces
   numTransitions
-  (incomingPerTransLow, incomingPerTransHigh)
-  (outgoingPerTransLow, outgoingPerTransHigh)
-  (incomingPerPlaceLow, incomingPerPlaceHigh)
-  (outgoingPerPlaceLow, outgoingPerPlaceHigh)
-  (totalPlacesToTransLow, totalPlacesToTransHigh)
-  (totalTransToPlacesLow, totalTransToPlacesHigh)
+  ArrowDensityConstraints {
+    incomingArrowsPerTransition = (incomingPerTransLow, incomingPerTransHigh),
+    outgoingArrowsPerTransition = (outgoingPerTransLow, outgoingPerTransHigh),
+    incomingArrowsPerPlace = (incomingPerPlaceLow, incomingPerPlaceHigh),
+    outgoingArrowsPerPlace = (outgoingPerPlaceLow, outgoingPerPlaceHigh),
+    totalArrowsFromPlacesToTransitions = (totalPlacesToTransLow, totalPlacesToTransHigh),
+    totalArrowsFromTransitionsToPlaces = (totalTransToPlacesLow, totalTransToPlacesHigh)
+  }
   -- totalArrowsFromPlacesToTransitions relates to incomingArrowsPerTransition
   -- Check that totalArrowsFromPlacesToTransitions is consistent with per-transition bounds
   | totalPlacesToTransLow > incomingPerTransHighBound * numTransitions

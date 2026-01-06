@@ -570,12 +570,7 @@ data NetGoalConfig = NetGoalConfig {
   -- Must be in the range @1..numPlaces@.
   maxPlacesChanged    :: Int,
   transitionBehaviorConstraints :: TransitionBehaviorConstraints,
-  incomingArrowsPerTransition :: (Int, Maybe Int),
-  outgoingArrowsPerTransition :: (Int, Maybe Int),
-  incomingArrowsPerPlace :: (Int, Maybe Int),
-  outgoingArrowsPerPlace :: (Int, Maybe Int),
-  totalArrowsFromPlacesToTransitions :: (Int, Maybe Int),
-  totalArrowsFromTransitionsToPlaces :: (Int, Maybe Int)
+  arrowDensityConstraints :: Type.ArrowDensityConstraints
   }
   deriving (Generic, Read, Show)
 #if !MIN_VERSION_base(4,18,0)
@@ -596,12 +591,10 @@ defaultReachConfig = ReachConfig {
       allowedTokenChanges = Nothing,
       areNonPreserving = Just 2
       },
-    incomingArrowsPerTransition = (0, Just 3),
-    outgoingArrowsPerTransition = (0, Just 3),
-    incomingArrowsPerPlace = (0, Nothing),
-    outgoingArrowsPerPlace = (0, Nothing),
-    totalArrowsFromPlacesToTransitions = (0, Nothing),
-    totalArrowsFromTransitionsToPlaces = (0, Nothing)
+    arrowDensityConstraints = Type.noArrowDensityConstraints {
+      Type.incomingArrowsPerTransition = (0, Just 3),
+      Type.outgoingArrowsPerTransition = (0, Just 3)
+      }
     },
   maxPrintedSolutions = 1,
   rejectLongerThan    = Just 6,
@@ -640,17 +633,9 @@ findNetGoalWithSolutions filterConfig maxPrintedSolutions NetGoalConfig {..} =
   let ps = [Place 1 .. Place numPlaces]
       try :: RandT StdGen m [[(Int, MaybeT (RandT StdGen m) (NetGoal Place Transition, Either (NonEmpty [Transition]) (NonEmpty [Transition])))]]
       try = do
-        let arrowConstraints = Type.ArrowDensityConstraints {
-              Type.incomingArrowsPerTransition = incomingArrowsPerTransition,
-              Type.outgoingArrowsPerTransition = outgoingArrowsPerTransition,
-              Type.incomingArrowsPerPlace = incomingArrowsPerPlace,
-              Type.outgoingArrowsPerPlace = outgoingArrowsPerPlace,
-              Type.totalArrowsFromPlacesToTransitions = totalArrowsFromPlacesToTransitions,
-              Type.totalArrowsFromTransitionsToPlaces = totalArrowsFromTransitionsToPlaces
-              }
-            generateNet =
+        let generateNet =
               maybe generateNet return =<< netLimitsFiltered
-                arrowConstraints
+                arrowDensityConstraints
                 numPlaces
                 ps
                 ts
@@ -735,18 +720,19 @@ generateNetGoal filterConfig maxPrintedSolutions netGoalConfig seed =
 
 checkReachConfig :: ReachConfig -> Maybe String
 checkReachConfig ReachConfig {..} =
-  checkBasicPetriConfig
+  let Type.ArrowDensityConstraints {..} = arrowDensityConstraints netGoalConfig
+  in checkBasicPetriConfig
     (numPlaces netGoalConfig)
     (numTransitions netGoalConfig)
     (capacity netGoalConfig)
     (minTransitionLength netGoalConfig)
     (maxTransitionLength netGoalConfig)
-    (incomingArrowsPerTransition netGoalConfig)
-    (outgoingArrowsPerTransition netGoalConfig)
-    (incomingArrowsPerPlace netGoalConfig)
-    (outgoingArrowsPerPlace netGoalConfig)
-    (totalArrowsFromPlacesToTransitions netGoalConfig)
-    (totalArrowsFromTransitionsToPlaces netGoalConfig)
+    incomingArrowsPerTransition
+    outgoingArrowsPerTransition
+    incomingArrowsPerPlace
+    outgoingArrowsPerPlace
+    totalArrowsFromPlacesToTransitions
+    totalArrowsFromTransitionsToPlaces
     (drawPreferenceOrder netGoalConfig)
     rejectLongerThan
     showLengthHint
@@ -773,8 +759,8 @@ checkReachConfig ReachConfig {..} =
   <|>
   checkTransitionBehaviorConstraints
     (numPlaces netGoalConfig)
-    (incomingArrowsPerTransition netGoalConfig)
-    (outgoingArrowsPerTransition netGoalConfig)
+    incomingArrowsPerTransition
+    outgoingArrowsPerTransition
     (numTransitions netGoalConfig)
     (transitionBehaviorConstraints netGoalConfig)
   <|>
