@@ -64,7 +64,6 @@ import Modelling.PetriNet.Reach.Property (
 import Modelling.PetriNet.Reach.ConfigValidation (
   checkBasicPetriConfig,
   checkFilterConfigWith,
-  checkTransitionBehaviorConstraints,
   )
 import Modelling.PetriNet.Reach.Reach   (
   assertReachPoints,

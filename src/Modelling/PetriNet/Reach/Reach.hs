@@ -110,7 +110,6 @@ import Control.Monad.Trans.Maybe        (MaybeT (MaybeT, runMaybeT))
 import Modelling.PetriNet.Reach.ConfigValidation (
   checkBasicPetriConfig,
   checkFilterConfigWith,
-  checkTransitionBehaviorConstraints,
   )
 import Control.OutputCapable.Blocks (
   ArticleToUse (IndefiniteArticle),

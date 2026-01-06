@@ -21,7 +21,6 @@ import Modelling.PetriNet.Reach.Filter (
   FilterConfig (..),
   noFiltering,
   )
-import qualified Modelling.PetriNet.Reach.Type as Type
 import Modelling.PetriNet.Reach.Type (Capacity(..), TransitionBehaviorConstraints(..), ArrowDensityConstraints(..))
 
 -- | Check that a range (low, high) is valid

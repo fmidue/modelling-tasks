@@ -28,9 +28,11 @@ import Modelling.PetriNet.Reach.Type (
   Capacity(..),
   Place(..),
   TransitionBehaviorConstraints(..),
+  ArrowDensityConstraints(..),
   connectionTokenBehavior,
   mark,
   noTransitionBehaviorConstraints,
+  noArrowDensityConstraints,
   )
 
 import Data.Maybe                        (isJust)
@@ -91,8 +93,14 @@ spec = do
         let config = defaultReachConfig {
               filterConfig = noFiltering,
               netGoalConfig = (netGoalConfig defaultReachConfig) {
-                incomingArrowsPerPlace = (1, Just 2),
-                totalArrowsFromTransitionsToPlaces = (6, Just 12),
+                arrowDensityConstraints = ArrowDensityConstraints {
+                  incomingArrowsPerTransition = (0, Just 3),
+                  outgoingArrowsPerTransition = (0, Just 3),
+                  incomingArrowsPerPlace = (1, Just 2),
+                  outgoingArrowsPerPlace = (0, Nothing),
+                  totalArrowsFromPlacesToTransitions = (0, Nothing),
+                  totalArrowsFromTransitionsToPlaces = (6, Just 12)
+                  },
                 transitionBehaviorConstraints = noTransitionBehaviorConstraints
                 }
               }
@@ -108,8 +116,14 @@ spec = do
         let config = defaultReachConfig {
               filterConfig = noFiltering,
               netGoalConfig = (netGoalConfig defaultReachConfig) {
-                outgoingArrowsPerPlace = (1, Just 2),
-                totalArrowsFromPlacesToTransitions = (6, Just 12),
+                arrowDensityConstraints = ArrowDensityConstraints {
+                  incomingArrowsPerTransition = (0, Just 3),
+                  outgoingArrowsPerTransition = (0, Just 3),
+                  incomingArrowsPerPlace = (0, Nothing),
+                  outgoingArrowsPerPlace = (1, Just 2),
+                  totalArrowsFromPlacesToTransitions = (6, Just 12),
+                  totalArrowsFromTransitionsToPlaces = (0, Nothing)
+                  },
                 transitionBehaviorConstraints = noTransitionBehaviorConstraints
                 }
               }
@@ -125,7 +139,14 @@ spec = do
         let config = defaultReachConfig {
               filterConfig = noFiltering,
               netGoalConfig = (netGoalConfig defaultReachConfig) {
-                totalArrowsFromPlacesToTransitions = (10, Just 18),
+                arrowDensityConstraints = ArrowDensityConstraints {
+                  incomingArrowsPerTransition = (0, Just 3),
+                  outgoingArrowsPerTransition = (0, Just 3),
+                  incomingArrowsPerPlace = (0, Nothing),
+                  outgoingArrowsPerPlace = (0, Nothing),
+                  totalArrowsFromPlacesToTransitions = (10, Just 18),
+                  totalArrowsFromTransitionsToPlaces = (0, Nothing)
+                  },
                 transitionBehaviorConstraints = noTransitionBehaviorConstraints
                 }
               }
@@ -140,7 +161,14 @@ spec = do
         let config = defaultReachConfig {
               filterConfig = noFiltering,
               netGoalConfig = (netGoalConfig defaultReachConfig) {
-                totalArrowsFromTransitionsToPlaces = (10, Just 18),
+                arrowDensityConstraints = ArrowDensityConstraints {
+                  incomingArrowsPerTransition = (0, Just 3),
+                  outgoingArrowsPerTransition = (0, Just 3),
+                  incomingArrowsPerPlace = (0, Nothing),
+                  outgoingArrowsPerPlace = (0, Nothing),
+                  totalArrowsFromPlacesToTransitions = (0, Nothing),
+                  totalArrowsFromTransitionsToPlaces = (10, Just 18)
+                  },
                 transitionBehaviorConstraints = noTransitionBehaviorConstraints
                 }
               }
