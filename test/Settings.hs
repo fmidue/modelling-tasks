@@ -19,7 +19,7 @@ needsTuning spec = do
     else describe "needs tuning" spec
 
 nightly :: Spec -> Spec
-nightly =
+nightly spec = do
   skip <- runIO $ readIORef skipNeedsTuning
   if skip
     then xdescribe "runs only nightly (skipping)" spec

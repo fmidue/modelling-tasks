@@ -37,7 +37,7 @@ import Data.Maybe                        (isJust)
 import qualified Data.Map                 as M
 import Data.Set                         (Set)
 
-import Settings (nightly)
+-- import Settings (nightly)
 
 import Test.Hspec
 import Test.Hspec.QuickCheck (modifyMaxSuccess, prop)
@@ -60,8 +60,8 @@ spec = do
             ts = transitions net
         net `shouldSatisfy` hasMinTransitionLength (s ==) ts minL
 
-    nightly $
-     modifyMaxSuccess (const 1) $
+    -- nightly $
+    modifyMaxSuccess (const 1) $
       prop "generates non-trivial solutions when filtering is enabled (as in the default configuration)" $ \seed -> do
         let config = defaultReachConfig
         inst <- generateReach config seed
@@ -146,12 +146,12 @@ spec = do
             }
       checkReachConfig config `shouldSatisfy` isJust
 
-    it "accepts valid transitionBehaviorConstraints with areNonPreserving" $ do
+    it "accepts valid transitionBehaviorConstraints with areNonPreserving set to 0" $ do
       let config = defaultReachConfig {
             netGoalConfig = (netGoalConfig defaultReachConfig) {
               transitionBehaviorConstraints = TransitionBehaviorConstraints {
                 allowedTokenChanges = Nothing,
-                areNonPreserving = Just 2
+                areNonPreserving = Just 0
                 }
               }
             }
@@ -234,7 +234,7 @@ spec = do
         decreasingCount `shouldBe` 0
 
     modifyMaxSuccess (const 1) $
-      prop "respects areNonPreserving constraint" $ \seed -> do
+      prop "respects areNonPreserving constraint set to 0" $ \seed -> do
         let config = defaultReachConfig {
               filterConfig = noFiltering,
               netGoalConfig = (netGoalConfig defaultReachConfig) {
