@@ -337,12 +337,10 @@ differentNamesTask
   -> FilePath
   -> DifferentNamesInstance
   -> LangM m
-differentNamesTask showInputHelp path task@DifferentNamesInstance {..} = do
-  toTaskText (hasGivenCd && showInputHelp) path task
+differentNamesTask showInputHelp path task = do
+  toTaskText showInputHelp path task
   hoveringInformation True
   pure ()
-  where
-    hasGivenCd = Special GivenCd `elem` taskText
 
 toTaskText
   :: (
@@ -356,15 +354,17 @@ toTaskText
   -> FilePath
   -> DifferentNamesInstance
   -> LangM m
-toTaskText showInputHelp path task = do
-  specialToOutputCapable (toTaskSpecificText path task) (taskText task)
+toTaskText showInputHelp path task@DifferentNamesInstance {..} = do
+  specialToOutputCapable (toTaskSpecificText path task) taskText
   when showInputHelp $
-    toOutputCapable [inputHelpText]
-  extra $ addText task
+    toOutputCapable [inputHelpText hasGivenCd]
+  extra addText
   pure ()
+  where
+    hasGivenCd = Special GivenCd `elem` taskText
 
-mappingAdvice :: OutputCapable m => Bool -> LangM m
-mappingAdvice isCollapsed = collapsed isCollapsed (translations $ do
+mappingAdvice :: OutputCapable m => Bool -> Bool -> LangM m
+mappingAdvice isCollapsed hasGivenCd = collapsed isCollapsed (translations $ do
   english "Note on link grouping"
   german "Anmerkung zur Link-Gruppierung"
   ) $ do
@@ -372,13 +372,13 @@ mappingAdvice isCollapsed = collapsed isCollapsed (translations $ do
     english [iii|
       Links are already grouped correctly and fully,
       i.e., all links with the same label (and only links with the same label!)
-      in the OD correspond to exactly the same relationship in the CD.
+      in the OD correspond to exactly the same relationship#{if hasGivenCd then " in the CD" else ""}.
       |]
     german [iii|
       Links sind bereits vollständig und korrekt gruppiert,
       d.h., alle Links mit der selben Beschriftung
       (and auch nur Links mit der selben Beschriftung!)
-      im OD entsprechen genau der selben Beziehung im CD.
+      im OD entsprechen genau der selben Beziehung#{if hasGivenCd then " im CD" else ""}.
       |]
   paragraph $ translate $ do
     english [iii|
@@ -408,11 +408,12 @@ toTaskSpecificText path DifferentNamesInstance {..} = \case
     paragraph $ image $=<< cacheCd cdDrawSettings mempty cd path
   GivenOd -> paragraph $ image $=<<
     cacheOd oDiagram Forward True path
-  MappingAdvice -> mappingAdvice False
+  MappingAdvice -> mappingAdvice False hasGivenCd
   DirectionsAdvice -> directionsAdvice False
   SimplifiedInformation -> simplifiedInformation True
   where
     cd = fromClassDiagram cDiagram
+    hasGivenCd = Special GivenCd `elem` taskText
 
 defaultDifferentNamesTaskText :: DifferentNamesTaskText
 defaultDifferentNamesTaskText = [
@@ -438,26 +439,49 @@ defaultDifferentNamesTaskText = [
   Special SimplifiedInformation
   ]
 
-inputHelpText :: Output
-inputHelpText =
-  Paragraph [
-    Translated $ translations $ do
-      english [iii|
-        State your answer by giving a mapping of
-        relationships in the CD to links in the OD.
-        \n
-        To state that x in the CD corresponds to 1. in the OD and
-        y in the CD corresponds to 2. in the OD, write the mapping as:
-        |]
-      german [iii|
-        Geben Sie Ihre Antwort als eine Zuordnung von
-        Beziehungen im CD zu Links im OD an.
-        \n
-        Um anzugeben, dass x im CD zu 1. im OD und y im CD
-        zu 2. im OD korrespondieren, schreiben Sie die Zuordnung als:
-        |],
-    Code . uniform . show $ mappingShow differentNamesInitial
-    ]
+inputHelpText :: Bool -> Output
+inputHelpText hasGivenCd =
+  if hasGivenCd then
+    Paragraph [
+      Translated $ translations $ do
+        english [iii|
+          State your answer by giving a mapping of
+          relationships in the CD to links in the OD.
+          \n
+          To state that x in the CD corresponds to 1. in the OD and
+          y in the CD corresponds to 2. in the OD, write the mapping as:
+          |]
+        german [iii|
+          Geben Sie Ihre Antwort als eine Zuordnung von
+          Beziehungen im CD zu Links im OD an.
+          \n
+          Um anzugeben, dass x im CD zu 1. im OD und y im CD
+          zu 2. im OD korrespondieren, schreiben Sie die Zuordnung als:
+          |],
+      Code . uniform . show $ mappingShow differentNamesInitial
+      ]
+  else
+    Paragraph[
+      Translated $ translations $ do
+        english
+          [iii|
+            State your answer by giving a mapping of
+            real-world relationship names to links in the OD.
+            \n
+            To state that a relationship x corresponds to 1. in the OD and
+            another one y corresponds to 2. in the OD, write the mapping as:
+          |]
+        german
+          [iii|
+            Geben Sie Ihre Antwort als eine Zuordnung von
+            realweltlichen Beziehungsnamen zu Links im OD an.
+            \n
+            Um anzugeben, dass eine Beziehung x zu 1. im OD und eine andere y
+            zu 2. im OD korrespondiert, schreiben Sie die Zuordnung als:
+          |],
+      Code . uniform . show $ mappingShow differentNamesInitial
+      ]
+
 
 differentNamesInitial :: [(Name, Name)]
 differentNamesInitial = map (bimap Name Name) [("x", "1"), ("y", "2")]
