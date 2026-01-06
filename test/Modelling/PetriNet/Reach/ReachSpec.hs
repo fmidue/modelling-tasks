@@ -86,6 +86,64 @@ spec = do
             numberOfDifferentPlaces = length $ filter (\p -> mark startState p /= mark goalState p) places
         numberOfDifferentPlaces `shouldSatisfy` (<= 2)
 
+    modifyMaxSuccess (const 5) $
+      prop "respects incomingArrowsPerPlace constraint" $ \seed -> do
+        let config = defaultReachConfig {
+              filterConfig = noFiltering,
+              netGoalConfig = (netGoalConfig defaultReachConfig) {
+                incomingArrowsPerPlace = (1, Just 2),
+                transitionBehaviorConstraints = noTransitionBehaviorConstraints
+                }
+              }
+        inst <- generateReach config seed
+        let net = petriNet (netGoal inst)
+            places = [Place 1 .. Place (numPlaces $ netGoalConfig config)]
+            incomingArrowsPerPlaceList = map (\p -> countIncomingToPlace p (connections net)) places
+        all (\count -> count >= 1 && count <= 2) incomingArrowsPerPlaceList `shouldBe` True
+
+    modifyMaxSuccess (const 5) $
+      prop "respects outgoingArrowsPerPlace constraint" $ \seed -> do
+        let config = defaultReachConfig {
+              filterConfig = noFiltering,
+              netGoalConfig = (netGoalConfig defaultReachConfig) {
+                outgoingArrowsPerPlace = (1, Just 2),
+                transitionBehaviorConstraints = noTransitionBehaviorConstraints
+                }
+              }
+        inst <- generateReach config seed
+        let net = petriNet (netGoal inst)
+            places = [Place 1 .. Place (numPlaces $ netGoalConfig config)]
+            outgoingArrowsPerPlaceList = map (\p -> countOutgoingFromPlace p (connections net)) places
+        all (\count -> count >= 1 && count <= 2) outgoingArrowsPerPlaceList `shouldBe` True
+
+    modifyMaxSuccess (const 5) $
+      prop "respects totalArrowsFromPlacesToTransitions constraint" $ \seed -> do
+        let config = defaultReachConfig {
+              filterConfig = noFiltering,
+              netGoalConfig = (netGoalConfig defaultReachConfig) {
+                totalArrowsFromPlacesToTransitions = (10, Just 20),
+                transitionBehaviorConstraints = noTransitionBehaviorConstraints
+                }
+              }
+        inst <- generateReach config seed
+        let net = petriNet (netGoal inst)
+            totalArrows = sum [length pre | (pre, _, _) <- connections net]
+        totalArrows `shouldSatisfy` (\x -> x >= 10 && x <= 20)
+
+    modifyMaxSuccess (const 5) $
+      prop "respects totalArrowsFromTransitionsToPlaces constraint" $ \seed -> do
+        let config = defaultReachConfig {
+              filterConfig = noFiltering,
+              netGoalConfig = (netGoalConfig defaultReachConfig) {
+                totalArrowsFromTransitionsToPlaces = (10, Just 20),
+                transitionBehaviorConstraints = noTransitionBehaviorConstraints
+                }
+              }
+        inst <- generateReach config seed
+        let net = petriNet (netGoal inst)
+            totalArrows = sum [length post | (_, _, post) <- connections net]
+        totalArrows `shouldSatisfy` (\x -> x >= 10 && x <= 20)
+
   describe "checkReachConfig" $ do
     it "accepts valid configuration" $ do
       let config = defaultReachConfig
@@ -380,3 +438,11 @@ hasMinTransitionLength p ts minL n =
           a <- S.toList ts,
           as <- transitionVariants (x-1)
           ]
+
+countIncomingToPlace :: Place -> [([Place], t, [Place])] -> Int
+countIncomingToPlace place conns =
+  sum [length $ filter (== place) post | (_, _, post) <- conns]
+
+countOutgoingFromPlace :: Place -> [([Place], t, [Place])] -> Int
+countOutgoingFromPlace place conns =
+  sum [length $ filter (== place) pre | (pre, _, _) <- conns]

@@ -643,6 +643,10 @@ findNetGoalWithSolutions filterConfig maxPrintedSolutions NetGoalConfig {..} =
               maybe generateNet return =<< netLimitsFiltered
                 incomingArrowsPerTransition
                 outgoingArrowsPerTransition
+                incomingArrowsPerPlace
+                outgoingArrowsPerPlace
+                totalArrowsFromPlacesToTransitions
+                totalArrowsFromTransitionsToPlaces
                 numPlaces
                 ps
                 ts

@@ -114,8 +114,8 @@ checkBasicPetriConfig
     <|> checkRange "totalArrowsFromTransitionsToPlaces" totalArrowsFromTransitionsToPlaces
     <|> checkRangeVersusPlaces "incomingArrowsPerTransition" incomingArrowsPerTransition numPlaces
     <|> checkRangeVersusPlaces "outgoingArrowsPerTransition" outgoingArrowsPerTransition numPlaces
-    <|> checkRangeVersusPlaces "incomingArrowsPerPlace" incomingArrowsPerPlace numPlaces
-    <|> checkRangeVersusPlaces "outgoingArrowsPerPlace" outgoingArrowsPerPlace numPlaces
+    <|> checkRangeVersusTransitions "incomingArrowsPerPlace" incomingArrowsPerPlace numTransitions
+    <|> checkRangeVersusTransitions "outgoingArrowsPerPlace" outgoingArrowsPerPlace numTransitions
     <|> checkRejectLongerThanConsistency rejectLongerThan maxTransitionLength showLengthHint
     <|> checkDrawCommands drawCommands
     <|> checkArrowDensityCrossValidation
@@ -140,6 +140,17 @@ checkBasicPetriConfig
         if high > places
         then Just $ "The upper limit for " ++ what ++ " (currently " ++ show high ++
                    ") cannot exceed numPlaces (currently " ++ show places ++ ")"
+        else Nothing
+    checkRangeVersusTransitions what (low, h) transitions = case h of
+      Nothing ->
+        if low > transitions
+        then Just $ "The lower limit for " ++ what ++ " (currently " ++ show low ++
+                   ") cannot exceed numTransitions (currently " ++ show transitions ++ ")"
+        else Nothing
+      Just high ->
+        if high > transitions
+        then Just $ "The upper limit for " ++ what ++ " (currently " ++ show high ++
+                   ") cannot exceed numTransitions (currently " ++ show transitions ++ ")"
         else Nothing
 
 -- | Check filter configuration constraints given the transition length parameters
@@ -279,6 +290,7 @@ checkArrowDensityCrossValidation
   (outgoingPerPlaceLow, outgoingPerPlaceHigh)
   (totalPlacesToTransLow, totalPlacesToTransHigh)
   (totalTransToPlacesLow, totalTransToPlacesHigh)
+  -- totalArrowsFromPlacesToTransitions relates to incomingArrowsPerTransition
   -- Check that totalArrowsFromPlacesToTransitions is consistent with per-transition bounds
   | totalPlacesToTransLow > incomingPerTransHighBound * numTransitions
   = Just $ "totalArrowsFromPlacesToTransitions lower bound (" ++ show totalPlacesToTransLow ++
@@ -289,6 +301,7 @@ checkArrowDensityCrossValidation
   = Just $ "totalArrowsFromPlacesToTransitions upper bound (" ++ show totalHigh ++
            ") is less than minimum required arrows based on incomingArrowsPerTransition (" ++
            show (incomingPerTransLow * numTransitions) ++ ")"
+  -- totalArrowsFromTransitionsToPlaces relates to outgoingArrowsPerTransition
   -- Check that totalArrowsFromTransitionsToPlaces is consistent with per-transition bounds
   | totalTransToPlacesLow > outgoingPerTransHighBound * numTransitions
   = Just $ "totalArrowsFromTransitionsToPlaces lower bound (" ++ show totalTransToPlacesLow ++
@@ -299,6 +312,7 @@ checkArrowDensityCrossValidation
   = Just $ "totalArrowsFromTransitionsToPlaces upper bound (" ++ show totalHigh ++
            ") is less than minimum required arrows based on outgoingArrowsPerTransition (" ++
            show (outgoingPerTransLow * numTransitions) ++ ")"
+  -- totalArrowsFromPlacesToTransitions relates to outgoingArrowsPerPlace
   -- Check that totalArrowsFromPlacesToTransitions is consistent with per-place bounds
   | totalPlacesToTransLow > outgoingPerPlaceHighBound * numPlaces
   = Just $ "totalArrowsFromPlacesToTransitions lower bound (" ++ show totalPlacesToTransLow ++
@@ -309,6 +323,7 @@ checkArrowDensityCrossValidation
   = Just $ "totalArrowsFromPlacesToTransitions upper bound (" ++ show totalHigh ++
            ") is less than minimum required arrows based on outgoingArrowsPerPlace (" ++
            show (outgoingPerPlaceLow * numPlaces) ++ ")"
+  -- totalArrowsFromTransitionsToPlaces relates to incomingArrowsPerPlace
   -- Check that totalArrowsFromTransitionsToPlaces is consistent with per-place bounds
   | totalTransToPlacesLow > incomingPerPlaceHighBound * numPlaces
   = Just $ "totalArrowsFromTransitionsToPlaces lower bound (" ++ show totalTransToPlacesLow ++
@@ -320,19 +335,21 @@ checkArrowDensityCrossValidation
            ") is less than minimum required arrows based on incomingArrowsPerPlace (" ++
            show (incomingPerPlaceLow * numPlaces) ++ ")"
   -- Check that per-transition and per-place bounds are mutually consistent
-  | incomingPerTransLow * numTransitions > incomingPerPlaceHighBound * numPlaces
+  -- incomingArrowsPerTransition and outgoingArrowsPerPlace refer to the same arrows (places to transitions)
+  | incomingPerTransLow * numTransitions > outgoingPerPlaceHighBound * numPlaces
   = Just $ "incomingArrowsPerTransition lower bound times numTransitions (" ++
            show (incomingPerTransLow * numTransitions) ++
-           ") exceeds maximum possible arrows based on incomingArrowsPerPlace (" ++
-           show (incomingPerPlaceHighBound * numPlaces) ++ ")"
-  | outgoingPerTransLow * numTransitions > outgoingPerPlaceHighBound * numPlaces
-  = Just $ "outgoingArrowsPerTransition lower bound times numTransitions (" ++
-           show (outgoingPerTransLow * numTransitions) ++
            ") exceeds maximum possible arrows based on outgoingArrowsPerPlace (" ++
            show (outgoingPerPlaceHighBound * numPlaces) ++ ")"
+  -- outgoingArrowsPerTransition and incomingArrowsPerPlace refer to the same arrows (transitions to places)
+  | outgoingPerTransLow * numTransitions > incomingPerPlaceHighBound * numPlaces
+  = Just $ "outgoingArrowsPerTransition lower bound times numTransitions (" ++
+           show (outgoingPerTransLow * numTransitions) ++
+           ") exceeds maximum possible arrows based on incomingArrowsPerPlace (" ++
+           show (incomingPerPlaceHighBound * numPlaces) ++ ")"
   | otherwise = Nothing
   where
     incomingPerTransHighBound = fromMaybe numPlaces incomingPerTransHigh
     outgoingPerTransHighBound = fromMaybe numPlaces outgoingPerTransHigh
-    incomingPerPlaceHighBound = fromMaybe numPlaces incomingPerPlaceHigh
-    outgoingPerPlaceHighBound = fromMaybe numPlaces outgoingPerPlaceHigh
+    incomingPerPlaceHighBound = fromMaybe numTransitions incomingPerPlaceHigh
+    outgoingPerPlaceHighBound = fromMaybe numTransitions outgoingPerPlaceHigh

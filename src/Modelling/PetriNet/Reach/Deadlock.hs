@@ -400,6 +400,10 @@ try conf = do
     n <- MaybeT $ netLimitsFiltered
       (incomingArrowsPerTransition conf)
       (outgoingArrowsPerTransition conf)
+      (incomingArrowsPerPlace conf)
+      (outgoingArrowsPerPlace conf)
+      (totalArrowsFromPlacesToTransitions conf)
+      (totalArrowsFromTransitionsToPlaces conf)
       (numPlaces conf)
       ps
       ts

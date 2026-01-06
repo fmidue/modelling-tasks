@@ -59,6 +59,60 @@ spec = do
           let allSolutions = either undefined toList (shortestSolutions deadlockInstance)
           allSolutions `shouldSatisfy` not . shouldDiscardSolutions (filterConfig config) (numTransitions config)
 
+    modifyMaxSuccess (const 3) $
+      prop "respects incomingArrowsPerPlace constraint" $ \seed -> do
+        let config = defaultDeadlockConfig {
+              maxTransitionLength = 6,
+              minTransitionLength = 6,
+              incomingArrowsPerPlace = (1, Just 2),
+              filterConfig = noFiltering
+              }
+        deadlockInstance <- generateDeadlock config seed
+        let net = petriNet deadlockInstance
+            places = [Place 1 .. Place (numPlaces config)]
+            incomingArrowsPerPlaceList = map (\p -> countIncomingToPlace p (connections net)) places
+        all (\count -> count >= 1 && count <= 2) incomingArrowsPerPlaceList `shouldBe` True
+
+    modifyMaxSuccess (const 3) $
+      prop "respects outgoingArrowsPerPlace constraint" $ \seed -> do
+        let config = defaultDeadlockConfig {
+              maxTransitionLength = 6,
+              minTransitionLength = 6,
+              outgoingArrowsPerPlace = (1, Just 2),
+              filterConfig = noFiltering
+              }
+        deadlockInstance <- generateDeadlock config seed
+        let net = petriNet deadlockInstance
+            places = [Place 1 .. Place (numPlaces config)]
+            outgoingArrowsPerPlaceList = map (\p -> countOutgoingFromPlace p (connections net)) places
+        all (\count -> count >= 1 && count <= 2) outgoingArrowsPerPlaceList `shouldBe` True
+
+    modifyMaxSuccess (const 3) $
+      prop "respects totalArrowsFromPlacesToTransitions constraint" $ \seed -> do
+        let config = defaultDeadlockConfig {
+              maxTransitionLength = 6,
+              minTransitionLength = 6,
+              totalArrowsFromPlacesToTransitions = (8, Just 15),
+              filterConfig = noFiltering
+              }
+        deadlockInstance <- generateDeadlock config seed
+        let net = petriNet deadlockInstance
+            totalArrows = sum [length pre | (pre, _, _) <- connections net]
+        totalArrows `shouldSatisfy` (\x -> x >= 8 && x <= 15)
+
+    modifyMaxSuccess (const 3) $
+      prop "respects totalArrowsFromTransitionsToPlaces constraint" $ \seed -> do
+        let config = defaultDeadlockConfig {
+              maxTransitionLength = 6,
+              minTransitionLength = 6,
+              totalArrowsFromTransitionsToPlaces = (8, Just 15),
+              filterConfig = noFiltering
+              }
+        deadlockInstance <- generateDeadlock config seed
+        let net = petriNet deadlockInstance
+            totalArrows = sum [length post | (_, _, post) <- connections net]
+        totalArrows `shouldSatisfy` (\x -> x >= 8 && x <= 15)
+
   describe "checkDeadlockConfig" $ do
     it "accepts valid configuration" $ do
       let config = defaultDeadlockConfig
@@ -277,3 +331,11 @@ spec = do
             totalArrowsFromTransitionsToPlaces = (6, Just 12)
             }
       checkDeadlockConfig config `shouldBe` Nothing
+
+countIncomingToPlace :: Place -> [([Place], t, [Place])] -> Int
+countIncomingToPlace place conns =
+  sum [length $ filter (== place) post | (_, _, post) <- conns]
+
+countOutgoingFromPlace :: Place -> [([Place], t, [Place])] -> Int
+countOutgoingFromPlace place conns =
+  sum [length $ filter (== place) pre | (pre, _, _) <- conns]
