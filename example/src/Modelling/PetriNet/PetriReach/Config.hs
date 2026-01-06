@@ -23,8 +23,8 @@ task2023_27 = ReachConfig {
     outgoingArrowsPerTransition = (2, Just 3),
     incomingArrowsPerPlace = (0, Nothing),
     outgoingArrowsPerPlace = (0, Nothing),
-    totalArrowsFromPlacesToTransitions = (0, Nothing),
-    totalArrowsFromTransitionsToPlaces = (0, Nothing),
+    totalArrowsFromPlacesToTransitions = (8, Just 8),
+    totalArrowsFromTransitionsToPlaces = (8, Just 12),
     maxPlacesChanged = 4,
     transitionBehaviorConstraints = noTransitionBehaviorConstraints
     },
@@ -53,8 +53,8 @@ task2023_28 = ReachConfig {
     outgoingArrowsPerTransition = (2, Just 3),
     incomingArrowsPerPlace = (0, Nothing),
     outgoingArrowsPerPlace = (0, Nothing),
-    totalArrowsFromPlacesToTransitions = (0, Nothing),
-    totalArrowsFromTransitionsToPlaces = (0, Nothing),
+    totalArrowsFromPlacesToTransitions = (8, Just 8),
+    totalArrowsFromTransitionsToPlaces = (8, Just 12),
     maxPlacesChanged = 6,
     transitionBehaviorConstraints = noTransitionBehaviorConstraints
     },
@@ -95,8 +95,8 @@ task2024_60 = ReachConfig {
     outgoingArrowsPerTransition = (2, Just 3),
     incomingArrowsPerPlace = (0, Nothing),
     outgoingArrowsPerPlace = (0, Nothing),
-    totalArrowsFromPlacesToTransitions = (0, Nothing),
-    totalArrowsFromTransitionsToPlaces = (0, Nothing),
+    totalArrowsFromPlacesToTransitions = (8, Just 8),
+    totalArrowsFromTransitionsToPlaces = (8, Just 12),
     maxPlacesChanged = 4,
     transitionBehaviorConstraints = noTransitionBehaviorConstraints
     },

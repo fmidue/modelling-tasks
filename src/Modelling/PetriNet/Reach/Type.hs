@@ -108,6 +108,34 @@ noTransitionBehaviorConstraints = TransitionBehaviorConstraints {
   areNonPreserving = Nothing
   }
 
+-- | Arrow density constraints for net generation
+data ArrowDensityConstraints = ArrowDensityConstraints {
+  -- | Constrain arrows entering each transition (from places)
+  incomingArrowsPerTransition :: (Int, Maybe Int),
+  -- | Constrain arrows leaving each transition (to places)
+  outgoingArrowsPerTransition :: (Int, Maybe Int),
+  -- | Constrain arrows entering each place (from transitions)
+  incomingArrowsPerPlace :: (Int, Maybe Int),
+  -- | Constrain arrows leaving each place (to transitions)
+  outgoingArrowsPerPlace :: (Int, Maybe Int),
+  -- | Global constraint on total arrows from places to transitions
+  totalArrowsFromPlacesToTransitions :: (Int, Maybe Int),
+  -- | Global constraint on total arrows from transitions to places
+  totalArrowsFromTransitionsToPlaces :: (Int, Maybe Int)
+  }
+  deriving (Data, Eq, Generic, Hashable, Ord, Read, Show)
+
+-- | Default arrow density constraints (no restrictions)
+noArrowDensityConstraints :: ArrowDensityConstraints
+noArrowDensityConstraints = ArrowDensityConstraints {
+  incomingArrowsPerTransition = (0, Nothing),
+  outgoingArrowsPerTransition = (0, Nothing),
+  incomingArrowsPerPlace = (0, Nothing),
+  outgoingArrowsPerPlace = (0, Nothing),
+  totalArrowsFromPlacesToTransitions = (0, Nothing),
+  totalArrowsFromTransitionsToPlaces = (0, Nothing)
+  }
+
 data Net s t = Net {
   places :: Set s,
   transitions :: Set t,
@@ -272,3 +300,44 @@ satisfiesTransitionBehaviorConstraints net TransitionBehaviorConstraints {..} =
       Just expected ->
         let nonPreserving = length $ filter (uncurry (/=) . connectionTokenBehavior) $ connections net
         in nonPreserving == expected
+
+-- | Check if a net satisfies per-place arrow constraints
+satisfiesPerPlaceConstraints
+  :: Ord s
+  => Net s t
+  -> ArrowDensityConstraints
+  -> Bool
+satisfiesPerPlaceConstraints net ArrowDensityConstraints {..}
+  | incomingArrowsPerPlace == (0, Nothing) && outgoingArrowsPerPlace == (0, Nothing) = True
+  | otherwise = all checkPlace (S.toList $ places net)
+  where
+    checkPlace place =
+      checkBounds incomingArrowsPerPlace (countIncomingArrows place) &&
+      checkBounds outgoingArrowsPerPlace (countOutgoingArrows place)
+
+    checkBounds (low, maybeHigh) count =
+      count >= low && maybe True (count <=) maybeHigh
+
+    -- Count arrows coming into a place (from transitions to place)
+    countIncomingArrows place =
+      sum [length $ filter (== place) post | (_, _, post) <- connections net]
+    -- Count arrows going out of a place (from place to transitions)
+    countOutgoingArrows place =
+      sum [length $ filter (== place) pre | (pre, _, _) <- connections net]
+
+-- | Check if a net satisfies total arrow constraints
+satisfiesTotalArrowConstraints
+  :: Net s t
+  -> ArrowDensityConstraints
+  -> Bool
+satisfiesTotalArrowConstraints net ArrowDensityConstraints {..}
+  | totalArrowsFromPlacesToTransitions == (0, Nothing) && totalArrowsFromTransitionsToPlaces == (0, Nothing) = True
+  | otherwise =
+      checkBounds totalArrowsFromPlacesToTransitions placesToTrans &&
+      checkBounds totalArrowsFromTransitionsToPlaces transToPlaces
+  where
+    placesToTrans = sum [length pre | (pre, _, _) <- connections net]
+    transToPlaces = sum [length post | (_, _, post) <- connections net]
+
+    checkBounds (low, maybeHigh) count =
+      count >= low && maybe True (count <=) maybeHigh

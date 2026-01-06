@@ -65,6 +65,7 @@ spec = do
               maxTransitionLength = 6,
               minTransitionLength = 6,
               incomingArrowsPerPlace = (1, Just 2),
+              totalArrowsFromTransitionsToPlaces = (6, Just 12),
               filterConfig = noFiltering
               }
         checkDeadlockConfig config `shouldBe` Nothing
@@ -80,6 +81,7 @@ spec = do
               maxTransitionLength = 6,
               minTransitionLength = 6,
               outgoingArrowsPerPlace = (1, Just 2),
+              totalArrowsFromPlacesToTransitions = (6, Just 12),
               filterConfig = noFiltering
               }
         checkDeadlockConfig config `shouldBe` Nothing

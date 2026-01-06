@@ -92,7 +92,7 @@ spec = do
               filterConfig = noFiltering,
               netGoalConfig = (netGoalConfig defaultReachConfig) {
                 incomingArrowsPerPlace = (1, Just 2),
-                totalArrowsFromTransitionsToPlaces = (4, Just 12),
+                totalArrowsFromTransitionsToPlaces = (6, Just 12),
                 transitionBehaviorConstraints = noTransitionBehaviorConstraints
                 }
               }
@@ -109,7 +109,7 @@ spec = do
               filterConfig = noFiltering,
               netGoalConfig = (netGoalConfig defaultReachConfig) {
                 outgoingArrowsPerPlace = (1, Just 2),
-                totalArrowsFromPlacesToTransitions = (4, Just 12),
+                totalArrowsFromPlacesToTransitions = (6, Just 12),
                 transitionBehaviorConstraints = noTransitionBehaviorConstraints
                 }
               }
