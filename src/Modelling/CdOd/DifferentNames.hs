@@ -442,45 +442,45 @@ defaultDifferentNamesTaskText = [
 inputHelpText :: Bool -> Output
 inputHelpText hasGivenCd =
   if hasGivenCd then
-    Paragraph [
-      Translated $ translations $ do
-        english [iii|
-          State your answer by giving a mapping of
-          relationships in the CD to links in the OD.
-          \n
-          To state that x in the CD corresponds to 1. in the OD and
-          y in the CD corresponds to 2. in the OD, write the mapping as:
-          |]
-        german [iii|
-          Geben Sie Ihre Antwort als eine Zuordnung von
-          Beziehungen im CD zu Links im OD an.
-          \n
-          Um anzugeben, dass x im CD zu 1. im OD und y im CD
-          zu 2. im OD korrespondieren, schreiben Sie die Zuordnung als:
-          |],
-      Code . uniform . show $ mappingShow differentNamesInitial
-      ]
+  Paragraph [
+    Translated $ translations $ do
+      english [iii|
+        State your answer by giving a mapping of
+        relationships in the CD to links in the OD.
+        \n
+        To state that x in the CD corresponds to 1. in the OD and
+        y in the CD corresponds to 2. in the OD, write the mapping as:
+        |]
+      german [iii|
+        Geben Sie Ihre Antwort als eine Zuordnung von
+        Beziehungen im CD zu Links im OD an.
+        \n
+        Um anzugeben, dass x im CD zu 1. im OD und y im CD
+        zu 2. im OD korrespondieren, schreiben Sie die Zuordnung als:
+        |],
+    Code . uniform . show $ mappingShow differentNamesInitial
+    ]
   else
-    Paragraph[
-      Translated $ translations $ do
-        english
-          [iii|
-            State your answer by giving a mapping of
-            real-world relationship names to links in the OD.
-            \n
-            To state that a relationship x corresponds to 1. in the OD and
-            another one y corresponds to 2. in the OD, write the mapping as:
-          |]
-        german
-          [iii|
-            Geben Sie Ihre Antwort als eine Zuordnung von
-            realweltlichen Beziehungsnamen zu Links im OD an.
-            \n
-            Um anzugeben, dass eine Beziehung x zu 1. im OD und eine andere y
-            zu 2. im OD korrespondiert, schreiben Sie die Zuordnung als:
-          |],
-      Code . uniform . show $ mappingShow differentNamesInitial
-      ]
+  Paragraph[
+    Translated $ translations $ do
+      english
+        [iii|
+          State your answer by giving a mapping of
+          real-world relationship names to links in the OD.
+          \n
+          To state that a relationship x corresponds to 1. in the OD and
+          another one y corresponds to 2. in the OD, write the mapping as:
+        |]
+      german
+        [iii|
+          Geben Sie Ihre Antwort als eine Zuordnung von
+          realweltlichen Beziehungsnamen zu Links im OD an.
+          \n
+          Um anzugeben, dass eine Beziehung x zu 1. im OD und eine andere y
+          zu 2. im OD korrespondiert, schreiben Sie die Zuordnung als:
+        |],
+    Code . uniform . show $ mappingShow differentNamesInitial
+    ]
 
 
 differentNamesInitial :: [(Name, Name)]
