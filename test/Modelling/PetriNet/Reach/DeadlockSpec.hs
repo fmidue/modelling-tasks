@@ -22,6 +22,7 @@ import Modelling.PetriNet.Reach.Type (
   TransitionBehaviorConstraints(..),
   ArrowDensityConstraints(..),
   connectionTokenBehavior,
+  noArrowDensityConstraints,
   )
 
 import Data.Maybe                       (isJust)
@@ -65,12 +66,8 @@ spec = do
         let config = defaultDeadlockConfig {
               maxTransitionLength = 6,
               minTransitionLength = 6,
-              arrowDensityConstraints = ArrowDensityConstraints {
-                incomingArrowsPerTransition = (0, Nothing),
-                outgoingArrowsPerTransition = (0, Nothing),
+              arrowDensityConstraints = noArrowDensityConstraints {
                 incomingArrowsPerPlace = (1, Just 2),
-                outgoingArrowsPerPlace = (0, Nothing),
-                totalArrowsFromPlacesToTransitions = (0, Nothing),
                 totalArrowsFromTransitionsToPlaces = (6, Just 12)
                 },
               filterConfig = noFiltering
@@ -87,13 +84,9 @@ spec = do
         let config = defaultDeadlockConfig {
               maxTransitionLength = 6,
               minTransitionLength = 6,
-              arrowDensityConstraints = ArrowDensityConstraints {
-                incomingArrowsPerTransition = (0, Nothing),
-                outgoingArrowsPerTransition = (0, Nothing),
-                incomingArrowsPerPlace = (0, Nothing),
+              arrowDensityConstraints = noArrowDensityConstraints {
                 outgoingArrowsPerPlace = (1, Just 2),
-                totalArrowsFromPlacesToTransitions = (6, Just 12),
-                totalArrowsFromTransitionsToPlaces = (0, Nothing)
+                totalArrowsFromPlacesToTransitions = (6, Just 12)
                 },
               filterConfig = noFiltering
               }
@@ -109,13 +102,8 @@ spec = do
         let config = defaultDeadlockConfig {
               maxTransitionLength = 6,
               minTransitionLength = 6,
-              arrowDensityConstraints = ArrowDensityConstraints {
-                incomingArrowsPerTransition = (0, Nothing),
-                outgoingArrowsPerTransition = (0, Nothing),
-                incomingArrowsPerPlace = (0, Nothing),
-                outgoingArrowsPerPlace = (0, Nothing),
-                totalArrowsFromPlacesToTransitions = (8, Just 15),
-                totalArrowsFromTransitionsToPlaces = (0, Nothing)
+              arrowDensityConstraints = noArrowDensityConstraints {
+                totalArrowsFromPlacesToTransitions = (8, Just 15)
                 },
               filterConfig = noFiltering
               }
@@ -130,12 +118,7 @@ spec = do
         let config = defaultDeadlockConfig {
               maxTransitionLength = 6,
               minTransitionLength = 6,
-              arrowDensityConstraints = ArrowDensityConstraints {
-                incomingArrowsPerTransition = (0, Nothing),
-                outgoingArrowsPerTransition = (0, Nothing),
-                incomingArrowsPerPlace = (0, Nothing),
-                outgoingArrowsPerPlace = (0, Nothing),
-                totalArrowsFromPlacesToTransitions = (0, Nothing),
+              arrowDensityConstraints = noArrowDensityConstraints {
                 totalArrowsFromTransitionsToPlaces = (8, Just 15)
                 },
               filterConfig = noFiltering
@@ -153,7 +136,7 @@ spec = do
 
     it "rejects incomingArrowsPerTransition where upper < lower" $ do
       let config = defaultDeadlockConfig {
-            arrowDensityConstraints = (arrowDensityConstraints defaultDeadlockConfig) {
+            arrowDensityConstraints = noArrowDensityConstraints {
               incomingArrowsPerTransition = (5, Just 2)
               }
             }
@@ -161,7 +144,7 @@ spec = do
 
     it "rejects outgoingArrowsPerTransition where upper < lower" $ do
       let config = defaultDeadlockConfig {
-            arrowDensityConstraints = (arrowDensityConstraints defaultDeadlockConfig) {
+            arrowDensityConstraints = noArrowDensityConstraints {
               outgoingArrowsPerTransition = (5, Just 2)
               }
             }

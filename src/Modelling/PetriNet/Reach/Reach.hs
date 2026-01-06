@@ -84,8 +84,8 @@ import Modelling.PetriNet.Reach.Property (
   )
 import Modelling.PetriNet.Reach.Roll    (netLimitsFiltered)
 import Modelling.PetriNet.Reach.Step    (executes, successors)
-import qualified Modelling.PetriNet.Reach.Type as Type
 import Modelling.PetriNet.Reach.Type (
+  ArrowDensityConstraints(..),
   Capacity (Unbounded),
   Net (start, transitions),
   Place (..),
@@ -99,6 +99,7 @@ import Modelling.PetriNet.Reach.Type (
   example,
   mapState,
   mark,
+  noArrowDensityConstraints,
   )
 
 import Control.Applicative              (Alternative, (<|>))
@@ -569,7 +570,7 @@ data NetGoalConfig = NetGoalConfig {
   -- Must be in the range @1..numPlaces@.
   maxPlacesChanged    :: Int,
   transitionBehaviorConstraints :: TransitionBehaviorConstraints,
-  arrowDensityConstraints :: Type.ArrowDensityConstraints
+  arrowDensityConstraints :: ArrowDensityConstraints
   }
   deriving (Generic, Read, Show)
 #if !MIN_VERSION_base(4,18,0)
@@ -590,9 +591,9 @@ defaultReachConfig = ReachConfig {
       allowedTokenChanges = Nothing,
       areNonPreserving = Just 2
       },
-    arrowDensityConstraints = Type.noArrowDensityConstraints {
-      Type.incomingArrowsPerTransition = (0, Just 3),
-      Type.outgoingArrowsPerTransition = (0, Just 3)
+    arrowDensityConstraints = noArrowDensityConstraints {
+      incomingArrowsPerTransition = (0, Just 3),
+      outgoingArrowsPerTransition = (0, Just 3)
       }
     },
   maxPrintedSolutions = 1,

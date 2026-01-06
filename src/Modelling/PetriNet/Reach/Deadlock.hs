@@ -77,8 +77,8 @@ import Modelling.PetriNet.Reach.Reach   (
   )
 import Modelling.PetriNet.Reach.Roll    (netLimitsFiltered)
 import Modelling.PetriNet.Reach.Step    (executes, successors)
-import qualified Modelling.PetriNet.Reach.Type as Type
 import Modelling.PetriNet.Reach.Type (
+  ArrowDensityConstraints(..),
   Capacity (Unbounded),
   Net (..),
   Place (..),
@@ -90,6 +90,7 @@ import Modelling.PetriNet.Reach.Type (
   TransitionsList (TransitionsList),
   bimapNet,
   example,
+  noArrowDensityConstraints,
   noTransitionBehaviorConstraints,
   )
 
@@ -262,7 +263,7 @@ data DeadlockConfig = DeadlockConfig {
   maxTransitionLength :: Int,
   minTransitionLength :: Int,
   transitionBehaviorConstraints :: TransitionBehaviorConstraints,
-  arrowDensityConstraints :: Type.ArrowDensityConstraints,
+  arrowDensityConstraints :: ArrowDensityConstraints,
   maxPrintedSolutions :: Int,
   rejectLongerThan    :: Maybe Int,
   showLengthHint      :: Bool,
@@ -285,7 +286,7 @@ defaultDeadlockConfig =
   maxTransitionLength = 8,
   minTransitionLength = 8,
   transitionBehaviorConstraints = noTransitionBehaviorConstraints,
-  arrowDensityConstraints = Type.noArrowDensityConstraints,
+  arrowDensityConstraints = noArrowDensityConstraints,
   maxPrintedSolutions = 0,
   rejectLongerThan    = Just 8,
   showLengthHint      = False,
