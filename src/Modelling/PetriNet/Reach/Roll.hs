@@ -14,14 +14,7 @@ import Modelling.PetriNet.Reach.Type (
   State (State),
   Connection,
   TransitionBehaviorConstraints,
-  ArrowDensityConstraints (
-    incomingArrowsPerTransition,
-    outgoingArrowsPerTransition,
-    incomingArrowsPerPlace,
-    outgoingArrowsPerPlace,
-    totalArrowsFromPlacesToTransitions,
-    totalArrowsFromTransitionsToPlaces
-    ),
+  ArrowDensityConstraints (..),
   hasIsolatedNodes,
   satisfiesTransitionBehaviorConstraints,
   satisfiesPerPlaceConstraints,
