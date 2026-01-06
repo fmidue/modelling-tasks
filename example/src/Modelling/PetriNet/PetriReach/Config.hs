@@ -53,8 +53,8 @@ task2023_28 = ReachConfig {
     outgoingArrowsPerTransition = (2, Just 3),
     incomingArrowsPerPlace = (0, Nothing),
     outgoingArrowsPerPlace = (0, Nothing),
-    totalArrowsFromPlacesToTransitions = (8, Just 8),
-    totalArrowsFromTransitionsToPlaces = (8, Just 12),
+    totalArrowsFromPlacesToTransitions = (12, Just 12),
+    totalArrowsFromTransitionsToPlaces = (12, Just 18),
     maxPlacesChanged = 6,
     transitionBehaviorConstraints = noTransitionBehaviorConstraints
     },
