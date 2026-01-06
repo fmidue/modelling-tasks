@@ -720,19 +720,14 @@ generateNetGoal filterConfig maxPrintedSolutions netGoalConfig seed =
 
 checkReachConfig :: ReachConfig -> Maybe String
 checkReachConfig ReachConfig {..} =
-  let Type.ArrowDensityConstraints {..} = arrowDensityConstraints netGoalConfig
-  in checkBasicPetriConfig
+  checkBasicPetriConfig
     (numPlaces netGoalConfig)
     (numTransitions netGoalConfig)
     (capacity netGoalConfig)
     (minTransitionLength netGoalConfig)
     (maxTransitionLength netGoalConfig)
-    incomingArrowsPerTransition
-    outgoingArrowsPerTransition
-    incomingArrowsPerPlace
-    outgoingArrowsPerPlace
-    totalArrowsFromPlacesToTransitions
-    totalArrowsFromTransitionsToPlaces
+    (transitionBehaviorConstraints netGoalConfig)
+    (arrowDensityConstraints netGoalConfig)
     (drawPreferenceOrder netGoalConfig)
     rejectLongerThan
     showLengthHint
@@ -756,13 +751,6 @@ checkReachConfig ReachConfig {..} =
       Just maxSolutions | maxPrintedSolutions > maxSolutions ->
         Just "maxPrintedSolutions cannot be greater than solutionSetLimit"
       _ -> Nothing)
-  <|>
-  checkTransitionBehaviorConstraints
-    (numPlaces netGoalConfig)
-    incomingArrowsPerTransition
-    outgoingArrowsPerTransition
-    (numTransitions netGoalConfig)
-    (transitionBehaviorConstraints netGoalConfig)
   <|>
   if showTargetNet || showPlaceNamesInNet
       then Nothing

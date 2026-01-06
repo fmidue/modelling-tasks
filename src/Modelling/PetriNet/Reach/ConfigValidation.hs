@@ -1,3 +1,5 @@
+{-# LANGUAGE RecordWildCards #-}
+
 -- | Common validation logic for Petri Net configurations (Deadlock and Reach)
 module Modelling.PetriNet.Reach.ConfigValidation (
   checkBasicPetriConfig,
@@ -72,20 +74,16 @@ checkRejectLongerThanConsistency rejectLongerThan maxTransitionLength showLength
 
 -- | Check basic Petri net configuration including sizes, lengths, ranges, capacity and draw commands
 checkBasicPetriConfig
-  :: Int                      -- ^ numPlaces
-  -> Int                      -- ^ numTransitions
-  -> Capacity s               -- ^ capacity
-  -> Int                      -- ^ minTransitionLength
-  -> Int                      -- ^ maxTransitionLength
-  -> (Int, Maybe Int)         -- ^ incomingArrowsPerTransition
-  -> (Int, Maybe Int)         -- ^ outgoingArrowsPerTransition
-  -> (Int, Maybe Int)         -- ^ incomingArrowsPerPlace
-  -> (Int, Maybe Int)         -- ^ outgoingArrowsPerPlace
-  -> (Int, Maybe Int)         -- ^ totalArrowsFromPlacesToTransitions
-  -> (Int, Maybe Int)         -- ^ totalArrowsFromTransitionsToPlaces
-  -> [GraphvizCommand]        -- ^ drawCommands
-  -> Maybe Int                -- ^ rejectLongerThan
-  -> Bool                     -- ^ showLengthHint
+  :: Int                             -- ^ numPlaces
+  -> Int                             -- ^ numTransitions
+  -> Capacity s                      -- ^ capacity
+  -> Int                             -- ^ minTransitionLength
+  -> Int                             -- ^ maxTransitionLength
+  -> TransitionBehaviorConstraints   -- ^ transitionBehaviorConstraints
+  -> ArrowDensityConstraints         -- ^ arrowDensityConstraints
+  -> [GraphvizCommand]               -- ^ drawCommands
+  -> Maybe Int                       -- ^ rejectLongerThan
+  -> Bool                            -- ^ showLengthHint
   -> Maybe String
 checkBasicPetriConfig
   numPlaces
@@ -93,41 +91,33 @@ checkBasicPetriConfig
   capacity
   minTransitionLength
   maxTransitionLength
-  incomingArrowsPerTransition
-  outgoingArrowsPerTransition
-  incomingArrowsPerPlace
-  outgoingArrowsPerPlace
-  totalArrowsFromPlacesToTransitions
-  totalArrowsFromTransitionsToPlaces
+  transitionBehaviorConstraints
+  arrowDensityConstraints
   drawCommands
   rejectLongerThan
   showLengthHint =
     checkPetriNetSizes numPlaces numTransitions
     <|> checkCapacity capacity
     <|> checkTransitionLengths minTransitionLength maxTransitionLength
-    <|> checkRange "incomingArrowsPerTransition" incomingArrowsPerTransition
-    <|> checkRange "outgoingArrowsPerTransition" outgoingArrowsPerTransition
-    <|> checkRange "incomingArrowsPerPlace" incomingArrowsPerPlace
-    <|> checkRange "outgoingArrowsPerPlace" outgoingArrowsPerPlace
-    <|> checkRange "totalArrowsFromPlacesToTransitions" totalArrowsFromPlacesToTransitions
-    <|> checkRange "totalArrowsFromTransitionsToPlaces" totalArrowsFromTransitionsToPlaces
-    <|> checkRangeVersusPlaces "incomingArrowsPerTransition" incomingArrowsPerTransition numPlaces
-    <|> checkRangeVersusPlaces "outgoingArrowsPerTransition" outgoingArrowsPerTransition numPlaces
-    <|> checkRangeVersusTransitions "incomingArrowsPerPlace" incomingArrowsPerPlace numTransitions
-    <|> checkRangeVersusTransitions "outgoingArrowsPerPlace" outgoingArrowsPerPlace numTransitions
+    <|> checkTransitionBehaviorConstraints
+          numPlaces
+          (incomingArrowsPerTransition arrowDensityConstraints)
+          (outgoingArrowsPerTransition arrowDensityConstraints)
+          numTransitions
+          transitionBehaviorConstraints
+    <|> checkRange "incomingArrowsPerTransition" (incomingArrowsPerTransition arrowDensityConstraints)
+    <|> checkRange "outgoingArrowsPerTransition" (outgoingArrowsPerTransition arrowDensityConstraints)
+    <|> checkRange "incomingArrowsPerPlace" (incomingArrowsPerPlace arrowDensityConstraints)
+    <|> checkRange "outgoingArrowsPerPlace" (outgoingArrowsPerPlace arrowDensityConstraints)
+    <|> checkRange "totalArrowsFromPlacesToTransitions" (totalArrowsFromPlacesToTransitions arrowDensityConstraints)
+    <|> checkRange "totalArrowsFromTransitionsToPlaces" (totalArrowsFromTransitionsToPlaces arrowDensityConstraints)
+    <|> checkRangeVersusPlaces "incomingArrowsPerTransition" (incomingArrowsPerTransition arrowDensityConstraints) numPlaces
+    <|> checkRangeVersusPlaces "outgoingArrowsPerTransition" (outgoingArrowsPerTransition arrowDensityConstraints) numPlaces
+    <|> checkRangeVersusTransitions "incomingArrowsPerPlace" (incomingArrowsPerPlace arrowDensityConstraints) numTransitions
+    <|> checkRangeVersusTransitions "outgoingArrowsPerPlace" (outgoingArrowsPerPlace arrowDensityConstraints) numTransitions
     <|> checkRejectLongerThanConsistency rejectLongerThan maxTransitionLength showLengthHint
     <|> checkDrawCommands drawCommands
-    <|> checkArrowDensityCrossValidation
-          numPlaces
-          numTransitions
-          (Type.ArrowDensityConstraints {
-            Type.incomingArrowsPerTransition = incomingArrowsPerTransition,
-            Type.outgoingArrowsPerTransition = outgoingArrowsPerTransition,
-            Type.incomingArrowsPerPlace = incomingArrowsPerPlace,
-            Type.outgoingArrowsPerPlace = outgoingArrowsPerPlace,
-            Type.totalArrowsFromPlacesToTransitions = totalArrowsFromPlacesToTransitions,
-            Type.totalArrowsFromTransitionsToPlaces = totalArrowsFromTransitionsToPlaces
-          })
+    <|> checkArrowDensityCrossValidation numPlaces numTransitions arrowDensityConstraints
   where
     checkDrawCommands [] = Just "drawCommands cannot be empty"
     checkDrawCommands _  = Nothing

@@ -311,19 +311,14 @@ defaultDeadlockInstance = DeadlockInstance {
 
 checkDeadlockConfig :: DeadlockConfig -> Maybe String
 checkDeadlockConfig DeadlockConfig {..} =
-  let Type.ArrowDensityConstraints {..} = arrowDensityConstraints
-  in checkBasicPetriConfig
+  checkBasicPetriConfig
     numPlaces
     numTransitions
     capacity
     minTransitionLength
     maxTransitionLength
-    incomingArrowsPerTransition
-    outgoingArrowsPerTransition
-    incomingArrowsPerPlace
-    outgoingArrowsPerPlace
-    totalArrowsFromPlacesToTransitions
-    totalArrowsFromTransitionsToPlaces
+    transitionBehaviorConstraints
+    arrowDensityConstraints
     drawPreferenceOrder
     rejectLongerThan
     showLengthHint
@@ -333,13 +328,6 @@ checkDeadlockConfig DeadlockConfig {..} =
     minTransitionLength
     numTransitions
     filterConfig
-  <|>
-  checkTransitionBehaviorConstraints
-    numPlaces
-    incomingArrowsPerTransition
-    outgoingArrowsPerTransition
-    numTransitions
-    transitionBehaviorConstraints
   <|>
   if maxPrintedSolutions < 0
     then Just "maxPrintedSolutions must be non-negative"

@@ -4,8 +4,7 @@ module Modelling.PetriNet.PetriDeadlock.Config where
 
 import Modelling.PetriNet.Reach.Deadlock (DeadlockConfig(..))
 import Modelling.PetriNet.Reach.Filter  (defaultFilterConfig, FilterConfig(absentTransitionsRequirement, forbiddenCycleLengths, requireCycleLengthsAny))
-import qualified Modelling.PetriNet.Reach.Type as Type
-import Modelling.PetriNet.Reach.Type    (Capacity(..), noTransitionBehaviorConstraints)
+import Modelling.PetriNet.Reach.Type    (Capacity(..), TransitionBehaviorConstraints(..), ArrowDensityConstraints(..))
 import Data.GraphViz.Commands           (GraphvizCommand(..))
 
 {-|
@@ -19,12 +18,14 @@ task2023_29 = DeadlockConfig {
   drawPreferenceOrder = [Circo],
   maxTransitionLength = 7,
   minTransitionLength = 7,
-  transitionBehaviorConstraints = noTransitionBehaviorConstraints,
-  arrowDensityConstraints = Type.noArrowDensityConstraints {
-    Type.incomingArrowsPerTransition = (1, Just 2),
-    Type.outgoingArrowsPerTransition = (1, Just 2),
-    Type.totalArrowsFromPlacesToTransitions = (4, Just 8),
-    Type.totalArrowsFromTransitionsToPlaces = (4, Just 8)
+  transitionBehaviorConstraints = TransitionBehaviorConstraints { allowedTokenChanges = Nothing, areNonPreserving = Nothing },
+  arrowDensityConstraints = ArrowDensityConstraints {
+    incomingArrowsPerTransition = (1, Just 2),
+    outgoingArrowsPerTransition = (1, Just 2),
+    incomingArrowsPerPlace = (0, Nothing),
+    outgoingArrowsPerPlace = (0, Nothing),
+    totalArrowsFromPlacesToTransitions = (4, Just 8),
+    totalArrowsFromTransitionsToPlaces = (4, Just 8)
     },
   maxPrintedSolutions = 10,
   rejectLongerThan = Just 7,
@@ -45,12 +46,14 @@ task2023_30 = DeadlockConfig {
   drawPreferenceOrder = [Circo],
   maxTransitionLength = 14,
   minTransitionLength = 14,
-  transitionBehaviorConstraints = noTransitionBehaviorConstraints,
-  arrowDensityConstraints = Type.noArrowDensityConstraints {
-    Type.incomingArrowsPerTransition = (1, Just 2),
-    Type.outgoingArrowsPerTransition = (1, Just 2),
-    Type.totalArrowsFromPlacesToTransitions = (8, Just 16),
-    Type.totalArrowsFromTransitionsToPlaces = (8, Just 16)
+  transitionBehaviorConstraints = TransitionBehaviorConstraints { allowedTokenChanges = Nothing, areNonPreserving = Nothing },
+  arrowDensityConstraints = ArrowDensityConstraints {
+    incomingArrowsPerTransition = (1, Just 2),
+    outgoingArrowsPerTransition = (1, Just 2),
+    incomingArrowsPerPlace = (0, Nothing),
+    outgoingArrowsPerPlace = (0, Nothing),
+    totalArrowsFromPlacesToTransitions = (8, Just 16),
+    totalArrowsFromTransitionsToPlaces = (8, Just 16)
     },
   maxPrintedSolutions = 10,
   rejectLongerThan = Just 14,
@@ -85,12 +88,14 @@ task2024_61 = DeadlockConfig {
   drawPreferenceOrder = [Circo],
   maxTransitionLength = 8,
   minTransitionLength = 8,
-  transitionBehaviorConstraints = noTransitionBehaviorConstraints,
-  arrowDensityConstraints = Type.noArrowDensityConstraints {
-    Type.incomingArrowsPerTransition = (1, Just 2),
-    Type.outgoingArrowsPerTransition = (1, Just 2),
-    Type.totalArrowsFromPlacesToTransitions = (4, Just 8),
-    Type.totalArrowsFromTransitionsToPlaces = (4, Just 8)
+  transitionBehaviorConstraints = TransitionBehaviorConstraints { allowedTokenChanges = Nothing, areNonPreserving = Nothing },
+  arrowDensityConstraints = ArrowDensityConstraints {
+    incomingArrowsPerTransition = (1, Just 2),
+    outgoingArrowsPerTransition = (1, Just 2),
+    incomingArrowsPerPlace = (0, Nothing),
+    outgoingArrowsPerPlace = (0, Nothing),
+    totalArrowsFromPlacesToTransitions = (4, Just 8),
+    totalArrowsFromTransitionsToPlaces = (4, Just 8)
     },
   maxPrintedSolutions = 10,
   rejectLongerThan = Just 8,
