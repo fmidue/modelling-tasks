@@ -37,7 +37,7 @@ import Data.Maybe                        (isJust)
 import qualified Data.Map                 as M
 import Data.Set                         (Set)
 
--- import Settings (needsTuning)
+import Settings (nightly)
 
 import Test.Hspec
 import Test.Hspec.QuickCheck (modifyMaxSuccess, prop)
@@ -60,8 +60,8 @@ spec = do
             ts = transitions net
         net `shouldSatisfy` hasMinTransitionLength (s ==) ts minL
 
-    -- needsTuning $
-    modifyMaxSuccess (const 1) $
+    nightly $
+     modifyMaxSuccess (const 1) $
       prop "generates non-trivial solutions when filtering is enabled (as in the default configuration)" $ \seed -> do
         let config = defaultReachConfig
         inst <- generateReach config seed

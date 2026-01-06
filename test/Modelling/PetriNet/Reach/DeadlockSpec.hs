@@ -29,7 +29,7 @@ import Modelling.PetriNet.Reach.ReachSpec (
   hasMinTransitionLength,
   )
 
--- import Settings (needsTuning)
+import Settings (nightly)
 
 import Test.Hspec
 import Test.Hspec.QuickCheck (modifyMaxSuccess, prop)
@@ -51,8 +51,8 @@ spec = do
         net `shouldSatisfy`
           hasMinTransitionLength (null . successors net) ts minL
 
-    -- needsTuning $
-    modifyMaxSuccess (const 1) $
+    nightly $
+     modifyMaxSuccess (const 1) $
       prop "generates non-trivial solutions when filtering is enabled (as in the default configuration)" $ \seed -> do
           let config = defaultDeadlockConfig
           deadlockInstance <- generateDeadlock config seed
@@ -139,8 +139,8 @@ spec = do
             }
       checkDeadlockConfig config `shouldSatisfy` isJust
 
-    -- needsTuning $
-    modifyMaxSuccess (const 1) $
+    nightly $
+     modifyMaxSuccess (const 1) $
       prop "respects allowedTokenChanges = Just LT (only token-decreasing)" $ \seed -> do
         let config = defaultDeadlockConfig {
               filterConfig = noFiltering,
@@ -154,8 +154,8 @@ spec = do
             increasingCount = length $ filter (uncurry (<) . connectionTokenBehavior) $ connections net
         increasingCount `shouldBe` 0
 
-    -- needsTuning $
-    modifyMaxSuccess (const 1) $
+    nightly $
+     modifyMaxSuccess (const 1) $
       prop "respects allowedTokenChanges = Just GT (only token-increasing)" $ \seed -> do
         let config = defaultDeadlockConfig {
               filterConfig = noFiltering,
@@ -169,8 +169,8 @@ spec = do
             decreasingCount = length $ filter (uncurry (>) . connectionTokenBehavior) $ connections net
         decreasingCount `shouldBe` 0
 
-    -- needsTuning $
-    modifyMaxSuccess (const 1) $
+    nightly $
+     modifyMaxSuccess (const 1) $
       prop "respects areNonPreserving constraint" $ \seed -> do
         let config = defaultDeadlockConfig {
               filterConfig = noFiltering,
