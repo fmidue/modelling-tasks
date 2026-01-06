@@ -267,13 +267,9 @@ spec = do
 
     it "rejects allowedTokenChanges = Just LT with impossible range (vHigh <= nLow)" $ do
       let config = defaultDeadlockConfig {
-            arrowDensityConstraints = ArrowDensityConstraints {
+            arrowDensityConstraints = noArrowDensityConstraints {
               incomingArrowsPerTransition = (1, Just 2),
-              outgoingArrowsPerTransition = (3, Just 5),
-              incomingArrowsPerPlace = (0, Nothing),
-              outgoingArrowsPerPlace = (0, Nothing),
-              totalArrowsFromPlacesToTransitions = (0, Nothing),
-              totalArrowsFromTransitionsToPlaces = (0, Nothing)
+              outgoingArrowsPerTransition = (3, Just 5)
               },
             transitionBehaviorConstraints = TransitionBehaviorConstraints {
               allowedTokenChanges = Just LT,
@@ -284,13 +280,9 @@ spec = do
 
     it "rejects allowedTokenChanges = Just GT with impossible range (nHigh <= vLow)" $ do
       let config = defaultDeadlockConfig {
-            arrowDensityConstraints = ArrowDensityConstraints {
+            arrowDensityConstraints = noArrowDensityConstraints {
               incomingArrowsPerTransition = (3, Just 5),
-              outgoingArrowsPerTransition = (1, Just 2),
-              incomingArrowsPerPlace = (0, Nothing),
-              outgoingArrowsPerPlace = (0, Nothing),
-              totalArrowsFromPlacesToTransitions = (0, Nothing),
-              totalArrowsFromTransitionsToPlaces = (0, Nothing)
+              outgoingArrowsPerTransition = (1, Just 2)
               },
             transitionBehaviorConstraints = TransitionBehaviorConstraints {
               allowedTokenChanges = Just GT,
@@ -301,13 +293,9 @@ spec = do
 
     it "rejects areNonPreserving > 0 with fixed equal ranges" $ do
       let config = defaultDeadlockConfig {
-            arrowDensityConstraints = ArrowDensityConstraints {
+            arrowDensityConstraints = noArrowDensityConstraints {
               incomingArrowsPerTransition = (2, Just 2),
-              outgoingArrowsPerTransition = (2, Just 2),
-              incomingArrowsPerPlace = (0, Nothing),
-              outgoingArrowsPerPlace = (0, Nothing),
-              totalArrowsFromPlacesToTransitions = (0, Nothing),
-              totalArrowsFromTransitionsToPlaces = (0, Nothing)
+              outgoingArrowsPerTransition = (2, Just 2)
               },
             transitionBehaviorConstraints = TransitionBehaviorConstraints {
               allowedTokenChanges = Nothing,
@@ -318,11 +306,9 @@ spec = do
 
     it "accepts allowedTokenChanges = Just LT with valid range" $ do
       let config = defaultDeadlockConfig {
-            arrowDensityConstraints = ArrowDensityConstraints {
+            arrowDensityConstraints = noArrowDensityConstraints {
               incomingArrowsPerTransition = (2, Just 5),
               outgoingArrowsPerTransition = (0, Just 3),
-              incomingArrowsPerPlace = (0, Nothing),
-              outgoingArrowsPerPlace = (0, Nothing),
               totalArrowsFromPlacesToTransitions = (12, Just 30),
               totalArrowsFromTransitionsToPlaces = (0, Just 18)
               },
@@ -335,11 +321,9 @@ spec = do
 
     it "accepts allowedTokenChanges = Just GT with valid range" $ do
       let config = defaultDeadlockConfig {
-            arrowDensityConstraints = ArrowDensityConstraints {
+            arrowDensityConstraints = noArrowDensityConstraints {
               incomingArrowsPerTransition = (0, Just 3),
               outgoingArrowsPerTransition = (2, Just 5),
-              incomingArrowsPerPlace = (0, Nothing),
-              outgoingArrowsPerPlace = (0, Nothing),
               totalArrowsFromPlacesToTransitions = (0, Just 18),
               totalArrowsFromTransitionsToPlaces = (12, Just 30)
               },
@@ -352,25 +336,17 @@ spec = do
 
     it "rejects configuration when totalArrowsFromPlacesToTransitions lower bound exceeds maximum possible from incomingArrowsPerTransition" $ do
       let config = defaultDeadlockConfig {
-            arrowDensityConstraints = ArrowDensityConstraints {
+            arrowDensityConstraints = noArrowDensityConstraints {
               incomingArrowsPerTransition = (0, Just 2),
-              outgoingArrowsPerTransition = (0, Nothing),
-              incomingArrowsPerPlace = (0, Nothing),
-              outgoingArrowsPerPlace = (0, Nothing),
-              totalArrowsFromPlacesToTransitions = (20, Nothing),
-              totalArrowsFromTransitionsToPlaces = (0, Nothing)
+              totalArrowsFromPlacesToTransitions = (20, Nothing)
               }
             }
       checkDeadlockConfig config `shouldSatisfy` isJust
 
     it "rejects configuration when totalArrowsFromTransitionsToPlaces lower bound exceeds maximum possible from outgoingArrowsPerTransition" $ do
       let config = defaultDeadlockConfig {
-            arrowDensityConstraints = ArrowDensityConstraints {
-              incomingArrowsPerTransition = (0, Nothing),
+            arrowDensityConstraints = noArrowDensityConstraints {
               outgoingArrowsPerTransition = (0, Just 2),
-              incomingArrowsPerPlace = (0, Nothing),
-              outgoingArrowsPerPlace = (0, Nothing),
-              totalArrowsFromPlacesToTransitions = (0, Nothing),
               totalArrowsFromTransitionsToPlaces = (20, Nothing)
               }
             }
@@ -378,25 +354,17 @@ spec = do
 
     it "rejects configuration when totalArrowsFromPlacesToTransitions upper bound is less than minimum from incomingArrowsPerTransition" $ do
       let config = defaultDeadlockConfig {
-            arrowDensityConstraints = ArrowDensityConstraints {
+            arrowDensityConstraints = noArrowDensityConstraints {
               incomingArrowsPerTransition = (2, Just 3),
-              outgoingArrowsPerTransition = (0, Nothing),
-              incomingArrowsPerPlace = (0, Nothing),
-              outgoingArrowsPerPlace = (0, Nothing),
-              totalArrowsFromPlacesToTransitions = (0, Just 5),
-              totalArrowsFromTransitionsToPlaces = (0, Nothing)
+              totalArrowsFromPlacesToTransitions = (0, Just 5)
               }
             }
       checkDeadlockConfig config `shouldSatisfy` isJust
 
     it "rejects configuration when totalArrowsFromTransitionsToPlaces upper bound is less than minimum from outgoingArrowsPerTransition" $ do
       let config = defaultDeadlockConfig {
-            arrowDensityConstraints = ArrowDensityConstraints {
-              incomingArrowsPerTransition = (0, Nothing),
+            arrowDensityConstraints = noArrowDensityConstraints {
               outgoingArrowsPerTransition = (2, Just 3),
-              incomingArrowsPerPlace = (0, Nothing),
-              outgoingArrowsPerPlace = (0, Nothing),
-              totalArrowsFromPlacesToTransitions = (0, Nothing),
               totalArrowsFromTransitionsToPlaces = (0, Just 5)
               }
             }
@@ -404,26 +372,18 @@ spec = do
 
     it "rejects configuration when totalArrowsFromPlacesToTransitions lower bound is less than minimum from incomingArrowsPerTransition (aggressive narrowing)" $ do
       let config = defaultDeadlockConfig {
-            arrowDensityConstraints = ArrowDensityConstraints {
+            arrowDensityConstraints = noArrowDensityConstraints {
               incomingArrowsPerTransition = (2, Just 3),
-              outgoingArrowsPerTransition = (0, Nothing),
-              incomingArrowsPerPlace = (0, Nothing),
-              outgoingArrowsPerPlace = (0, Nothing),
-              totalArrowsFromPlacesToTransitions = (5, Just 20),
-              totalArrowsFromTransitionsToPlaces = (0, Nothing)
+              totalArrowsFromPlacesToTransitions = (5, Just 20)
               }
             }
       checkDeadlockConfig config `shouldSatisfy` isJust
 
     it "rejects configuration when totalArrowsFromPlacesToTransitions upper bound is greater than maximum from incomingArrowsPerTransition (aggressive narrowing)" $ do
       let config = defaultDeadlockConfig {
-            arrowDensityConstraints = ArrowDensityConstraints {
+            arrowDensityConstraints = noArrowDensityConstraints {
               incomingArrowsPerTransition = (1, Just 2),
-              outgoingArrowsPerTransition = (0, Nothing),
-              incomingArrowsPerPlace = (0, Nothing),
-              outgoingArrowsPerPlace = (0, Nothing),
-              totalArrowsFromPlacesToTransitions = (6, Just 20),
-              totalArrowsFromTransitionsToPlaces = (0, Nothing)
+              totalArrowsFromPlacesToTransitions = (6, Just 20)
               }
             }
       checkDeadlockConfig config `shouldSatisfy` isJust
