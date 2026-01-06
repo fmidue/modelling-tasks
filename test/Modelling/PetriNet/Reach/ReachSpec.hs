@@ -92,6 +92,7 @@ spec = do
               filterConfig = noFiltering,
               netGoalConfig = (netGoalConfig defaultReachConfig) {
                 incomingArrowsPerPlace = (1, Just 2),
+                totalArrowsFromTransitionsToPlaces = (4, Just 12),
                 transitionBehaviorConstraints = noTransitionBehaviorConstraints
                 }
               }
@@ -108,6 +109,7 @@ spec = do
               filterConfig = noFiltering,
               netGoalConfig = (netGoalConfig defaultReachConfig) {
                 outgoingArrowsPerPlace = (1, Just 2),
+                totalArrowsFromPlacesToTransitions = (4, Just 12),
                 transitionBehaviorConstraints = noTransitionBehaviorConstraints
                 }
               }
@@ -123,7 +125,7 @@ spec = do
         let config = defaultReachConfig {
               filterConfig = noFiltering,
               netGoalConfig = (netGoalConfig defaultReachConfig) {
-                totalArrowsFromPlacesToTransitions = (10, Just 20),
+                totalArrowsFromPlacesToTransitions = (10, Just 18),
                 transitionBehaviorConstraints = noTransitionBehaviorConstraints
                 }
               }
@@ -131,14 +133,14 @@ spec = do
         inst <- generateReach config seed
         let net = petriNet (netGoal inst)
             totalArrows = sum [length pre | (pre, _, _) <- connections net]
-        totalArrows `shouldSatisfy` (\x -> x >= 10 && x <= 20)
+        totalArrows `shouldSatisfy` (\x -> x >= 10 && x <= 18)
 
     modifyMaxSuccess (const 5) $
       prop "respects totalArrowsFromTransitionsToPlaces constraint" $ \seed -> do
         let config = defaultReachConfig {
               filterConfig = noFiltering,
               netGoalConfig = (netGoalConfig defaultReachConfig) {
-                totalArrowsFromTransitionsToPlaces = (10, Just 20),
+                totalArrowsFromTransitionsToPlaces = (10, Just 18),
                 transitionBehaviorConstraints = noTransitionBehaviorConstraints
                 }
               }
@@ -146,7 +148,7 @@ spec = do
         inst <- generateReach config seed
         let net = petriNet (netGoal inst)
             totalArrows = sum [length post | (_, _, post) <- connections net]
-        totalArrows `shouldSatisfy` (\x -> x >= 10 && x <= 20)
+        totalArrows `shouldSatisfy` (\x -> x >= 10 && x <= 18)
 
   describe "checkReachConfig" $ do
     it "accepts valid configuration" $ do

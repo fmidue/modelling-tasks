@@ -130,11 +130,9 @@ checkBasicPetriConfig
   where
     checkDrawCommands [] = Just "drawCommands cannot be empty"
     checkDrawCommands _  = Nothing
-    checkRangeVersusPlaces what range =
-      checkRangeVersusCount what range "numPlaces"
-    checkRangeVersusTransitions what range =
-      checkRangeVersusCount what range "numTransitions"
-    checkRangeVersusCount what (low, h) countName count = case h of
+    checkRangeVersusPlaces = checkRangeVersusCount "numPlaces"
+    checkRangeVersusTransitions = checkRangeVersusCount "numTransitions"
+    checkRangeVersusCount countName what (low, h) count = case h of
       Nothing ->
         if low > count
         then Just $ "The lower limit for " ++ what ++ " (currently " ++ show low ++

@@ -20,7 +20,7 @@ import Modelling.PetriNet.Reach.Type (
 
 import Control.Monad                    (forM, guard)
 import Control.Monad.Random.Class       (MonadRandom (getRandomR))
-import Data.Maybe                       (fromMaybe)
+import Data.Maybe                       (fromMaybe, isJust, isNothing)
 import System.Random.Shuffle            (shuffleM)
 
 netConns
@@ -142,15 +142,21 @@ satisfiesPerPlaceConstraints
   -> (Int, Maybe Int)  -- ^ incomingArrowsPerPlace
   -> (Int, Maybe Int)  -- ^ outgoingArrowsPerPlace
   -> Bool
-satisfiesPerPlaceConstraints net (incomingLow, incomingHigh) (outgoingLow, outgoingHigh) =
-  all checkPlace (S.toList $ places net)
+satisfiesPerPlaceConstraints net (incomingLow, incomingHigh) (outgoingLow, outgoingHigh)
+  -- Special case: if both lower bounds are 0 and both upper bounds are Nothing, no checking needed
+  | incomingLow == 0 && isNothing incomingHigh && outgoingLow == 0 && isNothing outgoingHigh = True
+  | otherwise = all checkPlace (S.toList $ places net)
   where
     checkPlace place =
-      let incoming = countIncomingArrows place (connections net)
-          outgoing = countOutgoingArrows place (connections net)
-          incomingOk = incoming >= incomingLow &&
+      let incoming = if incomingLow > 0 || isJust incomingHigh
+                     then countIncomingArrows place (connections net)
+                     else 0  -- Skip counting if not needed
+          outgoing = if outgoingLow > 0 || isJust outgoingHigh
+                     then countOutgoingArrows place (connections net)
+                     else 0  -- Skip counting if not needed
+          incomingOk = (incomingLow == 0 || incoming >= incomingLow) &&
                       maybe True (incoming <=) incomingHigh
-          outgoingOk = outgoing >= outgoingLow &&
+          outgoingOk = (outgoingLow == 0 || outgoing >= outgoingLow) &&
                       maybe True (outgoing <=) outgoingHigh
       in incomingOk && outgoingOk
 
@@ -168,11 +174,18 @@ satisfiesTotalArrowConstraints
   -> (Int, Maybe Int)  -- ^ totalArrowsFromPlacesToTransitions
   -> (Int, Maybe Int)  -- ^ totalArrowsFromTransitionsToPlaces
   -> Bool
-satisfiesTotalArrowConstraints net (placesToTransLow, placesToTransHigh) (transToPlacesLow, transToPlacesHigh) =
-  let placesToTrans = sum [length pre | (pre, _, _) <- connections net]
-      transToPlaces = sum [length post | (_, _, post) <- connections net]
-      placesToTransOk = placesToTrans >= placesToTransLow &&
-                       maybe True (placesToTrans <=) placesToTransHigh
-      transToPlacesOk = transToPlaces >= transToPlacesLow &&
-                       maybe True (transToPlaces <=) transToPlacesHigh
-  in placesToTransOk && transToPlacesOk
+satisfiesTotalArrowConstraints net (placesToTransLow, placesToTransHigh) (transToPlacesLow, transToPlacesHigh)
+  -- Special case: if both lower bounds are 0 and both upper bounds are Nothing, no checking needed
+  | placesToTransLow == 0 && isNothing placesToTransHigh && transToPlacesLow == 0 && isNothing transToPlacesHigh = True
+  | otherwise =
+      let placesToTrans = if placesToTransLow > 0 || isJust placesToTransHigh
+                          then sum [length pre | (pre, _, _) <- connections net]
+                          else 0  -- Skip counting if not needed
+          transToPlaces = if transToPlacesLow > 0 || isJust transToPlacesHigh
+                          then sum [length post | (_, _, post) <- connections net]
+                          else 0  -- Skip counting if not needed
+          placesToTransOk = (placesToTransLow == 0 || placesToTrans >= placesToTransLow) &&
+                           maybe True (placesToTrans <=) placesToTransHigh
+          transToPlacesOk = (transToPlacesLow == 0 || transToPlaces >= transToPlacesLow) &&
+                           maybe True (transToPlaces <=) transToPlacesHigh
+      in placesToTransOk && transToPlacesOk
