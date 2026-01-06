@@ -82,7 +82,7 @@ import Modelling.PetriNet.Reach.Property (
   Property (Default),
   validate,
   )
-import Modelling.PetriNet.Reach.Roll    (netLimits)
+import Modelling.PetriNet.Reach.Roll    (netLimitsFiltered)
 import Modelling.PetriNet.Reach.Step    (executes, successors)
 import Modelling.PetriNet.Reach.Type (
   Capacity (Unbounded),
@@ -92,10 +92,10 @@ import Modelling.PetriNet.Reach.Type (
   ShowTransition (ShowTransition),
   State,
   Transition (..),
+  TransitionBehaviorConstraints (..),
   TransitionsList (TransitionsList),
   bimapNet,
   example,
-  hasIsolatedNodes,
   mapState,
   mark,
   )
@@ -109,6 +109,7 @@ import Control.Monad.Trans.Maybe        (MaybeT (MaybeT, runMaybeT))
 import Modelling.PetriNet.Reach.ConfigValidation (
   checkBasicPetriConfig,
   checkFilterConfigWith,
+  checkTransitionBehaviorConstraints,
   )
 import Control.OutputCapable.Blocks (
   ArticleToUse (IndefiniteArticle),
@@ -139,7 +140,6 @@ import Data.Foldable                    (sequenceA_, traverse_)
 import Data.GraphViz                    (GraphvizCommand (..))
 import Data.List                        (singleton, transpose)
 import Data.List.Extra                  (groupSort, nubSort)
-import Data.Maybe                       (fromMaybe)
 import Data.Ratio                       ((%))
 import Data.String.Interpolate          (i)
 #if !MIN_VERSION_base(4,18,0)
@@ -568,6 +568,7 @@ data NetGoalConfig = NetGoalConfig {
   -- | Maximum number of places where token counts may differ between start and goal state.
   -- Must be in the range @1..numPlaces@.
   maxPlacesChanged    :: Int,
+  transitionBehaviorConstraints :: TransitionBehaviorConstraints,
   postconditionsRange :: (Int, Maybe Int),
   preconditionsRange  :: (Int, Maybe Int)
   }
@@ -586,10 +587,14 @@ defaultReachConfig = ReachConfig {
     maxTransitionLength = 6,
     minTransitionLength = 6,
     maxPlacesChanged    = 3,
-    postconditionsRange = (0, Nothing),
-    preconditionsRange  = (0, Nothing)
+    transitionBehaviorConstraints = TransitionBehaviorConstraints {
+      allowedTokenChanges = Nothing,
+      areNonPreserving = Just 2
+      },
+    postconditionsRange = (0, Just 3),
+    preconditionsRange  = (0, Just 3)
     },
-  maxPrintedSolutions = 0,
+  maxPrintedSolutions = 1,
   rejectLongerThan    = Just 6,
   showLengthHint      = False,
   showMinLengthHint   = True,
@@ -626,13 +631,17 @@ findNetGoalWithSolutions filterConfig maxPrintedSolutions NetGoalConfig {..} =
   let ps = [Place 1 .. Place numPlaces]
       try :: RandT StdGen m [[(Int, MaybeT (RandT StdGen m) (NetGoal Place Transition, Either (NonEmpty [Transition]) (NonEmpty [Transition])))]]
       try = do
-        n <- netLimits vLow vHigh nLow nHigh
-            ps
-            ts
-            capacity
+        let generateNet =
+              maybe generateNet return =<< netLimitsFiltered
+                preconditionsRange
+                postconditionsRange
+                numPlaces
+                ps
+                ts
+                capacity
+                transitionBehaviorConstraints
+        n <- generateNet
         return $ do
-         -- Filter out nets with isolated nodes
-         guard $ not $ hasIsolatedNodes n
          zs <-
             take (maxTransitionLength - minTransitionLength + 1)
             $ drop minTransitionLength
@@ -662,10 +671,6 @@ findNetGoalWithSolutions filterConfig maxPrintedSolutions NetGoalConfig {..} =
             choosePerDistance = M.elems . foldr (M.unionWith (<|>) . M.map (shuffleM >=> msum) . M.fromDistinctAscList . groupSort) M.empty
         runMaybeT (msum (map (msum . choosePerDistance) groupedByLevel))
   where
-    fixMaximum :: (Int, Maybe Int) -> (Int, Int)
-    fixMaximum = second (min numPlaces . fromMaybe maxBound)
-    (vLow, vHigh) = fixMaximum preconditionsRange
-    (nLow, nHigh) = fixMaximum postconditionsRange
     ts = [Transition 1 .. Transition numTransitions]
 
 -- | Validate drawability and solution filter criteria, then prepare solutions for output
@@ -745,6 +750,13 @@ checkReachConfig ReachConfig {..} =
       Just maxSolutions | maxPrintedSolutions > maxSolutions ->
         Just "maxPrintedSolutions cannot be greater than solutionSetLimit"
       _ -> Nothing)
+  <|>
+  checkTransitionBehaviorConstraints
+    (numPlaces netGoalConfig)
+    (preconditionsRange netGoalConfig)
+    (postconditionsRange netGoalConfig)
+    (numTransitions netGoalConfig)
+    (transitionBehaviorConstraints netGoalConfig)
   <|>
   if showTargetNet || showPlaceNamesInNet
       then Nothing

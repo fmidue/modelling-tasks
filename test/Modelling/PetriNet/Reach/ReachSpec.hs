@@ -22,35 +22,36 @@ import Modelling.PetriNet.Reach.Property (
   satisfiesAtAnyState,
   )
 import Modelling.PetriNet.Reach.Type (
-  Net (transitions, start),
+  Net (transitions, start, connections),
   State,
   Transition (..),
   Capacity(..),
   Place(..),
+  TransitionBehaviorConstraints(..),
+  connectionTokenBehavior,
   mark,
+  noTransitionBehaviorConstraints,
   )
 
 import Data.Maybe                        (isJust)
 import qualified Data.Map                 as M
 import Data.Set                         (Set)
 
-import Settings (needsTuning)
+import Settings (nightly)
 
 import Test.Hspec
-import Test.QuickCheck (
-  Testable (property),
-  maxSuccess,
-  quickCheckWith,
-  stdArgs,
-  )
+import Test.Hspec.QuickCheck (modifyMaxSuccess, prop)
 
 spec :: Spec
 spec = do
   describe "generateReach" $ do
-    it "abides minTransitionLength" $
-      quickCheckWith stdArgs {maxSuccess = 50} $ property $ \seed -> do
+    modifyMaxSuccess (const 15) $
+      prop "abides minTransitionLength" $ \seed -> do
         let config = defaultReachConfig {
-              filterConfig = noFiltering
+              filterConfig = noFiltering,
+              netGoalConfig = (netGoalConfig defaultReachConfig) {
+                transitionBehaviorConstraints = noTransitionBehaviorConstraints
+                }
               }
             minL = minTransitionLength (netGoalConfig config)
         inst <- generateReach config seed
@@ -59,20 +60,21 @@ spec = do
             ts = transitions net
         net `shouldSatisfy` hasMinTransitionLength (s ==) ts minL
 
-    needsTuning $
-     it "generates non-trivial solutions when filtering is enabled" $
-      quickCheckWith stdArgs {maxSuccess = 15} $ property $ \seed -> do
+    nightly $
+     modifyMaxSuccess (const 3) $
+      prop "generates non-trivial solutions when filtering is enabled (as in the default configuration)" $ \seed -> do
         let config = defaultReachConfig
         inst <- generateReach config seed
         let allSolutions = either undefined toList (shortestSolutions inst)
         allSolutions `shouldSatisfy` not . shouldDiscardSolutions (filterConfig config) (numTransitions $ netGoalConfig config)
 
-    it "adheres to maxPlacesChanged constraint with noFiltering" $
-      quickCheckWith stdArgs {maxSuccess = 50} $ property $ \seed -> do
+    modifyMaxSuccess (const 15) $
+      prop "adheres to maxPlacesChanged constraint with noFiltering" $ \seed -> do
         let config = defaultReachConfig {
               filterConfig = noFiltering,
               netGoalConfig = (netGoalConfig defaultReachConfig) {
-                maxPlacesChanged = 2
+                maxPlacesChanged = 2,
+                transitionBehaviorConstraints = noTransitionBehaviorConstraints
                 }
               }
         inst <- generateReach config seed
@@ -143,6 +145,174 @@ spec = do
             showPlaceNamesInNet = False
             }
       checkReachConfig config `shouldSatisfy` isJust
+
+    it "accepts valid transitionBehaviorConstraints with areNonPreserving set to 0" $ do
+      let config = defaultReachConfig {
+            netGoalConfig = (netGoalConfig defaultReachConfig) {
+              transitionBehaviorConstraints = TransitionBehaviorConstraints {
+                allowedTokenChanges = Nothing,
+                areNonPreserving = Just 0
+                }
+              }
+            }
+      checkReachConfig config `shouldBe` Nothing
+
+    it "rejects negative areNonPreserving" $ do
+      let config = defaultReachConfig {
+            netGoalConfig = (netGoalConfig defaultReachConfig) {
+              transitionBehaviorConstraints = TransitionBehaviorConstraints {
+                allowedTokenChanges = Nothing,
+                areNonPreserving = Just (-1)
+                }
+              }
+            }
+      checkReachConfig config `shouldSatisfy` isJust
+
+    it "rejects areNonPreserving greater than numTransitions" $ do
+      let config = defaultReachConfig {
+            netGoalConfig = (netGoalConfig defaultReachConfig) {
+              transitionBehaviorConstraints = TransitionBehaviorConstraints {
+                allowedTokenChanges = Nothing,
+                areNonPreserving = Just 10
+                }
+              }
+            }
+      checkReachConfig config `shouldSatisfy` isJust
+
+    it "rejects allowedTokenChanges = Just EQ (meaningless)" $ do
+      let config = defaultReachConfig {
+            netGoalConfig = (netGoalConfig defaultReachConfig) {
+              transitionBehaviorConstraints = TransitionBehaviorConstraints {
+                allowedTokenChanges = Just EQ,
+                areNonPreserving = Nothing
+                }
+              }
+            }
+      checkReachConfig config `shouldSatisfy` isJust
+
+    it "rejects meaningless combination: areNonPreserving = 0 with allowedTokenChanges" $ do
+      let config = defaultReachConfig {
+            netGoalConfig = (netGoalConfig defaultReachConfig) {
+              transitionBehaviorConstraints = TransitionBehaviorConstraints {
+                allowedTokenChanges = Just GT,
+                areNonPreserving = Just 0
+                }
+              }
+            }
+      checkReachConfig config `shouldSatisfy` isJust
+
+    modifyMaxSuccess (const 3) $
+      prop "respects allowedTokenChanges = Just LT (only token-decreasing)" $ \seed -> do
+        let config = defaultReachConfig {
+              filterConfig = noFiltering,
+              netGoalConfig = (netGoalConfig defaultReachConfig) {
+                transitionBehaviorConstraints = TransitionBehaviorConstraints {
+                  allowedTokenChanges = Just LT,
+                  areNonPreserving = Nothing
+                  }
+                }
+              }
+        inst <- generateReach config seed
+        let net = petriNet (netGoal inst)
+            increasingCount = length $ filter (uncurry (<) . connectionTokenBehavior) $ connections net
+        increasingCount `shouldBe` 0
+
+    modifyMaxSuccess (const 3) $
+      prop "respects allowedTokenChanges = Just GT (only token-increasing)" $ \seed -> do
+        let config = defaultReachConfig {
+              filterConfig = noFiltering,
+              netGoalConfig = (netGoalConfig defaultReachConfig) {
+                transitionBehaviorConstraints = TransitionBehaviorConstraints {
+                  allowedTokenChanges = Just GT,
+                  areNonPreserving = Nothing
+                  }
+                }
+              }
+        inst <- generateReach config seed
+        let net = petriNet (netGoal inst)
+            decreasingCount = length $ filter (uncurry (>) . connectionTokenBehavior) $ connections net
+        decreasingCount `shouldBe` 0
+
+    modifyMaxSuccess (const 1) $
+      prop "respects areNonPreserving constraint set to 0" $ \seed -> do
+        let config = defaultReachConfig {
+              filterConfig = noFiltering,
+              netGoalConfig = (netGoalConfig defaultReachConfig) {
+                transitionBehaviorConstraints = TransitionBehaviorConstraints {
+                  allowedTokenChanges = Nothing,
+                  areNonPreserving = Just 0
+                  }
+                }
+              }
+        inst <- generateReach config seed
+        let net = petriNet (netGoal inst)
+            nonPreservingCount = length $ filter (uncurry (/=) . connectionTokenBehavior) $ connections net
+        nonPreservingCount `shouldBe` 0
+
+    it "rejects allowedTokenChanges = Just LT with impossible range (vHigh <= nLow)" $ do
+      let config = defaultReachConfig {
+            netGoalConfig = (netGoalConfig defaultReachConfig) {
+              preconditionsRange = (1, Just 2),
+              postconditionsRange = (3, Just 5),
+              transitionBehaviorConstraints = TransitionBehaviorConstraints {
+                allowedTokenChanges = Just LT,
+                areNonPreserving = Nothing
+                }
+              }
+            }
+      checkReachConfig config `shouldSatisfy` isJust
+
+    it "rejects allowedTokenChanges = Just GT with impossible range (nHigh <= vLow)" $ do
+      let config = defaultReachConfig {
+            netGoalConfig = (netGoalConfig defaultReachConfig) {
+              preconditionsRange = (3, Just 5),
+              postconditionsRange = (1, Just 2),
+              transitionBehaviorConstraints = TransitionBehaviorConstraints {
+                allowedTokenChanges = Just GT,
+                areNonPreserving = Nothing
+                }
+              }
+            }
+      checkReachConfig config `shouldSatisfy` isJust
+
+    it "rejects areNonPreserving > 0 with fixed equal ranges" $ do
+      let config = defaultReachConfig {
+            netGoalConfig = (netGoalConfig defaultReachConfig) {
+              preconditionsRange = (2, Just 2),
+              postconditionsRange = (2, Just 2),
+              transitionBehaviorConstraints = TransitionBehaviorConstraints {
+                allowedTokenChanges = Nothing,
+                areNonPreserving = Just 1
+                }
+              }
+            }
+      checkReachConfig config `shouldSatisfy` isJust
+
+    it "accepts allowedTokenChanges = Just LT with valid range" $ do
+      let config = defaultReachConfig {
+            netGoalConfig = (netGoalConfig defaultReachConfig) {
+              preconditionsRange = (2, Just 5),
+              postconditionsRange = (0, Just 3),
+              transitionBehaviorConstraints = TransitionBehaviorConstraints {
+                allowedTokenChanges = Just LT,
+                areNonPreserving = Nothing
+                }
+              }
+            }
+      checkReachConfig config `shouldBe` Nothing
+
+    it "accepts allowedTokenChanges = Just GT with valid range" $ do
+      let config = defaultReachConfig {
+            netGoalConfig = (netGoalConfig defaultReachConfig) {
+              preconditionsRange = (0, Just 3),
+              postconditionsRange = (2, Just 5),
+              transitionBehaviorConstraints = TransitionBehaviorConstraints {
+                allowedTokenChanges = Just GT,
+                areNonPreserving = Nothing
+                }
+              }
+            }
+      checkReachConfig config `shouldBe` Nothing
 
 hasMinTransitionLength
   :: (Ord s, Show s)

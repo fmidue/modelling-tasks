@@ -8,18 +8,19 @@ module Modelling.PetriNet.Reach.ConfigValidation (
   checkTransitionLengths,
   checkRejectLongerThanConsistency,
   checkCapacity,
+  checkTransitionBehaviorConstraints,
   checkFilterConfigWith
 ) where
 
 import Control.Applicative (Alternative ((<|>)))
 import Data.GraphViz.Commands (GraphvizCommand)
 import Data.List.Extra (notNull)
-import Data.Maybe (isJust)
+import Data.Maybe (fromMaybe, isJust)
 import Modelling.PetriNet.Reach.Filter (
   FilterConfig (..),
   noFiltering,
   )
-import Modelling.PetriNet.Reach.Type (Capacity(..))
+import Modelling.PetriNet.Reach.Type (Capacity(..), TransitionBehaviorConstraints(..))
 
 -- | Check that a range (low, high) is valid
 checkRange
@@ -98,11 +99,24 @@ checkBasicPetriConfig
     <|> checkTransitionLengths minTransitionLength maxTransitionLength
     <|> checkRange "preconditionsRange" preconditionsRange
     <|> checkRange "postconditionsRange" postconditionsRange
+    <|> checkRangeVersusPlaces "preconditionsRange" preconditionsRange numPlaces
+    <|> checkRangeVersusPlaces "postconditionsRange" postconditionsRange numPlaces
     <|> checkRejectLongerThanConsistency rejectLongerThan maxTransitionLength showLengthHint
     <|> checkDrawCommands drawCommands
   where
     checkDrawCommands [] = Just "drawCommands cannot be empty"
     checkDrawCommands _  = Nothing
+    checkRangeVersusPlaces what (low, h) places = case h of
+      Nothing ->
+        if low > places
+        then Just $ "The lower limit for " ++ what ++ " (currently " ++ show low ++
+                   ") cannot exceed numPlaces (currently " ++ show places ++ ")"
+        else Nothing
+      Just high ->
+        if high > places
+        then Just $ "The upper limit for " ++ what ++ " (currently " ++ show high ++
+                   ") cannot exceed numPlaces (currently " ++ show places ++ ")"
+        else Nothing
 
 -- | Check filter configuration constraints given the transition length parameters
 checkFilterConfigWith
@@ -185,3 +199,38 @@ checkFilterConfigWith rejectLongerThan theTransitionLength@minTransitionLength n
     hasConflictBetweenForbiddenAndRequired :: [Int] -> [Int] -> Bool
     hasConflictBetweenForbiddenAndRequired forbidden =
       any (\r -> any (\f -> f `mod` r == 0) forbidden)
+
+-- | Check transition behavior constraints for validity
+checkTransitionBehaviorConstraints
+  :: Int                               -- ^ numPlaces
+  -> (Int, Maybe Int)                  -- ^ preconditionsRange
+  -> (Int, Maybe Int)                  -- ^ postconditionsRange
+  -> Int                               -- ^ numTransitions
+  -> TransitionBehaviorConstraints     -- ^ constraints
+  -> Maybe String
+checkTransitionBehaviorConstraints numPlaces preconditionsRange postconditionsRange numTransitions TransitionBehaviorConstraints {..}
+  | Just EQ <- allowedTokenChanges
+  = Just "allowedTokenChanges = Just EQ is meaningless; use areNonPreserving = Just 0 instead"
+  | Just numberOfNonPreserving <- areNonPreserving
+  , numberOfNonPreserving < 0 || numberOfNonPreserving > numTransitions
+  = Just "areNonPreserving must be non-negative and at most numTransitions when specified"
+  | areNonPreserving == Just 0
+  , isJust allowedTokenChanges
+  = Just "when areNonPreserving = Just 0 (all transitions token-preserving), allowedTokenChanges = Just ... makes no sense"
+  | allowedTokenChanges == Just LT
+  , vLow < nLow || vHigh < nHigh
+  = Just "with allowedTokenChanges = Just LT, the combination of preconditionsRange and postconditionsRange is too lax"
+  | allowedTokenChanges == Just GT
+  , vLow > nLow || vHigh > nHigh
+  = Just "with allowedTokenChanges = Just GT, the combination of preconditionsRange and postconditionsRange is too lax"
+  | areNonPreserving /= Just 0
+  , vLow == vHigh && nLow == nHigh && vLow == nLow
+  = Just "only areNonPreserving = Just 0 makes sense when preconditionsRange and postconditionsRange are all fixed to one value anyway"
+  | otherwise
+  = Nothing
+  where
+    (vLow, vHighMaybe) = preconditionsRange
+    (nLow, nHighMaybe) = postconditionsRange
+    -- Since checkBasicPetriConfig guarantees upper bounds don't exceed numPlaces, we can use numPlaces as the default
+    vHigh = fromMaybe numPlaces vHighMaybe
+    nHigh = fromMaybe numPlaces nHighMaybe

@@ -44,7 +44,6 @@ module Modelling.PetriNet.Reach.Deadlock (
   exampleInstance,
 ) where
 
-import qualified Control.Monad.Trans              as Monad (lift)
 import qualified Data.Map                         as M (fromList)
 import qualified Data.Set                         as S (fromList, toList)
 
@@ -65,6 +64,7 @@ import Modelling.PetriNet.Reach.Property (
 import Modelling.PetriNet.Reach.ConfigValidation (
   checkBasicPetriConfig,
   checkFilterConfigWith,
+  checkTransitionBehaviorConstraints,
   )
 import Modelling.PetriNet.Reach.Reach   (
   assertReachPoints,
@@ -76,7 +76,7 @@ import Modelling.PetriNet.Reach.Reach   (
   provideSolutionsFeedback,
   validateDrawabilityAndSolutionFiltering,
   )
-import Modelling.PetriNet.Reach.Roll    (netLimits)
+import Modelling.PetriNet.Reach.Roll    (netLimitsFiltered)
 import Modelling.PetriNet.Reach.Step    (executes, successors)
 import Modelling.PetriNet.Reach.Type (
   Capacity (Unbounded),
@@ -86,10 +86,11 @@ import Modelling.PetriNet.Reach.Type (
   ShowTransition (ShowTransition),
   State (State),
   Transition (..),
+  TransitionBehaviorConstraints,
   TransitionsList (TransitionsList),
   bimapNet,
   example,
-  hasIsolatedNodes,
+  noTransitionBehaviorConstraints,
   )
 
 import Control.Applicative              (Alternative, (<|>))
@@ -108,17 +109,16 @@ import Control.OutputCapable.Blocks.Generic (
   ($>>),
   ($>>=),
   )
-import Data.Bifunctor                   (Bifunctor (second), bimap)
+import Data.Bifunctor                   (bimap)
 import Data.Either.Combinators          (whenRight)
 import Control.Functor.Trans            (FunctorTrans (lift))
 import Control.Monad                    (guard)
 import Control.Monad.Catch              (MonadCatch, MonadThrow)
 import Control.Monad.Random             (evalRandT, mkStdGen)
-import Control.Monad.Trans.Maybe        (MaybeT, runMaybeT)
+import Control.Monad.Trans.Maybe        (MaybeT (MaybeT), runMaybeT)
 import Control.Monad.Trans.Random       (RandT)
 import System.Random.Internal           (StdGen)
 import Data.GraphViz                    (GraphvizCommand (..))
-import Data.Maybe                       (fromMaybe)
 #if !MIN_VERSION_base(4,18,0)
 import Data.Typeable                    (Typeable)
 #endif
@@ -261,6 +261,7 @@ data DeadlockConfig = DeadlockConfig {
   drawPreferenceOrder :: [GraphvizCommand],
   maxTransitionLength :: Int,
   minTransitionLength :: Int,
+  transitionBehaviorConstraints :: TransitionBehaviorConstraints,
   postconditionsRange :: (Int, Maybe Int),
   preconditionsRange  :: (Int, Maybe Int),
   maxPrintedSolutions :: Int,
@@ -284,6 +285,7 @@ defaultDeadlockConfig =
   drawPreferenceOrder = [Dot, Neato, TwoPi, Circo, Fdp, Sfdp, Osage, Patchwork],
   maxTransitionLength = 8,
   minTransitionLength = 8,
+  transitionBehaviorConstraints = noTransitionBehaviorConstraints,
   postconditionsRange = (0, Nothing),
   preconditionsRange  = (0, Nothing),
   maxPrintedSolutions = 0,
@@ -327,6 +329,13 @@ checkDeadlockConfig DeadlockConfig {..} =
     minTransitionLength
     numTransitions
     filterConfig
+  <|>
+  checkTransitionBehaviorConstraints
+    numPlaces
+    preconditionsRange
+    postconditionsRange
+    numTransitions
+    transitionBehaviorConstraints
   <|>
   if maxPrintedSolutions < 0
     then Just "maxPrintedSolutions must be non-negative"
@@ -376,12 +385,14 @@ try
 try conf = do
     let ps = [Place 1 .. Place (numPlaces conf)]
         ts = [Transition 1 .. Transition (numTransitions conf)]
-    n <- Monad.lift $ netLimits vLow vHigh nLow nHigh
+    n <- MaybeT $ netLimitsFiltered
+      (preconditionsRange conf)
+      (postconditionsRange conf)
+      (numPlaces conf)
       ps
       ts
       (Modelling.PetriNet.Reach.Deadlock.capacity conf)
-    -- Filter out nets with isolated nodes
-    guard $ not $ hasIsolatedNodes n
+      (transitionBehaviorConstraints conf)
     let deadlockLevels = map (filter (null . successors n . fst)) (levelsWithAlternatives n)
         (no, yeah) = span null
           $ take (maxTransitionLength conf + 1)
@@ -393,11 +404,6 @@ try conf = do
       n (drawPreferenceOrder conf) allShortestSolutions
       (filterConfig conf) (numTransitions conf) (maxPrintedSolutions conf)
     pure (n, cmd, solutionsList)
-  where
-    fixMaximum :: (Int, Maybe Int) -> (Int, Int)
-    fixMaximum = second (min (numPlaces conf) . fromMaybe maxBound)
-    (vLow, vHigh) = fixMaximum $ preconditionsRange conf
-    (nLow, nHigh) = fixMaximum $ postconditionsRange conf
 
 exampleInstance :: Net Int Int
 exampleInstance =
