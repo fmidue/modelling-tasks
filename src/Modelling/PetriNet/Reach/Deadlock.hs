@@ -262,8 +262,12 @@ data DeadlockConfig = DeadlockConfig {
   maxTransitionLength :: Int,
   minTransitionLength :: Int,
   transitionBehaviorConstraints :: TransitionBehaviorConstraints,
-  postconditionsRange :: (Int, Maybe Int),
-  preconditionsRange  :: (Int, Maybe Int),
+  incomingArrowsPerTransition :: (Int, Maybe Int),
+  outgoingArrowsPerTransition :: (Int, Maybe Int),
+  incomingArrowsPerPlace :: (Int, Maybe Int),
+  outgoingArrowsPerPlace :: (Int, Maybe Int),
+  totalArrowsFromPlacesToTransitions :: (Int, Maybe Int),
+  totalArrowsFromTransitionsToPlaces :: (Int, Maybe Int),
   maxPrintedSolutions :: Int,
   rejectLongerThan    :: Maybe Int,
   showLengthHint      :: Bool,
@@ -286,8 +290,12 @@ defaultDeadlockConfig =
   maxTransitionLength = 8,
   minTransitionLength = 8,
   transitionBehaviorConstraints = noTransitionBehaviorConstraints,
-  postconditionsRange = (0, Nothing),
-  preconditionsRange  = (0, Nothing),
+  incomingArrowsPerTransition = (0, Nothing),
+  outgoingArrowsPerTransition = (0, Nothing),
+  incomingArrowsPerPlace = (0, Nothing),
+  outgoingArrowsPerPlace = (0, Nothing),
+  totalArrowsFromPlacesToTransitions = (0, Nothing),
+  totalArrowsFromTransitionsToPlaces = (0, Nothing),
   maxPrintedSolutions = 0,
   rejectLongerThan    = Just 8,
   showLengthHint      = False,
@@ -318,8 +326,12 @@ checkDeadlockConfig DeadlockConfig {..} =
     capacity
     minTransitionLength
     maxTransitionLength
-    preconditionsRange
-    postconditionsRange
+    incomingArrowsPerTransition
+    outgoingArrowsPerTransition
+    incomingArrowsPerPlace
+    outgoingArrowsPerPlace
+    totalArrowsFromPlacesToTransitions
+    totalArrowsFromTransitionsToPlaces
     drawPreferenceOrder
     rejectLongerThan
     showLengthHint
@@ -332,8 +344,8 @@ checkDeadlockConfig DeadlockConfig {..} =
   <|>
   checkTransitionBehaviorConstraints
     numPlaces
-    preconditionsRange
-    postconditionsRange
+    incomingArrowsPerTransition
+    outgoingArrowsPerTransition
     numTransitions
     transitionBehaviorConstraints
   <|>
@@ -386,8 +398,8 @@ try conf = do
     let ps = [Place 1 .. Place (numPlaces conf)]
         ts = [Transition 1 .. Transition (numTransitions conf)]
     n <- MaybeT $ netLimitsFiltered
-      (preconditionsRange conf)
-      (postconditionsRange conf)
+      (incomingArrowsPerTransition conf)
+      (outgoingArrowsPerTransition conf)
       (numPlaces conf)
       ps
       ts

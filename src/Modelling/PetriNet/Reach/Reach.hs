@@ -569,8 +569,12 @@ data NetGoalConfig = NetGoalConfig {
   -- Must be in the range @1..numPlaces@.
   maxPlacesChanged    :: Int,
   transitionBehaviorConstraints :: TransitionBehaviorConstraints,
-  postconditionsRange :: (Int, Maybe Int),
-  preconditionsRange  :: (Int, Maybe Int)
+  incomingArrowsPerTransition :: (Int, Maybe Int),
+  outgoingArrowsPerTransition :: (Int, Maybe Int),
+  incomingArrowsPerPlace :: (Int, Maybe Int),
+  outgoingArrowsPerPlace :: (Int, Maybe Int),
+  totalArrowsFromPlacesToTransitions :: (Int, Maybe Int),
+  totalArrowsFromTransitionsToPlaces :: (Int, Maybe Int)
   }
   deriving (Generic, Read, Show)
 #if !MIN_VERSION_base(4,18,0)
@@ -591,8 +595,12 @@ defaultReachConfig = ReachConfig {
       allowedTokenChanges = Nothing,
       areNonPreserving = Just 2
       },
-    postconditionsRange = (0, Just 3),
-    preconditionsRange  = (0, Just 3)
+    incomingArrowsPerTransition = (0, Just 3),
+    outgoingArrowsPerTransition = (0, Just 3),
+    incomingArrowsPerPlace = (0, Nothing),
+    outgoingArrowsPerPlace = (0, Nothing),
+    totalArrowsFromPlacesToTransitions = (0, Nothing),
+    totalArrowsFromTransitionsToPlaces = (0, Nothing)
     },
   maxPrintedSolutions = 1,
   rejectLongerThan    = Just 6,
@@ -633,8 +641,8 @@ findNetGoalWithSolutions filterConfig maxPrintedSolutions NetGoalConfig {..} =
       try = do
         let generateNet =
               maybe generateNet return =<< netLimitsFiltered
-                preconditionsRange
-                postconditionsRange
+                incomingArrowsPerTransition
+                outgoingArrowsPerTransition
                 numPlaces
                 ps
                 ts
@@ -725,8 +733,12 @@ checkReachConfig ReachConfig {..} =
     (capacity netGoalConfig)
     (minTransitionLength netGoalConfig)
     (maxTransitionLength netGoalConfig)
-    (preconditionsRange netGoalConfig)
-    (postconditionsRange netGoalConfig)
+    (incomingArrowsPerTransition netGoalConfig)
+    (outgoingArrowsPerTransition netGoalConfig)
+    (incomingArrowsPerPlace netGoalConfig)
+    (outgoingArrowsPerPlace netGoalConfig)
+    (totalArrowsFromPlacesToTransitions netGoalConfig)
+    (totalArrowsFromTransitionsToPlaces netGoalConfig)
     (drawPreferenceOrder netGoalConfig)
     rejectLongerThan
     showLengthHint
@@ -753,8 +765,8 @@ checkReachConfig ReachConfig {..} =
   <|>
   checkTransitionBehaviorConstraints
     (numPlaces netGoalConfig)
-    (preconditionsRange netGoalConfig)
-    (postconditionsRange netGoalConfig)
+    (incomingArrowsPerTransition netGoalConfig)
+    (outgoingArrowsPerTransition netGoalConfig)
     (numTransitions netGoalConfig)
     (transitionBehaviorConstraints netGoalConfig)
   <|>

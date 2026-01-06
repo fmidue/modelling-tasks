@@ -94,15 +94,15 @@ takeRandom low high xs  = take
 -- | Generate a net with limits and filtering for isolated nodes and transition behavior constraints
 netLimitsFiltered
   :: (MonadRandom m, Ord s, Ord t)
-  => (Int, Maybe Int)                  -- ^ preconditionsRange
-  -> (Int, Maybe Int)                  -- ^ postconditionsRange
+  => (Int, Maybe Int)                  -- ^ incomingArrowsPerTransition
+  -> (Int, Maybe Int)                  -- ^ outgoingArrowsPerTransition
   -> Int                               -- ^ numPlaces
   -> [s]                               -- ^ places
   -> [t]                               -- ^ transitions
   -> Capacity s                        -- ^ capacityConstraint
   -> TransitionBehaviorConstraints     -- ^ transition behavior constraints
   -> m (Maybe (Net s t))
-netLimitsFiltered preconditionsRange postconditionsRange numPlaces ps ts capacityConstraint transitionBehaviorConstraints = do
+netLimitsFiltered incomingArrowsPerTransition outgoingArrowsPerTransition numPlaces ps ts capacityConstraint transitionBehaviorConstraints = do
   n <- netLimits vLow vHigh nLow nHigh ps ts capacityConstraint
   return $ do
     -- Filter out nets with isolated nodes
@@ -113,5 +113,5 @@ netLimitsFiltered preconditionsRange postconditionsRange numPlaces ps ts capacit
   where
     fixMaximum :: (Int, Maybe Int) -> (Int, Int)
     fixMaximum (low, high) = (low, fromMaybe numPlaces high)
-    (vLow, vHigh) = fixMaximum preconditionsRange
-    (nLow, nHigh) = fixMaximum postconditionsRange
+    (vLow, vHigh) = fixMaximum incomingArrowsPerTransition
+    (nLow, nHigh) = fixMaximum outgoingArrowsPerTransition
