@@ -22,7 +22,6 @@ import Modelling.PetriNet.Reach.Type (
   TransitionBehaviorConstraints(..),
   ArrowDensityConstraints(..),
   connectionTokenBehavior,
-  noArrowDensityConstraints,
   )
 
 import Data.Maybe                       (isJust)
@@ -153,11 +152,19 @@ spec = do
       checkDeadlockConfig config `shouldBe` Nothing
 
     it "rejects incomingArrowsPerTransition where upper < lower" $ do
-      let config = defaultDeadlockConfig { incomingArrowsPerTransition = (5, Just 2) }
+      let config = defaultDeadlockConfig {
+            arrowDensityConstraints = (arrowDensityConstraints defaultDeadlockConfig) {
+              incomingArrowsPerTransition = (5, Just 2)
+              }
+            }
       checkDeadlockConfig config `shouldSatisfy` isJust
 
     it "rejects outgoingArrowsPerTransition where upper < lower" $ do
-      let config = defaultDeadlockConfig { outgoingArrowsPerTransition = (5, Just 2) }
+      let config = defaultDeadlockConfig {
+            arrowDensityConstraints = (arrowDensityConstraints defaultDeadlockConfig) {
+              outgoingArrowsPerTransition = (5, Just 2)
+              }
+            }
       checkDeadlockConfig config `shouldSatisfy` isJust
 
     it "rejects empty drawPreferenceOrder" $ do
@@ -345,10 +352,14 @@ spec = do
 
     it "accepts allowedTokenChanges = Just GT with valid range" $ do
       let config = defaultDeadlockConfig {
-            incomingArrowsPerTransition = (0, Just 3),
-            outgoingArrowsPerTransition = (2, Just 5),
-            totalArrowsFromPlacesToTransitions = (0, Just 18),
-            totalArrowsFromTransitionsToPlaces = (12, Just 30),
+            arrowDensityConstraints = ArrowDensityConstraints {
+              incomingArrowsPerTransition = (0, Just 3),
+              outgoingArrowsPerTransition = (2, Just 5),
+              incomingArrowsPerPlace = (0, Nothing),
+              outgoingArrowsPerPlace = (0, Nothing),
+              totalArrowsFromPlacesToTransitions = (0, Just 18),
+              totalArrowsFromTransitionsToPlaces = (12, Just 30)
+              },
             transitionBehaviorConstraints = TransitionBehaviorConstraints {
               allowedTokenChanges = Just GT,
               areNonPreserving = Nothing

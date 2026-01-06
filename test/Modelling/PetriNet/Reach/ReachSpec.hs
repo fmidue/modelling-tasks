@@ -32,7 +32,6 @@ import Modelling.PetriNet.Reach.Type (
   connectionTokenBehavior,
   mark,
   noTransitionBehaviorConstraints,
-  noArrowDensityConstraints,
   )
 
 import Data.Maybe                        (isJust)
@@ -351,8 +350,10 @@ spec = do
     it "rejects allowedTokenChanges = Just LT with impossible range (vHigh <= nLow)" $ do
       let config = defaultReachConfig {
             netGoalConfig = (netGoalConfig defaultReachConfig) {
-              incomingArrowsPerTransition = (1, Just 2),
-              outgoingArrowsPerTransition = (3, Just 5),
+              arrowDensityConstraints = (arrowDensityConstraints $ netGoalConfig defaultReachConfig) {
+                incomingArrowsPerTransition = (1, Just 2),
+                outgoingArrowsPerTransition = (3, Just 5)
+                },
               transitionBehaviorConstraints = TransitionBehaviorConstraints {
                 allowedTokenChanges = Just LT,
                 areNonPreserving = Nothing
@@ -364,8 +365,10 @@ spec = do
     it "rejects allowedTokenChanges = Just GT with impossible range (nHigh <= vLow)" $ do
       let config = defaultReachConfig {
             netGoalConfig = (netGoalConfig defaultReachConfig) {
-              incomingArrowsPerTransition = (3, Just 5),
-              outgoingArrowsPerTransition = (1, Just 2),
+              arrowDensityConstraints = (arrowDensityConstraints $ netGoalConfig defaultReachConfig) {
+                incomingArrowsPerTransition = (3, Just 5),
+                outgoingArrowsPerTransition = (1, Just 2)
+                },
               transitionBehaviorConstraints = TransitionBehaviorConstraints {
                 allowedTokenChanges = Just GT,
                 areNonPreserving = Nothing
@@ -377,8 +380,10 @@ spec = do
     it "rejects areNonPreserving > 0 with fixed equal ranges" $ do
       let config = defaultReachConfig {
             netGoalConfig = (netGoalConfig defaultReachConfig) {
-              incomingArrowsPerTransition = (2, Just 2),
-              outgoingArrowsPerTransition = (2, Just 2),
+              arrowDensityConstraints = (arrowDensityConstraints $ netGoalConfig defaultReachConfig) {
+                incomingArrowsPerTransition = (2, Just 2),
+                outgoingArrowsPerTransition = (2, Just 2)
+                },
               transitionBehaviorConstraints = TransitionBehaviorConstraints {
                 allowedTokenChanges = Nothing,
                 areNonPreserving = Just 1
@@ -390,10 +395,12 @@ spec = do
     it "accepts allowedTokenChanges = Just LT with valid range" $ do
       let config = defaultReachConfig {
             netGoalConfig = (netGoalConfig defaultReachConfig) {
-              incomingArrowsPerTransition = (2, Just 5),
-              outgoingArrowsPerTransition = (0, Just 3),
-              totalArrowsFromPlacesToTransitions = (12, Just 30),
-              totalArrowsFromTransitionsToPlaces = (0, Just 18),
+              arrowDensityConstraints = (arrowDensityConstraints $ netGoalConfig defaultReachConfig) {
+                incomingArrowsPerTransition = (2, Just 5),
+                outgoingArrowsPerTransition = (0, Just 3),
+                totalArrowsFromPlacesToTransitions = (12, Just 30),
+                totalArrowsFromTransitionsToPlaces = (0, Just 18)
+                },
               transitionBehaviorConstraints = TransitionBehaviorConstraints {
                 allowedTokenChanges = Just LT,
                 areNonPreserving = Nothing
@@ -405,10 +412,12 @@ spec = do
     it "accepts allowedTokenChanges = Just GT with valid range" $ do
       let config = defaultReachConfig {
             netGoalConfig = (netGoalConfig defaultReachConfig) {
-              incomingArrowsPerTransition = (0, Just 3),
-              outgoingArrowsPerTransition = (2, Just 5),
-              totalArrowsFromPlacesToTransitions = (0, Just 18),
-              totalArrowsFromTransitionsToPlaces = (12, Just 30),
+              arrowDensityConstraints = (arrowDensityConstraints $ netGoalConfig defaultReachConfig) {
+                incomingArrowsPerTransition = (0, Just 3),
+                outgoingArrowsPerTransition = (2, Just 5),
+                totalArrowsFromPlacesToTransitions = (0, Just 18),
+                totalArrowsFromTransitionsToPlaces = (12, Just 30)
+                },
               transitionBehaviorConstraints = TransitionBehaviorConstraints {
                 allowedTokenChanges = Just GT,
                 areNonPreserving = Nothing
@@ -420,8 +429,10 @@ spec = do
     it "rejects configuration when totalArrowsFromPlacesToTransitions lower bound exceeds maximum possible from incomingArrowsPerTransition" $ do
       let config = defaultReachConfig {
             netGoalConfig = (netGoalConfig defaultReachConfig) {
-              incomingArrowsPerTransition = (0, Just 2),
-              totalArrowsFromPlacesToTransitions = (20, Nothing)
+              arrowDensityConstraints = (arrowDensityConstraints $ netGoalConfig defaultReachConfig) {
+                incomingArrowsPerTransition = (0, Just 2),
+                totalArrowsFromPlacesToTransitions = (20, Nothing)
+                }
               }
             }
       checkReachConfig config `shouldSatisfy` isJust
@@ -429,8 +440,10 @@ spec = do
     it "rejects configuration when totalArrowsFromTransitionsToPlaces lower bound exceeds maximum possible from outgoingArrowsPerTransition" $ do
       let config = defaultReachConfig {
             netGoalConfig = (netGoalConfig defaultReachConfig) {
-              outgoingArrowsPerTransition = (0, Just 2),
-              totalArrowsFromTransitionsToPlaces = (20, Nothing)
+              arrowDensityConstraints = (arrowDensityConstraints $ netGoalConfig defaultReachConfig) {
+                outgoingArrowsPerTransition = (0, Just 2),
+                totalArrowsFromTransitionsToPlaces = (20, Nothing)
+                }
               }
             }
       checkReachConfig config `shouldSatisfy` isJust
@@ -438,8 +451,10 @@ spec = do
     it "rejects configuration when totalArrowsFromPlacesToTransitions upper bound is less than minimum from incomingArrowsPerTransition" $ do
       let config = defaultReachConfig {
             netGoalConfig = (netGoalConfig defaultReachConfig) {
-              incomingArrowsPerTransition = (2, Just 3),
-              totalArrowsFromPlacesToTransitions = (0, Just 5)
+              arrowDensityConstraints = (arrowDensityConstraints $ netGoalConfig defaultReachConfig) {
+                incomingArrowsPerTransition = (2, Just 3),
+                totalArrowsFromPlacesToTransitions = (0, Just 5)
+                }
               }
             }
       checkReachConfig config `shouldSatisfy` isJust
@@ -447,8 +462,10 @@ spec = do
     it "rejects configuration when totalArrowsFromTransitionsToPlaces upper bound is less than minimum from outgoingArrowsPerTransition" $ do
       let config = defaultReachConfig {
             netGoalConfig = (netGoalConfig defaultReachConfig) {
-              outgoingArrowsPerTransition = (2, Just 3),
-              totalArrowsFromTransitionsToPlaces = (0, Just 5)
+              arrowDensityConstraints = (arrowDensityConstraints $ netGoalConfig defaultReachConfig) {
+                outgoingArrowsPerTransition = (2, Just 3),
+                totalArrowsFromTransitionsToPlaces = (0, Just 5)
+                }
               }
             }
       checkReachConfig config `shouldSatisfy` isJust
@@ -456,8 +473,10 @@ spec = do
     it "rejects configuration when totalArrowsFromPlacesToTransitions lower bound is less than minimum from incomingArrowsPerTransition (aggressive narrowing)" $ do
       let config = defaultReachConfig {
             netGoalConfig = (netGoalConfig defaultReachConfig) {
-              incomingArrowsPerTransition = (2, Just 3),
-              totalArrowsFromPlacesToTransitions = (5, Just 20)
+              arrowDensityConstraints = (arrowDensityConstraints $ netGoalConfig defaultReachConfig) {
+                incomingArrowsPerTransition = (2, Just 3),
+                totalArrowsFromPlacesToTransitions = (5, Just 20)
+                }
               }
             }
       checkReachConfig config `shouldSatisfy` isJust
@@ -465,8 +484,10 @@ spec = do
     it "rejects configuration when totalArrowsFromPlacesToTransitions upper bound is greater than maximum from incomingArrowsPerTransition (aggressive narrowing)" $ do
       let config = defaultReachConfig {
             netGoalConfig = (netGoalConfig defaultReachConfig) {
-              incomingArrowsPerTransition = (1, Just 2),
-              totalArrowsFromPlacesToTransitions = (6, Just 20)
+              arrowDensityConstraints = (arrowDensityConstraints $ netGoalConfig defaultReachConfig) {
+                incomingArrowsPerTransition = (1, Just 2),
+                totalArrowsFromPlacesToTransitions = (6, Just 20)
+                }
               }
             }
       checkReachConfig config `shouldSatisfy` isJust
@@ -474,12 +495,14 @@ spec = do
     it "accepts configuration with consistent arrow density parameters" $ do
       let config = defaultReachConfig {
             netGoalConfig = (netGoalConfig defaultReachConfig) {
-              incomingArrowsPerTransition = (1, Just 2),
-              outgoingArrowsPerTransition = (1, Just 2),
-              incomingArrowsPerPlace = (1, Just 3),
-              outgoingArrowsPerPlace = (1, Just 3),
-              totalArrowsFromPlacesToTransitions = (6, Just 12),
-              totalArrowsFromTransitionsToPlaces = (6, Just 12)
+              arrowDensityConstraints = (arrowDensityConstraints $ netGoalConfig defaultReachConfig) {
+                incomingArrowsPerTransition = (1, Just 2),
+                outgoingArrowsPerTransition = (1, Just 2),
+                incomingArrowsPerPlace = (1, Just 3),
+                outgoingArrowsPerPlace = (1, Just 3),
+                totalArrowsFromPlacesToTransitions = (6, Just 12),
+                totalArrowsFromTransitionsToPlaces = (6, Just 12)
+                }
               }
             }
       checkReachConfig config `shouldBe` Nothing
