@@ -372,15 +372,13 @@ mappingAdvice isCollapsed = collapsed isCollapsed (translations $ do
     english [iii|
       Links are already grouped correctly and fully,
       i.e., all links with the same label (and only links with the same label!)
-      in the OD correspond to exactly the same relationship
-      #{if isCollapsed then "" else " in the CD"}.
+      in the OD correspond to exactly the same relationship#{if isCollapsed then "" else " in the CD"}.
       |]
     german [iii|
       Links sind bereits vollständig und korrekt gruppiert,
       d.h., alle Links mit der selben Beschriftung
       (and auch nur Links mit der selben Beschriftung!)
-      im OD entsprechen genau der selben Beziehung
-      #{if isCollapsed then "" else " im CD"}.
+      im OD entsprechen genau der selben Beziehung#{if isCollapsed then "" else " im CD"}.
       |]
   paragraph $ translate $ do
     english [iii|
