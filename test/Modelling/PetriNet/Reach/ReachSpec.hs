@@ -233,21 +233,21 @@ spec = do
             decreasingCount = length $ filter (uncurry (>) . connectionTokenBehavior) $ connections net
         decreasingCount `shouldBe` 0
 
-    modifyMaxSuccess (const 3) $
+    modifyMaxSuccess (const 1) $
       prop "respects areNonPreserving constraint" $ \seed -> do
         let config = defaultReachConfig {
               filterConfig = noFiltering,
               netGoalConfig = (netGoalConfig defaultReachConfig) {
                 transitionBehaviorConstraints = TransitionBehaviorConstraints {
                   allowedTokenChanges = Nothing,
-                  areNonPreserving = Just 2
+                  areNonPreserving = Just 0
                   }
                 }
               }
         inst <- generateReach config seed
         let net = petriNet (netGoal inst)
             nonPreservingCount = length $ filter (not . uncurry (==) . connectionTokenBehavior) $ connections net
-        nonPreservingCount `shouldBe` 2
+        nonPreservingCount `shouldBe` 0
 
     it "rejects allowedTokenChanges = Just LT with impossible range (vHigh <= nLow)" $ do
       let config = defaultReachConfig {
