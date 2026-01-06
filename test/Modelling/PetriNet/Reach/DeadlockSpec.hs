@@ -209,6 +209,7 @@ spec = do
                 areNonPreserving = Nothing
                 }
               }
+        checkDeadlockConfig config `shouldBe` Nothing
         inst <- generateDeadlock config seed
         let net = petriNet inst
             increasingCount = length $ filter (uncurry (<) . connectionTokenBehavior) $ connections net
@@ -224,6 +225,7 @@ spec = do
                 areNonPreserving = Nothing
                 }
               }
+        checkDeadlockConfig config `shouldBe` Nothing
         inst <- generateDeadlock config seed
         let net = petriNet inst
             decreasingCount = length $ filter (uncurry (>) . connectionTokenBehavior) $ connections net
@@ -239,6 +241,7 @@ spec = do
                 areNonPreserving = Just 1
                 }
               }
+        checkDeadlockConfig config `shouldBe` Nothing
         inst <- generateDeadlock config seed
         let net = petriNet inst
             nonPreservingCount = length $ filter (uncurry (/=) . connectionTokenBehavior) $ connections net

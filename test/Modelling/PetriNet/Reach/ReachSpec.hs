@@ -276,6 +276,7 @@ spec = do
                   }
                 }
               }
+        checkReachConfig config `shouldBe` Nothing
         inst <- generateReach config seed
         let net = petriNet (netGoal inst)
             increasingCount = length $ filter (uncurry (<) . connectionTokenBehavior) $ connections net
@@ -292,6 +293,7 @@ spec = do
                   }
                 }
               }
+        checkReachConfig config `shouldBe` Nothing
         inst <- generateReach config seed
         let net = petriNet (netGoal inst)
             decreasingCount = length $ filter (uncurry (>) . connectionTokenBehavior) $ connections net
@@ -308,6 +310,7 @@ spec = do
                   }
                 }
               }
+        checkReachConfig config `shouldBe` Nothing
         inst <- generateReach config seed
         let net = petriNet (netGoal inst)
             nonPreservingCount = length $ filter (uncurry (/=) . connectionTokenBehavior) $ connections net
