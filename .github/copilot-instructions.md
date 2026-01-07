@@ -457,7 +457,7 @@ defaultDeadlockInstance = DeadlockInstance {
 
 **Background**:
 
-- This project generates tasks that are used in Autotool (https://gitlab.imn.htwk-leipzig.de/autotool/all0)
+- This project generates tasks that are used in Autotool (https://git.uni-due.de/fmi/autotool-dev)
 - Autotool requires `ToDoc` and `Reader` instances for serialization/deserialization
 - Forgetting these instances causes build failures in Autotool (not locally)
 
@@ -474,115 +474,6 @@ defaultDeadlockInstance = DeadlockInstance {
 {-# LANGUAGE DeriveAnyClass #-}  -- Required for deriving Reader and ToDoc
 {-# LANGUAGE DeriveGeneric #-}   -- Required for Generic derivation
 ```
-
-**Standard deriving pattern for Config types**:
-
-```haskell
-data SomeTaskConfig = SomeTaskConfig {
-  field1 :: Int,
-  field2 :: String,
-  field3 :: CustomType  -- CustomType must also derive Reader and ToDoc
-  } deriving (Generic, Read, Reader, Show, ToDoc)
-```
-
-**Standard deriving pattern for Instance types**:
-
-```haskell
-data SomeTaskInstance = SomeTaskInstance {
-  field1 :: Bool,
-  field2 :: Map Int String,
-  field3 :: CustomType  -- CustomType must also derive Reader and ToDoc
-  } deriving (Eq, Generic, Hashable, Read, Reader, Show, ToDoc)
-```
-
-**Standard deriving pattern for nested types**:
-
-```haskell
--- For simple data types
-data CustomData = CustomData {
-  value :: String
-  } deriving (Eq, Generic, Hashable, Read, Reader, Show, ToDoc)
-
--- For enumeration types
-data TaskOption
-  = Option1
-  | Option2
-  | Option3
-  deriving (Bounded, Enum, Eq, Generic, Hashable, Ord, Read, Reader, Show, ToDoc)
-```
-
-**Ordering of derived instances**:
-
-Follow this standard ordering (alphabetical within each group):
-
-1. Type classes for basic operations: `Bounded`, `Enum`, `Eq`, `Ord`
-2. Type classes for structure: `Foldable`, `Functor`, `Traversable`
-3. Meta-programming: `Data`, `Generic`
-4. Hashing: `Hashable`
-5. Serialization: `Read`, `Reader`, `Show`, `ToDoc`
-
-**Common mistakes to avoid**:
-
-❌ **Forgetting to derive ToDoc and Reader**:
-```haskell
--- BAD - Missing Reader and ToDoc
-data MyConfig = MyConfig {
-  field :: Int
-  } deriving (Generic, Read, Show)  -- Will cause Autotool build failure!
-```
-
-✅ **Always include Reader and ToDoc**:
-```haskell
--- GOOD - Includes Reader and ToDoc
-data MyConfig = MyConfig {
-  field :: Int
-  } deriving (Generic, Read, Reader, Show, ToDoc)
-```
-
-❌ **Forgetting to derive for nested types**:
-```haskell
--- BAD - NestedType doesn't derive Reader and ToDoc
-data NestedType = NestedType String
-  deriving (Generic, Show)  -- Missing Reader and ToDoc!
-
-data MyConfig = MyConfig {
-  nested :: NestedType
-  } deriving (Generic, Read, Reader, Show, ToDoc)  -- Will fail because NestedType lacks instances!
-```
-
-✅ **Derive for all nested types**:
-```haskell
--- GOOD - NestedType includes Reader and ToDoc
-data NestedType = NestedType String
-  deriving (Generic, Read, Reader, Show, ToDoc)
-
-data MyConfig = MyConfig {
-  nested :: NestedType
-  } deriving (Generic, Read, Reader, Show, ToDoc)
-```
-
-**Manual instances**:
-
-In rare cases, you may need manual instances (e.g., for custom serialization):
-
-```haskell
-instance Reader CustomType where
-  atomic_readerPrec = parseCustomTypePrec
-
-instance ToDoc CustomType where
-  toDocPrec _ = text . showCustomType
-```
-
-Most types should use automatic deriving via `Generic` rather than manual instances.
-
-**Verification**:
-
-When adding new Config or Instance types, verify:
-
-1. The data type derives `Reader` and `ToDoc`
-2. All nested custom types also derive `Reader` and `ToDoc`
-3. Required language extensions (`DeriveAnyClass`, `DeriveGeneric`) are enabled
-4. The code builds successfully with `stack --stack-yaml=stack-apps.yaml test --no-run-tests modelling-tasks`
 
 ## Repository Structure
 
