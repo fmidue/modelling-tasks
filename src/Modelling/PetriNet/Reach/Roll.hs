@@ -5,7 +5,13 @@ based on file: collection/src/Petri/Roll.hs
 -}
 module Modelling.PetriNet.Reach.Roll (netLimitsFiltered) where
 
-import qualified Data.Map                         as M (fromList, fromListWith, elems, union)
+import qualified Data.Map                         as M (
+  fromDistinctAscList,
+  fromList,
+  fromListWith,
+  elems,
+  union,
+  )
 import qualified Data.Set                         as S (fromList, toList)
 
 import Modelling.PetriNet.Reach.Type (
@@ -97,26 +103,6 @@ inBounds :: (Int, Maybe Int) -> Int -> Bool
 inBounds (low, maybeHigh) value =
   value >= low && maybe True (value <=) maybeHigh
 
--- | Check if a net satisfies total arrows from places to transitions constraint
-satisfiesTotalPlacesToTransitions
-  :: Net s t
-  -> (Int, Maybe Int)  -- ^ totalArrowsFromPlacesToTransitions
-  -> [s]              -- ^ concatenated pre lists (shared computation)
-  -> Bool
-satisfiesTotalPlacesToTransitions _ (0, Nothing) _ = True
-satisfiesTotalPlacesToTransitions _ bounds allPlacesToTrans =
-  inBounds bounds (length allPlacesToTrans)
-
--- | Check if a net satisfies total arrows from transitions to places constraint
-satisfiesTotalTransitionsToPlaces
-  :: Net s t
-  -> (Int, Maybe Int)  -- ^ totalArrowsFromTransitionsToPlaces
-  -> [s]              -- ^ concatenated post lists (shared computation)
-  -> Bool
-satisfiesTotalTransitionsToPlaces _ (0, Nothing) _ = True
-satisfiesTotalTransitionsToPlaces _ bounds allTransToPlaces =
-  inBounds bounds (length allTransToPlaces)
-
 -- | Generate a net with limits and filtering for isolated nodes and transition behavior constraints
 netLimitsFiltered
   :: (MonadRandom m, Ord s, Ord t)
@@ -145,7 +131,7 @@ netLimitsFiltered
     let allTransToPlaces = concatMap (\(_, _, post) -> post) (connections n)
     let allPlacesToTrans = concatMap (\(pre, _, _) -> pre) (connections n)
     -- Compute initialMap once and share for both per-place checks
-    let initialMap = M.fromList [(place, 0) | place <- S.toList $ places n]
+    let initialMap = M.fromDistinctAscList [(place, 0) | place <- S.toList $ places n]
     -- Check incoming arrows per place (inlined)
     let incomingBounds = incomingArrowsPerPlace arrowConstraints
     guard $ case incomingBounds of
@@ -160,10 +146,16 @@ netLimitsFiltered
       _ -> let countMap = M.fromListWith (+) [(place, 1) | place <- allPlacesToTrans]
                           `M.union` initialMap
            in all (inBounds outgoingBounds) $ M.elems countMap
-    guard $ satisfiesTotalPlacesToTransitions n
-      (totalArrowsFromPlacesToTransitions arrowConstraints) allPlacesToTrans
-    guard $ satisfiesTotalTransitionsToPlaces n
-      (totalArrowsFromTransitionsToPlaces arrowConstraints) allTransToPlaces
+    -- Check total arrows from places to transitions (inlined)
+    let totalPlacesToTransBounds = totalArrowsFromPlacesToTransitions arrowConstraints
+    guard $ case totalPlacesToTransBounds of
+      (0, Nothing) -> True
+      _ -> inBounds totalPlacesToTransBounds (length allPlacesToTrans)
+    -- Check total arrows from transitions to places (inlined)
+    let totalTransToPlacesBounds = totalArrowsFromTransitionsToPlaces arrowConstraints
+    guard $ case totalTransToPlacesBounds of
+      (0, Nothing) -> True
+      _ -> inBounds totalTransToPlacesBounds (length allTransToPlaces)
     return n
   where
     fixMaximum :: (Int, Maybe Int) -> (Int, Int)
