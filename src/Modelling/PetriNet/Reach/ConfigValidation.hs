@@ -276,62 +276,26 @@ checkArrowDensityCrossValidation
     totalArrowsFromPlacesToTransitions = (totalPlacesToTransLow, totalPlacesToTransHigh),
     totalArrowsFromTransitionsToPlaces = (totalTransToPlacesLow, totalTransToPlacesHigh)
   }
-  -- totalArrowsFromPlacesToTransitions relates to incomingArrowsPerTransition
-  -- Aggressive narrowing: if per-transition lower bound implies higher total, require it
-  | totalPlacesToTransLow < incomingPerTransLow * numTransitions
+  -- totalArrowsFromPlacesToTransitions relates to both incomingArrowsPerTransition and outgoingArrowsPerPlace
+  -- Aggressive narrowing: lower bound must satisfy both per-transition and per-place constraints
+  | totalPlacesToTransLow < minPlacesToTrans
   = Just $ "totalArrowsFromPlacesToTransitions lower bound (" ++ show totalPlacesToTransLow ++
-           ") should be at least " ++ show (incomingPerTransLow * numTransitions) ++
-           " to match incomingArrowsPerTransition lower bound of " ++ show incomingPerTransLow ++
-           " per transition across " ++ show numTransitions ++ " transitions"
-  -- Aggressive narrowing: if per-transition upper bound implies tighter total, require it
-  | fromMaybe totalPlacesToTransLow totalPlacesToTransHigh > incomingPerTransHighBound * numTransitions
+           ") should be at least " ++ show minPlacesToTrans
+  -- Aggressive narrowing: upper bound must satisfy both per-transition and per-place constraints
+  | fromMaybe totalPlacesToTransLow totalPlacesToTransHigh > maxPlacesToTrans
   = Just $ "totalArrowsFromPlacesToTransitions upper bound (" ++
            show (fromMaybe totalPlacesToTransLow totalPlacesToTransHigh) ++
-           ") should be at most " ++ show (incomingPerTransHighBound * numTransitions) ++
-           " to match incomingArrowsPerTransition upper bound of " ++ show incomingPerTransHighBound ++
-           " per transition across " ++ show numTransitions ++ " transitions"
-  -- totalArrowsFromTransitionsToPlaces relates to outgoingArrowsPerTransition
-  -- Aggressive narrowing: if per-transition lower bound implies higher total, require it
-  | totalTransToPlacesLow < outgoingPerTransLow * numTransitions
+           ") should be at most " ++ show maxPlacesToTrans
+  -- totalArrowsFromTransitionsToPlaces relates to both outgoingArrowsPerTransition and incomingArrowsPerPlace
+  -- Aggressive narrowing: lower bound must satisfy both per-transition and per-place constraints
+  | totalTransToPlacesLow < minTransToPlaces
   = Just $ "totalArrowsFromTransitionsToPlaces lower bound (" ++ show totalTransToPlacesLow ++
-           ") should be at least " ++ show (outgoingPerTransLow * numTransitions) ++
-           " to match outgoingArrowsPerTransition lower bound of " ++ show outgoingPerTransLow ++
-           " per transition across " ++ show numTransitions ++ " transitions"
-  -- Aggressive narrowing: if per-transition upper bound implies tighter total, require it
-  | fromMaybe totalTransToPlacesLow totalTransToPlacesHigh > outgoingPerTransHighBound * numTransitions
+           ") should be at least " ++ show minTransToPlaces
+  -- Aggressive narrowing: upper bound must satisfy both per-transition and per-place constraints
+  | fromMaybe totalTransToPlacesLow totalTransToPlacesHigh > maxTransToPlaces
   = Just $ "totalArrowsFromTransitionsToPlaces upper bound (" ++
            show (fromMaybe totalTransToPlacesLow totalTransToPlacesHigh) ++
-           ") should be at most " ++ show (outgoingPerTransHighBound * numTransitions) ++
-           " to match outgoingArrowsPerTransition upper bound of " ++ show outgoingPerTransHighBound ++
-           " per transition across " ++ show numTransitions ++ " transitions"
-  -- totalArrowsFromPlacesToTransitions relates to outgoingArrowsPerPlace
-  -- Aggressive narrowing: if per-place lower bound implies higher total, require it
-  | totalPlacesToTransLow < outgoingPerPlaceLow * numPlaces
-  = Just $ "totalArrowsFromPlacesToTransitions lower bound (" ++ show totalPlacesToTransLow ++
-           ") should be at least " ++ show (outgoingPerPlaceLow * numPlaces) ++
-           " to match outgoingArrowsPerPlace lower bound of " ++ show outgoingPerPlaceLow ++
-           " per place across " ++ show numPlaces ++ " places"
-  -- Aggressive narrowing: if per-place upper bound implies tighter total, require it
-  | fromMaybe totalPlacesToTransLow totalPlacesToTransHigh > outgoingPerPlaceHighBound * numPlaces
-  = Just $ "totalArrowsFromPlacesToTransitions upper bound (" ++
-           show (fromMaybe totalPlacesToTransLow totalPlacesToTransHigh) ++
-           ") should be at most " ++ show (outgoingPerPlaceHighBound * numPlaces) ++
-           " to match outgoingArrowsPerPlace upper bound of " ++ show outgoingPerPlaceHighBound ++
-           " per place across " ++ show numPlaces ++ " places"
-  -- totalArrowsFromTransitionsToPlaces relates to incomingArrowsPerPlace
-  -- Aggressive narrowing: if per-place lower bound implies higher total, require it
-  | totalTransToPlacesLow < incomingPerPlaceLow * numPlaces
-  = Just $ "totalArrowsFromTransitionsToPlaces lower bound (" ++ show totalTransToPlacesLow ++
-           ") should be at least " ++ show (incomingPerPlaceLow * numPlaces) ++
-           " to match incomingArrowsPerPlace lower bound of " ++ show incomingPerPlaceLow ++
-           " per place across " ++ show numPlaces ++ " places"
-  -- Aggressive narrowing: if per-place upper bound implies tighter total, require it
-  | fromMaybe totalTransToPlacesLow totalTransToPlacesHigh > incomingPerPlaceHighBound * numPlaces
-  = Just $ "totalArrowsFromTransitionsToPlaces upper bound (" ++
-           show (fromMaybe totalTransToPlacesLow totalTransToPlacesHigh) ++
-           ") should be at most " ++ show (incomingPerPlaceHighBound * numPlaces) ++
-           " to match incomingArrowsPerPlace upper bound of " ++ show incomingPerPlaceHighBound ++
-           " per place across " ++ show numPlaces ++ " places"
+           ") should be at most " ++ show maxTransToPlaces
   -- Check that per-transition and per-place bounds are mutually consistent
   -- incomingArrowsPerTransition and outgoingArrowsPerPlace refer to the same arrows (places to transitions)
   | incomingPerTransLow * numTransitions > outgoingPerPlaceHighBound * numPlaces
@@ -351,3 +315,9 @@ checkArrowDensityCrossValidation
     outgoingPerTransHighBound = fromMaybe numPlaces outgoingPerTransHigh
     incomingPerPlaceHighBound = fromMaybe numTransitions incomingPerPlaceHigh
     outgoingPerPlaceHighBound = fromMaybe numTransitions outgoingPerPlaceHigh
+    -- Combine constraints: totalArrowsFromPlacesToTransitions must satisfy both per-transition and per-place bounds
+    minPlacesToTrans = max (incomingPerTransLow * numTransitions) (outgoingPerPlaceLow * numPlaces)
+    maxPlacesToTrans = min (incomingPerTransHighBound * numTransitions) (outgoingPerPlaceHighBound * numPlaces)
+    -- Combine constraints: totalArrowsFromTransitionsToPlaces must satisfy both per-transition and per-place bounds
+    minTransToPlaces = max (outgoingPerTransLow * numTransitions) (incomingPerPlaceLow * numPlaces)
+    maxTransToPlaces = min (outgoingPerTransHighBound * numTransitions) (incomingPerPlaceHighBound * numPlaces)
