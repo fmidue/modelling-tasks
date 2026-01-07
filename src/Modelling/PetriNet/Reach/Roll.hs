@@ -97,38 +97,6 @@ inBounds :: (Int, Maybe Int) -> Int -> Bool
 inBounds (low, maybeHigh) value =
   value >= low && maybe True (value <=) maybeHigh
 
--- | Check if a net satisfies incoming arrows per place constraint
-satisfiesIncomingArrowsPerPlace
-  :: Ord s
-  => Net s t
-  -> (Int, Maybe Int)  -- ^ incomingArrowsPerPlace
-  -> [s]              -- ^ concatenated post lists (shared computation)
-  -> Bool
-satisfiesIncomingArrowsPerPlace _ (0, Nothing) _ = True
-satisfiesIncomingArrowsPerPlace net bounds allTransToPlaces =
-  all (inBounds bounds) $ M.elems countMap
-  where
-    -- Initialize map with 0 for each place
-    initialMap = M.fromList [(place, 0) | place <- S.toList $ places net]
-    -- Update counts from incoming arrows
-    countMap = M.fromListWith (+) [(place, 1) | place <- allTransToPlaces] `M.union` initialMap
-
--- | Check if a net satisfies outgoing arrows per place constraint
-satisfiesOutgoingArrowsPerPlace
-  :: Ord s
-  => Net s t
-  -> (Int, Maybe Int)  -- ^ outgoingArrowsPerPlace
-  -> [s]              -- ^ concatenated pre lists (shared computation)
-  -> Bool
-satisfiesOutgoingArrowsPerPlace _ (0, Nothing) _ = True
-satisfiesOutgoingArrowsPerPlace net bounds allPlacesToTrans =
-  all (inBounds bounds) $ M.elems countMap
-  where
-    -- Initialize map with 0 for each place
-    initialMap = M.fromList [(place, 0) | place <- S.toList $ places net]
-    -- Update counts from outgoing arrows
-    countMap = M.fromListWith (+) [(place, 1) | place <- allPlacesToTrans] `M.union` initialMap
-
 -- | Check if a net satisfies total arrows from places to transitions constraint
 satisfiesTotalPlacesToTransitions
   :: Net s t
@@ -176,10 +144,22 @@ netLimitsFiltered
     -- Compute concatenated lists once and share across related checks
     let allTransToPlaces = concatMap (\(_, _, post) -> post) (connections n)
     let allPlacesToTrans = concatMap (\(pre, _, _) -> pre) (connections n)
-    guard $ satisfiesIncomingArrowsPerPlace n
-      (incomingArrowsPerPlace arrowConstraints) allTransToPlaces
-    guard $ satisfiesOutgoingArrowsPerPlace n
-      (outgoingArrowsPerPlace arrowConstraints) allPlacesToTrans
+    -- Compute initialMap once and share for both per-place checks
+    let initialMap = M.fromList [(place, 0) | place <- S.toList $ places n]
+    -- Check incoming arrows per place (inlined)
+    let incomingBounds = incomingArrowsPerPlace arrowConstraints
+    guard $ case incomingBounds of
+      (0, Nothing) -> True
+      _ -> let countMap = M.fromListWith (+) [(place, 1) | place <- allTransToPlaces]
+                          `M.union` initialMap
+           in all (inBounds incomingBounds) $ M.elems countMap
+    -- Check outgoing arrows per place (inlined)
+    let outgoingBounds = outgoingArrowsPerPlace arrowConstraints
+    guard $ case outgoingBounds of
+      (0, Nothing) -> True
+      _ -> let countMap = M.fromListWith (+) [(place, 1) | place <- allPlacesToTrans]
+                          `M.union` initialMap
+           in all (inBounds outgoingBounds) $ M.elems countMap
     guard $ satisfiesTotalPlacesToTransitions n
       (totalArrowsFromPlacesToTransitions arrowConstraints) allPlacesToTrans
     guard $ satisfiesTotalTransitionsToPlaces n
