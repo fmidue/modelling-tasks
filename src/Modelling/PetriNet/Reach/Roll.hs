@@ -1,3 +1,4 @@
+{-# LANGUAGE RecordWildCards #-}
 {-|
 originally from Autotool (https://gitlab.imn.htwk-leipzig.de/autotool/all0)
 based on revision: ad25a990816a162fdd13941ff889653f22d6ea0a
@@ -114,7 +115,7 @@ netLimitsFiltered
   -> TransitionBehaviorConstraints     -- ^ transition behavior constraints
   -> m (Maybe (Net s t))
 netLimitsFiltered
-  arrowConstraints
+  ArrowDensityConstraints{..}
   numPlaces
   ps
   ts
@@ -133,32 +134,28 @@ netLimitsFiltered
     -- Compute initialMap once and share for both per-place checks
     let initialMap = M.fromDistinctAscList [(place, 0) | place <- S.toList $ places n]
     -- Check incoming arrows per place (inlined)
-    let incomingBounds = incomingArrowsPerPlace arrowConstraints
-    guard $ case incomingBounds of
+    guard $ case incomingArrowsPerPlace of
       (0, Nothing) -> True
       _ -> let countMap = M.fromListWith (+) [(place, 1) | place <- allTransToPlaces]
                           `M.union` initialMap
-           in all (inBounds incomingBounds) $ M.elems countMap
+           in all (inBounds incomingArrowsPerPlace) $ M.elems countMap
     -- Check outgoing arrows per place (inlined)
-    let outgoingBounds = outgoingArrowsPerPlace arrowConstraints
-    guard $ case outgoingBounds of
+    guard $ case outgoingArrowsPerPlace of
       (0, Nothing) -> True
       _ -> let countMap = M.fromListWith (+) [(place, 1) | place <- allPlacesToTrans]
                           `M.union` initialMap
-           in all (inBounds outgoingBounds) $ M.elems countMap
+           in all (inBounds outgoingArrowsPerPlace) $ M.elems countMap
     -- Check total arrows from places to transitions (inlined)
-    let totalPlacesToTransBounds = totalArrowsFromPlacesToTransitions arrowConstraints
-    guard $ case totalPlacesToTransBounds of
+    guard $ case totalArrowsFromPlacesToTransitions of
       (0, Nothing) -> True
-      _ -> inBounds totalPlacesToTransBounds (length allPlacesToTrans)
+      _ -> inBounds totalArrowsFromPlacesToTransitions (length allPlacesToTrans)
     -- Check total arrows from transitions to places (inlined)
-    let totalTransToPlacesBounds = totalArrowsFromTransitionsToPlaces arrowConstraints
-    guard $ case totalTransToPlacesBounds of
+    guard $ case totalArrowsFromTransitionsToPlaces of
       (0, Nothing) -> True
-      _ -> inBounds totalTransToPlacesBounds (length allTransToPlaces)
+      _ -> inBounds totalArrowsFromTransitionsToPlaces (length allTransToPlaces)
     return n
   where
     fixMaximum :: (Int, Maybe Int) -> (Int, Int)
     fixMaximum (low, high) = (low, fromMaybe numPlaces high)
-    (vLow, vHigh) = fixMaximum (incomingArrowsPerTransition arrowConstraints)
-    (nLow, nHigh) = fixMaximum (outgoingArrowsPerTransition arrowConstraints)
+    (vLow, vHigh) = fixMaximum incomingArrowsPerTransition
+    (nLow, nHigh) = fixMaximum outgoingArrowsPerTransition
