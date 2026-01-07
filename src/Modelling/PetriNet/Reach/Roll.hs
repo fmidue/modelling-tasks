@@ -93,61 +93,57 @@ takeRandom low high xs  = take
   <$> getRandomR (low, high)
   <*> shuffleM xs
 
--- | Check per-place arrow constraints efficiently by sharing computation
--- of concatenated pre/post lists
-checkPerPlaceConstraints
+-- | Check if a net satisfies incoming arrows per place constraint
+satisfiesIncomingArrowsPerPlace
   :: Ord s
   => Net s t
-  -> (Int, Maybe Int)  -- ^ incomingArrowsPerPlace bounds
-  -> (Int, Maybe Int)  -- ^ outgoingArrowsPerPlace bounds
+  -> (Int, Maybe Int)  -- ^ incomingArrowsPerPlace
+  -> [s]              -- ^ concatenated post lists (shared computation)
   -> Bool
-checkPerPlaceConstraints net incomingBounds outgoingBounds
-  | incomingBounds == (0, Nothing) && outgoingBounds == (0, Nothing) = True
-  | otherwise =
-      checkIncoming incomingBounds && checkOutgoing outgoingBounds
+satisfiesIncomingArrowsPerPlace _ (0, Nothing) _ = True
+satisfiesIncomingArrowsPerPlace net bounds allTransToPlaces =
+  all checkPlace (S.toList $ places net)
   where
-    -- Concatenate and group all post lists (transitions to places) - computed once
-    allTransToPlaces = concatMap (\(_, _, post) -> post) (connections net)
     incomingCountMap = M.fromListWith (+) [(place, 1) | place <- allTransToPlaces]
+    checkPlace place =
+      let count = M.findWithDefault 0 place incomingCountMap
+      in inBounds bounds count
 
-    -- Concatenate and group all pre lists (places to transitions) - computed once
-    allPlacesToTrans = concatMap (\(pre, _, _) -> pre) (connections net)
-    outgoingCountMap = M.fromListWith (+) [(place, 1) | place <- allPlacesToTrans]
-
-    checkIncoming (0, Nothing) = True
-    checkIncoming bounds =
-      all (\place ->
-          let count = M.findWithDefault 0 place incomingCountMap
-          in inBounds bounds count
-        ) (S.toList $ places net)
-
-    checkOutgoing (0, Nothing) = True
-    checkOutgoing bounds =
-      all (\place ->
-          let count = M.findWithDefault 0 place outgoingCountMap
-          in inBounds bounds count
-        ) (S.toList $ places net)
-
--- | Check total arrow constraints efficiently by sharing computation
-checkTotalArrowConstraints
-  :: Net s t
-  -> (Int, Maybe Int)  -- ^ totalArrowsFromPlacesToTransitions bounds
-  -> (Int, Maybe Int)  -- ^ totalArrowsFromTransitionsToPlaces bounds
+-- | Check if a net satisfies outgoing arrows per place constraint
+satisfiesOutgoingArrowsPerPlace
+  :: Ord s
+  => Net s t
+  -> (Int, Maybe Int)  -- ^ outgoingArrowsPerPlace
+  -> [s]              -- ^ concatenated pre lists (shared computation)
   -> Bool
-checkTotalArrowConstraints net placesToTransBounds transToPlacesBounds
-  | placesToTransBounds == (0, Nothing) && transToPlacesBounds == (0, Nothing) = True
-  | otherwise =
-      checkPlacesToTrans placesToTransBounds && checkTransToPlaces transToPlacesBounds
+satisfiesOutgoingArrowsPerPlace _ (0, Nothing) _ = True
+satisfiesOutgoingArrowsPerPlace net bounds allPlacesToTrans =
+  all checkPlace (S.toList $ places net)
   where
-    -- Compute totals once
-    totalPlacesToTrans = sum [length pre | (pre, _, _) <- connections net]
-    totalTransToPlaces = sum [length post | (_, _, post) <- connections net]
+    outgoingCountMap = M.fromListWith (+) [(place, 1) | place <- allPlacesToTrans]
+    checkPlace place =
+      let count = M.findWithDefault 0 place outgoingCountMap
+      in inBounds bounds count
 
-    checkPlacesToTrans (0, Nothing) = True
-    checkPlacesToTrans bounds = inBounds bounds totalPlacesToTrans
+-- | Check if a net satisfies total arrows from places to transitions constraint
+satisfiesTotalPlacesToTransitions
+  :: Net s t
+  -> (Int, Maybe Int)  -- ^ totalArrowsFromPlacesToTransitions
+  -> [s]              -- ^ concatenated pre lists (shared computation)
+  -> Bool
+satisfiesTotalPlacesToTransitions _ (0, Nothing) _ = True
+satisfiesTotalPlacesToTransitions _ bounds allPlacesToTrans =
+  inBounds bounds (length allPlacesToTrans)
 
-    checkTransToPlaces (0, Nothing) = True
-    checkTransToPlaces bounds = inBounds bounds totalTransToPlaces
+-- | Check if a net satisfies total arrows from transitions to places constraint
+satisfiesTotalTransitionsToPlaces
+  :: Net s t
+  -> (Int, Maybe Int)  -- ^ totalArrowsFromTransitionsToPlaces
+  -> [s]              -- ^ concatenated post lists (shared computation)
+  -> Bool
+satisfiesTotalTransitionsToPlaces _ (0, Nothing) _ = True
+satisfiesTotalTransitionsToPlaces _ bounds allTransToPlaces =
+  inBounds bounds (length allTransToPlaces)
 
 -- | Generate a net with limits and filtering for isolated nodes and transition behavior constraints
 netLimitsFiltered
@@ -172,13 +168,18 @@ netLimitsFiltered
     guard $ not $ hasIsolatedNodes n
     -- Filter out nets that don't satisfy transition behavior constraints
     guard $ satisfiesTransitionBehaviorConstraints n transitionBehaviorConstraints
-    -- Filter out nets that don't satisfy arrow density constraints (optimized)
-    guard $ checkPerPlaceConstraints n
-      (incomingArrowsPerPlace arrowConstraints)
-      (outgoingArrowsPerPlace arrowConstraints)
-    guard $ checkTotalArrowConstraints n
-      (totalArrowsFromPlacesToTransitions arrowConstraints)
-      (totalArrowsFromTransitionsToPlaces arrowConstraints)
+    -- Filter out nets that don't satisfy arrow density constraints
+    -- Compute concatenated lists once and share across related checks
+    let allTransToPlaces = concatMap (\(_, _, post) -> post) (connections n)
+    let allPlacesToTrans = concatMap (\(pre, _, _) -> pre) (connections n)
+    guard $ satisfiesIncomingArrowsPerPlace n
+      (incomingArrowsPerPlace arrowConstraints) allTransToPlaces
+    guard $ satisfiesOutgoingArrowsPerPlace n
+      (outgoingArrowsPerPlace arrowConstraints) allPlacesToTrans
+    guard $ satisfiesTotalPlacesToTransitions n
+      (totalArrowsFromPlacesToTransitions arrowConstraints) allPlacesToTrans
+    guard $ satisfiesTotalTransitionsToPlaces n
+      (totalArrowsFromTransitionsToPlaces arrowConstraints) allTransToPlaces
     return n
   where
     fixMaximum :: (Int, Maybe Int) -> (Int, Int)
