@@ -26,7 +26,6 @@ import qualified Data.Set                         as S (
   fromList,
   isSubsetOf,
   map,
-  toList,
   )
 
 import Modelling.Auxiliary.Common       (parseInt, skipSpaces)
@@ -302,51 +301,7 @@ satisfiesTransitionBehaviorConstraints net TransitionBehaviorConstraints {..} =
         let nonPreserving = length $ filter (uncurry (/=) . connectionTokenBehavior) $ connections net
         in nonPreserving == expected
 
--- | Helper to check if a count satisfies bounds
-checkArrowBounds :: (Int, Maybe Int) -> Int -> Bool
-checkArrowBounds (low, maybeHigh) count =
-  count >= low && maybe True (count <=) maybeHigh
-
-satisfiesIncomingArrowsPerPlace
-  :: Ord s
-  => Net s t
-  -> (Int, Maybe Int)  -- ^ incomingArrowsPerPlace
-  -> Bool
-satisfiesIncomingArrowsPerPlace _ (0, Nothing) = True
-satisfiesIncomingArrowsPerPlace net bounds =
-  all (checkArrowBounds bounds . countIncomingArrows) (S.toList $ places net)
-  where
-    countIncomingArrows place =
-      sum [length $ filter (== place) post | (_, _, post) <- connections net]
-
-satisfiesOutgoingArrowsPerPlace
-  :: Ord s
-  => Net s t
-  -> (Int, Maybe Int)  -- ^ outgoingArrowsPerPlace
-  -> Bool
-satisfiesOutgoingArrowsPerPlace _ (0, Nothing) = True
-satisfiesOutgoingArrowsPerPlace net bounds =
-  all (checkArrowBounds bounds . countOutgoingArrows) (S.toList $ places net)
-  where
-    countOutgoingArrows place =
-      sum [length $ filter (== place) pre | (pre, _, _) <- connections net]
-
-satisfiesTotalPlacesToTransitions
-  :: Net s t
-  -> (Int, Maybe Int)  -- ^ totalArrowsFromPlacesToTransitions
-  -> Bool
-satisfiesTotalPlacesToTransitions _ (0, Nothing) = True
-satisfiesTotalPlacesToTransitions net bounds =
-  checkArrowBounds bounds placesToTrans
-  where
-    placesToTrans = sum [length pre | (pre, _, _) <- connections net]
-
-satisfiesTotalTransitionsToPlaces
-  :: Net s t
-  -> (Int, Maybe Int)  -- ^ totalArrowsFromTransitionsToPlaces
-  -> Bool
-satisfiesTotalTransitionsToPlaces _ (0, Nothing) = True
-satisfiesTotalTransitionsToPlaces net bounds =
-  checkArrowBounds bounds transToPlaces
-  where
-    transToPlaces = sum [length post | (_, _, post) <- connections net]
+-- | Helper to check if a value satisfies the given bounds
+inBounds :: (Int, Maybe Int) -> Int -> Bool
+inBounds (low, maybeHigh) value =
+  value >= low && maybe True (value <=) maybeHigh
