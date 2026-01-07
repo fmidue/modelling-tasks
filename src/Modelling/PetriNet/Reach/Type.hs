@@ -99,7 +99,7 @@ data TransitionBehaviorConstraints = TransitionBehaviorConstraints {
   -- If @Nothing@, no restriction on number of non-preserving transitions.
   areNonPreserving :: Maybe Int
   }
-  deriving (Data, Eq, Generic, Hashable, Ord, Read, Show)
+  deriving (Data, Eq, Generic, Hashable, Ord, Read, Reader, Show, ToDoc)
 
 -- | No transition behavior constraints
 noTransitionBehaviorConstraints :: TransitionBehaviorConstraints
