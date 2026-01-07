@@ -78,10 +78,16 @@ checkBasicPetriConfig
   -> [GraphvizCommand] -> Maybe Int -> Bool
   -> Maybe String
 checkBasicPetriConfig
-  numPlaces numTransitions capacity
-  minTransitionLength maxTransitionLength
-  transitionBehaviorConstraints arrowDensityConstraints
-  drawCommands rejectLongerThan showLengthHint =
+  numPlaces                          -- ^ numPlaces
+  numTransitions                     -- ^ numTransitions
+  capacity                           -- ^ capacity
+  minTransitionLength                -- ^ minTransitionLength
+  maxTransitionLength                -- ^ maxTransitionLength
+  transitionBehaviorConstraints      -- ^ transitionBehaviorConstraints
+  arrowDensityConstraints            -- ^ arrowDensityConstraints
+  drawCommands                       -- ^ drawCommands
+  rejectLongerThan                   -- ^ rejectLongerThan
+  showLengthHint =                   -- ^ showLengthHint
     checkPetriNetSizes numPlaces numTransitions
     <|> checkCapacity capacity
     <|> checkTransitionLengths minTransitionLength maxTransitionLength
