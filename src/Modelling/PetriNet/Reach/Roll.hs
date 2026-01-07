@@ -17,8 +17,10 @@ import Modelling.PetriNet.Reach.Type (
   ArrowDensityConstraints (..),
   hasIsolatedNodes,
   satisfiesTransitionBehaviorConstraints,
-  satisfiesPerPlaceConstraints,
-  satisfiesTotalArrowConstraints,
+  satisfiesIncomingArrowsPerPlace,
+  satisfiesOutgoingArrowsPerPlace,
+  satisfiesTotalPlacesToTransitions,
+  satisfiesTotalTransitionsToPlaces,
   )
 
 import Control.Monad                    (forM, guard)
@@ -118,13 +120,11 @@ netLimitsFiltered
     -- Filter out nets that don't satisfy transition behavior constraints
     guard $ satisfiesTransitionBehaviorConstraints n transitionBehaviorConstraints
     -- Filter out nets that don't satisfy per-place arrow constraints
-    guard $ satisfiesPerPlaceConstraints n
-      (incomingArrowsPerPlace arrowConstraints)
-      (outgoingArrowsPerPlace arrowConstraints)
+    guard $ satisfiesIncomingArrowsPerPlace n (incomingArrowsPerPlace arrowConstraints)
+    guard $ satisfiesOutgoingArrowsPerPlace n (outgoingArrowsPerPlace arrowConstraints)
     -- Filter out nets that don't satisfy total arrow constraints
-    guard $ satisfiesTotalArrowConstraints n
-      (totalArrowsFromPlacesToTransitions arrowConstraints)
-      (totalArrowsFromTransitionsToPlaces arrowConstraints)
+    guard $ satisfiesTotalPlacesToTransitions n (totalArrowsFromPlacesToTransitions arrowConstraints)
+    guard $ satisfiesTotalTransitionsToPlaces n (totalArrowsFromTransitionsToPlaces arrowConstraints)
     return n
   where
     fixMaximum :: (Int, Maybe Int) -> (Int, Int)
