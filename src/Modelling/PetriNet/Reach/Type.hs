@@ -300,8 +300,3 @@ satisfiesTransitionBehaviorConstraints net TransitionBehaviorConstraints {..} =
       Just expected ->
         let nonPreserving = length $ filter (uncurry (/=) . connectionTokenBehavior) $ connections net
         in nonPreserving == expected
-
--- | Helper to check if a value satisfies the given bounds
-inBounds :: (Int, Maybe Int) -> Int -> Bool
-inBounds (low, maybeHigh) value =
-  value >= low && maybe True (value <=) maybeHigh

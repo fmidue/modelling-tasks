@@ -5,7 +5,7 @@ based on file: collection/src/Petri/Roll.hs
 -}
 module Modelling.PetriNet.Reach.Roll (netLimitsFiltered) where
 
-import qualified Data.Map                         as M (fromList, findWithDefault, fromListWith)
+import qualified Data.Map                         as M (fromList, fromListWith, elems, union)
 import qualified Data.Set                         as S (fromList, toList)
 
 import Modelling.PetriNet.Reach.Type (
@@ -17,7 +17,6 @@ import Modelling.PetriNet.Reach.Type (
   ArrowDensityConstraints (..),
   hasIsolatedNodes,
   satisfiesTransitionBehaviorConstraints,
-  inBounds,
   )
 
 import Control.Monad                    (forM, guard)
@@ -93,6 +92,11 @@ takeRandom low high xs  = take
   <$> getRandomR (low, high)
   <*> shuffleM xs
 
+-- | Helper to check if a value satisfies the given bounds
+inBounds :: (Int, Maybe Int) -> Int -> Bool
+inBounds (low, maybeHigh) value =
+  value >= low && maybe True (value <=) maybeHigh
+
 -- | Check if a net satisfies incoming arrows per place constraint
 satisfiesIncomingArrowsPerPlace
   :: Ord s
@@ -102,12 +106,12 @@ satisfiesIncomingArrowsPerPlace
   -> Bool
 satisfiesIncomingArrowsPerPlace _ (0, Nothing) _ = True
 satisfiesIncomingArrowsPerPlace net bounds allTransToPlaces =
-  all checkPlace (S.toList $ places net)
+  all (inBounds bounds) $ M.elems countMap
   where
-    incomingCountMap = M.fromListWith (+) [(place, 1) | place <- allTransToPlaces]
-    checkPlace place =
-      let count = M.findWithDefault 0 place incomingCountMap
-      in inBounds bounds count
+    -- Initialize map with 0 for each place
+    initialMap = M.fromList [(place, 0) | place <- S.toList $ places net]
+    -- Update counts from incoming arrows
+    countMap = M.fromListWith (+) [(place, 1) | place <- allTransToPlaces] `M.union` initialMap
 
 -- | Check if a net satisfies outgoing arrows per place constraint
 satisfiesOutgoingArrowsPerPlace
@@ -118,12 +122,12 @@ satisfiesOutgoingArrowsPerPlace
   -> Bool
 satisfiesOutgoingArrowsPerPlace _ (0, Nothing) _ = True
 satisfiesOutgoingArrowsPerPlace net bounds allPlacesToTrans =
-  all checkPlace (S.toList $ places net)
+  all (inBounds bounds) $ M.elems countMap
   where
-    outgoingCountMap = M.fromListWith (+) [(place, 1) | place <- allPlacesToTrans]
-    checkPlace place =
-      let count = M.findWithDefault 0 place outgoingCountMap
-      in inBounds bounds count
+    -- Initialize map with 0 for each place
+    initialMap = M.fromList [(place, 0) | place <- S.toList $ places net]
+    -- Update counts from outgoing arrows
+    countMap = M.fromListWith (+) [(place, 1) | place <- allPlacesToTrans] `M.union` initialMap
 
 -- | Check if a net satisfies total arrows from places to transitions constraint
 satisfiesTotalPlacesToTransitions
