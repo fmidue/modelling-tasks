@@ -451,6 +451,30 @@ defaultDeadlockInstance = DeadlockInstance {
 - Then it is sometimes better to simply inline it directly instead
 - Balance this with readability - don't inline if it makes code harder to understand
 
+### Deriving ToDoc and Reader Instances
+
+**CRITICAL**: All Config and Instance data types MUST derive `ToDoc` and `Reader` instances for Autotool compatibility.
+
+**Background**:
+
+- This project generates tasks that are used in [Autotool](https://git.uni-due.de/fmi/autotool-dev)
+- Autotool requires `ToDoc` and `Reader` instances for serialization/deserialization
+- Forgetting these instances causes build failures in Autotool (not locally)
+
+**When to derive ToDoc and Reader**:
+
+1. **Always derive for Config types**: Any data type named `*Config` (e.g., `MatchAdConfig`, `NameCdErrorConfig`)
+2. **Always derive for Instance types**: Any data type named `*Instance` (e.g., `MatchAdInstance`, `SelectASInstance`)
+3. **Always derive for nested types**: Any custom data type used as a field in Config or Instance types
+4. **Always derive for task-related enums**: Enumeration types used in task configuration or instances
+
+**Required language extensions**:
+
+```haskell
+{-# LANGUAGE DeriveAnyClass #-}  -- Required for deriving Reader and ToDoc
+{-# LANGUAGE DeriveGeneric #-}   -- Required for Generic derivation
+```
+
 ## Repository Structure
 
 ### Key Directories
