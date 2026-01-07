@@ -310,6 +310,11 @@ This principle is particularly important when working with Haskell records:
 - **When modifying record type definitions**: Only change the lines that need to be changed
 - **When modifying record value assignments**: Only change the lines that need to be changed
 - **NEVER realign existing fields** just to make them line up with new or modified fields
+- **When adding new fields to records (or to other entity listings in the code)**:
+  - **PREFERRED**: Add new fields somewhere BEFORE the last field (not at the end) to minimize the diff
+  - Adding at the end requires modifying the previously-last field to add a trailing comma (1 existing line changed + new lines added)
+  - Adding before the last field requires no modifications to existing lines (0 existing lines changed + new lines added)
+  - This same principle **also** applies to export lists, import lists, and other comma-separated lists given as separate lines in the code
 
 **Examples for record type definitions**:
 
@@ -326,7 +331,7 @@ data DeadlockInstance s t = DeadlockInstance {
   showPlaceNames        :: Bool,             -- realigned (unnecessary change)
   withLengthHint        :: Maybe Int,        -- realigned (unnecessary change)
   withMinLengthHint     :: Bool,             -- realigned (unnecessary change)
-  solutions             :: Either [t] [[t]], -- realigned (unnecessary change)
+  solutions             :: Either [t] [[t]], -- realigned and added trailing comma (unnecessary changes)
   maxDisplayedSolutions :: Maybe Int         -- new field
 ```
 
@@ -343,8 +348,8 @@ data DeadlockInstance s t = DeadlockInstance {
   showPlaceNames    :: Bool,
   withLengthHint    :: Maybe Int,
   withMinLengthHint :: Bool,
-  solutions         :: Either [t] [[t]],
-  maxDisplayedSolutions :: Maybe Int  -- new field (added without realigning others)
+  maxDisplayedSolutions :: Maybe Int,  -- new field (added without realigning others and without requiring trailing comma in the last line)
+  solutions         :: Either [t] [[t]]
 ```
 
 **Examples for record value assignments**:
@@ -362,7 +367,7 @@ defaultDeadlockInstance = DeadlockInstance {
   showPlaceNames                = False,     -- realigned (unnecessary change)
   -- THIS IS WHERE the showSolution field was previously
   withLengthHint                = Just 9,    -- realigned (unnecessary change)
-  withMinLengthHint             = True,      -- realigned (unnecessary change)
+  withMinLengthHint             = True,      -- realigned and added trailing comma (unnecessary changes)
   instanceMaxDisplayedSolutions = Nothing,   -- new field (replacing showSolution)
   solutions                     = Left []    -- new field (replacing showSolution)
   }
@@ -386,7 +391,7 @@ defaultDeadlockInstance = DeadlockInstance {
   }
 ```
 
-**Note**: The `solutions` field uses padding spaces to fit the previous alignment. This is fine because:
+**Note**: The `solutions` field uses padding spaces here to fit the previous alignment. This is fine because:
 
 - It doesn't change the line count of the diff
 - It maintains consistency with existing field alignment
@@ -445,6 +450,30 @@ defaultDeadlockInstance = DeadlockInstance {
   - Is used only exactly once in the rest of the code
 - Then it is sometimes better to simply inline it directly instead
 - Balance this with readability - don't inline if it makes code harder to understand
+
+### Deriving ToDoc and Reader Instances
+
+**CRITICAL**: All Config and Instance data types MUST derive `ToDoc` and `Reader` instances for Autotool compatibility.
+
+**Background**:
+
+- This project generates tasks that are used in [Autotool](https://git.uni-due.de/fmi/autotool-dev)
+- Autotool requires `ToDoc` and `Reader` instances for serialization/deserialization
+- Forgetting these instances causes build failures in Autotool (not locally)
+
+**When to derive ToDoc and Reader**:
+
+1. **Always derive for Config types**: Any data type named `*Config` (e.g., `MatchAdConfig`, `NameCdErrorConfig`)
+2. **Always derive for Instance types**: Any data type named `*Instance` (e.g., `MatchAdInstance`, `SelectASInstance`)
+3. **Always derive for nested types**: Any custom data type used as a field in Config or Instance types
+4. **Always derive for task-related enums**: Enumeration types used in task configuration or instances
+
+**Required language extensions**:
+
+```haskell
+{-# LANGUAGE DeriveAnyClass #-}  -- Required for deriving Reader and ToDoc
+{-# LANGUAGE DeriveGeneric #-}   -- Required for Generic derivation
+```
 
 ## Repository Structure
 

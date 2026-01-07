@@ -8,16 +8,19 @@ module Modelling.PetriNet.Reach.ConfigValidation (
   checkTransitionLengths,
   checkRejectLongerThanConsistency,
   checkCapacity,
+  checkTransitionBehaviorConstraints,
   checkFilterConfigWith
 ) where
 
 import Control.Applicative (Alternative ((<|>)))
 import Data.GraphViz.Commands (GraphvizCommand)
+import Data.List.Extra (notNull)
+import Data.Maybe (fromMaybe, isJust)
 import Modelling.PetriNet.Reach.Filter (
   FilterConfig (..),
   noFiltering,
   )
-import Modelling.PetriNet.Reach.Type (Capacity(..))
+import Modelling.PetriNet.Reach.Type (Capacity(..), TransitionBehaviorConstraints(..))
 
 -- | Check that a range (low, high) is valid
 checkRange
@@ -96,43 +99,138 @@ checkBasicPetriConfig
     <|> checkTransitionLengths minTransitionLength maxTransitionLength
     <|> checkRange "preconditionsRange" preconditionsRange
     <|> checkRange "postconditionsRange" postconditionsRange
+    <|> checkRangeVersusPlaces "preconditionsRange" preconditionsRange numPlaces
+    <|> checkRangeVersusPlaces "postconditionsRange" postconditionsRange numPlaces
     <|> checkRejectLongerThanConsistency rejectLongerThan maxTransitionLength showLengthHint
     <|> checkDrawCommands drawCommands
   where
     checkDrawCommands [] = Just "drawCommands cannot be empty"
     checkDrawCommands _  = Nothing
+    checkRangeVersusPlaces what (low, h) places = case h of
+      Nothing ->
+        if low > places
+        then Just $ "The lower limit for " ++ what ++ " (currently " ++ show low ++
+                   ") cannot exceed numPlaces (currently " ++ show places ++ ")"
+        else Nothing
+      Just high ->
+        if high > places
+        then Just $ "The upper limit for " ++ what ++ " (currently " ++ show high ++
+                   ") cannot exceed numPlaces (currently " ++ show places ++ ")"
+        else Nothing
 
 -- | Check filter configuration constraints given the transition length parameters
 checkFilterConfigWith
   :: Maybe Int        -- ^ rejectLongerThan
   -> Int              -- ^ minTransitionLength
-  -> Int              -- ^ maxTransitionLength
+  -> Int              -- ^ numTransitions (total number of transitions)
   -> FilterConfig     -- ^ filterConfig
   -> Maybe String
-checkFilterConfigWith rejectLongerThan minTransitionLength maxTransitionLength filterConfig@FilterConfig{..}
+checkFilterConfigWith rejectLongerThan theTransitionLength@minTransitionLength numTransitions filterConfig@FilterConfig{..}
   | rejectLongerThan /= Just minTransitionLength
   , filterConfig /= noFiltering
   = Just $ "If transition length is not enforced to one value, filterConfig must be set to "
     ++ show noFiltering
-  | Just repeats <- minRepetitiveLength
+  | Just repeats <- repetitiveSubsequenceThreshold
   , repeats < 2
-  = Just "minRepetitiveLength has to be set to at least 2 if it is enabled"
-  | Just repeats <- minRepetitiveLength
-  , repeats > maxTransitionLength `div` 2
-  = Just "minRepetitiveLength must not be higher than half of maxTransitionLength"
-  | Just cycleLength <- maxCycleLength
-  , cycleLength < 1
-  = Just "setting maxCycleLength to less than 1 does not make sense"
-  | Just cycleLength <- maxCycleLength
-  , cycleLength > maxTransitionLength `div` 2
-  = Just "maxCycleLength must not be higher than half of maxTransitionLength"
-  | Just spaceballsLength <- minSpaceballsLength
-  , spaceballsLength < 2 || spaceballsLength > maxTransitionLength
-  = Just "minSpaceballsLength must be a value from 2 to maxTransitionLength if it is enabled"
-  | Just maxSolutions <- maxNumberOfSolutions
+  = Just "repetitiveSubsequenceThreshold has to be set to at least 2 if it is enabled"
+  | Just repeats <- repetitiveSubsequenceThreshold
+  , repeats > halfTransitionLength
+  = Just "repetitiveSubsequenceThreshold must not be higher than half of maxTransitionLength"
+  | not (isSorted forbiddenCycleLengths) || not (isSorted requireCycleLengthsAny)
+  = Just "forbiddenCycleLengths and requireCycleLengthsAny must each be sorted in ascending order"
+  | notNull forbiddenCycleLengths && head forbiddenCycleLengths < 2
+  = Just "forbiddenCycleLengths must contain only values greater than 1"
+  | notNull requireCycleLengthsAny && head requireCycleLengthsAny < 1
+  = Just "requireCycleLengthsAny must contain only positive values"
+  | notNull forbiddenCycleLengths && last forbiddenCycleLengths > halfTransitionLength
+  = Just "forbiddenCycleLengths must not contain values higher than half of maxTransitionLength"
+  | notNull requireCycleLengthsAny && last requireCycleLengthsAny > halfTransitionLength
+  = Just "requireCycleLengthsAny must not contain values higher than half of maxTransitionLength"
+  | any ((0 /=) . mod theTransitionLength) (forbiddenCycleLengths ++ requireCycleLengthsAny)
+  = Just "forbiddenCycleLengths and requireCycleLengthsAny must each contain only divisors of the target sequence length"
+  | any (< minRequiredTransitions) (forbiddenCycleLengths ++ requireCycleLengthsAny)
+  = Just "forbiddenCycleLengths or requireCycleLengthsAny contains values that are already impossible due to transitionCoverageRequirement"
+  | hasRedundantMultiples forbiddenCycleLengths
+  = Just "forbiddenCycleLengths contains redundant multiples (no need to forbid n if k*n for some k>1 is already forbidden)"
+  | hasRedundantMultiples requireCycleLengthsAny
+  = Just "requireCycleLengthsAny contains redundant multiples (no need to ask e.g. for 'n or 2*n', since asking for '2*n' would suffice)"
+  | hasConflictBetweenForbiddenAndRequired forbiddenCycleLengths requireCycleLengthsAny
+  = Just "requireCycleLengthsAny and forbiddenCycleLengths must not have overlapping or conflicting values"
+  | 1 `elem` requireCycleLengthsAny && isJust repetitiveSubsequenceThreshold
+  = Just "if requireCycleLengthsAny contains 1, repetitiveSubsequenceThreshold should be Nothing \
+         \(forbidding repetitive subsequences does not make sense when requiring cycle length 1)"
+  | Just spaceballsLength <- spaceballsPrefixThreshold
+  , spaceballsLength < 2 || spaceballsLength > theTransitionLength
+  = Just "spaceballsPrefixThreshold must be a value from 2 to maxTransitionLength if it is enabled"
+  | Just maxSolutions <- solutionSetLimit
   , maxSolutions < 1
-  = Just "setting maxNumberOfSolutions to less than 1 does not make sense"
-  | minTransitionCoverage < 0 || minTransitionCoverage > 1
-  = Just "minTransitionCoverage must be a value from 0 to 1"
+  = Just "setting solutionSetLimit to less than 1 does not make sense"
+  | solutionSetLimit == Just 1
+  , not requireSolutionsArePermutations
+  = Just "when solutionSetLimit is 1, requireSolutionsArePermutations might as well be set to True"
+  | transitionCoverageRequirement < 0 || transitionCoverageRequirement > 1
+  = Just "transitionCoverageRequirement must be a value from 0 to 1"
+  | absentTransitionsRequirement < 0 || absentTransitionsRequirement >= numTransitions
+  = Just "absentTransitionsRequirement must be non-negative and smaller than the total number of transitions"
+  | absentTransitionsRequirement > maxAbsent
+  = Just $ "absentTransitionsRequirement conflicts with transitionCoverageRequirement: " ++
+           "at most " ++ show maxAbsent ++ " transitions can be absent given the coverage requirement"
   | otherwise
   = Nothing
+  where
+    halfTransitionLength = theTransitionLength `div` 2
+    minRequiredTransitions = ceiling (transitionCoverageRequirement * fromIntegral numTransitions)
+    maxAbsent = numTransitions - minRequiredTransitions
+
+    isSorted :: Ord a => [a] -> Bool
+    isSorted [] = True
+    isSorted [_] = True
+    isSorted (x:rest@(y:_)) = x < y && isSorted rest
+
+    hasRedundantMultiples :: [Int] -> Bool
+    hasRedundantMultiples = go []
+      where
+        go :: [Int] -> [Int] -> Bool
+        go _ [] = False
+        go smallerElements (currentElement : remainingElements)
+          | any ((0 ==) . mod currentElement) smallerElements = True
+          | otherwise = go (currentElement : smallerElements) remainingElements
+
+    hasConflictBetweenForbiddenAndRequired :: [Int] -> [Int] -> Bool
+    hasConflictBetweenForbiddenAndRequired forbidden =
+      any (\r -> any (\f -> f `mod` r == 0) forbidden)
+
+-- | Check transition behavior constraints for validity
+checkTransitionBehaviorConstraints
+  :: Int                               -- ^ numPlaces
+  -> (Int, Maybe Int)                  -- ^ preconditionsRange
+  -> (Int, Maybe Int)                  -- ^ postconditionsRange
+  -> Int                               -- ^ numTransitions
+  -> TransitionBehaviorConstraints     -- ^ constraints
+  -> Maybe String
+checkTransitionBehaviorConstraints numPlaces preconditionsRange postconditionsRange numTransitions TransitionBehaviorConstraints {..}
+  | Just EQ <- allowedTokenChanges
+  = Just "allowedTokenChanges = Just EQ is meaningless; use areNonPreserving = Just 0 instead"
+  | Just numberOfNonPreserving <- areNonPreserving
+  , numberOfNonPreserving < 0 || numberOfNonPreserving > numTransitions
+  = Just "areNonPreserving must be non-negative and at most numTransitions when specified"
+  | areNonPreserving == Just 0
+  , isJust allowedTokenChanges
+  = Just "when areNonPreserving = Just 0 (all transitions token-preserving), allowedTokenChanges = Just ... makes no sense"
+  | allowedTokenChanges == Just LT
+  , vLow < nLow || vHigh < nHigh
+  = Just "with allowedTokenChanges = Just LT, the combination of preconditionsRange and postconditionsRange is too lax"
+  | allowedTokenChanges == Just GT
+  , vLow > nLow || vHigh > nHigh
+  = Just "with allowedTokenChanges = Just GT, the combination of preconditionsRange and postconditionsRange is too lax"
+  | areNonPreserving /= Just 0
+  , vLow == vHigh && nLow == nHigh && vLow == nLow
+  = Just "only areNonPreserving = Just 0 makes sense when preconditionsRange and postconditionsRange are all fixed to one value anyway"
+  | otherwise
+  = Nothing
+  where
+    (vLow, vHighMaybe) = preconditionsRange
+    (nLow, nHighMaybe) = postconditionsRange
+    -- Since checkBasicPetriConfig guarantees upper bounds don't exceed numPlaces, we can use numPlaces as the default
+    vHigh = fromMaybe numPlaces vHighMaybe
+    nHigh = fromMaybe numPlaces nHighMaybe

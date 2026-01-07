@@ -3,8 +3,8 @@
 module Modelling.PetriNet.PetriReach.Config where
 
 import Modelling.PetriNet.Reach.Reach   (ReachConfig(..), NetGoalConfig(..))
-import Modelling.PetriNet.Reach.Filter  (defaultFilterConfig)
-import Modelling.PetriNet.Reach.Type    (Capacity(..))
+import Modelling.PetriNet.Reach.Filter  (defaultFilterConfig, FilterConfig(absentTransitionsRequirement, forbiddenCycleLengths, requireCycleLengthsAny))
+import Modelling.PetriNet.Reach.Type    (Capacity(..), noTransitionBehaviorConstraints)
 import Data.GraphViz.Commands           (GraphvizCommand(..))
 
 {-|
@@ -16,19 +16,21 @@ task2023_27 = ReachConfig {
     numPlaces = 4,
     numTransitions = 4,
     capacity = Unbounded,
-    drawCommands = [Circo],
+    drawPreferenceOrder = [Circo],
     maxTransitionLength = 8,
     minTransitionLength = 8,
     postconditionsRange = (2, Just 3),
+    maxPlacesChanged = 4,
+    transitionBehaviorConstraints = noTransitionBehaviorConstraints,
     preconditionsRange = (2, Just 2)
     },
-  printSolution = True,
+  maxPrintedSolutions = 10,
   rejectLongerThan = Just 8,
   showLengthHint = False,
   showMinLengthHint = True,
   showTargetNet = True,
   showPlaceNamesInNet = False,
-  filterConfig = defaultFilterConfig
+  filterConfig = defaultFilterConfig { absentTransitionsRequirement = 0, forbiddenCycleLengths = [], requireCycleLengthsAny = [] }
   }
 
 {-|
@@ -40,19 +42,21 @@ task2023_28 = ReachConfig {
     numPlaces = 6,
     numTransitions = 6,
     capacity = Unbounded,
-    drawCommands = [Circo],
+    drawPreferenceOrder = [Circo],
     maxTransitionLength = 12,
     minTransitionLength = 12,
     postconditionsRange = (2, Just 3),
+    maxPlacesChanged = 6,
+    transitionBehaviorConstraints = noTransitionBehaviorConstraints,
     preconditionsRange = (2, Just 2)
     },
-  printSolution = True,
+  maxPrintedSolutions = 10,
   rejectLongerThan = Just 12,
   showLengthHint = False,
   showMinLengthHint = True,
   showTargetNet = True,
   showPlaceNamesInNet = False,
-  filterConfig = defaultFilterConfig
+  filterConfig = defaultFilterConfig { forbiddenCycleLengths = [], requireCycleLengthsAny = [] }
   }
 
 {-|
@@ -76,17 +80,19 @@ task2024_60 = ReachConfig {
     numPlaces = 4,
     numTransitions = 4,
     capacity = Unbounded,
-    drawCommands = [Circo],
+    drawPreferenceOrder = [Circo],
     maxTransitionLength = 8,
     minTransitionLength = 8,
     postconditionsRange = (2, Just 3),
+    maxPlacesChanged = 4,
+    transitionBehaviorConstraints = noTransitionBehaviorConstraints,
     preconditionsRange = (2, Just 2)
     },
-  printSolution = True,
+  maxPrintedSolutions = 10,
   rejectLongerThan = Just 8,
   showLengthHint = False,
   showMinLengthHint = True,
   showTargetNet = True,
   showPlaceNamesInNet = False,
-  filterConfig = defaultFilterConfig
+  filterConfig = defaultFilterConfig { absentTransitionsRequirement = 0, forbiddenCycleLengths = [], requireCycleLengthsAny = [] }
   }

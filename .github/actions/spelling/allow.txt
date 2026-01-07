@@ -83,6 +83,7 @@ forkend
 fst
 ghci
 github
+gpt
 graphviz
 hspace
 hspec
@@ -116,6 +117,7 @@ randomisability
 randomisable
 randomise
 readerlatex
+realweltlichen
 refactorings
 scanl
 schrittige

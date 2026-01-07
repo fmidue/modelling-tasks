@@ -9,7 +9,7 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE RecordWildCards #-}
-{-# LANGUAGE TupleSections #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 {-|
 originally from Autotool (https://gitlab.imn.htwk-leipzig.de/autotool/all0)
@@ -24,10 +24,6 @@ module Modelling.PetriNet.Reach.Deadlock (
 
   -- * Generation
   generateDeadlock,
-
-  -- * Solutions
-  deadlockSolution,
-  deadlockAllSolutions,
 
   -- * Task creation
   deadlockTask,
@@ -48,17 +44,17 @@ module Modelling.PetriNet.Reach.Deadlock (
   exampleInstance,
 ) where
 
-import qualified Control.Monad.Trans              as Monad (lift)
 import qualified Data.Map                         as M (fromList)
 import qualified Data.Set                         as S (fromList, toList)
+
+import Data.List.NonEmpty                 (NonEmpty((:|)))
 
 import Capabilities.Cache               (MonadCache)
 import Capabilities.Diagrams            (MonadDiagrams)
 import Capabilities.Graphviz            (MonadGraphviz)
-import Modelling.PetriNet.Reach.Draw    (drawToFile, isPetriDrawable)
+import Modelling.PetriNet.Reach.Draw    (drawToFile)
 import Modelling.PetriNet.Reach.Filter (
   FilterConfig (..),
-  areSolutionsTrivial,
   defaultFilterConfig,
   )
 import Modelling.PetriNet.Reach.Property (
@@ -68,16 +64,20 @@ import Modelling.PetriNet.Reach.Property (
 import Modelling.PetriNet.Reach.ConfigValidation (
   checkBasicPetriConfig,
   checkFilterConfigWith,
+  checkTransitionBehaviorConstraints,
   )
 import Modelling.PetriNet.Reach.Reach   (
   assertReachPoints,
   isNoLonger,
   levelsWithAlternatives,
+  rejectSpaceballsPattern,
   reportReachFor,
   transitionsValid,
+  provideSolutionsFeedback,
+  validateDrawabilityAndSolutionFiltering,
   )
-import Modelling.PetriNet.Reach.Roll    (netLimits)
-import Modelling.PetriNet.Reach.Step    (deadlocks, deadlocks', executes, successors)
+import Modelling.PetriNet.Reach.Roll    (netLimitsFiltered)
+import Modelling.PetriNet.Reach.Step    (executes, successors)
 import Modelling.PetriNet.Reach.Type (
   Capacity (Unbounded),
   Net (..),
@@ -86,10 +86,11 @@ import Modelling.PetriNet.Reach.Type (
   ShowTransition (ShowTransition),
   State (State),
   Transition (..),
+  TransitionBehaviorConstraints,
   TransitionsList (TransitionsList),
   bimapNet,
   example,
-  hasIsolatedNodes,
+  noTransitionBehaviorConstraints,
   )
 
 import Control.Applicative              (Alternative, (<|>))
@@ -102,20 +103,22 @@ import Control.OutputCapable.Blocks (
   translate,
   yesNo,
   )
+import Data.Ratio                       ((%))
+
 import Control.OutputCapable.Blocks.Generic (
   ($>>),
   ($>>=),
   )
-import Data.Bifunctor                   (Bifunctor (second))
+import Data.Bifunctor                   (bimap)
 import Data.Either.Combinators          (whenRight)
 import Control.Functor.Trans            (FunctorTrans (lift))
-import Control.Monad                    (guard, msum, replicateM)
+import Control.Monad                    (guard)
 import Control.Monad.Catch              (MonadCatch, MonadThrow)
-import Control.Monad.Extra              (findM)
-import Control.Monad.Random             (MonadRandom, evalRandT, mkStdGen)
-import Control.Monad.Trans.Maybe        (MaybeT (MaybeT, runMaybeT))
+import Control.Monad.Random             (evalRandT, mkStdGen)
+import Control.Monad.Trans.Maybe        (MaybeT (MaybeT), runMaybeT)
+import Control.Monad.Trans.Random       (RandT)
+import System.Random.Internal           (StdGen)
 import Data.GraphViz                    (GraphvizCommand (..))
-import Data.Maybe                       (fromMaybe)
 #if !MIN_VERSION_base(4,18,0)
 import Data.Typeable                    (Typeable)
 #endif
@@ -166,6 +169,7 @@ deadlockSyntax
 deadlockSyntax inst ts =
   do transitionsValid (petriNet inst) ts
      isNoLonger (noLongerThan inst) ts
+     rejectSpaceballsPattern (rejectSpaceballsLength inst) ts
      pure ()
 
 deadlockEvaluation
@@ -200,26 +204,7 @@ deadlockEvaluation path deadlock ts =
   where
     deadlockInstance = toShowDeadlockInstance deadlock
     n = petriNet deadlockInstance
-    aSolution
-      | showSolution deadlockInstance
-      = Just $ show $ TransitionsList $ deadlockSolution deadlock
-      | otherwise
-      = Nothing
-
-deadlockSolution :: Ord s => DeadlockInstance s t -> [t]
-deadlockSolution = reverse . snd . head . concat . deadlocks' . petriNet
-
-{-|
-Get all possible shortest solutions for deadlock detection in a given Petri net
-
-Note: This function does not terminate
-if no deadlock is reachable and the net is not bounded.
--}
-deadlockAllSolutions :: Ord s => Net s t -> [[t]]
-deadlockAllSolutions net =
-  map reverse . concatMap snd
-    $ head $ dropWhile null
-    $ map (filter (null . successors net . fst)) $ levelsWithAlternatives net
+    aSolution = provideSolutionsFeedback (maxDisplayedSolutions deadlock) (shortestSolutions deadlock)
 
 data DeadlockInstance s t = DeadlockInstance {
   drawUsing         :: GraphvizCommand,
@@ -227,9 +212,18 @@ data DeadlockInstance s t = DeadlockInstance {
   noLongerThan      :: Maybe Int,
   petriNet          :: Net s t,
   showPlaceNames    :: Bool,
-  showSolution      :: Bool,
+  maxDisplayedSolutions :: Int,
+  -- | Solutions to the deadlock task.
+  -- 'Left' contains (some) shortest solutions when no filtering is applied.
+  -- 'Right' contains all solutions when filtering is applied.
+  -- Note: 'Left' may not contain all shortest solutions, only up to 'maxDisplayedSolutions'.
+  shortestSolutions :: Either (NonEmpty [t]) (NonEmpty [t]),
   withLengthHint    :: Maybe Int,
-  withMinLengthHint :: Bool
+  withMinLengthHint :: Bool,
+  -- | Minimum length of Spaceballs PIN pattern to reject during syntax checking.
+  -- If set to @Just n@, sequences starting with @n@ or more consecutive transitions
+  -- (e.g., @[t1, t2, t3, t4]@) will be rejected.
+  rejectSpaceballsLength :: Maybe Int
   } deriving (Generic, Read, Show)
 #if !MIN_VERSION_base(4,18,0)
   deriving Typeable
@@ -247,9 +241,11 @@ bimapDeadlockInstance f g DeadlockInstance {..} = DeadlockInstance {
     noLongerThan      = noLongerThan,
     petriNet          = bimapNet f g petriNet,
     showPlaceNames    = showPlaceNames,
-    showSolution      = showSolution,
+    maxDisplayedSolutions = maxDisplayedSolutions,
+    shortestSolutions = bimap (fmap (map g)) (fmap (map g)) shortestSolutions,
     withLengthHint    = withLengthHint,
-    withMinLengthHint = withMinLengthHint
+    withMinLengthHint = withMinLengthHint,
+    rejectSpaceballsLength = rejectSpaceballsLength
     }
 
 toShowDeadlockInstance
@@ -261,12 +257,14 @@ data DeadlockConfig = DeadlockConfig {
   numPlaces :: Int,
   numTransitions :: Int,
   capacity :: Capacity Place,
-  drawCommands        :: [GraphvizCommand],
+  -- | Draw commands in order of preference
+  drawPreferenceOrder :: [GraphvizCommand],
   maxTransitionLength :: Int,
   minTransitionLength :: Int,
+  transitionBehaviorConstraints :: TransitionBehaviorConstraints,
   postconditionsRange :: (Int, Maybe Int),
   preconditionsRange  :: (Int, Maybe Int),
-  printSolution       :: Bool,
+  maxPrintedSolutions :: Int,
   rejectLongerThan    :: Maybe Int,
   showLengthHint      :: Bool,
   showMinLengthHint   :: Bool,
@@ -281,20 +279,21 @@ data DeadlockConfig = DeadlockConfig {
 defaultDeadlockConfig :: DeadlockConfig
 defaultDeadlockConfig =
   DeadlockConfig {
-  numPlaces = 4,
-  numTransitions = 4,
+  numPlaces = 6,
+  numTransitions = 6,
   Modelling.PetriNet.Reach.Deadlock.capacity = Unbounded,
-  drawCommands        = [Dot, Neato, TwoPi, Circo, Fdp, Sfdp, Osage, Patchwork],
+  drawPreferenceOrder = [Dot, Neato, TwoPi, Circo, Fdp, Sfdp, Osage, Patchwork],
   maxTransitionLength = 8,
   minTransitionLength = 8,
+  transitionBehaviorConstraints = noTransitionBehaviorConstraints,
   postconditionsRange = (0, Nothing),
   preconditionsRange  = (0, Nothing),
-  printSolution       = False,
+  maxPrintedSolutions = 0,
   rejectLongerThan    = Just 8,
   showLengthHint      = False,
   showMinLengthHint   = True,
   showPlaceNamesInNet = False,
-  filterConfig        = defaultFilterConfig { maxNumberOfSolutions = Nothing }
+  filterConfig        = defaultFilterConfig { solutionSetLimit = Nothing, forbiddenCycleLengths = [4], requireCycleLengthsAny = [], transitionCoverageRequirement = 1 % 2 }
   }
 
 defaultDeadlockInstance :: DeadlockInstance Place Transition
@@ -304,9 +303,11 @@ defaultDeadlockInstance = DeadlockInstance {
   noLongerThan      = Nothing,
   petriNet          = fst example,
   showPlaceNames    = False,
-  showSolution      = False,
+  maxDisplayedSolutions = 0,
+  shortestSolutions = Left ([] :| []), -- TO DO: add a solution
   withLengthHint    = Just 9,
-  withMinLengthHint = True
+  withMinLengthHint = True,
+  rejectSpaceballsLength = Nothing
   }
 
 checkDeadlockConfig :: DeadlockConfig -> Maybe String
@@ -319,15 +320,29 @@ checkDeadlockConfig DeadlockConfig {..} =
     maxTransitionLength
     preconditionsRange
     postconditionsRange
-    drawCommands
+    drawPreferenceOrder
     rejectLongerThan
     showLengthHint
   <|>
   checkFilterConfigWith
     rejectLongerThan
     minTransitionLength
-    maxTransitionLength
+    numTransitions
     filterConfig
+  <|>
+  checkTransitionBehaviorConstraints
+    numPlaces
+    preconditionsRange
+    postconditionsRange
+    numTransitions
+    transitionBehaviorConstraints
+  <|>
+  if maxPrintedSolutions < 0
+    then Just "maxPrintedSolutions must be non-negative"
+    else case solutionSetLimit filterConfig of
+      Just maxSolutions | maxPrintedSolutions > maxSolutions ->
+        Just "maxPrintedSolutions cannot be greater than solutionSetLimit"
+      _ -> Nothing
 
 generateDeadlock
   :: (MonadCatch m, MonadDiagrams m, MonadGraphviz m)
@@ -335,60 +350,60 @@ generateDeadlock
   -> Int
   -> m (DeadlockInstance Place Transition)
 generateDeadlock conf@DeadlockConfig {..} seed = do
-  (petri, cmd) <- tries 1000 filterConfig conf seed
+  (petri, cmd, solutionsList) <- tries conf seed
   pure DeadlockInstance {
     drawUsing         = cmd,
     minLength         = minTransitionLength,
     noLongerThan      = rejectLongerThan,
     petriNet          = petri,
     showPlaceNames    = showPlaceNamesInNet,
-    showSolution      = printSolution,
+    maxDisplayedSolutions = maxPrintedSolutions,
+    shortestSolutions = solutionsList,
     withLengthHint    =
       if showLengthHint then Just maxTransitionLength else Nothing,
-    withMinLengthHint = showMinLengthHint
+    withMinLengthHint = showMinLengthHint,
+    rejectSpaceballsLength = spaceballsPrefixThreshold filterConfig
     }
 
 tries
-  :: (MonadCatch m, MonadDiagrams m, MonadGraphviz m)
-  => Int
-  -> FilterConfig
-  -> DeadlockConfig
+  :: forall m. (MonadCatch m, MonadDiagrams m, MonadGraphviz m)
+  => DeadlockConfig
   -> Int
-  -> m (Net Place Transition, GraphvizCommand)
-tries n filterConfig conf seed = eval out
+  -> m (Net Place Transition, GraphvizCommand, Either (NonEmpty [Transition]) (NonEmpty [Transition]))
+tries conf seed = eval out
   where
     eval f = evalRandT f $ mkStdGen seed
-    out = do
-      xs <- replicateM n $ try conf
-      maybe out pure =<< runMaybeT (msum $ map checkCandidate $ concat xs)
-    checkCandidate (l, pn) = do
-      guard $ l >= minTransitionLength conf
-      let allSolutions = deadlockAllSolutions pn
-          availableTransitions = transitions pn
-      guard (not $ areSolutionsTrivial filterConfig availableTransitions allSolutions)
-      MaybeT $ fmap (pn,) <$> findM (Monad.lift . isPetriDrawable pn) (drawCommands conf)
+    out
+      :: RandT StdGen m (Net Place Transition, GraphvizCommand, Either (NonEmpty [Transition]) (NonEmpty [Transition]))
+    out =
+      maybe out pure =<< runMaybeT (try conf)
 
-try :: MonadRandom m => DeadlockConfig -> m [(Int, Net Place Transition)]
+try
+  :: (MonadCatch m, MonadDiagrams m, MonadGraphviz m)
+  => DeadlockConfig
+  -> MaybeT (RandT StdGen m) (Net Place Transition, GraphvizCommand, Either (NonEmpty [Transition]) (NonEmpty [Transition]))
 try conf = do
-  let ps = [Place 1 .. Place (numPlaces conf)]
-      ts = [Transition 1 .. Transition (numTransitions conf)]
-  n <- netLimits vLow vHigh nLow nHigh
+    let ps = [Place 1 .. Place (numPlaces conf)]
+        ts = [Transition 1 .. Transition (numTransitions conf)]
+    n <- MaybeT $ netLimitsFiltered
+      (preconditionsRange conf)
+      (postconditionsRange conf)
+      (numPlaces conf)
       ps
       ts
       (Modelling.PetriNet.Reach.Deadlock.capacity conf)
-  return $ do
-    -- Filter out nets with isolated nodes
-    guard $ not $ hasIsolatedNodes n
-    let (no,yeah) = span (null . snd)
+      (transitionBehaviorConstraints conf)
+    let deadlockLevels = map (filter (null . successors n . fst)) (levelsWithAlternatives n)
+        (no, yeah) = span null
           $ take (maxTransitionLength conf + 1)
-          $ zip [0 :: Int ..]
-          $ deadlocks n
+          deadlockLevels
     guard $ not $ null yeah
-    return (length no, n)
-  where
-    fixMaximum = second (min (numPlaces conf) . fromMaybe maxBound)
-    (vLow, vHigh) = fixMaximum $ preconditionsRange conf
-    (nLow, nHigh) = fixMaximum $ postconditionsRange conf
+    let allShortestSolutions = map reverse . concatMap snd $ head yeah
+    guard $ length no >= minTransitionLength conf
+    (cmd, solutionsList) <- validateDrawabilityAndSolutionFiltering
+      n (drawPreferenceOrder conf) allShortestSolutions
+      (filterConfig conf) (numTransitions conf) (maxPrintedSolutions conf)
+    pure (n, cmd, solutionsList)
 
 exampleInstance :: Net Int Int
 exampleInstance =

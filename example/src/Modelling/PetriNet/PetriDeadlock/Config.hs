@@ -3,8 +3,8 @@
 module Modelling.PetriNet.PetriDeadlock.Config where
 
 import Modelling.PetriNet.Reach.Deadlock (DeadlockConfig(..))
-import Modelling.PetriNet.Reach.Filter  (defaultFilterConfig, FilterConfig(..))
-import Modelling.PetriNet.Reach.Type    (Capacity(..))
+import Modelling.PetriNet.Reach.Filter  (defaultFilterConfig, FilterConfig(absentTransitionsRequirement, forbiddenCycleLengths, requireCycleLengthsAny))
+import Modelling.PetriNet.Reach.Type    (Capacity(..), noTransitionBehaviorConstraints)
 import Data.GraphViz.Commands           (GraphvizCommand(..))
 
 {-|
@@ -15,17 +15,18 @@ task2023_29 = DeadlockConfig {
   numPlaces = 4,
   numTransitions = 4,
   capacity = Unbounded,
-  drawCommands = [Circo],
+  drawPreferenceOrder = [Circo],
   maxTransitionLength = 7,
   minTransitionLength = 7,
+  transitionBehaviorConstraints = noTransitionBehaviorConstraints,
   postconditionsRange = (1, Just 2),
   preconditionsRange = (1, Just 2),
-  printSolution = True,
+  maxPrintedSolutions = 10,
   rejectLongerThan = Just 7,
   showLengthHint = False,
   showMinLengthHint = True,
   showPlaceNamesInNet = False,
-  filterConfig = defaultFilterConfig { maxCycleLength = Just 3 }
+  filterConfig = defaultFilterConfig { forbiddenCycleLengths = [], absentTransitionsRequirement = 0, requireCycleLengthsAny = [] }
   }
 
 {-|
@@ -36,17 +37,18 @@ task2023_30 = DeadlockConfig {
   numPlaces = 6,
   numTransitions = 8,
   capacity = Unbounded,
-  drawCommands = [Circo],
+  drawPreferenceOrder = [Circo],
   maxTransitionLength = 14,
   minTransitionLength = 14,
+  transitionBehaviorConstraints = noTransitionBehaviorConstraints,
   postconditionsRange = (1, Just 2),
   preconditionsRange = (1, Just 2),
-  printSolution = True,
+  maxPrintedSolutions = 10,
   rejectLongerThan = Just 14,
   showLengthHint = False,
   showMinLengthHint = True,
   showPlaceNamesInNet = False,
-  filterConfig = defaultFilterConfig
+  filterConfig = defaultFilterConfig { forbiddenCycleLengths = [], requireCycleLengthsAny = [] }
   }
 
 {-|
@@ -71,15 +73,16 @@ task2024_61 = DeadlockConfig {
   numPlaces = 4,
   numTransitions = 4,
   capacity = Unbounded,
-  drawCommands = [Circo],
+  drawPreferenceOrder = [Circo],
   maxTransitionLength = 8,
   minTransitionLength = 8,
+  transitionBehaviorConstraints = noTransitionBehaviorConstraints,
   postconditionsRange = (1, Just 2),
   preconditionsRange = (1, Just 2),
-  printSolution = True,
+  maxPrintedSolutions = 10,
   rejectLongerThan = Just 8,
   showLengthHint = False,
   showMinLengthHint = True,
   showPlaceNamesInNet = False,
-  filterConfig = defaultFilterConfig
+  filterConfig = defaultFilterConfig { absentTransitionsRequirement = 0, forbiddenCycleLengths = [], requireCycleLengthsAny = [] }
   }
