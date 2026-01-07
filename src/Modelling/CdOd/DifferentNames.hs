@@ -35,8 +35,8 @@ import qualified Data.Bimap                       as BM (
   fromList,
   keys,
   lookup,
-  lookupR,
   mapMonotonicR,
+  pairMember,
   toAscList,
   )
 import qualified Data.Map                         as M (
@@ -157,7 +157,6 @@ import Control.Monad.Random (
   )
 import Control.Monad.Trans.Except       (runExceptT)
 import Data.Bifunctor                   (Bifunctor (bimap, first))
-import Data.Bimap                       (Bimap)
 import Data.Bitraversable               (bitraverse)
 import Data.Bool                        (bool)
 import Data.Char                        (isDigit)
@@ -175,7 +174,6 @@ import Data.List (
   )
 import Data.Maybe (
   catMaybes,
-  isJust,
   isNothing,
   listToMaybe,
   mapMaybe,
@@ -551,15 +549,6 @@ differentNamesSyntax DifferentNamesInstance {..} cs = addPretext $ do
       (not . null . tail)
       $ group $ sort (map fst choicesStripped ++ map snd choicesStripped)
 
-readMapping :: Ord a => Bimap a a -> (a, a) -> Maybe (a, a)
-readMapping m (x, y)
-  | isJust (BM.lookup x m) || isJust (BM.lookupR y m)
-  = Just (x, y)
-  | isJust (BM.lookup y m) || isJust (BM.lookupR x m)
-  = Just (y, x)
-  | otherwise
-  = Nothing
-
 differentNamesEvaluation
   :: OutputCapable m
   => DifferentNamesInstance
@@ -569,6 +558,12 @@ differentNamesEvaluation task cs = do
   let csStripped = map (bimap stripName stripName) cs
       -- Strip periods from the mapping's link labels (second element of each pair)
       mStripped = BM.mapMonotonicR stripName $ nameMapping $ mapping task
+      -- Swap answer tuples around if necessary
+      -- The preceding syntax check guarantees only valid pairs can be submitted here
+      readMapping pair =
+        if BM.pairMember pair mStripped
+        then pair
+        else swap pair
       what = translations $ do
         german "Zuordnungen"
         english "mappings"
@@ -578,7 +573,7 @@ differentNamesEvaluation task cs = do
         then Just . (DefiniteArticle,) . show . mappingShow
           $ differentNamesSolution task
         else Nothing
-  multipleChoice what solution ms (mapMaybe (readMapping mStripped) csStripped)
+  multipleChoice what solution ms (map readMapping csStripped)
 
 differentNamesSolution :: DifferentNamesInstance -> [(Name, Name)]
 differentNamesSolution = BM.toAscList . nameMapping . mapping
