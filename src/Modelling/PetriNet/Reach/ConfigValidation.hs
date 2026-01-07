@@ -73,21 +73,28 @@ checkRejectLongerThanConsistency rejectLongerThan maxTransitionLength showLength
 
 -- | Check basic Petri net configuration including sizes, lengths, ranges, capacity and draw commands
 checkBasicPetriConfig
-  :: Int -> Int -> Capacity s -> Int -> Int
-  -> TransitionBehaviorConstraints -> ArrowDensityConstraints
-  -> [GraphvizCommand] -> Maybe Int -> Bool
+  :: Int                      -- ^ numPlaces
+  -> Int                      -- ^ numTransitions
+  -> Capacity s               -- ^ capacity
+  -> Int                      -- ^ minTransitionLength
+  -> Int                      -- ^ maxTransitionLength
+  -> TransitionBehaviorConstraints -- ^ transitionBehaviorConstraints
+  -> ArrowDensityConstraints  -- ^ arrowDensityConstraints
+  -> [GraphvizCommand]        -- ^ drawCommands
+  -> Maybe Int                -- ^ rejectLongerThan
+  -> Bool                     -- ^ showLengthHint
   -> Maybe String
 checkBasicPetriConfig
-  numPlaces                          -- ^ numPlaces
-  numTransitions                     -- ^ numTransitions
-  capacity                           -- ^ capacity
-  minTransitionLength                -- ^ minTransitionLength
-  maxTransitionLength                -- ^ maxTransitionLength
-  transitionBehaviorConstraints      -- ^ transitionBehaviorConstraints
-  arrowDensityConstraints            -- ^ arrowDensityConstraints
-  drawCommands                       -- ^ drawCommands
-  rejectLongerThan                   -- ^ rejectLongerThan
-  showLengthHint =                   -- ^ showLengthHint
+  numPlaces
+  numTransitions
+  capacity
+  minTransitionLength
+  maxTransitionLength
+  transitionBehaviorConstraints
+  arrowDensityConstraints
+  drawCommands
+  rejectLongerThan
+  showLengthHint =
     checkPetriNetSizes numPlaces numTransitions
     <|> checkCapacity capacity
     <|> checkTransitionLengths minTransitionLength maxTransitionLength
