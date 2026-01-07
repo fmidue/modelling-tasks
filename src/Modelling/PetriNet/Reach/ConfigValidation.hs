@@ -114,8 +114,8 @@ checkBasicPetriConfig
     <|> checkRangeVersusCount "numPlaces" "outgoingArrowsPerTransition" (outgoingArrowsPerTransition arrowDensityConstraints) numPlaces
     <|> checkRangeVersusCount "numTransitions" "incomingArrowsPerPlace" (incomingArrowsPerPlace arrowDensityConstraints) numTransitions
     <|> checkRangeVersusCount "numTransitions" "outgoingArrowsPerPlace" (outgoingArrowsPerPlace arrowDensityConstraints) numTransitions
-    <|> checkRangeVersusCount "totalPlacesTransitions" "totalArrowsFromPlacesToTransitions" (totalArrowsFromPlacesToTransitions arrowDensityConstraints) (numPlaces * numTransitions)
-    <|> checkRangeVersusCount "totalPlacesTransitions" "totalArrowsFromTransitionsToPlaces" (totalArrowsFromTransitionsToPlaces arrowDensityConstraints) (numPlaces * numTransitions)
+    <|> checkRangeVersusCount "numPlaces * numTransitions" "totalArrowsFromPlacesToTransitions" (totalArrowsFromPlacesToTransitions arrowDensityConstraints) (numPlaces * numTransitions)
+    <|> checkRangeVersusCount "numPlaces * numTransitions" "totalArrowsFromTransitionsToPlaces" (totalArrowsFromTransitionsToPlaces arrowDensityConstraints) (numPlaces * numTransitions)
     <|> checkRejectLongerThanConsistency rejectLongerThan maxTransitionLength showLengthHint
     <|> checkDrawCommands drawCommands
     <|> checkArrowDensityCrossValidation numPlaces numTransitions arrowDensityConstraints
