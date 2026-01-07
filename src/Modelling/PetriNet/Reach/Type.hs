@@ -302,13 +302,11 @@ satisfiesTransitionBehaviorConstraints net TransitionBehaviorConstraints {..} =
         let nonPreserving = length $ filter (uncurry (/=) . connectionTokenBehavior) $ connections net
         in nonPreserving == expected
 
--- | Check if a net satisfies per-place arrow constraints
 -- | Helper to check if a count satisfies bounds
 checkArrowBounds :: (Int, Maybe Int) -> Int -> Bool
 checkArrowBounds (low, maybeHigh) count =
   count >= low && maybe True (count <=) maybeHigh
 
--- | Check if a net satisfies incoming arrows per place constraint
 satisfiesIncomingArrowsPerPlace
   :: Ord s
   => Net s t
@@ -316,14 +314,11 @@ satisfiesIncomingArrowsPerPlace
   -> Bool
 satisfiesIncomingArrowsPerPlace _ (0, Nothing) = True
 satisfiesIncomingArrowsPerPlace net bounds =
-  all checkPlace (S.toList $ places net)
+  all (checkArrowBounds bounds . countIncomingArrows) (S.toList $ places net)
   where
-    checkPlace place = checkArrowBounds bounds (countIncomingArrows place)
-    -- Count arrows coming into a place (from transitions to place)
     countIncomingArrows place =
       sum [length $ filter (== place) post | (_, _, post) <- connections net]
 
--- | Check if a net satisfies outgoing arrows per place constraint
 satisfiesOutgoingArrowsPerPlace
   :: Ord s
   => Net s t
@@ -331,14 +326,11 @@ satisfiesOutgoingArrowsPerPlace
   -> Bool
 satisfiesOutgoingArrowsPerPlace _ (0, Nothing) = True
 satisfiesOutgoingArrowsPerPlace net bounds =
-  all checkPlace (S.toList $ places net)
+  all (checkArrowBounds bounds . countOutgoingArrows) (S.toList $ places net)
   where
-    checkPlace place = checkArrowBounds bounds (countOutgoingArrows place)
-    -- Count arrows going out of a place (from place to transitions)
     countOutgoingArrows place =
       sum [length $ filter (== place) pre | (pre, _, _) <- connections net]
 
--- | Check if a net satisfies total arrows from places to transitions constraint
 satisfiesTotalPlacesToTransitions
   :: Net s t
   -> (Int, Maybe Int)  -- ^ totalArrowsFromPlacesToTransitions
@@ -349,7 +341,6 @@ satisfiesTotalPlacesToTransitions net bounds =
   where
     placesToTrans = sum [length pre | (pre, _, _) <- connections net]
 
--- | Check if a net satisfies total arrows from transitions to places constraint
 satisfiesTotalTransitionsToPlaces
   :: Net s t
   -> (Int, Maybe Int)  -- ^ totalArrowsFromTransitionsToPlaces
@@ -359,4 +350,3 @@ satisfiesTotalTransitionsToPlaces net bounds =
   checkArrowBounds bounds transToPlaces
   where
     transToPlaces = sum [length post | (_, _, post) <- connections net]
-
