@@ -124,7 +124,7 @@ data ArrowDensityConstraints = ArrowDensityConstraints {
   -- | Global constraint on total arrows from transitions to places
   totalArrowsFromTransitionsToPlaces :: (Int, Maybe Int)
   }
-  deriving (Data, Eq, Generic, Hashable, Ord, Read, Show)
+  deriving (Data, Eq, Generic, Hashable, Ord, Read, Reader, Show, ToDoc)
 
 -- | Default arrow density constraints (no restrictions)
 noArrowDensityConstraints :: ArrowDensityConstraints
