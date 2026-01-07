@@ -457,7 +457,7 @@ defaultDeadlockInstance = DeadlockInstance {
 
 **Background**:
 
-- This project generates tasks that are used in Autotool (https://git.uni-due.de/fmi/autotool-dev)
+- This project generates tasks that are used in [Autotool](https://git.uni-due.de/fmi/autotool-dev)
 - Autotool requires `ToDoc` and `Reader` instances for serialization/deserialization
 - Forgetting these instances causes build failures in Autotool (not locally)
 
