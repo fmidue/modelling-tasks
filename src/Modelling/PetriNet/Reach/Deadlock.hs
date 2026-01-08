@@ -89,6 +89,8 @@ import Modelling.PetriNet.Reach.Type (
   TransitionBehaviorConstraints,
   TransitionsList (TransitionsList),
   bimapNet,
+  countFusableInputNodes,
+  countFusableOutputNodes,
   example,
   noArrowDensityConstraints,
   noTransitionBehaviorConstraints,
@@ -269,6 +271,14 @@ data DeadlockConfig = DeadlockConfig {
   showLengthHint      :: Bool,
   showMinLengthHint   :: Bool,
   showPlaceNamesInNet :: Bool,
+  -- | Require exactly this many transitions with exactly one input place
+  -- that is exclusively consumed by that transition.
+  -- If @Nothing@, no constraint on fusable input nodes.
+  requireFusableInputNodes :: Maybe Int,
+  -- | Require exactly this many transitions with exactly one output place
+  -- that is exclusively produced by that transition.
+  -- If @Nothing@, no constraint on fusable output nodes.
+  requireFusableOutputNodes :: Maybe Int,
   filterConfig        :: FilterConfig
   }
   deriving (Generic, Read, Show)
@@ -292,6 +302,8 @@ defaultDeadlockConfig =
   showLengthHint      = False,
   showMinLengthHint   = True,
   showPlaceNamesInNet = False,
+  requireFusableInputNodes = Nothing,
+  requireFusableOutputNodes = Nothing,
   filterConfig        = defaultFilterConfig { solutionSetLimit = Nothing, forbiddenCycleLengths = [4], requireCycleLengthsAny = [], transitionCoverageRequirement = 1 % 2 }
   }
 
@@ -335,6 +347,20 @@ checkDeadlockConfig DeadlockConfig {..} =
       Just maxSolutions | maxPrintedSolutions > maxSolutions ->
         Just "maxPrintedSolutions cannot be greater than solutionSetLimit"
       _ -> Nothing
+  <|>
+  case requireFusableInputNodes of
+    Just count | count < 0 ->
+      Just "requireFusableInputNodes must be non-negative"
+    Just count | count > numTransitions ->
+      Just "requireFusableInputNodes cannot exceed numTransitions"
+    _ -> Nothing
+  <|>
+  case requireFusableOutputNodes of
+    Just count | count < 0 ->
+      Just "requireFusableOutputNodes must be non-negative"
+    Just count | count > numTransitions ->
+      Just "requireFusableOutputNodes cannot exceed numTransitions"
+    _ -> Nothing
 
 generateDeadlock
   :: (MonadCatch m, MonadDiagrams m, MonadGraphviz m)
@@ -391,6 +417,13 @@ try conf = do
     guard $ not $ null yeah
     let allShortestSolutions = map reverse . concatMap snd $ head yeah
     guard $ length no >= minTransitionLength conf
+    -- Check fusable node constraints
+    case requireFusableInputNodes conf of
+      Nothing -> pure ()
+      Just expected -> guard $ countFusableInputNodes n == expected
+    case requireFusableOutputNodes conf of
+      Nothing -> pure ()
+      Just expected -> guard $ countFusableOutputNodes n == expected
     (cmd, solutionsList) <- validateDrawabilityAndSolutionFiltering
       n (drawPreferenceOrder conf) allShortestSolutions
       (filterConfig conf) (numTransitions conf) (maxPrintedSolutions conf)

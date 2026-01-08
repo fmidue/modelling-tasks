@@ -300,3 +300,37 @@ satisfiesTransitionBehaviorConstraints net TransitionBehaviorConstraints {..} =
       Just expected ->
         let nonPreserving = length $ filter (uncurry (/=) . connectionTokenBehavior) $ connections net
         in nonPreserving == expected
+
+{- | Count transitions with exactly one input place that is exclusively consumed by that transition.
+A "fusable input node" is a transition t where:
+- t depends on exactly one input place s, AND
+- t is the only transition that takes from s
+-}
+countFusableInputNodes :: (Ord s, Ord t) => Net s t -> Int
+countFusableInputNodes net =
+  length $ filter isFusableInput (connections net)
+  where
+    isFusableInput (inputPlaces, transition, _) =
+      case inputPlaces of
+        [singlePlace] -> isOnlyConsumerOf transition singlePlace
+        _ -> False
+    isOnlyConsumerOf transition place =
+      let consumersOfPlace = [t | (pre, t, _) <- connections net, place `elem` pre]
+      in consumersOfPlace == [transition]
+
+{- | Count transitions with exactly one output place that is exclusively produced by that transition.
+A "fusable output node" is a transition t where:
+- t produces to exactly one place s, AND
+- t is the only transition that produces to s
+-}
+countFusableOutputNodes :: (Ord s, Ord t) => Net s t -> Int
+countFusableOutputNodes net =
+  length $ filter isFusableOutput (connections net)
+  where
+    isFusableOutput (_, transition, outputPlaces) =
+      case outputPlaces of
+        [singlePlace] -> isOnlyProducerOf transition singlePlace
+        _ -> False
+    isOnlyProducerOf transition place =
+      let producersOfPlace = [t | (_, t, post) <- connections net, place `elem` post]
+      in producersOfPlace == [transition]

@@ -22,6 +22,8 @@ import Modelling.PetriNet.Reach.Type (
   TransitionBehaviorConstraints(..),
   ArrowDensityConstraints(..),
   connectionTokenBehavior,
+  countFusableInputNodes,
+  countFusableOutputNodes,
   noArrowDensityConstraints,
   )
 
@@ -187,6 +189,51 @@ spec = do
             nonPreservingCount = length $ filter (uncurry (/=) . connectionTokenBehavior) $ connections net
         nonPreservingCount `shouldBe` 1
 
+    modifyMaxSuccess (const 3) $
+      prop "respects requireFusableInputNodes constraint" $ \seed -> do
+        let config = defaultDeadlockConfig {
+              maxTransitionLength = 6,
+              minTransitionLength = 6,
+              requireFusableInputNodes = Just 2,
+              filterConfig = noFiltering
+              }
+        checkDeadlockConfig config `shouldBe` Nothing
+        deadlockInstance <- generateDeadlock config seed
+        let net = petriNet deadlockInstance
+            actualFusableInputCount = countFusableInputNodes net
+        actualFusableInputCount `shouldBe` 2
+
+    modifyMaxSuccess (const 3) $
+      prop "respects requireFusableOutputNodes constraint" $ \seed -> do
+        let config = defaultDeadlockConfig {
+              maxTransitionLength = 6,
+              minTransitionLength = 6,
+              requireFusableOutputNodes = Just 2,
+              filterConfig = noFiltering
+              }
+        checkDeadlockConfig config `shouldBe` Nothing
+        deadlockInstance <- generateDeadlock config seed
+        let net = petriNet deadlockInstance
+            actualFusableOutputCount = countFusableOutputNodes net
+        actualFusableOutputCount `shouldBe` 2
+
+    modifyMaxSuccess (const 3) $
+      prop "respects both fusable node constraints simultaneously" $ \seed -> do
+        let config = defaultDeadlockConfig {
+              maxTransitionLength = 6,
+              minTransitionLength = 6,
+              requireFusableInputNodes = Just 1,
+              requireFusableOutputNodes = Just 1,
+              filterConfig = noFiltering
+              }
+        checkDeadlockConfig config `shouldBe` Nothing
+        deadlockInstance <- generateDeadlock config seed
+        let net = petriNet deadlockInstance
+            actualFusableInputCount = countFusableInputNodes net
+            actualFusableOutputCount = countFusableOutputNodes net
+        actualFusableInputCount `shouldBe` 1
+        actualFusableOutputCount `shouldBe` 1
+
   describe "checkDeadlockConfig" $ do
     it "accepts valid configuration" $ do
       let config = defaultDeadlockConfig
@@ -344,5 +391,60 @@ spec = do
               totalArrowsFromPlacesToTransitions = (6, Just 12),
               totalArrowsFromTransitionsToPlaces = (6, Just 12)
               }
+            }
+      checkDeadlockConfig config `shouldBe` Nothing
+
+    it "accepts Nothing for requireFusableInputNodes" $ do
+      let config = defaultDeadlockConfig {
+            requireFusableInputNodes = Nothing
+            }
+      checkDeadlockConfig config `shouldBe` Nothing
+
+    it "accepts valid requireFusableInputNodes" $ do
+      let config = defaultDeadlockConfig {
+            requireFusableInputNodes = Just 2
+            }
+      checkDeadlockConfig config `shouldBe` Nothing
+
+    it "rejects negative requireFusableInputNodes" $ do
+      let config = defaultDeadlockConfig {
+            requireFusableInputNodes = Just (-1)
+            }
+      checkDeadlockConfig config `shouldSatisfy` isJust
+
+    it "rejects requireFusableInputNodes exceeding numTransitions" $ do
+      let config = defaultDeadlockConfig {
+            requireFusableInputNodes = Just 10
+            }
+      checkDeadlockConfig config `shouldSatisfy` isJust
+
+    it "accepts Nothing for requireFusableOutputNodes" $ do
+      let config = defaultDeadlockConfig {
+            requireFusableOutputNodes = Nothing
+            }
+      checkDeadlockConfig config `shouldBe` Nothing
+
+    it "accepts valid requireFusableOutputNodes" $ do
+      let config = defaultDeadlockConfig {
+            requireFusableOutputNodes = Just 2
+            }
+      checkDeadlockConfig config `shouldBe` Nothing
+
+    it "rejects negative requireFusableOutputNodes" $ do
+      let config = defaultDeadlockConfig {
+            requireFusableOutputNodes = Just (-1)
+            }
+      checkDeadlockConfig config `shouldSatisfy` isJust
+
+    it "rejects requireFusableOutputNodes exceeding numTransitions" $ do
+      let config = defaultDeadlockConfig {
+            requireFusableOutputNodes = Just 10
+            }
+      checkDeadlockConfig config `shouldSatisfy` isJust
+
+    it "accepts both fusable node parameters set" $ do
+      let config = defaultDeadlockConfig {
+            requireFusableInputNodes = Just 1,
+            requireFusableOutputNodes = Just 1
             }
       checkDeadlockConfig config `shouldBe` Nothing
