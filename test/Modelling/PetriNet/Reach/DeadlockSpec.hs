@@ -138,77 +138,56 @@ spec = do
             totalArrows = sum [length post | (_, _, post) <- connections net]
         totalArrows `shouldSatisfy` (\x -> x >= 8 && x <= 15)
 
-    it "has valid config for nightly test (allowedTokenChanges LT)" $ do
-      let config = defaultDeadlockConfig {
-            filterConfig = noFiltering,
-            transitionBehaviorConstraints = TransitionBehaviorConstraints {
-              allowedTokenChanges = Just LT,
-              areNonPreserving = Nothing
-              }
+    let configLT = defaultDeadlockConfig {
+          filterConfig = noFiltering,
+          transitionBehaviorConstraints = TransitionBehaviorConstraints {
+            allowedTokenChanges = Just LT,
+            areNonPreserving = Nothing
             }
-      checkDeadlockConfig config `shouldBe` Nothing
+          }
+    it "has valid config for nightly test (allowedTokenChanges LT)" $
+      checkDeadlockConfig configLT `shouldBe` Nothing
     nightly $
      modifyMaxSuccess (const 1) $
       prop "respects allowedTokenChanges = Just LT (only token-decreasing)" $ \seed -> do
-        let config = defaultDeadlockConfig {
-              filterConfig = noFiltering,
-              transitionBehaviorConstraints = TransitionBehaviorConstraints {
-                allowedTokenChanges = Just LT,
-                areNonPreserving = Nothing
-                }
-              }
-        checkDeadlockConfig config `shouldBe` Nothing
-        inst <- generateDeadlock config seed
+        checkDeadlockConfig configLT `shouldBe` Nothing
+        inst <- generateDeadlock configLT seed
         let net = petriNet inst
             increasingCount = length $ filter (uncurry (<) . connectionTokenBehavior) $ connections net
         increasingCount `shouldBe` 0
 
-    it "has valid config for nightly test (allowedTokenChanges GT)" $ do
-      let config = defaultDeadlockConfig {
-            filterConfig = noFiltering,
-            transitionBehaviorConstraints = TransitionBehaviorConstraints {
-              allowedTokenChanges = Just GT,
-              areNonPreserving = Nothing
-              }
+    let configGT = defaultDeadlockConfig {
+          filterConfig = noFiltering,
+          transitionBehaviorConstraints = TransitionBehaviorConstraints {
+            allowedTokenChanges = Just GT,
+            areNonPreserving = Nothing
             }
-      checkDeadlockConfig config `shouldBe` Nothing
+          }
+    it "has valid config for nightly test (allowedTokenChanges GT)" $
+      checkDeadlockConfig configGT `shouldBe` Nothing
     nightly $
      modifyMaxSuccess (const 1) $
       prop "respects allowedTokenChanges = Just GT (only token-increasing)" $ \seed -> do
-        let config = defaultDeadlockConfig {
-              filterConfig = noFiltering,
-              transitionBehaviorConstraints = TransitionBehaviorConstraints {
-                allowedTokenChanges = Just GT,
-                areNonPreserving = Nothing
-                }
-              }
-        checkDeadlockConfig config `shouldBe` Nothing
-        inst <- generateDeadlock config seed
+        checkDeadlockConfig configGT `shouldBe` Nothing
+        inst <- generateDeadlock configGT seed
         let net = petriNet inst
             decreasingCount = length $ filter (uncurry (>) . connectionTokenBehavior) $ connections net
         decreasingCount `shouldBe` 0
 
-    it "has valid config for nightly test (areNonPreserving)" $ do
-      let config = defaultDeadlockConfig {
-            filterConfig = noFiltering,
-            transitionBehaviorConstraints = TransitionBehaviorConstraints {
-              allowedTokenChanges = Nothing,
-              areNonPreserving = Just 1
-              }
+    let configNP = defaultDeadlockConfig {
+          filterConfig = noFiltering,
+          transitionBehaviorConstraints = TransitionBehaviorConstraints {
+            allowedTokenChanges = Nothing,
+            areNonPreserving = Just 1
             }
-      checkDeadlockConfig config `shouldBe` Nothing
+          }
+    it "has valid config for nightly test (areNonPreserving)" $
+      checkDeadlockConfig configNP `shouldBe` Nothing
     nightly $
      modifyMaxSuccess (const 1) $
       prop "respects areNonPreserving constraint" $ \seed -> do
-        let config = defaultDeadlockConfig {
-              filterConfig = noFiltering,
-              transitionBehaviorConstraints = TransitionBehaviorConstraints {
-                allowedTokenChanges = Nothing,
-                areNonPreserving = Just 1
-                }
-              }
-        checkDeadlockConfig config `shouldBe` Nothing
-        inst <- generateDeadlock config seed
+        checkDeadlockConfig configNP `shouldBe` Nothing
+        inst <- generateDeadlock configNP seed
         let net = petriNet inst
             nonPreservingCount = length $ filter (uncurry (/=) . connectionTokenBehavior) $ connections net
         nonPreservingCount `shouldBe` 1

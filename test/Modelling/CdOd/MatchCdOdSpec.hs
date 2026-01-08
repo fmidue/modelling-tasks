@@ -43,8 +43,6 @@ spec = do
       checkMatchCdOdConfig defaultMatchCdOdConfig `shouldBe` Nothing
   describe "matchCdOd" $
     context "using defaultMatchCdOdConfig" $ do
-      it "has valid config" $
-        checkMatchCdOdConfig defaultMatchCdOdConfig `shouldBe` Nothing
       it "generates an instance" $
         do
           segment <- oneOf [0 .. 3]
