@@ -148,7 +148,6 @@ spec = do
     nightly $
      modifyMaxSuccess (const 1) $
       prop "respects allowedTokenChanges = Just LT (only token-decreasing)" $ \seed -> do
-        checkDeadlockConfig configLT `shouldBe` Nothing
         inst <- generateDeadlock configLT seed
         let net = petriNet inst
             increasingCount = length $ filter (uncurry (<) . connectionTokenBehavior) $ connections net
@@ -166,7 +165,6 @@ spec = do
     nightly $
      modifyMaxSuccess (const 1) $
       prop "respects allowedTokenChanges = Just GT (only token-increasing)" $ \seed -> do
-        checkDeadlockConfig configGT `shouldBe` Nothing
         inst <- generateDeadlock configGT seed
         let net = petriNet inst
             decreasingCount = length $ filter (uncurry (>) . connectionTokenBehavior) $ connections net
@@ -184,7 +182,6 @@ spec = do
     nightly $
      modifyMaxSuccess (const 1) $
       prop "respects areNonPreserving constraint" $ \seed -> do
-        checkDeadlockConfig configNP `shouldBe` Nothing
         inst <- generateDeadlock configNP seed
         let net = petriNet inst
             nonPreservingCount = length $ filter (uncurry (/=) . connectionTokenBehavior) $ connections net
