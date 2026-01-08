@@ -117,6 +117,7 @@ import Data.Either.Combinators          (whenRight)
 import Control.Functor.Trans            (FunctorTrans (lift))
 import Control.Monad                    (guard)
 import Control.Monad.Catch              (MonadCatch, MonadThrow)
+import Control.Monad.Extra              (whenJust)
 import Control.Monad.Random             (evalRandT, mkStdGen)
 import Control.Monad.Trans.Maybe        (MaybeT (MaybeT), runMaybeT)
 import Control.Monad.Trans.Random       (RandT)
@@ -321,6 +322,38 @@ defaultDeadlockInstance = DeadlockInstance {
   rejectSpaceballsLength = Nothing
   }
 
+checkFusableNodeConfig
+  :: Maybe Int  -- ^ requireFusableInputNodes
+  -> Maybe Int  -- ^ requireFusableOutputNodes
+  -> Int        -- ^ numTransitions
+  -> ArrowDensityConstraints
+  -> Maybe String
+checkFusableNodeConfig maybeInputNodes maybeOutputNodes numTrans ArrowDensityConstraints {..}
+  | Just count <- maybeInputNodes
+  , count < 0
+  = Just "requireFusableInputNodes must be non-negative"
+  | Just count <- maybeInputNodes
+  , count > numTrans
+  = Just "requireFusableInputNodes cannot exceed numTransitions"
+  | Just count <- maybeOutputNodes
+  , count < 0
+  = Just "requireFusableOutputNodes must be non-negative"
+  | Just count <- maybeOutputNodes
+  , count > numTrans
+  = Just "requireFusableOutputNodes cannot exceed numTransitions"
+  | Just inputCount <- maybeInputNodes
+  , let (minIn, _) = incomingArrowsPerTransition
+  , minIn > 1
+  , inputCount > 0
+  = Just "requireFusableInputNodes > 0 conflicts with incomingArrowsPerTransition minimum > 1"
+  | Just outputCount <- maybeOutputNodes
+  , let (minOut, _) = outgoingArrowsPerTransition
+  , minOut > 1
+  , outputCount > 0
+  = Just "requireFusableOutputNodes > 0 conflicts with outgoingArrowsPerTransition minimum > 1"
+  | otherwise
+  = Nothing
+
 checkDeadlockConfig :: DeadlockConfig -> Maybe String
 checkDeadlockConfig DeadlockConfig {..} =
   checkBasicPetriConfig
@@ -348,19 +381,11 @@ checkDeadlockConfig DeadlockConfig {..} =
         Just "maxPrintedSolutions cannot be greater than solutionSetLimit"
       _ -> Nothing
   <|>
-  case requireFusableInputNodes of
-    Just count | count < 0 ->
-      Just "requireFusableInputNodes must be non-negative"
-    Just count | count > numTransitions ->
-      Just "requireFusableInputNodes cannot exceed numTransitions"
-    _ -> Nothing
-  <|>
-  case requireFusableOutputNodes of
-    Just count | count < 0 ->
-      Just "requireFusableOutputNodes must be non-negative"
-    Just count | count > numTransitions ->
-      Just "requireFusableOutputNodes cannot exceed numTransitions"
-    _ -> Nothing
+  checkFusableNodeConfig
+    requireFusableInputNodes
+    requireFusableOutputNodes
+    numTransitions
+    arrowDensityConstraints
 
 generateDeadlock
   :: (MonadCatch m, MonadDiagrams m, MonadGraphviz m)
@@ -418,12 +443,10 @@ try conf = do
     let allShortestSolutions = map reverse . concatMap snd $ head yeah
     guard $ length no >= minTransitionLength conf
     -- Check fusable node constraints
-    case requireFusableInputNodes conf of
-      Nothing -> pure ()
-      Just expected -> guard $ countFusableInputNodes n == expected
-    case requireFusableOutputNodes conf of
-      Nothing -> pure ()
-      Just expected -> guard $ countFusableOutputNodes n == expected
+    whenJust (requireFusableInputNodes conf) $ \expected ->
+      guard $ countFusableInputNodes n == expected
+    whenJust (requireFusableOutputNodes conf) $ \expected ->
+      guard $ countFusableOutputNodes n == expected
     (cmd, solutionsList) <- validateDrawabilityAndSolutionFiltering
       n (drawPreferenceOrder conf) allShortestSolutions
       (filterConfig conf) (numTransitions conf) (maxPrintedSolutions conf)
