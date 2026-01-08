@@ -60,6 +60,8 @@ spec = do
   describe "validFindConcurrencyConfigs" $
     checkConfigs checkFindConcurrencyConfig findConfigs'
   describe "findConcurrency" $ do
+    it "has valid config" $
+      checkFindConcurrencyConfig defaultFindConcurrencyConfig `shouldBe` Nothing
     defaultConfigTaskGeneration
       (findConcurrency defaultFindConcurrencyConfig {
           Find.alloyConfig = firstInstanceConfig
@@ -71,6 +73,8 @@ spec = do
   describe "validPickConcurrencyConfigs" $
     checkConfigs checkPickConcurrencyConfig pickConfigs
   describe "pickConcurrency" $ do
+    it "has valid config" $
+      checkPickConcurrencyConfig defaultPickConcurrencyConfig `shouldBe` Nothing
     defaultConfigTaskGeneration
       (pickConcurrency defaultPickConcurrencyConfig {
           Pick.alloyConfig = firstInstanceConfig

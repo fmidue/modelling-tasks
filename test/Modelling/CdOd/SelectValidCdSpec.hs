@@ -22,6 +22,8 @@ spec = do
       checkSelectValidCdConfig defaultSelectValidCdConfig `shouldBe` Nothing
   describe "selectValidCd" $
     context "using defaultSelectValidCdConfig" $ do
+      it "has valid config" $
+        checkSelectValidCdConfig defaultSelectValidCdConfig `shouldBe` Nothing
       it "generates an instance" $ do
         do
           segment <- oneOf [0 .. 3]

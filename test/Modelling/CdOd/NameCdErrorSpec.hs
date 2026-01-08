@@ -33,6 +33,8 @@ spec = do
       checkNameCdErrorInstance defaultNameCdErrorInstance `shouldBe` Nothing
   describe "nameCdErrorGenerate" $
     context "using defaultNameCdErrorConfig" $ do
+      it "has valid config" $
+        checkNameCdErrorConfig defaultNameCdErrorConfig `shouldBe` Nothing
       it "generates an instance" $
         do
           segment <- oneOf [0 .. 3]

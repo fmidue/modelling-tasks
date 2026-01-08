@@ -29,6 +29,8 @@ spec = do
       checkRepairCdInstance defaultRepairCdInstance `shouldBe` Nothing
   describe "repairCd" $
     context "using defaultRepairCdConfig with limited instances" $ do
+      it "has valid config" $
+        checkRepairCdConfig defaultRepairCdConfig `shouldBe` Nothing
       it "generates an instance" $
         do
           segment <- oneOf [0 .. 3]

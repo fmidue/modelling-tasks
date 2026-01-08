@@ -99,6 +99,8 @@ spec = do
         `shouldBe` Nothing
   describe "differentNames" $ do
     context "using defaultDifferentNamesConfig" $ do
+      it "has valid config" $
+        checkDifferentNamesConfig defaultDifferentNamesConfig `shouldBe` Nothing
       it "generates an instance" $ do
         inst <- runExceptT @String $ do
           segment <- oneOf [0 .. 3]

@@ -56,12 +56,15 @@ spec = do
                 }
               }
             minL = minTransitionLength (netGoalConfig config)
+        checkReachConfig config `shouldBe` Nothing
         inst <- generateReach config seed
         let net = petriNet (netGoal inst)
             s = goal (netGoal inst)
             ts = transitions net
         net `shouldSatisfy` hasMinTransitionLength (s ==) ts minL
 
+    it "has valid config for nightly test" $
+      checkReachConfig defaultReachConfig `shouldBe` Nothing
     nightly $
      modifyMaxSuccess (const 1) $
       prop "generates non-trivial solutions when filtering is enabled (as in the default configuration)" $ \seed -> do
@@ -79,6 +82,7 @@ spec = do
                 transitionBehaviorConstraints = noTransitionBehaviorConstraints
                 }
               }
+        checkReachConfig config `shouldBe` Nothing
         inst <- generateReach config seed
         let net = petriNet (netGoal inst)
             startState = start net
