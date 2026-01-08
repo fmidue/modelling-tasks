@@ -104,11 +104,8 @@ netLimitsWithPregen
   -> m (Net s t)
 netLimitsWithPregen vLow vHigh nLow nHigh ps ts cap pregenConns forbidIncoming forbidOutgoing = do
   s <- state ps
-  -- Get transitions that already have connections
-  let transitionsWithConnections = [t | (_, t, _) <- pregenConns]
-      transitionsNeedingConnections = filter (`notElem` transitionsWithConnections) ts
-  -- Generate connections for remaining transitions using forbid sets
-  newConns <- forM transitionsNeedingConnections $ \t -> do
+  -- Generate connections for ALL transitions, respecting forbid sets
+  newConns <- forM ts $ \t -> do
     vor <- if t `elem` forbidIncoming
            then return []
            else takeRandom vLow vHigh ps
