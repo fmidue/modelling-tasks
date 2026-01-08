@@ -7,14 +7,13 @@ based on file: collection/src/Petri/Roll.hs
 module Modelling.PetriNet.Reach.Roll (netLimitsFiltered) where
 
 import qualified Data.Map                         as M (
-  fromDistinctAscList,
   fromList,
   fromListWith,
   fromSet,
   elems,
   union,
   )
-import qualified Data.Set                         as S (fromList, toList)
+import qualified Data.Set                         as S (fromList)
 
 import Modelling.PetriNet.Reach.Type (
   Net (..),

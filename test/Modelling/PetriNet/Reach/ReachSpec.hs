@@ -102,16 +102,15 @@ spec = do
                 transitionBehaviorConstraints = noTransitionBehaviorConstraints
                 }
               }
+            countIncomingToPlace :: Place -> [([Place], t, [Place])] -> Int
+            countIncomingToPlace place conns =
+              sum [length $ filter (== place) post | (_, _, post) <- conns]
         checkReachConfig config `shouldBe` Nothing
         inst <- generateReach config seed
         let net = petriNet (netGoal inst)
             places = [Place 1 .. Place (numPlaces $ netGoalConfig config)]
             incomingArrowsPerPlaceList = map (\p -> countIncomingToPlace p (connections net)) places
         all (\count -> count >= 1 && count <= 2) incomingArrowsPerPlaceList `shouldBe` True
-        where
-          countIncomingToPlace :: Place -> [([Place], t, [Place])] -> Int
-          countIncomingToPlace place conns =
-            sum [length $ filter (== place) post | (_, _, post) <- conns]
 
     modifyMaxSuccess (const 5) $
       prop "respects outgoingArrowsPerPlace constraint" $ \seed -> do
@@ -127,16 +126,15 @@ spec = do
                 transitionBehaviorConstraints = noTransitionBehaviorConstraints
                 }
               }
+            countOutgoingFromPlace :: Place -> [([Place], t, [Place])] -> Int
+            countOutgoingFromPlace place conns =
+              sum [length $ filter (== place) pre | (pre, _, _) <- conns]
         checkReachConfig config `shouldBe` Nothing
         inst <- generateReach config seed
         let net = petriNet (netGoal inst)
             places = [Place 1 .. Place (numPlaces $ netGoalConfig config)]
             outgoingArrowsPerPlaceList = map (\p -> countOutgoingFromPlace p (connections net)) places
         all (\count -> count >= 1 && count <= 2) outgoingArrowsPerPlaceList `shouldBe` True
-        where
-          countOutgoingFromPlace :: Place -> [([Place], t, [Place])] -> Int
-          countOutgoingFromPlace place conns =
-            sum [length $ filter (== place) pre | (pre, _, _) <- conns]
 
     modifyMaxSuccess (const 5) $
       prop "respects totalArrowsFromPlacesToTransitions constraint" $ \seed -> do
