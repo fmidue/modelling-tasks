@@ -304,7 +304,7 @@ satisfiesTransitionBehaviorConstraints net TransitionBehaviorConstraints {..} =
 {- | Count transitions with exactly one input place that is exclusively consumed by that transition.
 A "fusable input node" is a transition t where:
 - t depends on exactly one input place s, AND
-- t is the only transition that takes from s
+- t is the only transition that takes from s (excluding back-and-forth loops)
 -}
 countFusableInputNodes :: (Ord s, Ord t) => Net s t -> Int
 countFusableInputNodes net =
@@ -316,12 +316,16 @@ countFusableInputNodes net =
         _ -> False
     isOnlyConsumerOf transition place =
       let consumersOfPlace = [t | (pre, t, _) <- connections net, place `elem` pre]
-      in consumersOfPlace == [transition]
+          -- Filter out transitions that also produce to the place (loops)
+          nonLoopConsumers = filter (\t -> not $ hasConnectionTo t place) consumersOfPlace
+      in nonLoopConsumers == [transition]
+    hasConnectionTo trans place =
+      any (\(_, t, post) -> t == trans && place `elem` post) (connections net)
 
 {- | Count transitions with exactly one output place that is exclusively produced by that transition.
 A "fusable output node" is a transition t where:
 - t produces to exactly one place s, AND
-- t is the only transition that produces to s
+- t is the only transition that produces to s (excluding back-and-forth loops)
 -}
 countFusableOutputNodes :: (Ord s, Ord t) => Net s t -> Int
 countFusableOutputNodes net =
@@ -333,4 +337,8 @@ countFusableOutputNodes net =
         _ -> False
     isOnlyProducerOf transition place =
       let producersOfPlace = [t | (_, t, post) <- connections net, place `elem` post]
-      in producersOfPlace == [transition]
+          -- Filter out transitions that also consume from the place (loops)
+          nonLoopProducers = filter (\t -> not $ hasConnectionFrom t place) producersOfPlace
+      in nonLoopProducers == [transition]
+    hasConnectionFrom trans place =
+      any (\(pre, t, _) -> t == trans && place `elem` pre) (connections net)

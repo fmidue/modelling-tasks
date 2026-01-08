@@ -484,3 +484,11 @@ spec = do
               }
             }
       checkDeadlockConfig config `shouldSatisfy` isJust
+
+    it "rejects when requireFusableInputNodes + requireFusableOutputNodes exceeds numTransitions" $ do
+      let config = defaultDeadlockConfig {
+            numTransitions = 5,
+            requireFusableInputNodes = Just 3,
+            requireFusableOutputNodes = Just 3
+            }
+      checkDeadlockConfig config `shouldSatisfy` isJust

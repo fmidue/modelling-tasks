@@ -121,6 +121,7 @@ import Control.Monad.Extra              (whenJust)
 import Control.Monad.Random             (evalRandT, mkStdGen)
 import Control.Monad.Trans.Maybe        (MaybeT (MaybeT), runMaybeT)
 import Control.Monad.Trans.Random       (RandT)
+import Data.Maybe                       (fromMaybe)
 import System.Random.Internal           (StdGen)
 import Data.GraphViz                    (GraphvizCommand (..))
 #if !MIN_VERSION_base(4,18,0)
@@ -342,6 +343,10 @@ checkFusableNodeConfig maybeInputNodes maybeOutputNodes numTrans ArrowDensityCon
   , count > numTrans
   = Just "requireFusableOutputNodes cannot exceed numTransitions"
   | Just inputCount <- maybeInputNodes
+  , Just outputCount <- maybeOutputNodes
+  , inputCount + outputCount > numTrans
+  = Just "requireFusableInputNodes + requireFusableOutputNodes cannot exceed numTransitions (no transition can be both input-fusable and output-fusable)"
+  | Just inputCount <- maybeInputNodes
   , let (minIn, _) = incomingArrowsPerTransition
   , minIn > 1
   , inputCount > 0
@@ -445,6 +450,8 @@ try conf = do
       ts
       (Modelling.PetriNet.Reach.Deadlock.capacity conf)
       (transitionBehaviorConstraints conf)
+      (fromMaybe 0 $ requireFusableInputNodes conf)
+      (fromMaybe 0 $ requireFusableOutputNodes conf)
     let deadlockLevels = map (filter (null . successors n . fst)) (levelsWithAlternatives n)
         (no, yeah) = span null
           $ take (maxTransitionLength conf + 1)
