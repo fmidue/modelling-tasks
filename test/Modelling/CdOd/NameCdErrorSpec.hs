@@ -41,7 +41,7 @@ spec = do
                 && not (M.null $ errorReasons x)
           check <$> nameCdErrorGenerate defaultNameCdErrorConfig segment seed
         `shouldReturn` True
-      it "reproducible generates defaultNameCdErrorInstance" $
+      it "reproducibly generates defaultNameCdErrorInstance" $
         nameCdErrorGenerate defaultNameCdErrorConfig 0 0
         `shouldReturn` defaultNameCdErrorInstance
   describe "renameInstance" $

@@ -32,18 +32,20 @@ spec = do
       checkMathConfig defaultMathConfig `shouldBe` Nothing
   where
     defaultMathTask task =
-      context "using its default config" $
+      context "using (almost) its default config" $
         it "generates everything needed to create the Task" $ do
           gen <- getStdGen
           let seed = fst $ random gen
               section = fst $ randomR (0, 3) gen
-          matchInst <- runExceptT @String $ lift $ task defaultMathConfig {
-            changeConfig = (changeConfig defaultMathConfig) {
-                tokenChangeOverall = 1,
-                maxTokenChangePerPlace = 1
-                },
-            alloyConfig = defaultAlloyConfig {
-              maxInstances = Just (toInteger section + 1)
-              }
-            } section seed
+              config = defaultMathConfig {
+                changeConfig = (changeConfig defaultMathConfig) {
+                    tokenChangeOverall = 1,
+                    maxTokenChangePerPlace = 1
+                    },
+                alloyConfig = defaultAlloyConfig {
+                  maxInstances = Just (toInteger section + 1)
+                  }
+                }
+          checkMathConfig config `shouldBe` Nothing
+          matchInst <- runExceptT @String $ lift $ task config section seed
           matchInst `shouldSatisfy` isRight

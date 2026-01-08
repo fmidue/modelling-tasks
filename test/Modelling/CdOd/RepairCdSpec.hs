@@ -35,7 +35,7 @@ spec = do
           seed <- randomIO
           not . M.null . changes <$> repairCd defaultRepairCdConfig segment seed
         `shouldReturn` True
-      it "reproducible generates defaultRepairCdInstance" $
+      it "reproducibly generates defaultRepairCdInstance" $
         repairCd defaultRepairCdConfig 0 0
         `shouldReturn` defaultRepairCdInstance
   describe "renameInstance" $
