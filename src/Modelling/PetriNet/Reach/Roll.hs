@@ -10,6 +10,7 @@ import qualified Data.Map                         as M (
   fromDistinctAscList,
   fromList,
   fromListWith,
+  fromSet,
   elems,
   union,
   )
@@ -130,7 +131,7 @@ netLimitsFiltered
     -- Filter out nets that don't satisfy arrow density constraints beyond incomingArrowsPerTransition and outgoingArrowsPerTransition
     let allTransToPlaces = concatMap (\(_, _, post) -> post) (connections n)
     let allPlacesToTrans = concatMap (\(pre, _, _) -> pre) (connections n)
-    let initialMap = M.fromDistinctAscList [(place, 0) | place <- S.toList $ places n]
+    let initialMap = M.fromSet (const 0) (places n)
     guard $ case incomingArrowsPerPlace of
       (0, Nothing) -> True
       _ -> let countMap = M.fromListWith (+) [(place, 1) | place <- allTransToPlaces]

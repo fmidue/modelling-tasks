@@ -36,14 +36,6 @@ import Settings (nightly)
 import Test.Hspec
 import Test.Hspec.QuickCheck (modifyMaxSuccess, prop)
 
-countIncomingToPlace :: Place -> [([Place], t, [Place])] -> Int
-countIncomingToPlace place conns =
-  sum [length $ filter (== place) post | (_, _, post) <- conns]
-
-countOutgoingFromPlace :: Place -> [([Place], t, [Place])] -> Int
-countOutgoingFromPlace place conns =
-  sum [length $ filter (== place) pre | (pre, _, _) <- conns]
-
 spec :: Spec
 spec = do
   describe "generateDeadlock" $ do
@@ -86,6 +78,10 @@ spec = do
             places = [Place 1 .. Place (numPlaces config)]
             incomingArrowsPerPlaceList = map (\p -> countIncomingToPlace p (connections net)) places
         all (\count -> count >= 1 && count <= 2) incomingArrowsPerPlaceList `shouldBe` True
+        where
+          countIncomingToPlace :: Place -> [([Place], t, [Place])] -> Int
+          countIncomingToPlace place conns =
+            sum [length $ filter (== place) post | (_, _, post) <- conns]
 
     modifyMaxSuccess (const 3) $
       prop "respects outgoingArrowsPerPlace constraint" $ \seed -> do
@@ -104,6 +100,10 @@ spec = do
             places = [Place 1 .. Place (numPlaces config)]
             outgoingArrowsPerPlaceList = map (\p -> countOutgoingFromPlace p (connections net)) places
         all (\count -> count >= 1 && count <= 2) outgoingArrowsPerPlaceList `shouldBe` True
+        where
+          countOutgoingFromPlace :: Place -> [([Place], t, [Place])] -> Int
+          countOutgoingFromPlace place conns =
+            sum [length $ filter (== place) pre | (pre, _, _) <- conns]
 
     modifyMaxSuccess (const 3) $
       prop "respects totalArrowsFromPlacesToTransitions constraint" $ \seed -> do
@@ -360,4 +360,3 @@ spec = do
               }
             }
       checkDeadlockConfig config `shouldBe` Nothing
-
