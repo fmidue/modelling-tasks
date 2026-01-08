@@ -174,6 +174,57 @@ spec = do
             totalArrows = sum [length post | (_, _, post) <- connections net]
         totalArrows `shouldSatisfy` (\x -> x >= 10 && x <= 18)
 
+    modifyMaxSuccess (const 3) $
+      prop "respects allowedTokenChanges = Just LT (only token-decreasing)" $ \seed -> do
+        let config = defaultReachConfig {
+              filterConfig = noFiltering,
+              netGoalConfig = (netGoalConfig defaultReachConfig) {
+                transitionBehaviorConstraints = TransitionBehaviorConstraints {
+                  allowedTokenChanges = Just LT,
+                  areNonPreserving = Nothing
+                  }
+                }
+              }
+        checkReachConfig config `shouldBe` Nothing
+        inst <- generateReach config seed
+        let net = petriNet (netGoal inst)
+            increasingCount = length $ filter (uncurry (<) . connectionTokenBehavior) $ connections net
+        increasingCount `shouldBe` 0
+
+    modifyMaxSuccess (const 3) $
+      prop "respects allowedTokenChanges = Just GT (only token-increasing)" $ \seed -> do
+        let config = defaultReachConfig {
+              filterConfig = noFiltering,
+              netGoalConfig = (netGoalConfig defaultReachConfig) {
+                transitionBehaviorConstraints = TransitionBehaviorConstraints {
+                  allowedTokenChanges = Just GT,
+                  areNonPreserving = Nothing
+                  }
+                }
+              }
+        checkReachConfig config `shouldBe` Nothing
+        inst <- generateReach config seed
+        let net = petriNet (netGoal inst)
+            decreasingCount = length $ filter (uncurry (>) . connectionTokenBehavior) $ connections net
+        decreasingCount `shouldBe` 0
+
+    modifyMaxSuccess (const 1) $
+      prop "respects areNonPreserving constraint set to 0" $ \seed -> do
+        let config = defaultReachConfig {
+              filterConfig = noFiltering,
+              netGoalConfig = (netGoalConfig defaultReachConfig) {
+                transitionBehaviorConstraints = TransitionBehaviorConstraints {
+                  allowedTokenChanges = Nothing,
+                  areNonPreserving = Just 0
+                  }
+                }
+              }
+        checkReachConfig config `shouldBe` Nothing
+        inst <- generateReach config seed
+        let net = petriNet (netGoal inst)
+            nonPreservingCount = length $ filter (uncurry (/=) . connectionTokenBehavior) $ connections net
+        nonPreservingCount `shouldBe` 0
+
   describe "checkReachConfig" $ do
     it "accepts valid configuration" $ do
       let config = defaultReachConfig
@@ -272,57 +323,6 @@ spec = do
               }
             }
       checkReachConfig config `shouldSatisfy` isJust
-
-    modifyMaxSuccess (const 3) $
-      prop "respects allowedTokenChanges = Just LT (only token-decreasing)" $ \seed -> do
-        let config = defaultReachConfig {
-              filterConfig = noFiltering,
-              netGoalConfig = (netGoalConfig defaultReachConfig) {
-                transitionBehaviorConstraints = TransitionBehaviorConstraints {
-                  allowedTokenChanges = Just LT,
-                  areNonPreserving = Nothing
-                  }
-                }
-              }
-        checkReachConfig config `shouldBe` Nothing
-        inst <- generateReach config seed
-        let net = petriNet (netGoal inst)
-            increasingCount = length $ filter (uncurry (<) . connectionTokenBehavior) $ connections net
-        increasingCount `shouldBe` 0
-
-    modifyMaxSuccess (const 3) $
-      prop "respects allowedTokenChanges = Just GT (only token-increasing)" $ \seed -> do
-        let config = defaultReachConfig {
-              filterConfig = noFiltering,
-              netGoalConfig = (netGoalConfig defaultReachConfig) {
-                transitionBehaviorConstraints = TransitionBehaviorConstraints {
-                  allowedTokenChanges = Just GT,
-                  areNonPreserving = Nothing
-                  }
-                }
-              }
-        checkReachConfig config `shouldBe` Nothing
-        inst <- generateReach config seed
-        let net = petriNet (netGoal inst)
-            decreasingCount = length $ filter (uncurry (>) . connectionTokenBehavior) $ connections net
-        decreasingCount `shouldBe` 0
-
-    modifyMaxSuccess (const 1) $
-      prop "respects areNonPreserving constraint set to 0" $ \seed -> do
-        let config = defaultReachConfig {
-              filterConfig = noFiltering,
-              netGoalConfig = (netGoalConfig defaultReachConfig) {
-                transitionBehaviorConstraints = TransitionBehaviorConstraints {
-                  allowedTokenChanges = Nothing,
-                  areNonPreserving = Just 0
-                  }
-                }
-              }
-        checkReachConfig config `shouldBe` Nothing
-        inst <- generateReach config seed
-        let net = petriNet (netGoal inst)
-            nonPreservingCount = length $ filter (uncurry (/=) . connectionTokenBehavior) $ connections net
-        nonPreservingCount `shouldBe` 0
 
     it "rejects allowedTokenChanges = Just LT with impossible range (vHigh <= nLow)" $ do
       let config = defaultReachConfig {
