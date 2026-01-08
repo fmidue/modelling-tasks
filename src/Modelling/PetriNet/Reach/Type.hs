@@ -328,7 +328,7 @@ countFusableInputNodes net =
     hasConnectionTo trans place =
       any (\(_, t, post) -> t == trans && place `elem` post) (connections net)
     hasOtherConnections trans place =
-      any (\(pre, t, post) -> t == trans && (any (`notElem` [place]) pre || any (`notElem` [place]) post)) (connections net)
+      any (\(pre, t, post) -> t == trans && (any (/= place) pre || any (/= place) post)) (connections net)
 
 {- | Count transitions with exactly one output place that is exclusively produced by that transition.
 A "fusable output node" is a transition t where:
@@ -357,4 +357,4 @@ countFusableOutputNodes net =
     hasConnectionFrom trans place =
       any (\(pre, t, _) -> t == trans && place `elem` pre) (connections net)
     hasOtherConnections trans place =
-      any (\(pre, t, post) -> t == trans && (any (`notElem` [place]) pre || any (`notElem` [place]) post)) (connections net)
+      any (\(pre, t, post) -> t == trans && (any (/= place) pre || any (/= place) post)) (connections net)
