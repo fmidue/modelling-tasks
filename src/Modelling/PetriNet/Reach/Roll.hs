@@ -88,7 +88,7 @@ generateFusableConnections allPlaces allTransitions numInputFusable numOutputFus
          , outputFusableTransitions  -- forbid outgoing from these
          )
 
--- | Generate net with pre-existing connections and forbid sets
+-- | Generate net with preexisting connections and forbid sets
 netLimitsWithPregen
   :: (MonadRandom m, Ord s, Ord t)
   => Int  -- ^ vLow
