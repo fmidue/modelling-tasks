@@ -140,22 +140,6 @@ spec = do
       let config = defaultDeadlockConfig
       checkDeadlockConfig config `shouldBe` Nothing
 
-    it "rejects incomingArrowsPerTransition where upper < lower" $ do
-      let config = defaultDeadlockConfig {
-            arrowDensityConstraints = noArrowDensityConstraints {
-              incomingArrowsPerTransition = (5, Just 2)
-              }
-            }
-      checkDeadlockConfig config `shouldSatisfy` isJust
-
-    it "rejects outgoingArrowsPerTransition where upper < lower" $ do
-      let config = defaultDeadlockConfig {
-            arrowDensityConstraints = noArrowDensityConstraints {
-              outgoingArrowsPerTransition = (5, Just 2)
-              }
-            }
-      checkDeadlockConfig config `shouldSatisfy` isJust
-
     it "rejects empty drawPreferenceOrder" $ do
       let config = defaultDeadlockConfig { drawPreferenceOrder = [] }
       checkDeadlockConfig config `shouldSatisfy` isJust

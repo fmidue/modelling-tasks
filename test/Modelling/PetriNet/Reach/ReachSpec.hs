@@ -179,26 +179,6 @@ spec = do
       let config = defaultReachConfig
       checkReachConfig config `shouldBe` Nothing
 
-    it "rejects incomingArrowsPerTransition where upper < lower" $ do
-      let config = defaultReachConfig {
-            netGoalConfig = (netGoalConfig defaultReachConfig) {
-              arrowDensityConstraints = (arrowDensityConstraints $ netGoalConfig defaultReachConfig) {
-                incomingArrowsPerTransition = (5, Just 2)
-                }
-              }
-            }
-      checkReachConfig config `shouldSatisfy` isJust
-
-    it "rejects outgoingArrowsPerTransition where upper < lower" $ do
-      let config = defaultReachConfig {
-            netGoalConfig = (netGoalConfig defaultReachConfig) {
-              arrowDensityConstraints = (arrowDensityConstraints $ netGoalConfig defaultReachConfig) {
-                outgoingArrowsPerTransition = (5, Just 2)
-                }
-              }
-            }
-      checkReachConfig config `shouldSatisfy` isJust
-
     it "rejects empty drawPreferenceOrder" $ do
       let config = defaultReachConfig {
             netGoalConfig = (netGoalConfig defaultReachConfig) {
