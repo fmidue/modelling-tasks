@@ -31,6 +31,39 @@ import Control.Monad.Random.Class       (MonadRandom (getRandomR))
 import Data.Maybe                       (fromMaybe)
 import System.Random.Shuffle            (shuffleM)
 
+-- | Generate net with preexisting connections and forbid sets
+netLimitsWithPregen
+  :: (MonadRandom m, Ord s, Ord t)
+  => Int  -- ^ vLow
+  -> Int  -- ^ vHigh
+  -> Int  -- ^ nLow
+  -> Int  -- ^ nHigh
+  -> [s]  -- ^ places
+  -> [t]  -- ^ transitions
+  -> Capacity s
+  -> [Connection s t]  -- ^ Pre-generated connections
+  -> [t]  -- ^ Transitions that should not receive incoming connections
+  -> [t]  -- ^ Transitions that should not have outgoing connections
+  -> m (Net s t)
+netLimitsWithPregen vLow vHigh nLow nHigh ps ts cap pregenConns forbidIncoming forbidOutgoing = do
+  s <- state ps
+  -- Generate connections for ALL transitions, respecting forbid sets
+  newConns <- forM ts $ \t -> do
+    vor <- if t `elem` forbidIncoming
+           then return []
+           else takeRandom vLow vHigh ps
+    nach <- if t `elem` forbidOutgoing
+            then return []
+            else takeRandom nLow nHigh ps
+    return (vor, t, nach)
+  return $ Net {
+    places      = S.fromList ps,
+    transitions = S.fromList ts,
+    connections = pregenConns ++ newConns,
+    capacity    = cap,
+    start       = s
+    }
+
 state :: (MonadRandom m, Ord s) => [s] -> m (State s)
 state ps = do
   qs <- selection ps
@@ -87,39 +120,6 @@ generateFusableConnections allPlaces allTransitions numInputFusable numOutputFus
          , inputFusableTransitions   -- forbid incoming to these
          , outputFusableTransitions  -- forbid outgoing from these
          )
-
--- | Generate net with preexisting connections and forbid sets
-netLimitsWithPregen
-  :: (MonadRandom m, Ord s, Ord t)
-  => Int  -- ^ vLow
-  -> Int  -- ^ vHigh
-  -> Int  -- ^ nLow
-  -> Int  -- ^ nHigh
-  -> [s]  -- ^ places
-  -> [t]  -- ^ transitions
-  -> Capacity s
-  -> [Connection s t]  -- ^ Pre-generated connections
-  -> [t]  -- ^ Transitions that should not receive incoming connections
-  -> [t]  -- ^ Transitions that should not have outgoing connections
-  -> m (Net s t)
-netLimitsWithPregen vLow vHigh nLow nHigh ps ts cap pregenConns forbidIncoming forbidOutgoing = do
-  s <- state ps
-  -- Generate connections for ALL transitions, respecting forbid sets
-  newConns <- forM ts $ \t -> do
-    vor <- if t `elem` forbidIncoming
-           then return []
-           else takeRandom vLow vHigh ps
-    nach <- if t `elem` forbidOutgoing
-            then return []
-            else takeRandom nLow nHigh ps
-    return (vor, t, nach)
-  return $ Net {
-    places      = S.fromList ps,
-    transitions = S.fromList ts,
-    connections = pregenConns ++ newConns,
-    capacity    = cap,
-    start       = s
-    }
 
 -- | Generate a net with limits and filtering for isolated nodes and transition behavior constraints
 netLimitsFiltered
