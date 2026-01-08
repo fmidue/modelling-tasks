@@ -32,7 +32,7 @@ import Data.Maybe                       (fromMaybe)
 import System.Random.Shuffle            (shuffleM)
 
 -- | Generate net with preexisting connections and forbid sets
-netLimitsWithPregen
+netLimitsWithPregenerated
   :: (MonadRandom m, Ord s, Ord t)
   => Int  -- ^ vLow
   -> Int  -- ^ vHigh
@@ -45,10 +45,10 @@ netLimitsWithPregen
   -> [t]  -- ^ Transitions that should not receive incoming connections
   -> [t]  -- ^ Transitions that should not have outgoing connections
   -> m (Net s t)
-netLimitsWithPregen vLow vHigh nLow nHigh ps ts cap pregenConns forbidIncoming forbidOutgoing = do
+netLimitsWithPregenerated vLow vHigh nLow nHigh ps ts cap pregeneratedConnections forbidIncoming forbidOutgoing = do
   s <- state ps
   -- Generate connections for ALL transitions, respecting forbid sets
-  newConns <- forM ts $ \t -> do
+  newConnections <- forM ts $ \t -> do
     vor <- if t `elem` forbidIncoming
            then return []
            else takeRandom vLow vHigh ps
@@ -59,7 +59,7 @@ netLimitsWithPregen vLow vHigh nLow nHigh ps ts cap pregenConns forbidIncoming f
   return $ Net {
     places      = S.fromList ps,
     transitions = S.fromList ts,
-    connections = pregenConns ++ newConns,
+    connections = pregeneratedConnections ++ newConnections,
     capacity    = cap,
     start       = s
     }
@@ -143,11 +143,11 @@ netLimitsFiltered
   requiredFusableInputNodes
   requiredFusableOutputNodes = do
   -- Pre-generate fusable node connections
-  (pregenConnections, forbidIncoming, forbidOutgoing) <-
+  (pregeneratedConnections, forbidIncoming, forbidOutgoing) <-
     generateFusableConnections ps ts requiredFusableInputNodes requiredFusableOutputNodes
   -- Generate net with forbid sets
-  n <- netLimitsWithPregen vLow vHigh nLow nHigh ps ts capacityConstraint
-         pregenConnections forbidIncoming forbidOutgoing
+  n <- netLimitsWithPregenerated vLow vHigh nLow nHigh ps ts capacityConstraint
+         pregeneratedConnections forbidIncoming forbidOutgoing
   return $ do
     -- Filter out nets with isolated nodes
     guard $ not $ hasIsolatedNodes n
