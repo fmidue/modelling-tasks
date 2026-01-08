@@ -127,29 +127,23 @@ netLimitsFiltered
     guard $ not $ hasIsolatedNodes n
     -- Filter out nets that don't satisfy transition behavior constraints
     guard $ satisfiesTransitionBehaviorConstraints n transitionBehaviorConstraints
-    -- Filter out nets that don't satisfy arrow density constraints
-    -- Compute concatenated lists once and share across related checks
+    -- Filter out nets that don't satisfy arrow density constraints beyond incomingArrowsPerTransition and outgoingArrowsPerTransition
     let allTransToPlaces = concatMap (\(_, _, post) -> post) (connections n)
     let allPlacesToTrans = concatMap (\(pre, _, _) -> pre) (connections n)
-    -- Compute initialMap once and share for both per-place checks
     let initialMap = M.fromDistinctAscList [(place, 0) | place <- S.toList $ places n]
-    -- Check incoming arrows per place (inlined)
     guard $ case incomingArrowsPerPlace of
       (0, Nothing) -> True
       _ -> let countMap = M.fromListWith (+) [(place, 1) | place <- allTransToPlaces]
                           `M.union` initialMap
            in all (inBounds incomingArrowsPerPlace) $ M.elems countMap
-    -- Check outgoing arrows per place (inlined)
     guard $ case outgoingArrowsPerPlace of
       (0, Nothing) -> True
       _ -> let countMap = M.fromListWith (+) [(place, 1) | place <- allPlacesToTrans]
                           `M.union` initialMap
            in all (inBounds outgoingArrowsPerPlace) $ M.elems countMap
-    -- Check total arrows from places to transitions (inlined)
     guard $ case totalArrowsFromPlacesToTransitions of
       (0, Nothing) -> True
       _ -> inBounds totalArrowsFromPlacesToTransitions (length allPlacesToTrans)
-    -- Check total arrows from transitions to places (inlined)
     guard $ case totalArrowsFromTransitionsToPlaces of
       (0, Nothing) -> True
       _ -> inBounds totalArrowsFromTransitionsToPlaces (length allTransToPlaces)
