@@ -593,7 +593,9 @@ defaultReachConfig = ReachConfig {
       },
     arrowDensityConstraints = noArrowDensityConstraints {
       incomingArrowsPerTransition = (0, Just 3),
-      outgoingArrowsPerTransition = (0, Just 3)
+      outgoingArrowsPerTransition = (0, Just 3),
+      incomingArrowsPerPlace = (0, Just 2),
+      outgoingArrowsPerPlace = (0, Just 2)
       }
     },
   maxPrintedSolutions = 1,
