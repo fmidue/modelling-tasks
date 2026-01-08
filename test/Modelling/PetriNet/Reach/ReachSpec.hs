@@ -63,12 +63,14 @@ spec = do
             ts = transitions net
         net `shouldSatisfy` hasMinTransitionLength (s ==) ts minL
 
-    it "has valid config for nightly test" $
-      checkReachConfig defaultReachConfig `shouldBe` Nothing
+    it "has valid config for nightly test" $ do
+      let config = defaultReachConfig
+      checkReachConfig config `shouldBe` Nothing
     nightly $
      modifyMaxSuccess (const 1) $
       prop "generates non-trivial solutions when filtering is enabled (as in the default configuration)" $ \seed -> do
         let config = defaultReachConfig
+        checkReachConfig config `shouldBe` Nothing
         inst <- generateReach config seed
         let allSolutions = either undefined toList (shortestSolutions inst)
         allSolutions `shouldSatisfy` not . shouldDiscardSolutions (filterConfig config) (numTransitions $ netGoalConfig config)
