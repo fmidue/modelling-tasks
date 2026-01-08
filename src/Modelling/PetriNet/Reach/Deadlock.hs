@@ -446,6 +446,11 @@ try conf = do
       (transitionBehaviorConstraints conf)
       (fromMaybe 0 $ requireFusableInputNodes conf)
       (fromMaybe 0 $ requireFusableOutputNodes conf)
+    -- Check fusable node constraints
+    whenJust (requireFusableInputNodes conf) $ \expected ->
+      guard $ countFusableInputNodes n == expected
+    whenJust (requireFusableOutputNodes conf) $ \expected ->
+      guard $ countFusableOutputNodes n == expected
     let deadlockLevels = map (filter (null . successors n . fst)) (levelsWithAlternatives n)
         (no, yeah) = span null
           $ take (maxTransitionLength conf + 1)
@@ -453,11 +458,6 @@ try conf = do
     guard $ not $ null yeah
     let allShortestSolutions = map reverse . concatMap snd $ head yeah
     guard $ length no >= minTransitionLength conf
-    -- Check fusable node constraints
-    whenJust (requireFusableInputNodes conf) $ \expected ->
-      guard $ countFusableInputNodes n == expected
-    whenJust (requireFusableOutputNodes conf) $ \expected ->
-      guard $ countFusableOutputNodes n == expected
     (cmd, solutionsList) <- validateDrawabilityAndSolutionFiltering
       n (drawPreferenceOrder conf) allShortestSolutions
       (filterConfig conf) (numTransitions conf) (maxPrintedSolutions conf)
