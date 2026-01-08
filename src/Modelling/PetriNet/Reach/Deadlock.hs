@@ -64,7 +64,6 @@ import Modelling.PetriNet.Reach.Property (
 import Modelling.PetriNet.Reach.ConfigValidation (
   checkBasicPetriConfig,
   checkFilterConfigWith,
-  checkTransitionBehaviorConstraints,
   )
 import Modelling.PetriNet.Reach.Reach   (
   assertReachPoints,
@@ -79,6 +78,7 @@ import Modelling.PetriNet.Reach.Reach   (
 import Modelling.PetriNet.Reach.Roll    (netLimitsFiltered)
 import Modelling.PetriNet.Reach.Step    (executes, successors)
 import Modelling.PetriNet.Reach.Type (
+  ArrowDensityConstraints(..),
   Capacity (Unbounded),
   Net (..),
   Place (..),
@@ -90,6 +90,7 @@ import Modelling.PetriNet.Reach.Type (
   TransitionsList (TransitionsList),
   bimapNet,
   example,
+  noArrowDensityConstraints,
   noTransitionBehaviorConstraints,
   )
 
@@ -262,8 +263,7 @@ data DeadlockConfig = DeadlockConfig {
   maxTransitionLength :: Int,
   minTransitionLength :: Int,
   transitionBehaviorConstraints :: TransitionBehaviorConstraints,
-  postconditionsRange :: (Int, Maybe Int),
-  preconditionsRange  :: (Int, Maybe Int),
+  arrowDensityConstraints :: ArrowDensityConstraints,
   maxPrintedSolutions :: Int,
   rejectLongerThan    :: Maybe Int,
   showLengthHint      :: Bool,
@@ -286,8 +286,7 @@ defaultDeadlockConfig =
   maxTransitionLength = 8,
   minTransitionLength = 8,
   transitionBehaviorConstraints = noTransitionBehaviorConstraints,
-  postconditionsRange = (0, Nothing),
-  preconditionsRange  = (0, Nothing),
+  arrowDensityConstraints = noArrowDensityConstraints,
   maxPrintedSolutions = 0,
   rejectLongerThan    = Just 8,
   showLengthHint      = False,
@@ -318,8 +317,8 @@ checkDeadlockConfig DeadlockConfig {..} =
     capacity
     minTransitionLength
     maxTransitionLength
-    preconditionsRange
-    postconditionsRange
+    transitionBehaviorConstraints
+    arrowDensityConstraints
     drawPreferenceOrder
     rejectLongerThan
     showLengthHint
@@ -329,13 +328,6 @@ checkDeadlockConfig DeadlockConfig {..} =
     minTransitionLength
     numTransitions
     filterConfig
-  <|>
-  checkTransitionBehaviorConstraints
-    numPlaces
-    preconditionsRange
-    postconditionsRange
-    numTransitions
-    transitionBehaviorConstraints
   <|>
   if maxPrintedSolutions < 0
     then Just "maxPrintedSolutions must be non-negative"
@@ -386,8 +378,7 @@ try conf = do
     let ps = [Place 1 .. Place (numPlaces conf)]
         ts = [Transition 1 .. Transition (numTransitions conf)]
     n <- MaybeT $ netLimitsFiltered
-      (preconditionsRange conf)
-      (postconditionsRange conf)
+      (arrowDensityConstraints conf)
       (numPlaces conf)
       ps
       ts

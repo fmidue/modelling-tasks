@@ -85,6 +85,7 @@ import Modelling.PetriNet.Reach.Property (
 import Modelling.PetriNet.Reach.Roll    (netLimitsFiltered)
 import Modelling.PetriNet.Reach.Step    (executes, successors)
 import Modelling.PetriNet.Reach.Type (
+  ArrowDensityConstraints(..),
   Capacity (Unbounded),
   Net (start, transitions),
   Place (..),
@@ -98,6 +99,7 @@ import Modelling.PetriNet.Reach.Type (
   example,
   mapState,
   mark,
+  noArrowDensityConstraints,
   )
 
 import Control.Applicative              (Alternative, (<|>))
@@ -109,7 +111,6 @@ import Control.Monad.Trans.Maybe        (MaybeT (MaybeT, runMaybeT))
 import Modelling.PetriNet.Reach.ConfigValidation (
   checkBasicPetriConfig,
   checkFilterConfigWith,
-  checkTransitionBehaviorConstraints,
   )
 import Control.OutputCapable.Blocks (
   ArticleToUse (IndefiniteArticle),
@@ -569,8 +570,7 @@ data NetGoalConfig = NetGoalConfig {
   -- Must be in the range @1..numPlaces@.
   maxPlacesChanged    :: Int,
   transitionBehaviorConstraints :: TransitionBehaviorConstraints,
-  postconditionsRange :: (Int, Maybe Int),
-  preconditionsRange  :: (Int, Maybe Int)
+  arrowDensityConstraints :: ArrowDensityConstraints
   }
   deriving (Generic, Read, Show)
 #if !MIN_VERSION_base(4,18,0)
@@ -591,8 +591,12 @@ defaultReachConfig = ReachConfig {
       allowedTokenChanges = Nothing,
       areNonPreserving = Just 2
       },
-    postconditionsRange = (0, Just 3),
-    preconditionsRange  = (0, Just 3)
+    arrowDensityConstraints = noArrowDensityConstraints {
+      incomingArrowsPerTransition = (0, Just 3),
+      outgoingArrowsPerTransition = (0, Just 3),
+      incomingArrowsPerPlace = (0, Just 2),
+      outgoingArrowsPerPlace = (0, Just 2)
+      }
     },
   maxPrintedSolutions = 1,
   rejectLongerThan    = Just 6,
@@ -633,8 +637,7 @@ findNetGoalWithSolutions filterConfig maxPrintedSolutions NetGoalConfig {..} =
       try = do
         let generateNet =
               maybe generateNet return =<< netLimitsFiltered
-                preconditionsRange
-                postconditionsRange
+                arrowDensityConstraints
                 numPlaces
                 ps
                 ts
@@ -725,8 +728,8 @@ checkReachConfig ReachConfig {..} =
     (capacity netGoalConfig)
     (minTransitionLength netGoalConfig)
     (maxTransitionLength netGoalConfig)
-    (preconditionsRange netGoalConfig)
-    (postconditionsRange netGoalConfig)
+    (transitionBehaviorConstraints netGoalConfig)
+    (arrowDensityConstraints netGoalConfig)
     (drawPreferenceOrder netGoalConfig)
     rejectLongerThan
     showLengthHint
@@ -750,13 +753,6 @@ checkReachConfig ReachConfig {..} =
       Just maxSolutions | maxPrintedSolutions > maxSolutions ->
         Just "maxPrintedSolutions cannot be greater than solutionSetLimit"
       _ -> Nothing)
-  <|>
-  checkTransitionBehaviorConstraints
-    (numPlaces netGoalConfig)
-    (preconditionsRange netGoalConfig)
-    (postconditionsRange netGoalConfig)
-    (numTransitions netGoalConfig)
-    (transitionBehaviorConstraints netGoalConfig)
   <|>
   if showTargetNet || showPlaceNamesInNet
       then Nothing

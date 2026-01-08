@@ -108,6 +108,34 @@ noTransitionBehaviorConstraints = TransitionBehaviorConstraints {
   areNonPreserving = Nothing
   }
 
+-- | Arrow density constraints for net generation
+data ArrowDensityConstraints = ArrowDensityConstraints {
+  -- | Constrain arrows entering each transition (from places)
+  incomingArrowsPerTransition :: (Int, Maybe Int),
+  -- | Constrain arrows leaving each transition (to places)
+  outgoingArrowsPerTransition :: (Int, Maybe Int),
+  -- | Constrain arrows entering each place (from transitions)
+  incomingArrowsPerPlace :: (Int, Maybe Int),
+  -- | Constrain arrows leaving each place (to transitions)
+  outgoingArrowsPerPlace :: (Int, Maybe Int),
+  -- | Global constraint on total arrows from places to transitions
+  totalArrowsFromPlacesToTransitions :: (Int, Maybe Int),
+  -- | Global constraint on total arrows from transitions to places
+  totalArrowsFromTransitionsToPlaces :: (Int, Maybe Int)
+  }
+  deriving (Data, Eq, Generic, Hashable, Ord, Read, Reader, Show, ToDoc)
+
+-- | Default arrow density constraints (no restrictions)
+noArrowDensityConstraints :: ArrowDensityConstraints
+noArrowDensityConstraints = ArrowDensityConstraints {
+  incomingArrowsPerTransition = (0, Nothing),
+  outgoingArrowsPerTransition = (0, Nothing),
+  incomingArrowsPerPlace = (0, Nothing),
+  outgoingArrowsPerPlace = (0, Nothing),
+  totalArrowsFromPlacesToTransitions = (0, Nothing),
+  totalArrowsFromTransitionsToPlaces = (0, Nothing)
+  }
+
 data Net s t = Net {
   places :: Set s,
   transitions :: Set t,

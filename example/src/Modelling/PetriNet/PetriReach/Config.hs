@@ -4,7 +4,7 @@ module Modelling.PetriNet.PetriReach.Config where
 
 import Modelling.PetriNet.Reach.Reach   (ReachConfig(..), NetGoalConfig(..))
 import Modelling.PetriNet.Reach.Filter  (defaultFilterConfig, FilterConfig(absentTransitionsRequirement, forbiddenCycleLengths, requireCycleLengthsAny))
-import Modelling.PetriNet.Reach.Type    (Capacity(..), noTransitionBehaviorConstraints)
+import Modelling.PetriNet.Reach.Type    (Capacity(..), TransitionBehaviorConstraints(..), ArrowDensityConstraints(..))
 import Data.GraphViz.Commands           (GraphvizCommand(..))
 
 {-|
@@ -19,10 +19,19 @@ task2023_27 = ReachConfig {
     drawPreferenceOrder = [Circo],
     maxTransitionLength = 8,
     minTransitionLength = 8,
-    postconditionsRange = (2, Just 3),
+    arrowDensityConstraints = ArrowDensityConstraints {
+      incomingArrowsPerTransition = (2, Just 2),
+      outgoingArrowsPerTransition = (2, Just 3),
+      incomingArrowsPerPlace = (0, Nothing),
+      outgoingArrowsPerPlace = (0, Nothing),
+      totalArrowsFromPlacesToTransitions = (8, Just 8),
+      totalArrowsFromTransitionsToPlaces = (8, Just 12)
+      },
     maxPlacesChanged = 4,
-    transitionBehaviorConstraints = noTransitionBehaviorConstraints,
-    preconditionsRange = (2, Just 2)
+    transitionBehaviorConstraints = TransitionBehaviorConstraints {
+      allowedTokenChanges = Nothing,
+      areNonPreserving = Nothing
+      }
     },
   maxPrintedSolutions = 10,
   rejectLongerThan = Just 8,
@@ -45,10 +54,19 @@ task2023_28 = ReachConfig {
     drawPreferenceOrder = [Circo],
     maxTransitionLength = 12,
     minTransitionLength = 12,
-    postconditionsRange = (2, Just 3),
+    arrowDensityConstraints = ArrowDensityConstraints {
+      incomingArrowsPerTransition = (2, Just 2),
+      outgoingArrowsPerTransition = (2, Just 3),
+      incomingArrowsPerPlace = (0, Nothing),
+      outgoingArrowsPerPlace = (0, Nothing),
+      totalArrowsFromPlacesToTransitions = (12, Just 12),
+      totalArrowsFromTransitionsToPlaces = (12, Just 18)
+      },
     maxPlacesChanged = 6,
-    transitionBehaviorConstraints = noTransitionBehaviorConstraints,
-    preconditionsRange = (2, Just 2)
+    transitionBehaviorConstraints = TransitionBehaviorConstraints {
+      allowedTokenChanges = Nothing,
+      areNonPreserving = Nothing
+      }
     },
   maxPrintedSolutions = 10,
   rejectLongerThan = Just 12,
@@ -83,10 +101,19 @@ task2024_60 = ReachConfig {
     drawPreferenceOrder = [Circo],
     maxTransitionLength = 8,
     minTransitionLength = 8,
-    postconditionsRange = (2, Just 3),
+    arrowDensityConstraints = ArrowDensityConstraints {
+      incomingArrowsPerTransition = (2, Just 2),
+      outgoingArrowsPerTransition = (2, Just 3),
+      incomingArrowsPerPlace = (0, Nothing),
+      outgoingArrowsPerPlace = (0, Nothing),
+      totalArrowsFromPlacesToTransitions = (8, Just 8),
+      totalArrowsFromTransitionsToPlaces = (8, Just 12)
+      },
     maxPlacesChanged = 4,
-    transitionBehaviorConstraints = noTransitionBehaviorConstraints,
-    preconditionsRange = (2, Just 2)
+    transitionBehaviorConstraints = TransitionBehaviorConstraints {
+      allowedTokenChanges = Nothing,
+      areNonPreserving = Nothing
+      }
     },
   maxPrintedSolutions = 10,
   rejectLongerThan = Just 8,

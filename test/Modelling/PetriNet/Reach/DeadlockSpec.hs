@@ -20,7 +20,9 @@ import Modelling.PetriNet.Reach.Type (
   Capacity(..),
   Place(..),
   TransitionBehaviorConstraints(..),
+  ArrowDensityConstraints(..),
   connectionTokenBehavior,
+  noArrowDensityConstraints,
   )
 
 import Data.Maybe                       (isJust)
@@ -59,18 +61,132 @@ spec = do
           let allSolutions = either undefined toList (shortestSolutions deadlockInstance)
           allSolutions `shouldSatisfy` not . shouldDiscardSolutions (filterConfig config) (numTransitions config)
 
+    modifyMaxSuccess (const 3) $
+      prop "respects incomingArrowsPerPlace constraint" $ \seed -> do
+        let config = defaultDeadlockConfig {
+              maxTransitionLength = 6,
+              minTransitionLength = 6,
+              arrowDensityConstraints = noArrowDensityConstraints {
+                incomingArrowsPerPlace = (1, Just 2),
+                totalArrowsFromTransitionsToPlaces = (6, Just 12)
+                },
+              filterConfig = noFiltering
+              }
+            countIncomingToPlace :: Place -> [([Place], t, [Place])] -> Int
+            countIncomingToPlace place conns =
+              sum [length $ filter (== place) post | (_, _, post) <- conns]
+        checkDeadlockConfig config `shouldBe` Nothing
+        deadlockInstance <- generateDeadlock config seed
+        let net = petriNet deadlockInstance
+            places = [Place 1 .. Place (numPlaces config)]
+            incomingArrowsPerPlaceList = map (\p -> countIncomingToPlace p (connections net)) places
+        all (\count -> count >= 1 && count <= 2) incomingArrowsPerPlaceList `shouldBe` True
+
+    modifyMaxSuccess (const 3) $
+      prop "respects outgoingArrowsPerPlace constraint" $ \seed -> do
+        let config = defaultDeadlockConfig {
+              maxTransitionLength = 6,
+              minTransitionLength = 6,
+              arrowDensityConstraints = noArrowDensityConstraints {
+                outgoingArrowsPerPlace = (1, Just 2),
+                totalArrowsFromPlacesToTransitions = (6, Just 12)
+                },
+              filterConfig = noFiltering
+              }
+            countOutgoingFromPlace :: Place -> [([Place], t, [Place])] -> Int
+            countOutgoingFromPlace place conns =
+              sum [length $ filter (== place) pre | (pre, _, _) <- conns]
+        checkDeadlockConfig config `shouldBe` Nothing
+        deadlockInstance <- generateDeadlock config seed
+        let net = petriNet deadlockInstance
+            places = [Place 1 .. Place (numPlaces config)]
+            outgoingArrowsPerPlaceList = map (\p -> countOutgoingFromPlace p (connections net)) places
+        all (\count -> count >= 1 && count <= 2) outgoingArrowsPerPlaceList `shouldBe` True
+
+    modifyMaxSuccess (const 3) $
+      prop "respects totalArrowsFromPlacesToTransitions constraint" $ \seed -> do
+        let config = defaultDeadlockConfig {
+              maxTransitionLength = 6,
+              minTransitionLength = 6,
+              arrowDensityConstraints = noArrowDensityConstraints {
+                totalArrowsFromPlacesToTransitions = (8, Just 15)
+                },
+              filterConfig = noFiltering
+              }
+        checkDeadlockConfig config `shouldBe` Nothing
+        deadlockInstance <- generateDeadlock config seed
+        let net = petriNet deadlockInstance
+            totalArrows = sum [length pre | (pre, _, _) <- connections net]
+        totalArrows `shouldSatisfy` (\x -> x >= 8 && x <= 15)
+
+    modifyMaxSuccess (const 3) $
+      prop "respects totalArrowsFromTransitionsToPlaces constraint" $ \seed -> do
+        let config = defaultDeadlockConfig {
+              maxTransitionLength = 6,
+              minTransitionLength = 6,
+              arrowDensityConstraints = noArrowDensityConstraints {
+                totalArrowsFromTransitionsToPlaces = (8, Just 15)
+                },
+              filterConfig = noFiltering
+              }
+        checkDeadlockConfig config `shouldBe` Nothing
+        deadlockInstance <- generateDeadlock config seed
+        let net = petriNet deadlockInstance
+            totalArrows = sum [length post | (_, _, post) <- connections net]
+        totalArrows `shouldSatisfy` (\x -> x >= 8 && x <= 15)
+
+    nightly $
+     modifyMaxSuccess (const 1) $
+      prop "respects allowedTokenChanges = Just LT (only token-decreasing)" $ \seed -> do
+        let config = defaultDeadlockConfig {
+              filterConfig = noFiltering,
+              transitionBehaviorConstraints = TransitionBehaviorConstraints {
+                allowedTokenChanges = Just LT,
+                areNonPreserving = Nothing
+                }
+              }
+        checkDeadlockConfig config `shouldBe` Nothing
+        inst <- generateDeadlock config seed
+        let net = petriNet inst
+            increasingCount = length $ filter (uncurry (<) . connectionTokenBehavior) $ connections net
+        increasingCount `shouldBe` 0
+
+    nightly $
+     modifyMaxSuccess (const 1) $
+      prop "respects allowedTokenChanges = Just GT (only token-increasing)" $ \seed -> do
+        let config = defaultDeadlockConfig {
+              filterConfig = noFiltering,
+              transitionBehaviorConstraints = TransitionBehaviorConstraints {
+                allowedTokenChanges = Just GT,
+                areNonPreserving = Nothing
+                }
+              }
+        checkDeadlockConfig config `shouldBe` Nothing
+        inst <- generateDeadlock config seed
+        let net = petriNet inst
+            decreasingCount = length $ filter (uncurry (>) . connectionTokenBehavior) $ connections net
+        decreasingCount `shouldBe` 0
+
+    nightly $
+     modifyMaxSuccess (const 1) $
+      prop "respects areNonPreserving constraint" $ \seed -> do
+        let config = defaultDeadlockConfig {
+              filterConfig = noFiltering,
+              transitionBehaviorConstraints = TransitionBehaviorConstraints {
+                allowedTokenChanges = Nothing,
+                areNonPreserving = Just 1
+                }
+              }
+        checkDeadlockConfig config `shouldBe` Nothing
+        inst <- generateDeadlock config seed
+        let net = petriNet inst
+            nonPreservingCount = length $ filter (uncurry (/=) . connectionTokenBehavior) $ connections net
+        nonPreservingCount `shouldBe` 1
+
   describe "checkDeadlockConfig" $ do
     it "accepts valid configuration" $ do
       let config = defaultDeadlockConfig
       checkDeadlockConfig config `shouldBe` Nothing
-
-    it "rejects preconditionsRange where upper < lower" $ do
-      let config = defaultDeadlockConfig { preconditionsRange = (5, Just 2) }
-      checkDeadlockConfig config `shouldSatisfy` isJust
-
-    it "rejects postconditionsRange where upper < lower" $ do
-      let config = defaultDeadlockConfig { postconditionsRange = (5, Just 2) }
-      checkDeadlockConfig config `shouldSatisfy` isJust
 
     it "rejects empty drawPreferenceOrder" $ do
       let config = defaultDeadlockConfig { drawPreferenceOrder = [] }
@@ -139,55 +255,14 @@ spec = do
             }
       checkDeadlockConfig config `shouldSatisfy` isJust
 
-    nightly $
-     modifyMaxSuccess (const 1) $
-      prop "respects allowedTokenChanges = Just LT (only token-decreasing)" $ \seed -> do
-        let config = defaultDeadlockConfig {
-              filterConfig = noFiltering,
-              transitionBehaviorConstraints = TransitionBehaviorConstraints {
-                allowedTokenChanges = Just LT,
-                areNonPreserving = Nothing
-                }
-              }
-        inst <- generateDeadlock config seed
-        let net = petriNet inst
-            increasingCount = length $ filter (uncurry (<) . connectionTokenBehavior) $ connections net
-        increasingCount `shouldBe` 0
-
-    nightly $
-     modifyMaxSuccess (const 1) $
-      prop "respects allowedTokenChanges = Just GT (only token-increasing)" $ \seed -> do
-        let config = defaultDeadlockConfig {
-              filterConfig = noFiltering,
-              transitionBehaviorConstraints = TransitionBehaviorConstraints {
-                allowedTokenChanges = Just GT,
-                areNonPreserving = Nothing
-                }
-              }
-        inst <- generateDeadlock config seed
-        let net = petriNet inst
-            decreasingCount = length $ filter (uncurry (>) . connectionTokenBehavior) $ connections net
-        decreasingCount `shouldBe` 0
-
-    nightly $
-     modifyMaxSuccess (const 1) $
-      prop "respects areNonPreserving constraint" $ \seed -> do
-        let config = defaultDeadlockConfig {
-              filterConfig = noFiltering,
-              transitionBehaviorConstraints = TransitionBehaviorConstraints {
-                allowedTokenChanges = Nothing,
-                areNonPreserving = Just 1
-                }
-              }
-        inst <- generateDeadlock config seed
-        let net = petriNet inst
-            nonPreservingCount = length $ filter (uncurry (/=) . connectionTokenBehavior) $ connections net
-        nonPreservingCount `shouldBe` 1
-
     it "rejects allowedTokenChanges = Just LT with impossible range (vHigh <= nLow)" $ do
       let config = defaultDeadlockConfig {
-            preconditionsRange = (1, Just 2),
-            postconditionsRange = (3, Just 5),
+            arrowDensityConstraints = noArrowDensityConstraints {
+              incomingArrowsPerTransition = (1, Just 2),
+              outgoingArrowsPerTransition = (3, Just 5),
+              totalArrowsFromPlacesToTransitions = (6, Just 12),
+              totalArrowsFromTransitionsToPlaces = (18, Just 30)
+              },
             transitionBehaviorConstraints = TransitionBehaviorConstraints {
               allowedTokenChanges = Just LT,
               areNonPreserving = Nothing
@@ -197,8 +272,12 @@ spec = do
 
     it "rejects allowedTokenChanges = Just GT with impossible range (nHigh <= vLow)" $ do
       let config = defaultDeadlockConfig {
-            preconditionsRange = (3, Just 5),
-            postconditionsRange = (1, Just 2),
+            arrowDensityConstraints = noArrowDensityConstraints {
+              incomingArrowsPerTransition = (3, Just 5),
+              outgoingArrowsPerTransition = (1, Just 2),
+              totalArrowsFromPlacesToTransitions = (18, Just 30),
+              totalArrowsFromTransitionsToPlaces = (6, Just 12)
+              },
             transitionBehaviorConstraints = TransitionBehaviorConstraints {
               allowedTokenChanges = Just GT,
               areNonPreserving = Nothing
@@ -208,8 +287,12 @@ spec = do
 
     it "rejects areNonPreserving > 0 with fixed equal ranges" $ do
       let config = defaultDeadlockConfig {
-            preconditionsRange = (2, Just 2),
-            postconditionsRange = (2, Just 2),
+            arrowDensityConstraints = noArrowDensityConstraints {
+              incomingArrowsPerTransition = (2, Just 2),
+              outgoingArrowsPerTransition = (2, Just 2),
+              totalArrowsFromPlacesToTransitions = (12, Just 12),
+              totalArrowsFromTransitionsToPlaces = (12, Just 12)
+              },
             transitionBehaviorConstraints = TransitionBehaviorConstraints {
               allowedTokenChanges = Nothing,
               areNonPreserving = Just 1
@@ -219,8 +302,12 @@ spec = do
 
     it "accepts allowedTokenChanges = Just LT with valid range" $ do
       let config = defaultDeadlockConfig {
-            preconditionsRange = (2, Just 5),
-            postconditionsRange = (0, Just 3),
+            arrowDensityConstraints = noArrowDensityConstraints {
+              incomingArrowsPerTransition = (2, Just 5),
+              outgoingArrowsPerTransition = (0, Just 3),
+              totalArrowsFromPlacesToTransitions = (12, Just 30),
+              totalArrowsFromTransitionsToPlaces = (0, Just 18)
+              },
             transitionBehaviorConstraints = TransitionBehaviorConstraints {
               allowedTokenChanges = Just LT,
               areNonPreserving = Nothing
@@ -230,11 +317,28 @@ spec = do
 
     it "accepts allowedTokenChanges = Just GT with valid range" $ do
       let config = defaultDeadlockConfig {
-            preconditionsRange = (0, Just 3),
-            postconditionsRange = (2, Just 5),
+            arrowDensityConstraints = noArrowDensityConstraints {
+              incomingArrowsPerTransition = (0, Just 3),
+              outgoingArrowsPerTransition = (2, Just 5),
+              totalArrowsFromPlacesToTransitions = (0, Just 18),
+              totalArrowsFromTransitionsToPlaces = (12, Just 30)
+              },
             transitionBehaviorConstraints = TransitionBehaviorConstraints {
               allowedTokenChanges = Just GT,
               areNonPreserving = Nothing
+              }
+            }
+      checkDeadlockConfig config `shouldBe` Nothing
+
+    it "accepts configuration with consistent arrow density parameters" $ do
+      let config = defaultDeadlockConfig {
+            arrowDensityConstraints = ArrowDensityConstraints {
+              incomingArrowsPerTransition = (1, Just 2),
+              outgoingArrowsPerTransition = (1, Just 2),
+              incomingArrowsPerPlace = (1, Just 3),
+              outgoingArrowsPerPlace = (1, Just 3),
+              totalArrowsFromPlacesToTransitions = (6, Just 12),
+              totalArrowsFromTransitionsToPlaces = (6, Just 12)
               }
             }
       checkDeadlockConfig config `shouldBe` Nothing
