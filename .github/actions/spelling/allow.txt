@@ -81,6 +81,7 @@ foldr
 forkagain
 forkend
 fst
+fusable
 ghci
 github
 gpt
