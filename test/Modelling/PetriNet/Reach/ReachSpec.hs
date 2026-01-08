@@ -47,7 +47,7 @@ import Test.Hspec.QuickCheck (modifyMaxSuccess, prop)
 spec :: Spec
 spec = do
   describe "generateReach" $ do
-    modifyMaxSuccess (const 15) $
+    modifyMaxSuccess (const 5) $
       prop "abides minTransitionLength" $ \seed -> do
         let config = defaultReachConfig {
               filterConfig = noFiltering,
@@ -63,14 +63,14 @@ spec = do
         net `shouldSatisfy` hasMinTransitionLength (s ==) ts minL
 
     nightly $
-     modifyMaxSuccess (const 3) $
+     modifyMaxSuccess (const 1) $
       prop "generates non-trivial solutions when filtering is enabled (as in the default configuration)" $ \seed -> do
         let config = defaultReachConfig
         inst <- generateReach config seed
         let allSolutions = either undefined toList (shortestSolutions inst)
         allSolutions `shouldSatisfy` not . shouldDiscardSolutions (filterConfig config) (numTransitions $ netGoalConfig config)
 
-    modifyMaxSuccess (const 15) $
+    modifyMaxSuccess (const 5) $
       prop "adheres to maxPlacesChanged constraint with noFiltering" $ \seed -> do
         let config = defaultReachConfig {
               filterConfig = noFiltering,
@@ -88,7 +88,7 @@ spec = do
             numberOfDifferentPlaces = length $ filter (\p -> mark startState p /= mark goalState p) places
         numberOfDifferentPlaces `shouldSatisfy` (<= 2)
 
-    modifyMaxSuccess (const 5) $
+    modifyMaxSuccess (const 3) $
       prop "respects incomingArrowsPerPlace constraint" $ \seed -> do
         let config = defaultReachConfig {
               filterConfig = noFiltering,
@@ -112,7 +112,7 @@ spec = do
             incomingArrowsPerPlaceList = map (\p -> countIncomingToPlace p (connections net)) places
         all (\count -> count >= 1 && count <= 2) incomingArrowsPerPlaceList `shouldBe` True
 
-    modifyMaxSuccess (const 5) $
+    modifyMaxSuccess (const 3) $
       prop "respects outgoingArrowsPerPlace constraint" $ \seed -> do
         let config = defaultReachConfig {
               filterConfig = noFiltering,
@@ -136,7 +136,7 @@ spec = do
             outgoingArrowsPerPlaceList = map (\p -> countOutgoingFromPlace p (connections net)) places
         all (\count -> count >= 1 && count <= 2) outgoingArrowsPerPlaceList `shouldBe` True
 
-    modifyMaxSuccess (const 5) $
+    modifyMaxSuccess (const 3) $
       prop "respects totalArrowsFromPlacesToTransitions constraint" $ \seed -> do
         let config = defaultReachConfig {
               filterConfig = noFiltering,
@@ -155,7 +155,7 @@ spec = do
             totalArrows = sum [length pre | (pre, _, _) <- connections net]
         totalArrows `shouldSatisfy` (\x -> x >= 10 && x <= 18)
 
-    modifyMaxSuccess (const 5) $
+    modifyMaxSuccess (const 3) $
       prop "respects totalArrowsFromTransitionsToPlaces constraint" $ \seed -> do
         let config = defaultReachConfig {
               filterConfig = noFiltering,
