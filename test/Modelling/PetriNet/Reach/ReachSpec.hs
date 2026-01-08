@@ -79,6 +79,7 @@ spec = do
                 transitionBehaviorConstraints = noTransitionBehaviorConstraints
                 }
               }
+        checkReachConfig config `shouldBe` Nothing
         inst <- generateReach config seed
         let net = petriNet (netGoal inst)
             startState = start net
