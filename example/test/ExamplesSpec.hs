@@ -81,6 +81,8 @@ import Modelling.CdOd.DifferentNames.Config (
   task2025_14,
   task2025_15,
   task2025_16,
+  task2025_21,
+  task2025_22,
   )
 import Modelling.CdOd.MatchCdOd (
   checkMatchCdOdConfig,
@@ -484,3 +486,7 @@ spec =
         checkMatchCdOdConfig task2025_19 `shouldBe` Nothing
       it "task20" $
         checkMatchCdOdConfig task2025_20 `shouldBe` Nothing
+      it "task21" $
+        checkDifferentNamesConfig task2025_21 `shouldBe` Nothing
+      it "task22" $
+        checkDifferentNamesConfig task2025_22 `shouldBe` Nothing
