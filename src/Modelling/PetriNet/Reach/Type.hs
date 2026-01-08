@@ -310,9 +310,9 @@ countFusableInputNodes :: (Ord s, Ord t) => Net s t -> Int
 countFusableInputNodes net =
   length $ filter isFusableInput (connections net)
   where
-    isFusableInput (inputPlaces, transition, _) =
+    isFusableInput (inputPlaces, transition, outputPlaces) =
       case inputPlaces of
-        [singlePlace] -> isOnlyConsumerOf transition singlePlace
+        [singlePlace] -> singlePlace `notElem` outputPlaces && isOnlyConsumerOf transition singlePlace
         _ -> False
     isOnlyConsumerOf transition place =
       let consumersOfPlace = [t | (pre, t, _) <- connections net, place `elem` pre]
@@ -339,9 +339,9 @@ countFusableOutputNodes :: (Ord s, Ord t) => Net s t -> Int
 countFusableOutputNodes net =
   length $ filter isFusableOutput (connections net)
   where
-    isFusableOutput (_, transition, outputPlaces) =
+    isFusableOutput (inputPlaces, transition, outputPlaces) =
       case outputPlaces of
-        [singlePlace] -> isOnlyProducerOf transition singlePlace
+        [singlePlace] -> singlePlace `notElem` inputPlaces && isOnlyProducerOf transition singlePlace
         _ -> False
     isOnlyProducerOf transition place =
       let producersOfPlace = [t | (_, t, post) <- connections net, place `elem` post]
