@@ -351,6 +351,16 @@ checkFusableNodeConfig maybeInputNodes maybeOutputNodes numTrans ArrowDensityCon
   , minOut > 1
   , outputCount > 0
   = Just "requireFusableOutputNodes > 0 conflicts with outgoingArrowsPerTransition minimum > 1"
+  | Just inputCount <- maybeInputNodes
+  , let (minOutPlace, _) = outgoingArrowsPerPlace
+  , minOutPlace > 1
+  , inputCount > 0
+  = Just "requireFusableInputNodes > 0 conflicts with outgoingArrowsPerPlace minimum > 1"
+  | Just outputCount <- maybeOutputNodes
+  , let (minInPlace, _) = incomingArrowsPerPlace
+  , minInPlace > 1
+  , outputCount > 0
+  = Just "requireFusableOutputNodes > 0 conflicts with incomingArrowsPerPlace minimum > 1"
   | otherwise
   = Nothing
 

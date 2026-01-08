@@ -466,3 +466,21 @@ spec = do
               }
             }
       checkDeadlockConfig config `shouldSatisfy` isJust
+
+    it "rejects requireFusableInputNodes > 0 with outgoingArrowsPerPlace minimum > 1" $ do
+      let config = defaultDeadlockConfig {
+            requireFusableInputNodes = Just 1,
+            arrowDensityConstraints = noArrowDensityConstraints {
+              outgoingArrowsPerPlace = (2, Just 3)
+              }
+            }
+      checkDeadlockConfig config `shouldSatisfy` isJust
+
+    it "rejects requireFusableOutputNodes > 0 with incomingArrowsPerPlace minimum > 1" $ do
+      let config = defaultDeadlockConfig {
+            requireFusableOutputNodes = Just 1,
+            arrowDensityConstraints = noArrowDensityConstraints {
+              incomingArrowsPerPlace = (2, Just 3)
+              }
+            }
+      checkDeadlockConfig config `shouldSatisfy` isJust
