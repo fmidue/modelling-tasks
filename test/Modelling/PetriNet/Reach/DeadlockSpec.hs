@@ -36,6 +36,14 @@ import Settings (nightly)
 import Test.Hspec
 import Test.Hspec.QuickCheck (modifyMaxSuccess, prop)
 
+countIncomingToPlace :: Place -> [([Place], t, [Place])] -> Int
+countIncomingToPlace place conns =
+  sum [length $ filter (== place) post | (_, _, post) <- conns]
+
+countOutgoingFromPlace :: Place -> [([Place], t, [Place])] -> Int
+countOutgoingFromPlace place conns =
+  sum [length $ filter (== place) pre | (pre, _, _) <- conns]
+
 spec :: Spec
 spec = do
   describe "generateDeadlock" $ do
@@ -269,7 +277,9 @@ spec = do
       let config = defaultDeadlockConfig {
             arrowDensityConstraints = noArrowDensityConstraints {
               incomingArrowsPerTransition = (1, Just 2),
-              outgoingArrowsPerTransition = (3, Just 5)
+              outgoingArrowsPerTransition = (3, Just 5),
+              totalArrowsFromPlacesToTransitions = (6, Just 12),
+              totalArrowsFromTransitionsToPlaces = (18, Just 30)
               },
             transitionBehaviorConstraints = TransitionBehaviorConstraints {
               allowedTokenChanges = Just LT,
@@ -282,7 +292,9 @@ spec = do
       let config = defaultDeadlockConfig {
             arrowDensityConstraints = noArrowDensityConstraints {
               incomingArrowsPerTransition = (3, Just 5),
-              outgoingArrowsPerTransition = (1, Just 2)
+              outgoingArrowsPerTransition = (1, Just 2),
+              totalArrowsFromPlacesToTransitions = (18, Just 30),
+              totalArrowsFromTransitionsToPlaces = (6, Just 12)
               },
             transitionBehaviorConstraints = TransitionBehaviorConstraints {
               allowedTokenChanges = Just GT,
@@ -295,7 +307,9 @@ spec = do
       let config = defaultDeadlockConfig {
             arrowDensityConstraints = noArrowDensityConstraints {
               incomingArrowsPerTransition = (2, Just 2),
-              outgoingArrowsPerTransition = (2, Just 2)
+              outgoingArrowsPerTransition = (2, Just 2),
+              totalArrowsFromPlacesToTransitions = (12, Just 12),
+              totalArrowsFromTransitionsToPlaces = (12, Just 12)
               },
             transitionBehaviorConstraints = TransitionBehaviorConstraints {
               allowedTokenChanges = Nothing,
@@ -347,10 +361,3 @@ spec = do
             }
       checkDeadlockConfig config `shouldBe` Nothing
 
-countIncomingToPlace :: Place -> [([Place], t, [Place])] -> Int
-countIncomingToPlace place conns =
-  sum [length $ filter (== place) post | (_, _, post) <- conns]
-
-countOutgoingFromPlace :: Place -> [([Place], t, [Place])] -> Int
-countOutgoingFromPlace place conns =
-  sum [length $ filter (== place) pre | (pre, _, _) <- conns]
