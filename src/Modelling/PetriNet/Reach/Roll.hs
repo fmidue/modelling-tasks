@@ -11,6 +11,7 @@ import qualified Data.Map                         as M (
   fromListWith,
   fromSet,
   elems,
+  lookup,
   union,
   )
 import qualified Data.Set                         as S (fromList)
@@ -44,25 +45,47 @@ netLimitsWithPregenerated
   -> [Connection s t]  -- ^ Pre-generated connections
   -> [t]  -- ^ Transitions that should not receive incoming connections
   -> [t]  -- ^ Transitions that should not have outgoing connections
+  -> [s]  -- ^ Places used in pregenerated input connections (forbid in vor unless loop)
+  -> [s]  -- ^ Places used in pregenerated output connections (forbid in nach unless loop)
   -> m (Net s t)
-netLimitsWithPregenerated vLow vHigh nLow nHigh ps ts cap pregeneratedConnections forbidIncoming forbidOutgoing = do
+netLimitsWithPregenerated vLow vHigh nLow nHigh ps ts cap pregeneratedConnections forbidIncoming forbidOutgoing forbiddenInputPlaces forbiddenOutputPlaces = do
   s <- state ps
   -- Generate connections for ALL transitions, respecting forbid sets
   newConnections <- forM ts $ \t -> do
-    vor <- if t `elem` forbidIncoming
-           then return []
-           else takeRandom vLow vHigh ps
-    nach <- if t `elem` forbidOutgoing
-            then return []
-            else takeRandom nLow nHigh ps
+    (vor, nach) <- generateValidConnection t
     return (vor, t, nach)
+  -- Merge pregenerated and new connections
+  let pregeneratedMap = M.fromList [(t, (pre, post)) | (pre, t, post) <- pregeneratedConnections]
+      mergedConnections = map (\(vor, t, nach) ->
+        case M.lookup t pregeneratedMap of
+          Just (preVor, preNach) -> (preVor ++ vor, t, preNach ++ nach)
+          Nothing -> (vor, t, nach)
+        ) newConnections
   return $ Net {
     places      = S.fromList ps,
     transitions = S.fromList ts,
-    connections = pregeneratedConnections ++ newConnections,
+    connections = mergedConnections,
     capacity    = cap,
     start       = s
     }
+  where
+    generateValidConnection t = do
+      vor <- if t `elem` forbidIncoming
+             then return []
+             else takeRandom vLow vHigh ps
+      nach <- if t `elem` forbidOutgoing
+              then return []
+              else takeRandom nLow nHigh ps
+      -- Check if the connection violates place forbid rules
+      if isValidPlaceUsage vor nach
+        then return (vor, nach)
+        else generateValidConnection t  -- Retry if invalid
+
+    isValidPlaceUsage vor nach =
+      -- For each place in vor: if it's a forbidden input place, only allow if vor == nach == [that place]
+      all (\place -> place `notElem` forbiddenInputPlaces || (vor == [place] && nach == [place])) vor
+      -- For each place in nach: if it's a forbidden output place, only allow if vor == nach == [that place]
+      && all (\place -> place `notElem` forbiddenOutputPlaces || (vor == [place] && nach == [place])) nach
 
 state :: (MonadRandom m, Ord s) => [s] -> m (State s)
 state ps = do
@@ -100,7 +123,7 @@ generateFusableConnections
   -> [t]  -- ^ All transitions
   -> Int  -- ^ Number of input-fusable transitions to create
   -> Int  -- ^ Number of output-fusable transitions to create
-  -> m ([Connection s t], [t], [t])
+  -> m ([Connection s t], [t], [t], [s], [s])
 generateFusableConnections allPlaces allTransitions numInputFusable numOutputFusable = do
   -- Randomly select transitions and places for fusable nodes
   shuffledTransitions <- shuffleM allTransitions
@@ -115,10 +138,12 @@ generateFusableConnections allPlaces allTransitions numInputFusable numOutputFus
   -- Create connections for output-fusable transitions (t -> s)
   let outputConnections = zipWith (\trans place -> ([], trans, [place]))
                                    outputFusableTransitions outputFusablePlaces
-  -- Return connections and forbid sets
+  -- Return connections, transition forbid sets, and place forbid sets
   return ( inputConnections ++ outputConnections
-         , inputFusableTransitions   -- forbid incoming to these
-         , outputFusableTransitions  -- forbid outgoing from these
+         , inputFusableTransitions   -- forbid incoming to these transitions
+         , outputFusableTransitions  -- forbid outgoing from these transitions
+         , inputFusablePlaces        -- forbid these places in vor (unless loop)
+         , outputFusablePlaces       -- forbid these places in nach (unless loop)
          )
 
 -- | Generate a net with limits and filtering for isolated nodes and transition behavior constraints
@@ -143,11 +168,11 @@ netLimitsFiltered
   requiredFusableInputNodes
   requiredFusableOutputNodes = do
   -- Pre-generate fusable node connections
-  (pregeneratedConnections, forbidIncoming, forbidOutgoing) <-
+  (pregeneratedConnections, forbidIncoming, forbidOutgoing, forbiddenInputPlaces, forbiddenOutputPlaces) <-
     generateFusableConnections ps ts requiredFusableInputNodes requiredFusableOutputNodes
   -- Generate net with forbid sets
   n <- netLimitsWithPregenerated vLow vHigh nLow nHigh ps ts capacityConstraint
-         pregeneratedConnections forbidIncoming forbidOutgoing
+         pregeneratedConnections forbidIncoming forbidOutgoing forbiddenInputPlaces forbiddenOutputPlaces
   return $ do
     -- Filter out nets with isolated nodes
     guard $ not $ hasIsolatedNodes n

@@ -316,11 +316,19 @@ countFusableInputNodes net =
         _ -> False
     isOnlyConsumerOf transition place =
       let consumersOfPlace = [t | (pre, t, _) <- connections net, place `elem` pre]
-          -- Filter out transitions that also produce to the place (loops)
-          nonLoopConsumers = filter (\t -> not $ hasConnectionTo t place) consumersOfPlace
+          -- Filter out transitions that have a loop (consume from AND produce to the place)
+          -- UNLESS they also have OTHER connections (to/from other places)
+          nonLoopConsumers = filter (\t -> not $ isLoopOnlyConsumer t place) consumersOfPlace
       in nonLoopConsumers == [transition]
+    isLoopOnlyConsumer trans place =
+      -- Has connection from place AND to place
+      hasConnectionTo trans place
+      -- AND does NOT have connections to/from other places
+      && not (hasOtherConnections trans place)
     hasConnectionTo trans place =
       any (\(_, t, post) -> t == trans && place `elem` post) (connections net)
+    hasOtherConnections trans place =
+      any (\(pre, t, post) -> t == trans && (any (`notElem` [place]) pre || any (`notElem` [place]) post)) (connections net)
 
 {- | Count transitions with exactly one output place that is exclusively produced by that transition.
 A "fusable output node" is a transition t where:
@@ -337,8 +345,16 @@ countFusableOutputNodes net =
         _ -> False
     isOnlyProducerOf transition place =
       let producersOfPlace = [t | (_, t, post) <- connections net, place `elem` post]
-          -- Filter out transitions that also consume from the place (loops)
-          nonLoopProducers = filter (\t -> not $ hasConnectionFrom t place) producersOfPlace
+          -- Filter out transitions that have a loop (produce to AND consume from the place)
+          -- UNLESS they also have OTHER connections (to/from other places)
+          nonLoopProducers = filter (\t -> not $ isLoopOnlyProducer t place) producersOfPlace
       in nonLoopProducers == [transition]
+    isLoopOnlyProducer trans place =
+      -- Has connection to place AND from place
+      hasConnectionFrom trans place
+      -- AND does NOT have connections to/from other places
+      && not (hasOtherConnections trans place)
     hasConnectionFrom trans place =
       any (\(pre, t, _) -> t == trans && place `elem` pre) (connections net)
+    hasOtherConnections trans place =
+      any (\(pre, t, post) -> t == trans && (any (`notElem` [place]) pre || any (`notElem` [place]) post)) (connections net)
