@@ -31,24 +31,6 @@ import Control.Monad.Random.Class       (MonadRandom (getRandomR))
 import Data.Maybe                       (fromMaybe)
 import System.Random.Shuffle            (shuffleM)
 
-netConns
-  :: (MonadRandom m, Ord s, Ord t)
-  => ([s] -> [t] -> m [Connection s t])
-  -> [s]
-  -> [t]
-  -> Capacity s
-  -> m (Net s t)
-netConns conns ps ts cap = do
-  s <- state ps
-  cs <- conns ps ts
-  return $ Net {
-    places      = S.fromList ps,
-    transitions = S.fromList ts,
-    connections = cs,
-    capacity    = cap,
-    start       = s
-    }
-
 state :: (MonadRandom m, Ord s) => [s] -> m (State s)
 state ps = do
   qs <- selection ps
@@ -68,32 +50,6 @@ selection xs = do
   xs' <- if f then selection $ pre ++ post else return []
   return $ x : xs'
 
-netLimits
-  :: (MonadRandom m, Ord s, Ord t)
-  => Int
-  -> Int
-  -> Int
-  -> Int
-  -> [s]
-  -> [t]
-  -> Capacity s
-  -> m (Net s t)
-netLimits vLow vHigh nLow nHigh = netConns $ connLimits vLow vHigh nLow nHigh
-
-connLimits
-  :: MonadRandom m
-  => Int
-  -> Int
-  -> Int
-  -> Int
-  -> [s]
-  -> [t]
-  -> m [Connection s t]
-connLimits vLow vHigh nLow nHigh ps ts = forM ts $ \t -> do
-  vor <- takeRandom vLow vHigh ps
-  nach <- takeRandom nLow nHigh ps
-  return (vor, t, nach)
-
 takeRandom :: MonadRandom m => Int -> Int -> [a] -> m [a]
 takeRandom low high xs  = take
   <$> getRandomR (low, high)
@@ -103,6 +59,70 @@ takeRandom low high xs  = take
 inBounds :: (Int, Maybe Int) -> Int -> Bool
 inBounds (low, maybeHigh) value =
   value >= low && maybe True (value <=) maybeHigh
+
+-- | Generate pre-determined fusable node connections
+generateFusableConnections
+  :: MonadRandom m
+  => [s]  -- ^ All places
+  -> [t]  -- ^ All transitions
+  -> Int  -- ^ Number of input-fusable transitions to create
+  -> Int  -- ^ Number of output-fusable transitions to create
+  -> m ([Connection s t], [t], [t])
+generateFusableConnections allPlaces allTransitions numInputFusable numOutputFusable = do
+  -- Randomly select transitions and places for fusable nodes
+  shuffledTransitions <- shuffleM allTransitions
+  shuffledPlaces <- shuffleM allPlaces
+  let inputFusableTransitions = take numInputFusable shuffledTransitions
+      outputFusableTransitions = take numOutputFusable (drop numInputFusable shuffledTransitions)
+      inputFusablePlaces = take numInputFusable shuffledPlaces
+      outputFusablePlaces = take numOutputFusable (drop numInputFusable shuffledPlaces)
+  -- Create connections for input-fusable transitions (s -> t)
+  let inputConnections = zipWith (\place trans -> ([place], trans, []))
+                                  inputFusablePlaces inputFusableTransitions
+  -- Create connections for output-fusable transitions (t -> s)
+  let outputConnections = zipWith (\trans place -> ([], trans, [place]))
+                                   outputFusableTransitions outputFusablePlaces
+  -- Return connections and forbid sets
+  return ( inputConnections ++ outputConnections
+         , inputFusableTransitions   -- forbid incoming to these
+         , outputFusableTransitions  -- forbid outgoing from these
+         )
+
+-- | Generate net with pre-existing connections and forbid sets
+netLimitsWithPregen
+  :: (MonadRandom m, Ord s, Ord t)
+  => Int  -- ^ vLow
+  -> Int  -- ^ vHigh
+  -> Int  -- ^ nLow
+  -> Int  -- ^ nHigh
+  -> [s]  -- ^ places
+  -> [t]  -- ^ transitions
+  -> Capacity s
+  -> [Connection s t]  -- ^ Pre-generated connections
+  -> [t]  -- ^ Transitions that should not receive incoming connections
+  -> [t]  -- ^ Transitions that should not have outgoing connections
+  -> m (Net s t)
+netLimitsWithPregen vLow vHigh nLow nHigh ps ts cap pregenConns forbidIncoming forbidOutgoing = do
+  s <- state ps
+  -- Get transitions that already have connections
+  let transitionsWithConnections = [t | (_, t, _) <- pregenConns]
+      transitionsNeedingConnections = filter (`notElem` transitionsWithConnections) ts
+  -- Generate connections for remaining transitions using forbid sets
+  newConns <- forM transitionsNeedingConnections $ \t -> do
+    vor <- if t `elem` forbidIncoming
+           then return []
+           else takeRandom vLow vHigh ps
+    nach <- if t `elem` forbidOutgoing
+            then return []
+            else takeRandom nLow nHigh ps
+    return (vor, t, nach)
+  return $ Net {
+    places      = S.fromList ps,
+    transitions = S.fromList ts,
+    connections = pregenConns ++ newConns,
+    capacity    = cap,
+    start       = s
+    }
 
 -- | Generate a net with limits and filtering for isolated nodes and transition behavior constraints
 netLimitsFiltered
@@ -123,9 +143,14 @@ netLimitsFiltered
   ts
   capacityConstraint
   transitionBehaviorConstraints
-  _requiredFusableInputNodes
-  _requiredFusableOutputNodes = do
-  n <- netLimits vLow vHigh nLow nHigh ps ts capacityConstraint
+  requiredFusableInputNodes
+  requiredFusableOutputNodes = do
+  -- Pre-generate fusable node connections
+  (pregenConnections, forbidIncoming, forbidOutgoing) <-
+    generateFusableConnections ps ts requiredFusableInputNodes requiredFusableOutputNodes
+  -- Generate net with forbid sets
+  n <- netLimitsWithPregen vLow vHigh nLow nHigh ps ts capacityConstraint
+         pregenConnections forbidIncoming forbidOutgoing
   return $ do
     -- Filter out nets with isolated nodes
     guard $ not $ hasIsolatedNodes n
