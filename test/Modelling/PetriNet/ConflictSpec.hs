@@ -62,8 +62,6 @@ spec = do
   describe "validFindConflictConfigs" $
     checkConfigs checkFindConflictConfig findConfigs'
   describe "findConflicts" $ do
-    it "has valid config" $
-      checkFindConflictConfig defaultFindConflictConfig `shouldBe` Nothing
     defaultConfigTaskGeneration
       (findConflict defaultFindConflictConfig {
           Find.alloyConfig = firstInstanceConfig
@@ -75,8 +73,6 @@ spec = do
   describe "validPickConflictConfigs" $
     checkConfigs checkPickConflictConfig pickConfigs
   describe "pickConflicts" $ do
-    it "has valid config" $
-      checkPickConflictConfig defaultPickConflictConfig `shouldBe` Nothing
     defaultConfigTaskGeneration
       (pickConflict defaultPickConflictConfig {
           Pick.alloyConfig = firstInstanceConfig
