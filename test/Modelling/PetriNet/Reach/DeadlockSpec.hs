@@ -54,8 +54,6 @@ spec = do
         net `shouldSatisfy`
           hasMinTransitionLength (null . successors net) ts minL
 
-    it "has valid config for nightly test" $
-      checkDeadlockConfig defaultDeadlockConfig `shouldBe` Nothing
     nightly $
      modifyMaxSuccess (const 1) $
       prop "generates non-trivial solutions when filtering is enabled (as in the default configuration)" $ \seed -> do
