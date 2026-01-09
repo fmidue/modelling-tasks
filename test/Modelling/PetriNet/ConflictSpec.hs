@@ -59,6 +59,12 @@ import Test.Hspec
 
 spec :: Spec
 spec = do
+  describe "checkFindConflictConfig" $
+    it "accepts the default config" $
+      checkFindConflictConfig defaultFindConflictConfig `shouldBe` Nothing
+  describe "checkPickConflictConfig" $
+    it "accepts the default config" $
+      checkPickConflictConfig defaultPickConflictConfig `shouldBe` Nothing
   describe "validFindConflictConfigs" $
     checkConfigs checkFindConflictConfig findConfigs'
   describe "findConflicts" $ do

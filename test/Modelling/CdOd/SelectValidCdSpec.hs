@@ -29,6 +29,6 @@ spec = do
           not . M.null . classDiagrams
             <$> selectValidCd defaultSelectValidCdConfig segment seed
         `shouldReturn` True
-      it "reproducible generates defaultSelectValidCdInstance" $
+      it "reproducibly generates defaultSelectValidCdInstance" $
         selectValidCd defaultSelectValidCdConfig 0 0
         `shouldReturn` defaultSelectValidCdInstance

@@ -520,7 +520,7 @@ checkFindConcurrencyConfig FindConcurrencyConfig {
     additionalCheck BasicConfig {..} AdvConfig {..}
       | Just False /= presenceOfSourceTransitions, atLeastActive > 2
       = Just [iii|
-        When 'atLeastActive' is greater than 2
+        When 'atLeastActive' is greater than 2,
         'presenceOfSourceTransitions' has to be 'Just False'
         |]
       | otherwise

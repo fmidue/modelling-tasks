@@ -876,7 +876,7 @@ data FindConcurrencyConfig = FindConcurrencyConfig
 defaultFindConcurrencyConfig :: FindConcurrencyConfig
 defaultFindConcurrencyConfig = FindConcurrencyConfig
   { basicConfig = defaultBasicConfig { atLeastActive = 3 }
-  , advConfig = defaultAdvConfig{ presenceOfSourceTransitions = Nothing }
+  , advConfig = defaultAdvConfig{ presenceOfSourceTransitions = Just False }
   , changeConfig = defaultChangeConfig
   , graphConfig = defaultGraphConfig { hidePlaceNames = True }
   , printSolution = False

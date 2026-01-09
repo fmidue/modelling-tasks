@@ -105,7 +105,7 @@ spec = do
           seed <- randomIO
           differentNames defaultDifferentNamesConfig segment seed
         inst `shouldSatisfy` isRight
-      it "reproducible generates defaultDifferentNamesInstance" $
+      it "reproducibly generates defaultDifferentNamesInstance" $
         differentNames defaultDifferentNamesConfig 0 0
         `shouldReturn` defaultDifferentNamesInstance
   describe "differentNamesEvaluation" $ do

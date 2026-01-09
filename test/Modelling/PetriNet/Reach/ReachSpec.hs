@@ -56,6 +56,7 @@ spec = do
                 }
               }
             minL = minTransitionLength (netGoalConfig config)
+        checkReachConfig config `shouldBe` Nothing
         inst <- generateReach config seed
         let net = petriNet (netGoal inst)
             s = goal (netGoal inst)
