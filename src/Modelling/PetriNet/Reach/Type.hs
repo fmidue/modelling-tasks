@@ -307,16 +307,16 @@ A "fusable input node" is a transition t where:
 - t consumes from exactly one input place s, AND
 - t is the only transition that consumes from s (except for trivial back-and-forth looping transitions)
 -}
-countFusableInputNodes :: (Ord s, Ord t) => Map t ([s], [s]) -> [([s], t, [s])] -> Int
-countFusableInputNodes transitionPlacesMap conns =
-  length $ filter isFusableInput conns
+countFusableInputNodes :: (Ord s, Ord t) => Map t ([s], [s]) -> Int
+countFusableInputNodes transitionPlacesMap =
+  length $ filter isFusableInput $ M.toList transitionPlacesMap
   where
-    isFusableInput (inputPlaces, transition, outputPlaces) =
+    isFusableInput (transition, (inputPlaces, outputPlaces)) =
       case inputPlaces of
         [singlePlace] -> singlePlace `notElem` outputPlaces && isOnlyConsumerOf transition singlePlace
         _ -> False
     -- Optimized: build consumer map once and reuse
-    consumerMap = M.fromListWith (++) [(place, [t]) | (pre, t, _) <- conns, place <- pre]
+    consumerMap = M.fromListWith (++) [(place, [t]) | (t, (pre, _)) <- M.toList transitionPlacesMap, place <- pre]
     isOnlyConsumerOf transition place =
       case M.lookup place consumerMap of
         Nothing -> False
@@ -337,16 +337,16 @@ A "fusable output node" is a transition t where:
 - t produces to exactly one place s, AND
 - t is the only transition that produces to s (except for trivial back-and-forth looping transitions)
 -}
-countFusableOutputNodes :: (Ord s, Ord t) => Map t ([s], [s]) -> [([s], t, [s])] -> Int
-countFusableOutputNodes transitionPlacesMap conns =
-  length $ filter isFusableOutput conns
+countFusableOutputNodes :: (Ord s, Ord t) => Map t ([s], [s]) -> Int
+countFusableOutputNodes transitionPlacesMap =
+  length $ filter isFusableOutput $ M.toList transitionPlacesMap
   where
-    isFusableOutput (inputPlaces, transition, outputPlaces) =
+    isFusableOutput (transition, (inputPlaces, outputPlaces)) =
       case outputPlaces of
         [singlePlace] -> singlePlace `notElem` inputPlaces && isOnlyProducerOf transition singlePlace
         _ -> False
     -- Optimized: build producer map once and reuse
-    producerMap = M.fromListWith (++) [(place, [t]) | (_, t, post) <- conns, place <- post]
+    producerMap = M.fromListWith (++) [(place, [t]) | (t, (_, post)) <- M.toList transitionPlacesMap, place <- post]
     isOnlyProducerOf transition place =
       case M.lookup place producerMap of
         Nothing -> False

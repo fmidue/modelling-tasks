@@ -1,5 +1,7 @@
 module Modelling.PetriNet.Reach.DeadlockSpec where
 
+import qualified Data.Map                         as M (fromList)
+
 import Data.List.NonEmpty                 (toList)
 import Capabilities.Diagrams.IO         ()
 import Capabilities.Graphviz.IO         ()
@@ -203,7 +205,8 @@ spec = do
         checkDeadlockConfig config `shouldBe` Nothing
         deadlockInstance <- generateDeadlock config seed
         let net = petriNet deadlockInstance
-            actualFusableInputCount = countFusableInputNodes net
+            transitionPlacesMap = M.fromList [(t, (pre, post)) | (pre, t, post) <- connections net]
+            actualFusableInputCount = countFusableInputNodes transitionPlacesMap
         actualFusableInputCount `shouldBe` 2
 
     modifyMaxSuccess (const 3) $
@@ -220,7 +223,8 @@ spec = do
         checkDeadlockConfig config `shouldBe` Nothing
         deadlockInstance <- generateDeadlock config seed
         let net = petriNet deadlockInstance
-            actualFusableOutputCount = countFusableOutputNodes net
+            transitionPlacesMap = M.fromList [(t, (pre, post)) | (pre, t, post) <- connections net]
+            actualFusableOutputCount = countFusableOutputNodes transitionPlacesMap
         actualFusableOutputCount `shouldBe` 2
 
     modifyMaxSuccess (const 3) $
@@ -239,8 +243,9 @@ spec = do
         checkDeadlockConfig config `shouldBe` Nothing
         deadlockInstance <- generateDeadlock config seed
         let net = petriNet deadlockInstance
-            actualFusableInputCount = countFusableInputNodes net
-            actualFusableOutputCount = countFusableOutputNodes net
+            transitionPlacesMap = M.fromList [(t, (pre, post)) | (pre, t, post) <- connections net]
+            actualFusableInputCount = countFusableInputNodes transitionPlacesMap
+            actualFusableOutputCount = countFusableOutputNodes transitionPlacesMap
         actualFusableInputCount `shouldBe` 1
         actualFusableOutputCount `shouldBe` 1
 

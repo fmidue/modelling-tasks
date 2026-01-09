@@ -474,11 +474,10 @@ try conf = do
       (fromMaybe 0 $ requireFusableOutputNodes conf)
     -- Check fusable node constraints
     let transitionPlacesMap = M.fromList [(t, (pre, post)) | (pre, t, post) <- connections n]
-        conns = connections n
     whenJust (requireFusableInputNodes conf) $ \expected ->
-      guard $ countFusableInputNodes transitionPlacesMap conns == expected
+      guard $ countFusableInputNodes transitionPlacesMap == expected
     whenJust (requireFusableOutputNodes conf) $ \expected ->
-      guard $ countFusableOutputNodes transitionPlacesMap conns == expected
+      guard $ countFusableOutputNodes transitionPlacesMap == expected
     let deadlockLevels = map (filter (null . successors n . fst)) (levelsWithAlternatives n)
         (no, yeah) = span null
           $ take (maxTransitionLength conf + 1)
