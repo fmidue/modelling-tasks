@@ -383,6 +383,7 @@ checkFusableNodeConfig maybeInputNodes maybeOutputNodes numTrans ArrowDensityCon
   | Just inputCount <- maybeInputNodes
   , let (minimumTotal, _) = totalArrowsFromPlacesToTransitions
   , inputCount > 0
+  , minimumTotal > 0
   , minimumTotal < inputCount
   = Just "requireFusableInputNodes exceeds totalArrowsFromPlacesToTransitions lower bound (narrowing constraint)"
   | Just inputCount <- maybeInputNodes
@@ -394,6 +395,7 @@ checkFusableNodeConfig maybeInputNodes maybeOutputNodes numTrans ArrowDensityCon
   | Just outputCount <- maybeOutputNodes
   , let (minimumTotal, _) = totalArrowsFromTransitionsToPlaces
   , outputCount > 0
+  , minimumTotal > 0
   , minimumTotal < outputCount
   = Just "requireFusableOutputNodes exceeds totalArrowsFromTransitionsToPlaces lower bound (narrowing constraint)"
   | Just outputCount <- maybeOutputNodes
