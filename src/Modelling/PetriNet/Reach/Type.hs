@@ -307,16 +307,16 @@ A "fusable input node" is a transition t where:
 - t consumes from exactly one input place s, AND
 - t is the only transition that consumes from s (except for trivial back-and-forth looping transitions)
 -}
-countFusableInputNodes :: (Ord s, Ord t) => Net s t -> Int
-countFusableInputNodes net =
-  length $ filter isFusableInput (connections net)
+countFusableInputNodes :: (Ord s, Ord t) => Map t ([s], [s]) -> [([s], t, [s])] -> Int
+countFusableInputNodes transitionPlacesMap conns =
+  length $ filter isFusableInput conns
   where
     isFusableInput (inputPlaces, transition, outputPlaces) =
       case inputPlaces of
         [singlePlace] -> singlePlace `notElem` outputPlaces && isOnlyConsumerOf transition singlePlace
         _ -> False
     -- Optimized: build consumer map once and reuse
-    consumerMap = M.fromListWith (++) [(place, [t]) | (pre, t, _) <- connections net, place <- pre]
+    consumerMap = M.fromListWith (++) [(place, [t]) | (pre, t, _) <- conns, place <- pre]
     isOnlyConsumerOf transition place =
       case M.lookup place consumerMap of
         Nothing -> False
@@ -325,8 +325,6 @@ countFusableInputNodes net =
           in nonLoopConsumers == [transition]
     isLoopOnlyConsumer trans place =
       hasConnectionTo trans place && not (hasOtherConnections trans place)
-    -- Optimized: build single lookup map with pairs for fast connection checks
-    transitionPlacesMap = M.fromList [(t, (pre, post)) | (pre, t, post) <- connections net]
     hasConnectionTo trans place =
       maybe False (\(_, postPlaces) -> place `elem` postPlaces) (M.lookup trans transitionPlacesMap)
     hasOtherConnections trans place =
@@ -339,16 +337,16 @@ A "fusable output node" is a transition t where:
 - t produces to exactly one place s, AND
 - t is the only transition that produces to s (except for trivial back-and-forth looping transitions)
 -}
-countFusableOutputNodes :: (Ord s, Ord t) => Net s t -> Int
-countFusableOutputNodes net =
-  length $ filter isFusableOutput (connections net)
+countFusableOutputNodes :: (Ord s, Ord t) => Map t ([s], [s]) -> [([s], t, [s])] -> Int
+countFusableOutputNodes transitionPlacesMap conns =
+  length $ filter isFusableOutput conns
   where
     isFusableOutput (inputPlaces, transition, outputPlaces) =
       case outputPlaces of
         [singlePlace] -> singlePlace `notElem` inputPlaces && isOnlyProducerOf transition singlePlace
         _ -> False
     -- Optimized: build producer map once and reuse
-    producerMap = M.fromListWith (++) [(place, [t]) | (_, t, post) <- connections net, place <- post]
+    producerMap = M.fromListWith (++) [(place, [t]) | (_, t, post) <- conns, place <- post]
     isOnlyProducerOf transition place =
       case M.lookup place producerMap of
         Nothing -> False
@@ -357,8 +355,6 @@ countFusableOutputNodes net =
           in nonLoopProducers == [transition]
     isLoopOnlyProducer trans place =
       hasConnectionFrom trans place && not (hasOtherConnections trans place)
-    -- Optimized: build single lookup map with pairs for fast connection checks
-    transitionPlacesMap = M.fromList [(t, (pre, post)) | (pre, t, post) <- connections net]
     hasConnectionFrom trans place =
       maybe False (\(prePlaces, _) -> place `elem` prePlaces) (M.lookup trans transitionPlacesMap)
     hasOtherConnections trans place =
