@@ -325,15 +325,14 @@ countFusableInputNodes net =
           in nonLoopConsumers == [transition]
     isLoopOnlyConsumer trans place =
       hasConnectionTo trans place && not (hasOtherConnections trans place)
-    -- Optimized: build lookup maps for fast connection checks
-    transitionToPostMap = M.fromList [(t, post) | (_, t, post) <- connections net]
-    transitionToAllPlacesMap = M.fromList [(t, (pre, post)) | (pre, t, post) <- connections net]
+    -- Optimized: build single lookup map with pairs for fast connection checks
+    transitionPlacesMap = M.fromList [(t, (post, (pre, post))) | (pre, t, post) <- connections net]
     hasConnectionTo trans place =
-      maybe False (place `elem`) (M.lookup trans transitionToPostMap)
+      maybe False (\(postPlaces, _) -> place `elem` postPlaces) (M.lookup trans transitionPlacesMap)
     hasOtherConnections trans place =
-      case M.lookup trans transitionToAllPlacesMap of
+      case M.lookup trans transitionPlacesMap of
         Nothing -> False
-        Just (pre, post) -> any (/= place) pre || any (/= place) post
+        Just (_, (pre, post)) -> any (/= place) pre || any (/= place) post
 
 {- | Count transitions with exactly one output place which moreover is exclusively produced to by that transition.
 A "fusable output node" is a transition t where:
@@ -358,12 +357,11 @@ countFusableOutputNodes net =
           in nonLoopProducers == [transition]
     isLoopOnlyProducer trans place =
       hasConnectionFrom trans place && not (hasOtherConnections trans place)
-    -- Optimized: build lookup maps for fast connection checks
-    transitionToPreMap = M.fromList [(t, pre) | (pre, t, _) <- connections net]
-    transitionToAllPlacesMap = M.fromList [(t, (pre, post)) | (pre, t, post) <- connections net]
+    -- Optimized: build single lookup map with pairs for fast connection checks
+    transitionPlacesMap = M.fromList [(t, (pre, (pre, post))) | (pre, t, post) <- connections net]
     hasConnectionFrom trans place =
-      maybe False (place `elem`) (M.lookup trans transitionToPreMap)
+      maybe False (\(prePlaces, _) -> place `elem` prePlaces) (M.lookup trans transitionPlacesMap)
     hasOtherConnections trans place =
-      case M.lookup trans transitionToAllPlacesMap of
+      case M.lookup trans transitionPlacesMap of
         Nothing -> False
-        Just (pre, post) -> any (/= place) pre || any (/= place) post
+        Just (_, (pre, post)) -> any (/= place) pre || any (/= place) post

@@ -195,7 +195,10 @@ spec = do
               maxTransitionLength = 6,
               minTransitionLength = 6,
               requireFusableInputNodes = Just 2,
-              filterConfig = noFiltering
+              filterConfig = noFiltering,
+              arrowDensityConstraints = noArrowDensityConstraints {
+                totalArrowsFromPlacesToTransitions = (2, Nothing)
+                }
               }
         checkDeadlockConfig config `shouldBe` Nothing
         deadlockInstance <- generateDeadlock config seed
@@ -209,7 +212,10 @@ spec = do
               maxTransitionLength = 6,
               minTransitionLength = 6,
               requireFusableOutputNodes = Just 2,
-              filterConfig = noFiltering
+              filterConfig = noFiltering,
+              arrowDensityConstraints = noArrowDensityConstraints {
+                totalArrowsFromTransitionsToPlaces = (2, Nothing)
+                }
               }
         checkDeadlockConfig config `shouldBe` Nothing
         deadlockInstance <- generateDeadlock config seed
@@ -224,7 +230,11 @@ spec = do
               minTransitionLength = 6,
               requireFusableInputNodes = Just 1,
               requireFusableOutputNodes = Just 1,
-              filterConfig = noFiltering
+              filterConfig = noFiltering,
+              arrowDensityConstraints = noArrowDensityConstraints {
+                totalArrowsFromPlacesToTransitions = (1, Nothing),
+                totalArrowsFromTransitionsToPlaces = (1, Nothing)
+                }
               }
         checkDeadlockConfig config `shouldBe` Nothing
         deadlockInstance <- generateDeadlock config seed
@@ -402,7 +412,10 @@ spec = do
 
     it "accepts valid requireFusableInputNodes" $ do
       let config = defaultDeadlockConfig {
-            requireFusableInputNodes = Just 2
+            requireFusableInputNodes = Just 2,
+            arrowDensityConstraints = noArrowDensityConstraints {
+              totalArrowsFromPlacesToTransitions = (2, Nothing)
+              }
             }
       checkDeadlockConfig config `shouldBe` Nothing
 
@@ -426,7 +439,10 @@ spec = do
 
     it "accepts valid requireFusableOutputNodes" $ do
       let config = defaultDeadlockConfig {
-            requireFusableOutputNodes = Just 2
+            requireFusableOutputNodes = Just 2,
+            arrowDensityConstraints = noArrowDensityConstraints {
+              totalArrowsFromTransitionsToPlaces = (2, Nothing)
+              }
             }
       checkDeadlockConfig config `shouldBe` Nothing
 
@@ -445,7 +461,11 @@ spec = do
     it "accepts both fusable node parameters set" $ do
       let config = defaultDeadlockConfig {
             requireFusableInputNodes = Just 1,
-            requireFusableOutputNodes = Just 1
+            requireFusableOutputNodes = Just 1,
+            arrowDensityConstraints = noArrowDensityConstraints {
+              totalArrowsFromPlacesToTransitions = (1, Nothing),
+              totalArrowsFromTransitionsToPlaces = (1, Nothing)
+              }
             }
       checkDeadlockConfig config `shouldBe` Nothing
 
