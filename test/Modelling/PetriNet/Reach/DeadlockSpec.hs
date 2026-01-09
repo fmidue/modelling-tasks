@@ -1,7 +1,5 @@
 module Modelling.PetriNet.Reach.DeadlockSpec where
 
-import qualified Data.Map                         as M (fromList)
-
 import Data.List.NonEmpty                 (toList)
 import Capabilities.Diagrams.IO         ()
 import Capabilities.Graphviz.IO         ()

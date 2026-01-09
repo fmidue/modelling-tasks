@@ -21,6 +21,7 @@ import qualified Data.Map                         as M (
   fromListWith,
   lookup,
   mapKeys,
+  size,
   toList,
   )
 import qualified Data.Set                         as S (
@@ -309,28 +310,26 @@ A "fusable input node" is a transition t where:
 -}
 countFusableInputNodes :: (Ord s, Ord t) => Map t ([s], [s]) -> Int
 countFusableInputNodes transitionPlacesMap =
-  length $ filter isFusableInput $ M.toList transitionPlacesMap
+  M.size $ M.filter isFusableInput transitionPlacesMap
   where
-    isFusableInput (transition, (inputPlaces, outputPlaces)) =
+    isFusableInput (inputPlaces, outputPlaces) =
       case inputPlaces of
-        [singlePlace] -> singlePlace `notElem` outputPlaces && isOnlyConsumerOf transition singlePlace
+        [singlePlace] -> singlePlace `notElem` outputPlaces && isOnlyConsumerOf singlePlace
         _ -> False
-    -- Optimized: build consumer map once and reuse
-    consumerMap = M.fromListWith (++) [(place, [t]) | (t, (pre, _)) <- M.toList transitionPlacesMap, place <- pre]
-    isOnlyConsumerOf transition place =
+    -- Optimized: build consumer map once from transitionPlacesMap using Map operations
+    consumerMap = M.fromListWith (++)
+      [(place, [t]) | (t, (pre, _)) <- M.toList transitionPlacesMap, place <- pre]
+    isOnlyConsumerOf place =
       case M.lookup place consumerMap of
         Nothing -> False
         Just consumersOfPlace ->
           let nonLoopConsumers = filter (\t -> not $ isLoopOnlyConsumer t place) consumersOfPlace
-          in nonLoopConsumers == [transition]
+          in length nonLoopConsumers == 1
     isLoopOnlyConsumer trans place =
-      hasConnectionTo trans place && not (hasOtherConnections trans place)
-    hasConnectionTo trans place =
-      maybe False (\(_, postPlaces) -> place `elem` postPlaces) (M.lookup trans transitionPlacesMap)
-    hasOtherConnections trans place =
       case M.lookup trans transitionPlacesMap of
         Nothing -> False
-        Just (pre, post) -> any (/= place) pre || any (/= place) post
+        Just (pre, post) ->
+          place `elem` post && all (== place) pre && all (== place) post
 
 {- | Count transitions with exactly one output place which moreover is exclusively produced to by that transition.
 A "fusable output node" is a transition t where:
@@ -339,25 +338,23 @@ A "fusable output node" is a transition t where:
 -}
 countFusableOutputNodes :: (Ord s, Ord t) => Map t ([s], [s]) -> Int
 countFusableOutputNodes transitionPlacesMap =
-  length $ filter isFusableOutput $ M.toList transitionPlacesMap
+  M.size $ M.filter isFusableOutput transitionPlacesMap
   where
-    isFusableOutput (transition, (inputPlaces, outputPlaces)) =
+    isFusableOutput (inputPlaces, outputPlaces) =
       case outputPlaces of
-        [singlePlace] -> singlePlace `notElem` inputPlaces && isOnlyProducerOf transition singlePlace
+        [singlePlace] -> singlePlace `notElem` inputPlaces && isOnlyProducerOf singlePlace
         _ -> False
-    -- Optimized: build producer map once and reuse
-    producerMap = M.fromListWith (++) [(place, [t]) | (t, (_, post)) <- M.toList transitionPlacesMap, place <- post]
-    isOnlyProducerOf transition place =
+    -- Optimized: build producer map once from transitionPlacesMap using Map operations
+    producerMap = M.fromListWith (++)
+      [(place, [t]) | (t, (_, post)) <- M.toList transitionPlacesMap, place <- post]
+    isOnlyProducerOf place =
       case M.lookup place producerMap of
         Nothing -> False
         Just producersOfPlace ->
           let nonLoopProducers = filter (\t -> not $ isLoopOnlyProducer t place) producersOfPlace
-          in nonLoopProducers == [transition]
+          in length nonLoopProducers == 1
     isLoopOnlyProducer trans place =
-      hasConnectionFrom trans place && not (hasOtherConnections trans place)
-    hasConnectionFrom trans place =
-      maybe False (\(prePlaces, _) -> place `elem` prePlaces) (M.lookup trans transitionPlacesMap)
-    hasOtherConnections trans place =
       case M.lookup trans transitionPlacesMap of
         Nothing -> False
-        Just (pre, post) -> any (/= place) pre || any (/= place) post
+        Just (pre, post) ->
+          place `elem` pre && all (== place) pre && all (== place) post
