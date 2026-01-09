@@ -273,12 +273,12 @@ data DeadlockConfig = DeadlockConfig {
   showLengthHint      :: Bool,
   showMinLengthHint   :: Bool,
   showPlaceNamesInNet :: Bool,
-  -- | Require exactly this many transitions with exactly one input place
-  -- that is exclusively consumed by that transition.
+  -- | Require exactly this many transitions with exactly one input place,
+  -- which is exclusively consumed from by that transition.
   -- If @Nothing@, no constraint on fusable input nodes.
   requireFusableInputNodes :: Maybe Int,
-  -- | Require exactly this many transitions with exactly one output place
-  -- that is exclusively produced by that transition.
+  -- | Require exactly this many transitions with exactly one output place,
+  -- which is exclusively produced to by that transition.
   -- If @Nothing@, no constraint on fusable output nodes.
   requireFusableOutputNodes :: Maybe Int,
   filterConfig        :: FilterConfig

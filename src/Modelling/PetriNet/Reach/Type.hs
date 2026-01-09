@@ -301,10 +301,10 @@ satisfiesTransitionBehaviorConstraints net TransitionBehaviorConstraints {..} =
         let nonPreserving = length $ filter (uncurry (/=) . connectionTokenBehavior) $ connections net
         in nonPreserving == expected
 
-{- | Count transitions with exactly one input place that is exclusively consumed by that transition.
+{- | Count transitions with exactly one input place which moreover is exclusively consumed from by that transition.
 A "fusable input node" is a transition t where:
-- t depends on exactly one input place s, AND
-- t is the only transition that takes from s (excluding back-and-forth loops)
+- t consumes from exactly one input place s, AND
+- t is the only transition that consumes from s (except for trivial back-and-forth looping transitions)
 -}
 countFusableInputNodes :: (Ord s, Ord t) => Net s t -> Int
 countFusableInputNodes net =
@@ -330,10 +330,10 @@ countFusableInputNodes net =
     hasOtherConnections trans place =
       any (\(pre, t, post) -> t == trans && (any (/= place) pre || any (/= place) post)) (connections net)
 
-{- | Count transitions with exactly one output place that is exclusively produced by that transition.
+{- | Count transitions with exactly one output place which moreover is exclusively produced to by that transition.
 A "fusable output node" is a transition t where:
 - t produces to exactly one place s, AND
-- t is the only transition that produces to s (excluding back-and-forth loops)
+- t is the only transition that produces to s (except for trivial back-and-forth looping transitions)
 -}
 countFusableOutputNodes :: (Ord s, Ord t) => Net s t -> Int
 countFusableOutputNodes net =
