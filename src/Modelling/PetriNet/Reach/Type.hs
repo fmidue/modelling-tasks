@@ -326,13 +326,13 @@ countFusableInputNodes net =
     isLoopOnlyConsumer trans place =
       hasConnectionTo trans place && not (hasOtherConnections trans place)
     -- Optimized: build single lookup map with pairs for fast connection checks
-    transitionPlacesMap = M.fromList [(t, (post, (pre, post))) | (pre, t, post) <- connections net]
+    transitionPlacesMap = M.fromList [(t, (pre, post)) | (pre, t, post) <- connections net]
     hasConnectionTo trans place =
-      maybe False (\(postPlaces, _) -> place `elem` postPlaces) (M.lookup trans transitionPlacesMap)
+      maybe False (\(_, postPlaces) -> place `elem` postPlaces) (M.lookup trans transitionPlacesMap)
     hasOtherConnections trans place =
       case M.lookup trans transitionPlacesMap of
         Nothing -> False
-        Just (_, (pre, post)) -> any (/= place) pre || any (/= place) post
+        Just (pre, post) -> any (/= place) pre || any (/= place) post
 
 {- | Count transitions with exactly one output place which moreover is exclusively produced to by that transition.
 A "fusable output node" is a transition t where:
@@ -358,10 +358,10 @@ countFusableOutputNodes net =
     isLoopOnlyProducer trans place =
       hasConnectionFrom trans place && not (hasOtherConnections trans place)
     -- Optimized: build single lookup map with pairs for fast connection checks
-    transitionPlacesMap = M.fromList [(t, (pre, (pre, post))) | (pre, t, post) <- connections net]
+    transitionPlacesMap = M.fromList [(t, (pre, post)) | (pre, t, post) <- connections net]
     hasConnectionFrom trans place =
       maybe False (\(prePlaces, _) -> place `elem` prePlaces) (M.lookup trans transitionPlacesMap)
     hasOtherConnections trans place =
       case M.lookup trans transitionPlacesMap of
         Nothing -> False
-        Just (_, (pre, post)) -> any (/= place) pre || any (/= place) post
+        Just (pre, post) -> any (/= place) pre || any (/= place) post
