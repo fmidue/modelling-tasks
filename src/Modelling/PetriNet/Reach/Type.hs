@@ -18,6 +18,7 @@ import qualified Data.Map                         as M (
   filter,
   findWithDefault,
   fromList,
+  fromListWith,
   lookup,
   mapKeys,
   toList,

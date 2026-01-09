@@ -11,6 +11,7 @@ import qualified Data.Bimap                       as BM (
   lookup,
   member,
   memberR,
+  null,
   Bimap,
   )
 import qualified Data.Map                         as M (
@@ -59,33 +60,61 @@ netLimitsWithPregenerated
   transitionInputBimap transitionOutputBimap = do
   s <- state ps
   -- Generate connections for ALL transitions, respecting forbid sets
-  -- Optimize: skip checks when both bimaps are empty (no fusable nodes)
-  let hasNoFusableNodes = BM.null transitionInputBimap && BM.null transitionOutputBimap
+  -- Three-tier optimization based on which bimaps are empty
+  let inputBimapEmpty = BM.null transitionInputBimap
+      outputBimapEmpty = BM.null transitionOutputBimap
   newConnections <- forM ts $ \t -> do
-    (vor, nach) <- if hasNoFusableNodes
-                   then simpleFastConnection t
-                   else generateValidConnection t
+    (vor, nach) <- case (inputBimapEmpty, outputBimapEmpty) of
+      (True, True)   -> simpleFastConnection t
+      (True, False)  -> partialFastConnectionInput t
+      (False, True)  -> partialFastConnectionOutput t
+      (False, False) -> generateValidConnection t
     return (vor, t, nach)
   -- Merge pregenerated and new connections
-  let pregeneratedMap = M.fromList [(t, (pre, post)) | (pre, t, post) <- pregeneratedConnections]
-      mergedConnections = map (\(vor, t, nach) ->
-        case M.lookup t pregeneratedMap of
-          Just (preVor, preNach) -> (preVor ++ vor, t, preNach ++ nach)
-          Nothing -> (vor, t, nach)
-        ) newConnections
+  -- Optimization: skip merge if no pregenerated connections
+  let finalConnections = if null pregeneratedConnections
+                         then newConnections
+                         else let pregeneratedMap = M.fromList [(t, (pre, post)) | (pre, t, post) <- pregeneratedConnections]
+                              in map (\(vor, t, nach) ->
+                                   case M.lookup t pregeneratedMap of
+                                     Just (preVor, preNach) -> (preVor ++ vor, t, preNach ++ nach)
+                                     Nothing -> (vor, t, nach)
+                                 ) newConnections
   return $ Net {
     places      = S.fromList ps,
     transitions = S.fromList ts,
-    connections = mergedConnections,
+    connections = finalConnections,
     capacity    = cap,
     start       = s
     }
   where
     -- Fast path when no fusable nodes exist - skip all validation checks
-    simpleFastConnection t = do
+    simpleFastConnection _ = do
       vor <- takeRandom vLow vHigh ps
       nach <- takeRandom nLow nHigh ps
       return (vor, nach)
+
+    -- Partial fast path: only input bimap is empty - skip input place validation
+    partialFastConnectionInput t = do
+      vor <- takeRandom vLow vHigh ps
+      nach <- if BM.member t transitionOutputBimap
+              then return []
+              else takeRandom nLow nHigh ps
+      -- Check only output place usage
+      if isValidOutputPlaceUsage t vor nach
+        then return (vor, nach)
+        else partialFastConnectionInput t  -- Retry if invalid
+
+    -- Partial fast path: only output bimap is empty - skip output place validation
+    partialFastConnectionOutput t = do
+      vor <- if BM.member t transitionInputBimap
+             then return []
+             else takeRandom vLow vHigh ps
+      nach <- takeRandom nLow nHigh ps
+      -- Check only input place usage
+      if isValidInputPlaceUsage t vor nach
+        then return (vor, nach)
+        else partialFastConnectionOutput t  -- Retry if invalid
 
     generateValidConnection t = do
       vor <- if BM.member t transitionInputBimap
@@ -94,18 +123,20 @@ netLimitsWithPregenerated
       nach <- if BM.member t transitionOutputBimap
               then return []
               else takeRandom nLow nHigh ps
-      -- Check if the connection violates place forbid rules
-      if isValidPlaceUsage t vor nach
+      -- Check both input and output place usage
+      if isValidInputPlaceUsage t vor nach && isValidOutputPlaceUsage t vor nach
         then return (vor, nach)
         else generateValidConnection t  -- Retry if invalid
 
-    isValidPlaceUsage t vor nach =
-      -- For each place in vor: if it's a forbidden input place (exists in bimap), only allow if vor == nach == [that place]
+    isValidInputPlaceUsage t vor nach =
+      -- For each place in vor: if it's a forbidden input place, only allow if vor == nach == [that place]
       all (\place -> not (BM.memberR place transitionInputBimap) || (vor == [place] && nach == [place])) vor
-      -- For each place in nach: if it's a forbidden output place (exists in bimap), only allow if vor == nach == [that place]
-      && all (\place -> not (BM.memberR place transitionOutputBimap) || (vor == [place] && nach == [place])) nach
       -- If t has a pregenerated input place, prevent that place from appearing in nach
       && maybe True (`notElem` nach) (BM.lookup t transitionInputBimap)
+
+    isValidOutputPlaceUsage t vor nach =
+      -- For each place in nach: if it's a forbidden output place, only allow if vor == nach == [that place]
+      all (\place -> not (BM.memberR place transitionOutputBimap) || (vor == [place] && nach == [place])) nach
       -- If t has a pregenerated output place, prevent that place from appearing in vor
       && maybe True (`notElem` vor) (BM.lookup t transitionOutputBimap)
 

@@ -330,7 +330,7 @@ checkFusableNodeConfig
   -> Int        -- ^ numPlaces
   -> ArrowDensityConstraints
   -> Maybe String
-checkFusableNodeConfig maybeInputNodes maybeOutputNodes numTrans numPlc ArrowDensityConstraints {..}
+checkFusableNodeConfig maybeInputNodes maybeOutputNodes numTrans _ ArrowDensityConstraints {..}
   | Just count <- maybeInputNodes
   , count < 0 || count > numTrans
   = Just "requireFusableInputNodes must be non-negative and cannot exceed numTransitions"
@@ -342,62 +342,57 @@ checkFusableNodeConfig maybeInputNodes maybeOutputNodes numTrans numPlc ArrowDen
   , inputCount + outputCount > numTrans
   = Just "requireFusableInputNodes + requireFusableOutputNodes cannot exceed numTransitions"
   | Just inputCount <- maybeInputNodes
-  , let (minIn, maxIn) = incomingArrowsPerTransition
-  , minIn > 1
+  , let (minimumIncoming, _) = incomingArrowsPerTransition
+  , minimumIncoming > 1
   , inputCount > 0
   = Just "requireFusableInputNodes > 0 conflicts with incomingArrowsPerTransition minimum > 1"
   | Just inputCount <- maybeInputNodes
-  , let (_, maxIn) = incomingArrowsPerTransition
-  , maxIn == Just 0
+  , let (_, maximumIncoming) = incomingArrowsPerTransition
+  , maximumIncoming == Just 0
   , inputCount > 0
   = Just "requireFusableInputNodes > 0 conflicts with incomingArrowsPerTransition maximum = 0"
   | Just outputCount <- maybeOutputNodes
-  , let (minOut, _) = outgoingArrowsPerTransition
-  , minOut > 1
+  , let (minimumOutgoing, _) = outgoingArrowsPerTransition
+  , minimumOutgoing > 1
   , outputCount > 0
   = Just "requireFusableOutputNodes > 0 conflicts with outgoingArrowsPerTransition minimum > 1"
   | Just outputCount <- maybeOutputNodes
-  , let (_, maxOut) = outgoingArrowsPerTransition
-  , maxOut == Just 0
+  , let (_, maximumOutgoing) = outgoingArrowsPerTransition
+  , maximumOutgoing == Just 0
   , outputCount > 0
   = Just "requireFusableOutputNodes > 0 conflicts with outgoingArrowsPerTransition maximum = 0"
   | Just inputCount <- maybeInputNodes
-  , let (minOutPlace, _) = outgoingArrowsPerPlace
-  , minOutPlace > 1
+  , let (minimumOutgoingPlace, _) = outgoingArrowsPerPlace
+  , minimumOutgoingPlace > 1
   , inputCount > 0
   = Just "requireFusableInputNodes > 0 conflicts with outgoingArrowsPerPlace minimum > 1"
   | Just inputCount <- maybeInputNodes
-  , let (_, maxOutPlace) = outgoingArrowsPerPlace
-  , maxOutPlace == Just 0
+  , let (_, maximumOutgoingPlace) = outgoingArrowsPerPlace
+  , maximumOutgoingPlace == Just 0
   , inputCount > 0
   = Just "requireFusableInputNodes > 0 conflicts with outgoingArrowsPerPlace maximum = 0"
   | Just outputCount <- maybeOutputNodes
-  , let (minInPlace, _) = incomingArrowsPerPlace
-  , minInPlace > 1
+  , let (minimumIncomingPlace, _) = incomingArrowsPerPlace
+  , minimumIncomingPlace > 1
   , outputCount > 0
   = Just "requireFusableOutputNodes > 0 conflicts with incomingArrowsPerPlace minimum > 1"
   | Just outputCount <- maybeOutputNodes
-  , let (_, maxInPlace) = incomingArrowsPerPlace
-  , maxInPlace == Just 0
+  , let (_, maximumIncomingPlace) = incomingArrowsPerPlace
+  , maximumIncomingPlace == Just 0
   , outputCount > 0
   = Just "requireFusableOutputNodes > 0 conflicts with incomingArrowsPerPlace maximum = 0"
   | Just inputCount <- maybeInputNodes
-  , let (minTotal, maxTotal) = totalArrowsFromPlacesToTransitions
+  , let (_, maximumTotal) = totalArrowsFromPlacesToTransitions
   , inputCount > 0
-  , maxTotal < Just inputCount
-  = Just "requireFusableInputNodes conflicts with totalArrowsFromPlacesToTransitions: requires at least as many arrows"
+  , Just maxTotal <- maximumTotal
+  , maxTotal < inputCount
+  = Just "requireFusableInputNodes exceeds totalArrowsFromPlacesToTransitions upper bound"
   | Just outputCount <- maybeOutputNodes
-  , let (minTotal, maxTotal) = totalArrowsFromTransitionsToPlaces
+  , let (_, maximumTotal) = totalArrowsFromTransitionsToPlaces
   , outputCount > 0
-  , maxTotal < Just outputCount
-  = Just "requireFusableOutputNodes conflicts with totalArrowsFromTransitionsToPlaces: requires at least as many arrows"
-  | Just inputCount <- maybeInputNodes
-  , Just outputCount <- maybeOutputNodes
-  , let (minPtoT, maxPtoT) = totalArrowsFromPlacesToTransitions
-  , let (minTtoP, maxTtoP) = totalArrowsFromTransitionsToPlaces
-  , inputCount > 0 && outputCount > 0
-  , maxPtoT < Just inputCount || maxTtoP < Just outputCount
-  = Just "fusable node requirements conflict with total arrow constraints"
+  , Just maxTotal <- maximumTotal
+  , maxTotal < outputCount
+  = Just "requireFusableOutputNodes exceeds totalArrowsFromTransitionsToPlaces upper bound"
   | otherwise
   = Nothing
 
