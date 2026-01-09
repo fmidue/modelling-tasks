@@ -516,6 +516,9 @@ checkNameCdErrorInstance NameCdErrorInstance {..}
       . filter isRelevant
       $ annotatedRelationships classDiagram
 
+defaultNameCdErrorTaskText :: NameCdErrorTaskText
+defaultNameCdErrorTaskText = nameCdErrorTaskText True
+
 nameCdErrorTaskText :: Bool -> NameCdErrorTaskText
 nameCdErrorTaskText withAnswerChoices = concat [
  [
@@ -555,9 +558,6 @@ nameCdErrorTaskText withAnswerChoices = concat [
  ]]
  where
     optional cond xs = if cond then xs else []
-
-defaultNameCdErrorTaskText :: NameCdErrorTaskText
-defaultNameCdErrorTaskText = nameCdErrorTaskText True
 
 inputHelpText :: [Output]
 inputHelpText = [
