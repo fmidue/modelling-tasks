@@ -59,8 +59,12 @@ netLimitsWithPregenerated
   transitionInputBimap transitionOutputBimap = do
   s <- state ps
   -- Generate connections for ALL transitions, respecting forbid sets
+  -- Optimize: skip checks when both bimaps are empty (no fusable nodes)
+  let hasNoFusableNodes = BM.null transitionInputBimap && BM.null transitionOutputBimap
   newConnections <- forM ts $ \t -> do
-    (vor, nach) <- generateValidConnection t
+    (vor, nach) <- if hasNoFusableNodes
+                   then simpleFastConnection t
+                   else generateValidConnection t
     return (vor, t, nach)
   -- Merge pregenerated and new connections
   let pregeneratedMap = M.fromList [(t, (pre, post)) | (pre, t, post) <- pregeneratedConnections]
@@ -77,6 +81,12 @@ netLimitsWithPregenerated
     start       = s
     }
   where
+    -- Fast path when no fusable nodes exist - skip all validation checks
+    simpleFastConnection t = do
+      vor <- takeRandom vLow vHigh ps
+      nach <- takeRandom nLow nHigh ps
+      return (vor, nach)
+
     generateValidConnection t = do
       vor <- if BM.member t transitionInputBimap
              then return []

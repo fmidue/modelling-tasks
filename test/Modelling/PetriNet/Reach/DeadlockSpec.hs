@@ -492,3 +492,57 @@ spec = do
             requireFusableOutputNodes = Just 3
             }
       checkDeadlockConfig config `shouldSatisfy` isJust
+
+    it "rejects requireFusableInputNodes > 0 with incomingArrowsPerTransition maximum = 0" $ do
+      let config = defaultDeadlockConfig {
+            requireFusableInputNodes = Just 1,
+            arrowDensityConstraints = noArrowDensityConstraints {
+              incomingArrowsPerTransition = (0, Just 0)
+              }
+            }
+      checkDeadlockConfig config `shouldSatisfy` isJust
+
+    it "rejects requireFusableOutputNodes > 0 with outgoingArrowsPerTransition maximum = 0" $ do
+      let config = defaultDeadlockConfig {
+            requireFusableOutputNodes = Just 1,
+            arrowDensityConstraints = noArrowDensityConstraints {
+              outgoingArrowsPerTransition = (0, Just 0)
+              }
+            }
+      checkDeadlockConfig config `shouldSatisfy` isJust
+
+    it "rejects requireFusableInputNodes > 0 with outgoingArrowsPerPlace maximum = 0" $ do
+      let config = defaultDeadlockConfig {
+            requireFusableInputNodes = Just 1,
+            arrowDensityConstraints = noArrowDensityConstraints {
+              outgoingArrowsPerPlace = (0, Just 0)
+              }
+            }
+      checkDeadlockConfig config `shouldSatisfy` isJust
+
+    it "rejects requireFusableOutputNodes > 0 with incomingArrowsPerPlace maximum = 0" $ do
+      let config = defaultDeadlockConfig {
+            requireFusableOutputNodes = Just 1,
+            arrowDensityConstraints = noArrowDensityConstraints {
+              incomingArrowsPerPlace = (0, Just 0)
+              }
+            }
+      checkDeadlockConfig config `shouldSatisfy` isJust
+
+    it "rejects requireFusableInputNodes when totalArrowsFromPlacesToTransitions maximum is too low" $ do
+      let config = defaultDeadlockConfig {
+            requireFusableInputNodes = Just 3,
+            arrowDensityConstraints = noArrowDensityConstraints {
+              totalArrowsFromPlacesToTransitions = (0, Just 2)
+              }
+            }
+      checkDeadlockConfig config `shouldSatisfy` isJust
+
+    it "rejects requireFusableOutputNodes when totalArrowsFromTransitionsToPlaces maximum is too low" $ do
+      let config = defaultDeadlockConfig {
+            requireFusableOutputNodes = Just 3,
+            arrowDensityConstraints = noArrowDensityConstraints {
+              totalArrowsFromTransitionsToPlaces = (0, Just 2)
+              }
+            }
+      checkDeadlockConfig config `shouldSatisfy` isJust

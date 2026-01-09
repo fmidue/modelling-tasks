@@ -314,21 +314,25 @@ countFusableInputNodes net =
       case inputPlaces of
         [singlePlace] -> singlePlace `notElem` outputPlaces && isOnlyConsumerOf transition singlePlace
         _ -> False
+    -- Optimized: build consumer map once and reuse
+    consumerMap = M.fromListWith (++) [(place, [t]) | (pre, t, _) <- connections net, place <- pre]
     isOnlyConsumerOf transition place =
-      let consumersOfPlace = [t | (pre, t, _) <- connections net, place `elem` pre]
-          -- Filter out transitions that have a loop (consume from AND produce to the place)
-          -- UNLESS they also have OTHER connections (to/from other places)
-          nonLoopConsumers = filter (\t -> not $ isLoopOnlyConsumer t place) consumersOfPlace
-      in nonLoopConsumers == [transition]
+      case M.lookup place consumerMap of
+        Nothing -> False
+        Just consumersOfPlace ->
+          let nonLoopConsumers = filter (\t -> not $ isLoopOnlyConsumer t place) consumersOfPlace
+          in nonLoopConsumers == [transition]
     isLoopOnlyConsumer trans place =
-      -- Has connection from place AND to place
-      hasConnectionTo trans place
-      -- AND does NOT have connections to/from other places
-      && not (hasOtherConnections trans place)
+      hasConnectionTo trans place && not (hasOtherConnections trans place)
+    -- Optimized: build lookup maps for fast connection checks
+    transitionToPostMap = M.fromList [(t, post) | (_, t, post) <- connections net]
+    transitionToAllPlacesMap = M.fromList [(t, (pre, post)) | (pre, t, post) <- connections net]
     hasConnectionTo trans place =
-      any (\(_, t, post) -> t == trans && place `elem` post) (connections net)
+      maybe False (place `elem`) (M.lookup trans transitionToPostMap)
     hasOtherConnections trans place =
-      any (\(pre, t, post) -> t == trans && (any (/= place) pre || any (/= place) post)) (connections net)
+      case M.lookup trans transitionToAllPlacesMap of
+        Nothing -> False
+        Just (pre, post) -> any (/= place) pre || any (/= place) post
 
 {- | Count transitions with exactly one output place which moreover is exclusively produced to by that transition.
 A "fusable output node" is a transition t where:
@@ -343,18 +347,22 @@ countFusableOutputNodes net =
       case outputPlaces of
         [singlePlace] -> singlePlace `notElem` inputPlaces && isOnlyProducerOf transition singlePlace
         _ -> False
+    -- Optimized: build producer map once and reuse
+    producerMap = M.fromListWith (++) [(place, [t]) | (_, t, post) <- connections net, place <- post]
     isOnlyProducerOf transition place =
-      let producersOfPlace = [t | (_, t, post) <- connections net, place `elem` post]
-          -- Filter out transitions that have a loop (produce to AND consume from the place)
-          -- UNLESS they also have OTHER connections (to/from other places)
-          nonLoopProducers = filter (\t -> not $ isLoopOnlyProducer t place) producersOfPlace
-      in nonLoopProducers == [transition]
+      case M.lookup place producerMap of
+        Nothing -> False
+        Just producersOfPlace ->
+          let nonLoopProducers = filter (\t -> not $ isLoopOnlyProducer t place) producersOfPlace
+          in nonLoopProducers == [transition]
     isLoopOnlyProducer trans place =
-      -- Has connection to place AND from place
-      hasConnectionFrom trans place
-      -- AND does NOT have connections to/from other places
-      && not (hasOtherConnections trans place)
+      hasConnectionFrom trans place && not (hasOtherConnections trans place)
+    -- Optimized: build lookup maps for fast connection checks
+    transitionToPreMap = M.fromList [(t, pre) | (pre, t, _) <- connections net]
+    transitionToAllPlacesMap = M.fromList [(t, (pre, post)) | (pre, t, post) <- connections net]
     hasConnectionFrom trans place =
-      any (\(pre, t, _) -> t == trans && place `elem` pre) (connections net)
+      maybe False (place `elem`) (M.lookup trans transitionToPreMap)
     hasOtherConnections trans place =
-      any (\(pre, t, post) -> t == trans && (any (/= place) pre || any (/= place) post)) (connections net)
+      case M.lookup trans transitionToAllPlacesMap of
+        Nothing -> False
+        Just (pre, post) -> any (/= place) pre || any (/= place) post
