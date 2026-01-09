@@ -60,15 +60,12 @@ netLimitsWithPregenerated
   transitionInputBimap transitionOutputBimap = do
   s <- state ps
   -- Generate connections for ALL transitions, respecting forbid sets
-  -- Three-tier optimization based on which bimaps are empty
-  let inputBimapEmpty = BM.null transitionInputBimap
-      outputBimapEmpty = BM.null transitionOutputBimap
+  -- Optimization based on which bimaps are empty
+  let bothBimapsEmpty = BM.null transitionInputBimap && BM.null transitionOutputBimap
   newConnections <- forM ts $ \t -> do
-    (vor, nach) <- case (inputBimapEmpty, outputBimapEmpty) of
-      (True, True)   -> simpleFastConnection t
-      (True, False)  -> partialFastConnectionInput t
-      (False, True)  -> partialFastConnectionOutput t
-      (False, False) -> generateValidConnection t
+    (vor, nach) <- if bothBimapsEmpty
+                   then simpleFastConnection
+                   else generateValidConnection t
     return (vor, t, nach)
   -- Merge pregenerated and new connections
   -- Optimization: skip merge if no pregenerated connections
@@ -89,32 +86,10 @@ netLimitsWithPregenerated
     }
   where
     -- Fast path when no fusable nodes exist - skip all validation checks
-    simpleFastConnection _ = do
+    simpleFastConnection = do
       vor <- takeRandom vLow vHigh ps
       nach <- takeRandom nLow nHigh ps
       return (vor, nach)
-
-    -- Partial fast path: only input bimap is empty - skip input place validation
-    partialFastConnectionInput t = do
-      vor <- takeRandom vLow vHigh ps
-      nach <- if BM.member t transitionOutputBimap
-              then return []
-              else takeRandom nLow nHigh ps
-      -- Check only output place usage
-      if isValidOutputPlaceUsage t vor nach
-        then return (vor, nach)
-        else partialFastConnectionInput t  -- Retry if invalid
-
-    -- Partial fast path: only output bimap is empty - skip output place validation
-    partialFastConnectionOutput t = do
-      vor <- if BM.member t transitionInputBimap
-             then return []
-             else takeRandom vLow vHigh ps
-      nach <- takeRandom nLow nHigh ps
-      -- Check only input place usage
-      if isValidInputPlaceUsage t vor nach
-        then return (vor, nach)
-        else partialFastConnectionOutput t  -- Retry if invalid
 
     generateValidConnection t = do
       vor <- if BM.member t transitionInputBimap
@@ -129,16 +104,22 @@ netLimitsWithPregenerated
         else generateValidConnection t  -- Retry if invalid
 
     isValidInputPlaceUsage t vor nach =
-      -- For each place in vor: if it's a forbidden input place, only allow if vor == nach == [that place]
-      all (\place -> not (BM.memberR place transitionInputBimap) || (vor == [place] && nach == [place])) vor
-      -- If t has a pregenerated input place, prevent that place from appearing in nach
-      && maybe True (`notElem` nach) (BM.lookup t transitionInputBimap)
+      -- Skip checks if input bimap is empty
+      BM.null transitionInputBimap ||
+      (  -- For each place in vor: if it's a forbidden input place, only allow if vor == nach == [that place]
+         all (\place -> not (BM.memberR place transitionInputBimap) || (vor == [place] && nach == [place])) vor
+         -- If t has a pregenerated input place, prevent that place from appearing in nach
+         && maybe True (`notElem` nach) (BM.lookup t transitionInputBimap)
+      )
 
     isValidOutputPlaceUsage t vor nach =
-      -- For each place in nach: if it's a forbidden output place, only allow if vor == nach == [that place]
-      all (\place -> not (BM.memberR place transitionOutputBimap) || (vor == [place] && nach == [place])) nach
-      -- If t has a pregenerated output place, prevent that place from appearing in vor
-      && maybe True (`notElem` vor) (BM.lookup t transitionOutputBimap)
+      -- Skip checks if output bimap is empty
+      BM.null transitionOutputBimap ||
+      (  -- For each place in nach: if it's a forbidden output place, only allow if vor == nach == [that place]
+         all (\place -> not (BM.memberR place transitionOutputBimap) || (vor == [place] && nach == [place])) nach
+         -- If t has a pregenerated output place, prevent that place from appearing in vor
+         && maybe True (`notElem` vor) (BM.lookup t transitionOutputBimap)
+      )
 
 state :: (MonadRandom m, Ord s) => [s] -> m (State s)
 state ps = do

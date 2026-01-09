@@ -327,10 +327,9 @@ checkFusableNodeConfig
   :: Maybe Int  -- ^ requireFusableInputNodes
   -> Maybe Int  -- ^ requireFusableOutputNodes
   -> Int        -- ^ numTransitions
-  -> Int        -- ^ numPlaces
   -> ArrowDensityConstraints
   -> Maybe String
-checkFusableNodeConfig maybeInputNodes maybeOutputNodes numTrans _ ArrowDensityConstraints {..}
+checkFusableNodeConfig maybeInputNodes maybeOutputNodes numTrans ArrowDensityConstraints {..}
   | Just count <- maybeInputNodes
   , count < 0 || count > numTrans
   = Just "requireFusableInputNodes must be non-negative and cannot exceed numTransitions"
@@ -382,11 +381,21 @@ checkFusableNodeConfig maybeInputNodes maybeOutputNodes numTrans _ ArrowDensityC
   , outputCount > 0
   = Just "requireFusableOutputNodes > 0 conflicts with incomingArrowsPerPlace maximum = 0"
   | Just inputCount <- maybeInputNodes
+  , let (minimumTotal, _) = totalArrowsFromPlacesToTransitions
+  , inputCount > 0
+  , minimumTotal < inputCount
+  = Just "requireFusableInputNodes exceeds totalArrowsFromPlacesToTransitions lower bound (narrowing constraint)"
+  | Just inputCount <- maybeInputNodes
   , let (_, maximumTotal) = totalArrowsFromPlacesToTransitions
   , inputCount > 0
   , Just maxTotal <- maximumTotal
   , maxTotal < inputCount
   = Just "requireFusableInputNodes exceeds totalArrowsFromPlacesToTransitions upper bound"
+  | Just outputCount <- maybeOutputNodes
+  , let (minimumTotal, _) = totalArrowsFromTransitionsToPlaces
+  , outputCount > 0
+  , minimumTotal < outputCount
+  = Just "requireFusableOutputNodes exceeds totalArrowsFromTransitionsToPlaces lower bound (narrowing constraint)"
   | Just outputCount <- maybeOutputNodes
   , let (_, maximumTotal) = totalArrowsFromTransitionsToPlaces
   , outputCount > 0
@@ -427,7 +436,6 @@ checkDeadlockConfig DeadlockConfig {..} =
     requireFusableInputNodes
     requireFusableOutputNodes
     numTransitions
-    numPlaces
     arrowDensityConstraints
 
 generateDeadlock
