@@ -32,8 +32,10 @@ module Modelling.CdOd.NameCdError (
   nameCdErrorSyntax,
   nameCdErrorTask,
   nameCdErrorTaskText,
+  relevantRelationships,
   renameInstance,
   translateReason,
+  translateRelationship,
   ) where
 
 import qualified Modelling.CdOd.CdAndChanges.Transform as Changes (
@@ -418,18 +420,29 @@ toTaskSpecificText path task@NameCdErrorInstance {..} = \case
       $ map (second (renderReason (printNavigations cdDrawSettings) . snd))
       $ M.toList errorReasons
     RelationshipsList -> do
-      let defaults = omittedDefaults cdDrawSettings
-          phrase article x y z = translate $ do
-            english $ phraseRelationship English defaults article Denoted x y z
-            german $ phraseRelationship German defaults article Denoted x y z
-          phraseRelationship' Annotation {..} = phrase
-            (referenceUsing annotation)
+      let phraseRelationship' annotation = translateRelationship
+            cdDrawSettings
             byName
-            (printNavigations cdDrawSettings)
-            annotated
+            annotation
       enumerateM (text . show)
-        $ map (second phraseRelationship')
+        $ map (second (translate . put . phraseRelationship'))
         $ relevantRelationships task
+
+translateRelationship
+  :: CdDrawSettings
+  -> Bool
+  -> Annotation Relevance (AnyRelationship String String)
+  -> Map Language String
+translateRelationship cdDrawSettings byName Annotation {..} =
+  let defaults = omittedDefaults cdDrawSettings
+      phrase article x y z = translations $ do
+        english $ phraseRelationship English defaults article Denoted x y z
+        german $ phraseRelationship German defaults article Denoted x y z
+  in phrase
+    (referenceUsing annotation)
+    byName
+    (printNavigations cdDrawSettings)
+    annotated
 
 data NameCdErrorInstance = NameCdErrorInstance {
   byName                      :: !Bool,
