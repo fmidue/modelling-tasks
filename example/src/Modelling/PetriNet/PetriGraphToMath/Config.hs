@@ -134,7 +134,7 @@ average max memory usage: 1005.36 MB
 -}
 task2025_23 :: MathConfig
 task2025_23 = task2024_21 {
-  graphConfig = GraphConfig {
+  graphConfig = (graphConfig task2024_21) {
     graphLayouts = [Dot, Neato, Fdp, Sfdp]
     }
   }
