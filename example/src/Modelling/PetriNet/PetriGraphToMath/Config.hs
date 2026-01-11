@@ -122,3 +122,31 @@ CPU usage: 103%
 -}
 task2024_22 :: MathConfig
 task2024_22 = task2023_18
+
+{-|
+points: 0.05
+the amount of generated instances: 100
+maximum concurrent amount of tasks: 50
+average generation time per instance on the cluster (without considering concurrency): 12:32min
+total run time on the cluster (not including queuing time): 26:59min
+average CPU usage: 101%
+average max memory usage: 1005.36 MB
+-}
+task2025_23 :: MathConfig
+task2025_23 = task2024_21 {
+  graphConfig = GraphConfig {
+    graphLayouts = [Dot, Neato, Fdp, Sfdp]
+    }
+  }
+
+{-|
+points: 0.05
+the amount of generated instances: 100
+maximum concurrent amount of tasks: 50
+average generation time per instance on the cluster (without considering concurrency): 29:17min
+total run time on the cluster (not including queuing time): 01:02:09h
+average CPU usage: 100%
+average max memory usage: 1245.69 MB
+-}
+task2025_24 :: MathConfig
+task2025_24 = task2024_22

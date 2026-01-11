@@ -122,3 +122,27 @@ CPU usage: 107%
 -}
 task2024_24 :: MathConfig
 task2024_24 = task2023_20
+
+{-|
+points: 0.05
+the amount of generated instances: 100
+maximum concurrent amount of tasks: 50
+average generation time per instance on the cluster (without considering concurrency): 11:33min
+total run time on the cluster (not including queuing time): 24:22min
+average CPU usage: 101%
+average max memory usage: 868.59 MB
+-}
+task2025_25 :: MathConfig
+task2025_25 = task2024_23
+
+{-|
+points: 0.05
+the amount of generated instances: 100
+maximum concurrent amount of tasks: 50
+average generation time per instance on the cluster (without considering concurrency): 38:35min
+total run time on the cluster (not including queuing time): 01:54:22h
+average CPU usage: 100%
+average max memory usage: 1758.83 MB
+-}
+task2025_26 :: MathConfig
+task2025_26 = task2024_24
