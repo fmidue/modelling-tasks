@@ -317,8 +317,8 @@ countFusableInputNodes transitionPlacesMap =
       case inputPlaces of
         [singlePlace] -> singlePlace `notElem` outputPlaces &&
                          null $ tail $
-                         filter (\(pre, post) -> post /= [singlePlace] || any (/= singlePlace) pre) $
-                         (consumerMap ! singlePlace)
+                         filter (\(pre, post) -> post /= [singlePlace] || any (/= singlePlace) pre)
+                                (consumerMap ! singlePlace)
         _ -> False
     consumerMap = M.fromListWith (++)
       [(place, [places]) | places <- M.elems transitionPlacesMap, place <- fst places]
@@ -336,8 +336,8 @@ countFusableOutputNodes transitionPlacesMap =
       case outputPlaces of
         [singlePlace] -> singlePlace `notElem` inputPlaces &&
                          null $ tail $
-                         filter (\(pre, post) -> pre /= [singlePlace] || any (/= singlePlace) post) $
-                         (producerMap ! singlePlace)
+                         filter (\(pre, post) -> pre /= [singlePlace] || any (/= singlePlace) post)
+                                (producerMap ! singlePlace)
         _ -> False
     producerMap = M.fromListWith (++)
       [(place, [places]) | places <- M.elems transitionPlacesMap, place <- snd places]
