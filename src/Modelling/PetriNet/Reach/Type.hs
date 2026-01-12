@@ -15,6 +15,7 @@ based on file: collection/src/Petri/Type.hs
 module Modelling.PetriNet.Reach.Type where
 
 import qualified Data.Map                         as M (
+  elems,
   filter,
   findWithDefault,
   fromList,
@@ -38,7 +39,7 @@ import Autolib.ToDoc                    (ToDoc (toDocPrec), text)
 import Control.Monad                    (void)
 import Data.Data                        (Data)
 import Data.List                        (intercalate)
-import Data.Map                         (Map)
+import Data.Map                         (Map, (!))
 import Data.Set                         (Set)
 import GHC.Generics                     (Generic)
 import Text.ParserCombinators.Parsec (
@@ -314,22 +315,13 @@ countFusableInputNodes transitionPlacesMap =
   where
     isFusableInput (inputPlaces, outputPlaces) =
       case inputPlaces of
-        [singlePlace] -> singlePlace `notElem` outputPlaces && isOnlyConsumerOf singlePlace
+        [singlePlace] -> singlePlace `notElem` outputPlaces &&
+                         null $ tail $
+                         filter (\(pre, post) -> post /= [singlePlace] || any (/= singlePlace) pre) $
+                         (consumerMap ! singlePlace)
         _ -> False
-    -- Optimized: build consumer map once from transitionPlacesMap using Map operations
     consumerMap = M.fromListWith (++)
-      [(place, [t]) | (t, (pre, _)) <- M.toList transitionPlacesMap, place <- pre]
-    isOnlyConsumerOf place =
-      case M.lookup place consumerMap of
-        Nothing -> False
-        Just consumersOfPlace ->
-          let nonLoopConsumers = filter (\t -> not $ isLoopOnlyConsumer t place) consumersOfPlace
-          in length nonLoopConsumers == 1
-    isLoopOnlyConsumer trans place =
-      case M.lookup trans transitionPlacesMap of
-        Nothing -> False
-        Just (pre, post) ->
-          place `elem` post && all (== place) pre && all (== place) post
+      [(place, [places]) | places <- M.elems transitionPlacesMap, place <- fst places]
 
 {- | Count transitions with exactly one output place which moreover is exclusively produced to by that transition.
 A "fusable output node" is a transition t where:
@@ -342,19 +334,10 @@ countFusableOutputNodes transitionPlacesMap =
   where
     isFusableOutput (inputPlaces, outputPlaces) =
       case outputPlaces of
-        [singlePlace] -> singlePlace `notElem` inputPlaces && isOnlyProducerOf singlePlace
+        [singlePlace] -> singlePlace `notElem` inputPlaces &&
+                         null $ tail $
+                         filter (\(pre, post) -> pre /= [singlePlace] || any (/= singlePlace) post) $
+                         (producerMap ! singlePlace)
         _ -> False
-    -- Optimized: build producer map once from transitionPlacesMap using Map operations
     producerMap = M.fromListWith (++)
-      [(place, [t]) | (t, (_, post)) <- M.toList transitionPlacesMap, place <- post]
-    isOnlyProducerOf place =
-      case M.lookup place producerMap of
-        Nothing -> False
-        Just producersOfPlace ->
-          let nonLoopProducers = filter (\t -> not $ isLoopOnlyProducer t place) producersOfPlace
-          in length nonLoopProducers == 1
-    isLoopOnlyProducer trans place =
-      case M.lookup trans transitionPlacesMap of
-        Nothing -> False
-        Just (pre, post) ->
-          place `elem` pre && all (== place) pre && all (== place) post
+      [(place, [places]) | places <- M.elems transitionPlacesMap, place <- snd places]
