@@ -309,7 +309,7 @@ A "fusable input node" is a transition t where:
 - t consumes from exactly one input place s, AND
 - t is the only transition that consumes from s (except for trivial back-and-forth looping transitions)
 -}
-countFusableInputNodes :: (Ord s, Ord t) => Map t ([s], [s]) -> Int
+countFusableInputNodes :: Ord s => Map t ([s], [s]) -> Int
 countFusableInputNodes transitionPlacesMap =
   M.size $ M.filter isFusableInput transitionPlacesMap
   where
@@ -326,7 +326,7 @@ A "fusable output node" is a transition t where:
 - t produces to exactly one place s, AND
 - t is the only transition that produces to s (except for trivial back-and-forth looping transitions)
 -}
-countFusableOutputNodes :: (Ord s, Ord t) => Map t ([s], [s]) -> Int
+countFusableOutputNodes :: Ord s => Map t ([s], [s]) -> Int
 countFusableOutputNodes transitionPlacesMap =
   M.size $ M.filter isFusableOutput transitionPlacesMap
   where
