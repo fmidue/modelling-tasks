@@ -420,10 +420,9 @@ toTaskSpecificText path task@NameCdErrorInstance {..} = \case
       $ map (second (renderReason (printNavigations cdDrawSettings) . snd))
       $ M.toList errorReasons
     RelationshipsList -> do
-      let phraseRelationship' annotation = translateRelationship
+      let phraseRelationship' = translateRelationship
             cdDrawSettings
             byName
-            annotation
       enumerateM (text . show)
         $ map (second (translate . put . phraseRelationship'))
         $ relevantRelationships task
