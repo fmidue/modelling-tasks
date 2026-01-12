@@ -374,18 +374,10 @@ checkFusableNodeConfig maybeInputNodes maybeOutputNodes numTrans ArrowDensityCon
   = Just "requireFusableOutputNodes > 0 conflicts with incomingArrowsPerPlace maximum = 0"
   | Just inputCount <- maybeInputNodes
   , fst totalArrowsFromPlacesToTransitions < inputCount
-  = Just "requireFusableInputNodes exceeds totalArrowsFromPlacesToTransitions lower bound (narrowing constraint)"
-  | Just inputCount <- maybeInputNodes
-  , Just maxTotal <- snd totalArrowsFromPlacesToTransitions
-  , maxTotal < inputCount
-  = Just "requireFusableInputNodes exceeds totalArrowsFromPlacesToTransitions upper bound"
+  = Just "having fewer totalArrowsFromPlacesToTransitions than requireFusableInputNodes makes no sense"
   | Just outputCount <- maybeOutputNodes
   , fst totalArrowsFromTransitionsToPlaces < outputCount
-  = Just "requireFusableOutputNodes exceeds totalArrowsFromTransitionsToPlaces lower bound (narrowing constraint)"
-  | Just outputCount <- maybeOutputNodes
-  , Just maxTotal <- snd totalArrowsFromTransitionsToPlaces
-  , maxTotal < outputCount
-  = Just "requireFusableOutputNodes exceeds totalArrowsFromTransitionsToPlaces upper bound"
+  = Just "having fewer totalArrowsFromTransitionsToPlaces than requireFusableOutputNodes exceeds makes no sense"
   | otherwise
   = Nothing
 
@@ -409,18 +401,18 @@ checkDeadlockConfig DeadlockConfig {..} =
     numTransitions
     filterConfig
   <|>
+  checkFusableNodeConfig
+    requireFusableInputNodes
+    requireFusableOutputNodes
+    numTransitions
+    arrowDensityConstraints
+  <|>
   if maxPrintedSolutions < 0
     then Just "maxPrintedSolutions must be non-negative"
     else case solutionSetLimit filterConfig of
       Just maxSolutions | maxPrintedSolutions > maxSolutions ->
         Just "maxPrintedSolutions cannot be greater than solutionSetLimit"
       _ -> Nothing
-  <|>
-  checkFusableNodeConfig
-    requireFusableInputNodes
-    requireFusableOutputNodes
-    numTransitions
-    arrowDensityConstraints
 
 generateDeadlock
   :: (MonadCatch m, MonadDiagrams m, MonadGraphviz m)
