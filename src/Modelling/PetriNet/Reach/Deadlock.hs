@@ -377,7 +377,7 @@ checkFusableNodeConfig maybeInputNodes maybeOutputNodes numTrans ArrowDensityCon
   = Just "having fewer totalArrowsFromPlacesToTransitions than requireFusableInputNodes makes no sense"
   | Just outputCount <- maybeOutputNodes
   , fst totalArrowsFromTransitionsToPlaces < outputCount
-  = Just "having fewer totalArrowsFromTransitionsToPlaces than requireFusableOutputNodes exceeds makes no sense"
+  = Just "having fewer totalArrowsFromTransitionsToPlaces than requireFusableOutputNodes makes no sense"
   | otherwise
   = Nothing
 
