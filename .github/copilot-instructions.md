@@ -541,9 +541,9 @@ defaultDeadlockInstance = DeadlockInstance {
 
 After making changes, always validate:
 
-1. **Build succeeds**: `stack --stack-yaml=stack-apps.yaml test --no-run-tests modelling-tasks` or `stack --stack-yaml=stack-apps.yaml test --no-run-tests` **MUST PASS BEFORE COMMIT**
+1. **Library build succeeds**: `stack --stack-yaml=stack-apps.yaml test --no-run-tests modelling-tasks` **MUST PASS BEFORE COMMIT**
 2. **Test suite compiles**: `stack --stack-yaml=stack-apps.yaml test --no-run-tests` **MUST PASS BEFORE COMMIT**
-3. **Example directory compiles and tests pass**: `stack --stack-yaml=stack-examples.yaml test` **MUST PASS BEFORE COMMIT**
+3. **Example directory compiles and its tests pass**: `stack --stack-yaml=stack-examples.yaml test` **MUST PASS BEFORE COMMIT**
 4. **EditorConfig compliance**: `./scripts/check-editorconfig.sh` **MUST PASS**
 5. **HLint does not complain**: `hlint src/ test/ app/` **MUST PASS WITHOUT EVEN JUST SUGGESTIONS**
 6. **Targeted tests pass**: Run targeted tests for code you modified using `--match` patterns
