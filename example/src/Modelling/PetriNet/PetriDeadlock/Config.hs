@@ -110,3 +110,9 @@ task2024_61 = DeadlockConfig {
   requireFusableOutputNodes = Nothing,
   filterConfig = defaultFilterConfig { absentTransitionsRequirement = 0, forbiddenCycleLengths = [], requireCycleLengthsAny = [] }
   }
+
+task2025_29 :: DeadlockConfig
+task2025_29 = task2024_27
+
+task2025_30 :: DeadlockConfig
+task2025_30 = task2024_28

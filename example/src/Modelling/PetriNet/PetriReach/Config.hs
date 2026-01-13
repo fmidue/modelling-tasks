@@ -123,3 +123,9 @@ task2024_60 = ReachConfig {
   showPlaceNamesInNet = False,
   filterConfig = defaultFilterConfig { absentTransitionsRequirement = 0, forbiddenCycleLengths = [], requireCycleLengthsAny = [] }
   }
+
+task2025_27 :: ReachConfig
+task2025_27 = task2024_25
+
+task2025_28 :: ReachConfig
+task2025_28 = task2024_26
