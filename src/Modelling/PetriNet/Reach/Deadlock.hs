@@ -260,8 +260,8 @@ toShowDeadlockInstance = bimapDeadlockInstance ShowPlace ShowTransition
 
 -- | Configuration for deadlock task generation.
 -- Note: The two kinds of fusable transition/place situations (input-fusable and output-fusable)
--- are guaranteed to be non-overlapping. No transition can be both input-fusable and output-fusable
--- and no such transitions share a relevant fusing place.
+-- are guaranteed to be non-overlapping. No transition will be both input-fusable and output-fusable
+-- and no such transitions will share a fusing-relevant place.
 data DeadlockConfig = DeadlockConfig {
   numPlaces :: Int,
   numTransitions :: Int,
