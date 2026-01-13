@@ -15,14 +15,12 @@ based on file: collection/src/Petri/Type.hs
 module Modelling.PetriNet.Reach.Type where
 
 import qualified Data.Map                         as M (
-  elems,
   filter,
   findWithDefault,
   fromList,
   fromListWith,
   lookup,
   mapKeys,
-  size,
   toList,
   )
 import qualified Data.Set                         as S (
@@ -309,31 +307,31 @@ A "fusable input node" is a transition t where:
 - t consumes from exactly one input place s, AND
 - t is the only transition that consumes from s (except for trivial back-and-forth looping transitions)
 -}
-countFusableInputNodes :: Ord s => Map t ([s], [s]) -> Int
-countFusableInputNodes transitionPlacesMap =
-  M.size $ M.filter isFusableInput transitionPlacesMap
+countFusableInputNodes :: Ord s => [([s], t, [s])] -> Int
+countFusableInputNodes connections =
+  length $ filter isFusableInput connections
   where
-    isFusableInput (inputPlaces, outputPlaces) =
+    isFusableInput (inputPlaces, _, outputPlaces) =
       case inputPlaces of
         [singlePlace] -> singlePlace `notElem` outputPlaces &&
-                         null (tail (filter (\(pre, post) -> pre /= [singlePlace] || post /= [singlePlace]) (consumerMap ! singlePlace)))
+                         null (tail (filter (\(pre, _, post) -> pre /= [singlePlace] || post /= [singlePlace]) (consumerMap ! singlePlace)))
         _ -> False
     consumerMap = M.fromListWith (++)
-      [(place, [places]) | places <- M.elems transitionPlacesMap, place <- fst places]
+      [(place, [conn]) | conn@(pre, _, _) <- connections, place <- pre]
 
 {- | Count transitions with exactly one output place which moreover is exclusively produced to by that transition.
 A "fusable output node" is a transition t where:
 - t produces to exactly one place s, AND
 - t is the only transition that produces to s (except for trivial back-and-forth looping transitions)
 -}
-countFusableOutputNodes :: Ord s => Map t ([s], [s]) -> Int
-countFusableOutputNodes transitionPlacesMap =
-  M.size $ M.filter isFusableOutput transitionPlacesMap
+countFusableOutputNodes :: Ord s => [([s], t, [s])] -> Int
+countFusableOutputNodes connections =
+  length $ filter isFusableOutput connections
   where
-    isFusableOutput (inputPlaces, outputPlaces) =
+    isFusableOutput (inputPlaces, _, outputPlaces) =
       case outputPlaces of
         [singlePlace] -> singlePlace `notElem` inputPlaces &&
-                         null (tail (filter (\(pre, post) -> pre /= [singlePlace] || post /= [singlePlace]) (producerMap ! singlePlace)))
+                         null (tail (filter (\(pre, _, post) -> pre /= [singlePlace] || post /= [singlePlace]) (producerMap ! singlePlace)))
         _ -> False
     producerMap = M.fromListWith (++)
-      [(place, [places]) | places <- M.elems transitionPlacesMap, place <- snd places]
+      [(place, [conn]) | conn@(_, _, post) <- connections, place <- post]
