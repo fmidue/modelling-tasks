@@ -258,8 +258,8 @@ data DeadlockConfig = DeadlockConfig {
   numPlaces :: Int,
   numTransitions :: Int,
   capacity :: Capacity Place,
-  -- | Draw commands in order of preference
-  drawPreferenceOrder :: [GraphvizCommand],
+  -- | Graph layout commands to choose from (randomly selected during generation)
+  graphLayouts :: [GraphvizCommand],
   maxTransitionLength :: Int,
   minTransitionLength :: Int,
   transitionBehaviorConstraints :: TransitionBehaviorConstraints,
@@ -282,7 +282,7 @@ defaultDeadlockConfig =
   numPlaces = 6,
   numTransitions = 6,
   Modelling.PetriNet.Reach.Deadlock.capacity = Unbounded,
-  drawPreferenceOrder = [Dot, Neato, TwoPi, Circo, Fdp, Sfdp, Osage, Patchwork],
+  graphLayouts = [Dot, Neato, TwoPi, Circo, Fdp, Sfdp, Osage, Patchwork],
   maxTransitionLength = 8,
   minTransitionLength = 8,
   transitionBehaviorConstraints = noTransitionBehaviorConstraints,
@@ -319,7 +319,7 @@ checkDeadlockConfig DeadlockConfig {..} =
     maxTransitionLength
     transitionBehaviorConstraints
     arrowDensityConstraints
-    drawPreferenceOrder
+    graphLayouts
     rejectLongerThan
     showLengthHint
   <|>
@@ -392,7 +392,7 @@ try conf = do
     let allShortestSolutions = map reverse . concatMap snd $ head yeah
     guard $ length no >= minTransitionLength conf
     (cmd, solutionsList) <- validateDrawabilityAndSolutionFiltering
-      n (drawPreferenceOrder conf) allShortestSolutions
+      n (graphLayouts conf) allShortestSolutions
       (filterConfig conf) (numTransitions conf) (maxPrintedSolutions conf)
     pure (n, cmd, solutionsList)
 
