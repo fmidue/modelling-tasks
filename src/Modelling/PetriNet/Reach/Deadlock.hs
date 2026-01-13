@@ -327,53 +327,39 @@ checkFusableNodeConfig
   :: Maybe Int  -- ^ requireFusableInputNodes
   -> Maybe Int  -- ^ requireFusableOutputNodes
   -> Int        -- ^ numTransitions
+  -> Int        -- ^ numPlaces
   -> ArrowDensityConstraints
   -> Maybe String
-checkFusableNodeConfig maybeInputNodes maybeOutputNodes numTrans ArrowDensityConstraints {..}
+checkFusableNodeConfig maybeInputNodes maybeOutputNodes numTrans numPls ArrowDensityConstraints {..}
   | let relevantInputCount = fromMaybe 0 maybeInputNodes
   , let relevantOutputCount = fromMaybe 0 maybeOutputNodes
-  , relevantInputCount < 0 || relevantOutputCount < 0 || relevantInputCount + relevantOutputCount > numTrans
-  = Just "requireFusableInputNodes and requireFusableOutputNodes must not be negative and together cannot exceed numTransitions"
-  | Just inputCount <- maybeInputNodes
-  , fst incomingArrowsPerTransition > 1
-  , inputCount > 0
-  = Just "requireFusableInputNodes > 0 conflicts with incomingArrowsPerTransition minimum > 1"
-  | Just inputCount <- maybeInputNodes
-  , snd incomingArrowsPerTransition == Just 0
-  , inputCount > 0
-  = Just "requireFusableInputNodes > 0 conflicts with incomingArrowsPerTransition maximum = 0"
-  | Just outputCount <- maybeOutputNodes
-  , fst outgoingArrowsPerTransition > 1
-  , outputCount > 0
-  = Just "requireFusableOutputNodes > 0 conflicts with outgoingArrowsPerTransition minimum > 1"
-  | Just outputCount <- maybeOutputNodes
-  , snd outgoingArrowsPerTransition == Just 0
-  , outputCount > 0
-  = Just "requireFusableOutputNodes > 0 conflicts with outgoingArrowsPerTransition maximum = 0"
-  | Just inputCount <- maybeInputNodes
-  , fst outgoingArrowsPerPlace > 1
-  , inputCount > 0
-  = Just "requireFusableInputNodes > 0 conflicts with outgoingArrowsPerPlace minimum > 1"
-  | Just inputCount <- maybeInputNodes
-  , snd outgoingArrowsPerPlace == Just 0
-  , inputCount > 0
-  = Just "requireFusableInputNodes > 0 conflicts with outgoingArrowsPerPlace maximum = 0"
-  | Just outputCount <- maybeOutputNodes
-  , fst incomingArrowsPerPlace > 1
-  , outputCount > 0
-  = Just "requireFusableOutputNodes > 0 conflicts with incomingArrowsPerPlace minimum > 1"
-  | Just outputCount <- maybeOutputNodes
-  , snd incomingArrowsPerPlace == Just 0
-  , outputCount > 0
-  = Just "requireFusableOutputNodes > 0 conflicts with incomingArrowsPerPlace maximum = 0"
-  | Just inputCount <- maybeInputNodes
-  , fst totalArrowsFromPlacesToTransitions < inputCount
-  = Just "having fewer totalArrowsFromPlacesToTransitions than requireFusableInputNodes makes no sense"
-  | Just outputCount <- maybeOutputNodes
-  , fst totalArrowsFromTransitionsToPlaces < outputCount
-  = Just "having fewer totalArrowsFromTransitionsToPlaces than requireFusableOutputNodes makes no sense"
+  , relevantInputCount < 0 || relevantOutputCount < 0
+    || relevantInputCount + relevantOutputCount > min numTrans numPls
+  = Just "fusable node requirements invalid or exceed min(transitions,places)"
   | otherwise
-  = Nothing
+  = checkMinConflict maybeInputNodes incomingArrowsPerTransition "InputNodes" "incomingArrowsPerTransition"
+    <|> checkMaxConflict maybeInputNodes incomingArrowsPerTransition "InputNodes" "incomingArrowsPerTransition"
+    <|> checkMinConflict maybeOutputNodes outgoingArrowsPerTransition "OutputNodes" "outgoingArrowsPerTransition"
+    <|> checkMaxConflict maybeOutputNodes outgoingArrowsPerTransition "OutputNodes" "outgoingArrowsPerTransition"
+    <|> checkMinConflict maybeInputNodes outgoingArrowsPerPlace "InputNodes" "outgoingArrowsPerPlace"
+    <|> checkMaxConflict maybeInputNodes outgoingArrowsPerPlace "InputNodes" "outgoingArrowsPerPlace"
+    <|> checkMinConflict maybeOutputNodes incomingArrowsPerPlace "OutputNodes" "incomingArrowsPerPlace"
+    <|> checkMaxConflict maybeOutputNodes incomingArrowsPerPlace "OutputNodes" "incomingArrowsPerPlace"
+    <|> checkTotalLower maybeInputNodes (fst totalArrowsFromPlacesToTransitions) "InputNodes" "totalArrowsFromPlacesToTransitions"
+    <|> checkTotalLower maybeOutputNodes (fst totalArrowsFromTransitionsToPlaces) "OutputNodes" "totalArrowsFromTransitionsToPlaces"
+  where
+    checkMinConflict maybeCount (minVal, _) nodeType constraintName
+      | Just count <- maybeCount, minVal > 1, count > 0
+      = Just $ "requireFusable" ++ nodeType ++ " > 0 conflicts with " ++ constraintName ++ " minimum > 1"
+      | otherwise = Nothing
+    checkMaxConflict maybeCount (_, maxVal) nodeType constraintName
+      | Just count <- maybeCount, maxVal == Just 0, count > 0
+      = Just $ "requireFusable" ++ nodeType ++ " > 0 conflicts with " ++ constraintName ++ " maximum = 0"
+      | otherwise = Nothing
+    checkTotalLower maybeCount totalMin nodeType constraintName
+      | Just count <- maybeCount, totalMin < count
+      = Just $ "having fewer " ++ constraintName ++ " than requireFusable" ++ nodeType ++ " makes no sense"
+      | otherwise = Nothing
 
 checkDeadlockConfig :: DeadlockConfig -> Maybe String
 checkDeadlockConfig DeadlockConfig {..} =
@@ -399,6 +385,7 @@ checkDeadlockConfig DeadlockConfig {..} =
     requireFusableInputNodes
     requireFusableOutputNodes
     numTransitions
+    numPlaces
     arrowDensityConstraints
   <|>
   if maxPrintedSolutions < 0
