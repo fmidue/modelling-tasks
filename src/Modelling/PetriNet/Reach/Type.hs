@@ -303,8 +303,8 @@ satisfiesTransitionBehaviorConstraints net TransitionBehaviorConstraints {..} =
         in nonPreserving == expected
 
 {- | Count transitions with exactly one input place which moreover is exclusively consumed from by that transition.
-A "fusable input node" is a transition t where:
-- t consumes from exactly one input place s, AND
+More specifically, a "fusable input node" is a transition t where:
+- t consumes (truly) from exactly one input place s, AND
 - t is the only transition that consumes from s (except for trivial back-and-forth looping transitions)
 -}
 countFusableInputNodes :: Ord s => [([s], t, [s])] -> Int
@@ -320,8 +320,8 @@ countFusableInputNodes connections =
       [(place, [conn]) | conn@(pre, _, _) <- connections, place <- pre]
 
 {- | Count transitions with exactly one output place which moreover is exclusively produced to by that transition.
-A "fusable output node" is a transition t where:
-- t produces to exactly one place s, AND
+More specifically, a "fusable output node" is a transition t where:
+- t produces (truly) to exactly one place s, AND
 - t is the only transition that produces to s (except for trivial back-and-forth looping transitions)
 -}
 countFusableOutputNodes :: Ord s => [([s], t, [s])] -> Int
