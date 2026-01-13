@@ -190,12 +190,16 @@ import Modelling.PetriNet.PetriGraphToMath.Config (
   task2023_18,
   task2024_21,
   task2024_22,
+  task2025_23,
+  task2025_24,
   )
 import Modelling.PetriNet.PetriMathToGraph.Config (
   task2023_19,
   task2023_20,
   task2024_23,
   task2024_24,
+  task2025_25,
+  task2025_26,
   )
 import Modelling.PetriNet.PetriPickConcurrency.Config (
   task2023_21,
@@ -490,3 +494,11 @@ spec =
         checkDifferentNamesConfig task2025_21 `shouldBe` Nothing
       it "task22" $
         checkDifferentNamesConfig task2025_22 `shouldBe` Nothing
+      it "task23" $
+        checkGraphToMathConfig task2025_23 `shouldBe` Nothing
+      it "task24" $
+        checkGraphToMathConfig task2025_24 `shouldBe` Nothing
+      it "task25" $
+        checkMathConfig task2025_25 `shouldBe` Nothing
+      it "task26" $
+        checkMathConfig task2025_26 `shouldBe` Nothing
