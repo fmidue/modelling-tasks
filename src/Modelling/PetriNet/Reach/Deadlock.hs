@@ -330,16 +330,10 @@ checkFusableNodeConfig
   -> ArrowDensityConstraints
   -> Maybe String
 checkFusableNodeConfig maybeInputNodes maybeOutputNodes numTrans ArrowDensityConstraints {..}
-  | Just count <- maybeInputNodes
-  , count < 0 || count > numTrans
-  = Just "requireFusableInputNodes must be non-negative and cannot exceed numTransitions"
-  | Just count <- maybeOutputNodes
-  , count < 0 || count > numTrans
-  = Just "requireFusableOutputNodes must be non-negative and cannot exceed numTransitions"
-  | Just inputCount <- maybeInputNodes
-  , Just outputCount <- maybeOutputNodes
-  , inputCount + outputCount > numTrans
-  = Just "requireFusableInputNodes + requireFusableOutputNodes cannot exceed numTransitions"
+  | let relevantInputCount = fromMaybe 0 maybeInputNodes
+  , let relevantOutputCount = fromMaybe 0 maybeOutputNodes
+  , relevantInputCount < 0 || relevantOutputCount < 0 || relevantInputCount + relevantOutputCount > numTrans
+  = Just "requireFusableInputNodes and requireFusableOutputNodes must not be negative and together cannot exceed numTransitions"
   | Just inputCount <- maybeInputNodes
   , fst incomingArrowsPerTransition > 1
   , inputCount > 0
