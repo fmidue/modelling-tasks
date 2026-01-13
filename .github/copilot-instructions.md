@@ -82,10 +82,37 @@ stack --stack-yaml=stack-apps.yaml test --no-run-tests
 
 **Build times**: Remember that builds can take 30-45 minutes. Set appropriate timeout values (60+ minutes) and never cancel builds.
 
+### 🔴 NEVER COMMIT CODE THAT DOESN'T COMPILE IN EXAMPLE DIRECTORY
+
+**ABSOLUTE REQUIREMENT**: The example directory MUST always successfully compile and run.
+
+**BEFORE ANY COMMIT**: Run these commands to validate the example directory:
+
+```bash
+# Compile example directory (must succeed)
+stack --stack-yaml=stack-examples.yaml test --no-run-tests
+
+# Run example tests (must succeed)
+stack --stack-yaml=stack-examples.yaml test
+```
+
+**If compilation or tests fail**: Fix all errors before committing:
+
+- Review the error messages carefully
+- Fix all type errors, missing imports, and syntax issues
+- Re-run both commands until they succeed
+- Only then proceed with committing
+
+**IF EXAMPLE DIRECTORY FAILS TO COMPILE OR RUN**:
+
+- **DO NOT COMMIT**
+- **DO NOT USE `report_progress`**
+- **FIX ALL ERRORS FIRST**
+
 ### ⏰ NEVER CANCEL BUILDS OR TESTS
 
 - **Project builds**: 30-45 minutes (set timeout to 60+ minutes)
-- **Test suites**: 15-30 minutes (set timeout to 45+ minutes)
+- **Targeted test runs**: 5-15 minutes (set timeout to 30+ minutes)
 - Builds resume from cache when interrupted properly - canceling wastes progress
 
 ## Working Effectively
@@ -110,11 +137,19 @@ Dependencies are pre-installed by the automated setup workflow. Build the projec
 
 ### Running Tests
 
-- `stack test` -- Takes 15-30 minutes. Set timeout to 45+ minutes.
-- `stack --stack-yaml=stack-apps.yaml test` -- includes all test suites
-- Test-specific options:
+**CRITICAL**: **NEVER run the full test suite**. Always use targeted tests with `--match` patterns.
+
+**Targeted testing examples**:
+- `stack test --test-arguments="-m SelectAS"` -- Test specific module
+- `stack test --test-arguments="-m Modelling.CdOd"` -- Test category
+- `stack test --test-arguments="-m \"is valid\""` -- Test specific description
+
+**Additional test options**:
   - `--test-arguments="--skip-needs-tuning"` -- excludes unstable/long-running tests
-  - `--test-arguments="--times --maximum-generated-tests=50"` -- limits test case generation
+  - `--test-arguments="--maximum-generated-tests=50"` -- limits test case generation
+
+**Combine matching with options**:
+- `stack test --test-arguments="-m SelectAS --skip-needs-tuning --maximum-generated-tests=10"`
 
 **NEVER CANCEL**: Allow adequate time for tests to complete.
 
@@ -177,6 +212,20 @@ stack --stack-yaml=stack-apps.yaml test --no-run-tests
 ```
 
 **Never commit code that doesn't build**. This is a fundamental requirement.
+
+### Example Directory Compilation and Testing (MANDATORY)
+
+**CRITICAL**: The example directory must always compile and run successfully:
+
+```bash
+# Compile example directory (must succeed)
+stack --stack-yaml=stack-examples.yaml test --no-run-tests
+
+# Run example tests (must succeed)
+stack --stack-yaml=stack-examples.yaml test
+```
+
+**Never commit code that breaks the example directory**. This is a fundamental requirement.
 
 ### EditorConfig Compliance (MANDATORY)
 
@@ -509,11 +558,15 @@ defaultDeadlockInstance = DeadlockInstance {
 After making changes, always validate:
 
 1. **Build succeeds**: `stack --stack-yaml=stack-apps.yaml test --no-run-tests modelling-tasks` or `stack --stack-yaml=stack-apps.yaml test --no-run-tests` **MUST PASS BEFORE COMMIT**
-2. **EditorConfig compliance**: `./scripts/check-editorconfig.sh` **MUST PASS**
-3. **HLint does not complain**: `hlint src/ test/ app/` **MUST PASS WITHOUT EVEN JUST SUGGESTIONS**
-4. **Tests pass**: `stack --stack-yaml=stack-apps.yaml test` (30+ minutes)
-5. **App execution**: Test at least one app with `stack exec <app-name>`
-6. **GHCi interaction**: Load examples and generate task instances
+2. **Example directory compiles**: `stack --stack-yaml=stack-examples.yaml test --no-run-tests` **MUST PASS BEFORE COMMIT**
+3. **Example directory tests pass**: `stack --stack-yaml=stack-examples.yaml test` **MUST PASS BEFORE COMMIT**
+4. **EditorConfig compliance**: `./scripts/check-editorconfig.sh` **MUST PASS**
+5. **HLint does not complain**: `hlint src/ test/ app/` **MUST PASS WITHOUT EVEN JUST SUGGESTIONS**
+6. **Targeted tests pass**: Run targeted tests for code you modified using `--match` patterns
+7. **App execution** (if applicable): Test relevant apps with `stack exec <app-name>`
+8. **GHCi interaction** (if applicable): Load examples and generate task instances
+
+**NEVER run the full test suite** (`stack test` or `stack --stack-yaml=stack-apps.yaml test` without `--match`). Always use targeted testing.
 
 ### Manual Testing Workflow
 
