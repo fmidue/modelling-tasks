@@ -122,8 +122,6 @@ This project uses Haskell Stack as its primary build tool. Three Stack configura
 
 ### Building the Project
 
-**NEVER CANCEL builds or dependency installations - they can take 60+ minutes**
-
 Dependencies are pre-installed by the automated setup workflow. Build the project with:
 
 - `stack --stack-yaml=stack-apps.yaml build` -- Builds the main library plus all applications in `/app`, `/legacy-app`, and `/example` (30-45 minutes)
@@ -148,8 +146,6 @@ Dependencies are pre-installed by the automated setup workflow. Build the projec
 **Combine matching with options**:
 
 - `stack test --test-arguments="-m SelectAS --skip-needs-tuning --qc-max-success=10"`
-
-**NEVER CANCEL**: Allow adequate time for tests to complete.
 
 ### Running Applications
 
@@ -193,46 +189,7 @@ runLangMReport (return ()) (>>) (nameCdErrorTask "/tmp/" inst) >>= \(Just (), x)
 
 ## Validation and Linting
 
-Always run these commands before committing changes:
-
-### Build Success (MANDATORY)
-
-**CRITICAL**: Code must successfully build before any commit:
-
-```bash
-stack --stack-yaml=stack-apps.yaml test --no-run-tests modelling-tasks
-```
-
-For the full application suite:
-
-```bash
-stack --stack-yaml=stack-apps.yaml test --no-run-tests
-```
-
-**Never commit code that doesn't build**. This is a fundamental requirement.
-
-### EditorConfig Compliance (MANDATORY)
-
-**ALWAYS run this first before any commit**:
-
-```bash
-./scripts/check-editorconfig.sh
-```
-
-This script enforces:
-
-- No trailing whitespace
-- Final newlines on all files (except test/unit/\*\* files)
-
-**If violations found**, fix them immediately with:
-
-```bash
-# Remove trailing whitespace from specific file:
-sed -i 's/[[:space:]]*$//' filename
-
-# Add final newline to specific file:
-echo >> filename
-```
+Always run these commands before committing changes. See "CRITICAL WARNINGS" section above for detailed build and EditorConfig requirements.
 
 ### Linting
 
@@ -300,35 +257,6 @@ num :: Int              -- Use: number, numberOfItems
 - Loop variables in very short, localized contexts (e.g., `i`, `j`, `k` in list comprehensions)
 - Widely accepted mathematical notation in domain-specific contexts (e.g., `n` for count in mathematical functions)
 - Standard abbreviations from the problem domain (e.g., `cd` for "class diagram", `od` for "object diagram" when these are established terms in the codebase)
-
-### Code Formatting
-
-**MANDATORY .editorconfig compliance**:
-
-```bash
-# ALWAYS run before committing:
-./scripts/check-editorconfig.sh
-```
-
-Follow `.editorconfig` standards (enforced by CI):
-
-- **2-space indentation** (where specified)
-- **LF line endings** (except test/unit/\*\* files)
-- **TRIM TRAILING WHITESPACE** (except test/unit/\*\* files)
-- **INSERT FINAL NEWLINE** (except test/unit/\*\* files)
-- **175 character line limit** (160 for .als files)
-- **No line length limits** for YAML, Markdown, or TeX files
-- **Special handling** for test/unit/ files (formatting rules relaxed)
-
-**Quick fix commands for violations**:
-
-```bash
-# Remove trailing whitespace:
-sed -i 's/[[:space:]]*$//' filename
-
-# Add final newline:
-echo >> filename
-```
 
 ## Haskell Development Guidelines
 
@@ -586,27 +514,7 @@ Tests are matched using a hierarchical path consisting of:
 
 The `--match` (or `-m`) option accepts patterns that match against the full hierarchical test path. Matching is substring-based and case-sensitive.
 
-**CRITICAL QUOTING RULES**: When using `stack test --test-arguments`, the entire argument string is already in double quotes. Therefore:
-
-- **DO NOT** use single quotes around patterns - they become part of the pattern itself
-- For patterns with spaces, use escaped double quotes: `\"`
-- For simple patterns without spaces, no quotes are needed
-
-**IMPORTANT**: When using `stack test --test-arguments`, patterns with spaces MUST be quoted with escaped quotes:
-
-```bash
-# CORRECT - Pattern with spaces requires escaped quotes
-stack test --test-arguments="-m \"is valid\""
-
-# CORRECT - Simple patterns without spaces don't need quotes
-stack test --test-arguments="-m SelectAS"
-
-# WRONG - Do NOT use single quotes around the pattern
-stack test --test-arguments="--match 'SelectAS'"  # This will match 0 tests!
-
-# WRONG - This is also incorrect (single quotes become part of the pattern)
-stack test --test-arguments="-m 'Modelling.CdOd'"  # Will match nothing!
-```
+**Quoting Rules**: When using `stack test --test-arguments`, patterns with spaces MUST be quoted with escaped double quotes (`\"`). Simple patterns without spaces don't need quotes. DO NOT use single quotes - they become part of the pattern and will match nothing.
 
 **Examples with actual tests from this repository**:
 
