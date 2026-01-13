@@ -140,8 +140,8 @@ Dependencies are pre-installed by the automated setup workflow. Build the projec
 - `stack test --test-arguments="-m \"is valid\""` -- Test specific description
 
 **Additional test options**:
-  - `--test-arguments="--skip-needs-tuning"` -- excludes unstable/long-running tests
-  - `--test-arguments="--maximum-generated-tests=50"` -- limits test case generation
+- `--test-arguments="--skip-needs-tuning"` -- excludes unstable/long-running tests
+- `--test-arguments="--maximum-generated-tests=50"` -- limits test case generation
 
 **Combine matching with options**:
 - `stack test --test-arguments="-m SelectAS --skip-needs-tuning --maximum-generated-tests=10"`
