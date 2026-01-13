@@ -18,6 +18,7 @@ import qualified Data.Map                         as M (
   filter,
   findWithDefault,
   fromList,
+  fromListWith,
   lookup,
   mapKeys,
   toList,
@@ -36,7 +37,7 @@ import Autolib.ToDoc                    (ToDoc (toDocPrec), text)
 import Control.Monad                    (void)
 import Data.Data                        (Data)
 import Data.List                        (intercalate)
-import Data.Map                         (Map)
+import Data.Map                         (Map, (!))
 import Data.Set                         (Set)
 import GHC.Generics                     (Generic)
 import Text.ParserCombinators.Parsec (
@@ -300,3 +301,37 @@ satisfiesTransitionBehaviorConstraints net TransitionBehaviorConstraints {..} =
       Just expected ->
         let nonPreserving = length $ filter (uncurry (/=) . connectionTokenBehavior) $ connections net
         in nonPreserving == expected
+
+{- | Count transitions with exactly one input place which moreover is exclusively consumed from by that transition.
+More specifically, a "fusable input node" is a transition t where:
+- t consumes (truly) from exactly one input place s, AND
+- t is the only transition that consumes from s (except for trivial back-and-forth looping transitions)
+-}
+countFusableInputNodes :: Ord s => [([s], t, [s])] -> Int
+countFusableInputNodes connections =
+  length $ filter isFusableInput connections
+  where
+    isFusableInput (inputPlaces, _, outputPlaces) =
+      case inputPlaces of
+        [singlePlace] -> singlePlace `notElem` outputPlaces &&
+                         null (tail (filter (\(pre, _, post) -> pre /= [singlePlace] || post /= [singlePlace]) (consumerMap ! singlePlace)))
+        _ -> False
+    consumerMap = M.fromListWith (++)
+      [(place, [conn]) | conn@(pre, _, _) <- connections, place <- pre]
+
+{- | Count transitions with exactly one output place which moreover is exclusively produced to by that transition.
+More specifically, a "fusable output node" is a transition t where:
+- t produces (truly) to exactly one place s, AND
+- t is the only transition that produces to s (except for trivial back-and-forth looping transitions)
+-}
+countFusableOutputNodes :: Ord s => [([s], t, [s])] -> Int
+countFusableOutputNodes connections =
+  length $ filter isFusableOutput connections
+  where
+    isFusableOutput (inputPlaces, _, outputPlaces) =
+      case outputPlaces of
+        [singlePlace] -> singlePlace `notElem` inputPlaces &&
+                         null (tail (filter (\(pre, _, post) -> pre /= [singlePlace] || post /= [singlePlace]) (producerMap ! singlePlace)))
+        _ -> False
+    producerMap = M.fromListWith (++)
+      [(place, [conn]) | conn@(_, _, post) <- connections, place <- post]

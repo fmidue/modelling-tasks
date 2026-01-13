@@ -22,6 +22,8 @@ import Modelling.PetriNet.Reach.Type (
   TransitionBehaviorConstraints(..),
   ArrowDensityConstraints(..),
   connectionTokenBehavior,
+  countFusableInputNodes,
+  countFusableOutputNodes,
   noArrowDensityConstraints,
   )
 
@@ -186,6 +188,61 @@ spec = do
         let net = petriNet inst
             nonPreservingCount = length $ filter (uncurry (/=) . connectionTokenBehavior) $ connections net
         nonPreservingCount `shouldBe` 1
+
+    modifyMaxSuccess (const 3) $
+      prop "respects requireFusableInputNodes constraint" $ \seed -> do
+        let config = defaultDeadlockConfig {
+              maxTransitionLength = 6,
+              minTransitionLength = 6,
+              requireFusableInputNodes = Just 2,
+              filterConfig = noFiltering,
+              arrowDensityConstraints = noArrowDensityConstraints {
+                totalArrowsFromPlacesToTransitions = (2, Nothing)
+                }
+              }
+        checkDeadlockConfig config `shouldBe` Nothing
+        deadlockInstance <- generateDeadlock config seed
+        let net = petriNet deadlockInstance
+            actualFusableInputCount = countFusableInputNodes (connections net)
+        actualFusableInputCount `shouldBe` 2
+
+    modifyMaxSuccess (const 3) $
+      prop "respects requireFusableOutputNodes constraint" $ \seed -> do
+        let config = defaultDeadlockConfig {
+              maxTransitionLength = 6,
+              minTransitionLength = 6,
+              requireFusableOutputNodes = Just 2,
+              filterConfig = noFiltering,
+              arrowDensityConstraints = noArrowDensityConstraints {
+                totalArrowsFromTransitionsToPlaces = (2, Nothing)
+                }
+              }
+        checkDeadlockConfig config `shouldBe` Nothing
+        deadlockInstance <- generateDeadlock config seed
+        let net = petriNet deadlockInstance
+            actualFusableOutputCount = countFusableOutputNodes (connections net)
+        actualFusableOutputCount `shouldBe` 2
+
+    modifyMaxSuccess (const 3) $
+      prop "respects both fusable node constraints simultaneously" $ \seed -> do
+        let config = defaultDeadlockConfig {
+              maxTransitionLength = 6,
+              minTransitionLength = 6,
+              requireFusableInputNodes = Just 1,
+              requireFusableOutputNodes = Just 1,
+              filterConfig = noFiltering,
+              arrowDensityConstraints = noArrowDensityConstraints {
+                totalArrowsFromPlacesToTransitions = (1, Nothing),
+                totalArrowsFromTransitionsToPlaces = (1, Nothing)
+                }
+              }
+        checkDeadlockConfig config `shouldBe` Nothing
+        deadlockInstance <- generateDeadlock config seed
+        let net = petriNet deadlockInstance
+            actualFusableInputCount = countFusableInputNodes (connections net)
+            actualFusableOutputCount = countFusableOutputNodes (connections net)
+        actualFusableInputCount `shouldBe` 1
+        actualFusableOutputCount `shouldBe` 1
 
   describe "checkDeadlockConfig" $ do
     it "accepts valid configuration" $ do

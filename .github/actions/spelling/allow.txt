@@ -58,6 +58,7 @@ bigskip
 bigvee
 bigwedge
 bimap
+bimaps
 bitraverse
 blacktriangleright
 bottomrule
@@ -81,6 +82,7 @@ foldr
 forkagain
 forkend
 fst
+fusable
 ghci
 github
 gpt

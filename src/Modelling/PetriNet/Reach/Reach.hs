@@ -643,6 +643,8 @@ findNetGoalWithSolutions filterConfig maxPrintedSolutions NetGoalConfig {..} =
                 ts
                 capacity
                 transitionBehaviorConstraints
+                0  -- No fusable input nodes required for Reach tasks
+                0  -- No fusable output nodes required for Reach tasks
         n <- generateNet
         return $ do
          zs <-

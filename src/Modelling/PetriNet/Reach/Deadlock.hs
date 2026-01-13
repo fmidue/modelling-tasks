@@ -89,6 +89,8 @@ import Modelling.PetriNet.Reach.Type (
   TransitionBehaviorConstraints,
   TransitionsList (TransitionsList),
   bimapNet,
+  countFusableInputNodes,
+  countFusableOutputNodes,
   example,
   noArrowDensityConstraints,
   noTransitionBehaviorConstraints,
@@ -115,9 +117,11 @@ import Data.Either.Combinators          (whenRight)
 import Control.Functor.Trans            (FunctorTrans (lift))
 import Control.Monad                    (guard)
 import Control.Monad.Catch              (MonadCatch, MonadThrow)
+import Control.Monad.Extra              (whenJust)
 import Control.Monad.Random             (evalRandT, mkStdGen)
 import Control.Monad.Trans.Maybe        (MaybeT (MaybeT), runMaybeT)
 import Control.Monad.Trans.Random       (RandT)
+import Data.Maybe                       (fromMaybe)
 import System.Random.Internal           (StdGen)
 import Data.GraphViz                    (GraphvizCommand (..))
 #if !MIN_VERSION_base(4,18,0)
@@ -254,6 +258,10 @@ toShowDeadlockInstance
   -> DeadlockInstance ShowPlace ShowTransition
 toShowDeadlockInstance = bimapDeadlockInstance ShowPlace ShowTransition
 
+-- | Configuration for deadlock task generation.
+-- Note: The two kinds of fusable transition/place situations (input-fusable and output-fusable)
+-- are guaranteed to be non-overlapping. No transition will be both input-fusable and output-fusable
+-- and no such transitions will share a fusing-relevant place.
 data DeadlockConfig = DeadlockConfig {
   numPlaces :: Int,
   numTransitions :: Int,
@@ -269,6 +277,14 @@ data DeadlockConfig = DeadlockConfig {
   showLengthHint      :: Bool,
   showMinLengthHint   :: Bool,
   showPlaceNamesInNet :: Bool,
+  -- | Require exactly this many transitions with exactly one input place,
+  -- which is exclusively consumed from by that transition.
+  -- If @Nothing@, no constraint on fusable input nodes.
+  requireFusableInputNodes :: Maybe Int,
+  -- | Require exactly this many transitions with exactly one output place,
+  -- which is exclusively produced to by that transition.
+  -- If @Nothing@, no constraint on fusable output nodes.
+  requireFusableOutputNodes :: Maybe Int,
   filterConfig        :: FilterConfig
   }
   deriving (Generic, Read, Show)
@@ -292,6 +308,8 @@ defaultDeadlockConfig =
   showLengthHint      = False,
   showMinLengthHint   = True,
   showPlaceNamesInNet = False,
+  requireFusableInputNodes = Nothing,
+  requireFusableOutputNodes = Nothing,
   filterConfig        = defaultFilterConfig { solutionSetLimit = Nothing, forbiddenCycleLengths = [4], requireCycleLengthsAny = [], transitionCoverageRequirement = 1 % 2 }
   }
 
@@ -308,6 +326,38 @@ defaultDeadlockInstance = DeadlockInstance {
   withMinLengthHint = True,
   rejectSpaceballsLength = Nothing
   }
+
+checkFusableNodeConfig
+  :: Maybe Int  -- ^ requireFusableInputNodes
+  -> Maybe Int  -- ^ requireFusableOutputNodes
+  -> Int        -- ^ numTransitions
+  -> Int        -- ^ numPlaces
+  -> ArrowDensityConstraints
+  -> Maybe String
+checkFusableNodeConfig maybeInputNodes maybeOutputNodes numTrans numPlaces ArrowDensityConstraints {..}
+  | let relevantInputCount = fromMaybe 0 maybeInputNodes
+  , let relevantOutputCount = fromMaybe 0 maybeOutputNodes
+  , relevantInputCount < 0 || relevantOutputCount < 0
+    || relevantInputCount + relevantOutputCount > min numTrans numPlaces
+  = Just "fusable node requirements must not be negative and together cannot exceed numTransitions or numPlaces"
+  | otherwise
+  = checkConflicts maybeInputNodes incomingArrowsPerTransition "InputNodes" "incomingArrowsPerTransition"
+    <|> checkConflicts maybeOutputNodes outgoingArrowsPerTransition "OutputNodes" "outgoingArrowsPerTransition"
+    <|> checkConflicts maybeInputNodes outgoingArrowsPerPlace "InputNodes" "outgoingArrowsPerPlace"
+    <|> checkConflicts maybeOutputNodes incomingArrowsPerPlace "OutputNodes" "incomingArrowsPerPlace"
+    <|> checkTotalLower maybeInputNodes (fst totalArrowsFromPlacesToTransitions) "InputNodes" "totalArrowsFromPlacesToTransitions"
+    <|> checkTotalLower maybeOutputNodes (fst totalArrowsFromTransitionsToPlaces) "OutputNodes" "totalArrowsFromTransitionsToPlaces"
+  where
+    checkConflicts maybeCount (minVal, maxVal) nodeType constraintName
+      | Just count <- maybeCount, count > 0, minVal > 1
+      = Just $ "requireFusable" ++ nodeType ++ " > 0 conflicts with " ++ constraintName ++ " minimum > 1"
+      | Just count <- maybeCount, count > 0, maxVal == Just 0
+      = Just $ "requireFusable" ++ nodeType ++ " > 0 conflicts with " ++ constraintName ++ " maximum = 0"
+      | otherwise = Nothing
+    checkTotalLower maybeCount totalMin nodeType constraintName
+      | Just count <- maybeCount, totalMin < count
+      = Just $ "having fewer " ++ constraintName ++ " than requireFusable" ++ nodeType ++ " makes no sense"
+      | otherwise = Nothing
 
 checkDeadlockConfig :: DeadlockConfig -> Maybe String
 checkDeadlockConfig DeadlockConfig {..} =
@@ -328,6 +378,13 @@ checkDeadlockConfig DeadlockConfig {..} =
     minTransitionLength
     numTransitions
     filterConfig
+  <|>
+  checkFusableNodeConfig
+    requireFusableInputNodes
+    requireFusableOutputNodes
+    numTransitions
+    numPlaces
+    arrowDensityConstraints
   <|>
   if maxPrintedSolutions < 0
     then Just "maxPrintedSolutions must be non-negative"
@@ -384,6 +441,13 @@ try conf = do
       ts
       (Modelling.PetriNet.Reach.Deadlock.capacity conf)
       (transitionBehaviorConstraints conf)
+      (fromMaybe 0 $ requireFusableInputNodes conf)
+      (fromMaybe 0 $ requireFusableOutputNodes conf)
+    -- Check fusable node constraints
+    whenJust (requireFusableInputNodes conf) $ \expected ->
+      guard $ countFusableInputNodes (connections n) <= expected
+    whenJust (requireFusableOutputNodes conf) $ \expected ->
+      guard $ countFusableOutputNodes (connections n) <= expected
     let deadlockLevels = map (filter (null . successors n . fst)) (levelsWithAlternatives n)
         (no, yeah) = span null
           $ take (maxTransitionLength conf + 1)
