@@ -82,28 +82,23 @@ stack --stack-yaml=stack-apps.yaml test --no-run-tests
 
 **Build times**: Remember that builds can take 30-45 minutes. Set appropriate timeout values (60+ minutes) and never cancel builds.
 
-### 🔴 NEVER COMMIT CODE THAT DOESN'T COMPILE IN EXAMPLE DIRECTORY
+### 🔴 NEVER COMMIT CODE WHERE TESTS DON'T COMPILE OR EXAMPLE DIRECTORY FAILS
 
-**ABSOLUTE REQUIREMENT**: The example directory MUST always successfully compile and run.
+**ABSOLUTE REQUIREMENT**: The test suite must always compile, and the example directory must always compile and run successfully.
 
-**BEFORE ANY COMMIT**: Run these commands to validate the example directory:
+**BEFORE ANY COMMIT**: Run these commands to validate:
 
 ```bash
-# Compile example directory (must succeed)
-stack --stack-yaml=stack-examples.yaml test --no-run-tests
+# Test suite must compile (must succeed)
+stack --stack-yaml=stack-apps.yaml test --no-run-tests
 
-# Run example tests (must succeed)
+# Example directory must compile and run (must succeed)
 stack --stack-yaml=stack-examples.yaml test
 ```
 
-**If compilation or tests fail**: Fix all errors before committing:
+**If either fails**: Fix all errors before committing. Only then proceed with committing.
 
-- Review the error messages carefully
-- Fix all type errors, missing imports, and syntax issues
-- Re-run both commands until they succeed
-- Only then proceed with committing
-
-**IF EXAMPLE DIRECTORY FAILS TO COMPILE OR RUN**:
+**IF VALIDATION FAILS**:
 
 - **DO NOT COMMIT**
 - **DO NOT USE `report_progress`**
@@ -212,20 +207,6 @@ stack --stack-yaml=stack-apps.yaml test --no-run-tests
 ```
 
 **Never commit code that doesn't build**. This is a fundamental requirement.
-
-### Example Directory Compilation and Testing (MANDATORY)
-
-**CRITICAL**: The example directory must always compile and run successfully:
-
-```bash
-# Compile example directory (must succeed)
-stack --stack-yaml=stack-examples.yaml test --no-run-tests
-
-# Run example tests (must succeed)
-stack --stack-yaml=stack-examples.yaml test
-```
-
-**Never commit code that breaks the example directory**. This is a fundamental requirement.
 
 ### EditorConfig Compliance (MANDATORY)
 
@@ -558,8 +539,8 @@ defaultDeadlockInstance = DeadlockInstance {
 After making changes, always validate:
 
 1. **Build succeeds**: `stack --stack-yaml=stack-apps.yaml test --no-run-tests modelling-tasks` or `stack --stack-yaml=stack-apps.yaml test --no-run-tests` **MUST PASS BEFORE COMMIT**
-2. **Example directory compiles**: `stack --stack-yaml=stack-examples.yaml test --no-run-tests` **MUST PASS BEFORE COMMIT**
-3. **Example directory tests pass**: `stack --stack-yaml=stack-examples.yaml test` **MUST PASS BEFORE COMMIT**
+2. **Test suite compiles**: `stack --stack-yaml=stack-apps.yaml test --no-run-tests` **MUST PASS BEFORE COMMIT**
+3. **Example directory compiles and tests pass**: `stack --stack-yaml=stack-examples.yaml test` **MUST PASS BEFORE COMMIT**
 4. **EditorConfig compliance**: `./scripts/check-editorconfig.sh` **MUST PASS**
 5. **HLint does not complain**: `hlint src/ test/ app/` **MUST PASS WITHOUT EVEN JUST SUGGESTIONS**
 6. **Targeted tests pass**: Run targeted tests for code you modified using `--match` patterns
