@@ -258,13 +258,6 @@ num :: Int              -- Use: number, numberOfItems
 - Widely accepted mathematical notation in domain-specific contexts (e.g., `n` for count in mathematical functions)
 - Standard abbreviations from the problem domain (e.g., `cd` for "class diagram", `od` for "object diagram" when these are established terms in the codebase)
 
-### Linting
-
-**Running HLint**:
-
-- Manual linting: `hlint src/ test/ app/`
-- HLint configuration in `.hlint.yaml`: uses `--cpp-simple` flag and ignores "Redundant pure" warnings
-
 ## Haskell Development Guidelines
 
 When writing Haskell code for this project, follow these best practices:
