@@ -135,15 +135,18 @@ Dependencies are pre-installed by the automated setup workflow. Build the projec
 **CRITICAL**: **NEVER run the full test suite**. Always use targeted tests with `--match` patterns.
 
 **Targeted testing examples**:
+
 - `stack test --test-arguments="-m SelectAS"` -- Test specific module
 - `stack test --test-arguments="-m Modelling.CdOd"` -- Test category
 - `stack test --test-arguments="-m \"is valid\""` -- Test specific description
 
 **Additional test options**:
+
 - `--test-arguments="--skip-needs-tuning"` -- excludes unstable/long-running tests
 - `--test-arguments="--qc-max-success=50"` -- limits test case generation
 
 **Combine matching with options**:
+
 - `stack test --test-arguments="-m SelectAS --skip-needs-tuning --qc-max-success=10"`
 
 **NEVER CANCEL**: Allow adequate time for tests to complete.
