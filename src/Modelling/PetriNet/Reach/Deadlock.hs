@@ -335,25 +335,19 @@ checkFusableNodeConfig maybeInputNodes maybeOutputNodes numTrans numPls ArrowDen
   , let relevantOutputCount = fromMaybe 0 maybeOutputNodes
   , relevantInputCount < 0 || relevantOutputCount < 0
     || relevantInputCount + relevantOutputCount > min numTrans numPls
-  = Just "fusable node requirements invalid or exceed min(transitions,places)"
+  = Just "fusable node requirements must not be negative and together cannot exceed numTransitions or numPlaces"
   | otherwise
-  = checkMinConflict maybeInputNodes incomingArrowsPerTransition "InputNodes" "incomingArrowsPerTransition"
-    <|> checkMaxConflict maybeInputNodes incomingArrowsPerTransition "InputNodes" "incomingArrowsPerTransition"
-    <|> checkMinConflict maybeOutputNodes outgoingArrowsPerTransition "OutputNodes" "outgoingArrowsPerTransition"
-    <|> checkMaxConflict maybeOutputNodes outgoingArrowsPerTransition "OutputNodes" "outgoingArrowsPerTransition"
-    <|> checkMinConflict maybeInputNodes outgoingArrowsPerPlace "InputNodes" "outgoingArrowsPerPlace"
-    <|> checkMaxConflict maybeInputNodes outgoingArrowsPerPlace "InputNodes" "outgoingArrowsPerPlace"
-    <|> checkMinConflict maybeOutputNodes incomingArrowsPerPlace "OutputNodes" "incomingArrowsPerPlace"
-    <|> checkMaxConflict maybeOutputNodes incomingArrowsPerPlace "OutputNodes" "incomingArrowsPerPlace"
+  = checkConflicts maybeInputNodes incomingArrowsPerTransition "InputNodes" "incomingArrowsPerTransition"
+    <|> checkConflicts maybeOutputNodes outgoingArrowsPerTransition "OutputNodes" "outgoingArrowsPerTransition"
+    <|> checkConflicts maybeInputNodes outgoingArrowsPerPlace "InputNodes" "outgoingArrowsPerPlace"
+    <|> checkConflicts maybeOutputNodes incomingArrowsPerPlace "OutputNodes" "incomingArrowsPerPlace"
     <|> checkTotalLower maybeInputNodes (fst totalArrowsFromPlacesToTransitions) "InputNodes" "totalArrowsFromPlacesToTransitions"
     <|> checkTotalLower maybeOutputNodes (fst totalArrowsFromTransitionsToPlaces) "OutputNodes" "totalArrowsFromTransitionsToPlaces"
   where
-    checkMinConflict maybeCount (minVal, _) nodeType constraintName
-      | Just count <- maybeCount, minVal > 1, count > 0
+    checkConflicts maybeCount (minVal, maxVal) nodeType constraintName
+      | Just count <- maybeCount, count > 0, minVal > 1
       = Just $ "requireFusable" ++ nodeType ++ " > 0 conflicts with " ++ constraintName ++ " minimum > 1"
-      | otherwise = Nothing
-    checkMaxConflict maybeCount (_, maxVal) nodeType constraintName
-      | Just count <- maybeCount, maxVal == Just 0, count > 0
+      | Just count <- maybeCount, count > 0, maxVal == Just 0
       = Just $ "requireFusable" ++ nodeType ++ " > 0 conflicts with " ++ constraintName ++ " maximum = 0"
       | otherwise = Nothing
     checkTotalLower maybeCount totalMin nodeType constraintName
