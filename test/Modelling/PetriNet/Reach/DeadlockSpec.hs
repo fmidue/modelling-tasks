@@ -192,8 +192,8 @@ spec = do
       let config = defaultDeadlockConfig
       checkDeadlockConfig config `shouldBe` Nothing
 
-    it "rejects empty drawPreferenceOrder" $ do
-      let config = defaultDeadlockConfig { drawPreferenceOrder = [] }
+    it "rejects empty graphLayouts" $ do
+      let config = defaultDeadlockConfig { graphLayouts = [] }
       checkDeadlockConfig config `shouldSatisfy` isJust
 
     it "accepts Unbounded capacity" $ do

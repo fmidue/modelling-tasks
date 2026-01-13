@@ -232,10 +232,10 @@ spec = do
       let config = defaultReachConfig
       checkReachConfig config `shouldBe` Nothing
 
-    it "rejects empty drawPreferenceOrder" $ do
+    it "rejects empty graphLayouts" $ do
       let config = defaultReachConfig {
             netGoalConfig = (netGoalConfig defaultReachConfig) {
-              drawPreferenceOrder = []
+              graphLayouts = []
               }
             }
       checkReachConfig config `shouldSatisfy` isJust

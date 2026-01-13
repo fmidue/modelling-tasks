@@ -562,8 +562,8 @@ data NetGoalConfig = NetGoalConfig {
   numPlaces :: Int,
   numTransitions :: Int,
   capacity :: Capacity Place,
-  -- | Draw commands in order of preference
-  drawPreferenceOrder :: [GraphvizCommand],
+  -- | Graph layout commands to choose from (randomly selected during generation)
+  graphLayouts :: [GraphvizCommand],
   maxTransitionLength :: Int,
   minTransitionLength :: Int,
   -- | Maximum number of places where token counts may differ between start and goal state.
@@ -583,7 +583,7 @@ defaultReachConfig = ReachConfig {
     numPlaces           = 6,
     numTransitions      = 6,
     Modelling.PetriNet.Reach.Reach.capacity = Unbounded,
-    drawPreferenceOrder = [Dot, Neato, TwoPi, Circo, Fdp, Sfdp, Osage, Patchwork],
+    graphLayouts = [Dot, Neato, TwoPi, Circo, Fdp, Sfdp, Osage, Patchwork],
     maxTransitionLength = 6,
     minTransitionLength = 6,
     maxPlacesChanged    = 3,
@@ -661,7 +661,7 @@ findNetGoalWithSolutions filterConfig maxPrintedSolutions NetGoalConfig {..} =
           guard (maxPlacesChanged == numPlaces || maxPlacesChanged >= length placeDifferences)
           return (d, do
             (cmd, solutionsList) <- validateDrawabilityAndSolutionFiltering
-              n drawPreferenceOrder allShortestSolutions filterConfig numTransitions maxPrintedSolutions
+              n graphLayouts allShortestSolutions filterConfig numTransitions maxPrintedSolutions
             let netGoal = NetGoal {
                   drawUsing   = cmd,
                   goal        = z',
@@ -682,7 +682,7 @@ validateDrawabilityAndSolutionFiltering
   => Net p t
        -- ^ Petri net to validate for drawability and from which the solutions were derived.
   -> [GraphvizCommand]
-       -- ^ Ordered list of Graphviz commands (drawing backends) to try for rendering the net.
+       -- ^ List of Graphviz commands (drawing backends) to try for rendering the net. A random order is used.
   -> [[t]]
        -- ^ All shortest solutions found, represented as sequences of transitions.
   -> FilterConfig
@@ -695,7 +695,8 @@ validateDrawabilityAndSolutionFiltering
        (GraphvizCommand, Either (NonEmpty [t]) (NonEmpty [t]))
 validateDrawabilityAndSolutionFiltering petri drawCommands allShortestSolutions filterConfig numTransitions maxPrintedSolutions = do
   guard (not $ shouldDiscardSolutions filterConfig numTransitions allShortestSolutions)
-  cmd <- MaybeT $ findM (Monad.lift . isPetriDrawable petri) drawCommands
+  shuffledCommands <- shuffleM drawCommands
+  cmd <- MaybeT $ findM (Monad.lift . isPetriDrawable petri) shuffledCommands
   solutionsList <-
     if filterConfig == noFiltering
       then pure $ Left $ fromList (take (max 1 maxPrintedSolutions) allShortestSolutions)
@@ -730,7 +731,7 @@ checkReachConfig ReachConfig {..} =
     (maxTransitionLength netGoalConfig)
     (transitionBehaviorConstraints netGoalConfig)
     (arrowDensityConstraints netGoalConfig)
-    (drawPreferenceOrder netGoalConfig)
+    (graphLayouts netGoalConfig)
     rejectLongerThan
     showLengthHint
   <|>
