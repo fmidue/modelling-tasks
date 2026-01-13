@@ -445,9 +445,9 @@ try conf = do
       (fromMaybe 0 $ requireFusableOutputNodes conf)
     -- Check fusable node constraints
     whenJust (requireFusableInputNodes conf) $ \expected ->
-      guard $ countFusableInputNodes (connections n) == expected
+      guard $ countFusableInputNodes (connections n) <= expected
     whenJust (requireFusableOutputNodes conf) $ \expected ->
-      guard $ countFusableOutputNodes (connections n) == expected
+      guard $ countFusableOutputNodes (connections n) <= expected
     let deadlockLevels = map (filter (null . successors n . fst)) (levelsWithAlternatives n)
         (no, yeah) = span null
           $ take (maxTransitionLength conf + 1)
