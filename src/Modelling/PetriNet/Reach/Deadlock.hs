@@ -330,11 +330,11 @@ checkFusableNodeConfig
   -> Int        -- ^ numPlaces
   -> ArrowDensityConstraints
   -> Maybe String
-checkFusableNodeConfig maybeInputNodes maybeOutputNodes numTrans numPls ArrowDensityConstraints {..}
+checkFusableNodeConfig maybeInputNodes maybeOutputNodes numTrans numPlaces ArrowDensityConstraints {..}
   | let relevantInputCount = fromMaybe 0 maybeInputNodes
   , let relevantOutputCount = fromMaybe 0 maybeOutputNodes
   , relevantInputCount < 0 || relevantOutputCount < 0
-    || relevantInputCount + relevantOutputCount > min numTrans numPls
+    || relevantInputCount + relevantOutputCount > min numTrans numPlaces
   = Just "fusable node requirements must not be negative and together cannot exceed numTransitions or numPlaces"
   | otherwise
   = checkConflicts maybeInputNodes incomingArrowsPerTransition "InputNodes" "incomingArrowsPerTransition"
