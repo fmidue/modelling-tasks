@@ -135,12 +135,12 @@ task2025_27 = ReachConfig {
     maxTransitionLength = 8,
     minTransitionLength = 8,
     arrowDensityConstraints = ArrowDensityConstraints {
-      incomingArrowsPerTransition = (2, Just 2),
+      incomingArrowsPerTransition = (2, Just 3),
       outgoingArrowsPerTransition = (2, Just 3),
-      incomingArrowsPerPlace = (0, Nothing),
-      outgoingArrowsPerPlace = (0, Nothing),
+      incomingArrowsPerPlace = (1, Nothing),
+      outgoingArrowsPerPlace = (1, Nothing),
       totalArrowsFromPlacesToTransitions = (8, Just 8),
-      totalArrowsFromTransitionsToPlaces = (8, Just 12)
+      totalArrowsFromTransitionsToPlaces = (8, Just 10)
       },
     maxPlacesChanged = 1,
     transitionBehaviorConstraints = TransitionBehaviorConstraints {
@@ -156,14 +156,14 @@ task2025_27 = ReachConfig {
   showPlaceNamesInNet = False,
   filterConfig = FilterConfig {
     rejectGroupedRepeats = True,
-    repetitiveSubsequenceThreshold = Just 3,
+    repetitiveSubsequenceThreshold = Just 4,
     spaceballsPrefixThreshold = Just 4,
-    forbiddenCycleLengths = [],
-    requireCycleLengthsAny = [4],
+    forbiddenCycleLengths = [4],
+    requireCycleLengthsAny = [],
     solutionSetLimit = Just 15,
     requireSolutionsArePermutations = True,
     absentTransitionsRequirement = 0,
-    transitionCoverageRequirement = 1 % 1
+    transitionCoverageRequirement = 3 % 4
     }
   }
 
