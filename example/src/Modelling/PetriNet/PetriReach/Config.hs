@@ -142,7 +142,7 @@ task2025_27 = ReachConfig {
       totalArrowsFromPlacesToTransitions = (8, Just 8),
       totalArrowsFromTransitionsToPlaces = (8, Just 12)
       },
-    maxPlacesChanged = 4,
+    maxPlacesChanged = 1,
     transitionBehaviorConstraints = TransitionBehaviorConstraints {
       allowedTokenChanges = Just GT,
       areNonPreserving = Just 1
@@ -184,7 +184,7 @@ task2025_28 = ReachConfig {
       totalArrowsFromPlacesToTransitions = (12, Just 12),
       totalArrowsFromTransitionsToPlaces = (12, Just 18)
       },
-    maxPlacesChanged = 6,
+    maxPlacesChanged = 1,
     transitionBehaviorConstraints = TransitionBehaviorConstraints {
       allowedTokenChanges = Just GT,
       areNonPreserving = Just 1
