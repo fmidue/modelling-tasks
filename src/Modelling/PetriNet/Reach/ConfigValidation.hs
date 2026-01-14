@@ -254,17 +254,25 @@ checkTransitionBehaviorConstraints numPlaces incomingArrowsPerTransition outgoin
   | allowedTokenChanges == Just GT
   , Just numberOfNonPreserving <- areNonPreserving
   , tnHigh - tvLow < numberOfNonPreserving
-  = Just $ "with allowedTokenChanges = Just GT and areNonPreserving = Just " ++ show numberOfNonPreserving ++
-           ", totalArrowsFromTransitionsToPlaces upper bound (" ++ show tnHigh ++
-           ") minus totalArrowsFromPlacesToTransitions lower bound (" ++ show tvLow ++
-           ") must be at least " ++ show numberOfNonPreserving
+  = Just $ unwords
+      [ "with allowedTokenChanges = Just GT and areNonPreserving = Just"
+      , show numberOfNonPreserving ++ ","
+      , "totalArrowsFromTransitionsToPlaces upper bound (" ++ show tnHigh ++ ")"
+      , "minus totalArrowsFromPlacesToTransitions lower bound (" ++ show tvLow ++ ")"
+      , "must be at least"
+      , show numberOfNonPreserving
+      ]
   | allowedTokenChanges == Just LT
   , Just numberOfNonPreserving <- areNonPreserving
   , tvHigh - tnLow < numberOfNonPreserving
-  = Just $ "with allowedTokenChanges = Just LT and areNonPreserving = Just " ++ show numberOfNonPreserving ++
-           ", totalArrowsFromPlacesToTransitions upper bound (" ++ show tvHigh ++
-           ") minus totalArrowsFromTransitionsToPlaces lower bound (" ++ show tnLow ++
-           ") must be at least " ++ show numberOfNonPreserving
+  = Just $ unwords
+      [ "with allowedTokenChanges = Just LT and areNonPreserving = Just"
+      , show numberOfNonPreserving ++ ","
+      , "totalArrowsFromPlacesToTransitions upper bound (" ++ show tvHigh ++ ")"
+      , "minus totalArrowsFromTransitionsToPlaces lower bound (" ++ show tnLow ++ ")"
+      , "must be at least"
+      , show numberOfNonPreserving
+      ]
   | areNonPreserving /= Just 0
   , vLow == vHigh && nLow == nHigh && vLow == nLow
   = Just "only areNonPreserving = Just 0 makes sense when incomingArrowsPerTransition and outgoingArrowsPerTransition are all fixed to one value anyway"
