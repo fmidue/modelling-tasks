@@ -100,11 +100,8 @@ checkBasicPetriConfig
     <|> checkTransitionLengths minTransitionLength maxTransitionLength
     <|> checkTransitionBehaviorConstraints
           numPlaces
-          (incomingArrowsPerTransition arrowDensityConstraints)
-          (outgoingArrowsPerTransition arrowDensityConstraints)
           numTransitions
-          (totalArrowsFromPlacesToTransitions arrowDensityConstraints)
-          (totalArrowsFromTransitionsToPlaces arrowDensityConstraints)
+          arrowDensityConstraints
           transitionBehaviorConstraints
     <|> checkRange "incomingArrowsPerTransition" (incomingArrowsPerTransition arrowDensityConstraints)
     <|> checkRange "outgoingArrowsPerTransition" (outgoingArrowsPerTransition arrowDensityConstraints)
@@ -229,14 +226,15 @@ checkFilterConfigWith rejectLongerThan theTransitionLength@minTransitionLength n
 -- | Check transition behavior constraints for validity
 checkTransitionBehaviorConstraints
   :: Int                               -- ^ numPlaces
-  -> (Int, Maybe Int)                  -- ^ incomingArrowsPerTransition
-  -> (Int, Maybe Int)                  -- ^ outgoingArrowsPerTransition
   -> Int                               -- ^ numTransitions
-  -> (Int, Maybe Int)                  -- ^ totalArrowsFromPlacesToTransitions
-  -> (Int, Maybe Int)                  -- ^ totalArrowsFromTransitionsToPlaces
-  -> TransitionBehaviorConstraints     -- ^ constraints
+  -> ArrowDensityConstraints           -- ^ arrow density constraints
+  -> TransitionBehaviorConstraints     -- ^ transition behavior constraints
   -> Maybe String
-checkTransitionBehaviorConstraints numPlaces incomingArrowsPerTransition outgoingArrowsPerTransition numTransitions totalArrowsFromPlacesToTransitions totalArrowsFromTransitionsToPlaces TransitionBehaviorConstraints {..}
+checkTransitionBehaviorConstraints
+  numPlaces
+  numTransitions
+  ArrowDensityConstraints {..}
+  TransitionBehaviorConstraints {..}
   | Just EQ <- allowedTokenChanges
   = Just "allowedTokenChanges = Just EQ is meaningless; use areNonPreserving = Just 0 instead"
   | Just numberOfNonPreserving <- areNonPreserving
@@ -262,6 +260,25 @@ checkTransitionBehaviorConstraints numPlaces incomingArrowsPerTransition outgoin
       , "must be at least"
       , show numberOfNonPreserving
       ]
+  | allowedTokenChanges == Just GT
+  , Just numberOfNonPreserving <- areNonPreserving
+  , let maxTokenIncreasePerTransition = nHigh - vLow
+  , let maxTotalTokenIncrease = numberOfNonPreserving * maxTokenIncreasePerTransition
+  , tnHigh - tvLow > maxTotalTokenIncrease
+  = Just $ unwords
+      [ "with allowedTokenChanges = Just GT and areNonPreserving = Just"
+      , show numberOfNonPreserving ++ ","
+      , "at most"
+      , show maxTokenIncreasePerTransition
+      , "token increase per transition is possible,"
+      , "so overall at most"
+      , show maxTotalTokenIncrease
+      , "token increase is possible,"
+      , "but totalArrowsFromTransitionsToPlaces upper bound (" ++ show tnHigh ++ ")"
+      , "minus totalArrowsFromPlacesToTransitions lower bound (" ++ show tvLow ++ ")"
+      , "is"
+      , show (tnHigh - tvLow)
+      ]
   | allowedTokenChanges == Just LT
   , Just numberOfNonPreserving <- areNonPreserving
   , tvHigh - tnLow < numberOfNonPreserving
@@ -272,6 +289,25 @@ checkTransitionBehaviorConstraints numPlaces incomingArrowsPerTransition outgoin
       , "minus totalArrowsFromTransitionsToPlaces lower bound (" ++ show tnLow ++ ")"
       , "must be at least"
       , show numberOfNonPreserving
+      ]
+  | allowedTokenChanges == Just LT
+  , Just numberOfNonPreserving <- areNonPreserving
+  , let maxTokenDecreasePerTransition = vHigh - nLow
+  , let maxTotalTokenDecrease = numberOfNonPreserving * maxTokenDecreasePerTransition
+  , tvHigh - tnLow > maxTotalTokenDecrease
+  = Just $ unwords
+      [ "with allowedTokenChanges = Just LT and areNonPreserving = Just"
+      , show numberOfNonPreserving ++ ","
+      , "at most"
+      , show maxTokenDecreasePerTransition
+      , "token decrease per transition is possible,"
+      , "so overall at most"
+      , show maxTotalTokenDecrease
+      , "token decrease is possible,"
+      , "but totalArrowsFromPlacesToTransitions upper bound (" ++ show tvHigh ++ ")"
+      , "minus totalArrowsFromTransitionsToPlaces lower bound (" ++ show tnLow ++ ")"
+      , "is"
+      , show (tvHigh - tnLow)
       ]
   | areNonPreserving /= Just 0
   , vLow == vHigh && nLow == nHigh && vLow == nLow
