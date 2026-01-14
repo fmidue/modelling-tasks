@@ -411,6 +411,74 @@ spec = do
             }
       checkReachConfig config `shouldBe` Nothing
 
+    it "rejects allowedTokenChanges = Just GT with areNonPreserving when arrow difference is insufficient" $ do
+      let config = defaultReachConfig {
+            netGoalConfig = (netGoalConfig defaultReachConfig) {
+              arrowDensityConstraints = noArrowDensityConstraints {
+                incomingArrowsPerTransition = (0, Just 3),
+                outgoingArrowsPerTransition = (2, Just 5),
+                totalArrowsFromPlacesToTransitions = (8, Just 8),
+                totalArrowsFromTransitionsToPlaces = (8, Just 9)
+                },
+              transitionBehaviorConstraints = TransitionBehaviorConstraints {
+                allowedTokenChanges = Just GT,
+                areNonPreserving = Just 2
+                }
+              }
+            }
+      checkReachConfig config `shouldSatisfy` isJust
+
+    it "rejects allowedTokenChanges = Just LT with areNonPreserving when arrow difference is insufficient" $ do
+      let config = defaultReachConfig {
+            netGoalConfig = (netGoalConfig defaultReachConfig) {
+              arrowDensityConstraints = noArrowDensityConstraints {
+                incomingArrowsPerTransition = (2, Just 5),
+                outgoingArrowsPerTransition = (0, Just 3),
+                totalArrowsFromPlacesToTransitions = (8, Just 9),
+                totalArrowsFromTransitionsToPlaces = (8, Just 8)
+                },
+              transitionBehaviorConstraints = TransitionBehaviorConstraints {
+                allowedTokenChanges = Just LT,
+                areNonPreserving = Just 2
+                }
+              }
+            }
+      checkReachConfig config `shouldSatisfy` isJust
+
+    it "accepts allowedTokenChanges = Just GT with areNonPreserving when arrow difference is sufficient" $ do
+      let config = defaultReachConfig {
+            netGoalConfig = (netGoalConfig defaultReachConfig) {
+              arrowDensityConstraints = noArrowDensityConstraints {
+                incomingArrowsPerTransition = (1, Just 3),
+                outgoingArrowsPerTransition = (1, Just 5),
+                totalArrowsFromPlacesToTransitions = (6, Just 18),
+                totalArrowsFromTransitionsToPlaces = (12, Just 30)
+                },
+              transitionBehaviorConstraints = TransitionBehaviorConstraints {
+                allowedTokenChanges = Just GT,
+                areNonPreserving = Just 2
+                }
+              }
+            }
+      checkReachConfig config `shouldBe` Nothing
+
+    it "accepts allowedTokenChanges = Just LT with areNonPreserving when arrow difference is sufficient" $ do
+      let config = defaultReachConfig {
+            netGoalConfig = (netGoalConfig defaultReachConfig) {
+              arrowDensityConstraints = noArrowDensityConstraints {
+                incomingArrowsPerTransition = (1, Just 5),
+                outgoingArrowsPerTransition = (1, Just 3),
+                totalArrowsFromPlacesToTransitions = (12, Just 30),
+                totalArrowsFromTransitionsToPlaces = (6, Just 18)
+                },
+              transitionBehaviorConstraints = TransitionBehaviorConstraints {
+                allowedTokenChanges = Just LT,
+                areNonPreserving = Just 2
+                }
+              }
+            }
+      checkReachConfig config `shouldBe` Nothing
+
     it "accepts configuration with consistent arrow density parameters" $ do
       let config = defaultReachConfig {
             netGoalConfig = (netGoalConfig defaultReachConfig) {

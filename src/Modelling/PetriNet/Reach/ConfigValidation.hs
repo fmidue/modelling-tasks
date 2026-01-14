@@ -103,6 +103,8 @@ checkBasicPetriConfig
           (incomingArrowsPerTransition arrowDensityConstraints)
           (outgoingArrowsPerTransition arrowDensityConstraints)
           numTransitions
+          (totalArrowsFromPlacesToTransitions arrowDensityConstraints)
+          (totalArrowsFromTransitionsToPlaces arrowDensityConstraints)
           transitionBehaviorConstraints
     <|> checkRange "incomingArrowsPerTransition" (incomingArrowsPerTransition arrowDensityConstraints)
     <|> checkRange "outgoingArrowsPerTransition" (outgoingArrowsPerTransition arrowDensityConstraints)
@@ -230,9 +232,11 @@ checkTransitionBehaviorConstraints
   -> (Int, Maybe Int)                  -- ^ incomingArrowsPerTransition
   -> (Int, Maybe Int)                  -- ^ outgoingArrowsPerTransition
   -> Int                               -- ^ numTransitions
+  -> (Int, Maybe Int)                  -- ^ totalArrowsFromPlacesToTransitions
+  -> (Int, Maybe Int)                  -- ^ totalArrowsFromTransitionsToPlaces
   -> TransitionBehaviorConstraints     -- ^ constraints
   -> Maybe String
-checkTransitionBehaviorConstraints numPlaces incomingArrowsPerTransition outgoingArrowsPerTransition numTransitions TransitionBehaviorConstraints {..}
+checkTransitionBehaviorConstraints numPlaces incomingArrowsPerTransition outgoingArrowsPerTransition numTransitions totalArrowsFromPlacesToTransitions totalArrowsFromTransitionsToPlaces TransitionBehaviorConstraints {..}
   | Just EQ <- allowedTokenChanges
   = Just "allowedTokenChanges = Just EQ is meaningless; use areNonPreserving = Just 0 instead"
   | Just numberOfNonPreserving <- areNonPreserving
@@ -247,6 +251,20 @@ checkTransitionBehaviorConstraints numPlaces incomingArrowsPerTransition outgoin
   | allowedTokenChanges == Just GT
   , vLow > nLow || vHigh > nHigh
   = Just "with allowedTokenChanges = Just GT, the combination of incomingArrowsPerTransition and outgoingArrowsPerTransition is too lax"
+  | allowedTokenChanges == Just GT
+  , Just numberOfNonPreserving <- areNonPreserving
+  , tnHigh - tvLow < numberOfNonPreserving
+  = Just $ "with allowedTokenChanges = Just GT and areNonPreserving = Just " ++ show numberOfNonPreserving ++
+           ", totalArrowsFromTransitionsToPlaces upper bound (" ++ show tnHigh ++
+           ") minus totalArrowsFromPlacesToTransitions lower bound (" ++ show tvLow ++
+           ") must be at least " ++ show numberOfNonPreserving
+  | allowedTokenChanges == Just LT
+  , Just numberOfNonPreserving <- areNonPreserving
+  , tvHigh - tnLow < numberOfNonPreserving
+  = Just $ "with allowedTokenChanges = Just LT and areNonPreserving = Just " ++ show numberOfNonPreserving ++
+           ", totalArrowsFromPlacesToTransitions upper bound (" ++ show tvHigh ++
+           ") minus totalArrowsFromTransitionsToPlaces lower bound (" ++ show tnLow ++
+           ") must be at least " ++ show numberOfNonPreserving
   | areNonPreserving /= Just 0
   , vLow == vHigh && nLow == nHigh && vLow == nLow
   = Just "only areNonPreserving = Just 0 makes sense when incomingArrowsPerTransition and outgoingArrowsPerTransition are all fixed to one value anyway"
@@ -258,6 +276,11 @@ checkTransitionBehaviorConstraints numPlaces incomingArrowsPerTransition outgoin
     -- Since checkBasicPetriConfig guarantees upper bounds don't exceed numPlaces, we can use numPlaces as the default
     vHigh = fromMaybe numPlaces vHighMaybe
     nHigh = fromMaybe numPlaces nHighMaybe
+    (tvLow, tvHighMaybe) = totalArrowsFromPlacesToTransitions
+    (tnLow, tnHighMaybe) = totalArrowsFromTransitionsToPlaces
+    -- For total arrows, use the product of numPlaces * numTransitions as the default upper bound
+    tvHigh = fromMaybe (numPlaces * numTransitions) tvHighMaybe
+    tnHigh = fromMaybe (numPlaces * numTransitions) tnHighMaybe
 
 -- | Check cross-validation of arrow density parameters
 checkArrowDensityCrossValidation
