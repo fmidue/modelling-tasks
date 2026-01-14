@@ -287,8 +287,8 @@ checkTransitionBehaviorConstraints numPlaces incomingArrowsPerTransition outgoin
     (tvLow, tvHighMaybe) = totalArrowsFromPlacesToTransitions
     (tnLow, tnHighMaybe) = totalArrowsFromTransitionsToPlaces
     -- For total arrows, use the product of numPlaces * numTransitions as the default upper bound.
-    -- This represents the maximum possible number of arrows between places and transitions:
-    -- at most one arrow can connect each place-transition pair.
+    -- This represents the maximum possible number of arrow connections (not counting weights):
+    -- each place can have at most one arrow connection to each transition.
     tvHigh = fromMaybe (numPlaces * numTransitions) tvHighMaybe
     tnHigh = fromMaybe (numPlaces * numTransitions) tnHighMaybe
 
