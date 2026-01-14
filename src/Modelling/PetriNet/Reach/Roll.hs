@@ -194,7 +194,9 @@ netLimitsFiltered
   requiredFusableOutputNodes = do
   -- Pre-generate fusable node connections
   (pregeneratedConnections, transitionInputBimap, transitionOutputBimap) <-
-    generateFusableConnections ps ts requiredFusableInputNodes requiredFusableOutputNodes
+    if requiredFusableInputNodes == 0 && requiredFusableOutputNodes == 0
+    then return ([], BM.fromList [], BM.fromList [])
+    else generateFusableConnections ps ts requiredFusableInputNodes requiredFusableOutputNodes
   -- Generate net with forbid sets
   n <- netLimitsWithPregenerated vLow vHigh nLow nHigh ps ts capacityConstraint
          pregeneratedConnections transitionInputBimap transitionOutputBimap
