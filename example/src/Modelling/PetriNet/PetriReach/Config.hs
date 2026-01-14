@@ -6,6 +6,7 @@ import Modelling.PetriNet.Reach.Reach   (ReachConfig(..), NetGoalConfig(..))
 import Modelling.PetriNet.Reach.Filter  (defaultFilterConfig, FilterConfig(..))
 import Modelling.PetriNet.Reach.Type    (Capacity(..), TransitionBehaviorConstraints(..), ArrowDensityConstraints(..))
 import Data.GraphViz.Commands           (GraphvizCommand(..))
+import Data.Ratio                       ((%))
 
 {-|
 points: 0.2
@@ -144,7 +145,7 @@ task2025_27 = ReachConfig {
     maxPlacesChanged = 4,
     transitionBehaviorConstraints = TransitionBehaviorConstraints {
       allowedTokenChanges = Just GT,
-      areNonPreserving = 1
+      areNonPreserving = Just 1
       }
     },
   maxPrintedSolutions = 10,
@@ -185,8 +186,8 @@ task2025_28 = ReachConfig {
       },
     maxPlacesChanged = 6,
     transitionBehaviorConstraints = TransitionBehaviorConstraints {
-      allowedTokenChanges = Nothing,
-      areNonPreserving = Nothing
+      allowedTokenChanges = Just GT,
+      areNonPreserving = Just 1
       }
     },
   maxPrintedSolutions = 10,
