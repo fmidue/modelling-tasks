@@ -3,7 +3,7 @@
 module Modelling.PetriNet.PetriReach.Config where
 
 import Modelling.PetriNet.Reach.Reach   (ReachConfig(..), NetGoalConfig(..))
-import Modelling.PetriNet.Reach.Filter  (defaultFilterConfig, FilterConfig(absentTransitionsRequirement, forbiddenCycleLengths, requireCycleLengthsAny))
+import Modelling.PetriNet.Reach.Filter  (defaultFilterConfig, FilterConfig(..))
 import Modelling.PetriNet.Reach.Type    (Capacity(..), TransitionBehaviorConstraints(..), ArrowDensityConstraints(..))
 import Data.GraphViz.Commands           (GraphvizCommand(..))
 
@@ -125,7 +125,85 @@ task2024_60 = ReachConfig {
   }
 
 task2025_27 :: ReachConfig
-task2025_27 = task2024_25
+task2025_27 = ReachConfig {
+  netGoalConfig  = NetGoalConfig {
+    numPlaces = 4,
+    numTransitions = 4,
+    capacity = Unbounded,
+    graphLayouts = [Circo],
+    maxTransitionLength = 8,
+    minTransitionLength = 8,
+    arrowDensityConstraints = ArrowDensityConstraints {
+      incomingArrowsPerTransition = (2, Just 2),
+      outgoingArrowsPerTransition = (2, Just 3),
+      incomingArrowsPerPlace = (0, Nothing),
+      outgoingArrowsPerPlace = (0, Nothing),
+      totalArrowsFromPlacesToTransitions = (8, Just 8),
+      totalArrowsFromTransitionsToPlaces = (8, Just 12)
+      },
+    maxPlacesChanged = 4,
+    transitionBehaviorConstraints = TransitionBehaviorConstraints {
+      allowedTokenChanges = Just GT,
+      areNonPreserving = 1
+      }
+    },
+  maxPrintedSolutions = 10,
+  rejectLongerThan = Just 8,
+  showLengthHint = False,
+  showMinLengthHint = True,
+  showTargetNet = True,
+  showPlaceNamesInNet = False,
+  filterConfig = FilterConfig {
+    rejectGroupedRepeats = True,
+    repetitiveSubsequenceThreshold = Just 3,
+    spaceballsPrefixThreshold = Just 4,
+    forbiddenCycleLengths = [],
+    requireCycleLengthsAny = [],
+    solutionSetLimit = Just 15,
+    requireSolutionsArePermutations = True,
+    absentTransitionsRequirement = 0,
+    transitionCoverageRequirement = 4 % 5
+    }
+  }
 
 task2025_28 :: ReachConfig
-task2025_28 = task2024_26
+task2025_28 = ReachConfig {
+  netGoalConfig  = NetGoalConfig {
+    numPlaces = 6,
+    numTransitions = 6,
+    capacity = Unbounded,
+    graphLayouts = [Circo],
+    maxTransitionLength = 12,
+    minTransitionLength = 12,
+    arrowDensityConstraints = ArrowDensityConstraints {
+      incomingArrowsPerTransition = (2, Just 2),
+      outgoingArrowsPerTransition = (2, Just 3),
+      incomingArrowsPerPlace = (0, Nothing),
+      outgoingArrowsPerPlace = (0, Nothing),
+      totalArrowsFromPlacesToTransitions = (12, Just 12),
+      totalArrowsFromTransitionsToPlaces = (12, Just 18)
+      },
+    maxPlacesChanged = 6,
+    transitionBehaviorConstraints = TransitionBehaviorConstraints {
+      allowedTokenChanges = Nothing,
+      areNonPreserving = Nothing
+      }
+    },
+  maxPrintedSolutions = 10,
+  rejectLongerThan = Just 12,
+  showLengthHint = False,
+  showMinLengthHint = True,
+  showTargetNet = True,
+  showPlaceNamesInNet = False,
+  filterConfig = FilterConfig {
+    rejectGroupedRepeats = True,
+    repetitiveSubsequenceThreshold = Just 3,
+    spaceballsPrefixThreshold = Just 4,
+    forbiddenCycleLengths = [],
+    requireCycleLengthsAny = [],
+    solutionSetLimit = Just 15,
+    requireSolutionsArePermutations = True,
+    absentTransitionsRequirement = 1,
+    transitionCoverageRequirement = 4 % 5
+    }
+  }
