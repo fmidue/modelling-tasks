@@ -7,6 +7,7 @@ based on file: collection/src/Petri/Roll.hs
 module Modelling.PetriNet.Reach.Roll (netLimitsFiltered) where
 
 import qualified Data.Bimap                       as BM (
+  empty,
   fromList,
   lookup,
   member,
@@ -195,7 +196,7 @@ netLimitsFiltered
   -- Pre-generate fusable node connections
   (pregeneratedConnections, transitionInputBimap, transitionOutputBimap) <-
     if requiredFusableInputNodes == 0 && requiredFusableOutputNodes == 0
-    then return ([], BM.fromList [], BM.fromList [])
+    then return ([], BM.empty, BM.empty)
     else generateFusableConnections ps ts requiredFusableInputNodes requiredFusableOutputNodes
   -- Generate net with forbid sets
   n <- netLimitsWithPregenerated vLow vHigh nLow nHigh ps ts capacityConstraint
