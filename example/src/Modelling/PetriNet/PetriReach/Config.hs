@@ -158,12 +158,12 @@ task2025_27 = ReachConfig {
     rejectGroupedRepeats = True,
     repetitiveSubsequenceThreshold = Just 3,
     spaceballsPrefixThreshold = Just 4,
-    forbiddenCycleLengths = [3],
+    forbiddenCycleLengths = [],
     requireCycleLengthsAny = [4],
     solutionSetLimit = Just 15,
     requireSolutionsArePermutations = True,
     absentTransitionsRequirement = 0,
-    transitionCoverageRequirement = 4 % 5
+    transitionCoverageRequirement = 1 % 1
     }
   }
 
