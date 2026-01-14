@@ -137,8 +137,8 @@ task2025_27 = ReachConfig {
     arrowDensityConstraints = ArrowDensityConstraints {
       incomingArrowsPerTransition = (2, Just 3),
       outgoingArrowsPerTransition = (2, Just 3),
-      incomingArrowsPerPlace = (1, Nothing),
-      outgoingArrowsPerPlace = (1, Nothing),
+      incomingArrowsPerPlace = (2, Just 3),
+      outgoingArrowsPerPlace = (1, Just 3),
       totalArrowsFromPlacesToTransitions = (8, Just 8),
       totalArrowsFromTransitionsToPlaces = (8, Just 10)
       },
