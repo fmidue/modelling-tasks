@@ -127,18 +127,18 @@ task2025_29 = DeadlockConfig {
   arrowDensityConstraints = ArrowDensityConstraints {
     incomingArrowsPerTransition = (1, Just 2),
     outgoingArrowsPerTransition = (1, Just 2),
-    incomingArrowsPerPlace = (0, Nothing),
-    outgoingArrowsPerPlace = (0, Nothing),
-    totalArrowsFromPlacesToTransitions = (4, Just 8),
-    totalArrowsFromTransitionsToPlaces = (4, Just 8)
+    incomingArrowsPerPlace = (1, Nothing),
+    outgoingArrowsPerPlace = (1, Nothing),
+    totalArrowsFromPlacesToTransitions = (5, Just 5),
+    totalArrowsFromTransitionsToPlaces = (4, Just 6)
     },
   maxPrintedSolutions = 10,
   rejectLongerThan = Just 7,
   showLengthHint = False,
   showMinLengthHint = True,
   showPlaceNamesInNet = False,
-  requireFusableInputNodes = Nothing,
-  requireFusableOutputNodes = Nothing,
+  requireFusableInputNodes = Just 1,
+  requireFusableOutputNodes = Just 1,
   filterConfig = FilterConfig {
     rejectGroupedRepeats = True,
     repetitiveSubsequenceThreshold = Just 3,
@@ -146,9 +146,9 @@ task2025_29 = DeadlockConfig {
     forbiddenCycleLengths = [],
     requireCycleLengthsAny = [],
     solutionSetLimit = Just 15,
-    requireSolutionsArePermutations = True,
+    requireSolutionsArePermutations = False,
     absentTransitionsRequirement = 0,
-    transitionCoverageRequirement = 4 % 5
+    transitionCoverageRequirement = 3 % 4
     }
   }
 
@@ -179,7 +179,7 @@ task2025_30 = DeadlockConfig {
   showPlaceNamesInNet = False,
   requireFusableInputNodes = Nothing,
   requireFusableOutputNodes = Nothing,
-  filterConfig = defaultFilterConfig {
+  filterConfig = FilterConfig {
     rejectGroupedRepeats = True,
     repetitiveSubsequenceThreshold = Just 3,
     spaceballsPrefixThreshold = Just 4,
