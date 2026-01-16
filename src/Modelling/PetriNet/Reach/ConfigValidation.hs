@@ -249,38 +249,43 @@ checkTransitionBehaviorConstraints
   | allowedTokenChanges == Just GT
   , vLow > nLow || vHigh > nHigh
   = Just "with allowedTokenChanges = Just GT, the combination of incomingArrowsPerTransition and outgoingArrowsPerTransition is too lax"
-  | Just numberOfNonPreserving <- areNonPreserving
-  , Just direction <- allowedTokenChanges
+  | Just direction <- allowedTokenChanges
   = let
+      -- Use fromMaybe to handle both Just and Nothing cases
+      -- For lower bound checks: at least 0 non-preserving transitions
+      minNonPreserving = fromMaybe 0 areNonPreserving
+      -- For upper bound checks: at most all transitions are non-preserving
+      maxNonPreserving = fromMaybe numTransitions areNonPreserving
+
       -- Calculate differences and limits based on direction
       (lowerDiff, maxPerTransition) = case direction of
         GT -> (tnLow - tvLow, nHigh - vLow)
         LT -> (tvLow - tnLow, vHigh - nLow)
 
-      maxTotal = numberOfNonPreserving * maxPerTransition
+      maxTotal = maxNonPreserving * maxPerTransition
 
       -- Check lower bound insufficient arrow difference
       checkLowerInsufficientDiff
-        | lowerDiff < numberOfNonPreserving
-        = Just $ insufficientArrowDifference direction numberOfNonPreserving "lower" tvLow tnLow
+        | lowerDiff < minNonPreserving
+        = Just $ insufficientArrowDifference direction minNonPreserving "lower" tvLow tnLow
         | otherwise
         = Nothing
 
       -- Check lower bound excessive arrow difference
       checkLowerExcessiveDiff
         | lowerDiff > maxTotal
-        = Just $ excessiveArrowDifference direction numberOfNonPreserving maxPerTransition maxTotal "lower" tvLow tnLow lowerDiff
+        = Just $ excessiveArrowDifference direction maxNonPreserving maxPerTransition maxTotal "lower" tvLow tnLow lowerDiff
         | otherwise
         = Nothing
 
       -- Check upper bound insufficient arrow difference
       checkUpperInsufficientDiff = case direction of
         GT | Just tvHighValue <- tvHighMaybe
-           , tnHigh - tvHighValue < numberOfNonPreserving
-           -> Just $ insufficientArrowDifference direction numberOfNonPreserving "upper" tvHighValue tnHigh
+           , tnHigh - tvHighValue < minNonPreserving
+           -> Just $ insufficientArrowDifference direction minNonPreserving "upper" tvHighValue tnHigh
         LT | Just tnHighValue <- tnHighMaybe
-           , tvHigh - tnHighValue < numberOfNonPreserving
-           -> Just $ insufficientArrowDifference direction numberOfNonPreserving "upper" tvHigh tnHighValue
+           , tvHigh - tnHighValue < minNonPreserving
+           -> Just $ insufficientArrowDifference direction minNonPreserving "upper" tvHigh tnHighValue
         _ -> Nothing
 
       -- Check upper bound excessive arrow difference
@@ -288,11 +293,11 @@ checkTransitionBehaviorConstraints
         GT | Just tnHighValue <- tnHighMaybe
            , let diff = tnHighValue - tvHigh
            , diff > maxTotal
-           -> Just $ excessiveArrowDifference direction numberOfNonPreserving maxPerTransition maxTotal "upper" tvHigh tnHighValue diff
+           -> Just $ excessiveArrowDifference direction maxNonPreserving maxPerTransition maxTotal "upper" tvHigh tnHighValue diff
         LT | Just tvHighValue <- tvHighMaybe
            , let diff = tvHighValue - tnHigh
            , diff > maxTotal
-           -> Just $ excessiveArrowDifference direction numberOfNonPreserving maxPerTransition maxTotal "upper" tvHighValue tnHigh diff
+           -> Just $ excessiveArrowDifference direction maxNonPreserving maxPerTransition maxTotal "upper" tvHighValue tnHigh diff
         _ -> Nothing
 
     in checkLowerInsufficientDiff <|> checkLowerExcessiveDiff <|> checkUpperInsufficientDiff <|> checkUpperExcessiveDiff
