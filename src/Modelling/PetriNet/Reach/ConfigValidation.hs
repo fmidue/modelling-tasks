@@ -16,7 +16,7 @@ module Modelling.PetriNet.Reach.ConfigValidation (
 import Control.Applicative (Alternative ((<|>)))
 import Data.GraphViz.Commands (GraphvizCommand)
 import Data.List.Extra (notNull)
-import Data.Maybe (fromMaybe, isJust)
+import Data.Maybe (fromMaybe, isJust, isNothing)
 import Modelling.PetriNet.Reach.Filter (
   FilterConfig (..),
   noFiltering,
@@ -328,7 +328,7 @@ checkTransitionBehaviorConstraints
         areNonPreservingText = case maybeAreNonPreserving of
           Just n -> " and areNonPreserving = Just " ++ show n
           Nothing -> ""
-        differenceText = if maybeAreNonPreserving `elem` [Nothing, Just 0]
+        differenceText = if isNothing maybeAreNonPreserving
           then "cannot be negative"
           else "cannot be just " ++ show actualDifference
       in unwords
