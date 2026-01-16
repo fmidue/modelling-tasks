@@ -252,10 +252,12 @@ checkTransitionBehaviorConstraints
   | Just numberOfNonPreserving <- areNonPreserving
   , Just direction <- allowedTokenChanges
   = let
-      -- Calculate differences based on direction
-      lowerDiff = case direction of
-        GT -> tnLow - tvLow
-        LT -> tvLow - tnLow
+      -- Calculate differences and limits based on direction
+      (lowerDiff, maxPerTransition) = case direction of
+        GT -> (tnLow - tvLow, nHigh - vLow)
+        LT -> (tvLow - tnLow, vHigh - nLow)
+
+      maxTotal = numberOfNonPreserving * maxPerTransition
 
       -- Check lower bound insufficient arrow difference
       checkLowerInsufficientDiff
@@ -277,31 +279,21 @@ checkTransitionBehaviorConstraints
       -- Check upper bound excessive arrow difference
       checkUpperExcessiveDiff = case direction of
         GT | Just tnHighValue <- tnHighMaybe
-           , let maxPerTransition = nHigh - vLow
-           , let maxTotal = numberOfNonPreserving * maxPerTransition
            , let diff = tnHighValue - tvHigh
            , diff > maxTotal
            -> Just $ excessiveArrowDifference direction numberOfNonPreserving maxPerTransition maxTotal "upper" tvHigh tnHighValue diff
         LT | Just tvHighValue <- tvHighMaybe
-           , let maxPerTransition = vHigh - nLow
-           , let maxTotal = numberOfNonPreserving * maxPerTransition
            , let diff = tvHighValue - tnHigh
            , diff > maxTotal
            -> Just $ excessiveArrowDifference direction numberOfNonPreserving maxPerTransition maxTotal "upper" tvHighValue tnHigh diff
         _ -> Nothing
 
       -- Check lower bound excessive arrow difference
-      checkLowerExcessiveDiff = case direction of
-        GT -> let maxPerTransition = nHigh - vLow
-                  maxTotal = numberOfNonPreserving * maxPerTransition
-              in if lowerDiff > maxTotal
-                 then Just $ excessiveArrowDifference direction numberOfNonPreserving maxPerTransition maxTotal "lower" tvLow tnLow lowerDiff
-                 else Nothing
-        LT -> let maxPerTransition = vHigh - nLow
-                  maxTotal = numberOfNonPreserving * maxPerTransition
-              in if lowerDiff > maxTotal
-                 then Just $ excessiveArrowDifference direction numberOfNonPreserving maxPerTransition maxTotal "lower" tvLow tnLow lowerDiff
-                 else Nothing
+      checkLowerExcessiveDiff
+        | lowerDiff > maxTotal
+        = Just $ excessiveArrowDifference direction numberOfNonPreserving maxPerTransition maxTotal "lower" tvLow tnLow lowerDiff
+        | otherwise
+        = Nothing
     in checkLowerInsufficientDiff <|> checkUpperInsufficientDiff <|> checkUpperExcessiveDiff <|> checkLowerExcessiveDiff
   | areNonPreserving /= Just 0
   , vLow == vHigh && nLow == nHigh && vLow == nLow
