@@ -249,62 +249,55 @@ checkTransitionBehaviorConstraints
   | allowedTokenChanges == Just GT
   , vLow > nLow || vHigh > nHigh
   = Just "with allowedTokenChanges = Just GT, the combination of incomingArrowsPerTransition and outgoingArrowsPerTransition is too lax"
-  | allowedTokenChanges == Just GT
-  , Just numberOfNonPreserving <- areNonPreserving
-  , tnLow - tvLow < numberOfNonPreserving
-  = Just $ insufficientArrowDifference GT numberOfNonPreserving
-      "lower" tnLow "lower" tvLow
-  | allowedTokenChanges == Just GT
-  , Just numberOfNonPreserving <- areNonPreserving
-  , Just tvHighValue <- tvHighMaybe
-  , tnHigh - tvHighValue < numberOfNonPreserving
-  = Just $ insufficientArrowDifference GT numberOfNonPreserving
-      "upper" tnHigh "upper" tvHighValue
-  | allowedTokenChanges == Just GT
-  , Just numberOfNonPreserving <- areNonPreserving
-  , Just tnHighValue <- tnHighMaybe
-  , let maxTokenIncreasePerTransition = nHigh - vLow
-  , let maxTotalTokenIncrease = numberOfNonPreserving * maxTokenIncreasePerTransition
-  , tnHighValue - tvHigh > maxTotalTokenIncrease
-  = Just $ excessiveArrowDifference GT numberOfNonPreserving
-      maxTokenIncreasePerTransition maxTotalTokenIncrease
-      "upper" tnHighValue "upper" tvHigh (tnHighValue - tvHigh)
-  | allowedTokenChanges == Just GT
-  , Just numberOfNonPreserving <- areNonPreserving
-  , let maxTokenIncreasePerTransition = nHigh - vLow
-  , let maxTotalTokenIncrease = numberOfNonPreserving * maxTokenIncreasePerTransition
-  , tnLow - tvLow > maxTotalTokenIncrease
-  = Just $ excessiveArrowDifference GT numberOfNonPreserving
-      maxTokenIncreasePerTransition maxTotalTokenIncrease
-      "lower" tnLow "lower" tvLow (tnLow - tvLow)
-  | allowedTokenChanges == Just LT
-  , Just numberOfNonPreserving <- areNonPreserving
-  , tvLow - tnLow < numberOfNonPreserving
-  = Just $ insufficientArrowDifference LT numberOfNonPreserving
-      "lower" tvLow "lower" tnLow
-  | allowedTokenChanges == Just LT
-  , Just numberOfNonPreserving <- areNonPreserving
-  , Just tnHighValue <- tnHighMaybe
-  , tvHigh - tnHighValue < numberOfNonPreserving
-  = Just $ insufficientArrowDifference LT numberOfNonPreserving
-      "upper" tvHigh "upper" tnHighValue
-  | allowedTokenChanges == Just LT
-  , Just numberOfNonPreserving <- areNonPreserving
-  , Just tvHighValue <- tvHighMaybe
-  , let maxTokenDecreasePerTransition = vHigh - nLow
-  , let maxTotalTokenDecrease = numberOfNonPreserving * maxTokenDecreasePerTransition
-  , tvHighValue - tnHigh > maxTotalTokenDecrease
-  = Just $ excessiveArrowDifference LT numberOfNonPreserving
-      maxTokenDecreasePerTransition maxTotalTokenDecrease
-      "upper" tvHighValue "upper" tnHigh (tvHighValue - tnHigh)
-  | allowedTokenChanges == Just LT
-  , Just numberOfNonPreserving <- areNonPreserving
-  , let maxTokenDecreasePerTransition = vHigh - nLow
-  , let maxTotalTokenDecrease = numberOfNonPreserving * maxTokenDecreasePerTransition
-  , tvLow - tnLow > maxTotalTokenDecrease
-  = Just $ excessiveArrowDifference LT numberOfNonPreserving
-      maxTokenDecreasePerTransition maxTotalTokenDecrease
-      "lower" tvLow "lower" tnLow (tvLow - tnLow)
+  | Just numberOfNonPreserving <- areNonPreserving
+  , Just direction <- allowedTokenChanges
+  = case direction of
+      GT
+        | tnLow - tvLow < numberOfNonPreserving
+        -> Just $ insufficientArrowDifference GT numberOfNonPreserving
+            "lower" tnLow "lower" tvLow
+        | Just tvHighValue <- tvHighMaybe
+        , tnHigh - tvHighValue < numberOfNonPreserving
+        -> Just $ insufficientArrowDifference GT numberOfNonPreserving
+            "upper" tnHigh "upper" tvHighValue
+        | Just tnHighValue <- tnHighMaybe
+        , let maxTokenIncreasePerTransition = nHigh - vLow
+        , let maxTotalTokenIncrease = numberOfNonPreserving * maxTokenIncreasePerTransition
+        , tnHighValue - tvHigh > maxTotalTokenIncrease
+        -> Just $ excessiveArrowDifference GT numberOfNonPreserving
+            maxTokenIncreasePerTransition maxTotalTokenIncrease
+            "upper" tnHighValue "upper" tvHigh (tnHighValue - tvHigh)
+        | let maxTokenIncreasePerTransition = nHigh - vLow
+        , let maxTotalTokenIncrease = numberOfNonPreserving * maxTokenIncreasePerTransition
+        , tnLow - tvLow > maxTotalTokenIncrease
+        -> Just $ excessiveArrowDifference GT numberOfNonPreserving
+            maxTokenIncreasePerTransition maxTotalTokenIncrease
+            "lower" tnLow "lower" tvLow (tnLow - tvLow)
+        | otherwise
+        -> Nothing
+      LT
+        | tvLow - tnLow < numberOfNonPreserving
+        -> Just $ insufficientArrowDifference LT numberOfNonPreserving
+            "lower" tvLow "lower" tnLow
+        | Just tnHighValue <- tnHighMaybe
+        , tvHigh - tnHighValue < numberOfNonPreserving
+        -> Just $ insufficientArrowDifference LT numberOfNonPreserving
+            "upper" tvHigh "upper" tnHighValue
+        | Just tvHighValue <- tvHighMaybe
+        , let maxTokenDecreasePerTransition = vHigh - nLow
+        , let maxTotalTokenDecrease = numberOfNonPreserving * maxTokenDecreasePerTransition
+        , tvHighValue - tnHigh > maxTotalTokenDecrease
+        -> Just $ excessiveArrowDifference LT numberOfNonPreserving
+            maxTokenDecreasePerTransition maxTotalTokenDecrease
+            "upper" tvHighValue "upper" tnHigh (tvHighValue - tnHigh)
+        | let maxTokenDecreasePerTransition = vHigh - nLow
+        , let maxTotalTokenDecrease = numberOfNonPreserving * maxTokenDecreasePerTransition
+        , tvLow - tnLow > maxTotalTokenDecrease
+        -> Just $ excessiveArrowDifference LT numberOfNonPreserving
+            maxTokenDecreasePerTransition maxTotalTokenDecrease
+            "lower" tvLow "lower" tnLow (tvLow - tnLow)
+        | otherwise
+        -> Nothing
   | areNonPreserving /= Just 0
   , vLow == vHigh && nLow == nHigh && vLow == nLow
   = Just "only areNonPreserving = Just 0 makes sense when incomingArrowsPerTransition and outgoingArrowsPerTransition are all fixed to one value anyway"
