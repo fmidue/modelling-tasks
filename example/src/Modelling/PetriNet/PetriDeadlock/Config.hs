@@ -154,40 +154,40 @@ task2025_29 = DeadlockConfig {
 
 task2025_30 :: DeadlockConfig
 task2025_30 = DeadlockConfig {
-    numPlaces = 6,
-    numTransitions = 8,
-    capacity = Unbounded,
-    graphLayouts = [Circo],
-    maxTransitionLength = 14,
-    minTransitionLength = 14,
-    transitionBehaviorConstraints = TransitionBehaviorConstraints {
-      allowedTokenChanges = Nothing,
-      areNonPreserving = Nothing
-      },
-    arrowDensityConstraints = ArrowDensityConstraints {
-      incomingArrowsPerTransition = (1, Just 2),
-      outgoingArrowsPerTransition = (1, Just 2),
-      incomingArrowsPerPlace = (1, Just 3),
-      outgoingArrowsPerPlace = (1, Just 2),
-      totalArrowsFromPlacesToTransitions = (9, Just 9),
-      totalArrowsFromTransitionsToPlaces = (10, Just 14)
-      },
-    maxPrintedSolutions = 10,
-    rejectLongerThan = Just 14,
-    showLengthHint = False,
-    showMinLengthHint = True,
-    showPlaceNamesInNet = False,
-    requireFusableInputNodes = Just 1,
-    requireFusableOutputNodes = Just 1,
-    filterConfig = FilterConfig {
-      rejectGroupedRepeats = True,
-      repetitiveSubsequenceThreshold = Just 4,
-      spaceballsPrefixThreshold = Just 4,
-      forbiddenCycleLengths = [],
-      requireCycleLengthsAny = [],
-      solutionSetLimit = Just 15,
-      requireSolutionsArePermutations = False,
-      absentTransitionsRequirement = 1,
-      transitionCoverageRequirement = 4 % 6
-      }
+  numPlaces = 6,
+  numTransitions = 8,
+  capacity = Unbounded,
+  graphLayouts = [Circo],
+  maxTransitionLength = 14,
+  minTransitionLength = 14,
+  transitionBehaviorConstraints = TransitionBehaviorConstraints {
+    allowedTokenChanges = Nothing,
+    areNonPreserving = Nothing
+    },
+  arrowDensityConstraints = ArrowDensityConstraints {
+    incomingArrowsPerTransition = (1, Just 2),
+    outgoingArrowsPerTransition = (1, Just 2),
+    incomingArrowsPerPlace = (1, Just 3),
+    outgoingArrowsPerPlace = (1, Just 2),
+    totalArrowsFromPlacesToTransitions = (9, Just 9),
+    totalArrowsFromTransitionsToPlaces = (10, Just 14)
+    },
+  maxPrintedSolutions = 10,
+  rejectLongerThan = Just 14,
+  showLengthHint = False,
+  showMinLengthHint = True,
+  showPlaceNamesInNet = False,
+  requireFusableInputNodes = Just 1,
+  requireFusableOutputNodes = Just 1,
+  filterConfig = FilterConfig {
+    rejectGroupedRepeats = True,
+    repetitiveSubsequenceThreshold = Just 4,
+    spaceballsPrefixThreshold = Just 4,
+    forbiddenCycleLengths = [],
+    requireCycleLengthsAny = [],
+    solutionSetLimit = Just 15,
+    requireSolutionsArePermutations = False,
+    absentTransitionsRequirement = 1,
+    transitionCoverageRequirement = 4 % 6
     }
+  }
