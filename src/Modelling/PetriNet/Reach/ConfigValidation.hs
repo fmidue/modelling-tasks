@@ -325,15 +325,19 @@ checkTransitionBehaviorConstraints
     -- Helper function for insufficient arrow difference errors
     insufficientArrowDifference direction maybeAreNonPreserving actualDifference boundType =
       let
+        minNonPreserving = fromMaybe 0 maybeAreNonPreserving
         areNonPreservingText = case maybeAreNonPreserving of
           Just n -> " and areNonPreserving = Just " ++ show n
           Nothing -> ""
+        differenceText = if minNonPreserving == 0
+          then "cannot be negative"
+          else "cannot be just " ++ show actualDifference
       in unwords
         [ "with allowedTokenChanges = Just"
         , show direction ++ areNonPreservingText ++ ","
         , boundType
-        , "bound difference between totalArrowsFromPlacesToTransitions and totalArrowsFromTransitionsToPlaces cannot be just"
-        , show actualDifference
+        , "bound difference between totalArrowsFromPlacesToTransitions and totalArrowsFromTransitionsToPlaces"
+        , differenceText
         ]
 
     -- Helper function for excessive arrow difference errors
