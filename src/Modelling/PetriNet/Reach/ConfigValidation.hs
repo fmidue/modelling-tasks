@@ -257,7 +257,7 @@ checkTransitionBehaviorConstraints
   = Just $ unwords
       [ "when areNonPreserving = Just 0 (all transitions token-preserving),"
       , "totalArrowsFromPlacesToTransitions upper bound (" ++ show tvHighValue ++ ")"
-      , "must equal totalArrowsFromTransitionsToPlaces upper bound (" ++ show tnHighValue ++ ")"
+      , "must equal totalArrowsFromTransitionsToPlaces upper bound (" ++ show tnHighValue ++ "), when both are set"
       ]
   | areNonPreserving == Just 0
   , vLow /= nLow
@@ -272,8 +272,8 @@ checkTransitionBehaviorConstraints
   , vHighValue /= nHighValue
   = Just $ unwords
       [ "when areNonPreserving = Just 0 (all transitions token-preserving),"
-      , "incomingArrowsPerTransition upper bound (" ++ show vHigh ++ ")"
-      , "must equal outgoingArrowsPerTransition upper bound (" ++ show nHigh ++ ")"
+      , "incomingArrowsPerTransition upper bound (" ++ show vHighValue ++ ")"
+      , "must equal outgoingArrowsPerTransition upper bound (" ++ show nHighValue ++ "), when both are set"
       ]
   | allowedTokenChanges == Just LT
   , vLow < nLow || vHigh < nHigh
