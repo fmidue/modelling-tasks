@@ -205,6 +205,6 @@ task2025_28 = ReachConfig {
     solutionSetLimit = Just 15,
     requireSolutionsArePermutations = True,
     absentTransitionsRequirement = 1,
-    transitionCoverageRequirement = 4 % 6
+    transitionCoverageRequirement = 2 % 3
     }
   }
