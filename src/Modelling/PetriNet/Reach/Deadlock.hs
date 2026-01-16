@@ -341,12 +341,12 @@ checkFusableNodeConfig maybeInputNodes maybeOutputNodes numTrans numPlaces Arrow
     || relevantInputCount + relevantOutputCount > min numTrans numPlaces
   = Just "fusable transitions consuming/producing requirements must not be negative and together cannot exceed numTransitions or numPlaces"
   | otherwise
-  = checkConflicts maybeInputNodes incomingArrowsPerTransition "InputNodes" "incomingArrowsPerTransition"
-    <|> checkConflicts maybeOutputNodes outgoingArrowsPerTransition "OutputNodes" "outgoingArrowsPerTransition"
-    <|> checkConflicts maybeInputNodes outgoingArrowsPerPlace "InputNodes" "outgoingArrowsPerPlace"
-    <|> checkConflicts maybeOutputNodes incomingArrowsPerPlace "OutputNodes" "incomingArrowsPerPlace"
-    <|> checkTotalLower maybeInputNodes (fst totalArrowsFromPlacesToTransitions) "InputNodes" "totalArrowsFromPlacesToTransitions"
-    <|> checkTotalLower maybeOutputNodes (fst totalArrowsFromTransitionsToPlaces) "OutputNodes" "totalArrowsFromTransitionsToPlaces"
+  = checkConflicts maybeInputNodes incomingArrowsPerTransition "Consuming" "incomingArrowsPerTransition"
+    <|> checkConflicts maybeOutputNodes outgoingArrowsPerTransition "Producing" "outgoingArrowsPerTransition"
+    <|> checkConflicts maybeInputNodes outgoingArrowsPerPlace "Consuming" "outgoingArrowsPerPlace"
+    <|> checkConflicts maybeOutputNodes incomingArrowsPerPlace "Producing" "incomingArrowsPerPlace"
+    <|> checkTotalLower maybeInputNodes (fst totalArrowsFromPlacesToTransitions) "Consuming" "totalArrowsFromPlacesToTransitions"
+    <|> checkTotalLower maybeOutputNodes (fst totalArrowsFromTransitionsToPlaces) "Producing" "totalArrowsFromTransitionsToPlaces"
   where
     checkConflicts maybeCount (minVal, maxVal) nodeType constraintName
       | Just count <- maybeCount, count > 0, minVal > 1
