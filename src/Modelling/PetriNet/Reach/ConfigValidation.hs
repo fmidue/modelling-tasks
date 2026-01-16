@@ -325,7 +325,7 @@ checkTransitionBehaviorConstraints
     tnHigh = fromMaybe (numPlaces * numTransitions) tnHighMaybe
 
     -- Helper function for insufficient arrow difference errors
-    insufficientArrowDifference direction numberOfNonPreserving transitionBound transitionValue placeBound placeValue = unwords
+    insufficientArrowDifference direction numberOfNonPreserving tnBound tnValue tvBound tvValue = unwords
       [ "with allowedTokenChanges = Just"
       , show direction
       , "and areNonPreserving = Just"
@@ -333,20 +333,20 @@ checkTransitionBehaviorConstraints
       , if direction == GT
         then "totalArrowsFromTransitionsToPlaces"
         else "totalArrowsFromPlacesToTransitions"
-      , transitionBound
-      , "bound (" ++ show transitionValue ++ ")"
+      , tnBound
+      , "bound (" ++ show tnValue ++ ")"
       , "minus"
       , if direction == GT
         then "totalArrowsFromPlacesToTransitions"
         else "totalArrowsFromTransitionsToPlaces"
-      , placeBound
-      , "bound (" ++ show placeValue ++ ")"
+      , tvBound
+      , "bound (" ++ show tvValue ++ ")"
       , "must be at least"
       , show numberOfNonPreserving
       ]
 
     -- Helper function for excessive arrow difference errors
-    excessiveArrowDifference direction numberOfNonPreserving maxPerTransition maxTotalTokenChange transitionBound transitionValue placeBound placeValue actualDifference = unwords
+    excessiveArrowDifference direction numberOfNonPreserving maxPerTransition maxTotalTokenChange tnBound tnValue tvBound tvValue actualDifference = unwords
       [ "with allowedTokenChanges = Just"
       , show direction
       , "and areNonPreserving = Just"
@@ -365,14 +365,14 @@ checkTransitionBehaviorConstraints
       , if direction == GT
         then "totalArrowsFromTransitionsToPlaces"
         else "totalArrowsFromPlacesToTransitions"
-      , transitionBound
-      , "bound (" ++ show transitionValue ++ ")"
+      , tnBound
+      , "bound (" ++ show tnValue ++ ")"
       , "minus"
       , if direction == GT
         then "totalArrowsFromPlacesToTransitions"
         else "totalArrowsFromTransitionsToPlaces"
-      , placeBound
-      , "bound (" ++ show placeValue ++ ")"
+      , tvBound
+      , "bound (" ++ show tvValue ++ ")"
       , "is"
       , show actualDifference
       ]
