@@ -169,7 +169,7 @@ task2025_30 = DeadlockConfig {
     outgoingArrowsPerTransition = (1, Just 2),
     incomingArrowsPerPlace = (1, Just 3),
     outgoingArrowsPerPlace = (1, Just 2),
-    totalArrowsFromPlacesToTransitions = (9, Just 9),
+    totalArrowsFromPlacesToTransitions = (9, Just 10),
     totalArrowsFromTransitionsToPlaces = (10, Just 14)
     },
   maxPrintedSolutions = 10,
@@ -177,17 +177,17 @@ task2025_30 = DeadlockConfig {
   showLengthHint = False,
   showMinLengthHint = True,
   showPlaceNamesInNet = False,
-  requireFusableInputNodes = Just 1,
-  requireFusableOutputNodes = Just 1,
+  requireFusableInputNodes = Just 2,
+  requireFusableOutputNodes = Just 2,
   filterConfig = FilterConfig {
     rejectGroupedRepeats = True,
     repetitiveSubsequenceThreshold = Just 4,
     spaceballsPrefixThreshold = Just 4,
     forbiddenCycleLengths = [],
     requireCycleLengthsAny = [],
-    solutionSetLimit = Just 15,
+    solutionSetLimit = Nothing,
     requireSolutionsArePermutations = False,
     absentTransitionsRequirement = 1,
-    transitionCoverageRequirement = 4 % 6
+    transitionCoverageRequirement = 3 % 4
     }
   }
