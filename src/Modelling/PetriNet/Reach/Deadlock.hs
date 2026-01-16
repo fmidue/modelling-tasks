@@ -279,12 +279,12 @@ data DeadlockConfig = DeadlockConfig {
   showPlaceNamesInNet :: Bool,
   -- | Require exactly this many transitions with exactly one input place,
   -- which is exclusively consumed from by that transition.
-  -- If @Nothing@, no constraint on fusable input nodes.
-  requireFusableInputNodes :: Maybe Int,
+  -- If @Nothing@, no constraint on fusable transitions consuming.
+  fusableTransitionsConsumingAreExactly :: Maybe Int,
   -- | Require exactly this many transitions with exactly one output place,
   -- which is exclusively produced to by that transition.
-  -- If @Nothing@, no constraint on fusable output nodes.
-  requireFusableOutputNodes :: Maybe Int,
+  -- If @Nothing@, no constraint on fusable transitions producing.
+  fusableTransitionsProducingAreExactly :: Maybe Int,
   filterConfig        :: FilterConfig
   }
   deriving (Generic, Read, Show)
@@ -308,8 +308,8 @@ defaultDeadlockConfig =
   showLengthHint      = False,
   showMinLengthHint   = True,
   showPlaceNamesInNet = False,
-  requireFusableInputNodes = Nothing,
-  requireFusableOutputNodes = Nothing,
+  fusableTransitionsConsumingAreExactly = Nothing,
+  fusableTransitionsProducingAreExactly = Nothing,
   filterConfig        = defaultFilterConfig { solutionSetLimit = Nothing, forbiddenCycleLengths = [4], requireCycleLengthsAny = [], transitionCoverageRequirement = 1 % 2 }
   }
 
@@ -328,8 +328,8 @@ defaultDeadlockInstance = DeadlockInstance {
   }
 
 checkFusableNodeConfig
-  :: Maybe Int  -- ^ requireFusableInputNodes
-  -> Maybe Int  -- ^ requireFusableOutputNodes
+  :: Maybe Int  -- ^ fusableTransitionsConsumingAreExactly
+  -> Maybe Int  -- ^ fusableTransitionsProducingAreExactly
   -> Int        -- ^ numTransitions
   -> Int        -- ^ numPlaces
   -> ArrowDensityConstraints
@@ -339,7 +339,7 @@ checkFusableNodeConfig maybeInputNodes maybeOutputNodes numTrans numPlaces Arrow
   , let relevantOutputCount = fromMaybe 0 maybeOutputNodes
   , relevantInputCount < 0 || relevantOutputCount < 0
     || relevantInputCount + relevantOutputCount > min numTrans numPlaces
-  = Just "fusable node requirements must not be negative and together cannot exceed numTransitions or numPlaces"
+  = Just "fusable transitions consuming/producing requirements must not be negative and together cannot exceed numTransitions or numPlaces"
   | otherwise
   = checkConflicts maybeInputNodes incomingArrowsPerTransition "InputNodes" "incomingArrowsPerTransition"
     <|> checkConflicts maybeOutputNodes outgoingArrowsPerTransition "OutputNodes" "outgoingArrowsPerTransition"
@@ -350,13 +350,13 @@ checkFusableNodeConfig maybeInputNodes maybeOutputNodes numTrans numPlaces Arrow
   where
     checkConflicts maybeCount (minVal, maxVal) nodeType constraintName
       | Just count <- maybeCount, count > 0, minVal > 1
-      = Just $ "requireFusable" ++ nodeType ++ " > 0 conflicts with " ++ constraintName ++ " minimum > 1"
+      = Just $ "fusableTransitions" ++ nodeType ++ "AreExactly > 0 conflicts with " ++ constraintName ++ " minimum > 1"
       | Just count <- maybeCount, count > 0, maxVal == Just 0
-      = Just $ "requireFusable" ++ nodeType ++ " > 0 conflicts with " ++ constraintName ++ " maximum = 0"
+      = Just $ "fusableTransitions" ++ nodeType ++ "AreExactly > 0 conflicts with " ++ constraintName ++ " maximum = 0"
       | otherwise = Nothing
     checkTotalLower maybeCount totalMin nodeType constraintName
       | Just count <- maybeCount, totalMin < count
-      = Just $ "having fewer " ++ constraintName ++ " than requireFusable" ++ nodeType ++ " makes no sense"
+      = Just $ "having fewer " ++ constraintName ++ " than fusableTransitions" ++ nodeType ++ "AreExactly makes no sense"
       | otherwise = Nothing
 
 checkDeadlockConfig :: DeadlockConfig -> Maybe String
@@ -380,8 +380,8 @@ checkDeadlockConfig DeadlockConfig {..} =
     filterConfig
   <|>
   checkFusableNodeConfig
-    requireFusableInputNodes
-    requireFusableOutputNodes
+    fusableTransitionsConsumingAreExactly
+    fusableTransitionsProducingAreExactly
     numTransitions
     numPlaces
     arrowDensityConstraints
@@ -441,12 +441,12 @@ try conf = do
       ts
       (Modelling.PetriNet.Reach.Deadlock.capacity conf)
       (transitionBehaviorConstraints conf)
-      (fromMaybe 0 $ requireFusableInputNodes conf)
-      (fromMaybe 0 $ requireFusableOutputNodes conf)
-    -- Check fusable node constraints
-    whenJust (requireFusableInputNodes conf) $ \expected ->
+      (fromMaybe 0 $ fusableTransitionsConsumingAreExactly conf)
+      (fromMaybe 0 $ fusableTransitionsProducingAreExactly conf)
+    -- Check fusable transitions consuming/producing constraints
+    whenJust (fusableTransitionsConsumingAreExactly conf) $ \expected ->
       guard $ countFusableInputNodes (connections n) <= expected
-    whenJust (requireFusableOutputNodes conf) $ \expected ->
+    whenJust (fusableTransitionsProducingAreExactly conf) $ \expected ->
       guard $ countFusableOutputNodes (connections n) <= expected
     let deadlockLevels = map (filter (null . successors n . fst)) (levelsWithAlternatives n)
         (no, yeah) = span null
