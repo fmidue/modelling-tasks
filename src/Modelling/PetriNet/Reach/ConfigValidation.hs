@@ -325,11 +325,10 @@ checkTransitionBehaviorConstraints
     -- Helper function for insufficient arrow difference errors
     insufficientArrowDifference direction maybeAreNonPreserving actualDifference boundType =
       let
-        minNonPreserving = fromMaybe 0 maybeAreNonPreserving
         areNonPreservingText = case maybeAreNonPreserving of
           Just n -> " and areNonPreserving = Just " ++ show n
           Nothing -> ""
-        differenceText = if minNonPreserving == 0
+        differenceText = if maybeAreNonPreserving `elem` [Nothing, Just 0]
           then "cannot be negative"
           else "cannot be just " ++ show actualDifference
       in unwords
@@ -343,14 +342,13 @@ checkTransitionBehaviorConstraints
     -- Helper function for excessive arrow difference errors
     excessiveArrowDifference direction maybeAreNonPreserving maxPerTransition actualDifference boundType =
       let
-        maxNonPreserving = fromMaybe numTransitions maybeAreNonPreserving
-        maxTotal = maxNonPreserving * maxPerTransition
+        maxTotal = (fromMaybe numTransitions maybeAreNonPreserving) * maxPerTransition
         areNonPreservingText = case maybeAreNonPreserving of
           Just n -> "areNonPreserving = Just " ++ show n
           Nothing -> "numTransitions = " ++ show numTransitions
       in unwords
         [ "with"
-        , areNonPreservingText ++ ","
+        , areNonPreservingText
         , "and at most"
         , show maxPerTransition
         , "token"
