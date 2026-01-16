@@ -148,7 +148,7 @@ task2025_29 = DeadlockConfig {
     solutionSetLimit = Just 15,
     requireSolutionsArePermutations = False,
     absentTransitionsRequirement = 0,
-    transitionCoverageRequirement = 3 % 4
+    transitionCoverageRequirement = 1 % 1
     }
   }
 
