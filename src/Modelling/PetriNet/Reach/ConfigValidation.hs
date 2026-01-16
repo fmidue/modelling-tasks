@@ -325,39 +325,39 @@ checkTransitionBehaviorConstraints
     tnHigh = fromMaybe (numPlaces * numTransitions) tnHighMaybe
 
     -- Helper function for insufficient arrow difference errors
-    insufficientArrowDifference direction numNonPres tnBound tnVal tvBound tvVal = unwords
+    insufficientArrowDifference direction numberOfNonPreserving transitionBound transitionValue placeBound placeValue = unwords
       [ "with allowedTokenChanges = Just"
       , show direction
       , "and areNonPreserving = Just"
-      , show numNonPres ++ ","
+      , show numberOfNonPreserving ++ ","
       , if direction == GT
         then "totalArrowsFromTransitionsToPlaces"
         else "totalArrowsFromPlacesToTransitions"
-      , tnBound
-      , "bound (" ++ show tnVal ++ ")"
+      , transitionBound
+      , "bound (" ++ show transitionValue ++ ")"
       , "minus"
       , if direction == GT
         then "totalArrowsFromPlacesToTransitions"
         else "totalArrowsFromTransitionsToPlaces"
-      , tvBound
-      , "bound (" ++ show tvVal ++ ")"
+      , placeBound
+      , "bound (" ++ show placeValue ++ ")"
       , "must be at least"
-      , show numNonPres
+      , show numberOfNonPreserving
       ]
 
     -- Helper function for excessive arrow difference errors
-    excessiveArrowDifference direction numNonPres maxPerTrans maxTotal tnBound tnVal tvBound tvVal actualDiff = unwords
+    excessiveArrowDifference direction numberOfNonPreserving maxPerTransition maxTotalTokenChange transitionBound transitionValue placeBound placeValue actualDifference = unwords
       [ "with allowedTokenChanges = Just"
       , show direction
       , "and areNonPreserving = Just"
-      , show numNonPres ++ ","
+      , show numberOfNonPreserving ++ ","
       , "at most"
-      , show maxPerTrans
+      , show maxPerTransition
       , "token"
       , if direction == GT then "increase" else "decrease"
       , "per transition is possible,"
       , "so overall at most"
-      , show maxTotal
+      , show maxTotalTokenChange
       , "token"
       , if direction == GT then "increase" else "decrease"
       , "is possible,"
@@ -365,16 +365,16 @@ checkTransitionBehaviorConstraints
       , if direction == GT
         then "totalArrowsFromTransitionsToPlaces"
         else "totalArrowsFromPlacesToTransitions"
-      , tnBound
-      , "bound (" ++ show tnVal ++ ")"
+      , transitionBound
+      , "bound (" ++ show transitionValue ++ ")"
       , "minus"
       , if direction == GT
         then "totalArrowsFromPlacesToTransitions"
         else "totalArrowsFromTransitionsToPlaces"
-      , tvBound
-      , "bound (" ++ show tvVal ++ ")"
+      , placeBound
+      , "bound (" ++ show placeValue ++ ")"
       , "is"
-      , show actualDiff
+      , show actualDifference
       ]
 
 -- | Check cross-validation of arrow density parameters
