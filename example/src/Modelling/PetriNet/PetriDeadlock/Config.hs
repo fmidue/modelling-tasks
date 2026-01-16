@@ -170,7 +170,7 @@ task2025_30 = DeadlockConfig {
     incomingArrowsPerPlace = (1, Just 3),
     outgoingArrowsPerPlace = (1, Just 2),
     totalArrowsFromPlacesToTransitions = (9, Just 9),
-    totalArrowsFromTransitionsToPlaces = (8, Just 14)
+    totalArrowsFromTransitionsToPlaces = (10, Just 14)
     },
   maxPrintedSolutions = 10,
   rejectLongerThan = Just 14,
