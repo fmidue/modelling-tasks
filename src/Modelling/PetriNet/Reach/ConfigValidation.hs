@@ -322,13 +322,11 @@ checkTransitionBehaviorConstraints
     insufficientArrowDifference direction maybeAreNonPreserving minNonPreserving boundType placeValue transitionValue =
       let
         areNonPreservingText = case maybeAreNonPreserving of
-          Just n -> "areNonPreserving = Just " ++ show n
-          Nothing -> "areNonPreserving not specified (assuming at least 0)"
+          Just n -> " and areNonPreserving = Just " ++ show n
+          Nothing -> ""
       in unwords
         [ "with allowedTokenChanges = Just"
-        , show direction
-        , "and"
-        , areNonPreservingText ++ ","
+        , show direction ++ areNonPreservingText ++ ","
         , boundType
         , "bound difference between totalArrowsFromPlacesToTransitions (" ++ show placeValue ++ ")"
         , "and totalArrowsFromTransitionsToPlaces (" ++ show transitionValue ++ ")"
@@ -343,18 +341,18 @@ checkTransitionBehaviorConstraints
         maxTotal = maxNonPreserving * maxPerTransition
         areNonPreservingText = case maybeAreNonPreserving of
           Just n -> "areNonPreserving = Just " ++ show n
-          Nothing -> "areNonPreserving not specified (assuming at most " ++ show maxNonPreserving ++ ")"
+          Nothing -> "numTransitions = " ++ show numTransitions
       in unwords
         [ "with allowedTokenChanges = Just"
         , show direction
         , "and"
         , areNonPreservingText ++ ","
-        , "at most"
+        , "and at most"
         , show maxPerTransition
         , "token"
         , if direction == GT then "increase" else "decrease"
-        , "per transition is possible,"
-        , "so overall at most"
+        , "per transition,"
+        , "overall at most"
         , show maxTotal
         , "token"
         , if direction == GT then "increase" else "decrease"
