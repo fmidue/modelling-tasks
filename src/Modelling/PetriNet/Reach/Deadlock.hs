@@ -259,8 +259,8 @@ toShowDeadlockInstance
 toShowDeadlockInstance = bimapDeadlockInstance ShowPlace ShowTransition
 
 -- | Configuration for deadlock task generation.
--- Note: The two kinds of fusable transition/place situations (input-fusable and output-fusable)
--- are guaranteed to be non-overlapping. No transition will be both input-fusable and output-fusable
+-- Note: The two kinds of fusable transition/place situations (consuming-fusable and producing-fusable)
+-- are guaranteed to be non-overlapping. No transition will be both consuming-fusable and producing-fusable
 -- and no such transitions will share a fusing-relevant place.
 data DeadlockConfig = DeadlockConfig {
   numPlaces :: Int,
@@ -339,7 +339,7 @@ checkFusableNodeConfig maybeConsuming maybeProducing numTrans numPlaces ArrowDen
   , let relevantProducingCount = fromMaybe 0 maybeProducing
   , relevantConsumingCount < 0 || relevantProducingCount < 0
     || relevantConsumingCount + relevantProducingCount > min numTrans numPlaces
-  = Just "fusable transitions consuming/producing requirements must not be negative and together cannot exceed numTransitions or numPlaces"
+  = Just "fusable transitions requirements must not be negative and together cannot exceed numTransitions or numPlaces"
   | otherwise
   = checkConflicts maybeConsuming incomingArrowsPerTransition "Consuming" "incomingArrowsPerTransition"
     <|> checkConflicts maybeProducing outgoingArrowsPerTransition "Producing" "outgoingArrowsPerTransition"
