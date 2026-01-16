@@ -332,8 +332,7 @@ checkTransitionBehaviorConstraints
         [ "with allowedTokenChanges = Just"
         , show direction ++ areNonPreservingText ++ ","
         , boundType
-        , "bound difference"
-        , "cannot be just"
+        , "bound difference between totalArrowsFromPlacesToTransitions and totalArrowsFromTransitionsToPlaces cannot be just"
         , show actualDifference
         ]
 
@@ -346,9 +345,7 @@ checkTransitionBehaviorConstraints
           Just n -> "areNonPreserving = Just " ++ show n
           Nothing -> "numTransitions = " ++ show numTransitions
       in unwords
-        [ "with allowedTokenChanges = Just"
-        , show direction
-        , "and"
+        [ "with"
         , areNonPreservingText ++ ","
         , "and at most"
         , show maxPerTransition
@@ -362,7 +359,7 @@ checkTransitionBehaviorConstraints
         , "is possible,"
         , "but"
         , boundType
-        , "bound difference is"
+        , "bound difference between totalArrowsFromPlacesToTransitions and totalArrowsFromTransitionsToPlaces is"
         , show actualDifference
         ]
 
