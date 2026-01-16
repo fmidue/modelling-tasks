@@ -16,7 +16,7 @@ module Modelling.PetriNet.Reach.ConfigValidation (
 import Control.Applicative (Alternative ((<|>)))
 import Data.GraphViz.Commands (GraphvizCommand)
 import Data.List.Extra (notNull)
-import Data.Maybe (fromMaybe, isJust)
+import Data.Maybe (fromMaybe, isJust, isNothing)
 import Modelling.PetriNet.Reach.Filter (
   FilterConfig (..),
   noFiltering,
@@ -100,9 +100,8 @@ checkBasicPetriConfig
     <|> checkTransitionLengths minTransitionLength maxTransitionLength
     <|> checkTransitionBehaviorConstraints
           numPlaces
-          (incomingArrowsPerTransition arrowDensityConstraints)
-          (outgoingArrowsPerTransition arrowDensityConstraints)
           numTransitions
+          arrowDensityConstraints
           transitionBehaviorConstraints
     <|> checkRange "incomingArrowsPerTransition" (incomingArrowsPerTransition arrowDensityConstraints)
     <|> checkRange "outgoingArrowsPerTransition" (outgoingArrowsPerTransition arrowDensityConstraints)
@@ -227,12 +226,15 @@ checkFilterConfigWith rejectLongerThan theTransitionLength@minTransitionLength n
 -- | Check transition behavior constraints for validity
 checkTransitionBehaviorConstraints
   :: Int                               -- ^ numPlaces
-  -> (Int, Maybe Int)                  -- ^ incomingArrowsPerTransition
-  -> (Int, Maybe Int)                  -- ^ outgoingArrowsPerTransition
   -> Int                               -- ^ numTransitions
-  -> TransitionBehaviorConstraints     -- ^ constraints
+  -> ArrowDensityConstraints           -- ^ arrow density constraints
+  -> TransitionBehaviorConstraints     -- ^ transition behavior constraints
   -> Maybe String
-checkTransitionBehaviorConstraints numPlaces incomingArrowsPerTransition outgoingArrowsPerTransition numTransitions TransitionBehaviorConstraints {..}
+checkTransitionBehaviorConstraints
+  numPlaces
+  numTransitions
+  ArrowDensityConstraints {..}
+  TransitionBehaviorConstraints {..}
   | Just EQ <- allowedTokenChanges
   = Just "allowedTokenChanges = Just EQ is meaningless; use areNonPreserving = Just 0 instead"
   | Just numberOfNonPreserving <- areNonPreserving
@@ -241,12 +243,98 @@ checkTransitionBehaviorConstraints numPlaces incomingArrowsPerTransition outgoin
   | areNonPreserving == Just 0
   , isJust allowedTokenChanges
   = Just "when areNonPreserving = Just 0 (all transitions token-preserving), allowedTokenChanges = Just ... makes no sense"
+  | areNonPreserving == Just 0
+  , tvLow /= tnLow
+  = Just $ unwords
+      [ "when areNonPreserving = Just 0 (all transitions token-preserving),"
+      , "totalArrowsFromPlacesToTransitions lower bound (" ++ show tvLow ++ ")"
+      , "must equal totalArrowsFromTransitionsToPlaces lower bound (" ++ show tnLow ++ ")"
+      ]
+  | areNonPreserving == Just 0
+  , Just tvHighValue <- tvHighMaybe
+  , Just tnHighValue <- tnHighMaybe
+  , tvHighValue /= tnHighValue
+  = Just $ unwords
+      [ "when areNonPreserving = Just 0 (all transitions token-preserving),"
+      , "totalArrowsFromPlacesToTransitions upper bound (" ++ show tvHighValue ++ ")"
+      , "must equal totalArrowsFromTransitionsToPlaces upper bound (" ++ show tnHighValue ++ "), when both are set"
+      ]
+  | areNonPreserving == Just 0
+  , vLow /= nLow
+  = Just $ unwords
+      [ "when areNonPreserving = Just 0 (all transitions token-preserving),"
+      , "incomingArrowsPerTransition lower bound (" ++ show vLow ++ ")"
+      , "must equal outgoingArrowsPerTransition lower bound (" ++ show nLow ++ ")"
+      ]
+  | areNonPreserving == Just 0
+  , Just vHighValue <- vHighMaybe
+  , Just nHighValue <- nHighMaybe
+  , vHighValue /= nHighValue
+  = Just $ unwords
+      [ "when areNonPreserving = Just 0 (all transitions token-preserving),"
+      , "incomingArrowsPerTransition upper bound (" ++ show vHighValue ++ ")"
+      , "must equal outgoingArrowsPerTransition upper bound (" ++ show nHighValue ++ "), when both are set"
+      ]
   | allowedTokenChanges == Just LT
   , vLow < nLow || vHigh < nHigh
   = Just "with allowedTokenChanges = Just LT, the combination of incomingArrowsPerTransition and outgoingArrowsPerTransition is too lax"
   | allowedTokenChanges == Just GT
   , vLow > nLow || vHigh > nHigh
   = Just "with allowedTokenChanges = Just GT, the combination of incomingArrowsPerTransition and outgoingArrowsPerTransition is too lax"
+  | Just direction <- allowedTokenChanges
+  = let
+      -- Use fromMaybe to handle both Just and Nothing cases
+      -- For lower bound checks: at least 0 non-preserving transitions
+      minNonPreserving = fromMaybe 0 areNonPreserving
+      -- For upper bound checks: at most all transitions are non-preserving
+      maxNonPreserving = fromMaybe numTransitions areNonPreserving
+
+      -- Calculate differences and limits based on direction
+      (lowerDiff, maxPerTransition) = case direction of
+        GT -> (tnLow - tvLow, nHigh - vLow)
+        LT -> (tvLow - tnLow, vHigh - nLow)
+
+      maxTotal = maxNonPreserving * maxPerTransition
+
+      -- Check lower bound insufficient arrow difference
+      checkLowerInsufficientDiff
+        | lowerDiff < minNonPreserving
+        = Just $ insufficientArrowDifference direction areNonPreserving lowerDiff "lower"
+        | otherwise
+        = Nothing
+
+      -- Check lower bound excessive arrow difference
+      checkLowerExcessiveDiff
+        | lowerDiff > maxTotal
+        = Just $ excessiveArrowDifference direction areNonPreserving maxPerTransition lowerDiff "lower"
+        | otherwise
+        = Nothing
+
+      -- Check upper bound insufficient arrow difference
+      checkUpperInsufficientDiff = case direction of
+        GT | Just tvHighValue <- tvHighMaybe
+           , let upperDiff = tnHigh - tvHighValue
+           , upperDiff < minNonPreserving
+           -> Just $ insufficientArrowDifference direction areNonPreserving upperDiff "upper"
+        LT | Just tnHighValue <- tnHighMaybe
+           , let upperDiff = tvHigh - tnHighValue
+           , upperDiff < minNonPreserving
+           -> Just $ insufficientArrowDifference direction areNonPreserving upperDiff "upper"
+        _ -> Nothing
+
+      -- Check upper bound excessive arrow difference
+      checkUpperExcessiveDiff = case direction of
+        GT | Just tnHighValue <- tnHighMaybe
+           , let upperDiff = tnHighValue - tvHigh
+           , upperDiff > maxTotal
+           -> Just $ excessiveArrowDifference direction areNonPreserving maxPerTransition upperDiff "upper"
+        LT | Just tvHighValue <- tvHighMaybe
+           , let upperDiff = tvHighValue - tnHigh
+           , upperDiff > maxTotal
+           -> Just $ excessiveArrowDifference direction areNonPreserving maxPerTransition upperDiff "upper"
+        _ -> Nothing
+
+    in checkLowerInsufficientDiff <|> checkLowerExcessiveDiff <|> checkUpperInsufficientDiff <|> checkUpperExcessiveDiff
   | areNonPreserving /= Just 0
   , vLow == vHigh && nLow == nHigh && vLow == nLow
   = Just "only areNonPreserving = Just 0 makes sense when incomingArrowsPerTransition and outgoingArrowsPerTransition are all fixed to one value anyway"
@@ -258,6 +346,56 @@ checkTransitionBehaviorConstraints numPlaces incomingArrowsPerTransition outgoin
     -- Since checkBasicPetriConfig guarantees upper bounds don't exceed numPlaces, we can use numPlaces as the default
     vHigh = fromMaybe numPlaces vHighMaybe
     nHigh = fromMaybe numPlaces nHighMaybe
+    (tvLow, tvHighMaybe) = totalArrowsFromPlacesToTransitions
+    (tnLow, tnHighMaybe) = totalArrowsFromTransitionsToPlaces
+    -- For total arrows, use the product of numPlaces * numTransitions as the default upper bound.
+    -- This represents the maximum possible number of arrow connections (not counting weights):
+    -- each place can have at most one arrow connection to each transition.
+    tvHigh = fromMaybe (numPlaces * numTransitions) tvHighMaybe
+    tnHigh = fromMaybe (numPlaces * numTransitions) tnHighMaybe
+
+    -- Helper function for insufficient arrow difference errors
+    insufficientArrowDifference direction maybeAreNonPreserving actualDifference boundType =
+      let
+        areNonPreservingText = case maybeAreNonPreserving of
+          Just n -> " and areNonPreserving = Just " ++ show n
+          Nothing -> ""
+        differenceText = if isNothing maybeAreNonPreserving
+          then "cannot be negative"
+          else "cannot be just " ++ show actualDifference
+      in unwords
+        [ "with allowedTokenChanges = Just"
+        , show direction ++ areNonPreservingText ++ ","
+        , boundType
+        , "bound difference between totalArrowsFromPlacesToTransitions and totalArrowsFromTransitionsToPlaces"
+        , differenceText
+        ]
+
+    -- Helper function for excessive arrow difference errors
+    excessiveArrowDifference direction maybeAreNonPreserving maxPerTransition actualDifference boundType =
+      let
+        maxTotal = maxPerTransition * fromMaybe numTransitions maybeAreNonPreserving
+        areNonPreservingText = case maybeAreNonPreserving of
+          Just n -> "areNonPreserving = Just " ++ show n
+          Nothing -> "numTransitions = " ++ show numTransitions
+      in unwords
+        [ "with"
+        , areNonPreservingText
+        , "and at most"
+        , show maxPerTransition
+        , "token"
+        , if direction == GT then "increase" else "decrease"
+        , "per transition,"
+        , "overall at most"
+        , show maxTotal
+        , "token"
+        , if direction == GT then "increase" else "decrease"
+        , "is possible,"
+        , "but"
+        , boundType
+        , "bound difference between totalArrowsFromPlacesToTransitions and totalArrowsFromTransitionsToPlaces is"
+        , show actualDifference
+        ]
 
 -- | Check cross-validation of arrow density parameters
 checkArrowDensityCrossValidation
