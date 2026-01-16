@@ -291,13 +291,11 @@ checkTransitionBehaviorConstraints
       -- Check upper bound excessive arrow difference
       checkUpperExcessiveDiff = case direction of
         GT | Just tnHighValue <- tnHighMaybe
-           , let diff = tnHighValue - tvHigh
-           , diff > maxTotal
-           -> Just $ excessiveArrowDifference direction maxNonPreserving maxPerTransition maxTotal "upper" tvHigh tnHighValue diff
+           , tnHighValue - tvHigh > maxTotal
+           -> Just $ excessiveArrowDifference direction maxNonPreserving maxPerTransition maxTotal "upper" tvHigh tnHighValue (tnHighValue - tvHigh)
         LT | Just tvHighValue <- tvHighMaybe
-           , let diff = tvHighValue - tnHigh
-           , diff > maxTotal
-           -> Just $ excessiveArrowDifference direction maxNonPreserving maxPerTransition maxTotal "upper" tvHighValue tnHigh diff
+           , tvHighValue - tnHigh > maxTotal
+           -> Just $ excessiveArrowDifference direction maxNonPreserving maxPerTransition maxTotal "upper" tvHighValue tnHigh (tvHighValue - tnHigh)
         _ -> Nothing
 
     in checkLowerInsufficientDiff <|> checkLowerExcessiveDiff <|> checkUpperInsufficientDiff <|> checkUpperExcessiveDiff
