@@ -266,6 +266,13 @@ checkTransitionBehaviorConstraints
         | otherwise
         = Nothing
 
+      -- Check lower bound excessive arrow difference
+      checkLowerExcessiveDiff
+        | lowerDiff > maxTotal
+        = Just $ excessiveArrowDifference direction numberOfNonPreserving maxPerTransition maxTotal "lower" tvLow tnLow lowerDiff
+        | otherwise
+        = Nothing
+
       -- Check upper bound insufficient arrow difference
       checkUpperInsufficientDiff = case direction of
         GT | Just tvHighValue <- tvHighMaybe
@@ -288,13 +295,7 @@ checkTransitionBehaviorConstraints
            -> Just $ excessiveArrowDifference direction numberOfNonPreserving maxPerTransition maxTotal "upper" tvHighValue tnHigh diff
         _ -> Nothing
 
-      -- Check lower bound excessive arrow difference
-      checkLowerExcessiveDiff
-        | lowerDiff > maxTotal
-        = Just $ excessiveArrowDifference direction numberOfNonPreserving maxPerTransition maxTotal "lower" tvLow tnLow lowerDiff
-        | otherwise
-        = Nothing
-    in checkLowerInsufficientDiff <|> checkUpperInsufficientDiff <|> checkUpperExcessiveDiff <|> checkLowerExcessiveDiff
+    in checkLowerInsufficientDiff <|> checkLowerExcessiveDiff <|> checkUpperInsufficientDiff <|> checkUpperExcessiveDiff
   | areNonPreserving /= Just 0
   , vLow == vHigh && nLow == nHigh && vLow == nLow
   = Just "only areNonPreserving = Just 0 makes sense when incomingArrowsPerTransition and outgoingArrowsPerTransition are all fixed to one value anyway"
