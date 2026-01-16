@@ -267,35 +267,39 @@ checkTransitionBehaviorConstraints
       -- Check lower bound insufficient arrow difference
       checkLowerInsufficientDiff
         | lowerDiff < minNonPreserving
-        = Just $ insufficientArrowDifference direction areNonPreserving minNonPreserving "lower" tvLow tnLow
+        = Just $ insufficientArrowDifference direction areNonPreserving lowerDiff "lower"
         | otherwise
         = Nothing
 
       -- Check lower bound excessive arrow difference
       checkLowerExcessiveDiff
         | lowerDiff > maxTotal
-        = Just $ excessiveArrowDifference direction areNonPreserving maxNonPreserving maxPerTransition "lower" tvLow tnLow
+        = Just $ excessiveArrowDifference direction areNonPreserving maxPerTransition lowerDiff "lower"
         | otherwise
         = Nothing
 
       -- Check upper bound insufficient arrow difference
       checkUpperInsufficientDiff = case direction of
         GT | Just tvHighValue <- tvHighMaybe
-           , tnHigh - tvHighValue < minNonPreserving
-           -> Just $ insufficientArrowDifference direction areNonPreserving minNonPreserving "upper" tvHighValue tnHigh
+           , let upperDiff = tnHigh - tvHighValue
+           , upperDiff < minNonPreserving
+           -> Just $ insufficientArrowDifference direction areNonPreserving upperDiff "upper"
         LT | Just tnHighValue <- tnHighMaybe
-           , tvHigh - tnHighValue < minNonPreserving
-           -> Just $ insufficientArrowDifference direction areNonPreserving minNonPreserving "upper" tvHigh tnHighValue
+           , let upperDiff = tvHigh - tnHighValue
+           , upperDiff < minNonPreserving
+           -> Just $ insufficientArrowDifference direction areNonPreserving upperDiff "upper"
         _ -> Nothing
 
       -- Check upper bound excessive arrow difference
       checkUpperExcessiveDiff = case direction of
         GT | Just tnHighValue <- tnHighMaybe
-           , tnHighValue - tvHigh > maxTotal
-           -> Just $ excessiveArrowDifference direction areNonPreserving maxNonPreserving maxPerTransition "upper" tvHigh tnHighValue
+           , let upperDiff = tnHighValue - tvHigh
+           , upperDiff > maxTotal
+           -> Just $ excessiveArrowDifference direction areNonPreserving maxPerTransition upperDiff "upper"
         LT | Just tvHighValue <- tvHighMaybe
-           , tvHighValue - tnHigh > maxTotal
-           -> Just $ excessiveArrowDifference direction areNonPreserving maxNonPreserving maxPerTransition "upper" tvHighValue tnHigh
+           , let upperDiff = tvHighValue - tnHigh
+           , upperDiff > maxTotal
+           -> Just $ excessiveArrowDifference direction areNonPreserving maxPerTransition upperDiff "upper"
         _ -> Nothing
 
     in checkLowerInsufficientDiff <|> checkLowerExcessiveDiff <|> checkUpperInsufficientDiff <|> checkUpperExcessiveDiff
@@ -319,7 +323,7 @@ checkTransitionBehaviorConstraints
     tnHigh = fromMaybe (numPlaces * numTransitions) tnHighMaybe
 
     -- Helper function for insufficient arrow difference errors
-    insufficientArrowDifference direction maybeAreNonPreserving minNonPreserving boundType placeValue transitionValue =
+    insufficientArrowDifference direction maybeAreNonPreserving actualDifference boundType =
       let
         areNonPreservingText = case maybeAreNonPreserving of
           Just n -> " and areNonPreserving = Just " ++ show n
@@ -328,16 +332,15 @@ checkTransitionBehaviorConstraints
         [ "with allowedTokenChanges = Just"
         , show direction ++ areNonPreservingText ++ ","
         , boundType
-        , "bound difference between totalArrowsFromPlacesToTransitions (" ++ show placeValue ++ ")"
-        , "and totalArrowsFromTransitionsToPlaces (" ++ show transitionValue ++ ")"
-        , "must be at least"
-        , show minNonPreserving
+        , "bound difference"
+        , "cannot be just"
+        , show actualDifference
         ]
 
     -- Helper function for excessive arrow difference errors
-    excessiveArrowDifference direction maybeAreNonPreserving maxNonPreserving maxPerTransition boundType placeValue transitionValue =
+    excessiveArrowDifference direction maybeAreNonPreserving maxPerTransition actualDifference boundType =
       let
-        actualDifference = abs (transitionValue - placeValue)
+        maxNonPreserving = fromMaybe numTransitions maybeAreNonPreserving
         maxTotal = maxNonPreserving * maxPerTransition
         areNonPreservingText = case maybeAreNonPreserving of
           Just n -> "areNonPreserving = Just " ++ show n
@@ -359,9 +362,7 @@ checkTransitionBehaviorConstraints
         , "is possible,"
         , "but"
         , boundType
-        , "bound difference between totalArrowsFromPlacesToTransitions (" ++ show placeValue ++ ")"
-        , "and totalArrowsFromTransitionsToPlaces (" ++ show transitionValue ++ ")"
-        , "is"
+        , "bound difference is"
         , show actualDifference
         ]
 
