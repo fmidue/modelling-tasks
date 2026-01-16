@@ -267,7 +267,9 @@ checkTransitionBehaviorConstraints
       , "must equal outgoingArrowsPerTransition lower bound (" ++ show nLow ++ ")"
       ]
   | areNonPreserving == Just 0
-  , vHigh /= nHigh
+  , Just vHighValue <- vHighMaybe
+  , Just nHighValue <- nHighMaybe
+  , vHighValue /= nHighValue
   = Just $ unwords
       [ "when areNonPreserving = Just 0 (all transitions token-preserving),"
       , "incomingArrowsPerTransition upper bound (" ++ show vHigh ++ ")"
