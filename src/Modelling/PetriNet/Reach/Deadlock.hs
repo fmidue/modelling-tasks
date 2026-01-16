@@ -334,19 +334,19 @@ checkFusableNodeConfig
   -> Int        -- ^ numPlaces
   -> ArrowDensityConstraints
   -> Maybe String
-checkFusableNodeConfig maybeInputNodes maybeOutputNodes numTrans numPlaces ArrowDensityConstraints {..}
-  | let relevantInputCount = fromMaybe 0 maybeInputNodes
-  , let relevantOutputCount = fromMaybe 0 maybeOutputNodes
-  , relevantInputCount < 0 || relevantOutputCount < 0
-    || relevantInputCount + relevantOutputCount > min numTrans numPlaces
-  = Just "fusable transitions requirements must not be negative and together cannot exceed numTransitions or numPlaces"
+checkFusableNodeConfig maybeConsuming maybeProducing numTrans numPlaces ArrowDensityConstraints {..}
+  | let relevantConsumingCount = fromMaybe 0 maybeConsuming
+  , let relevantProducingCount = fromMaybe 0 maybeProducing
+  , relevantConsumingCount < 0 || relevantProducingCount < 0
+    || relevantConsumingCount + relevantProducingCount > min numTrans numPlaces
+  = Just "fusable transitions consuming/producing requirements must not be negative and together cannot exceed numTransitions or numPlaces"
   | otherwise
-  = checkConflicts maybeInputNodes incomingArrowsPerTransition "Consuming" "incomingArrowsPerTransition"
-    <|> checkConflicts maybeOutputNodes outgoingArrowsPerTransition "Producing" "outgoingArrowsPerTransition"
-    <|> checkConflicts maybeInputNodes outgoingArrowsPerPlace "Consuming" "outgoingArrowsPerPlace"
-    <|> checkConflicts maybeOutputNodes incomingArrowsPerPlace "Producing" "incomingArrowsPerPlace"
-    <|> checkTotalLower maybeInputNodes (fst totalArrowsFromPlacesToTransitions) "Consuming" "totalArrowsFromPlacesToTransitions"
-    <|> checkTotalLower maybeOutputNodes (fst totalArrowsFromTransitionsToPlaces) "Producing" "totalArrowsFromTransitionsToPlaces"
+  = checkConflicts maybeConsuming incomingArrowsPerTransition "Consuming" "incomingArrowsPerTransition"
+    <|> checkConflicts maybeProducing outgoingArrowsPerTransition "Producing" "outgoingArrowsPerTransition"
+    <|> checkConflicts maybeConsuming outgoingArrowsPerPlace "Consuming" "outgoingArrowsPerPlace"
+    <|> checkConflicts maybeProducing incomingArrowsPerPlace "Producing" "incomingArrowsPerPlace"
+    <|> checkTotalLower maybeConsuming (fst totalArrowsFromPlacesToTransitions) "Consuming" "totalArrowsFromPlacesToTransitions"
+    <|> checkTotalLower maybeProducing (fst totalArrowsFromTransitionsToPlaces) "Producing" "totalArrowsFromTransitionsToPlaces"
   where
     checkConflicts maybeCount (minVal, maxVal) nodeType constraintName
       | Just count <- maybeCount, count > 0, minVal > 1
