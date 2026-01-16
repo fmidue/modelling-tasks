@@ -339,7 +339,7 @@ checkFusableNodeConfig maybeInputNodes maybeOutputNodes numTrans numPlaces Arrow
   , let relevantOutputCount = fromMaybe 0 maybeOutputNodes
   , relevantInputCount < 0 || relevantOutputCount < 0
     || relevantInputCount + relevantOutputCount > min numTrans numPlaces
-  = Just "fusable transitions consuming/producing requirements must not be negative and together cannot exceed numTransitions or numPlaces"
+  = Just "fusable transitions requirements must not be negative and together cannot exceed numTransitions or numPlaces"
   | otherwise
   = checkConflicts maybeInputNodes incomingArrowsPerTransition "Consuming" "incomingArrowsPerTransition"
     <|> checkConflicts maybeOutputNodes outgoingArrowsPerTransition "Producing" "outgoingArrowsPerTransition"
@@ -443,7 +443,7 @@ try conf = do
       (transitionBehaviorConstraints conf)
       (fromMaybe 0 $ fusableTransitionsConsumingAreExactly conf)
       (fromMaybe 0 $ fusableTransitionsProducingAreExactly conf)
-    -- Check fusable transitions consuming/producing constraints
+    -- Check fusable transitions constraints
     whenJust (fusableTransitionsConsumingAreExactly conf) $ \expected ->
       guard $ countFusableInputNodes (connections n) <= expected
     whenJust (fusableTransitionsProducingAreExactly conf) $ \expected ->
