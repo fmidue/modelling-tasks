@@ -259,6 +259,20 @@ checkTransitionBehaviorConstraints
       , "totalArrowsFromPlacesToTransitions upper bound (" ++ show tvHighValue ++ ")"
       , "must equal totalArrowsFromTransitionsToPlaces upper bound (" ++ show tnHighValue ++ ")"
       ]
+  | areNonPreserving == Just 0
+  , vLow /= nLow
+  = Just $ unwords
+      [ "when areNonPreserving = Just 0 (all transitions token-preserving),"
+      , "incomingArrowsPerTransition lower bound (" ++ show vLow ++ ")"
+      , "must equal outgoingArrowsPerTransition lower bound (" ++ show nLow ++ ")"
+      ]
+  | areNonPreserving == Just 0
+  , vHigh /= nHigh
+  = Just $ unwords
+      [ "when areNonPreserving = Just 0 (all transitions token-preserving),"
+      , "incomingArrowsPerTransition upper bound (" ++ show vHigh ++ ")"
+      , "must equal outgoingArrowsPerTransition upper bound (" ++ show nHigh ++ ")"
+      ]
   | allowedTokenChanges == Just LT
   , vLow < nLow || vHigh < nHigh
   = Just "with allowedTokenChanges = Just LT, the combination of incomingArrowsPerTransition and outgoingArrowsPerTransition is too lax"
