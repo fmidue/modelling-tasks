@@ -342,7 +342,7 @@ checkTransitionBehaviorConstraints
     -- Helper function for excessive arrow difference errors
     excessiveArrowDifference direction maybeAreNonPreserving maxPerTransition actualDifference boundType =
       let
-        maxTotal = (fromMaybe numTransitions maybeAreNonPreserving) * maxPerTransition
+        maxTotal = maxPerTransition * fromMaybe numTransitions maybeAreNonPreserving
         areNonPreservingText = case maybeAreNonPreserving of
           Just n -> "areNonPreserving = Just " ++ show n
           Nothing -> "numTransitions = " ++ show numTransitions
