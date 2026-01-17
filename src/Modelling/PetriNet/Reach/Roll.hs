@@ -173,6 +173,11 @@ generateFusableConnections allPlaces allTransitions numInputFusable numOutputFus
          )
 
 -- | Generate a net with limits and filtering for isolated nodes and transition behavior constraints
+--
+-- The parameters @requiredFusableTransitionsConsuming@ and @requiredFusableTransitionsProducing@
+-- specify the minimum number of transitions with exactly one consuming place (and no producing places)
+-- and the minimum number of transitions with exactly one producing place (and no consuming places),
+-- respectively. The actual net may have more such transitions than required.
 netLimitsFiltered
   :: (MonadRandom m, Ord s, Ord t)
   => ArrowDensityConstraints           -- ^ arrow density constraints
@@ -181,8 +186,8 @@ netLimitsFiltered
   -> [t]                               -- ^ transitions
   -> Capacity s                        -- ^ capacityConstraint
   -> TransitionBehaviorConstraints     -- ^ transition behavior constraints
-  -> Int                               -- ^ fusable transitions consuming are exactly
-  -> Int                               -- ^ fusable transitions producing are exactly
+  -> Int                               -- ^ required minimum fusable transitions consuming
+  -> Int                               -- ^ required minimum fusable transitions producing
   -> m (Maybe (Net s t))
 netLimitsFiltered
   ArrowDensityConstraints{..}
@@ -191,13 +196,13 @@ netLimitsFiltered
   ts
   capacityConstraint
   transitionBehaviorConstraints
-  fusableTransitionsConsumingAreExactly
-  fusableTransitionsProducingAreExactly = do
+  requiredFusableTransitionsConsuming
+  requiredFusableTransitionsProducing = do
   -- Pre-generate fusable node connections
   (pregeneratedConnections, transitionInputBimap, transitionOutputBimap) <-
-    if fusableTransitionsConsumingAreExactly == 0 && fusableTransitionsProducingAreExactly == 0
+    if requiredFusableTransitionsConsuming == 0 && requiredFusableTransitionsProducing == 0
     then return ([], BM.empty, BM.empty)
-    else generateFusableConnections ps ts fusableTransitionsConsumingAreExactly fusableTransitionsProducingAreExactly
+    else generateFusableConnections ps ts requiredFusableTransitionsConsuming requiredFusableTransitionsProducing
   -- Generate net with forbid sets
   n <- netLimitsWithPregenerated vLow vHigh nLow nHigh ps ts capacityConstraint
          pregeneratedConnections transitionInputBimap transitionOutputBimap
