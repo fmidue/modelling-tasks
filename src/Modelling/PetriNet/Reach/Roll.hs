@@ -52,13 +52,13 @@ netLimitsWithPregenerated
   -> [t]  -- ^ transitions
   -> Capacity s
   -> [Connection s t]  -- ^ Pre-generated connections
-  -> BM.Bimap t s  -- ^ Bimap from input-fusable transitions to their input places
-  -> BM.Bimap t s  -- ^ Bimap from output-fusable transitions to their output places
+  -> BM.Bimap t s  -- ^ Bimap from fusable transitions consuming to their input places
+  -> BM.Bimap t s  -- ^ Bimap from fusable transitions producing to their output places
   -> m (Net s t)
 netLimitsWithPregenerated
   vLow vHigh nLow nHigh ps ts cap
   pregeneratedConnections
-  transitionInputBimap transitionOutputBimap = do
+  transitionConsumingBimap transitionProducingBimap = do
   s <- state ps
   -- Generate connections for ALL transitions, respecting forbid sets
   newConnections <- forM ts $ \t -> do
@@ -83,10 +83,10 @@ netLimitsWithPregenerated
     }
   where
     generateValidConnection t = do
-      vor <- if BM.member t transitionInputBimap
+      vor <- if BM.member t transitionConsumingBimap
              then return []
              else takeRandom vLow vHigh ps
-      nach <- if BM.member t transitionOutputBimap
+      nach <- if BM.member t transitionProducingBimap
               then return []
               else takeRandom nLow nHigh ps
       -- Check both input and output place usage
@@ -96,20 +96,20 @@ netLimitsWithPregenerated
 
     isValidInputPlaceUsage t vor nach =
       -- Skip checks if input bimap is empty
-      BM.null transitionInputBimap ||
+      BM.null transitionConsumingBimap ||
       (  -- For each place in vor: if it's a forbidden input place, only allow if vor == nach == [that place]
-         all (\place -> not (BM.memberR place transitionInputBimap) || (vor == [place] && nach == [place])) vor
+         all (\place -> not (BM.memberR place transitionConsumingBimap) || (vor == [place] && nach == [place])) vor
          -- If t has a pregenerated input place, prevent that place from appearing in nach
-         && maybe True (`notElem` nach) (BM.lookup t transitionInputBimap)
+         && maybe True (`notElem` nach) (BM.lookup t transitionConsumingBimap)
       )
 
     isValidOutputPlaceUsage t vor nach =
       -- Skip checks if output bimap is empty
-      BM.null transitionOutputBimap ||
+      BM.null transitionProducingBimap ||
       (  -- For each place in nach: if it's a forbidden output place, only allow if vor == nach == [that place]
-         all (\place -> not (BM.memberR place transitionOutputBimap) || (vor == [place] && nach == [place])) nach
+         all (\place -> not (BM.memberR place transitionProducingBimap) || (vor == [place] && nach == [place])) nach
          -- If t has a pregenerated output place, prevent that place from appearing in vor
-         && maybe True (`notElem` vor) (BM.lookup t transitionOutputBimap)
+         && maybe True (`notElem` vor) (BM.lookup t transitionProducingBimap)
       )
 
 state :: (MonadRandom m, Ord s) => [s] -> m (State s)
@@ -146,17 +146,17 @@ generateFusableConnections
   :: (MonadRandom m, Ord t, Ord s)
   => [s]  -- ^ All places
   -> [t]  -- ^ All transitions
-  -> Int  -- ^ Number of input-fusable transitions to create
-  -> Int  -- ^ Number of output-fusable transitions to create
+  -> Int  -- ^ Number of fusable transitions consuming to create
+  -> Int  -- ^ Number of fusable transitions producing to create
   -> m ([Connection s t], BM.Bimap t s, BM.Bimap t s)
-generateFusableConnections allPlaces allTransitions numInputFusable numOutputFusable = do
+generateFusableConnections allPlaces allTransitions numConsumingFusable numProducingFusable = do
   -- Randomly select transitions and places for fusable nodes
   shuffledTransitions <- shuffleM allTransitions
   shuffledPlaces <- shuffleM allPlaces
-  let (inputFusableTransitions, remainingTransitions) = splitAt numInputFusable shuffledTransitions
-      outputFusableTransitions = take numOutputFusable remainingTransitions
-      (inputFusablePlaces, remainingPlaces) = splitAt numInputFusable shuffledPlaces
-      outputFusablePlaces = take numOutputFusable remainingPlaces
+  let (inputFusableTransitions, remainingTransitions) = splitAt numConsumingFusable shuffledTransitions
+      outputFusableTransitions = take numProducingFusable remainingTransitions
+      (inputFusablePlaces, remainingPlaces) = splitAt numConsumingFusable shuffledPlaces
+      outputFusablePlaces = take numProducingFusable remainingPlaces
   -- Create connections for input-fusable transitions (s -> t)
   let inputConnections = zipWith (\place trans -> ([place], trans, []))
                                   inputFusablePlaces inputFusableTransitions
@@ -164,12 +164,12 @@ generateFusableConnections allPlaces allTransitions numInputFusable numOutputFus
   let outputConnections = zipWith (\trans place -> ([], trans, [place]))
                                    outputFusableTransitions outputFusablePlaces
   -- Create bimaps from transitions to their pregenerated places
-  let transitionInputBimap = BM.fromList $ zip inputFusableTransitions inputFusablePlaces
-      transitionOutputBimap = BM.fromList $ zip outputFusableTransitions outputFusablePlaces
+  let transitionConsumingBimap = BM.fromList $ zip inputFusableTransitions inputFusablePlaces
+      transitionProducingBimap = BM.fromList $ zip outputFusableTransitions outputFusablePlaces
   -- Return connections and transition-place bimaps
   return ( inputConnections ++ outputConnections
-         , transitionInputBimap   -- bimap from input-fusable transitions to their places
-         , transitionOutputBimap  -- bimap from output-fusable transitions to their places
+         , transitionConsumingBimap   -- bimap from fusable transitions consuming to their places
+         , transitionProducingBimap  -- bimap from fusable transitions producing to their places
          )
 
 -- | Generate a net with limits and filtering for isolated nodes and transition behavior constraints
