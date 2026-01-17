@@ -22,8 +22,8 @@ import Modelling.PetriNet.Reach.Type (
   TransitionBehaviorConstraints(..),
   ArrowDensityConstraints(..),
   connectionTokenBehavior,
-  countFusableInputNodes,
-  countFusableOutputNodes,
+  countFusableTransitionsConsuming,
+  countFusableTransitionsProducing,
   noArrowDensityConstraints,
   )
 
@@ -203,8 +203,8 @@ spec = do
         checkDeadlockConfig config `shouldBe` Nothing
         deadlockInstance <- generateDeadlock config seed
         let net = petriNet deadlockInstance
-            actualFusableInputCount = countFusableInputNodes (connections net)
-        actualFusableInputCount `shouldBe` 2
+            actualFusableConsumingCount = countFusableTransitionsConsuming (connections net)
+        actualFusableConsumingCount `shouldBe` 2
 
     modifyMaxSuccess (const 3) $
       prop "respects fusableTransitionsProducingAreExactly constraint" $ \seed -> do
@@ -220,8 +220,8 @@ spec = do
         checkDeadlockConfig config `shouldBe` Nothing
         deadlockInstance <- generateDeadlock config seed
         let net = petriNet deadlockInstance
-            actualFusableOutputCount = countFusableOutputNodes (connections net)
-        actualFusableOutputCount `shouldBe` 2
+            actualFusableProducingCount = countFusableTransitionsProducing (connections net)
+        actualFusableProducingCount `shouldBe` 2
 
     modifyMaxSuccess (const 3) $
       prop "respects both fusable transitions consuming/producing constraints simultaneously" $ \seed -> do
@@ -239,10 +239,10 @@ spec = do
         checkDeadlockConfig config `shouldBe` Nothing
         deadlockInstance <- generateDeadlock config seed
         let net = petriNet deadlockInstance
-            actualFusableInputCount = countFusableInputNodes (connections net)
-            actualFusableOutputCount = countFusableOutputNodes (connections net)
-        actualFusableInputCount `shouldBe` 1
-        actualFusableOutputCount `shouldBe` 1
+            actualFusableConsumingCount = countFusableTransitionsConsuming (connections net)
+            actualFusableProducingCount = countFusableTransitionsProducing (connections net)
+        actualFusableConsumingCount `shouldBe` 1
+        actualFusableProducingCount `shouldBe` 1
 
   describe "checkDeadlockConfig" $ do
     it "accepts valid configuration" $ do
