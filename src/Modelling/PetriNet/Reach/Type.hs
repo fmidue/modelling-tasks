@@ -302,7 +302,7 @@ satisfiesTransitionBehaviorConstraints net TransitionBehaviorConstraints {..} =
         let nonPreserving = length $ filter (uncurry (/=) . connectionTokenBehavior) $ connections net
         in nonPreserving == expected
 
-{- | Count transitions that consume from exactly one place which is exclusively consumed from by that transition.
+{- | Count transitions with exactly one input place which moreover is exclusively consumed from by that transition.
 More specifically, a "fusable transition consuming" is a transition t where:
 - t consumes (truly) from exactly one input place s, AND
 - t is the only transition that consumes from s (except for trivial back-and-forth looping transitions)
@@ -319,7 +319,7 @@ countFusableTransitionsConsuming connections =
     consumerMap = M.fromListWith (++)
       [(place, [conn]) | conn@(pre, _, _) <- connections, place <- pre]
 
-{- | Count transitions that produce to exactly one place which is exclusively produced to by that transition.
+{- | Count transitions with exactly one output place which moreover is exclusively produced to by that transition.
 More specifically, a "fusable transition producing" is a transition t where:
 - t produces (truly) to exactly one place s, AND
 - t is the only transition that produces to s (except for trivial back-and-forth looping transitions)
