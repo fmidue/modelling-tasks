@@ -175,9 +175,7 @@ generateFusableConnections allPlaces allTransitions numInputFusable numOutputFus
 -- | Generate a net with limits and filtering for isolated nodes and transition behavior constraints
 --
 -- The parameters @requiredFusableTransitionsConsuming@ and @requiredFusableTransitionsProducing@
--- specify the minimum number of transitions with exactly one consuming place (and no producing places)
--- and the minimum number of transitions with exactly one producing place (and no consuming places),
--- respectively. The actual net may have more such transitions than required.
+-- specify the minimum numbers of transitions with the respective properties.
 netLimitsFiltered
   :: (MonadRandom m, Ord s, Ord t)
   => ArrowDensityConstraints           -- ^ arrow density constraints
@@ -199,13 +197,13 @@ netLimitsFiltered
   requiredFusableTransitionsConsuming
   requiredFusableTransitionsProducing = do
   -- Pre-generate fusable node connections
-  (pregeneratedConnections, transitionInputBimap, transitionOutputBimap) <-
+  (pregeneratedConnections, transitionConsuminBimap, transitionProducingBimap) <-
     if requiredFusableTransitionsConsuming == 0 && requiredFusableTransitionsProducing == 0
     then return ([], BM.empty, BM.empty)
     else generateFusableConnections ps ts requiredFusableTransitionsConsuming requiredFusableTransitionsProducing
   -- Generate net with forbid sets
   n <- netLimitsWithPregenerated vLow vHigh nLow nHigh ps ts capacityConstraint
-         pregeneratedConnections transitionInputBimap transitionOutputBimap
+         pregeneratedConnections transitionConsumingBimap transitionProducingBimap
   return $ do
     -- Filter out nets with isolated nodes
     guard $ not $ hasIsolatedNodes n
