@@ -155,17 +155,17 @@ generateFusableConnections allPlaces allTransitions numConsumingFusable numProdu
   shuffledPlaces <- shuffleM allPlaces
   let (inputFusableTransitions, remainingTransitions) = splitAt numConsumingFusable shuffledTransitions
       outputFusableTransitions = take numProducingFusable remainingTransitions
-      (inputFusablePlaces, remainingPlaces) = splitAt numConsumingFusable shuffledPlaces
-      outputFusablePlaces = take numProducingFusable remainingPlaces
+      (placesForInputFusableTransitions, remainingPlaces) = splitAt numConsumingFusable shuffledPlaces
+      placesForOutputFusableTransitions = take numProducingFusable remainingPlaces
   -- Create connections for fusable consuming-transitions (s -> t)
   let inputConnections = zipWith (\place trans -> ([place], trans, []))
-                                  inputFusablePlaces inputFusableTransitions
+                                  placesForInputFusableTransitions inputFusableTransitions
   -- Create connections for fusable producing-transitions (t -> s)
   let outputConnections = zipWith (\trans place -> ([], trans, [place]))
-                                   outputFusableTransitions outputFusablePlaces
+                                   outputFusableTransitions placesForOutputFusableTransitions
   -- Create bimaps from transitions to their pregenerated places
-  let transitionConsumingBimap = BM.fromList $ zip inputFusableTransitions inputFusablePlaces
-      transitionProducingBimap = BM.fromList $ zip outputFusableTransitions outputFusablePlaces
+  let transitionConsumingBimap = BM.fromList $ zip inputFusableTransitions placesForInputFusableTransitions
+      transitionProducingBimap = BM.fromList $ zip outputFusableTransitions placesForOutputFusableTransitions
   -- Return connections and transition-place bimaps
   return ( inputConnections ++ outputConnections
          , transitionConsumingBimap  -- bimap from fusable consuming-transitions to their places
