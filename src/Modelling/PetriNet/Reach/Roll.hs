@@ -181,8 +181,8 @@ netLimitsFiltered
   -> [t]                               -- ^ transitions
   -> Capacity s                        -- ^ capacityConstraint
   -> TransitionBehaviorConstraints     -- ^ transition behavior constraints
-  -> Int                               -- ^ required fusable input nodes
-  -> Int                               -- ^ required fusable output nodes
+  -> Int                               -- ^ fusable transitions consuming are exactly
+  -> Int                               -- ^ fusable transitions producing are exactly
   -> m (Maybe (Net s t))
 netLimitsFiltered
   ArrowDensityConstraints{..}
@@ -191,13 +191,13 @@ netLimitsFiltered
   ts
   capacityConstraint
   transitionBehaviorConstraints
-  requiredFusableInputNodes
-  requiredFusableOutputNodes = do
+  fusableTransitionsConsumingAreExactly
+  fusableTransitionsProducingAreExactly = do
   -- Pre-generate fusable node connections
   (pregeneratedConnections, transitionInputBimap, transitionOutputBimap) <-
-    if requiredFusableInputNodes == 0 && requiredFusableOutputNodes == 0
+    if fusableTransitionsConsumingAreExactly == 0 && fusableTransitionsProducingAreExactly == 0
     then return ([], BM.empty, BM.empty)
-    else generateFusableConnections ps ts requiredFusableInputNodes requiredFusableOutputNodes
+    else generateFusableConnections ps ts fusableTransitionsConsumingAreExactly fusableTransitionsProducingAreExactly
   -- Generate net with forbid sets
   n <- netLimitsWithPregenerated vLow vHigh nLow nHigh ps ts capacityConstraint
          pregeneratedConnections transitionInputBimap transitionOutputBimap
