@@ -33,8 +33,8 @@ task2023_29 = DeadlockConfig {
   showLengthHint = False,
   showMinLengthHint = True,
   showPlaceNamesInNet = False,
-  requireFusableInputNodes = Nothing,
-  requireFusableOutputNodes = Nothing,
+  fusableTransitionsConsumingAreExactly = Nothing,
+  fusableTransitionsProducingAreExactly = Nothing,
   filterConfig = defaultFilterConfig { forbiddenCycleLengths = [], absentTransitionsRequirement = 0, requireCycleLengthsAny = [] }
   }
 
@@ -63,8 +63,8 @@ task2023_30 = DeadlockConfig {
   showLengthHint = False,
   showMinLengthHint = True,
   showPlaceNamesInNet = False,
-  requireFusableInputNodes = Nothing,
-  requireFusableOutputNodes = Nothing,
+  fusableTransitionsConsumingAreExactly = Nothing,
+  fusableTransitionsProducingAreExactly = Nothing,
   filterConfig = defaultFilterConfig { forbiddenCycleLengths = [], requireCycleLengthsAny = [] }
   }
 
@@ -107,8 +107,8 @@ task2024_61 = DeadlockConfig {
   showLengthHint = False,
   showMinLengthHint = True,
   showPlaceNamesInNet = False,
-  requireFusableInputNodes = Nothing,
-  requireFusableOutputNodes = Nothing,
+  fusableTransitionsConsumingAreExactly = Nothing,
+  fusableTransitionsProducingAreExactly = Nothing,
   filterConfig = defaultFilterConfig { absentTransitionsRequirement = 0, forbiddenCycleLengths = [], requireCycleLengthsAny = [] }
   }
 

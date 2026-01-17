@@ -190,11 +190,11 @@ spec = do
         nonPreservingCount `shouldBe` 1
 
     modifyMaxSuccess (const 3) $
-      prop "respects requireFusableInputNodes constraint" $ \seed -> do
+      prop "respects fusableTransitionsConsumingAreExactly constraint" $ \seed -> do
         let config = defaultDeadlockConfig {
               maxTransitionLength = 6,
               minTransitionLength = 6,
-              requireFusableInputNodes = Just 2,
+              fusableTransitionsConsumingAreExactly = Just 2,
               filterConfig = noFiltering,
               arrowDensityConstraints = noArrowDensityConstraints {
                 totalArrowsFromPlacesToTransitions = (2, Nothing)
@@ -207,11 +207,11 @@ spec = do
         actualFusableInputCount `shouldBe` 2
 
     modifyMaxSuccess (const 3) $
-      prop "respects requireFusableOutputNodes constraint" $ \seed -> do
+      prop "respects fusableTransitionsProducingAreExactly constraint" $ \seed -> do
         let config = defaultDeadlockConfig {
               maxTransitionLength = 6,
               minTransitionLength = 6,
-              requireFusableOutputNodes = Just 2,
+              fusableTransitionsProducingAreExactly = Just 2,
               filterConfig = noFiltering,
               arrowDensityConstraints = noArrowDensityConstraints {
                 totalArrowsFromTransitionsToPlaces = (2, Nothing)
@@ -224,12 +224,12 @@ spec = do
         actualFusableOutputCount `shouldBe` 2
 
     modifyMaxSuccess (const 3) $
-      prop "respects both fusable node constraints simultaneously" $ \seed -> do
+      prop "respects both fusable transitions consuming/producing constraints simultaneously" $ \seed -> do
         let config = defaultDeadlockConfig {
               maxTransitionLength = 6,
               minTransitionLength = 6,
-              requireFusableInputNodes = Just 1,
-              requireFusableOutputNodes = Just 1,
+              fusableTransitionsConsumingAreExactly = Just 1,
+              fusableTransitionsProducingAreExactly = Just 1,
               filterConfig = noFiltering,
               arrowDensityConstraints = noArrowDensityConstraints {
                 totalArrowsFromPlacesToTransitions = (1, Nothing),
