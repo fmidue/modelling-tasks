@@ -52,8 +52,8 @@ netLimitsWithPregenerated
   -> [t]  -- ^ transitions
   -> Capacity s
   -> [Connection s t]  -- ^ Pre-generated connections
-  -> BM.Bimap t s  -- ^ Bimap from fusable transitions consuming to their input places
-  -> BM.Bimap t s  -- ^ Bimap from fusable transitions producing to their output places
+  -> BM.Bimap t s  -- ^ Bimap from fusable consuming-transitions to their input places
+  -> BM.Bimap t s  -- ^ Bimap from fusable producing-transitions to their output places
   -> m (Net s t)
 netLimitsWithPregenerated
   vLow vHigh nLow nHigh ps ts cap
@@ -146,8 +146,8 @@ generateFusableConnections
   :: (MonadRandom m, Ord t, Ord s)
   => [s]  -- ^ All places
   -> [t]  -- ^ All transitions
-  -> Int  -- ^ Number of fusable transitions consuming to create
-  -> Int  -- ^ Number of fusable transitions producing to create
+  -> Int  -- ^ Number of fusable consuming-transitions to create
+  -> Int  -- ^ Number of fusable producing-transitions to create
   -> m ([Connection s t], BM.Bimap t s, BM.Bimap t s)
 generateFusableConnections allPlaces allTransitions numConsumingFusable numProducingFusable = do
   -- Randomly select transitions and places for fusable nodes
@@ -157,10 +157,10 @@ generateFusableConnections allPlaces allTransitions numConsumingFusable numProdu
       outputFusableTransitions = take numProducingFusable remainingTransitions
       (inputFusablePlaces, remainingPlaces) = splitAt numConsumingFusable shuffledPlaces
       outputFusablePlaces = take numProducingFusable remainingPlaces
-  -- Create connections for fusable transitions consuming (s -> t)
+  -- Create connections for fusable consuming-transitions (s -> t)
   let inputConnections = zipWith (\place trans -> ([place], trans, []))
                                   inputFusablePlaces inputFusableTransitions
-  -- Create connections for fusable transitions producing (t -> s)
+  -- Create connections for fusable producing-transitions (t -> s)
   let outputConnections = zipWith (\trans place -> ([], trans, [place]))
                                    outputFusableTransitions outputFusablePlaces
   -- Create bimaps from transitions to their pregenerated places
@@ -168,8 +168,8 @@ generateFusableConnections allPlaces allTransitions numConsumingFusable numProdu
       transitionProducingBimap = BM.fromList $ zip outputFusableTransitions outputFusablePlaces
   -- Return connections and transition-place bimaps
   return ( inputConnections ++ outputConnections
-         , transitionConsumingBimap   -- bimap from fusable transitions consuming to their places
-         , transitionProducingBimap  -- bimap from fusable transitions producing to their places
+         , transitionConsumingBimap  -- bimap from fusable consuming-transitions to their places
+         , transitionProducingBimap  -- bimap from fusable producing-transitions to their places
          )
 
 -- | Generate a net with limits and filtering for isolated nodes and transition behavior constraints
