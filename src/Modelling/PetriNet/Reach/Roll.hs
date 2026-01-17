@@ -157,10 +157,10 @@ generateFusableConnections allPlaces allTransitions numConsumingFusable numProdu
       outputFusableTransitions = take numProducingFusable remainingTransitions
       (inputFusablePlaces, remainingPlaces) = splitAt numConsumingFusable shuffledPlaces
       outputFusablePlaces = take numProducingFusable remainingPlaces
-  -- Create connections for input-fusable transitions (s -> t)
+  -- Create connections for fusable transitions consuming (s -> t)
   let inputConnections = zipWith (\place trans -> ([place], trans, []))
                                   inputFusablePlaces inputFusableTransitions
-  -- Create connections for output-fusable transitions (t -> s)
+  -- Create connections for fusable transitions producing (t -> s)
   let outputConnections = zipWith (\trans place -> ([], trans, [place]))
                                    outputFusableTransitions outputFusablePlaces
   -- Create bimaps from transitions to their pregenerated places
