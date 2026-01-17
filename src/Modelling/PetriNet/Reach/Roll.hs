@@ -197,7 +197,7 @@ netLimitsFiltered
   requiredFusableTransitionsConsuming
   requiredFusableTransitionsProducing = do
   -- Pre-generate fusable node connections
-  (pregeneratedConnections, transitionConsuminBimap, transitionProducingBimap) <-
+  (pregeneratedConnections, transitionConsumingBimap, transitionProducingBimap) <-
     if requiredFusableTransitionsConsuming == 0 && requiredFusableTransitionsProducing == 0
     then return ([], BM.empty, BM.empty)
     else generateFusableConnections ps ts requiredFusableTransitionsConsuming requiredFusableTransitionsProducing
