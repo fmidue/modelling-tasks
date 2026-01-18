@@ -96,7 +96,10 @@ generateValidConnection
   -> [s]           -- ^ places
   -> t             -- ^ Transition
   -> m ([s], [s])  -- ^ (vor, nach)
-generateValidConnection transitionConsumingBimap transitionProducingBimap vLow vHigh nLow nHigh ps t = do
+generateValidConnection transitionConsumingBimap transitionProducingBimap vLow vHigh nLow nHigh ps t =
+  go
+  where
+    go = do
       vor <- if BM.member t transitionConsumingBimap
              then return []
              else takeRandom vLow vHigh ps
@@ -106,8 +109,8 @@ generateValidConnection transitionConsumingBimap transitionProducingBimap vLow v
       -- Check both input and output place usage
       if isValidInputPlaceUsage vor nach && isValidOutputPlaceUsage vor nach
         then return (vor, nach)
-        else generateValidConnection transitionConsumingBimap transitionProducingBimap vLow vHigh nLow nHigh ps t  -- Retry if invalid
-  where
+        else go  -- Retry if invalid
+
     -- | Check if input place usage is valid for a transition
     isValidInputPlaceUsage vor nach =
       -- Skip checks if input bimap is empty
