@@ -148,6 +148,16 @@ data FusableConnectionsResult s t = FusableConnectionsResult
   , transitionProducingBimap :: BM.Bimap t s
   }
 
+-- | Create connections for fusable consuming-transitions (place -> transition)
+createConsumingConnections :: [s] -> [t] -> [Connection s t]
+createConsumingConnections =
+  zipWith (\place trans -> ([place], trans, []))
+
+-- | Create connections for fusable producing-transitions (transition -> place)
+createProducingConnections :: [t] -> [s] -> [Connection s t]
+createProducingConnections =
+  zipWith (\trans place -> ([], trans, [place]))
+
 -- | Generate pre-determined fusable node connections
 generateFusableConnections
   :: (MonadRandom m, Ord t, Ord s)
@@ -164,14 +174,10 @@ generateFusableConnections allPlaces allTransitions numConsumingFusable numProdu
       outputFusableTransitions = take numProducingFusable remainingTransitions
       (placesForInputFusableTransitions, remainingPlaces) = splitAt numConsumingFusable shuffledPlaces
       placesForOutputFusableTransitions = take numProducingFusable remainingPlaces
-  -- Create connections for fusable consuming-transitions (s -> t)
-  let inputConnections = zipWith (\place trans -> ([place], trans, []))
-                                  placesForInputFusableTransitions inputFusableTransitions
-  -- Create connections for fusable producing-transitions (t -> s)
-  let outputConnections = zipWith (\trans place -> ([], trans, [place]))
-                                   outputFusableTransitions placesForOutputFusableTransitions
-  -- Create bimaps from transitions to their pregenerated places
-  let consumingBimap = BM.fromList $ zip inputFusableTransitions placesForInputFusableTransitions
+  -- Create connections and bimaps
+  let inputConnections = createConsumingConnections placesForInputFusableTransitions inputFusableTransitions
+      outputConnections = createProducingConnections outputFusableTransitions placesForOutputFusableTransitions
+      consumingBimap = BM.fromList $ zip inputFusableTransitions placesForInputFusableTransitions
       producingBimap = BM.fromList $ zip outputFusableTransitions placesForOutputFusableTransitions
   -- Return connections and transition-place bimaps
   return FusableConnectionsResult
