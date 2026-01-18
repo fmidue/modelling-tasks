@@ -4,9 +4,10 @@ originally from Autotool (https://gitlab.imn.htwk-leipzig.de/autotool/all0)
 based on revision: ad25a990816a162fdd13941ff889653f22d6ea0a
 based on file: collection/src/Petri/Roll.hs
 -}
-module Modelling.PetriNet.Reach.Roll (netLimitsFiltered, generateFusableConnections) where
+module Modelling.PetriNet.Reach.Roll (netLimitsFiltered, netLimitsFilteredWith, generateFusableConnections) where
 
 import qualified Data.Bimap                       as BM (
+  empty,
   fromList,
   lookup,
   member,
@@ -172,28 +173,30 @@ generateFusableConnections allPlaces allTransitions numConsumingFusable numProdu
          )
 
 -- | Generate a net with limits and filtering for isolated nodes and transition behavior constraints
-netLimitsFiltered
+-- | Generate a net with limits and filtering for isolated nodes and transition behavior constraints,
+-- with pregenerated fusable connections
+netLimitsFilteredWith
   :: (MonadRandom m, Ord s, Ord t)
-  => ArrowDensityConstraints           -- ^ arrow density constraints
+  => [Connection s t]                  -- ^ Pre-generated connections
+  -> BM.Bimap t s                      -- ^ Bimap from fusable consuming-transitions to their input places
+  -> BM.Bimap t s                      -- ^ Bimap from fusable producing-transitions to their output places
+  -> ArrowDensityConstraints           -- ^ arrow density constraints
   -> Int                               -- ^ numPlaces
   -> [s]                               -- ^ places
   -> [t]                               -- ^ transitions
   -> Capacity s                        -- ^ capacityConstraint
   -> TransitionBehaviorConstraints     -- ^ transition behavior constraints
-  -> [Connection s t]                  -- ^ Pre-generated connections
-  -> BM.Bimap t s                      -- ^ Bimap from fusable consuming-transitions to their input places
-  -> BM.Bimap t s                      -- ^ Bimap from fusable producing-transitions to their output places
   -> m (Maybe (Net s t))
-netLimitsFiltered
+netLimitsFilteredWith
+  pregeneratedConnections
+  transitionConsumingBimap
+  transitionProducingBimap
   ArrowDensityConstraints{..}
   numPlaces
   ps
   ts
   capacityConstraint
-  transitionBehaviorConstraints
-  pregeneratedConnections
-  transitionConsumingBimap
-  transitionProducingBimap = do
+  transitionBehaviorConstraints = do
   -- Generate net with forbid sets
   n <- netLimitsWithPregenerated vLow vHigh nLow nHigh ps ts capacityConstraint
          pregeneratedConnections transitionConsumingBimap transitionProducingBimap
@@ -228,3 +231,16 @@ netLimitsFiltered
     fixMaximum (low, high) = (low, fromMaybe numPlaces high)
     (vLow, vHigh) = fixMaximum incomingArrowsPerTransition
     (nLow, nHigh) = fixMaximum outgoingArrowsPerTransition
+
+-- | Generate a net with limits and filtering for isolated nodes and transition behavior constraints
+netLimitsFiltered
+  :: (MonadRandom m, Ord s, Ord t)
+  => ArrowDensityConstraints           -- ^ arrow density constraints
+  -> Int                               -- ^ numPlaces
+  -> [s]                               -- ^ places
+  -> [t]                               -- ^ transitions
+  -> Capacity s                        -- ^ capacityConstraint
+  -> TransitionBehaviorConstraints     -- ^ transition behavior constraints
+  -> m (Maybe (Net s t))
+netLimitsFiltered =
+  netLimitsFilteredWith [] BM.empty BM.empty
