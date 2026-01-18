@@ -104,42 +104,28 @@ generateValidConnection transitionConsumingBimap transitionProducingBimap vLow v
               then return []
               else takeRandom nLow nHigh ps
       -- Check both input and output place usage
-      if isValidInputPlaceUsage transitionConsumingBimap t vor nach && isValidOutputPlaceUsage transitionProducingBimap t vor nach
+      if isValidInputPlaceUsage t vor nach && isValidOutputPlaceUsage t vor nach
         then return (vor, nach)
         else generateValidConnection transitionConsumingBimap transitionProducingBimap vLow vHigh nLow nHigh ps t  -- Retry if invalid
-
--- | Check if input place usage is valid for a transition
-isValidInputPlaceUsage
-  :: (Ord t, Ord s)
-  => BM.Bimap t s  -- ^ Bimap from fusable consuming-transitions to their input places
-  -> t             -- ^ Transition
-  -> [s]           -- ^ Input places (vor)
-  -> [s]           -- ^ Output places (nach)
-  -> Bool
-isValidInputPlaceUsage transitionConsumingBimap t vor nach =
+  where
+    -- | Check if input place usage is valid for a transition
+    isValidInputPlaceUsage theTransition vor nach =
       -- Skip checks if input bimap is empty
       BM.null transitionConsumingBimap ||
       (  -- For each place in vor: if it's a forbidden input place, only allow if vor == nach == [that place]
          all (\place -> not (BM.memberR place transitionConsumingBimap) || (vor == [place] && nach == [place])) vor
          -- If t has a pregenerated input place, prevent that place from appearing in nach
-         && maybe True (`notElem` nach) (BM.lookup t transitionConsumingBimap)
+         && maybe True (`notElem` nach) (BM.lookup theTransition transitionConsumingBimap)
       )
 
--- | Check if output place usage is valid for a transition
-isValidOutputPlaceUsage
-  :: (Ord t, Ord s)
-  => BM.Bimap t s  -- ^ Bimap from fusable producing-transitions to their output places
-  -> t             -- ^ Transition
-  -> [s]           -- ^ Input places (vor)
-  -> [s]           -- ^ Output places (nach)
-  -> Bool
-isValidOutputPlaceUsage transitionProducingBimap t vor nach =
+    -- | Check if output place usage is valid for a transition
+    isValidOutputPlaceUsage theTransition vor nach =
       -- Skip checks if output bimap is empty
       BM.null transitionProducingBimap ||
       (  -- For each place in nach: if it's a forbidden output place, only allow if vor == nach == [that place]
          all (\place -> not (BM.memberR place transitionProducingBimap) || (vor == [place] && nach == [place])) nach
          -- If t has a pregenerated output place, prevent that place from appearing in vor
-         && maybe True (`notElem` vor) (BM.lookup t transitionProducingBimap)
+         && maybe True (`notElem` vor) (BM.lookup theTransition transitionProducingBimap)
       )
 
 state :: (MonadRandom m, Ord s) => [s] -> m (State s)
@@ -225,11 +211,41 @@ netLimitsFilteredWith
   ps
   ts
   capacityConstraint
-  transitionBehaviorConstraints = do
-  -- Generate net with forbid sets
+  transitionBehaviorConstraints =
+  netLimitsFilteredCommon
+    arrowDensityConstraints
+    numPlaces
+    ps
+    ts
+    capacityConstraint
+    transitionBehaviorConstraints
+    (generateValidConnection transitionConsumingBimap transitionProducingBimap)
+    (mergeConnections pregeneratedConnections)
+
+-- | Common implementation for netLimitsFiltered variants
+netLimitsFilteredCommon
+  :: (MonadRandom m, Ord s, Ord t)
+  => ArrowDensityConstraints           -- ^ arrow density constraints
+  -> Int                               -- ^ numPlaces
+  -> [s]                               -- ^ places
+  -> [t]                               -- ^ transitions
+  -> Capacity s                        -- ^ capacityConstraint
+  -> TransitionBehaviorConstraints     -- ^ transition behavior constraints
+  -> (Int -> Int -> Int -> Int -> [s] -> t -> m ([s], [s]))  -- ^ Function to generate valid connection
+  -> ([Connection s t] -> [Connection s t])  -- ^ Function to merge connections
+  -> m (Maybe (Net s t))
+netLimitsFilteredCommon
+  arrowDensityConstraints
+  numPlaces
+  ps
+  ts
+  capacityConstraint
+  transitionBehaviorConstraints
+  genValidConn
+  mergeConns = do
   n <- netLimitsWithPregenerated ps ts capacityConstraint
-         (generateValidConnection transitionConsumingBimap transitionProducingBimap vLow vHigh nLow nHigh ps)
-         (mergeConnections pregeneratedConnections)
+         (genValidConn vLow vHigh nLow nHigh ps)
+         mergeConns
   return $ applyNetFiltering arrowDensityConstraints transitionBehaviorConstraints n
   where
     fixMaximum :: (Int, Maybe Int) -> (Int, Int)
@@ -287,14 +303,13 @@ netLimitsFiltered
   ps
   ts
   capacityConstraint
-  transitionBehaviorConstraints = do
-  -- Generate net without pregenerated connections
-  n <- netLimitsWithPregenerated ps ts capacityConstraint
-         (\_ -> takeRandom vLow vHigh ps >>= \vor -> takeRandom nLow nHigh ps >>= \nach -> return (vor, nach))
-         id
-  return $ applyNetFiltering arrowDensityConstraints transitionBehaviorConstraints n
-  where
-    fixMaximum :: (Int, Maybe Int) -> (Int, Int)
-    fixMaximum (low, high) = (low, fromMaybe numPlaces high)
-    (vLow, vHigh) = fixMaximum (incomingArrowsPerTransition arrowDensityConstraints)
-    (nLow, nHigh) = fixMaximum (outgoingArrowsPerTransition arrowDensityConstraints)
+  transitionBehaviorConstraints =
+  netLimitsFilteredCommon
+    arrowDensityConstraints
+    numPlaces
+    ps
+    ts
+    capacityConstraint
+    transitionBehaviorConstraints
+    (\vLow vHigh nLow nHigh thePlaces _ -> takeRandom vLow vHigh thePlaces >>= \vor -> takeRandom nLow nHigh thePlaces >>= \nach -> return (vor, nach))
+    id
