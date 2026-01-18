@@ -141,6 +141,13 @@ inBounds :: (Int, Maybe Int) -> Int -> Bool
 inBounds (low, maybeHigh) value =
   value >= low && maybe True (value <=) maybeHigh
 
+-- | Result of generating fusable connections
+data FusableConnectionsResult s t = FusableConnectionsResult
+  { pregeneratedConnections :: [Connection s t]
+  , transitionConsumingBimap :: BM.Bimap t s
+  , transitionProducingBimap :: BM.Bimap t s
+  }
+
 -- | Generate pre-determined fusable node connections
 generateFusableConnections
   :: (MonadRandom m, Ord t, Ord s)
@@ -148,7 +155,7 @@ generateFusableConnections
   -> [t]  -- ^ All transitions
   -> Int  -- ^ Number of fusable consuming-transitions to create
   -> Int  -- ^ Number of fusable producing-transitions to create
-  -> m ([Connection s t], BM.Bimap t s, BM.Bimap t s)
+  -> m (FusableConnectionsResult s t)
 generateFusableConnections allPlaces allTransitions numConsumingFusable numProducingFusable = do
   -- Randomly select transitions and places for fusable nodes
   shuffledTransitions <- shuffleM allTransitions
@@ -164,13 +171,14 @@ generateFusableConnections allPlaces allTransitions numConsumingFusable numProdu
   let outputConnections = zipWith (\trans place -> ([], trans, [place]))
                                    outputFusableTransitions placesForOutputFusableTransitions
   -- Create bimaps from transitions to their pregenerated places
-  let transitionConsumingBimap = BM.fromList $ zip inputFusableTransitions placesForInputFusableTransitions
-      transitionProducingBimap = BM.fromList $ zip outputFusableTransitions placesForOutputFusableTransitions
+  let consumingBimap = BM.fromList $ zip inputFusableTransitions placesForInputFusableTransitions
+      producingBimap = BM.fromList $ zip outputFusableTransitions placesForOutputFusableTransitions
   -- Return connections and transition-place bimaps
-  return ( inputConnections ++ outputConnections
-         , transitionConsumingBimap  -- bimap from fusable consuming-transitions to their places
-         , transitionProducingBimap  -- bimap from fusable producing-transitions to their places
-         )
+  return FusableConnectionsResult
+    { pregeneratedConnections = inputConnections ++ outputConnections
+    , transitionConsumingBimap = consumingBimap
+    , transitionProducingBimap = producingBimap
+    }
 
 -- | Helper to generate fusable connections or return empty values if not needed
 generateFusableConnectionsIfNeeded
@@ -179,9 +187,14 @@ generateFusableConnectionsIfNeeded
   -> [t]  -- ^ transitions
   -> Int  -- ^ required minimum fusable transitions consuming
   -> Int  -- ^ required minimum fusable transitions producing
-  -> m ([Connection s t], BM.Bimap t s, BM.Bimap t s)
+  -> m (FusableConnectionsResult s t)
 generateFusableConnectionsIfNeeded places transitions requiredConsuming requiredProducing
-  | requiredConsuming == 0 && requiredProducing == 0 = return ([], BM.empty, BM.empty)
+  | requiredConsuming == 0 && requiredProducing == 0 =
+      return FusableConnectionsResult
+        { pregeneratedConnections = []
+        , transitionConsumingBimap = BM.empty
+        , transitionProducingBimap = BM.empty
+        }
   | otherwise = generateFusableConnections places transitions requiredConsuming requiredProducing
 
 -- | Generate a net with limits and filtering for isolated nodes and transition behavior constraints
@@ -209,7 +222,7 @@ netLimitsFiltered
   requiredFusableTransitionsConsuming
   requiredFusableTransitionsProducing = do
   -- Pre-generate fusable node connections
-  (pregeneratedConnections, transitionConsumingBimap, transitionProducingBimap) <-
+  FusableConnectionsResult{..} <-
     generateFusableConnectionsIfNeeded ps ts requiredFusableTransitionsConsuming requiredFusableTransitionsProducing
   -- Generate net with forbid sets
   n <- netLimitsWithPregenerated vLow vHigh nLow nHigh ps ts capacityConstraint
