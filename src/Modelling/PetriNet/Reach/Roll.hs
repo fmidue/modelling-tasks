@@ -4,10 +4,9 @@ originally from Autotool (https://gitlab.imn.htwk-leipzig.de/autotool/all0)
 based on revision: ad25a990816a162fdd13941ff889653f22d6ea0a
 based on file: collection/src/Petri/Roll.hs
 -}
-module Modelling.PetriNet.Reach.Roll (netLimitsFiltered) where
+module Modelling.PetriNet.Reach.Roll (netLimitsFiltered, generateFusableConnections) where
 
 import qualified Data.Bimap                       as BM (
-  empty,
   fromList,
   lookup,
   member,
@@ -173,9 +172,6 @@ generateFusableConnections allPlaces allTransitions numConsumingFusable numProdu
          )
 
 -- | Generate a net with limits and filtering for isolated nodes and transition behavior constraints
---
--- The parameters @requiredFusableTransitionsConsuming@ and @requiredFusableTransitionsProducing@
--- specify the minimum numbers of transitions with the respective properties.
 netLimitsFiltered
   :: (MonadRandom m, Ord s, Ord t)
   => ArrowDensityConstraints           -- ^ arrow density constraints
@@ -184,8 +180,9 @@ netLimitsFiltered
   -> [t]                               -- ^ transitions
   -> Capacity s                        -- ^ capacityConstraint
   -> TransitionBehaviorConstraints     -- ^ transition behavior constraints
-  -> Int                               -- ^ required minimum fusable transitions consuming
-  -> Int                               -- ^ required minimum fusable transitions producing
+  -> [Connection s t]                  -- ^ Pre-generated connections
+  -> BM.Bimap t s                      -- ^ Bimap from fusable consuming-transitions to their input places
+  -> BM.Bimap t s                      -- ^ Bimap from fusable producing-transitions to their output places
   -> m (Maybe (Net s t))
 netLimitsFiltered
   ArrowDensityConstraints{..}
@@ -194,13 +191,9 @@ netLimitsFiltered
   ts
   capacityConstraint
   transitionBehaviorConstraints
-  requiredFusableTransitionsConsuming
-  requiredFusableTransitionsProducing = do
-  -- Pre-generate fusable node connections
-  (pregeneratedConnections, transitionConsumingBimap, transitionProducingBimap) <-
-    if requiredFusableTransitionsConsuming == 0 && requiredFusableTransitionsProducing == 0
-    then return ([], BM.empty, BM.empty)
-    else generateFusableConnections ps ts requiredFusableTransitionsConsuming requiredFusableTransitionsProducing
+  pregeneratedConnections
+  transitionConsumingBimap
+  transitionProducingBimap = do
   -- Generate net with forbid sets
   n <- netLimitsWithPregenerated vLow vHigh nLow nHigh ps ts capacityConstraint
          pregeneratedConnections transitionConsumingBimap transitionProducingBimap

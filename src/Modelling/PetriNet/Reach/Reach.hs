@@ -58,6 +58,7 @@ module Modelling.PetriNet.Reach.Reach (
 ) where
 
 import qualified Control.Monad.Trans              as Monad (lift)
+import qualified Data.Bimap                       as BM (empty)
 import qualified Data.Map                         as M (elems, empty, fromDistinctAscList, map, unionWith)
 import qualified Data.Set                         as S (fromList, member, toList, union, empty)
 
@@ -643,8 +644,9 @@ findNetGoalWithSolutions filterConfig maxPrintedSolutions NetGoalConfig {..} =
                 ts
                 capacity
                 transitionBehaviorConstraints
-                0  -- No fusable input nodes required for Reach tasks
-                0  -- No fusable output nodes required for Reach tasks
+                []         -- No pregenerated connections for Reach tasks
+                BM.empty   -- No fusable input nodes required for Reach tasks
+                BM.empty   -- No fusable output nodes required for Reach tasks
         n <- generateNet
         return $ do
          zs <-

@@ -44,6 +44,7 @@ module Modelling.PetriNet.Reach.Deadlock (
   exampleInstance,
 ) where
 
+import qualified Data.Bimap                       as BM (empty)
 import qualified Data.Map                         as M (fromList)
 import qualified Data.Set                         as S (fromList, toList)
 
@@ -75,7 +76,7 @@ import Modelling.PetriNet.Reach.Reach   (
   provideSolutionsFeedback,
   validateDrawabilityAndSolutionFiltering,
   )
-import Modelling.PetriNet.Reach.Roll    (netLimitsFiltered)
+import Modelling.PetriNet.Reach.Roll    (netLimitsFiltered, generateFusableConnections)
 import Modelling.PetriNet.Reach.Step    (executes, successors)
 import Modelling.PetriNet.Reach.Type (
   ArrowDensityConstraints(..),
@@ -434,6 +435,13 @@ try
 try conf = do
     let ps = [Place 1 .. Place (numPlaces conf)]
         ts = [Transition 1 .. Transition (numTransitions conf)]
+        requiredFusableTransitionsConsuming = fromMaybe 0 $ fusableTransitionsConsumingAreExactly conf
+        requiredFusableTransitionsProducing = fromMaybe 0 $ fusableTransitionsProducingAreExactly conf
+    -- Pre-generate fusable node connections
+    (pregeneratedConnections, transitionConsumingBimap, transitionProducingBimap) <-
+      if requiredFusableTransitionsConsuming == 0 && requiredFusableTransitionsProducing == 0
+      then return ([], BM.empty, BM.empty)
+      else generateFusableConnections ps ts requiredFusableTransitionsConsuming requiredFusableTransitionsProducing
     n <- MaybeT $ netLimitsFiltered
       (arrowDensityConstraints conf)
       (numPlaces conf)
@@ -441,8 +449,9 @@ try conf = do
       ts
       (Modelling.PetriNet.Reach.Deadlock.capacity conf)
       (transitionBehaviorConstraints conf)
-      (fromMaybe 0 $ fusableTransitionsConsumingAreExactly conf)
-      (fromMaybe 0 $ fusableTransitionsProducingAreExactly conf)
+      pregeneratedConnections
+      transitionConsumingBimap
+      transitionProducingBimap
     -- Check fusable transitions constraints
     whenJust (fusableTransitionsConsumingAreExactly conf) $ \expected ->
       guard $ countFusableTransitionsConsuming (connections n) <= expected
