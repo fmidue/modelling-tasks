@@ -158,6 +158,10 @@ createProducingConnections :: [t] -> [s] -> [Connection s t]
 createProducingConnections =
   zipWith (\trans place -> ([], trans, [place]))
 
+-- | Create a bimap from transitions to places
+createTransitionPlaceBimap :: (Ord t, Ord s) => [t] -> [s] -> BM.Bimap t s
+createTransitionPlaceBimap transitions places = BM.fromList $ zip transitions places
+
 -- | Generate pre-determined fusable node connections
 generateFusableConnections
   :: (MonadRandom m, Ord t, Ord s)
@@ -177,8 +181,8 @@ generateFusableConnections allPlaces allTransitions numConsumingFusable numProdu
   -- Create connections and bimaps
   let inputConnections = createConsumingConnections placesForInputFusableTransitions inputFusableTransitions
       outputConnections = createProducingConnections outputFusableTransitions placesForOutputFusableTransitions
-      consumingBimap = BM.fromList $ zip inputFusableTransitions placesForInputFusableTransitions
-      producingBimap = BM.fromList $ zip outputFusableTransitions placesForOutputFusableTransitions
+      consumingBimap = createTransitionPlaceBimap inputFusableTransitions placesForInputFusableTransitions
+      producingBimap = createTransitionPlaceBimap outputFusableTransitions placesForOutputFusableTransitions
   -- Return connections and transition-place bimaps
   return FusableConnectionsResult
     { pregeneratedConnections = inputConnections ++ outputConnections
