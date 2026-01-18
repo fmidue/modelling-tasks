@@ -172,7 +172,40 @@ generateFusableConnections allPlaces allTransitions numConsumingFusable numProdu
          , transitionProducingBimap  -- bimap from fusable producing-transitions to their places
          )
 
--- | Generate a net with limits and filtering for isolated nodes and transition behavior constraints
+-- | Apply filtering checks to a net based on arrow density constraints and transition behavior
+applyNetFiltering
+  :: (Ord s, Ord t)
+  => ArrowDensityConstraints
+  -> TransitionBehaviorConstraints
+  -> Net s t
+  -> Maybe (Net s t)
+applyNetFiltering ArrowDensityConstraints{..} transitionBehaviorConstraints n = do
+  -- Filter out nets with isolated nodes
+  guard $ not $ hasIsolatedNodes n
+  -- Filter out nets that don't satisfy transition behavior constraints
+  guard $ satisfiesTransitionBehaviorConstraints n transitionBehaviorConstraints
+  -- Filter out nets that don't satisfy arrow density constraints beyond incomingArrowsPerTransition and outgoingArrowsPerTransition
+  let allTransToPlaces = concatMap (\(_, _, post) -> post) (connections n)
+  let allPlacesToTrans = concatMap (\(pre, _, _) -> pre) (connections n)
+  let initialMap = M.fromSet (const 0) (places n)
+  guard $ case incomingArrowsPerPlace of
+    (0, Nothing) -> True
+    _ -> let countMap = M.fromListWith (+) [(place, 1) | place <- allTransToPlaces]
+                        `M.union` initialMap
+         in all (inBounds incomingArrowsPerPlace) $ M.elems countMap
+  guard $ case outgoingArrowsPerPlace of
+    (0, Nothing) -> True
+    _ -> let countMap = M.fromListWith (+) [(place, 1) | place <- allPlacesToTrans]
+                        `M.union` initialMap
+         in all (inBounds outgoingArrowsPerPlace) $ M.elems countMap
+  guard $ case totalArrowsFromPlacesToTransitions of
+    (0, Nothing) -> True
+    _ -> inBounds totalArrowsFromPlacesToTransitions (length allPlacesToTrans)
+  guard $ case totalArrowsFromTransitionsToPlaces of
+    (0, Nothing) -> True
+    _ -> inBounds totalArrowsFromTransitionsToPlaces (length allTransToPlaces)
+  return n
+
 -- | Generate a net with limits and filtering for isolated nodes and transition behavior constraints,
 -- with pregenerated fusable connections
 netLimitsFilteredWith
@@ -191,7 +224,7 @@ netLimitsFilteredWith
   pregeneratedConnections
   transitionConsumingBimap
   transitionProducingBimap
-  ArrowDensityConstraints{..}
+  arrowDensityConstraints
   numPlaces
   ps
   ts
@@ -200,37 +233,12 @@ netLimitsFilteredWith
   -- Generate net with forbid sets
   n <- netLimitsWithPregenerated vLow vHigh nLow nHigh ps ts capacityConstraint
          pregeneratedConnections transitionConsumingBimap transitionProducingBimap
-  return $ do
-    -- Filter out nets with isolated nodes
-    guard $ not $ hasIsolatedNodes n
-    -- Filter out nets that don't satisfy transition behavior constraints
-    guard $ satisfiesTransitionBehaviorConstraints n transitionBehaviorConstraints
-    -- Filter out nets that don't satisfy arrow density constraints beyond incomingArrowsPerTransition and outgoingArrowsPerTransition
-    let allTransToPlaces = concatMap (\(_, _, post) -> post) (connections n)
-    let allPlacesToTrans = concatMap (\(pre, _, _) -> pre) (connections n)
-    let initialMap = M.fromSet (const 0) (places n)
-    guard $ case incomingArrowsPerPlace of
-      (0, Nothing) -> True
-      _ -> let countMap = M.fromListWith (+) [(place, 1) | place <- allTransToPlaces]
-                          `M.union` initialMap
-           in all (inBounds incomingArrowsPerPlace) $ M.elems countMap
-    guard $ case outgoingArrowsPerPlace of
-      (0, Nothing) -> True
-      _ -> let countMap = M.fromListWith (+) [(place, 1) | place <- allPlacesToTrans]
-                          `M.union` initialMap
-           in all (inBounds outgoingArrowsPerPlace) $ M.elems countMap
-    guard $ case totalArrowsFromPlacesToTransitions of
-      (0, Nothing) -> True
-      _ -> inBounds totalArrowsFromPlacesToTransitions (length allPlacesToTrans)
-    guard $ case totalArrowsFromTransitionsToPlaces of
-      (0, Nothing) -> True
-      _ -> inBounds totalArrowsFromTransitionsToPlaces (length allTransToPlaces)
-    return n
+  return $ applyNetFiltering arrowDensityConstraints transitionBehaviorConstraints n
   where
     fixMaximum :: (Int, Maybe Int) -> (Int, Int)
     fixMaximum (low, high) = (low, fromMaybe numPlaces high)
-    (vLow, vHigh) = fixMaximum incomingArrowsPerTransition
-    (nLow, nHigh) = fixMaximum outgoingArrowsPerTransition
+    (vLow, vHigh) = fixMaximum (incomingArrowsPerTransition arrowDensityConstraints)
+    (nLow, nHigh) = fixMaximum (outgoingArrowsPerTransition arrowDensityConstraints)
 
 -- | Generate a net with limits and filtering for isolated nodes and transition behavior constraints
 netLimitsFiltered
@@ -242,5 +250,19 @@ netLimitsFiltered
   -> Capacity s                        -- ^ capacityConstraint
   -> TransitionBehaviorConstraints     -- ^ transition behavior constraints
   -> m (Maybe (Net s t))
-netLimitsFiltered =
-  netLimitsFilteredWith [] BM.empty BM.empty
+netLimitsFiltered
+  arrowDensityConstraints
+  numPlaces
+  ps
+  ts
+  capacityConstraint
+  transitionBehaviorConstraints = do
+  -- Generate net without pregenerated connections
+  n <- netLimitsWithPregenerated vLow vHigh nLow nHigh ps ts capacityConstraint
+         [] BM.empty BM.empty
+  return $ applyNetFiltering arrowDensityConstraints transitionBehaviorConstraints n
+  where
+    fixMaximum :: (Int, Maybe Int) -> (Int, Int)
+    fixMaximum (low, high) = (low, fromMaybe numPlaces high)
+    (vLow, vHigh) = fixMaximum (incomingArrowsPerTransition arrowDensityConstraints)
+    (nLow, nHigh) = fixMaximum (outgoingArrowsPerTransition arrowDensityConstraints)
