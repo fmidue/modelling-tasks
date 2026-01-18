@@ -172,6 +172,18 @@ generateFusableConnections allPlaces allTransitions numConsumingFusable numProdu
          , transitionProducingBimap  -- bimap from fusable producing-transitions to their places
          )
 
+-- | Helper to generate fusable connections or return empty values if not needed
+generateFusableConnectionsIfNeeded
+  :: (MonadRandom m, Ord s, Ord t)
+  => [s]  -- ^ places
+  -> [t]  -- ^ transitions
+  -> Int  -- ^ required minimum fusable transitions consuming
+  -> Int  -- ^ required minimum fusable transitions producing
+  -> m ([Connection s t], BM.Bimap t s, BM.Bimap t s)
+generateFusableConnectionsIfNeeded places transitions requiredConsuming requiredProducing
+  | requiredConsuming == 0 && requiredProducing == 0 = return ([], BM.empty, BM.empty)
+  | otherwise = generateFusableConnections places transitions requiredConsuming requiredProducing
+
 -- | Generate a net with limits and filtering for isolated nodes and transition behavior constraints
 --
 -- The parameters @requiredFusableTransitionsConsuming@ and @requiredFusableTransitionsProducing@
@@ -198,9 +210,7 @@ netLimitsFiltered
   requiredFusableTransitionsProducing = do
   -- Pre-generate fusable node connections
   (pregeneratedConnections, transitionConsumingBimap, transitionProducingBimap) <-
-    if requiredFusableTransitionsConsuming == 0 && requiredFusableTransitionsProducing == 0
-    then return ([], BM.empty, BM.empty)
-    else generateFusableConnections ps ts requiredFusableTransitionsConsuming requiredFusableTransitionsProducing
+    generateFusableConnectionsIfNeeded ps ts requiredFusableTransitionsConsuming requiredFusableTransitionsProducing
   -- Generate net with forbid sets
   n <- netLimitsWithPregenerated vLow vHigh nLow nHigh ps ts capacityConstraint
          pregeneratedConnections transitionConsumingBimap transitionProducingBimap
