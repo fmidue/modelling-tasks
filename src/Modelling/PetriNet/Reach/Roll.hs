@@ -104,28 +104,28 @@ generateValidConnection transitionConsumingBimap transitionProducingBimap vLow v
               then return []
               else takeRandom nLow nHigh ps
       -- Check both input and output place usage
-      if isValidInputPlaceUsage t vor nach && isValidOutputPlaceUsage t vor nach
+      if isValidInputPlaceUsage vor nach && isValidOutputPlaceUsage vor nach
         then return (vor, nach)
         else generateValidConnection transitionConsumingBimap transitionProducingBimap vLow vHigh nLow nHigh ps t  -- Retry if invalid
   where
     -- | Check if input place usage is valid for a transition
-    isValidInputPlaceUsage theTransition vor nach =
+    isValidInputPlaceUsage vor nach =
       -- Skip checks if input bimap is empty
       BM.null transitionConsumingBimap ||
       (  -- For each place in vor: if it's a forbidden input place, only allow if vor == nach == [that place]
          all (\place -> not (BM.memberR place transitionConsumingBimap) || (vor == [place] && nach == [place])) vor
          -- If t has a pregenerated input place, prevent that place from appearing in nach
-         && maybe True (`notElem` nach) (BM.lookup theTransition transitionConsumingBimap)
+         && maybe True (`notElem` nach) (BM.lookup t transitionConsumingBimap)
       )
 
     -- | Check if output place usage is valid for a transition
-    isValidOutputPlaceUsage theTransition vor nach =
+    isValidOutputPlaceUsage vor nach =
       -- Skip checks if output bimap is empty
       BM.null transitionProducingBimap ||
       (  -- For each place in nach: if it's a forbidden output place, only allow if vor == nach == [that place]
          all (\place -> not (BM.memberR place transitionProducingBimap) || (vor == [place] && nach == [place])) nach
          -- If t has a pregenerated output place, prevent that place from appearing in vor
-         && maybe True (`notElem` vor) (BM.lookup theTransition transitionProducingBimap)
+         && maybe True (`notElem` vor) (BM.lookup t transitionProducingBimap)
       )
 
 state :: (MonadRandom m, Ord s) => [s] -> m (State s)
@@ -235,7 +235,7 @@ netLimitsFilteredCommon
   -> ([Connection s t] -> [Connection s t])  -- ^ Function to merge connections
   -> m (Maybe (Net s t))
 netLimitsFilteredCommon
-  arrowDensityConstraints
+  ArrowDensityConstraints{..}
   numPlaces
   ps
   ts
@@ -246,21 +246,7 @@ netLimitsFilteredCommon
   n <- netLimitsWithPregenerated ps ts capacityConstraint
          (genValidConn vLow vHigh nLow nHigh ps)
          mergeConns
-  return $ applyNetFiltering arrowDensityConstraints transitionBehaviorConstraints n
-  where
-    fixMaximum :: (Int, Maybe Int) -> (Int, Int)
-    fixMaximum (low, high) = (low, fromMaybe numPlaces high)
-    (vLow, vHigh) = fixMaximum (incomingArrowsPerTransition arrowDensityConstraints)
-    (nLow, nHigh) = fixMaximum (outgoingArrowsPerTransition arrowDensityConstraints)
-
--- | Apply filtering checks to a net based on arrow density constraints and transition behavior
-applyNetFiltering
-  :: (Ord s, Ord t)
-  => ArrowDensityConstraints
-  -> TransitionBehaviorConstraints
-  -> Net s t
-  -> Maybe (Net s t)
-applyNetFiltering ArrowDensityConstraints{..} transitionBehaviorConstraints n = do
+  return $ do
     -- Filter out nets with isolated nodes
     guard $ not $ hasIsolatedNodes n
     -- Filter out nets that don't satisfy transition behavior constraints
@@ -286,6 +272,11 @@ applyNetFiltering ArrowDensityConstraints{..} transitionBehaviorConstraints n = 
       (0, Nothing) -> True
       _ -> inBounds totalArrowsFromTransitionsToPlaces (length allTransToPlaces)
     return n
+  where
+    fixMaximum :: (Int, Maybe Int) -> (Int, Int)
+    fixMaximum (low, high) = (low, fromMaybe numPlaces high)
+    (vLow, vHigh) = fixMaximum incomingArrowsPerTransition
+    (nLow, nHigh) = fixMaximum outgoingArrowsPerTransition
 
 -- | Generate a net with limits and filtering for isolated nodes and transition behavior constraints
 netLimitsFiltered
@@ -311,5 +302,5 @@ netLimitsFiltered
     ts
     capacityConstraint
     transitionBehaviorConstraints
-    (\vLow vHigh nLow nHigh thePlaces _ -> takeRandom vLow vHigh thePlaces >>= \vor -> takeRandom nLow nHigh thePlaces >>= \nach -> return (vor, nach))
+    (\vLow vHigh nLow nHigh thePlaces _ -> (,) <$> takeRandom vLow vHigh thePlaces <*> takeRandom nLow nHigh thePlaces)
     id
