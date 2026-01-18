@@ -214,31 +214,31 @@ applyNetFiltering
   -> Net s t
   -> Maybe (Net s t)
 applyNetFiltering ArrowDensityConstraints{..} transitionBehaviorConstraints n = do
-  -- Filter out nets with isolated nodes
-  guard $ not $ hasIsolatedNodes n
-  -- Filter out nets that don't satisfy transition behavior constraints
-  guard $ satisfiesTransitionBehaviorConstraints n transitionBehaviorConstraints
-  -- Filter out nets that don't satisfy arrow density constraints beyond incomingArrowsPerTransition and outgoingArrowsPerTransition
-  let allTransToPlaces = concatMap (\(_, _, post) -> post) (connections n)
-  let allPlacesToTrans = concatMap (\(pre, _, _) -> pre) (connections n)
-  let initialMap = M.fromSet (const 0) (places n)
-  guard $ case incomingArrowsPerPlace of
-    (0, Nothing) -> True
-    _ -> let countMap = M.fromListWith (+) [(place, 1) | place <- allTransToPlaces]
-                        `M.union` initialMap
-         in all (inBounds incomingArrowsPerPlace) $ M.elems countMap
-  guard $ case outgoingArrowsPerPlace of
-    (0, Nothing) -> True
-    _ -> let countMap = M.fromListWith (+) [(place, 1) | place <- allPlacesToTrans]
-                        `M.union` initialMap
-         in all (inBounds outgoingArrowsPerPlace) $ M.elems countMap
-  guard $ case totalArrowsFromPlacesToTransitions of
-    (0, Nothing) -> True
-    _ -> inBounds totalArrowsFromPlacesToTransitions (length allPlacesToTrans)
-  guard $ case totalArrowsFromTransitionsToPlaces of
-    (0, Nothing) -> True
-    _ -> inBounds totalArrowsFromTransitionsToPlaces (length allTransToPlaces)
-  return n
+    -- Filter out nets with isolated nodes
+    guard $ not $ hasIsolatedNodes n
+    -- Filter out nets that don't satisfy transition behavior constraints
+    guard $ satisfiesTransitionBehaviorConstraints n transitionBehaviorConstraints
+    -- Filter out nets that don't satisfy arrow density constraints beyond incomingArrowsPerTransition and outgoingArrowsPerTransition
+    let allTransToPlaces = concatMap (\(_, _, post) -> post) (connections n)
+    let allPlacesToTrans = concatMap (\(pre, _, _) -> pre) (connections n)
+    let initialMap = M.fromSet (const 0) (places n)
+    guard $ case incomingArrowsPerPlace of
+      (0, Nothing) -> True
+      _ -> let countMap = M.fromListWith (+) [(place, 1) | place <- allTransToPlaces]
+                          `M.union` initialMap
+           in all (inBounds incomingArrowsPerPlace) $ M.elems countMap
+    guard $ case outgoingArrowsPerPlace of
+      (0, Nothing) -> True
+      _ -> let countMap = M.fromListWith (+) [(place, 1) | place <- allPlacesToTrans]
+                          `M.union` initialMap
+           in all (inBounds outgoingArrowsPerPlace) $ M.elems countMap
+    guard $ case totalArrowsFromPlacesToTransitions of
+      (0, Nothing) -> True
+      _ -> inBounds totalArrowsFromPlacesToTransitions (length allPlacesToTrans)
+    guard $ case totalArrowsFromTransitionsToPlaces of
+      (0, Nothing) -> True
+      _ -> inBounds totalArrowsFromTransitionsToPlaces (length allTransToPlaces)
+    return n
 
 -- | Generate a net with limits and filtering for isolated nodes and transition behavior constraints
 netLimitsFiltered
