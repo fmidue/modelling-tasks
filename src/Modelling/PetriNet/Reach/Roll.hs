@@ -7,7 +7,6 @@ based on file: collection/src/Petri/Roll.hs
 module Modelling.PetriNet.Reach.Roll (netLimitsFiltered, netLimitsFilteredWith, generateFusableConnections) where
 
 import qualified Data.Bimap                       as BM (
-  empty,
   fromList,
   lookup,
   member,
@@ -60,28 +59,23 @@ mergeConnections pregeneratedConnections newConnections =
 -- | Generate net with preexisting connections and forbid sets
 netLimitsWithPregenerated
   :: (MonadRandom m, Ord s, Ord t)
-  => Int  -- ^ vLow
-  -> Int  -- ^ vHigh
-  -> Int  -- ^ nLow
-  -> Int  -- ^ nHigh
-  -> [s]  -- ^ places
+  => [s]  -- ^ places
   -> [t]  -- ^ transitions
   -> Capacity s
-  -> [Connection s t]  -- ^ Pre-generated connections
-  -> BM.Bimap t s  -- ^ Bimap from fusable consuming-transitions to their input places
-  -> BM.Bimap t s  -- ^ Bimap from fusable producing-transitions to their output places
+  -> (t -> m ([s], [s]))  -- ^ Function to generate valid connection for a transition
+  -> ([Connection s t] -> [Connection s t])  -- ^ Function to merge connections
   -> m (Net s t)
 netLimitsWithPregenerated
-  vLow vHigh nLow nHigh ps ts cap
-  pregeneratedConnections
-  transitionConsumingBimap transitionProducingBimap = do
+  ps ts cap
+  genValidConn
+  mergeConns = do
   s <- state ps
   -- Generate connections for ALL transitions, respecting forbid sets
   newConnections <- forM ts $ \t -> do
-    (vor, nach) <- generateValidConnection vLow vHigh nLow nHigh ps transitionConsumingBimap transitionProducingBimap t
+    (vor, nach) <- genValidConn t
     return (vor, t, nach)
   -- Merge pregenerated and new connections
-  let finalConnections = mergeConnections pregeneratedConnections newConnections
+  let finalConnections = mergeConns newConnections
   return $ Net {
     places      = S.fromList ps,
     transitions = S.fromList ts,
@@ -93,16 +87,16 @@ netLimitsWithPregenerated
 -- | Generate a valid connection for a transition with retry logic
 generateValidConnection
   :: (MonadRandom m, Ord s, Ord t)
-  => Int           -- ^ vLow
+  => BM.Bimap t s  -- ^ Bimap from fusable consuming-transitions to their input places
+  -> BM.Bimap t s  -- ^ Bimap from fusable producing-transitions to their output places
+  -> Int           -- ^ vLow
   -> Int           -- ^ vHigh
   -> Int           -- ^ nLow
   -> Int           -- ^ nHigh
   -> [s]           -- ^ places
-  -> BM.Bimap t s  -- ^ Bimap from fusable consuming-transitions to their input places
-  -> BM.Bimap t s  -- ^ Bimap from fusable producing-transitions to their output places
   -> t             -- ^ Transition
   -> m ([s], [s])  -- ^ (vor, nach)
-generateValidConnection vLow vHigh nLow nHigh ps transitionConsumingBimap transitionProducingBimap t = do
+generateValidConnection transitionConsumingBimap transitionProducingBimap vLow vHigh nLow nHigh ps t = do
       vor <- if BM.member t transitionConsumingBimap
              then return []
              else takeRandom vLow vHigh ps
@@ -112,7 +106,7 @@ generateValidConnection vLow vHigh nLow nHigh ps transitionConsumingBimap transi
       -- Check both input and output place usage
       if isValidInputPlaceUsage transitionConsumingBimap t vor nach && isValidOutputPlaceUsage transitionProducingBimap t vor nach
         then return (vor, nach)
-        else generateValidConnection vLow vHigh nLow nHigh ps transitionConsumingBimap transitionProducingBimap t  -- Retry if invalid
+        else generateValidConnection transitionConsumingBimap transitionProducingBimap vLow vHigh nLow nHigh ps t  -- Retry if invalid
 
 -- | Check if input place usage is valid for a transition
 isValidInputPlaceUsage
@@ -233,8 +227,9 @@ netLimitsFilteredWith
   capacityConstraint
   transitionBehaviorConstraints = do
   -- Generate net with forbid sets
-  n <- netLimitsWithPregenerated vLow vHigh nLow nHigh ps ts capacityConstraint
-         pregeneratedConnections transitionConsumingBimap transitionProducingBimap
+  n <- netLimitsWithPregenerated ps ts capacityConstraint
+         (generateValidConnection transitionConsumingBimap transitionProducingBimap vLow vHigh nLow nHigh ps)
+         (mergeConnections pregeneratedConnections)
   return $ applyNetFiltering arrowDensityConstraints transitionBehaviorConstraints n
   where
     fixMaximum :: (Int, Maybe Int) -> (Int, Int)
@@ -294,8 +289,9 @@ netLimitsFiltered
   capacityConstraint
   transitionBehaviorConstraints = do
   -- Generate net without pregenerated connections
-  n <- netLimitsWithPregenerated vLow vHigh nLow nHigh ps ts capacityConstraint
-         [] BM.empty BM.empty
+  n <- netLimitsWithPregenerated ps ts capacityConstraint
+         (\_ -> takeRandom vLow vHigh ps >>= \vor -> takeRandom nLow nHigh ps >>= \nach -> return (vor, nach))
+         id
   return $ applyNetFiltering arrowDensityConstraints transitionBehaviorConstraints n
   where
     fixMaximum :: (Int, Maybe Int) -> (Int, Int)
