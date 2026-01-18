@@ -41,6 +41,22 @@ import Control.Monad.Random.Class       (MonadRandom (getRandomR))
 import Data.Maybe                       (fromMaybe)
 import System.Random.Shuffle            (shuffleM)
 
+-- | Merge pregenerated connections with newly generated connections
+mergeConnections
+  :: Ord t
+  => [Connection s t]  -- ^ Pregenerated connections
+  -> [Connection s t]  -- ^ New connections
+  -> [Connection s t]  -- ^ Merged connections
+mergeConnections pregeneratedConnections newConnections =
+  if null pregeneratedConnections
+  then newConnections
+  else let pregeneratedMap = M.fromList [(t, (pre, post)) | (pre, t, post) <- pregeneratedConnections]
+       in map (\(vor, t, nach) ->
+            case M.lookup t pregeneratedMap of
+              Just (preVor, preNach) -> (preVor ++ vor, t, preNach ++ nach)
+              Nothing -> (vor, t, nach)
+          ) newConnections
+
 -- | Generate net with preexisting connections and forbid sets
 netLimitsWithPregenerated
   :: (MonadRandom m, Ord s, Ord t)
@@ -74,6 +90,64 @@ netLimitsWithPregenerated
     start       = s
     }
 
+-- | Generate a valid connection for a transition with retry logic
+generateValidConnection
+  :: (MonadRandom m, Ord s, Ord t)
+  => Int           -- ^ vLow
+  -> Int           -- ^ vHigh
+  -> Int           -- ^ nLow
+  -> Int           -- ^ nHigh
+  -> [s]           -- ^ places
+  -> BM.Bimap t s  -- ^ Bimap from fusable consuming-transitions to their input places
+  -> BM.Bimap t s  -- ^ Bimap from fusable producing-transitions to their output places
+  -> t             -- ^ Transition
+  -> m ([s], [s])  -- ^ (vor, nach)
+generateValidConnection vLow vHigh nLow nHigh ps transitionConsumingBimap transitionProducingBimap t = do
+      vor <- if BM.member t transitionConsumingBimap
+             then return []
+             else takeRandom vLow vHigh ps
+      nach <- if BM.member t transitionProducingBimap
+              then return []
+              else takeRandom nLow nHigh ps
+      -- Check both input and output place usage
+      if isValidInputPlaceUsage transitionConsumingBimap t vor nach && isValidOutputPlaceUsage transitionProducingBimap t vor nach
+        then return (vor, nach)
+        else generateValidConnection vLow vHigh nLow nHigh ps transitionConsumingBimap transitionProducingBimap t  -- Retry if invalid
+
+-- | Check if input place usage is valid for a transition
+isValidInputPlaceUsage
+  :: (Ord t, Ord s)
+  => BM.Bimap t s  -- ^ Bimap from fusable consuming-transitions to their input places
+  -> t             -- ^ Transition
+  -> [s]           -- ^ Input places (vor)
+  -> [s]           -- ^ Output places (nach)
+  -> Bool
+isValidInputPlaceUsage transitionConsumingBimap t vor nach =
+      -- Skip checks if input bimap is empty
+      BM.null transitionConsumingBimap ||
+      (  -- For each place in vor: if it's a forbidden input place, only allow if vor == nach == [that place]
+         all (\place -> not (BM.memberR place transitionConsumingBimap) || (vor == [place] && nach == [place])) vor
+         -- If t has a pregenerated input place, prevent that place from appearing in nach
+         && maybe True (`notElem` nach) (BM.lookup t transitionConsumingBimap)
+      )
+
+-- | Check if output place usage is valid for a transition
+isValidOutputPlaceUsage
+  :: (Ord t, Ord s)
+  => BM.Bimap t s  -- ^ Bimap from fusable producing-transitions to their output places
+  -> t             -- ^ Transition
+  -> [s]           -- ^ Input places (vor)
+  -> [s]           -- ^ Output places (nach)
+  -> Bool
+isValidOutputPlaceUsage transitionProducingBimap t vor nach =
+      -- Skip checks if output bimap is empty
+      BM.null transitionProducingBimap ||
+      (  -- For each place in nach: if it's a forbidden output place, only allow if vor == nach == [that place]
+         all (\place -> not (BM.memberR place transitionProducingBimap) || (vor == [place] && nach == [place])) nach
+         -- If t has a pregenerated output place, prevent that place from appearing in vor
+         && maybe True (`notElem` vor) (BM.lookup t transitionProducingBimap)
+      )
+
 state :: (MonadRandom m, Ord s) => [s] -> m (State s)
 state ps = do
   qs <- selection ps
@@ -97,80 +171,6 @@ takeRandom :: MonadRandom m => Int -> Int -> [a] -> m [a]
 takeRandom low high xs  = take
   <$> getRandomR (low, high)
   <*> shuffleM xs
-
--- | Check if input place usage is valid for a transition
-isValidInputPlaceUsage
-  :: (Ord t, Ord s)
-  => BM.Bimap t s  -- ^ Bimap from fusable consuming-transitions to their input places
-  -> t             -- ^ Transition
-  -> [s]           -- ^ Input places (vor)
-  -> [s]           -- ^ Output places (nach)
-  -> Bool
-isValidInputPlaceUsage transitionConsumingBimap t vor nach =
-  -- Skip checks if input bimap is empty
-  BM.null transitionConsumingBimap ||
-  (  -- For each place in vor: if it's a forbidden input place, only allow if vor == nach == [that place]
-     all (\place -> not (BM.memberR place transitionConsumingBimap) || (vor == [place] && nach == [place])) vor
-     -- If t has a pregenerated input place, prevent that place from appearing in nach
-     && maybe True (`notElem` nach) (BM.lookup t transitionConsumingBimap)
-  )
-
--- | Check if output place usage is valid for a transition
-isValidOutputPlaceUsage
-  :: (Ord t, Ord s)
-  => BM.Bimap t s  -- ^ Bimap from fusable producing-transitions to their output places
-  -> t             -- ^ Transition
-  -> [s]           -- ^ Input places (vor)
-  -> [s]           -- ^ Output places (nach)
-  -> Bool
-isValidOutputPlaceUsage transitionProducingBimap t vor nach =
-  -- Skip checks if output bimap is empty
-  BM.null transitionProducingBimap ||
-  (  -- For each place in nach: if it's a forbidden output place, only allow if vor == nach == [that place]
-     all (\place -> not (BM.memberR place transitionProducingBimap) || (vor == [place] && nach == [place])) nach
-     -- If t has a pregenerated output place, prevent that place from appearing in vor
-     && maybe True (`notElem` vor) (BM.lookup t transitionProducingBimap)
-  )
-
--- | Generate a valid connection for a transition with retry logic
-generateValidConnection
-  :: (MonadRandom m, Ord s, Ord t)
-  => Int           -- ^ vLow
-  -> Int           -- ^ vHigh
-  -> Int           -- ^ nLow
-  -> Int           -- ^ nHigh
-  -> [s]           -- ^ places
-  -> BM.Bimap t s  -- ^ Bimap from fusable consuming-transitions to their input places
-  -> BM.Bimap t s  -- ^ Bimap from fusable producing-transitions to their output places
-  -> t             -- ^ Transition
-  -> m ([s], [s])  -- ^ (vor, nach)
-generateValidConnection vLow vHigh nLow nHigh ps transitionConsumingBimap transitionProducingBimap t = do
-  vor <- if BM.member t transitionConsumingBimap
-         then return []
-         else takeRandom vLow vHigh ps
-  nach <- if BM.member t transitionProducingBimap
-          then return []
-          else takeRandom nLow nHigh ps
-  -- Check both input and output place usage
-  if isValidInputPlaceUsage transitionConsumingBimap t vor nach && isValidOutputPlaceUsage transitionProducingBimap t vor nach
-    then return (vor, nach)
-    else generateValidConnection vLow vHigh nLow nHigh ps transitionConsumingBimap transitionProducingBimap t  -- Retry if invalid
-
--- | Merge pregenerated connections with newly generated connections
-mergeConnections
-  :: Ord t
-  => [Connection s t]  -- ^ Pregenerated connections
-  -> [Connection s t]  -- ^ New connections
-  -> [Connection s t]  -- ^ Merged connections
-mergeConnections pregeneratedConnections newConnections =
-  if null pregeneratedConnections
-  then newConnections
-  else let pregeneratedMap = M.fromList [(t, (pre, post)) | (pre, t, post) <- pregeneratedConnections]
-       in map (\(vor, t, nach) ->
-            case M.lookup t pregeneratedMap of
-              Just (preVor, preNach) -> (preVor ++ vor, t, preNach ++ nach)
-              Nothing -> (vor, t, nach)
-          ) newConnections
 
 -- | Helper to check if a value satisfies the given bounds
 inBounds :: (Int, Maybe Int) -> Int -> Bool
