@@ -89,8 +89,8 @@ import Modelling.PetriNet.Reach.Type (
   TransitionBehaviorConstraints,
   TransitionsList (TransitionsList),
   bimapNet,
-  countFusableInputNodes,
-  countFusableOutputNodes,
+  countFusableTransitionsConsuming,
+  countFusableTransitionsProducing,
   example,
   noArrowDensityConstraints,
   noTransitionBehaviorConstraints,
@@ -445,9 +445,9 @@ try conf = do
       (fromMaybe 0 $ fusableTransitionsProducingAreExactly conf)
     -- Check fusable transitions constraints
     whenJust (fusableTransitionsConsumingAreExactly conf) $ \expected ->
-      guard $ countFusableInputNodes (connections n) <= expected
+      guard $ countFusableTransitionsConsuming (connections n) <= expected
     whenJust (fusableTransitionsProducingAreExactly conf) $ \expected ->
-      guard $ countFusableOutputNodes (connections n) <= expected
+      guard $ countFusableTransitionsProducing (connections n) <= expected
     let deadlockLevels = map (filter (null . successors n . fst)) (levelsWithAlternatives n)
         (no, yeah) = span null
           $ take (maxTransitionLength conf + 1)
