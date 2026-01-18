@@ -436,29 +436,24 @@ try conf = do
         ts = [Transition 1 .. Transition (numTransitions conf)]
         requiredFusableTransitionsConsuming = fromMaybe 0 $ fusableTransitionsConsumingAreExactly conf
         requiredFusableTransitionsProducing = fromMaybe 0 $ fusableTransitionsProducingAreExactly conf
-    -- Pre-generate fusable node connections and call appropriate version of netLimitsFiltered
-    n <- MaybeT $
+    -- Pre-generate fusable node connections and bind appropriate version of netLimitsFiltered
+    netLimitsFilteredVariant <-
       if requiredFusableTransitionsConsuming == 0 && requiredFusableTransitionsProducing == 0
-      then netLimitsFiltered
-        (arrowDensityConstraints conf)
-        (numPlaces conf)
-        ps
-        ts
-        (Modelling.PetriNet.Reach.Deadlock.capacity conf)
-        (transitionBehaviorConstraints conf)
+      then return netLimitsFiltered
       else do
         (pregeneratedConnections, transitionConsumingBimap, transitionProducingBimap) <-
           generateFusableConnections ps ts requiredFusableTransitionsConsuming requiredFusableTransitionsProducing
-        netLimitsFilteredWith
+        return $ netLimitsFilteredWith
           pregeneratedConnections
           transitionConsumingBimap
           transitionProducingBimap
-          (arrowDensityConstraints conf)
-          (numPlaces conf)
-          ps
-          ts
-          (Modelling.PetriNet.Reach.Deadlock.capacity conf)
-          (transitionBehaviorConstraints conf)
+    n <- MaybeT $ netLimitsFilteredVariant
+      (arrowDensityConstraints conf)
+      (numPlaces conf)
+      ps
+      ts
+      (Modelling.PetriNet.Reach.Deadlock.capacity conf)
+      (transitionBehaviorConstraints conf)
     -- Check fusable transitions constraints
     whenJust (fusableTransitionsConsumingAreExactly conf) $ \expected ->
       guard $ countFusableTransitionsConsuming (connections n) <= expected
