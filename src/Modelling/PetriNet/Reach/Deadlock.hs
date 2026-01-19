@@ -45,7 +45,7 @@ module Modelling.PetriNet.Reach.Deadlock (
   exampleInstance,
 ) where
 
-import qualified Data.Bimap                       as BM (fromList, lookup, member, memberR, null)
+import qualified Data.Bimap                       as BM (fromList, lookup, member, memberR)
 import qualified Data.Map                         as M (fromList)
 import qualified Data.Set                         as S (fromList, toList)
 
@@ -459,7 +459,7 @@ try conf = do
             transitionProducingBimap = BM.fromList $ zip outputFusableTransitions placesForOutputFusableTransitions
         -- Helpers for generating valid connections:
         let isValidInputPlaceUsage =
-              if BM.null transitionConsumingBimap
+              if requiredFusableTransitionsConsuming == 0
               then \_ _ _ -> True
               else \t vor nach ->
                  -- For each place in vor: if it's a forbidden input place, only allow if vor == nach == [that place]
@@ -467,7 +467,7 @@ try conf = do
                  -- If t has a pregenerated input place, prevent that place from appearing in nach
                  && maybe True (`notElem` nach) (BM.lookup t transitionConsumingBimap)
             isValidOutputPlaceUsage =
-              if BM.null transitionProducingBimap
+              if requiredFusableTransitionsProducing == 0
               then \_ _ _ -> True
               else \t vor nach ->
                  -- For each place in nach: if it's a forbidden output place, only allow if vor == nach == [that place]
