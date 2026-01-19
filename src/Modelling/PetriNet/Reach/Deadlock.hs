@@ -437,7 +437,7 @@ try conf = do
         requiredFusableTransitionsConsuming = fromMaybe 0 $ fusableTransitionsConsumingAreExactly conf
         requiredFusableTransitionsProducing = fromMaybe 0 $ fusableTransitionsProducingAreExactly conf
     -- Pre-generate fusable node connections and bind appropriate version of netLimitsFiltered
-    netLimitsFilteredVariant <-
+    netGenerator <-
       if requiredFusableTransitionsConsuming == 0 && requiredFusableTransitionsProducing == 0
       then return netLimitsFiltered
       else do
@@ -447,7 +447,7 @@ try conf = do
           pregeneratedConnections
           transitionConsumingBimap
           transitionProducingBimap
-    n <- MaybeT $ netLimitsFilteredVariant
+    n <- MaybeT $ netGenerator
       (arrowDensityConstraints conf)
       (numPlaces conf)
       ps

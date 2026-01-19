@@ -188,7 +188,7 @@ netLimitsFilteredCommon
   -> TransitionBehaviorConstraints     -- ^ transition behavior constraints
   -> m (Maybe (Net s t))
 netLimitsFilteredCommon
-  genValidConn
+  generateValidConn
   mergeConns
   ArrowDensityConstraints{..}
   numPlaces
@@ -199,7 +199,7 @@ netLimitsFilteredCommon
   s <- state ps
   -- Generate connections for ALL transitions, respecting forbid sets
   newConnections <- forM ts $ \t -> do
-    (vor, nach) <- genValidConn vLow vHigh nLow nHigh ps t
+    (vor, nach) <- generateValidConn vLow vHigh nLow nHigh ps t
     return (vor, t, nach)
   let n = Net {
     places      = S.fromList ps,
