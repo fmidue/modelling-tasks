@@ -53,7 +53,21 @@ generateValidConnection
   -> t             -- ^ Transition
   -> m ([s], [s])  -- ^ (vor, nach)
 generateValidConnection transitionConsumingBimap transitionProducingBimap =
-  let
+  (\vLow vHigh nLow nHigh ps t ->
+   let
+     go = do
+       vor <- if BM.member t transitionConsumingBimap
+              then return []
+              else takeRandom vLow vHigh ps
+       nach <- if BM.member t transitionProducingBimap
+               then return []
+               else takeRandom nLow nHigh ps
+       -- Check both input and output place usage
+       if isValidInputPlaceUsage t vor nach && isValidOutputPlaceUsage t vor nach
+         then return (vor, nach)
+         else go  -- Retry if invalid
+   in go)
+  where
     -- | Check if input place usage is valid for a transition
     isValidInputPlaceUsage =
       if BM.null transitionConsumingBimap
@@ -73,20 +87,6 @@ generateValidConnection transitionConsumingBimap transitionProducingBimap =
          all (\place -> not (BM.memberR place transitionProducingBimap) || (vor == [place] && nach == [place])) nach
          -- If t has a pregenerated output place, prevent that place from appearing in vor
          && maybe True (`notElem` vor) (BM.lookup t transitionProducingBimap)
-  in \vLow vHigh nLow nHigh ps t ->
-    let
-      go = do
-        vor <- if BM.member t transitionConsumingBimap
-               then return []
-               else takeRandom vLow vHigh ps
-        nach <- if BM.member t transitionProducingBimap
-                then return []
-                else takeRandom nLow nHigh ps
-        -- Check both input and output place usage
-        if isValidInputPlaceUsage t vor nach && isValidOutputPlaceUsage t vor nach
-          then return (vor, nach)
-          else go  -- Retry if invalid
-    in go
 
 state :: (MonadRandom m, Ord s) => [s] -> m (State s)
 state ps = do
@@ -252,5 +252,5 @@ netLimitsFiltered
   -> m (Maybe (Net s t))
 netLimitsFiltered =
   netLimitsFilteredCommon
-    (\vLow vHigh nLow nHigh thePlaces _ -> (,) <$> takeRandom vLow vHigh thePlaces <*> takeRandom nLow nHigh thePlaces)
+    (\vLow vHigh nLow nHigh ps _ -> (,) <$> takeRandom vLow vHigh ps <*> takeRandom nLow nHigh ps)
     id
