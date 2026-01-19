@@ -45,7 +45,7 @@ module Modelling.PetriNet.Reach.Deadlock (
   exampleInstance,
 ) where
 
-import qualified Data.Bimap                       as BM (lookup)
+import qualified Data.Bimap                       as BM (fromList, lookup, member, memberR, null)
 import qualified Data.Map                         as M (fromList)
 import qualified Data.Set                         as S (fromList, toList)
 
@@ -79,7 +79,7 @@ import Modelling.PetriNet.Reach.Reach   (
   provideSolutionsFeedback,
   validateDrawabilityAndSolutionFiltering,
   )
-import Modelling.PetriNet.Reach.Roll    (netLimitsFiltered, simpleConnectionGenerator, generateValidConnection, generateFusableConnections)
+import Modelling.PetriNet.Reach.Roll    (netLimitsFiltered, simpleConnectionGenerator)
 import Modelling.PetriNet.Reach.Step    (executes, successors)
 import Modelling.PetriNet.Reach.Type (
   ArrowDensityConstraints(..),
@@ -123,6 +123,7 @@ import Control.Monad                    (guard)
 import Control.Monad.Catch              (MonadCatch, MonadThrow)
 import Control.Monad.Extra              (whenJust)
 import Control.Monad.Random             (evalRandT, mkStdGen)
+import System.Random.Shuffle            (shuffleM)
 import Control.Monad.Trans.Maybe        (MaybeT (MaybeT), runMaybeT)
 import Control.Monad.Trans.Random       (RandT)
 import Data.Maybe                       (fromMaybe)
@@ -445,11 +446,43 @@ try conf = do
       if requiredFusableTransitionsConsuming == 0 && requiredFusableTransitionsProducing == 0
       then return $ netLimitsFiltered simpleConnectionGenerator
       else do
-        (transitionConsumingBimap, transitionProducingBimap) <-
-          generateFusableConnections ps ts requiredFusableTransitionsConsuming requiredFusableTransitionsProducing
+        -- Inline generateFusableConnections
+        shuffledTransitions <- shuffleM ts
+        shuffledPlaces <- shuffleM ps
+        let (inputFusableTransitions, remainingTransitions) = splitAt requiredFusableTransitionsConsuming shuffledTransitions
+            outputFusableTransitions = take requiredFusableTransitionsProducing remainingTransitions
+            (placesForInputFusableTransitions, remainingPlaces) = splitAt requiredFusableTransitionsConsuming shuffledPlaces
+            placesForOutputFusableTransitions = take requiredFusableTransitionsProducing remainingPlaces
+        let transitionConsumingBimap = BM.fromList $ zip inputFusableTransitions placesForInputFusableTransitions
+            transitionProducingBimap = BM.fromList $ zip outputFusableTransitions placesForOutputFusableTransitions
         return $ netLimitsFiltered
-          $ \inputPlacesAction outputPlacesAction t -> do
-              (vor, nach) <- generateValidConnection transitionConsumingBimap transitionProducingBimap inputPlacesAction outputPlacesAction t
+          $ \inputPlacesAction outputPlacesAction t ->
+          -- Inline generateValidConnection
+          let
+            isValidInputPlaceUsage =
+              if BM.null transitionConsumingBimap
+              then \_ _ _ -> True
+              else \theTransition vor nach ->
+                 all (\place -> not (BM.memberR place transitionConsumingBimap) || (vor == [place] && nach == [place])) vor
+                 && maybe True (`notElem` nach) (BM.lookup theTransition transitionConsumingBimap)
+            isValidOutputPlaceUsage =
+              if BM.null transitionProducingBimap
+              then \_ _ _ -> True
+              else \theTransition vor nach ->
+                 all (\place -> not (BM.memberR place transitionProducingBimap) || (vor == [place] && nach == [place])) nach
+                 && maybe True (`notElem` vor) (BM.lookup theTransition transitionProducingBimap)
+            go = do
+              vor <- if BM.member t transitionConsumingBimap
+                     then return []
+                     else inputPlacesAction
+              nach <- if BM.member t transitionProducingBimap
+                      then return []
+                      else outputPlacesAction
+              if isValidInputPlaceUsage t vor nach && isValidOutputPlaceUsage t vor nach
+                then return (vor, nach)
+                else go
+          in do
+              (vor, nach) <- go
               case BM.lookup t transitionConsumingBimap of
                 Just preVor
                   -> return (preVor : vor, t, nach)
