@@ -52,26 +52,13 @@ generateValidConnection
   -> [s]           -- ^ places
   -> t             -- ^ Transition
   -> m ([s], [s])  -- ^ (vor, nach)
-generateValidConnection transitionConsumingBimap transitionProducingBimap vLow vHigh nLow nHigh ps t =
-  go
-  where
-    go = do
-      vor <- if BM.member t transitionConsumingBimap
-             then return []
-             else takeRandom vLow vHigh ps
-      nach <- if BM.member t transitionProducingBimap
-              then return []
-              else takeRandom nLow nHigh ps
-      -- Check both input and output place usage
-      if isValidInputPlaceUsage vor nach && isValidOutputPlaceUsage vor nach
-        then return (vor, nach)
-        else go  -- Retry if invalid
-
+generateValidConnection transitionConsumingBimap transitionProducingBimap =
+  let
     -- | Check if input place usage is valid for a transition
     isValidInputPlaceUsage =
       if BM.null transitionConsumingBimap
-      then \_ _ -> True
-      else \vor nach ->
+      then \_ _ _ -> True
+      else \t vor nach ->
          -- For each place in vor: if it's a forbidden input place, only allow if vor == nach == [that place]
          all (\place -> not (BM.memberR place transitionConsumingBimap) || (vor == [place] && nach == [place])) vor
          -- If t has a pregenerated input place, prevent that place from appearing in nach
@@ -80,12 +67,26 @@ generateValidConnection transitionConsumingBimap transitionProducingBimap vLow v
     -- | Check if output place usage is valid for a transition
     isValidOutputPlaceUsage =
       if BM.null transitionProducingBimap
-      then \_ _ -> True
-      else \vor nach ->
+      then \_ _ _ -> True
+      else \t vor nach ->
          -- For each place in nach: if it's a forbidden output place, only allow if vor == nach == [that place]
          all (\place -> not (BM.memberR place transitionProducingBimap) || (vor == [place] && nach == [place])) nach
          -- If t has a pregenerated output place, prevent that place from appearing in vor
          && maybe True (`notElem` vor) (BM.lookup t transitionProducingBimap)
+  in \vLow vHigh nLow nHigh ps t ->
+    let
+      go = do
+        vor <- if BM.member t transitionConsumingBimap
+               then return []
+               else takeRandom vLow vHigh ps
+        nach <- if BM.member t transitionProducingBimap
+                then return []
+                else takeRandom nLow nHigh ps
+        -- Check both input and output place usage
+        if isValidInputPlaceUsage t vor nach && isValidOutputPlaceUsage t vor nach
+          then return (vor, nach)
+          else go  -- Retry if invalid
+    in go
 
 state :: (MonadRandom m, Ord s) => [s] -> m (State s)
 state ps = do
