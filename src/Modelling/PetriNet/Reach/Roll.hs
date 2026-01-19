@@ -44,12 +44,12 @@ generateValidConnection
   :: (MonadRandom m, Ord s, Ord t)
   => BM.Bimap t s  -- ^ Bimap from fusable consuming-transitions to their input places
   -> BM.Bimap t s  -- ^ Bimap from fusable consuming-transitions to their output places
-  -> t             -- ^ Transition
   -> m [s]         -- ^ Action to get input places
   -> m [s]         -- ^ Action to get output places
+  -> t             -- ^ Transition
   -> m ([s], [s])  -- ^ (vor, nach)
 generateValidConnection transitionConsumingBimap transitionProducingBimap =
-  \t inputPlacesAction outputPlacesAction ->
+  \inputPlacesAction outputPlacesAction t ->
   let
     go = do
       vor <- if BM.member t transitionConsumingBimap
@@ -154,8 +154,8 @@ netLimitsFilteredWith
   transitionConsumingBimap
   transitionProducingBimap =
   netLimitsFilteredCommon
-    $ \t inputPlacesAction outputPlacesAction -> do
-        (vor, nach) <- generateValidConnection transitionConsumingBimap transitionProducingBimap t inputPlacesAction outputPlacesAction
+    $ \inputPlacesAction outputPlacesAction t -> do
+        (vor, nach) <- generateValidConnection transitionConsumingBimap transitionProducingBimap inputPlacesAction outputPlacesAction t
         case BM.lookup t transitionConsumingBimap of
           Just preVor
             -> return (preVor : vor, t, nach)
@@ -170,7 +170,7 @@ netLimitsFilteredWith
 -- | Common implementation for netLimitsFiltered variants
 netLimitsFilteredCommon
   :: (MonadRandom m, Ord s, Ord t)
-  => (t -> m [s] -> m [s] -> m (Connection s t))  -- ^ Function to generate a connection for a transition
+  => (m [s] -> m [s] -> t -> m (Connection s t))  -- ^ Function to generate a connection for a transition
   -> ArrowDensityConstraints           -- ^ arrow density constraints
   -> Int                               -- ^ numPlaces
   -> [s]                               -- ^ places
@@ -188,8 +188,7 @@ netLimitsFilteredCommon
   transitionBehaviorConstraints = do
   s <- state ps
   -- Generate connections for ALL transitions, respecting forbid sets
-  theConnections <- forM ts $ \t ->
-    generateConnection t (takeRandom vLow vHigh ps) (takeRandom nLow nHigh ps)
+  theConnections <- forM ts (generateConnection (takeRandom vLow vHigh ps) (takeRandom nLow nHigh ps))
   let n = Net {
     places      = S.fromList ps,
     transitions = S.fromList ts,
@@ -241,6 +240,6 @@ netLimitsFiltered
   -> m (Maybe (Net s t))
 netLimitsFiltered =
   netLimitsFilteredCommon
-    $ \t inputPlacesAction outputPlacesAction -> do
+    $ \inputPlacesAction outputPlacesAction t -> do
         (vor, nach) <- liftA2 (,) inputPlacesAction outputPlacesAction
         return (vor, t, nach)
