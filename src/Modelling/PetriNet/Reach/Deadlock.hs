@@ -4,6 +4,7 @@
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DerivingStrategies #-}
 #endif
+{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
@@ -44,9 +45,12 @@ module Modelling.PetriNet.Reach.Deadlock (
   exampleInstance,
 ) where
 
+import qualified Data.Bimap                       as BM (lookup)
 import qualified Data.Map                         as M (fromList)
 import qualified Data.Set                         as S (fromList, toList)
 
+import Autolib.Reader                   (Reader)
+import Autolib.ToDoc                    (ToDoc)
 import Data.List.NonEmpty                 (NonEmpty((:|)))
 
 import Capabilities.Cache               (MonadCache)
@@ -75,7 +79,7 @@ import Modelling.PetriNet.Reach.Reach   (
   provideSolutionsFeedback,
   validateDrawabilityAndSolutionFiltering,
   )
-import Modelling.PetriNet.Reach.Roll    (netLimitsFiltered)
+import Modelling.PetriNet.Reach.Roll    (netLimitsFiltered, simpleConnectionGenerator, generateValidConnection, generateFusableConnections)
 import Modelling.PetriNet.Reach.Step    (executes, successors)
 import Modelling.PetriNet.Reach.Type (
   ArrowDensityConstraints(..),
@@ -229,7 +233,7 @@ data DeadlockInstance s t = DeadlockInstance {
   -- If set to @Just n@, sequences starting with @n@ or more consecutive transitions
   -- (e.g., @[t1, t2, t3, t4]@) will be rejected.
   rejectSpaceballsLength :: Maybe Int
-  } deriving (Generic, Read, Show)
+  } deriving (Generic, Read, Show, Reader, ToDoc)
 #if !MIN_VERSION_base(4,18,0)
   deriving Typeable
 #endif
@@ -434,15 +438,35 @@ try
 try conf = do
     let ps = [Place 1 .. Place (numPlaces conf)]
         ts = [Transition 1 .. Transition (numTransitions conf)]
-    n <- MaybeT $ netLimitsFiltered
+        requiredFusableTransitionsConsuming = fromMaybe 0 $ fusableTransitionsConsumingAreExactly conf
+        requiredFusableTransitionsProducing = fromMaybe 0 $ fusableTransitionsProducingAreExactly conf
+    -- Pre-generate fusable node connections and bind appropriate version of netLimitsFiltered
+    netGenerator <-
+      if requiredFusableTransitionsConsuming == 0 && requiredFusableTransitionsProducing == 0
+      then return $ netLimitsFiltered simpleConnectionGenerator
+      else do
+        (transitionConsumingBimap, transitionProducingBimap) <-
+          generateFusableConnections ps ts requiredFusableTransitionsConsuming requiredFusableTransitionsProducing
+        return $ netLimitsFiltered
+          $ \inputPlacesAction outputPlacesAction t -> do
+              (vor, nach) <- generateValidConnection transitionConsumingBimap transitionProducingBimap inputPlacesAction outputPlacesAction t
+              case BM.lookup t transitionConsumingBimap of
+                Just preVor
+                  -> return (preVor : vor, t, nach)
+                _
+                  -> case BM.lookup t transitionProducingBimap of
+                       Just preNach
+                         -> return (vor, t, preNach : nach)
+                       _
+                         -> return (vor, t, nach)
+                -- impossible for both lookups to return Just
+    n <- MaybeT $ netGenerator
       (arrowDensityConstraints conf)
       (numPlaces conf)
       ps
       ts
       (Modelling.PetriNet.Reach.Deadlock.capacity conf)
       (transitionBehaviorConstraints conf)
-      (fromMaybe 0 $ fusableTransitionsConsumingAreExactly conf)
-      (fromMaybe 0 $ fusableTransitionsProducingAreExactly conf)
     -- Check fusable transitions constraints
     whenJust (fusableTransitionsConsumingAreExactly conf) $ \expected ->
       guard $ countFusableTransitionsConsuming (connections n) <= expected

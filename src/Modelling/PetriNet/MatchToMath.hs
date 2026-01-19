@@ -200,7 +200,7 @@ data MatchInstance a b = MatchInstance {
   to :: Map Int (Bool, b),
   addText :: ExtraText
   }
-  deriving (Data, Functor, Generic, Read, Show)
+  deriving (Data, Functor, Generic, Read, Reader, Show, ToDoc)
 
 instance Bifoldable MatchInstance where
   bifoldMap f g m@MatchInstance {} = f (from m) `mappend` foldMap (g . snd) (to m)

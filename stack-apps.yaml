@@ -22,7 +22,7 @@ extra-deps:
       - autotool-capabilities
       - autotool-capabilities-io-instances
   - git: https://git.uni-due.de/fmi/autotool-dev
-    commit: 56e75cd74d44f81ae52baa3b886025bd4d158bbb
+    commit: 849d725e7284e87e077af136ccc3140d824679e8
     subdirs:
       - base
       - data

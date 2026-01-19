@@ -5,6 +5,7 @@
 #if !MIN_VERSION_base(4,18,0)
 {-# LANGUAGE DerivingStrategies #-}
 #endif
+{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
@@ -61,6 +62,8 @@ import qualified Control.Monad.Trans              as Monad (lift)
 import qualified Data.Map                         as M (elems, empty, fromDistinctAscList, map, unionWith)
 import qualified Data.Set                         as S (fromList, member, toList, union, empty)
 
+import Autolib.Reader                   (Reader)
+import Autolib.ToDoc                    (ToDoc)
 import Data.List.NonEmpty                 (NonEmpty((:|)), fromList)
 
 import Capabilities.Cache               (MonadCache)
@@ -82,7 +85,7 @@ import Modelling.PetriNet.Reach.Property (
   Property (Default),
   validate,
   )
-import Modelling.PetriNet.Reach.Roll    (netLimitsFiltered)
+import Modelling.PetriNet.Reach.Roll    (netLimitsFiltered, simpleConnectionGenerator)
 import Modelling.PetriNet.Reach.Step    (executes, successors)
 import Modelling.PetriNet.Reach.Type (
   ArrowDensityConstraints(..),
@@ -487,7 +490,7 @@ data ReachInstance s t = ReachInstance {
   -- (e.g., @[t1, t2, t3, t4]@) will be rejected.
   rejectSpaceballsLength :: Maybe Int
   }
-  deriving (Generic, Read, Show, Data)
+  deriving (Generic, Read, Show, Data, Reader, ToDoc)
 #if !MIN_VERSION_base(4,18,0)
   deriving Typeable
 #endif
@@ -497,7 +500,7 @@ data NetGoal s t = NetGoal {
   petriNet          :: Net s t,
   goal              :: State s
   }
-  deriving (Generic, Read, Show, Data)
+  deriving (Generic, Read, Show, Data, Reader, ToDoc)
 #if !MIN_VERSION_base(4,18,0)
   deriving Typeable
 #endif
@@ -636,15 +639,13 @@ findNetGoalWithSolutions filterConfig maxPrintedSolutions NetGoalConfig {..} =
       try :: RandT StdGen m [[(Int, MaybeT (RandT StdGen m) (NetGoal Place Transition, Either (NonEmpty [Transition]) (NonEmpty [Transition])))]]
       try = do
         let generateNet =
-              maybe generateNet return =<< netLimitsFiltered
+              maybe generateNet return =<< netLimitsFiltered simpleConnectionGenerator
                 arrowDensityConstraints
                 numPlaces
                 ps
                 ts
                 capacity
                 transitionBehaviorConstraints
-                0  -- No fusable input nodes required for Reach tasks
-                0  -- No fusable output nodes required for Reach tasks
         n <- generateNet
         return $ do
          zs <-
