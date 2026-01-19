@@ -82,7 +82,7 @@ import Modelling.PetriNet.Reach.Property (
   Property (Default),
   validate,
   )
-import Modelling.PetriNet.Reach.Roll    (netLimitsFiltered)
+import Modelling.PetriNet.Reach.Roll    (netLimitsFiltered, simpleConnectionGenerator)
 import Modelling.PetriNet.Reach.Step    (executes, successors)
 import Modelling.PetriNet.Reach.Type (
   ArrowDensityConstraints(..),
@@ -636,7 +636,7 @@ findNetGoalWithSolutions filterConfig maxPrintedSolutions NetGoalConfig {..} =
       try :: RandT StdGen m [[(Int, MaybeT (RandT StdGen m) (NetGoal Place Transition, Either (NonEmpty [Transition]) (NonEmpty [Transition])))]]
       try = do
         let generateNet =
-              maybe generateNet return =<< netLimitsFiltered
+              maybe generateNet return =<< netLimitsFiltered simpleConnectionGenerator
                 arrowDensityConstraints
                 numPlaces
                 ps

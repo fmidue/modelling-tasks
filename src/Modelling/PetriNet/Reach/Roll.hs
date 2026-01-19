@@ -4,7 +4,7 @@ originally from Autotool (https://gitlab.imn.htwk-leipzig.de/autotool/all0)
 based on revision: ad25a990816a162fdd13941ff889653f22d6ea0a
 based on file: collection/src/Petri/Roll.hs
 -}
-module Modelling.PetriNet.Reach.Roll (netLimitsFiltered, netLimitsFilteredWith, generateFusableConnections) where
+module Modelling.PetriNet.Reach.Roll (netLimitsFiltered, simpleConnectionGenerator, generateValidConnection, generateFusableConnections) where
 
 import qualified Data.Bimap                       as BM (
   fromList,
@@ -139,36 +139,8 @@ generateFusableConnections allPlaces allTransitions numConsumingFusable numProdu
 
 -- | Generate a net with limits and filtering for isolated nodes and transition behavior constraints,
 -- with pregenerated fusable connections
-netLimitsFilteredWith
-  :: (MonadRandom m, Ord s, Ord t)
-  => BM.Bimap t s                      -- ^ Bimap from fusable consuming-transitions to their input places
-  -> BM.Bimap t s                      -- ^ Bimap from fusable producing-transitions to their output places
-  -> ArrowDensityConstraints           -- ^ arrow density constraints
-  -> Int                               -- ^ numPlaces
-  -> [s]                               -- ^ places
-  -> [t]                               -- ^ transitions
-  -> Capacity s                        -- ^ capacityConstraint
-  -> TransitionBehaviorConstraints     -- ^ transition behavior constraints
-  -> m (Maybe (Net s t))
-netLimitsFilteredWith
-  transitionConsumingBimap
-  transitionProducingBimap =
-  netLimitsFilteredCommon
-    $ \inputPlacesAction outputPlacesAction t -> do
-        (vor, nach) <- generateValidConnection transitionConsumingBimap transitionProducingBimap inputPlacesAction outputPlacesAction t
-        case BM.lookup t transitionConsumingBimap of
-          Just preVor
-            -> return (preVor : vor, t, nach)
-          _
-            -> case BM.lookup t transitionProducingBimap of
-                 Just preNach
-                   -> return (vor, t, preNach : nach)
-                 _
-                   -> return (vor, t, nach)
-          -- impossible for both lookups to return Just
-
--- | Common implementation for netLimitsFiltered variants
-netLimitsFilteredCommon
+-- | Generate a net with limits and filtering for isolated nodes and transition behavior constraints
+netLimitsFiltered
   :: (MonadRandom m, Ord s, Ord t)
   => (m [s] -> m [s] -> t -> m (Connection s t))  -- ^ Function to generate a connection for a transition
   -> ArrowDensityConstraints           -- ^ arrow density constraints
@@ -178,7 +150,7 @@ netLimitsFilteredCommon
   -> Capacity s                        -- ^ capacityConstraint
   -> TransitionBehaviorConstraints     -- ^ transition behavior constraints
   -> m (Maybe (Net s t))
-netLimitsFilteredCommon
+netLimitsFiltered
   generateConnection
   ArrowDensityConstraints{..}
   numPlaces
@@ -228,18 +200,10 @@ netLimitsFilteredCommon
     (vLow, vHigh) = fixMaximum incomingArrowsPerTransition
     (nLow, nHigh) = fixMaximum outgoingArrowsPerTransition
 
--- | Generate a net with limits and filtering for isolated nodes and transition behavior constraints
-netLimitsFiltered
-  :: (MonadRandom m, Ord s, Ord t)
-  => ArrowDensityConstraints           -- ^ arrow density constraints
-  -> Int                               -- ^ numPlaces
-  -> [s]                               -- ^ places
-  -> [t]                               -- ^ transitions
-  -> Capacity s                        -- ^ capacityConstraint
-  -> TransitionBehaviorConstraints     -- ^ transition behavior constraints
-  -> m (Maybe (Net s t))
-netLimitsFiltered =
-  netLimitsFilteredCommon
-    $ \inputPlacesAction outputPlacesAction t -> do
-        (vor, nach) <- liftA2 (,) inputPlacesAction outputPlacesAction
-        return (vor, t, nach)
+-- | Simple connection generator without fusable connections
+simpleConnectionGenerator
+  :: Monad m
+  => m [s] -> m [s] -> t -> m (Connection s t)
+simpleConnectionGenerator inputPlacesAction outputPlacesAction t = do
+  (vor, nach) <- liftA2 (,) inputPlacesAction outputPlacesAction
+  return (vor, t, nach)
