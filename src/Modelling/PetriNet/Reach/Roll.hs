@@ -40,22 +40,6 @@ import Control.Monad.Random.Class       (MonadRandom (getRandomR))
 import Data.Maybe                       (fromMaybe)
 import System.Random.Shuffle            (shuffleM)
 
--- | Merge pregenerated connections with newly generated connections
-mergeConnections
-  :: Ord t
-  => [Connection s t]  -- ^ Pregenerated connections
-  -> [Connection s t]  -- ^ New connections
-  -> [Connection s t]  -- ^ Merged connections
-mergeConnections pregeneratedConnections newConnections =
-  if null pregeneratedConnections
-  then newConnections
-  else let pregeneratedMap = M.fromList [(t, (pre, post)) | (pre, t, post) <- pregeneratedConnections]
-       in map (\(vor, t, nach) ->
-            case M.lookup t pregeneratedMap of
-              Just (preVor, preNach) -> (preVor ++ vor, t, preNach ++ nach)
-              Nothing -> (vor, t, nach)
-          ) newConnections
-
 -- | Generate net with preexisting connections and forbid sets
 netLimitsWithPregenerated
   :: (MonadRandom m, Ord s, Ord t)
@@ -223,7 +207,12 @@ netLimitsFilteredWith
     capacityConstraint
     transitionBehaviorConstraints
     (generateValidConnection transitionConsumingBimap transitionProducingBimap)
-    (mergeConnections pregeneratedConnections)
+    $ let pregeneratedMap = M.fromList [(t, (pre, post)) | (pre, t, post) <- pregeneratedConnections]
+      in map (\(vor, t, nach) ->
+           case M.lookup t pregeneratedMap of
+             Just (preVor, preNach) -> (preVor ++ vor, t, preNach ++ nach)
+             Nothing -> (vor, t, nach)
+         )
 
 -- | Common implementation for netLimitsFiltered variants
 netLimitsFilteredCommon
