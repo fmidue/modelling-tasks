@@ -178,8 +178,8 @@ netLimitsFilteredWith
 -- | Common implementation for netLimitsFiltered variants
 netLimitsFilteredCommon
   :: (MonadRandom m, Ord s, Ord t)
-  => (Int -> Int -> Int -> Int -> [s] -> t -> m ([s], [s]))  -- ^ Function to generate valid connection
-  -> ([Connection s t] -> [Connection s t])  -- ^ Function to merge connections
+  => (Int -> Int -> Int -> Int -> [s] -> t -> m ([s], [s]))  -- ^ Function to select places for a transition's connection
+  -> ([Connection s t] -> [Connection s t])  -- ^ Function to finalize connections
   -> ArrowDensityConstraints           -- ^ arrow density constraints
   -> Int                               -- ^ numPlaces
   -> [s]                               -- ^ places
@@ -188,8 +188,8 @@ netLimitsFilteredCommon
   -> TransitionBehaviorConstraints     -- ^ transition behavior constraints
   -> m (Maybe (Net s t))
 netLimitsFilteredCommon
-  generateValidConn
-  mergeConns
+  selectTransitionPlaces
+  finalizeConnections
   ArrowDensityConstraints{..}
   numPlaces
   ps
@@ -199,12 +199,12 @@ netLimitsFilteredCommon
   s <- state ps
   -- Generate connections for ALL transitions, respecting forbid sets
   newConnections <- forM ts $ \t -> do
-    (vor, nach) <- generateValidConn vLow vHigh nLow nHigh ps t
+    (vor, nach) <- selectTransitionPlaces vLow vHigh nLow nHigh ps t
     return (vor, t, nach)
   let n = Net {
     places      = S.fromList ps,
     transitions = S.fromList ts,
-    connections = mergeConns newConnections,  -- Merge pregenerated and new connections
+    connections = finalizeConnections newConnections,  -- Finalize connections (merge with pregenerated if needed)
     capacity    = capacityConstraint,
     start       = s
     }
