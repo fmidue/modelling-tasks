@@ -239,5 +239,5 @@ netLimitsFiltered
   -> m (Maybe (Net s t))
 netLimitsFiltered =
   netLimitsFilteredCommon
-    (\inputPlacesAction outputPlacesAction _ -> (,) <$> inputPlacesAction <*> outputPlacesAction)
+    (\inputPlacesAction outputPlacesAction _ -> liftA2 (,) inputPlacesAction outputPlacesAction)
     id
