@@ -138,8 +138,7 @@ generateFusableConnections allPlaces allTransitions numConsumingFusable numProdu
          )
 
 -- | Generate a net with limits and filtering for isolated nodes and transition behavior constraints,
--- with pregenerated fusable connections
--- | Generate a net with limits and filtering for isolated nodes and transition behavior constraints
+-- potentially with pregenerated fusable connections (of which the generateConnection argument takes care)
 netLimitsFiltered
   :: (MonadRandom m, Ord s, Ord t)
   => (m [s] -> m [s] -> t -> m (Connection s t))  -- ^ Function to generate a connection for a transition
