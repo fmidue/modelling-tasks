@@ -446,31 +446,38 @@ try conf = do
       if requiredFusableTransitionsConsuming == 0 && requiredFusableTransitionsProducing == 0
       then return $ netLimitsFiltered simpleConnectionGenerator
       else do
-        -- Inline generateFusableConnections
+        -- Generate pre-determined fusable node connections:
+        -- First, randomly select transitions and places for fusable nodes
         shuffledTransitions <- shuffleM ts
         shuffledPlaces <- shuffleM ps
         let (inputFusableTransitions, remainingTransitions) = splitAt requiredFusableTransitionsConsuming shuffledTransitions
             outputFusableTransitions = take requiredFusableTransitionsProducing remainingTransitions
             (placesForInputFusableTransitions, remainingPlaces) = splitAt requiredFusableTransitionsConsuming shuffledPlaces
             placesForOutputFusableTransitions = take requiredFusableTransitionsProducing remainingPlaces
+        -- Next, create bimaps from fusable transitions to their fusion-relevant places
         let transitionConsumingBimap = BM.fromList $ zip inputFusableTransitions placesForInputFusableTransitions
             transitionProducingBimap = BM.fromList $ zip outputFusableTransitions placesForOutputFusableTransitions
-        return $ netLimitsFiltered
-          $ \inputPlacesAction outputPlacesAction t ->
-          -- Inline generateValidConnection
-          let
-            isValidInputPlaceUsage =
+        -- Helpers for generating valid connections:
+        let isValidInputPlaceUsage =
               if BM.null transitionConsumingBimap
               then \_ _ _ -> True
-              else \theTransition vor nach ->
+              else \t vor nach ->
+                 -- For each place in vor: if it's a forbidden input place, only allow if vor == nach == [that place]
                  all (\place -> not (BM.memberR place transitionConsumingBimap) || (vor == [place] && nach == [place])) vor
-                 && maybe True (`notElem` nach) (BM.lookup theTransition transitionConsumingBimap)
+                 -- If t has a pregenerated input place, prevent that place from appearing in nach
+                 && maybe True (`notElem` nach) (BM.lookup t transitionConsumingBimap)
             isValidOutputPlaceUsage =
               if BM.null transitionProducingBimap
               then \_ _ _ -> True
-              else \theTransition vor nach ->
+              else \t vor nach ->
+                 -- For each place in nach: if it's a forbidden output place, only allow if vor == nach == [that place]
                  all (\place -> not (BM.memberR place transitionProducingBimap) || (vor == [place] && nach == [place])) nach
-                 && maybe True (`notElem` vor) (BM.lookup theTransition transitionProducingBimap)
+                 -- If t has a pregenerated output place, prevent that place from appearing in vor
+                 && maybe True (`notElem` vor) (BM.lookup t transitionProducingBimap)
+        return $ netLimitsFiltered
+          $ \inputPlacesAction outputPlacesAction t ->
+          -- Generate a valid connection for a transition, with retry logic
+          let
             go = do
               vor <- if BM.member t transitionConsumingBimap
                      then return []
@@ -480,7 +487,7 @@ try conf = do
                       else outputPlacesAction
               if isValidInputPlaceUsage t vor nach && isValidOutputPlaceUsage t vor nach
                 then return (vor, nach)
-                else go
+                else go  -- Retry if invalid
           in do
               (vor, nach) <- go
               case BM.lookup t transitionConsumingBimap of
