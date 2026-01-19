@@ -154,24 +154,23 @@ netLimitsFilteredWith
   transitionConsumingBimap
   transitionProducingBimap =
   netLimitsFilteredCommon
-    (generateValidConnection transitionConsumingBimap transitionProducingBimap)
-    $ \(vor, t, nach) ->
+    $ \t inputPlacesAction outputPlacesAction -> do
+        (vor, nach) <- generateValidConnection transitionConsumingBimap transitionProducingBimap t inputPlacesAction outputPlacesAction
         case BM.lookup t transitionConsumingBimap of
           Just preVor
-            -> (preVor : vor, t, nach)
+            -> return (preVor : vor, t, nach)
           _
             -> case BM.lookup t transitionProducingBimap of
                  Just preNach
-                   -> (vor, t, preNach : nach)
+                   -> return (vor, t, preNach : nach)
                  _
-                   -> (vor, t, nach)
+                   -> return (vor, t, nach)
           -- impossible for both lookups to return Just
 
 -- | Common implementation for netLimitsFiltered variants
 netLimitsFilteredCommon
   :: (MonadRandom m, Ord s, Ord t)
-  => (t -> m [s] -> m [s] -> m ([s], [s]))  -- ^ Function to select places for a transition's connection
-  -> (Connection s t -> Connection s t)     -- ^ Function to patch each connection
+  => (t -> m [s] -> m [s] -> m (Connection s t))  -- ^ Function to generate a connection for a transition
   -> ArrowDensityConstraints           -- ^ arrow density constraints
   -> Int                               -- ^ numPlaces
   -> [s]                               -- ^ places
@@ -180,8 +179,7 @@ netLimitsFilteredCommon
   -> TransitionBehaviorConstraints     -- ^ transition behavior constraints
   -> m (Maybe (Net s t))
 netLimitsFilteredCommon
-  selectPlaces
-  patchEachConnection
+  generateConnection
   ArrowDensityConstraints{..}
   numPlaces
   ps
@@ -190,9 +188,8 @@ netLimitsFilteredCommon
   transitionBehaviorConstraints = do
   s <- state ps
   -- Generate connections for ALL transitions, respecting forbid sets
-  theConnections <- forM ts $ \t -> do
-    (vor, nach) <- selectPlaces t (takeRandom vLow vHigh ps) (takeRandom nLow nHigh ps)
-    return $ patchEachConnection (vor, t, nach)
+  theConnections <- forM ts $ \t ->
+    generateConnection t (takeRandom vLow vHigh ps) (takeRandom nLow nHigh ps)
   let n = Net {
     places      = S.fromList ps,
     transitions = S.fromList ts,
@@ -244,5 +241,6 @@ netLimitsFiltered
   -> m (Maybe (Net s t))
 netLimitsFiltered =
   netLimitsFilteredCommon
-    (\_ -> liftA2 (,))
-    id
+    $ \t inputPlacesAction outputPlacesAction -> do
+        (vor, nach) <- liftA2 (,) inputPlacesAction outputPlacesAction
+        return (vor, t, nach)
