@@ -36,5 +36,3 @@ allow-newer-deps:
   - diagrams-graphviz
   - latex-svg-image
 hpack-force: true
-ghc-options:
-  HsOpenSSL: -optc=-Wno-deprecated-declarations -optc=-Wno-incompatible-pointer-types
