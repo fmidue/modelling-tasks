@@ -157,8 +157,8 @@ netLimitsFilteredWith
     (generateValidConnection transitionConsumingBimap transitionProducingBimap)
     $ \(vor, t, nach) ->
         case (BM.lookup t transitionConsumingBimap, BM.lookup t transitionProducingBimap) of
-          (Just prePlace, Nothing) -> ([prePlace], t, nach)
-          (Nothing, Just prePlace) -> (vor, t, [prePlace])
+          (Just prePlace, Nothing) -> (prePlace : vor, t, nach)
+          (Nothing, Just prePlace) -> (vor, t, prePlace : nach)
           (Nothing, Nothing)       -> (vor, t, nach)
           (Just _, Just _)         -> error "netLimitsFilteredWith: transition in both bimaps"
 
