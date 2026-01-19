@@ -15,6 +15,7 @@ import qualified Data.Bimap                       as BM (
   Bimap,
   )
 import qualified Data.Map                         as M (
+  Map,
   fromList,
   fromListWith,
   fromSet,
@@ -38,36 +39,20 @@ import Modelling.PetriNet.Reach.Type (
 import Control.Monad                    (forM, guard)
 import Control.Monad.Random.Class       (MonadRandom (getRandomR))
 import Data.Maybe                       (fromMaybe)
+import Control.Applicative              ((<|>))
 import System.Random.Shuffle            (shuffleM)
 
 -- | Generate a valid connection for a transition with retry logic
 generateValidConnection
   :: (MonadRandom m, Ord s, Ord t)
   => BM.Bimap t s  -- ^ Bimap from fusable consuming-transitions to their input places
-  -> BM.Bimap t s  -- ^ Bimap from fusable producing-transitions to their output places
-  -> Int           -- ^ vLow
-  -> Int           -- ^ vHigh
-  -> Int           -- ^ nLow
-  -> Int           -- ^ nHigh
-  -> [s]           -- ^ places
+  -> BM.Bimap t s  -- ^ Bimap from fusable consuming-transitions to their output places
+  -> m [s]         -- ^ Action to get input places
+  -> m [s]         -- ^ Action to get output places
   -> t             -- ^ Transition
   -> m ([s], [s])  -- ^ (vor, nach)
 generateValidConnection transitionConsumingBimap transitionProducingBimap =
-  \vLow vHigh nLow nHigh ps t ->
   let
-    go = do
-      vor <- if BM.member t transitionConsumingBimap
-             then return []
-             else takeRandom vLow vHigh ps
-      nach <- if BM.member t transitionProducingBimap
-              then return []
-              else takeRandom nLow nHigh ps
-      -- Check both input and output place usage
-      if isValidInputPlaceUsage t vor nach && isValidOutputPlaceUsage t vor nach
-        then return (vor, nach)
-        else go  -- Retry if invalid
-  in go
-  where
     -- | Check if input place usage is valid for a transition
     isValidInputPlaceUsage =
       if BM.null transitionConsumingBimap
@@ -87,6 +72,20 @@ generateValidConnection transitionConsumingBimap transitionProducingBimap =
          all (\place -> not (BM.memberR place transitionProducingBimap) || (vor == [place] && nach == [place])) nach
          -- If t has a pregenerated output place, prevent that place from appearing in vor
          && maybe True (`notElem` vor) (BM.lookup t transitionProducingBimap)
+  in \inputPlacesAction outputPlacesAction t ->
+    let
+      go = do
+        vor <- if BM.member t transitionConsumingBimap
+               then return []
+               else inputPlacesAction
+        nach <- if BM.member t transitionProducingBimap
+                then return []
+                else outputPlacesAction
+        -- Check both input and output place usage
+        if isValidInputPlaceUsage t vor nach && isValidOutputPlaceUsage t vor nach
+          then return (vor, nach)
+          else go  -- Retry if invalid
+    in go
 
 state :: (MonadRandom m, Ord s) => [s] -> m (State s)
 state ps = do
@@ -124,7 +123,7 @@ generateFusableConnections
   -> [t]  -- ^ All transitions
   -> Int  -- ^ Number of fusable consuming-transitions to create
   -> Int  -- ^ Number of fusable producing-transitions to create
-  -> m ([Connection s t], BM.Bimap t s, BM.Bimap t s)
+  -> m (M.Map t ([s], [s]), M.Map t ([s], [s]), BM.Bimap t s, BM.Bimap t s)
 generateFusableConnections allPlaces allTransitions numConsumingFusable numProducingFusable = do
   -- Randomly select transitions and places for fusable nodes
   shuffledTransitions <- shuffleM allTransitions
@@ -133,17 +132,17 @@ generateFusableConnections allPlaces allTransitions numConsumingFusable numProdu
       outputFusableTransitions = take numProducingFusable remainingTransitions
       (placesForInputFusableTransitions, remainingPlaces) = splitAt numConsumingFusable shuffledPlaces
       placesForOutputFusableTransitions = take numProducingFusable remainingPlaces
-  -- Create connections for fusable consuming-transitions (s -> t)
-  let inputConnections = zipWith (\place trans -> ([place], trans, []))
-                                  placesForInputFusableTransitions inputFusableTransitions
-  -- Create connections for fusable producing-transitions (t -> s)
-  let outputConnections = zipWith (\trans place -> ([], trans, [place]))
-                                   outputFusableTransitions placesForOutputFusableTransitions
+  -- Create maps from transitions to their pregenerated connections
+  let inputConnectionsMap = M.fromList $ zipWith (\trans place -> (trans, ([place], [])))
+                                                  inputFusableTransitions placesForInputFusableTransitions
+      outputConnectionsMap = M.fromList $ zipWith (\trans place -> (trans, ([], [place])))
+                                                   outputFusableTransitions placesForOutputFusableTransitions
   -- Create bimaps from transitions to their pregenerated places
   let transitionConsumingBimap = BM.fromList $ zip inputFusableTransitions placesForInputFusableTransitions
       transitionProducingBimap = BM.fromList $ zip outputFusableTransitions placesForOutputFusableTransitions
-  -- Return connections and transition-place bimaps
-  return ( inputConnections ++ outputConnections
+  -- Return maps and bimaps
+  return ( inputConnectionsMap
+         , outputConnectionsMap
          , transitionConsumingBimap  -- bimap from fusable consuming-transitions to their places
          , transitionProducingBimap  -- bimap from fusable producing-transitions to their places
          )
@@ -152,7 +151,8 @@ generateFusableConnections allPlaces allTransitions numConsumingFusable numProdu
 -- with pregenerated fusable connections
 netLimitsFilteredWith
   :: (MonadRandom m, Ord s, Ord t)
-  => [Connection s t]                  -- ^ Pre-generated connections
+  => M.Map t ([s], [s])            -- ^ Pre-generated input connections map
+  -> M.Map t ([s], [s])            -- ^ Pre-generated output connections map
   -> BM.Bimap t s                      -- ^ Bimap from fusable consuming-transitions to their input places
   -> BM.Bimap t s                      -- ^ Bimap from fusable producing-transitions to their output places
   -> ArrowDensityConstraints           -- ^ arrow density constraints
@@ -163,23 +163,22 @@ netLimitsFilteredWith
   -> TransitionBehaviorConstraints     -- ^ transition behavior constraints
   -> m (Maybe (Net s t))
 netLimitsFilteredWith
-  pregeneratedConnections
+  inputConnectionsMap
+  outputConnectionsMap
   transitionConsumingBimap
   transitionProducingBimap =
   netLimitsFilteredCommon
     (generateValidConnection transitionConsumingBimap transitionProducingBimap)
-    $ let pregeneratedMap = M.fromList [(t, (pre, post)) | (pre, t, post) <- pregeneratedConnections]
-      in map (\(vor, t, nach) ->
-           case M.lookup t pregeneratedMap of
-             Just (preVor, preNach) -> (preVor ++ vor, t, preNach ++ nach)
-             Nothing -> (vor, t, nach)
-         )
+    $ \(vor, t, nach) ->
+        let (preVor, preNach) = fromMaybe ([], []) $
+              M.lookup t inputConnectionsMap <|> M.lookup t outputConnectionsMap
+        in (preVor ++ vor, t, preNach ++ nach)
 
 -- | Common implementation for netLimitsFiltered variants
 netLimitsFilteredCommon
   :: (MonadRandom m, Ord s, Ord t)
-  => (Int -> Int -> Int -> Int -> [s] -> t -> m ([s], [s]))  -- ^ Function to select places for a transition's connection
-  -> ([Connection s t] -> [Connection s t])  -- ^ Function to finalize connections
+  => (m [s] -> m [s] -> t -> m ([s], [s]))  -- ^ Function to select places for a transition's connection
+  -> (Connection s t -> Connection s t)     -- ^ Function to patch connections
   -> ArrowDensityConstraints           -- ^ arrow density constraints
   -> Int                               -- ^ numPlaces
   -> [s]                               -- ^ places
@@ -188,8 +187,8 @@ netLimitsFilteredCommon
   -> TransitionBehaviorConstraints     -- ^ transition behavior constraints
   -> m (Maybe (Net s t))
 netLimitsFilteredCommon
-  selectTransitionPlaces
-  finalizeConnections
+  selectPlaces
+  patchConnections
   ArrowDensityConstraints{..}
   numPlaces
   ps
@@ -199,12 +198,12 @@ netLimitsFilteredCommon
   s <- state ps
   -- Generate connections for ALL transitions, respecting forbid sets
   newConnections <- forM ts $ \t -> do
-    (vor, nach) <- selectTransitionPlaces vLow vHigh nLow nHigh ps t
-    return (vor, t, nach)
+    (vor, nach) <- selectPlaces (takeRandom vLow vHigh ps) (takeRandom nLow nHigh ps) t
+    return $ patchConnections (vor, t, nach)
   let n = Net {
     places      = S.fromList ps,
     transitions = S.fromList ts,
-    connections = finalizeConnections newConnections,  -- Finalize connections (merge with pregenerated if needed)
+    connections = newConnections,
     capacity    = capacityConstraint,
     start       = s
     }
@@ -252,5 +251,5 @@ netLimitsFiltered
   -> m (Maybe (Net s t))
 netLimitsFiltered =
   netLimitsFilteredCommon
-    (\vLow vHigh nLow nHigh ps _ -> (,) <$> takeRandom vLow vHigh ps <*> takeRandom nLow nHigh ps)
+    (\inputPlacesAction outputPlacesAction _ -> (,) <$> inputPlacesAction <*> outputPlacesAction)
     id

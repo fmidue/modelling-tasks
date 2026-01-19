@@ -441,10 +441,11 @@ try conf = do
       if requiredFusableTransitionsConsuming == 0 && requiredFusableTransitionsProducing == 0
       then return netLimitsFiltered
       else do
-        (pregeneratedConnections, transitionConsumingBimap, transitionProducingBimap) <-
+        (inputConnectionsMap, outputConnectionsMap, transitionConsumingBimap, transitionProducingBimap) <-
           generateFusableConnections ps ts requiredFusableTransitionsConsuming requiredFusableTransitionsProducing
         return $ netLimitsFilteredWith
-          pregeneratedConnections
+          inputConnectionsMap
+          outputConnectionsMap
           transitionConsumingBimap
           transitionProducingBimap
     n <- MaybeT $ netGenerator
