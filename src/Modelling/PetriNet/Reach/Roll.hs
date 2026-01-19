@@ -138,10 +138,10 @@ generateFusableConnections allPlaces allTransitions numConsumingFusable numProdu
          )
 
 -- | Generate a net with limits and filtering for isolated nodes and transition behavior constraints,
--- potentially with pregenerated fusable connections (of which the generateConnection argument takes care)
+-- potentially with pregenerated fusable connections (of which the makeUpdateConnection argument takes care)
 netLimitsFiltered
   :: (MonadRandom m, Ord s, Ord t)
-  => (m [s] -> m [s] -> t -> m (Connection s t))  -- ^ Function to generate a connection for a transition
+  => (m [s] -> m [s] -> t -> m (Connection s t))  -- ^ Function to make/update a connection for a transition
   -> ArrowDensityConstraints           -- ^ arrow density constraints
   -> Int                               -- ^ numPlaces
   -> [s]                               -- ^ places
@@ -150,7 +150,7 @@ netLimitsFiltered
   -> TransitionBehaviorConstraints     -- ^ transition behavior constraints
   -> m (Maybe (Net s t))
 netLimitsFiltered
-  generateConnection
+  makeUpdateConnection
   ArrowDensityConstraints{..}
   numPlaces
   ps
@@ -159,7 +159,7 @@ netLimitsFiltered
   transitionBehaviorConstraints = do
   s <- state ps
   -- Generate connections for ALL transitions, respecting forbid sets
-  theConnections <- forM ts (generateConnection (takeRandom vLow vHigh ps) (takeRandom nLow nHigh ps))
+  theConnections <- forM ts (makeUpdateConnection (takeRandom vLow vHigh ps) (takeRandom nLow nHigh ps))
   let n = Net {
     places      = S.fromList ps,
     transitions = S.fromList ts,
@@ -204,5 +204,6 @@ simpleConnectionGenerator
   :: Monad m
   => m [s] -> m [s] -> t -> m (Connection s t)
 simpleConnectionGenerator inputPlacesAction outputPlacesAction t = do
-  (vor, nach) <- liftA2 (,) inputPlacesAction outputPlacesAction
+  vor <- inputPlacesAction
+  nach <- outputPlacesAction
   return (vor, t, nach)
