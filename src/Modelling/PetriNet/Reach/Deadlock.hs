@@ -44,6 +44,7 @@ module Modelling.PetriNet.Reach.Deadlock (
   exampleInstance,
 ) where
 
+import qualified Data.Bimap                       as BM (lookup)
 import qualified Data.Map                         as M (fromList)
 import qualified Data.Set                         as S (fromList, toList)
 
@@ -75,7 +76,7 @@ import Modelling.PetriNet.Reach.Reach   (
   provideSolutionsFeedback,
   validateDrawabilityAndSolutionFiltering,
   )
-import Modelling.PetriNet.Reach.Roll    (netLimitsFiltered)
+import Modelling.PetriNet.Reach.Roll    (netLimitsFiltered, simpleConnectionGenerator, generateValidConnection, generateFusableConnections)
 import Modelling.PetriNet.Reach.Step    (executes, successors)
 import Modelling.PetriNet.Reach.Type (
   ArrowDensityConstraints(..),
@@ -434,15 +435,35 @@ try
 try conf = do
     let ps = [Place 1 .. Place (numPlaces conf)]
         ts = [Transition 1 .. Transition (numTransitions conf)]
-    n <- MaybeT $ netLimitsFiltered
+        requiredFusableTransitionsConsuming = fromMaybe 0 $ fusableTransitionsConsumingAreExactly conf
+        requiredFusableTransitionsProducing = fromMaybe 0 $ fusableTransitionsProducingAreExactly conf
+    -- Pre-generate fusable node connections and bind appropriate version of netLimitsFiltered
+    netGenerator <-
+      if requiredFusableTransitionsConsuming == 0 && requiredFusableTransitionsProducing == 0
+      then return $ netLimitsFiltered simpleConnectionGenerator
+      else do
+        (transitionConsumingBimap, transitionProducingBimap) <-
+          generateFusableConnections ps ts requiredFusableTransitionsConsuming requiredFusableTransitionsProducing
+        return $ netLimitsFiltered
+          $ \inputPlacesAction outputPlacesAction t -> do
+              (vor, nach) <- generateValidConnection transitionConsumingBimap transitionProducingBimap inputPlacesAction outputPlacesAction t
+              case BM.lookup t transitionConsumingBimap of
+                Just preVor
+                  -> return (preVor : vor, t, nach)
+                _
+                  -> case BM.lookup t transitionProducingBimap of
+                       Just preNach
+                         -> return (vor, t, preNach : nach)
+                       _
+                         -> return (vor, t, nach)
+                -- impossible for both lookups to return Just
+    n <- MaybeT $ netGenerator
       (arrowDensityConstraints conf)
       (numPlaces conf)
       ps
       ts
       (Modelling.PetriNet.Reach.Deadlock.capacity conf)
       (transitionBehaviorConstraints conf)
-      (fromMaybe 0 $ fusableTransitionsConsumingAreExactly conf)
-      (fromMaybe 0 $ fusableTransitionsProducingAreExactly conf)
     -- Check fusable transitions constraints
     whenJust (fusableTransitionsConsumingAreExactly conf) $ \expected ->
       guard $ countFusableTransitionsConsuming (connections n) <= expected
