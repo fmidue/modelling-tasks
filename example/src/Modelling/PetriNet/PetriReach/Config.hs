@@ -125,6 +125,15 @@ task2024_60 = ReachConfig {
   filterConfig = defaultFilterConfig { absentTransitionsRequirement = 0, forbiddenCycleLengths = [], requireCycleLengthsAny = [] }
   }
 
+{-|
+points: 0.2
+the amount of generated instances: 100
+maximum concurrent amount of tasks: 50
+average generation time per instance on the cluster (without considering concurrency): 1.96s
+total run time on the cluster (not including queuing time): 1:41min
+average CPU usage: 95.72%
+average memory usage: 342.53 MB
+-}
 task2025_27 :: ReachConfig
 task2025_27 = ReachConfig {
   netGoalConfig  = NetGoalConfig {
@@ -167,6 +176,15 @@ task2025_27 = ReachConfig {
     }
   }
 
+{-|
+points: 0.25
+the amount of generated instances: 100
+maximum concurrent amount of tasks: 50
+average generation time per instance on the cluster (without considering concurrency): 7.48s
+total run time on the cluster (not including queuing time): 1:47min
+average CPU usage: 98.74%
+average memory usage: 374.26 MB
+-}
 task2025_28 :: ReachConfig
 task2025_28 = ReachConfig {
   netGoalConfig  = NetGoalConfig {

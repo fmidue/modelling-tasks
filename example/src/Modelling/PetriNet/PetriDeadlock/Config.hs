@@ -112,6 +112,15 @@ task2024_61 = DeadlockConfig {
   filterConfig = defaultFilterConfig { absentTransitionsRequirement = 0, forbiddenCycleLengths = [], requireCycleLengthsAny = [] }
   }
 
+{-|
+points: 0.2
+the amount of generated instances: 100
+maximum concurrent amount of tasks: 50
+average generation time per instance on the cluster (without considering concurrency): 3.26s
+total run time on the cluster (not including queuing time): 1:55min
+average CPU usage: 97.54%
+average memory usage: 378.04 MB
+-}
 task2025_29 :: DeadlockConfig
 task2025_29 = DeadlockConfig {
   numPlaces = 4,
@@ -152,6 +161,15 @@ task2025_29 = DeadlockConfig {
     }
   }
 
+{-|
+points: 0.25
+the amount of generated instances: 100
+maximum concurrent amount of tasks: 50
+average generation time per instance on the cluster (without considering concurrency): 2:30:44h
+total run time on the cluster (not including queuing time): 11:08:20h
+average CPU usage: 98.99%
+average memory usage: 372.13 MB
+-}
 task2025_30 :: DeadlockConfig
 task2025_30 = DeadlockConfig {
   numPlaces = 6,
