@@ -265,7 +265,7 @@ reportReachFor showInputHelp img noLonger lengthHint minLength showMinLengthHint
           englishConstraint, " ", show maxL, " steps."]
         german $ concat [
           "Ihre Lösung ", germanConstraint, " ", show maxL,
-          "Schritte enthalten."]
+          " Schritte enthalten."]
 
   let maxStepsHint = case lengthHint of
         Just maxSteps | showMinLengthHint && maxSteps == minLength -> singleton $ paragraph $ translate $ do
