@@ -116,6 +116,7 @@ import Control.OutputCapable.Blocks.Generic (
   ($>>),
   ($>>=),
   )
+import Data.Functor                     ((<&>))
 import Data.Bifunctor                   (bimap)
 import Data.Either.Combinators          (whenRight)
 import Control.Functor.Trans            (FunctorTrans (lift))
@@ -126,7 +127,7 @@ import Control.Monad.Random             (evalRandT, mkStdGen)
 import System.Random.Shuffle            (shuffleM)
 import Control.Monad.Trans.Maybe        (MaybeT (MaybeT), runMaybeT)
 import Control.Monad.Trans.Random       (RandT)
-import Data.Maybe                       (fromMaybe, isJust)
+import Data.Maybe                       (fromMaybe)
 import System.Random.Internal           (StdGen)
 import Data.GraphViz                    (GraphvizCommand (..))
 #if !MIN_VERSION_base(4,18,0)
@@ -460,32 +461,32 @@ try conf = do
         -- Helpers for generating valid connections:
         let isValidInputPlaceUsage =
               if requiredFusableTransitionsConsuming == 0
-              then \_ _ _ -> True
-              else \maybePregeneratedInputPlace vor nach ->
+              then \_ _ -> True
+              else \vor nach ->
                  -- For each place in vor: if it's a forbidden input place, only allow if vor == nach == [that place]
                  all (\place -> not (BM.memberR place transitionConsumingBimap) || (vor == [place] && nach == [place])) vor
-                 -- If t has a pregenerated input place, prevent that place from appearing in nach
-                 && maybe True (`notElem` nach) maybePregeneratedInputPlace
             isValidOutputPlaceUsage =
               if requiredFusableTransitionsProducing == 0
-              then \_ _ _ -> True
-              else \maybePregeneratedOutputPlace vor nach ->
+              then \_ _ -> True
+              else \nach vor ->
                  -- For each place in nach: if it's a forbidden output place, only allow if vor == nach == [that place]
                  all (\place -> not (BM.memberR place transitionProducingBimap) || (vor == [place] && nach == [place])) nach
-                 -- If t has a pregenerated output place, prevent that place from appearing in vor
-                 && maybe True (`notElem` vor) maybePregeneratedOutputPlace
         return $ netLimitsFiltered
           $ \inputPlacesAction outputPlacesAction t ->
           -- Generate a valid connection for a transition, with retry logic
           let
             consumingLookup = BM.lookup t transitionConsumingBimap
             producingLookup = BM.lookup t transitionProducingBimap
-            vorAction = if isJust consumingLookup then return [] else inputPlacesAction
-            nachAction = if isJust producingLookup then return [] else outputPlacesAction
+            vorAction = case consumingLookup of
+                          Just preVor -> return ([], notElem preVor)  -- If t has a pregenerated input place, prevent that place from appearing in nach
+                          _ -> inputPlacesAction <&> \vor -> (vor, isValidInputPlaceUsage vor)
+            nachAction = case producingLookup of
+                           Just preNach -> return ([], notElem preNach)  -- If t has a pregenerated output place, prevent that place from appearing in vor
+                           _ -> outputPlacesAction <&> \nach -> (nach, isValidOutputPlaceUsage nach)
             go = do
-              vor <- vorAction
-              nach <- nachAction
-              if isValidInputPlaceUsage consumingLookup vor nach && isValidOutputPlaceUsage producingLookup vor nach
+              (vor, checkInputPlaceUsage) <- vorAction
+              (nach, checkOutputPlaceUsage) <- nachAction
+              if checkInputPlaceUsage nach && checkOutputPlaceUsage vor
                 then return (maybe vor (:vor) consumingLookup, t, maybe nach (:nach) producingLookup)
                 else go  -- Retry if invalid
           in go
