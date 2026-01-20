@@ -475,19 +475,17 @@ try conf = do
           $ \inputPlacesAction outputPlacesAction t ->
           -- Generate a valid connection for a transition, with retry logic
           let
-            consumingLookup = BM.lookup t transitionConsumingBimap
-            producingLookup = BM.lookup t transitionProducingBimap
-            vorAction = case consumingLookup of
-                          Just preVor -> return ([], notElem preVor)  -- If t has a pregenerated input place, prevent that place from appearing in nach
-                          _ -> inputPlacesAction <&> \vor -> (vor, isValidInputPlaceUsage vor)
-            nachAction = case producingLookup of
-                           Just preNach -> return ([], notElem preNach)  -- If t has a pregenerated output place, prevent that place from appearing in vor
-                           _ -> outputPlacesAction <&> \nach -> (nach, isValidOutputPlaceUsage nach)
+            vorAction = case BM.lookup t transitionConsumingBimap of
+                          Just preVor -> return ([preVor], [], notElem preVor)  -- If t has a pregenerated input place, prevent that place from appearing in nach
+                          _ -> inputPlacesAction <&> \vor -> (vor, vor, isValidInputPlaceUsage vor)
+            nachAction = case BM.lookup t transitionProducingBimap of
+                           Just preNach -> return ([preNach], [], notElem preNach)  -- If t has a pregenerated output place, prevent that place from appearing in vor
+                           _ -> outputPlacesAction <&> \nach -> (nach, nach, isValidOutputPlaceUsage nach)
             go = do
-              (vor, checkInputPlaceUsage) <- vorAction
-              (nach, checkOutputPlaceUsage) <- nachAction
-              if checkInputPlaceUsage nach && checkOutputPlaceUsage vor
-                then return (maybe vor (:vor) consumingLookup, t, maybe nach (:nach) producingLookup)
+              (vor, vorForCheck, checkInputPlaceUsage) <- vorAction
+              (nach, nachForCheck, checkOutputPlaceUsage) <- nachAction
+              if checkInputPlaceUsage nachForCheck && checkOutputPlaceUsage vorForCheck
+                then return (vor, t, nach)
                 else go  -- Retry if invalid
           in go
     n <- MaybeT $ netGenerator
