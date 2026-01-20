@@ -66,11 +66,12 @@ import Modelling.Auxiliary.Output (
   checkTaskText,
   hoveringInformation,
   simplifiedInformation,
-  uniform,
+  uniform, extra,
   )
 import Modelling.CdOd.Auxiliary.Util    (alloyInstanceToOd)
 import Modelling.CdOd.CD2Alloy.Transform (
-  LinguisticReuse (None),
+  ExtendsAnd (FieldPlacement),
+  LinguisticReuse (ExtendsAnd),
   combineParts,
   createRunCommand,
   transform,
@@ -137,7 +138,7 @@ import Modelling.Types                  (Change (..))
 
 import Control.Applicative              (Alternative ((<|>)))
 import Control.Monad                    ((>=>), forM, void, when, zipWithM)
-import Control.Monad.Catch              (MonadThrow (throwM))
+import Control.Monad.Catch              (MonadCatch, MonadThrow (throwM))
 import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
   GenericOutputCapable (..),
@@ -248,7 +249,8 @@ data RepairCdConfig
     printExtendedFeedback :: Bool,
     printSolution    :: Bool,
     timeout          :: Maybe Int,
-    useNames         :: Bool
+    useNames         :: Bool,
+    extraText        :: Maybe (Map Language String)
   } deriving (Generic, Read, Show)
 
 defaultRepairCdConfig :: RepairCdConfig
@@ -281,7 +283,8 @@ defaultRepairCdConfig
     printExtendedFeedback = True,
     printSolution    = True,
     timeout          = Nothing,
-    useNames         = True
+    useNames         = True,
+    extraText        = Nothing
   }
 
 checkRepairCdConfig :: RepairCdConfig -> Maybe String
@@ -355,6 +358,7 @@ repairCdTask path task = do
   toTaskText path task
   paragraph simplifiedInformation
   paragraph hoveringInformation
+  extra $ addText task
   pure ()
 
 repairCdSyntax :: OutputCapable m => RepairCdInstance -> [Int] -> LangM m
@@ -451,8 +455,8 @@ toTaskSpecificText path RepairCdInstance {..} = \case
     path
   PotentialFixes ->
     enumerateM (text . show)
-      $ second (phrase byName (printNavigations cdDrawSettings) . option)
-      <$> M.toList changes
+      $ map (second (phrase byName (printNavigations cdDrawSettings) . option))
+      $ M.toList changes
   where
     defaults = omittedDefaults cdDrawSettings
     phrase x y Annotation {..} = translate $ do
@@ -467,7 +471,8 @@ data RepairCdInstance
     classDiagram   :: AnyCd,
     showExtendedFeedback :: Bool,
     showSolution   :: !Bool,
-    taskText       :: !RepairCdTaskText
+    taskText       :: !RepairCdTaskText,
+    addText        :: Maybe (Map Language String)
   } deriving (Eq, Generic, Read, Show)
 
 checkRepairCdInstance :: RepairCdInstance -> Maybe String
@@ -520,7 +525,8 @@ instance RandomiseLayout RepairCdInstance where
       classDiagram = cd,
       showExtendedFeedback = showExtendedFeedback,
       showSolution = showSolution,
-      taskText = taskText
+      taskText = taskText,
+      addText = addText
       }
 
 shuffleInstance :: MonadRandom m => RepairCdInstance -> m RepairCdInstance
@@ -533,7 +539,8 @@ shuffleInstance RepairCdInstance {..} = do
     classDiagram = classDiagram,
     showExtendedFeedback = showExtendedFeedback,
     showSolution = showSolution,
-    taskText = taskText
+    taskText = taskText,
+    addText = addText
     }
 
 renameInstance
@@ -562,11 +569,12 @@ renameInstance inst@RepairCdInstance {..} names' nonInheritances' = do
     classDiagram   = cd,
     showExtendedFeedback = showExtendedFeedback,
     showSolution   = showSolution,
-    taskText       = taskText
+    taskText       = taskText,
+    addText        = addText
     }
 
 repairCd
-  :: (MonadAlloy m, MonadThrow m)
+  :: (MonadAlloy m, MonadCatch m)
   => RepairCdConfig
   -> Int
   -> Int
@@ -589,7 +597,8 @@ repairCd RepairCdConfig {..} segment seed = flip evalRandT g $ do
     classDiagram = cd,
     showExtendedFeedback = printExtendedFeedback,
     showSolution = printSolution,
-    taskText = defaultRepairCdTaskText
+    taskText = defaultRepairCdTaskText,
+    addText = extraText
     }
   where
     g = mkStdGen $ (segment +) $ 4 * seed
@@ -790,7 +799,8 @@ defaultRepairCdInstance = RepairCdInstance {
     },
   showExtendedFeedback = True,
   showSolution = True,
-  taskText = defaultRepairCdTaskText
+  taskText = defaultRepairCdTaskText,
+  addText = Nothing
   }
 
 type StructuralWeakeningSet = ChangeSet StructuralWeakening
@@ -832,7 +842,7 @@ diversify = zipWith permutate [0..]
       in (illegalChange c, shuffle' [w, x, y, z] 4 $ mkStdGen g)
 
 repairIncorrect
-  :: (MonadAlloy m, MonadThrow m, RandomGen g)
+  :: (MonadAlloy m, MonadCatch m, RandomGen g)
   => AllowedProperties
   -> ClassConfig
   -> CdConstraints
@@ -903,11 +913,11 @@ repairIncorrect
       changes <- listToMaybe <$> getInstances (Just 1) to alloyCode
       fmap (relationshipChange . head . instanceChangesAndCds)
         <$> traverse fromInstanceWithPredefinedNames changes
-    getOD :: (MonadAlloy m, MonadRandom m, MonadThrow m) => Cd -> m (Maybe Od)
+    getOD :: (MonadAlloy m, MonadCatch m, MonadRandom m) => Cd -> m (Maybe Od)
     getOD cd = do
       let maxNumberOfObjects = maxObjects $ snd $ classLimits config
           parts = transform
-            None
+            (ExtendsAnd FieldPlacement)
             cd
             Nothing
             []
@@ -917,12 +927,14 @@ repairIncorrect
             ""
           command = createRunCommand
             "cd"
+            (Just $ classNames cd)
             (length $ classNames cd)
             maxNumberOfObjects
             (relationships cd)
       od <- listToMaybe
         <$> getInstances (Just 1) to (combineParts parts ++ command)
       od' <- forM od $ alloyInstanceToOd
+        (Just $ classNames cd)
         $ mapMaybe relationshipName $ relationships cd
       mapM (anonymiseObjects (anonymousObjectProportion objectProperties)) od'
 

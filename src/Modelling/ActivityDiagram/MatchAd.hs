@@ -51,6 +51,7 @@ import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
   GenericOutputCapable (..),
   LangM,
+  Language,
   Rated,
   OutputCapable,
   ($=<<),
@@ -68,25 +69,30 @@ import Control.Monad.Random (
   )
 import Data.List (sort)
 import Data.Map (Map)
-import Data.Maybe (isJust, fromJust)
+import Data.Maybe (isJust, isNothing, fromJust)
 import Data.String.Interpolate (i, iii)
 import GHC.Generics (Generic)
-import Modelling.Auxiliary.Output (addPretext)
+import Modelling.Auxiliary.Output (
+  addPretext,
+  extra
+  )
 import System.Random.Shuffle (shuffleM)
 
 data MatchAdInstance = MatchAdInstance {
   activityDiagram :: UMLActivityDiagram,
   plantUMLConf :: PlantUmlConfig,
-  showSolution :: Bool
-} deriving (Generic, Show)
+  showSolution :: Bool,
+  addText :: Maybe (Map Language String)
+} deriving (Generic, Read, Show)
 
 data MatchAdConfig = MatchAdConfig {
   adConfig :: AdConfig,
   maxInstances :: Maybe Integer,
   hideBranchConditions :: Bool,
   noActivityFinalInForkBlocks :: Maybe Bool,
-  printSolution :: Bool
-} deriving (Generic, Show)
+  printSolution :: Bool,
+  extraText :: Maybe (Map Language String)
+} deriving (Generic, Read, Show)
 
 defaultMatchAdConfig :: MatchAdConfig
 defaultMatchAdConfig = MatchAdConfig {
@@ -94,7 +100,8 @@ defaultMatchAdConfig = MatchAdConfig {
   maxInstances = Just 50,
   hideBranchConditions = False,
   noActivityFinalInForkBlocks = Just False,
-  printSolution = False
+  printSolution = False,
+  extraText = Nothing
 }
 
 checkMatchAdConfig :: MatchAdConfig -> Maybe String
@@ -111,7 +118,11 @@ checkMatchAdConfig' MatchAdConfig {
   | isJust maxInstances && fromJust maxInstances < 1
     = Just "The parameter 'maxInstances' must either be set to a positive value or to Nothing"
   | noActivityFinalInForkBlocks == Just True && activityFinalNodes adConfig > 1
-    = Just "Setting the parameter 'noActivityFinalInForkBlocks' to True prohibits having more than 1 Activity Final Node"
+    = Just "Setting the parameter 'noActivityFinalInForkBlocks' to 'Just True' prohibits having more than 1 Activity Final Node"
+  | noActivityFinalInForkBlocks == Just False && activityFinalNodes adConfig < 1
+    = Just "Setting the parameter 'noActivityFinalInForkBlocks' to 'Just False' requires having at least 1 Activity Final Node"
+  | isNothing noActivityFinalInForkBlocks && activityFinalNodes adConfig < 1
+    = Just "Having no Activity Final Node means setting the parameter 'noActivityFinalInForkBlocks' to Nothing makes no sense."
   | otherwise
     = Nothing
 
@@ -185,6 +196,9 @@ matchAdTask path task = do
       german [i|Geben Sie dazu Ihre Antwort wie im folgenden Beispiel an:|]
     code $ show matchAdInitial
     pure ()
+
+  extra $ addText task
+
   pure ()
 
 matchAdInitial :: MatchAdSolution
@@ -273,7 +287,8 @@ getMatchAdTask config = do
     plantUMLConf = defaultPlantUmlConfig {
       suppressBranchConditions = hideBranchConditions config
       },
-    showSolution = printSolution config
+    showSolution = printSolution config,
+    addText = extraText config
   }
 
 defaultMatchAdInstance :: MatchAdInstance
@@ -321,5 +336,6 @@ defaultMatchAdInstance = MatchAdInstance {
     ]
   },
   plantUMLConf = defaultPlantUmlConfig,
-  showSolution = False
+  showSolution = False,
+  addText = Nothing
 }

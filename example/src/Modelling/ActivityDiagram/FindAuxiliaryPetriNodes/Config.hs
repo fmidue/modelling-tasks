@@ -28,8 +28,9 @@ task2023_41 = FindAuxiliaryPetriNodesConfig {
   maxInstances = Just 2000,
   hideNodeNames = False,
   hideBranchConditions = True,
-  avoidAddingSinksForFinals = Nothing,
-  printSolution = True
+  presenceOfSinkTransitionsForFinals = Nothing,
+  printSolution = True,
+  extraText = Nothing
   }
 
 {-|
@@ -53,8 +54,9 @@ task2023_42 = FindAuxiliaryPetriNodesConfig {
   maxInstances = Just 2000,
   hideNodeNames = False,
   hideBranchConditions = True,
-  avoidAddingSinksForFinals = Nothing,
-  printSolution = True
+  presenceOfSinkTransitionsForFinals = Nothing,
+  printSolution = True,
+  extraText = Nothing
   }
 
 {-|
@@ -78,8 +80,9 @@ task2024_47 = FindAuxiliaryPetriNodesConfig {
   maxInstances = Just 2000,
   hideNodeNames = False,
   hideBranchConditions = True,
-  avoidAddingSinksForFinals = Nothing,
-  printSolution = True
+  presenceOfSinkTransitionsForFinals = Nothing,
+  printSolution = True,
+  extraText = Nothing
   }
 
 {-|
@@ -103,6 +106,59 @@ task2024_48 = FindAuxiliaryPetriNodesConfig {
   maxInstances = Just 2000,
   hideNodeNames = False,
   hideBranchConditions = True,
-  avoidAddingSinksForFinals = Nothing,
-  printSolution = True
+  presenceOfSinkTransitionsForFinals = Nothing,
+  printSolution = True,
+  extraText = Nothing
+  }
+
+{-|
+points: 0.08
+average generation time per instance: 1:51min
+CPU usage: 122%
+-}
+task2024_72 :: FindAuxiliaryPetriNodesConfig
+task2024_72 = FindAuxiliaryPetriNodesConfig {
+  adConfig = AdConfig {
+    actionLimits = (6, 6),
+    objectNodeLimits = (4, 4),
+    maxNamedNodes = 10,
+    decisionMergePairs = 2,
+    forkJoinPairs = 1,
+    activityFinalNodes = 0,
+    flowFinalNodes = 2,
+    cycles = 0
+    },
+  countOfPetriNodesBounds = (21, Just 27),
+  maxInstances = Just 2000,
+  hideNodeNames = False,
+  hideBranchConditions = True,
+  presenceOfSinkTransitionsForFinals = Just False,
+  printSolution = True,
+  extraText = Nothing
+  }
+
+{-|
+points: 0.08
+average generation time per instance: 3:28min
+CPU usage: 112%
+-}
+task2024_73 :: FindAuxiliaryPetriNodesConfig
+task2024_73 = FindAuxiliaryPetriNodesConfig {
+  adConfig = AdConfig {
+    actionLimits = (8, 8),
+    objectNodeLimits = (4, 4),
+    maxNamedNodes = 12,
+    decisionMergePairs = 3,
+    forkJoinPairs = 1,
+    activityFinalNodes = 1,
+    flowFinalNodes = 0,
+    cycles = 2
+    },
+  countOfPetriNodesBounds = (31, Just 41),
+  maxInstances = Just 2000,
+  hideNodeNames = False,
+  hideBranchConditions = True,
+  presenceOfSinkTransitionsForFinals = Just True,
+  printSolution = True,
+  extraText = Nothing
   }

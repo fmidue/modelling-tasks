@@ -70,10 +70,12 @@ import Modelling.Auxiliary.Output (
   hoveringInformation,
   simplifiedInformation,
   uniform,
+  extra,
   )
 import Modelling.CdOd.Auxiliary.Util    (alloyInstanceToOd)
 import Modelling.CdOd.CD2Alloy.Transform (
-  LinguisticReuse (None),
+  ExtendsAnd (FieldPlacement),
+  LinguisticReuse (ExtendsAnd),
   combineParts,
   createRunCommand,
   transform,
@@ -141,7 +143,7 @@ import Modelling.Types                  (Change (..))
 
 import Control.Applicative              (Alternative ((<|>)))
 import Control.Monad                    ((>=>), forM, join)
-import Control.Monad.Catch              (MonadThrow)
+import Control.Monad.Catch              (MonadCatch, MonadThrow)
 import Control.Monad.Except             (runExceptT)
 import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
@@ -243,7 +245,8 @@ data NameCdErrorConfig = NameCdErrorConfig {
   printSolution               :: Bool,
   reasonsPerInstance          :: NumberOfReasons,
   timeout                     :: Maybe Int,
-  useNames                    :: Bool
+  useNames                    :: Bool,
+  extraText                   :: Maybe (Map Language String)
   } deriving (Generic, Read, Show)
 
 defaultNameCdErrorConfig :: NameCdErrorConfig
@@ -279,7 +282,8 @@ defaultNameCdErrorConfig = NameCdErrorConfig {
     preDefinedValid = length $ filter (not . isIllegal) [minBound ..]
     },
   timeout = Nothing,
-  useNames = True
+  useNames = True,
+  extraText = Nothing
   }
 
 checkNameCdErrorConfig :: NameCdErrorConfig -> Maybe String
@@ -386,8 +390,8 @@ toTaskSpecificText path task@NameCdErrorInstance {..} = \case
       (unannotateCd classDiagram)
       path
     ReasonsList -> enumerateM (text . singleton)
-      $ second (renderReason (printNavigations cdDrawSettings) . snd)
-      <$> M.toList errorReasons
+      $ map (second (renderReason (printNavigations cdDrawSettings) . snd))
+      $ M.toList errorReasons
     RelationshipsList -> do
       let defaults = omittedDefaults cdDrawSettings
           phrase article x y z = translate $ do
@@ -408,7 +412,8 @@ data NameCdErrorInstance = NameCdErrorInstance {
   cdDrawSettings              :: !CdDrawSettings,
   errorReasons                :: !(Map Char (Bool, Reason)),
   showSolution                :: Bool,
-  taskText                    :: !NameCdErrorTaskText
+  taskText                    :: !NameCdErrorTaskText,
+  addText                     :: Maybe (Map Language String)
   } deriving (Eq, Generic, Read, Show)
 
 relevantRelationships
@@ -550,6 +555,7 @@ nameCdErrorTask path task = do
   toTaskText path task
   paragraph simplifiedInformation
   paragraph hoveringInformation
+  extra $ addText task
   pure ()
 
 dueTo1 :: Int
@@ -658,7 +664,8 @@ instance RandomiseLayout NameCdErrorInstance where
       classDiagram = cd,
       errorReasons = errorReasons,
       showSolution = showSolution,
-      taskText = taskText
+      taskText = taskText,
+      addText = addText
       }
 
 shuffleInstance :: MonadRandom m => NameCdErrorInstance -> m NameCdErrorInstance
@@ -679,7 +686,8 @@ shuffleInstance NameCdErrorInstance {..} = do
       },
     errorReasons = rs,
     showSolution = showSolution,
-    taskText = taskText
+    taskText = taskText,
+    addText = addText
     }
   where
     updatePriority x (priorities, ys) = case x of
@@ -709,11 +717,12 @@ renameInstance inst@NameCdErrorInstance {..} names' nonInheritances' = do
     classDiagram = cd,
     errorReasons = errorReasons,
     showSolution = showSolution,
-    taskText = taskText
+    taskText = taskText,
+    addText = addText
     }
 
 nameCdErrorGenerate
-  :: (MonadAlloy m, MonadThrow m)
+  :: (MonadAlloy m, MonadCatch m)
   => NameCdErrorConfig
   -> Int
   -> Int
@@ -723,7 +732,7 @@ nameCdErrorGenerate config segment seed = do
   flip evalRandT g $ generateAndRandomise config
 
 generateAndRandomise
-  :: (MonadAlloy m, MonadThrow m, RandomGen g)
+  :: (MonadAlloy m, MonadCatch m, RandomGen g)
   => NameCdErrorConfig
   -> RandT g m NameCdErrorInstance
 generateAndRandomise config@NameCdErrorConfig {..} = do
@@ -750,7 +759,8 @@ generateAndRandomise config@NameCdErrorConfig {..} = do
       $ (True, PreDefined reason)
       : map (False,) chosenReasons,
     showSolution = printSolution,
-    taskText = defaultNameCdErrorTaskText
+    taskText = defaultNameCdErrorTaskText,
+    addText = extraText
     }
   where
     relevanceFor xs n x = Annotation {
@@ -763,13 +773,14 @@ generateAndRandomise config@NameCdErrorConfig {..} = do
       }
 
 nameCdError
-  :: (MonadAlloy m, MonadThrow m, RandomGen g)
+  :: (MonadAlloy m, MonadCatch m, RandomGen g)
   => NameCdErrorConfig
   -> RandT g m (AnyCd, Property, [AnyRelationship String String])
 nameCdError NameCdErrorConfig {..}  = do
-  structuralWeakenings <- shuffleM $ (,)
-    <$> illegalStructuralWeakenings allowedProperties
-    <*> legalStructuralWeakenings allowedProperties
+  structuralWeakenings <- shuffleM [ (x,y) |
+    x <- illegalStructuralWeakenings allowedProperties,
+    y <- legalStructuralWeakenings allowedProperties
+    ]
   getInstanceWithStructuralWeakenings structuralWeakenings
   where
     getFixWith cd properties = Changes.transformGetNextFix
@@ -818,7 +829,7 @@ nameCdError NameCdErrorConfig {..}  = do
     getOD cd = do
       let maxNumberOfObjects = maxObjects $ snd $ classLimits classConfig
           parts = transform
-            None
+            (ExtendsAnd FieldPlacement)
             cd
             Nothing
             []
@@ -828,6 +839,7 @@ nameCdError NameCdErrorConfig {..}  = do
             ""
           command = createRunCommand
             "cd"
+            (Just $ classNames cd)
             (length $ classNames cd)
             maxNumberOfObjects
             (relationships cd)
@@ -835,7 +847,7 @@ nameCdError NameCdErrorConfig {..}  = do
       od <- listToMaybe
         <$> getInstances (Just 1) timeout (combineParts parts ++ command)
       od' <- fmap join $ forM od
-        $ runExceptT . alloyInstanceToOd possibleLinkNames
+        $ runExceptT . alloyInstanceToOd (Just $ classNames cd) possibleLinkNames
         >=> return . eitherToMaybe
       mapM (anonymiseObjects (anonymousObjectProportion objectProperties)) od'
 
@@ -997,5 +1009,6 @@ defaultNameCdErrorInstance = NameCdErrorInstance {
     ('k', (False, PreDefined ReverseRelationships))
     ],
   showSolution = False,
-  taskText = defaultNameCdErrorTaskText
+  taskText = defaultNameCdErrorTaskText,
+  addText = Nothing
   }

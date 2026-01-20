@@ -23,7 +23,8 @@ task2023_31 = MatchAdConfig {
   maxInstances = Just 500,
   hideBranchConditions = False,
   noActivityFinalInForkBlocks = Just False,
-  printSolution = True
+  printSolution = True,
+  extraText = Nothing
   }
 
 {-|
@@ -44,7 +45,8 @@ task2023_32 = MatchAdConfig {
   maxInstances = Just 500,
   hideBranchConditions = True,
   noActivityFinalInForkBlocks = Just True,
-  printSolution = True
+  printSolution = True,
+  extraText = Nothing
   }
 
 {-|
@@ -62,3 +64,11 @@ CPU usage: 158%
 -}
 task2024_38 :: MatchAdConfig
 task2024_38 = task2023_32
+
+{-|
+points: 0.08
+average generation time per instance: 0:38min
+CPU usage: 156%
+-}
+task2024_67 :: MatchAdConfig
+task2024_67 = task2023_31

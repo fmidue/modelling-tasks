@@ -26,7 +26,8 @@ task2023_35 = EnterASConfig {
   maxInstances = Just 2000,
   objectNodeOnEveryPath = Just True,
   answerLength = (10, 10),
-  printSolution = True
+  printSolution = True,
+  extraText = Nothing
   }
 
 {-|
@@ -50,7 +51,8 @@ task2023_36 = EnterASConfig {
   maxInstances = Just 2000,
   objectNodeOnEveryPath = Just False,
   answerLength = (14, 14),
-  printSolution = True
+  printSolution = True,
+  extraText = Nothing
   }
 
 {-|
@@ -74,7 +76,8 @@ task2024_41 = EnterASConfig {
   maxInstances = Just 2000,
   objectNodeOnEveryPath = Just True,
   answerLength = (11, 11),
-  printSolution = True
+  printSolution = True,
+  extraText = Nothing
   }
 
 {-|
@@ -84,3 +87,19 @@ CPU usage: 113%
 -}
 task2024_42 :: EnterASConfig
 task2024_42 = task2023_36
+
+{-|
+points: 0.08
+average generation time per instance: 6:11min
+CPU usage: 107%
+-}
+task2024_68 :: EnterASConfig
+task2024_68 = task2024_41
+
+{-|
+points: 0.08
+average generation time per instance: 5:16min
+CPU usage: 109%
+-}
+task2024_69 :: EnterASConfig
+task2024_69 = task2023_36

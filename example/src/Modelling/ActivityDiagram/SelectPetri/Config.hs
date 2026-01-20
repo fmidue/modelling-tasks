@@ -34,9 +34,10 @@ task2023_37 = SelectPetriConfig {
   numberOfModifications = 3,
   modifyAtMid = True,
   auxiliaryPetriNodeAbsent = Nothing,
-  avoidAddingSinksForFinals = Nothing,
+  presenceOfSinkTransitionsForFinals = Nothing,
   noActivityFinalInForkBlocks = Just True,
-  printSolution = True
+  printSolution = True,
+  extraText = Nothing
   }
 
 {-|
@@ -64,9 +65,10 @@ task2023_38 = SelectPetriConfig {
   numberOfModifications = 3,
   modifyAtMid = True,
   auxiliaryPetriNodeAbsent = Nothing,
-  avoidAddingSinksForFinals = Nothing,
+  presenceOfSinkTransitionsForFinals = Nothing,
   noActivityFinalInForkBlocks = Just True,
-  printSolution = True
+  printSolution = True,
+  extraText = Nothing
   }
 
 {-|
@@ -104,7 +106,8 @@ task2024_44 = SelectPetriConfig {
   numberOfModifications = 3,
   modifyAtMid = True,
   auxiliaryPetriNodeAbsent = Nothing,
-  avoidAddingSinksForFinals = Nothing,
+  presenceOfSinkTransitionsForFinals = Nothing,
   noActivityFinalInForkBlocks = Just True,
-  printSolution = True
+  printSolution = True,
+  extraText = Nothing
   }

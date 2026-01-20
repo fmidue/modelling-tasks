@@ -13,6 +13,7 @@ module Modelling.ActivityDiagram.MatchPetri (
   MatchPetriSolution(..),
   defaultMatchPetriConfig,
   checkMatchPetriConfig,
+  mapTypesToLabels,
   matchPetriAlloy,
   matchPetriSolution,
   extractAuxiliaryPetriNodes,
@@ -72,7 +73,10 @@ import Modelling.ActivityDiagram.PlantUMLConverter (
   drawAdToFile,
   )
 import Modelling.Auxiliary.Common (getFirstInstance, oneOf)
-import Modelling.Auxiliary.Output (addPretext)
+import Modelling.Auxiliary.Output (
+  addPretext,
+  extra
+  )
 import Modelling.PetriNet.Diagram (cacheNet)
 import Modelling.PetriNet.Types (
   DrawSettings (..),
@@ -88,6 +92,7 @@ import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
   GenericOutputCapable (..),
   LangM,
+  Language,
   Rated,
   OutputCapable,
   ($=<<),
@@ -120,7 +125,8 @@ data MatchPetriInstance = MatchPetriInstance {
   petriNet :: SimplePetriLike PetriKey,
   plantUMLConf :: PlantUmlConfig,
   petriDrawConf :: DrawSettings,
-  showSolution :: Bool
+  showSolution :: Bool,
+  addText :: Maybe (Map Language String)
 } deriving (Generic, Read, Show)
 
 data MatchPetriConfig = MatchPetriConfig {
@@ -132,11 +138,12 @@ data MatchPetriConfig = MatchPetriConfig {
   petriSvgHighlighting :: Bool,
   -- | Option to prevent auxiliary PetriNodes from occurring
   auxiliaryPetriNodeAbsent :: Maybe Bool,
-  -- | Avoid having to add new sink transitions for representing finals
-  avoidAddingSinksForFinals :: Maybe Bool,
+  -- | Force presence or absence of new sink transitions for representing finals
+  presenceOfSinkTransitionsForFinals :: Maybe Bool,
   -- | Avoid Activity Finals in concurrent flows to reduce confusion
   noActivityFinalInForkBlocks :: Maybe Bool,
-  printSolution :: Bool
+  printSolution :: Bool,
+  extraText :: Maybe (Map Language String)
 } deriving (Generic, Read, Show)
 
 pickRandomLayout :: (MonadRandom m) => MatchPetriConfig -> m GraphvizCommand
@@ -154,9 +161,10 @@ defaultMatchPetriConfig =
     petriLayout = [Dot],
     petriSvgHighlighting = True,
     auxiliaryPetriNodeAbsent = Nothing,
-    avoidAddingSinksForFinals = Nothing,
+    presenceOfSinkTransitionsForFinals = Nothing,
     noActivityFinalInForkBlocks = Just True,
-    printSolution = False
+    printSolution = False,
+    extraText = Nothing
   }
 
 checkMatchPetriConfig :: MatchPetriConfig -> Maybe String
@@ -171,7 +179,7 @@ checkMatchPetriConfig' MatchPetriConfig {
     maxInstances,
     petriLayout,
     auxiliaryPetriNodeAbsent,
-    avoidAddingSinksForFinals,
+    presenceOfSinkTransitionsForFinals,
     noActivityFinalInForkBlocks
   }
   | Config.activityFinalNodes adConfig > 1
@@ -185,9 +193,9 @@ checkMatchPetriConfig' MatchPetriConfig {
     Setting the parameter 'auxiliaryPetriNodeAbsent' to True
     prohibits having more than 0 cycles
     |]
-  | Just True <- avoidAddingSinksForFinals,
+  | Just False <- presenceOfSinkTransitionsForFinals,
     fst (actionLimits adConfig) + forkJoinPairs adConfig < 1
-    = Just "The option 'avoidAddingSinksForFinals' can only be achieved if the number of Actions, Fork Nodes and Join Nodes together is positive"
+    = Just "The option 'presenceOfSinkTransitionsForFinals = Just False' can only be achieved if the number of Actions, Fork Nodes and Join Nodes together is positive"
   | noActivityFinalInForkBlocks == Just True && Config.activityFinalNodes adConfig > 1
     = Just "Setting the parameter 'noActivityFinalInForkBlocks' to True prohibits having more than 1 'activityFinalNodes'"
   | noActivityFinalInForkBlocks == Just False && Config.activityFinalNodes adConfig == 0
@@ -204,7 +212,7 @@ matchPetriAlloy :: MatchPetriConfig -> String
 matchPetriAlloy MatchPetriConfig {
   adConfig,
   auxiliaryPetriNodeAbsent,
-  avoidAddingSinksForFinals,
+  presenceOfSinkTransitionsForFinals,
   noActivityFinalInForkBlocks
 }
   = adConfigToAlloy modules predicates adConfig
@@ -215,7 +223,7 @@ matchPetriAlloy MatchPetriConfig {
           [i|
             #{f auxiliaryPetriNodeAbsent "auxiliaryPetriNodeAbsent"}
             #{f activityFinalsExist "activityFinalsExist"}
-            #{f avoidAddingSinksForFinals "avoidAddingSinksForFinals"}
+            #{f (not <$> presenceOfSinkTransitionsForFinals) "avoidAddingSinksForFinals"}
             #{f noActivityFinalInForkBlocks "noActivityFinalInForkBlocks"}
           |]
     f opt s =
@@ -335,6 +343,9 @@ matchPetriTask path task = do
         |]
     pure ()
   finalNodesAdvice True
+
+  extra $ addText task
+
   pure ()
 
 matchPetriInitial :: MatchPetriSolution
@@ -455,7 +466,8 @@ getMatchPetriTask config = do
         with1Weights = False,
         withGraphvizCommand = layout
       },
-    showSolution = printSolution config
+    showSolution = printSolution config,
+    addText = extraText config
   }
 
 defaultMatchPetriInstance :: MatchPetriInstance
@@ -916,5 +928,6 @@ defaultMatchPetriInstance = MatchPetriInstance
       with1Weights = False,
       withGraphvizCommand = Dot
     },
-  showSolution = False
+  showSolution = False,
+  addText = Nothing
   }

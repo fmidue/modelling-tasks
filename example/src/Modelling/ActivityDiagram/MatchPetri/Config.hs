@@ -29,9 +29,10 @@ task2023_39 = MatchPetriConfig {
   petriLayout = [Fdp],
   petriSvgHighlighting = True,
   auxiliaryPetriNodeAbsent = Nothing,
-  avoidAddingSinksForFinals = Nothing,
+  presenceOfSinkTransitionsForFinals = Nothing,
   noActivityFinalInForkBlocks = Nothing,
-  printSolution = True
+  printSolution = True,
+  extraText = Nothing
   }
 
 {-|
@@ -56,9 +57,10 @@ task2023_40 = MatchPetriConfig {
   petriLayout = [Fdp],
   petriSvgHighlighting = True,
   auxiliaryPetriNodeAbsent = Nothing,
-  avoidAddingSinksForFinals = Nothing,
+  presenceOfSinkTransitionsForFinals = Nothing,
   noActivityFinalInForkBlocks = Nothing,
-  printSolution = True
+  printSolution = True,
+  extraText = Nothing
   }
 
 {-|
@@ -76,3 +78,59 @@ CPU usage: 102%
 -}
 task2024_46 :: MatchPetriConfig
 task2024_46 = task2023_40
+
+{-|
+points: 0.08
+average generation time per instance: 18:16min
+CPU usage: 105%
+-}
+task2024_70 :: MatchPetriConfig
+task2024_70 = MatchPetriConfig {
+  adConfig = AdConfig {
+    actionLimits = (6, 6),
+    objectNodeLimits = (7, 7),
+    maxNamedNodes = 13,
+    decisionMergePairs = 1,
+    forkJoinPairs = 1,
+    activityFinalNodes = 0,
+    flowFinalNodes = 1,
+    cycles = 0
+    },
+  maxInstances = Just 10000,
+  hideBranchConditions = True,
+  petriLayout = [Fdp],
+  petriSvgHighlighting = True,
+  auxiliaryPetriNodeAbsent = Just True,
+  presenceOfSinkTransitionsForFinals = Just True,
+  noActivityFinalInForkBlocks = Just True,
+  printSolution = True,
+  extraText = Nothing
+  }
+
+{-|
+points: 0.08
+average generation time per instance: 14:13min
+CPU usage: 104%
+-}
+task2024_71 :: MatchPetriConfig
+task2024_71 = MatchPetriConfig {
+  adConfig = AdConfig {
+    actionLimits = (8, 8),
+    objectNodeLimits = (5, 5),
+    maxNamedNodes = 13,
+    decisionMergePairs = 3,
+    forkJoinPairs = 2,
+    activityFinalNodes = 0,
+    flowFinalNodes = 3,
+    cycles = 3
+    },
+  maxInstances = Just 2000,
+  hideBranchConditions = True,
+  petriLayout = [Fdp],
+  petriSvgHighlighting = True,
+  auxiliaryPetriNodeAbsent = Just False,
+  presenceOfSinkTransitionsForFinals = Nothing,
+  noActivityFinalInForkBlocks = Just True,
+  printSolution = True,
+  extraText = Nothing
+  }

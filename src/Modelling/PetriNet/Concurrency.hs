@@ -3,6 +3,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE NamedFieldPuns #-}
 {-# Language QuasiQuotes #-}
+{-# LANGUAGE RecordWildCards #-}
 
 module Modelling.PetriNet.Concurrency (
   checkFindConcurrencyConfig,
@@ -94,7 +95,7 @@ import Modelling.PetriNet.Reach.Type (
   parseTransitionPrec,
   )
 import Modelling.PetriNet.Types         (
-  AdvConfig,
+  AdvConfig (..),
   BasicConfig (..),
   ChangeConfig,
   Concurrent (Concurrent),
@@ -413,7 +414,7 @@ petriNetConcurrencyAlloy
   :: BasicConfig
   -> ChangeConfig
   -> Either Bool AdvConfig
-  -- ^ Right for find task; Left for pick task
+  -- ^ Right for find task; Left for pick task (and the Bool in there says whether source transitions should be prohibited)
   -> String
 petriNetConcurrencyAlloy basicC changeC specific
   = [i|module PetriNetConcur
@@ -487,6 +488,7 @@ parseConcurrency inst = do
 
 checkFindConcurrencyConfig :: FindConcurrencyConfig -> Maybe String
 checkFindConcurrencyConfig FindConcurrencyConfig {
+  advConfig,
   basicConfig,
   changeConfig,
   graphConfig
@@ -494,6 +496,16 @@ checkFindConcurrencyConfig FindConcurrencyConfig {
   =
   checkFindTwoActive basicConfig
   <|> checkConfigForFind basicConfig changeConfig graphConfig
+  <|> additionalCheck basicConfig advConfig
+  where
+    additionalCheck BasicConfig {..} AdvConfig {..}
+      | Just False /= presenceOfSourceTransitions, atLeastActive > 2
+      = Just [iii|
+        When 'atLeastActive' is greater than 2
+        'presenceOfSourceTransitions' has to be 'Just False'
+        |]
+      | otherwise
+      = Nothing
 
 checkPickConcurrencyConfig :: PickConcurrencyConfig -> Maybe String
 checkPickConcurrencyConfig PickConcurrencyConfig {

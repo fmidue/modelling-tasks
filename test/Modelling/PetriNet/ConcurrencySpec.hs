@@ -1,4 +1,5 @@
 {-# LANGUAGE DuplicateRecordFields #-}
+{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE TypeApplications #-}
 module Modelling.PetriNet.ConcurrencySpec where
 
@@ -26,8 +27,8 @@ import Modelling.PetriNet.Pick (
   pickTaskInstance,
   )
 import Modelling.PetriNet.Types (
-  AdvConfig (AdvConfig),
-  BasicConfig,
+  AdvConfig (..),
+  BasicConfig (..),
   ChangeConfig,
   Concurrent (Concurrent),
   FindConcurrencyConfig (..),
@@ -80,7 +81,7 @@ spec = do
   where
     findConfigs' = validFindConcurrencyConfigs
       validFinds
-      (AdvConfig Nothing Nothing Nothing)
+      (AdvConfig Nothing Nothing (Just False))
     findConfigs = validAdvConfigs >>= validFindConcurrencyConfigs validFinds
     pickConfigs = validPickConcurrencyConfigs validPicks
     validFinds = validConfigsForFind 0 configDepth
@@ -90,7 +91,7 @@ checkFindConcurrencyInstance :: (a, Concurrent String) -> Bool
 checkFindConcurrencyInstance = isValidConcurrency . snd
 
 checkPickConcurrencyInstance :: [(a, Maybe (Concurrent String))] -> Bool
-checkPickConcurrencyInstance = f . fmap snd
+checkPickConcurrencyInstance = f . map snd
   where
     f [Just x, Nothing] = isValidConcurrency x
     f _                 = False
@@ -112,22 +113,32 @@ validFindConcurrencyConfigs
   -> AdvConfig
   -> [FindConcurrencyConfig]
 validFindConcurrencyConfigs cs advancedConfig =
+ filter
+ (\FindConcurrencyConfig{basicConfig = BasicConfig{..}, advConfig = AdvConfig{..}}
+  -> presenceOfSourceTransitions == Just False || atLeastActive == 2)
+ (
   uncurry (`FindConcurrencyConfig` advancedConfig)
     <$> cs
     ?? validGraphConfig
     ?? False
     ?? alloyTestConfig
+ )
 
 validPickConcurrencyConfigs
   :: [(BasicConfig, ChangeConfig)]
   -> [PickConcurrencyConfig]
-validPickConcurrencyConfigs cs = uncurry PickConcurrencyConfig
-  <$> cs
-  <*> pure validGraphConfig
-  <*> pure False
-  <*> [False, True]
-  ?? False
-  ?? alloyTestConfig
+validPickConcurrencyConfigs cs = [
+  PickConcurrencyConfig
+    basic
+    change
+    validGraphConfig
+    False
+    printSolution
+    False
+    alloyTestConfig |
+      (basic,change) <- cs,
+      printSolution <- [False, True]
+    ]
 
 isValidConcurrency :: Concurrent String -> Bool
 isValidConcurrency c@(Concurrent (t1, t2))

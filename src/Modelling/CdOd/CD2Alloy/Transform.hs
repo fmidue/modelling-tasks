@@ -48,6 +48,7 @@ also the following Alloy predicates, have been inlined
  * @Composition@
 -}
 module Modelling.CdOd.CD2Alloy.Transform (
+  ExtendsAnd (..),
   LinguisticReuse (..),
   Parts {- only for legacy-apps: -} (..),
   combineParts,
@@ -56,7 +57,7 @@ module Modelling.CdOd.CD2Alloy.Transform (
   transform,
   ) where
 
-import qualified Data.List.NonEmpty.Extra         as NE (nubOrd)
+import qualified Data.List.NonEmpty.Extra         as NE (nubOrd, singleton)
 
 import Modelling.CdOd.Types (
   Cd,
@@ -69,7 +70,7 @@ import Modelling.CdOd.Types (
   )
 
 import Data.Bifunctor                   (first)
-import Data.Foldable                    (Foldable (toList))
+import Data.Foldable                    (Foldable (toList), find)
 import Data.Function                    ((&))
 import Data.List                        ((\\), intercalate, union)
 import Data.List.NonEmpty               (NonEmpty ((:|)))
@@ -81,7 +82,7 @@ import Data.Maybe (
   mapMaybe,
   )
 import Data.String.Interpolate          (__i, i, iii)
-import Data.Tuple.Extra                 (uncurry3)
+import Data.Tuple.Extra                 ((&&&), dupe, uncurry3)
 
 {-|
 Parts belonging to the CD2Alloy Alloy program.
@@ -102,6 +103,19 @@ Conciseness is increased when relying more on Alloy language features.
 data LinguisticReuse
   = None
   -- ^ not at all
+  | ExtendsAnd !ExtendsAnd
+  -- ^ use extends for inheritance
+  deriving Show
+
+{-|
+What further to reuse than extends
+-}
+data ExtendsAnd
+  = NothingMore
+  -- ^ i.e. only extends
+  | FieldPlacement
+  -- ^ local field definition
+  deriving Show
 
 {-|
 Generates Alloy code to generate object diagrams for a given class diagram.
@@ -134,7 +148,7 @@ transform
   -- ^ a time stamp
   -> Parts
 transform
-  None
+  linguisticReuse
   ClassDiagram {classNames, relationships}
   maybeAllRelationshipNames
   abstractClassNames
@@ -160,10 +174,7 @@ module cd2alloy/CD#{index}Module
 // and now specialized for a fixed FieldName set originally appearing further below
 ///////////////////////////////////////////////////
 
-//Parent of all classes relating fields and values
-abstract sig Object {
-#{fields}
-}
+#{objectDefinition}
 #{objectsFact}
 #{sizeConstraints}
 #{loops}
@@ -173,6 +184,14 @@ abstract sig Object {
 // Structures potentially common to multiple CDs
 ///////////////////////////////////////////////////
 |]
+    objectDefinition = case linguisticReuse of
+      ExtendsAnd FieldPlacement -> ""
+      _ -> [__i|
+        //Parent of all classes relating fields and values
+        abstract sig Object {
+        #{fields}
+        }
+        |]
     fields = intercalate ",\n" $ map
       (\fieldName -> [i|  #{fieldName} : set Object|])
       allRelationshipNames
@@ -191,14 +210,25 @@ fact LimitIsolatedObjects {
       | otherwise = [i|
 fact LimitIsolatedObjects {
  let get = #{alloySetOf allRelationshipNames} |
-  \#Object > mul[2, \#{o : Object | no o.get and no get.o}]
+  \##{objectsParens} > mul[2, \#{o : #{objects} | no o.get and no get.o}]
 }
 |]
     noEmptyInstances = [i|
 fact NonEmptyInstancesOnly {
-  some Object
+  some #{objects}
 }
 |]
+    (objects, objectsParens)
+      | ExtendsAnd FieldPlacement <- linguisticReuse
+      = alloySetOf &&& alloySetOfParens $ complete
+      | otherwise = dupe "Object"
+    complete = case linguisticReuse of
+      None -> nonAbstractClassNames
+      ExtendsAnd {} -> nonAbstractSuperClassNames
+    nonAbstractSuperClassNames = nonAbstractClassNames \\ subClasses
+    subClasses = (`mapMaybe` relationships) $ \case
+        Inheritance {..} -> Just subClass
+        _ -> Nothing
     withJusts f xs
       | any isJust xs = f $ catMaybes xs
       | otherwise     = ""
@@ -207,7 +237,8 @@ fact SizeConstraints {
 #{unlines ps}
 }
 |]) [
-      ("  #Object >= " ++) . show <$> maybeLower 1 (objectLimits objectConfig),
+      ([i|  \##{objectsParens} >= |] ++) . show
+        <$> maybeLower 1 (objectLimits objectConfig),
       "  " & uncurry count (first (maybeLow 0) $ linkLimits objectConfig),
       uncurry linksPerObjects
         $ first (maybeLow 0)
@@ -219,12 +250,12 @@ fact SizeConstraints {
       let maybeLinkCount = alloyPlus $ map
             (\link -> [i|plus[\#o.#{link}, minus[\##{link}.o, \#(o.#{link} & o)]]|])
             allRelationshipNames
-      in [i|  all o : Object | |] & alloyCompare maybeLinkCount maybeMin maybeMax
+      in [i|  all o : #{objects} | |] & alloyCompare maybeLinkCount maybeMin maybeMax
     maybeLower l = maybeLow l . fst
     maybeLow l x = if x <= l then Nothing else Just x
     part2 = [i|
 // Classes
-#{unlines (classSigs classNames)}
+#{unlines (classSigs linguisticReuse relationships classNames)}
 |] -- Figure 2.1, Rule 1, part 1
     part3 = [i|
 ///////////////////////////////////////////////////
@@ -232,18 +263,28 @@ fact SizeConstraints {
 ///////////////////////////////////////////////////
 
 // Properties
-#{predicate index allRelationshipNames relationships nonAbstractClassNames}
+#{predicate
+  linguisticReuse
+  index
+  allRelationshipNames
+  relationships
+  complete
+  }
 |]
     nonAbstractClassNames = classNames \\ abstractClassNames
+    nonAbstractObjects = case linguisticReuse of
+      None -> nonAbstractClassNames
+      ExtendsAnd {} -> (`map` nonAbstractClassNames) $ \name ->
+        intercalate " - " $ name : directSubclassesOf relationships name
     inhabitance = case completelyInhabited of
       Nothing   -> ""
       Just False -> [i|
 fact NotCompletelyInhabited {
-  #{intercalate " or " $ map ("no " ++) nonAbstractClassNames}
+  #{intercalate " or " $ map ("no " ++) nonAbstractObjects}
 }|]
       Just True -> [i|
 fact CompletelyInhabited {
-#{unlines $ map ("  some " ++) nonAbstractClassNames}
+#{unlines $ map ("  some " ++) nonAbstractObjects}
 }|]
     relationshipNameAppearance = case usesEveryRelationshipName of
       Nothing -> ""
@@ -271,11 +312,11 @@ fact UsesEveryRelationshipName {
         if hasLoops
         then [i|
 fact SomeSelfLoops {
-  some o : Object | o in o.#{relationshipSet}
+  some o : #{objects} | o in o.#{relationshipSet}
 }|]
         else [i|
 fact NoSelfLoops {
-  no o : Object | o in o.#{relationshipSet}
+  no o : #{objects} | o in o.#{relationshipSet}
 }|]
     relationshipSet
       | [_] <- allRelationshipNames
@@ -328,16 +369,26 @@ Creates an Alloy run command line taking provided size constraints into account.
 -}
 createRunCommand
   :: String
+  -> Maybe [String]
+  -- ^ if provided, object limit will be defined as constraint rather than
+  -- by scope (by scope should be preferred, but is not possible for
+  -- @ExtendsAnd FieldPlacement@)
   -> Int
   -> ObjectConfig
   -> [Relationship a b]
   -> String
-createRunCommand command numClasses objectConfig relationships = [i|
+createRunCommand
+  command
+  maybeNonAbstractClassNames
+  numClasses
+  objectConfig
+  relationships
+  = [i|
 ///////////////////////////////////////////////////
 // Run commands
 ///////////////////////////////////////////////////
-
-run { #{command} } for #{maxObjects} Object, #{intSize} Int
+#{limitObjects}
+run { #{command} } for #{maxObjects} #{what} #{intSize} Int
 |]
   where
     maxLimit = maximum $ map maximumLimitOf relationships
@@ -353,6 +404,16 @@ run { #{command} } for #{maxObjects} Object, #{intSize} Int
       count linkLimits,
       count linksPerObjectLimits
       ]
+    (what, limitObjects) = case maybeNonAbstractClassNames of
+      Nothing -> ("Object,", "")
+      Just nonAbstractClassNames -> (
+        "but",
+        [__i|
+        fact objectsMaximum {
+          \##{alloySetOfParens nonAbstractClassNames} <= #{maxObjects}
+        }
+        |]
+        )
     count f = fromMaybe (fst $ f objectConfig) $ snd (f objectConfig)
 
 maximumLimitOf :: Relationship a b -> Int
@@ -365,8 +426,80 @@ maximumLimitOf = \case
     maximumLimit l1 l2 = max (maximumLinking l1) (maximumLinking l2)
     maximumLinking LimitedLinking {limits = (low, high)} = fromMaybe low high
 
-classSigs :: [String] -> [String]
-classSigs = map (\name -> "sig " ++ name ++ " extends Object {}")
+classSigs
+  :: LinguisticReuse
+  -> [Relationship String String]
+  -> [String]
+  -> [String]
+classSigs linguisticReuse relationships = map classSig
+  where
+    classSig :: String -> String
+    classSig name = case linguisticReuse of
+      None -> [i|sig #{name} extends Object {}|]
+      ExtendsAnd NothingMore ->
+        (\super -> [i|sig #{name} extends #{super} {}|])
+        $ maybe "Object" superClass
+        $ find (hasSuperClass name) relationships
+      ExtendsAnd FieldPlacement ->
+        (\extends -> [__i|
+          sig #{name}#{extends} #{fields name}#{spaced $ fieldConstraints name}|]
+          )
+        $ maybe "" ((" extends " ++) . superClass)
+        $ find (hasSuperClass name) relationships
+    fromTos = mapMaybe nameFromTo relationships
+    fields className = linesWrappedInOrBraces $ commaSeparated $
+      [ [iii|#{name} : set #{linking to}|]
+      | (name, from, to) <- fromTos
+      , linking from == className
+      ]
+    commaSeparated (x:xs@(_:_)) = (x ++ ",") : commaSeparated xs
+    commaSeparated xs = xs
+    spaced [] = []
+    spaced xs = ' ':xs
+    fieldConstraints className = linesWrappedInBraces $ filter (not . null) $
+      [ nonInheritanceLimits (const name) (limits to) ""
+      | (name, from, to) <- fromTos
+      , linking from == className
+      ] ++
+      [ nonInheritanceLimits (const [iii|@#{name}.this|]) (limits from) ""
+      | (name, from, to) <- fromTos
+      , linking to == className
+      ]
+    hasSuperClass name = \case
+      Inheritance {..} | subClass == name -> True
+      _ -> False
+
+{-| Puts curly braces arround the given lines which are indented,
+puts a pair of empty curly braces if no lines are given, and
+puts surrounding braces on that single line if just one line is given.
+-}
+linesWrappedInOrBraces :: [String] -> String
+linesWrappedInOrBraces [] = "{}"
+linesWrappedInOrBraces xs = linesWrappedInBraces xs
+
+{-| Puts curly braces arround the given lines which are indented,
+returns an empty string if no lines are given, and
+puts surrounding braces on that single line if just one line is given.
+-}
+linesWrappedInBraces :: [String] -> String
+linesWrappedInBraces [] = ""
+linesWrappedInBraces [x] = [iii|{#{x}}|]
+linesWrappedInBraces xs = [i|{
+  #{intercalate "\n  " xs}
+}|]
+
+{-|
+Retrieve the set of direct subclasses of the given class.
+-}
+directSubclassesOf
+  :: [Relationship String String]
+  -- ^ all relationships of the class diagram
+  -> String
+  -- ^ the name of the class to consider
+  -> [String]
+directSubclassesOf relationships name = (`mapMaybe` relationships) $ \case
+  Inheritance {superClass = s, ..} | name == s -> Just subClass
+  _ -> Nothing
 
 -- Figure 2.1, Rule 1, part 2, alternative implementation
 -- (SubsCD - inlined)
@@ -383,15 +516,15 @@ allSubclassesOf relationships name =
   NE.nubOrd
   $ name :| concatMap (toList . allSubclassesOf relationships) subclasses
   where
-    subclasses = (`mapMaybe` relationships) $ \case
-      Inheritance {superClass = s, ..} | name == s -> Just subClass
-      _ -> Nothing
+    subclasses = directSubclassesOf relationships name
 
 {-|
 The predicate constraining the specific class diagram.
 -}
 predicate
-  :: String
+  :: LinguisticReuse
+  -- ^ the degree of linguistic reuse to apply during the translation
+  -> String
   -- ^ an identifier for the class diagram
   -> [String]
   -- ^ all relationship names to consider
@@ -399,36 +532,57 @@ predicate
   -> [Relationship String String]
   -- ^ all relationships belonging to the class diagram
   -> [String]
-  -- ^ the set of non abstract class names
+  -- ^ a complete set of class names that contains all possible objects
   -> String
-predicate index allRelationshipNames relationships nonAbstractClassNames = [i|
+predicate
+  linguisticReuse
+  index
+  allRelationshipNames
+  relationships
+  complete
+  = [i|
 pred cd#{index} {
-
-  #{objects}
-
+#{objects}
   // Contents
 #{unlines nonExistingRelationships}
-  // Associations
-#{unlines objectAttributes}
+#{nonInheritanceConstraints linguisticReuse relationships}
   // Compositions
 #{compositions}
 }
 |]
   where
-    objects =
-      "Object = " ++ alloySetOf nonAbstractClassNames
+    objects
+      | ExtendsAnd FieldPlacement <- linguisticReuse = ""
+      | otherwise = [i|
+  Object = #{alloySetOf complete}
+|]
       -- Figure 2.2, Rule 5
+    objectSet
+      | ExtendsAnd FieldPlacement <- linguisticReuse = alloySetOf complete
+      | otherwise = "Object"
     nonExistingRelationships = map ("  no " ++)
       $ toList allRelationshipNames \\ mapMaybe relationshipName relationships
-    nameFromTo = \case
-      Association {..} ->
-        Just (associationName, associationFrom, associationTo)
-      Aggregation {..} ->
-        Just (aggregationName, aggregationPart, aggregationWhole)
-      Composition {..} ->
-        Just (compositionName, compositionPart, compositionWhole)
-      Inheritance {} ->
-        Nothing
+    compositions = compositeConstraint
+      objectSet
+      $ nubOrd $ flip mapMaybe relationships
+      $ \case
+        Composition {compositionName} -> Just compositionName
+        _ -> Nothing
+      -- Figure 2.2, Rule 4, corrected, simplified
+
+nonInheritanceConstraints
+  :: LinguisticReuse
+  -> [Relationship String String]
+  -> String
+nonInheritanceConstraints linguisticReuse relationships
+  | ExtendsAnd FieldPlacement <- linguisticReuse
+  = ""
+  | otherwise
+  = [__i|
+      // Associations
+    #{unlines objectAttributes}
+    |]
+  where
     objectAttributes = concatMap
       (maybe [] (uncurry3 associationFromTo) . nameFromTo)
       relationships
@@ -438,15 +592,24 @@ pred cd#{index} {
       makeNonInheritanceLimits ((name ++) . ('.' :)) subsTo (limits from)
       ]
       where
-        subsCd = allSubclassesOf relationships
+        subsCd = case linguisticReuse of
+          None -> allSubclassesOf relationships
+          ExtendsAnd {} -> NE.singleton
         subsFrom = subsCd $ linking from
         subsTo = subsCd $ linking to
-    compositions = compositeConstraint
-      $ nubOrd $ flip mapMaybe relationships
-      $ \case
-        Composition {compositionName} -> Just compositionName
-        _ -> Nothing
-      -- Figure 2.2, Rule 4, corrected, simplified
+
+nameFromTo
+  :: Relationship a b
+  -> Maybe (b, LimitedLinking a, LimitedLinking a)
+nameFromTo = \case
+  Association {..} ->
+    Just (associationName, associationFrom, associationTo)
+  Aggregation {..} ->
+    Just (aggregationName, aggregationPart, aggregationWhole)
+  Composition {..} ->
+    Just (compositionName, compositionPart, compositionWhole)
+  Inheritance {} ->
+    Nothing
 
 {-|
 Generates inlined Alloy code equivalent to a combination of the first parts of
@@ -474,9 +637,22 @@ makeNonInheritanceLimits
   -> NonEmpty String
   -> (Int, Maybe Int)
   -> String
-makeNonInheritanceLimits nameLinking fromSet (low, maybeUp) =
+makeNonInheritanceLimits nameLinking fromSet limits =
   [i|  all o : #{alloySetOf $ toList fromSet} | |]
-  & case maybeUp of
+  & nonInheritanceLimits nameLinking limits
+
+{-|
+Reusable part of defining multiplicity constraints for a non-inheritance
+relationship.
+-}
+nonInheritanceLimits
+  :: (String -> String)
+  -> (Int, Maybe Int)
+  -> String
+  -- ^ String to prepend (if constraint needs to be set)
+  -> String
+nonInheritanceLimits nameLinking (low, maybeUp) =
+  case maybeUp of
     Nothing -> case low of
       0 -> const ""
       _ -> (++ [iii|#{linkCount} >= #{low}|])
@@ -495,10 +671,10 @@ makeNonInheritanceLimits nameLinking fromSet (low, maybeUp) =
 Generates inlined, simplified Alloy code
 equivalent to the @Composition@ predicate.
 -}
-compositeConstraint :: [String] -> String
-compositeConstraint nameSet =
+compositeConstraint :: String -> [String] -> String
+compositeConstraint objectSet nameSet =
   maybe ""
-    (\usedFieldCount -> [i|  all o : Object | #{usedFieldCount} =< 1|])
+    (\usedFieldCount -> [i|  all o : #{objectSet} | #{usedFieldCount} =< 1|])
     $ alloyPlus
     $ (`map` toList nameSet) $ \fieldName ->
       [iii|\#o.#{fieldName}|]

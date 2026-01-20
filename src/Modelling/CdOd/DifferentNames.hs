@@ -56,10 +56,12 @@ import Modelling.Auxiliary.Output (
   hoveringInformation,
   simplifiedInformation,
   uniform,
+  extra,
   )
 import Modelling.CdOd.Auxiliary.Util
 import Modelling.CdOd.CD2Alloy.Transform (
-  LinguisticReuse (None),
+  ExtendsAnd (NothingMore),
+  LinguisticReuse (ExtendsAnd),
   combineParts,
   createRunCommand,
   mergeParts,
@@ -111,12 +113,13 @@ import Modelling.Types (
   )
 
 import Control.Applicative              (Alternative ((<|>)))
-import Control.Monad.Catch              (MonadThrow, throwM)
+import Control.Monad.Catch              (MonadCatch, MonadThrow, throwM)
 import Control.Monad.Extra              (whenJust)
 import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
   GenericOutputCapable (..),
   LangM,
+  Language,
   OutputCapable,
   Rated,
   ($=<<),
@@ -154,6 +157,7 @@ import Data.List (
   singleton,
   sort,
   )
+import Data.Map (Map)
 import Data.Maybe (
   catMaybes,
   isJust,
@@ -186,8 +190,7 @@ data DifferentNamesInstance = DifferentNamesInstance {
     mapping  :: NameMapping,
     linkShuffling :: ShufflingOption String,
     taskText :: !DifferentNamesTaskText,
-    -- | whether every relationship has an associated link (in the mapping)
-    usesAllRelationships :: Bool
+    addText :: Maybe (Map Language String)
   } deriving (Eq, Generic, Read, Show)
 
 checkDifferentNamesInstance :: DifferentNamesInstance -> Maybe String
@@ -228,7 +231,8 @@ data DifferentNamesConfig
     timeout          :: !(Maybe Int),
     -- | Obvious means here that each individual relationship to link mapping
     -- can be made without considering other relationships.
-    withObviousMapping :: !(Maybe Bool)
+    withObviousMapping :: !(Maybe Bool),
+    extraText :: Maybe (Map Language String)
   } deriving (Generic, Read, Show)
 
 checkDifferentNamesConfig :: DifferentNamesConfig -> Maybe String
@@ -293,7 +297,8 @@ defaultDifferentNamesConfig = DifferentNamesConfig {
     withNonTrivialInheritance = Just True,
     withObviousMapping = Nothing,
     maxInstances     = Just 200,
-    timeout          = Nothing
+    timeout          = Nothing,
+    extraText        = Nothing
   }
 
 newtype ShowName = ShowName { showName' :: Name }
@@ -302,7 +307,7 @@ instance Show ShowName where
   show = showName . showName'
 
 mappingShow :: [(Name, Name)] -> [(ShowName, ShowName)]
-mappingShow = fmap (bimap ShowName ShowName)
+mappingShow = map (bimap ShowName ShowName)
 
 type DifferentNamesTaskText = [SpecialOutput DifferentNamesTaskTextElement]
 
@@ -335,8 +340,10 @@ toTaskText
   => FilePath
   -> DifferentNamesInstance
   -> LangM m
-toTaskText path task =
+toTaskText path task = do
   specialToOutputCapable (toTaskSpecificText path task) (taskText task)
+  extra $ addText task
+  pure ()
 
 toTaskSpecificText
   :: (
@@ -419,7 +426,7 @@ defaultDifferentNamesTaskText = [
   ]
 
 differentNamesInitial :: [(Name, Name)]
-differentNamesInitial = bimap Name Name <$> [("a", "x"), ("b", "y")]
+differentNamesInitial = map (bimap Name Name) [("a", "x"), ("b", "y")]
 
 differentNamesSyntax
   :: OutputCapable m
@@ -499,7 +506,7 @@ differentNamesSolution :: DifferentNamesInstance -> [(Name, Name)]
 differentNamesSolution = BM.toAscList . nameMapping . mapping
 
 differentNames
-  :: (MonadAlloy m, MonadThrow m)
+  :: (MonadAlloy m, MonadCatch m)
   => DifferentNamesConfig
   -> Int
   -> Int
@@ -532,71 +539,73 @@ using 'defaultDifferentNamesConfig'.
 defaultDifferentNamesInstance :: DifferentNamesInstance
 defaultDifferentNamesInstance = DifferentNamesInstance {
   cDiagram = ClassDiagram {
-    classNames = ["C", "A", "D", "B"],
+    classNames = ["D", "B", "C", "A"],
     relationships = [
-      Inheritance {subClass = "D", superClass = "A"},
       Composition {
         compositionName = "a",
         compositionPart = LimitedLinking {
-          linking = "C",
+          linking = "B",
           limits = (2, Nothing)
           },
         compositionWhole = LimitedLinking {
-          linking = "B",
-          limits = (0, Just 1)
-          }
-        },
-      Association {
-        associationName = "b",
-        associationFrom = LimitedLinking {
-          linking = "A",
-          limits = (0, Nothing)
-          },
-        associationTo = LimitedLinking {
-          linking = "C",
+          linking = "D",
           limits = (0, Just 1)
           }
         },
       Aggregation {
-        aggregationName = "c",
+        aggregationName = "b",
         aggregationPart = LimitedLinking {
-          linking = "B",
+          linking = "D",
           limits = (0, Just 2)
           },
         aggregationWhole = LimitedLinking {
-          linking = "D",
+          linking = "A",
           limits = (0, Just 2)
           }
+        },
+      Association {
+        associationName = "c",
+        associationFrom = LimitedLinking {
+          linking = "C",
+          limits = (0, Nothing)
+          },
+        associationTo = LimitedLinking {
+          linking = "B",
+          limits = (0, Just 1)
+          }
+        },
+      Inheritance {
+        subClass = "A",
+        superClass = "C"
         }
       ]
     },
   cdDrawSettings = defaultCdDrawSettings,
   oDiagram = ObjectDiagram {
     objects = [
-      Object {isAnonymous = True, objectName = "d", objectClass = "D"},
-      Object {isAnonymous = True, objectName = "c1", objectClass = "C"},
-      Object {isAnonymous = True, objectName = "c2", objectClass = "C"},
-      Object {isAnonymous = True, objectName = "b", objectClass = "B"},
-      Object {isAnonymous = True, objectName = "d1", objectClass = "D"},
-      Object {isAnonymous = True, objectName = "c", objectClass = "C"}
+      Object {isAnonymous = True, objectName = "a1", objectClass = "A"},
+      Object {isAnonymous = True, objectName = "a",  objectClass = "A"},
+      Object {isAnonymous = True, objectName = "d",  objectClass = "D"},
+      Object {isAnonymous = True, objectName = "b",  objectClass = "B"},
+      Object {isAnonymous = True, objectName = "b1", objectClass = "B"}
       ],
     links = [
-      Link {linkName = "y", linkFrom = "c", linkTo = "b"},
-      Link {linkName = "x", linkFrom = "d1", linkTo = "c1"},
-      Link {linkName = "z", linkFrom = "b", linkTo = "d1"},
-      Link {linkName = "x", linkFrom = "d", linkTo = "c2"},
-      Link {linkName = "y", linkFrom = "c1", linkTo = "b"}
+      Link {linkName = "x", linkFrom = "b",  linkTo = "d"},
+      Link {linkName = "y", linkFrom = "d",  linkTo = "a1"},
+      Link {linkName = "x", linkFrom = "b1", linkTo = "d"},
+      Link {linkName = "z", linkFrom = "a",  linkTo = "b1"},
+      Link {linkName = "z", linkFrom = "a1", linkTo = "b1"}
       ]
     },
   showSolution = False,
-  mapping = toNameMapping $ BM.fromList [("a", "y"), ("b", "x"), ("c", "z")],
+  mapping = toNameMapping $ BM.fromList [("a", "x"), ("b", "y"), ("c", "z")],
   linkShuffling = ConsecutiveLetters,
   taskText = defaultDifferentNamesTaskText,
-  usesAllRelationships = True
+  addText = Nothing
   }
 
 getDifferentNamesTask
-  :: (MonadAlloy m, MonadRandom m, MonadThrow m)
+  :: (MonadAlloy m, MonadCatch m, MonadRandom m)
   => m DifferentNamesInstance
   -> DifferentNamesConfig
   -> Cd
@@ -613,6 +622,7 @@ getDifferentNamesTask tryNext DifferentNamesConfig {..} cd = do
         runCmd = foldr (\(n, _) -> (++ " and (not cd" ++ show n ++ ")")) "cd0" cds'
         onlyCd0 = createRunCommand
           runCmd
+          Nothing
           (length $ classNames cd)
           objectConfig
           (concatMap relationships cds)
@@ -635,7 +645,8 @@ getDifferentNamesTask tryNext DifferentNamesConfig {..} cd = do
         (usesEveryRelationshipName objectProperties)
         isCompleteMapping
         then do
-        od1' <- either error id <$> runExceptT (alloyInstanceToOd labels od1)
+        od1' <- either error id
+          <$> runExceptT (alloyInstanceToOd Nothing labels od1)
         od1'' <- anonymiseObjects (anonymousObjectProportion objectProperties) od1'
         return $ DifferentNamesInstance {
               cDiagram  = cd1,
@@ -649,13 +660,13 @@ getDifferentNamesTask tryNext DifferentNamesConfig {..} cd = do
               mapping   = toNameMapping bm',
               linkShuffling = ConsecutiveLetters,
               taskText = defaultDifferentNamesTaskText,
-              usesAllRelationships = isCompleteMapping
+              addText = extraText
               }
         else tryNext
   where
     renameEdges bm = either (error . show) id . bitraverse pure (`BM.lookup` bm)
     alloyFor n cd' = transform
-      None
+      (ExtendsAnd NothingMore)
       cd'
       Nothing
       []
@@ -714,7 +725,7 @@ instance RandomiseLayout DifferentNamesInstance where
       mapping = mapping,
       linkShuffling = linkShuffling,
       taskText = taskText,
-      usesAllRelationships = usesAllRelationships
+      addText = addText
       }
 
 renameInstance
@@ -749,5 +760,5 @@ renameInstance inst@DifferentNamesInstance {..} names' nonInheritances' linkNs' 
     mapping   = toNameMapping bm',
     linkShuffling = shuffling,
     taskText = taskText,
-    usesAllRelationships = usesAllRelationships
+    addText = addText
     }
