@@ -126,7 +126,7 @@ import Control.Monad.Random             (evalRandT, mkStdGen)
 import System.Random.Shuffle            (shuffleM)
 import Control.Monad.Trans.Maybe        (MaybeT (MaybeT), runMaybeT)
 import Control.Monad.Trans.Random       (RandT)
-import Data.Maybe                       (fromMaybe)
+import Data.Maybe                       (fromMaybe, isJust)
 import System.Random.Internal           (StdGen)
 import Data.GraphViz                    (GraphvizCommand (..))
 #if !MIN_VERSION_base(4,18,0)
@@ -461,47 +461,34 @@ try conf = do
         let isValidInputPlaceUsage =
               if requiredFusableTransitionsConsuming == 0
               then \_ _ _ -> True
-              else \maybePregeneratedPlace vor nach ->
+              else \maybePregeneratedInputPlace vor nach ->
                  -- For each place in vor: if it's a forbidden input place, only allow if vor == nach == [that place]
                  all (\place -> not (BM.memberR place transitionConsumingBimap) || (vor == [place] && nach == [place])) vor
                  -- If t has a pregenerated input place, prevent that place from appearing in nach
-                 && maybe True (`notElem` nach) maybePregeneratedPlace
+                 && maybe True (`notElem` nach) maybePregeneratedInputPlace
             isValidOutputPlaceUsage =
               if requiredFusableTransitionsProducing == 0
               then \_ _ _ -> True
-              else \maybePregeneratedPlace vor nach ->
+              else \maybePregeneratedOutputPlace vor nach ->
                  -- For each place in nach: if it's a forbidden output place, only allow if vor == nach == [that place]
                  all (\place -> not (BM.memberR place transitionProducingBimap) || (vor == [place] && nach == [place])) nach
                  -- If t has a pregenerated output place, prevent that place from appearing in vor
-                 && maybe True (`notElem` vor) maybePregeneratedPlace
+                 && maybe True (`notElem` vor) maybePregeneratedOutputPlace
         return $ netLimitsFiltered
           $ \inputPlacesAction outputPlacesAction t ->
           -- Generate a valid connection for a transition, with retry logic
           let
             consumingLookup = BM.lookup t transitionConsumingBimap
             producingLookup = BM.lookup t transitionProducingBimap
+            vorAction = if isJust consumingLookup then return [] else inputPlacesAction
+            nachAction = if isJust producingLookup then return [] else outputPlacesAction
             go = do
-              vor <- case consumingLookup of
-                       Just _ -> return []
-                       Nothing -> inputPlacesAction
-              nach <- case producingLookup of
-                        Just _ -> return []
-                        Nothing -> outputPlacesAction
+              vor <- vorAction
+              nach <- nachAction
               if isValidInputPlaceUsage consumingLookup vor nach && isValidOutputPlaceUsage producingLookup vor nach
-                then return (vor, nach)
+                then return (maybe vor (:vor) consumingLookup, t, maybe nach (:nach) producingLookup)
                 else go  -- Retry if invalid
-          in do
-              (vor, nach) <- go
-              case consumingLookup of
-                Just preVor
-                  -> return (preVor : vor, t, nach)
-                _
-                  -> case producingLookup of
-                       Just preNach
-                         -> return (vor, t, preNach : nach)
-                       _
-                         -> return (vor, t, nach)
-                -- impossible for both lookups to return Just
+          in go
     n <- MaybeT $ netGenerator
       (arrowDensityConstraints conf)
       (numPlaces conf)
