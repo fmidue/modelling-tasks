@@ -1,0 +1,76 @@
+---
+name: Haskell Nightly CI
+
+on:
+  schedule:
+    - cron: '0 3 * * *' # daily at 3 am
+
+permissions: read-all
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+
+    outputs:
+      has-changes: ${{ steps.new-commits.outputs.has-new-commits }}
+
+    steps:
+      - name: Check for new commits today
+        id: new-commits
+        uses: adriangl/check-new-commits-action@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          seconds: 86400 # One day in seconds
+
+  build_and_test:
+    needs: check
+    if: needs.check.outputs.has-changes == 'true'
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Install Packages
+        uses: delgurth/get-package@v6
+        with:
+          apt-get: graphviz texlive-base texlive-latex-base
+
+      - uses: actions/checkout@v4
+
+      - name: Restore Stack on Unix
+        id: cache-stack-unix-restore
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/.stack
+          key: ${{ runner.os }}-stack-global-${{ hashFiles('stack-apps.yaml') }}-${{ hashFiles('package.yaml') }}
+          fail-on-cache-miss: true
+
+      - name: Restore .stack-work
+        id: cache-stack-work-restore
+        uses: actions/cache/restore@v4
+        with:
+          path: .stack-work
+          key: ${{ runner.os }}-stack-work-${{ hashFiles('stack-apps.yaml') }}-${{ hashFiles('package.yaml') }}-${{ hashFiles('**/*.hs') }}
+          fail-on-cache-miss: true
+
+      - name: Setup stack
+        uses: haskell-actions/setup@v2
+        with:
+          enable-stack: true
+          stack-no-global: true
+
+      - name: Build and test
+        id: test-unix
+        run: |
+          set -ex
+          # shellcheck disable=SC2086
+          stack --no-terminal test --stack-yaml=stack-apps.yaml --coverage \
+            --bench --no-run-benchmarks --haddock --no-haddock-deps \
+            --test-arguments="--times"
+          set +ex
+
+      - name: Archive test artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: artifacts
+        if: ${{ failure() && steps.test-unix.conclusion == 'failure' }}

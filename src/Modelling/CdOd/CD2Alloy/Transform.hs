@@ -48,6 +48,7 @@ also the following Alloy predicates, have been inlined
  * @Composition@
 -}
 module Modelling.CdOd.CD2Alloy.Transform (
+  LinguisticReuse (..),
   Parts {- only for legacy-apps: -} (..),
   combineParts,
   createRunCommand,
@@ -92,6 +93,17 @@ data Parts = Parts {
   }
 
 {-|
+To what degree, high-level Allow language features should be used
+in order to express relationships directly.
+
+Expressiveness is increased when relying less on Alloy language features.
+Conciseness is increased when relying more on Alloy language features.
+-}
+data LinguisticReuse
+  = None
+  -- ^ not at all
+
+{-|
 Generates Alloy code to generate object diagrams for a given class diagram.
 The given class diagram must be valid otherwise the code generation
 might not terminate.
@@ -102,7 +114,9 @@ with the generated Alloy code for other (similar) class diagrams.
 (See 'mergeParts', 'combineParts' and 'createRunCommand')
 -}
 transform
-  :: Cd
+  :: LinguisticReuse
+  -- ^ the degree of linguistic reuse to apply during the translation
+  -> Cd
   -- ^ the class diagram for which to generate the code
   -> Maybe [String]
   -- ^ all relationship names to consider
@@ -120,6 +134,7 @@ transform
   -- ^ a time stamp
   -> Parts
 transform
+  None
   ClassDiagram {classNames, relationships}
   maybeAllRelationshipNames
   abstractClassNames
@@ -444,8 +459,7 @@ makeNonInheritance
   -> [String]
   -> String
 makeNonInheritance fromSet name toSet = [i|
-  #{name}.Object in #{alloySetOf fromSet}
-  Object.#{name} in #{alloySetOf toSet}|]
+  #{name} in #{alloySetOfParens fromSet} -> #{alloySetOfParens toSet}|]
   -- alternative to @ObjectFieldNames@ predicate inlined and simplified
 
 {-|
@@ -534,3 +548,7 @@ alloySetOf :: [String] -> String
 alloySetOf xs
   | null xs = "none"
   | otherwise = intercalate " + " xs
+
+alloySetOfParens :: [String] -> String
+alloySetOfParens xs@(_:_:_) = [i|(#{alloySetOf xs})|]
+alloySetOfParens xs = alloySetOf xs

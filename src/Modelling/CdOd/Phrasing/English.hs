@@ -10,6 +10,7 @@ module Modelling.CdOd.Phrasing.English (
 import Modelling.Types (
   Change (..),
   )
+import Modelling.CdOd.Auxiliary.Util    (oneAndOther)
 import Modelling.CdOd.Types (
   AnyRelationship,
   DefaultedLimitedLinking (..),
@@ -160,7 +161,7 @@ phraseRelation OmittedDefaultMultiplicities {..} article = curry3 $ \case
         #{consonantArticle article} relationship
         that makes #{linking aggregationWhole}
         an aggregation of #{linking aggregationPart}s
-        #{phraseParticipations kind part whole}
+        #{phraseParticipations kind whole part}
         |]
   (kind, _, Right Composition {..})
     | part <- defaultedAssociation compositionPart
@@ -175,7 +176,7 @@ phraseRelation OmittedDefaultMultiplicities {..} article = curry3 $ \case
         #{consonantArticle article} relationship
         that makes #{linking compositionWhole}
         a composition of #{linking compositionPart}s
-        #{phraseParticipations kind part whole}
+        #{phraseParticipations kind whole part}
         |]
   where
     defaultedCompositionWhole =
@@ -183,16 +184,6 @@ phraseRelation OmittedDefaultMultiplicities {..} article = curry3 $ \case
     defaultedAssociation =
       defaultedLimitedLinking associationOmittedDefaultMultiplicity
     defaultedInheritance = defaultedLimitedLinking Nothing
-
-oneAndOther
-  :: String
-  -> String
-  -> (DefaultedLimitedLinking, DefaultedLimitedLinking)
-  -> (DefaultedLimitedLinking, DefaultedLimitedLinking)
-oneAndOther linking1 linking2 (limit1, limit2) = (
-  limit1 {defaultedLinking = linking1},
-  limit2 {defaultedLinking = linking2}
-  )
 
 selfParticipatesPartWhole
   :: PhrasingKind
@@ -228,29 +219,29 @@ denotions
   :: DefaultedLimitedLinking
   -> DefaultedLimitedLinking
   -> String
-denotions from to = case (defaultedRange from, defaultedRange to) of
+denotions one other = case (defaultedRange one, defaultedRange other) of
   (Nothing, Nothing) -> [iii|which has not denoted multiplicities at all|]
-  (Nothing, Just toRange) -> [iii|
-     which has no multiplicity denoted near #{defaultedLinking from}
-     and #{toRange} near #{defaultedLinking to}
+  (Nothing, Just otherRange) -> [iii|
+     which has no multiplicity denoted near #{defaultedLinking one}
+     and #{otherRange} near #{defaultedLinking other}
      |]
-  (Just fromRange, Nothing) -> [iii|
-     which has no multiplicity denoted near #{defaultedLinking to}
-     and #{fromRange} near #{defaultedLinking from}
+  (Just oneRange, Nothing) -> [iii|
+     which has no multiplicity denoted near #{defaultedLinking other}
+     and #{oneRange} near #{defaultedLinking one}
      |]
-  (Just fromRange, Just toRange) -> [iii|
+  (Just oneRange, Just otherRange) -> [iii|
      which has denoted the multiplicity
-     #{fromRange} near #{defaultedLinking from}
-     and #{toRange} near #{defaultedLinking to}
+     #{oneRange} near #{defaultedLinking one}
+     and #{otherRange} near #{defaultedLinking other}
      |]
 
 participations
   :: DefaultedLimitedLinking
   -> DefaultedLimitedLinking
   -> String
-participations from to = [iii|
-  where #{participates from}
-  and #{participates to}
+participations one other = [iii|
+  where #{participates one}
+  and #{participates other}
   |]
 
 participates :: DefaultedLimitedLinking -> String

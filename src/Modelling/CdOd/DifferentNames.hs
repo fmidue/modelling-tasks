@@ -59,6 +59,7 @@ import Modelling.Auxiliary.Output (
   )
 import Modelling.CdOd.Auxiliary.Util
 import Modelling.CdOd.CD2Alloy.Transform (
+  LinguisticReuse (None),
   combineParts,
   createRunCommand,
   mergeParts,
@@ -580,11 +581,11 @@ defaultDifferentNamesInstance = DifferentNamesInstance {
       Object {isAnonymous = True, objectName = "c", objectClass = "C"}
       ],
     links = [
-      Link {linkName = "y", linkFrom = "c1", linkTo = "b"},
+      Link {linkName = "y", linkFrom = "c", linkTo = "b"},
       Link {linkName = "x", linkFrom = "d1", linkTo = "c1"},
       Link {linkName = "z", linkFrom = "b", linkTo = "d1"},
       Link {linkName = "x", linkFrom = "d", linkTo = "c2"},
-      Link {linkName = "y", linkFrom = "c2", linkTo = "b"}
+      Link {linkName = "y", linkFrom = "c1", linkTo = "b"}
       ]
     },
   showSolution = False,
@@ -654,6 +655,7 @@ getDifferentNamesTask tryNext DifferentNamesConfig {..} cd = do
   where
     renameEdges bm = either (error . show) id . bitraverse pure (`BM.lookup` bm)
     alloyFor n cd' = transform
+      None
       cd'
       Nothing
       []

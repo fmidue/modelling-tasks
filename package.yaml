@@ -146,7 +146,7 @@ library:
     - Modelling.Types
 tests:
   modelling-tasks-test:
-    main: Spec.hs
+    main: Main.hs
     source-dirs:
       - test
     ghc-options:
@@ -158,6 +158,7 @@ tests:
       - QuickCheck
       - HUnit
       - hspec
+      - hspec-core
       - process
       - random
     when:

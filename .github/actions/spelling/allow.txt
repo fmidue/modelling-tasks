@@ -23,9 +23,11 @@ Leftrightarrow
 Lexer
 Linkname
 Modellierung
+Multiplizitäten
 NTree
 Nachbereich
 Neato
+NOINLINE
 Perim
 Petrinetz
 Petrinetze
@@ -130,5 +132,6 @@ utf
 varepsilon
 vphantom
 weakenings
+xdescribe
 xlink
 xss
