@@ -45,7 +45,7 @@ module Modelling.PetriNet.Reach.Deadlock (
   exampleInstance,
 ) where
 
-import qualified Data.Bimap                       as BM (fromList, lookup, member, memberR)
+import qualified Data.Bimap                       as BM (fromList, lookup, memberR)
 import qualified Data.Map                         as M (fromList)
 import qualified Data.Set                         as S (fromList, toList)
 
@@ -461,40 +461,42 @@ try conf = do
         let isValidInputPlaceUsage =
               if requiredFusableTransitionsConsuming == 0
               then \_ _ _ -> True
-              else \t vor nach ->
+              else \maybePregeneratedPlace vor nach ->
                  -- For each place in vor: if it's a forbidden input place, only allow if vor == nach == [that place]
                  all (\place -> not (BM.memberR place transitionConsumingBimap) || (vor == [place] && nach == [place])) vor
                  -- If t has a pregenerated input place, prevent that place from appearing in nach
-                 && maybe True (`notElem` nach) (BM.lookup t transitionConsumingBimap)
+                 && maybe True (`notElem` nach) maybePregeneratedPlace
             isValidOutputPlaceUsage =
               if requiredFusableTransitionsProducing == 0
               then \_ _ _ -> True
-              else \t vor nach ->
+              else \maybePregeneratedPlace vor nach ->
                  -- For each place in nach: if it's a forbidden output place, only allow if vor == nach == [that place]
                  all (\place -> not (BM.memberR place transitionProducingBimap) || (vor == [place] && nach == [place])) nach
                  -- If t has a pregenerated output place, prevent that place from appearing in vor
-                 && maybe True (`notElem` vor) (BM.lookup t transitionProducingBimap)
+                 && maybe True (`notElem` vor) maybePregeneratedPlace
         return $ netLimitsFiltered
           $ \inputPlacesAction outputPlacesAction t ->
           -- Generate a valid connection for a transition, with retry logic
           let
+            consumingLookup = BM.lookup t transitionConsumingBimap
+            producingLookup = BM.lookup t transitionProducingBimap
             go = do
-              vor <- if BM.member t transitionConsumingBimap
-                     then return []
-                     else inputPlacesAction
-              nach <- if BM.member t transitionProducingBimap
-                      then return []
-                      else outputPlacesAction
-              if isValidInputPlaceUsage t vor nach && isValidOutputPlaceUsage t vor nach
+              vor <- case consumingLookup of
+                       Just _ -> return []
+                       Nothing -> inputPlacesAction
+              nach <- case producingLookup of
+                        Just _ -> return []
+                        Nothing -> outputPlacesAction
+              if isValidInputPlaceUsage consumingLookup vor nach && isValidOutputPlaceUsage producingLookup vor nach
                 then return (vor, nach)
                 else go  -- Retry if invalid
           in do
               (vor, nach) <- go
-              case BM.lookup t transitionConsumingBimap of
+              case consumingLookup of
                 Just preVor
                   -> return (preVor : vor, t, nach)
                 _
-                  -> case BM.lookup t transitionProducingBimap of
+                  -> case producingLookup of
                        Just preNach
                          -> return (vor, t, preNach : nach)
                        _
