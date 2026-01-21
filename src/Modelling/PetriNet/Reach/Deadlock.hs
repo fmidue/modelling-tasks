@@ -156,7 +156,7 @@ deadlockTask
   -> DeadlockInstance s t
   -> LangM m
 deadlockTask showInputHelp path inst = do
-  lift (drawToFile (not $ showPlaceNames inst) path (drawUsing inst) (petriNet inst))
+  lift (drawToFile (not $ showPlaceNames inst) False path (drawUsing inst) (petriNet inst))
   $>>= \img ->
     reportReachFor
     showInputHelp
