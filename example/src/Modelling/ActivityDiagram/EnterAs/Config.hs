@@ -5,6 +5,8 @@ module Modelling.ActivityDiagram.EnterAs.Config where
 import Modelling.ActivityDiagram.Config (AdConfig(..))
 import Modelling.ActivityDiagram.EnterAS (EnterASConfig(..))
 
+import Control.OutputCapable.Blocks     (ExtraText (..))
+
 {-|
 points: 0.15
 average generation time per instance: 3:30min
@@ -27,7 +29,7 @@ task2023_35 = EnterASConfig {
   objectNodeOnEveryPath = Just True,
   answerLength = (10, 10),
   printSolution = True,
-  extraText = Nothing
+  extraText = NoExtraText
   }
 
 {-|
@@ -52,7 +54,7 @@ task2023_36 = EnterASConfig {
   objectNodeOnEveryPath = Just False,
   answerLength = (14, 14),
   printSolution = True,
-  extraText = Nothing
+  extraText = NoExtraText
   }
 
 {-|
@@ -77,7 +79,7 @@ task2024_41 = EnterASConfig {
   objectNodeOnEveryPath = Just True,
   answerLength = (11, 11),
   printSolution = True,
-  extraText = Nothing
+  extraText = NoExtraText
   }
 
 {-|

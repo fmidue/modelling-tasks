@@ -1,11 +1,14 @@
 {-# LANGUAGE ApplicativeDo #-}
+{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# Language DuplicateRecordFields #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE NamedFieldPuns #-}
 {-# Language QuasiQuotes #-}
+{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE TupleSections #-}
+{-# LANGUAGE DeriveDataTypeable #-}
 
 module Modelling.PetriNet.MatchToMath (
   GraphToMathInstance,
@@ -43,7 +46,7 @@ import Capabilities.Alloy               (MonadAlloy, getInstances)
 import Capabilities.Cache               (MonadCache)
 import Capabilities.Diagrams            (MonadDiagrams)
 import Capabilities.Graphviz            (MonadGraphviz)
-import Modelling.Auxiliary.Common       (Object (oName), oneOf)
+import Modelling.Auxiliary.Common       (Object (oName), findFittingRandomElements)
 import Modelling.Auxiliary.Output       (
   hoveringInformation,
   )
@@ -59,7 +62,7 @@ import Modelling.PetriNet.Alloy (
   signatures,
   taskInstance,
   )
-import Modelling.PetriNet.Diagram       (cacheNet)
+import Modelling.PetriNet.Diagram       (cacheNet, isNetDrawable)
 import Modelling.PetriNet.LaTeX         (toPetriMath)
 import Modelling.PetriNet.Find (
   prohibitHidePlaceNames,
@@ -85,6 +88,7 @@ import Modelling.PetriNet.Types (
   PetriNode (..),
   SimpleNode (..),
   SimplePetriLike,
+  allDrawSettings,
   basicConfigBitWidthInput,
   checkActivatedSourceConfig,
   checkBasicConfig,
@@ -95,32 +99,34 @@ import Modelling.PetriNet.Types (
   defaultBasicConfig,
   defaultChangeConfig,
   defaultGraphConfig,
-  drawSettingsWithCommand,
   isPlaceNode,
-  manyRandomDrawSettings,
   mapChange,
   petriScopeBitWidth,
   prohibitPatchworkRenderer,
-  randomDrawSettings,
   shuffleNames,
   )
 
+import Autolib.Reader.Class             (Reader)
+import Autolib.ToDoc                    (ToDoc)
 import Control.Applicative              (Alternative ((<|>)))
-import Control.Arrow                    (first)
-import Control.Monad.Catch              (MonadThrow)
+import Control.Monad                    (when)
+import Control.Monad.Catch              (MonadCatch, MonadThrow)
 import Control.OutputCapable.Blocks       (
   ArticleToUse (DefiniteArticle),
+  ExtraText (..),
   GenericOutputCapable (..),
   LangM,
   Language,
   OutputCapable,
   ($=<<),
   english,
+  extra,
   german,
   singleChoice,
   translate,
   translations,
   )
+import Control.Monad.Extra              (findM)
 import Control.Monad.Random             (
   MonadRandom,
   RandT,
@@ -129,9 +135,11 @@ import Control.Monad.Random             (
   evalRandT,
   mkStdGen,
   )
+import Control.Monad.Trans              (lift)
 import Data.Bifoldable                  (Bifoldable (bifoldMap))
 import Data.Bifunctor                   (Bifunctor (bimap, second))
 import Data.Bitraversable               (Bitraversable (bitraverse), bimapM)
+import Data.Data                        (Data, Typeable)
 import Data.GraphViz                    (GraphvizCommand (Circo, Dot, Fdp, Sfdp))
 import Data.Map                         (Map, fromList, mapWithKey, toList)
 import Data.String.Interpolate          (i)
@@ -172,8 +180,9 @@ data MathConfig = MathConfig {
   printSolution :: Bool,
   useDifferentGraphLayouts :: Bool,
   wrongInstances :: Int,
-  alloyConfig :: AlloyConfig
-  } deriving (Generic, Read, Show)
+  alloyConfig :: AlloyConfig,
+  extraText :: ExtraText
+  } deriving (Generic, Read, Reader, Show, ToDoc)
 
 defaultMathConfig :: MathConfig
 defaultMathConfig = MathConfig {
@@ -188,15 +197,17 @@ defaultMathConfig = MathConfig {
   printSolution = False,
   useDifferentGraphLayouts = False,
   wrongInstances = 3,
-  alloyConfig = defaultAlloyConfig
+  alloyConfig = defaultAlloyConfig,
+  extraText = NoExtraText
   }
 
 data MatchInstance a b = MatchInstance {
   from :: a,
   showSolution :: Bool,
-  to :: Map Int (Bool, b)
+  to :: Map Int (Bool, b),
+  addText :: ExtraText
   }
-  deriving (Functor, Generic, Read, Show)
+  deriving (Data, Functor, Generic, Read, Reader, Show, ToDoc)
 
 instance Bifoldable MatchInstance where
   bifoldMap f g m@MatchInstance {} = f (from m) `mappend` foldMap (g . snd) (to m)
@@ -204,7 +215,8 @@ instance Bifoldable MatchInstance where
 instance Bifunctor MatchInstance where
   bimap f g m@MatchInstance {} = m {
     from = f $ from m,
-    to   = second g <$> to m
+    to   = second g <$> to m,
+    addText = addText m
     }
 
 instance Bitraversable MatchInstance where
@@ -212,6 +224,7 @@ instance Bitraversable MatchInstance where
     <$> f (from m)
     <*> pure (showSolution m)
     <*> traverse (traverse g) (to m)
+    <*> pure (addText m)
 
 evalWithStdGen
   :: Monad m
@@ -221,14 +234,34 @@ evalWithStdGen
 evalWithStdGen = flip evalRandT . mkStdGen
 
 writeDia
-  :: (MonadCache m, MonadDiagrams m, MonadGraphviz m, MonadThrow m, Net p n)
+  :: (
+    Data (n String),
+    Data (p n String),
+    MonadCache m,
+    MonadDiagrams m,
+    MonadGraphviz m,
+    MonadThrow m,
+    Net p n,
+    Typeable n,
+    Typeable p
+    )
   => FilePath
   -> MatchInstance (Drawable (p n String)) b
   -> m (MatchInstance FilePath b)
-writeDia path = bimapM (\(n, ds) -> writeGraph ds path "" n) pure
+writeDia path = bimapM (\(n, ds) -> writeGraph ds path n) pure
 
 writeDias
-  :: (MonadCache m, MonadDiagrams m, MonadGraphviz m, MonadThrow m, Net p n)
+  :: (
+    Data (n String),
+    Data (p n String),
+    MonadCache m,
+    MonadDiagrams m,
+    MonadGraphviz m,
+    MonadThrow m,
+    Net p n,
+    Typeable n,
+    Typeable p
+    )
   => FilePath
   -> MatchInstance a (Drawable (p n String))
   -> m (MatchInstance a FilePath)
@@ -237,52 +270,68 @@ writeDias path inst =
         from = from inst,
         to   = mapWithKey (\k -> second (show k,)) $ to inst
         }
-  in bimapM pure (\(l, (n, d)) -> writeGraph d path l n) inst'
+  in bimapM pure (\(_, (n, d)) -> writeGraph d path n) inst'
 
 writeGraph
-  :: (MonadCache m, MonadDiagrams m, MonadGraphviz m, MonadThrow m, Net p n)
+  :: (
+    Data (n String),
+    Data (p n String),
+    MonadCache m,
+    MonadDiagrams m,
+    MonadGraphviz m,
+    MonadThrow m,
+    Net p n,
+    Typeable n,
+    Typeable p
+    )
   => DrawSettings
   -> FilePath
-  -> String
   -> p n String
   -> m FilePath
-writeGraph drawSettings path index pl =
+writeGraph drawSettings path pl =
   cacheNet
-    (path ++ "graph" ++ index)
-    id
+    path
     pl
     drawSettings
 
 graphToMath
-  :: (MonadAlloy m, MonadThrow m, Net p n)
+  :: (MonadAlloy m, MonadCatch m, MonadDiagrams m, MonadGraphviz m, Net p n)
   => MathConfig
   -> Int
   -> Int
   -> m (MatchInstance (Drawable (p n String)) Math)
-graphToMath c segment seed = evalWithStdGen seed $ do
-  ds <- randomDrawSettings (graphConfig c)
-  (d, m, ms) <-
-    matchToMath ds (map toPetriMath) c segment
-  matchMathInstance c d m $ map fst ms
+graphToMath config@MathConfig {..} segment seed = evalWithStdGen seed getInstance
+  where
+    getInstance = do
+      allShuffled <- shuffleM $ allDrawSettings graphConfig
+      (petri, m, changes) <- matchToMath config segment
+      let maths = map (toPetriMath . fst) changes
+      maybeDrawSettings <- findM (lift . isNetDrawable petri) allShuffled
+      maybe
+        getInstance
+        (\d -> matchMathInstance config (petri, d) m maths)
+        maybeDrawSettings
 
 mathToGraph
-  :: (MonadAlloy m, MonadFail m, MonadThrow m, Net p n)
+  :: (MonadAlloy m, MonadCatch m, MonadDiagrams m, MonadGraphviz m, Net p n)
   => MathConfig
   -> Int
   -> Int
   -> m (MatchInstance Math (Drawable (p n String)))
-mathToGraph c segment seed = evalWithStdGen seed $ do
-  (x, xs) <- second (flip zip) <$>
-    if useDifferentGraphLayouts c
-    then do
-      (x':xs') <- manyRandomDrawSettings (graphConfig c) (wrongInstances c + 1)
-      return (x', xs')
-    else do
-      s <- drawSettingsWithCommand (graphConfig c)
-        <$> oneOf (graphLayouts $ graphConfig c)
-      return (s, replicate (wrongInstances c) s)
-  (d, m, ds) <- matchToMath x xs c segment
-  matchMathInstance c m d $ map fst ds
+mathToGraph config@MathConfig {..} segment seed = evalWithStdGen seed getInstance
+  where
+    getInstance = do
+      (petri, math, changes) <- matchToMath config segment
+      let petriNets = map fst changes
+          allPetriNets = petri : petriNets
+          predicates = map (\x -> lift . isNetDrawable x) allPetriNets
+          availableLayouts = allDrawSettings graphConfig
+      maybeDrawSettings <- findFittingRandomElements useDifferentGraphLayouts availableLayouts predicates
+      case maybeDrawSettings of
+        Just (d : ds) ->
+          matchMathInstance config math (petri, d) $ zip petriNets ds
+        Just [] -> error "impossible"
+        Nothing -> getInstance
 
 matchMathInstance
   :: MonadRandom m
@@ -296,17 +345,23 @@ matchMathInstance c x y ys = do
   return $ MatchInstance {
     from = x,
     showSolution = printSolution c,
-    to = fromList $ zip [1..] ys'
+    to = fromList $ zip [1..] ys',
+    addText = extraText c
     }
 
 matchToMath
-  :: (MonadAlloy m, MonadThrow m, Net p n, RandomGen g)
-  => DrawSettings
-  -> ([p n String] -> [a])
-  -> MathConfig
+  :: (
+    MonadAlloy m,
+    MonadCatch m,
+    MonadDiagrams m,
+    MonadGraphviz m,
+    Net p n,
+    RandomGen g
+    )
+  => MathConfig
   -> Int
-  -> RandT g m (Drawable (p n String), Math, [(a, Change)])
-matchToMath ds toOutput config segment = do
+  -> RandT g m (p n String, Math, [(p n String, Change)])
+matchToMath config segment = do
   (f, net, math) <- netMathInstance config segment
   fList <- getInstances
     (Just $ toInteger $ generatedWrongInstances config)
@@ -317,9 +372,9 @@ matchToMath ds toOutput config segment = do
     then do
     alloyChanges <- mapM addChange fList'
     changes <- firstM parse `mapM` alloyChanges
-    let changes' = uncurry zip $ first toOutput (unzip changes)
-    return ((net, ds), math, changes')
-    else matchToMath ds toOutput config segment
+    let changes' = uncurry zip $ unzip changes
+    return (net, math, changes')
+    else matchToMath config segment
   where
     parse = fmap fst . parseRenamedNet (singleSig "this" "Nodes" "") "flow" "tokens"
 
@@ -352,10 +407,11 @@ mathInstance config inst = do
 
 graphToMathTask
   :: (MonadCache m, MonadDiagrams m, MonadGraphviz m, MonadThrow m, OutputCapable m)
-  => FilePath
+  => Bool
+  -> FilePath
   -> GraphToMathInstance
   -> LangM m
-graphToMathTask path task = do
+graphToMathTask showInputHelp path task = do
   paragraph $ translate $ do
     english "Consider the following graphical representation of a Petri net:"
     german "Betrachten Sie folgende grafische Darstellung eines Petrinetzes:"
@@ -366,10 +422,11 @@ graphToMathTask path task = do
   enumerateM
     (text . (++ ". ") . show)
     $ map (second (mathToOutput latex . snd)) $ toList (to task)
-  paragraph $ translate $ do
+  when showInputHelp $ do
+   paragraph $ translate $ do
     english [i|Please state your answer by giving the number of the matching representation only.|]
     german [i|Geben Sie Ihre Antwort durch Angabe der Nummer der passenden Repräsentation an.|]
-  paragraph $ do
+   paragraph $ do
     translate $ do
       english [i|Stating |]
       german [i|Die Angabe von |]
@@ -378,7 +435,9 @@ graphToMathTask path task = do
       english [i| as answer would indicate that representation 1 matches the given graphical representation (and the other mathematical representations don't).|]
       german [i| als Antwort würde bedeuten, dass Repräsentation 1 zur gegebenen grafischen Darstellung passt (und die anderen mathematischen Repräsentationen nicht).|]
     pure ()
-  paragraph hoveringInformation
+   pure ()
+  hoveringInformation True
+  extra $ addText task
   pure ()
 
 mathToOutput :: OutputCapable m => (a -> LangM m) -> PetriMath a -> LangM m
@@ -414,10 +473,11 @@ mathToOutput f pm = paragraph $ do
 
 mathToGraphTask
   :: (MonadCache m, MonadDiagrams m, MonadGraphviz m, MonadThrow m, OutputCapable m)
-  => FilePath
+  => Bool
+  -> FilePath
   -> MathToGraphInstance
   -> LangM m
-mathToGraphTask path task = do
+mathToGraphTask showInputHelp path task = do
   paragraph $ translate $ do
     english "Consider the following mathematical representation of a Petri net:"
     german "Betrachten Sie folgende mathematische Repräsentation eines Petrinetzes:"
@@ -426,10 +486,11 @@ mathToGraphTask path task = do
     english "Which of the following diagrams represents this Petri net?"
     german "Welches der folgenden Diagramme stellt dieses Petrinetz dar?"
   images show snd $=<< to <$> writeDias path task
-  paragraph $ translate $ do
+  when showInputHelp $ do
+   paragraph $ translate $ do
     english [i|Please state your answer by giving the number of the matching diagram only.|]
     german [i|Geben Sie Ihre Antwort durch Angabe der Nummer des passenden Diagramms an.|]
-  paragraph $ do
+   paragraph $ do
     translate $ do
       english [i|Stating |]
       german [i|Die Angabe von |]
@@ -438,7 +499,9 @@ mathToGraphTask path task = do
       english [i| as answer would indicate that diagram 1 matches the given mathematical representation (and the other diagrams don't).|]
       german [i| als Antwort würde bedeuten, dass Diagramm 1 zur gegebenen mathematischen Repräsentation passt (und die anderen Diagramme nicht).|]
     pure ()
-  paragraph hoveringInformation
+   pure ()
+  hoveringInformation True
+  extra $ addText task
   pure ()
 
 graphToMathSyntax
@@ -448,7 +511,7 @@ graphToMathSyntax
   -> LangM m
 graphToMathSyntax task x =
   assertion (1 <= x && x <= length (to task)) $ translate $ do
-    english "The given mathematical representation is part of the task?"
+    english "The indicated mathematical representation is part of the task?"
     german "Die angegebene mathematische Repräsentation ist Bestandteil der Aufgabenstellung?"
 
 graphToMathEvaluation
@@ -472,8 +535,8 @@ mathToGraphSyntax
   -> LangM m
 mathToGraphSyntax task x =
   assertion (1 <= x && x <= length (to task)) $ translate $ do
-    english "Given graphical representation is part of the task?"
-    german "Die angegebene grafische Darstellung ist Bestandteil der Aufgabenstellung?"
+    english "The indicated graphical representation is part of the task?"
+    german "Die angegebene grafische Repräsentation ist Bestandteil der Aufgabenstellung?"
 
 mathToGraphEvaluation
   :: OutputCapable m
@@ -496,9 +559,9 @@ evaluation what task = do
   let solution = matchSolution task
       maybeSolution =
         if showSolution task
-        then Just $ show solution
+        then Just . (DefiniteArticle,) $ show solution
         else Nothing
-  singleChoice DefiniteArticle what maybeSolution solution
+  singleChoice what maybeSolution solution
 
 checkGraphToMathConfig :: MathConfig -> Maybe String
 checkGraphToMathConfig c@MathConfig {
@@ -694,7 +757,8 @@ defaultGraphToMathInstance = MatchInstance {
       initialMarkingMath = "m_0 = \\left(2,0,1,0\\right)",
       placeOrderMath = Just "\\left(s_{1},s_{2},s_{3},s_{4}\\right)"
       }))
-    ]
+    ],
+    addText = NoExtraText
   }
 
 defaultMathToGraphInstance :: MathToGraphInstance
@@ -792,5 +856,6 @@ defaultMathToGraphInstance = MatchInstance {
         withGraphvizCommand = Fdp
         }
       )))
-    ]
+    ],
+    addText = NoExtraText
   }

@@ -1,21 +1,38 @@
 ---
-resolver: lts-21.25
+resolver: lts-23.28
 packages:
   - .
   - example
 flags:
   modelling-tasks:
-    alloy-use-sat4j: false
     quick-testing: true
+  autotool-capabilities:
+    alloy-use-sat4j: false
+ghc-options:
+  autotool-capabilities: -DMAX_BIT_WIDTH=7
 extra-deps:
   - git: https://github.com/fmidue/output-blocks.git
-    commit: 6a1a5452af9d50c7cf0d4abb47e3c930b10f96d3
+    commit: d67590cb2e1a72ed72437a8cfe2972b680405569
     subdirs:
       - output-blocks
-  - call-alloy-0.6.0.2
-  - call-plantuml-0.0.1.3
+  - git: https://github.com/fmidue/autotool-capabilities.git
+    commit: ebd8d2b045148d774257183b7dda0d34416eef49
+    subdirs:
+      - autotool-capabilities
+      - autotool-capabilities-io-instances
+  - git: https://git.uni-due.de/fmi/autotool-dev
+    commit: 849d725e7284e87e077af136ccc3140d824679e8
+    subdirs:
+      - base
+      - data
+      - reader
+      - todoc
+      - transport
+      - util
+  - call-alloy-0.6.0.3
+  - call-plantuml-0.0.1.3@sha256:38d04cb6396c61313e77a234830d9215f7c41ccbffbe2549eb521312c12db3e3
   - diagrams-graphviz-1.4.1.1@sha256:e71afa8f89904c2a6a2cb490dba7108c6425779c2174b90bd90dbaf507a9d3dc,1388
-  - hgal-2.0.0.3@sha256:939908a4c80f8bec648043712617cc5794aeba81f7bcad0f77a4e3564da6e4f6,1856
+  - hgal-2.0.0.3@sha256:640432708b7356b72ca6096961234ffb5dd25e10c73722216e3a512ad848c4b6
   - latex-svg-image-0.2@sha256:b282a74a96724037ec3d24b664118e51170c8152aff12f363ddb715a38ef053a,1830
 allow-newer: true
 allow-newer-deps:

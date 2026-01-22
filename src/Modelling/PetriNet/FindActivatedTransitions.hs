@@ -3,6 +3,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE TupleSections #-}
 
 module Modelling.PetriNet.FindActivatedTransitions (
   checkActivatedTransitionsConfig,
@@ -57,7 +58,7 @@ import Modelling.PetriNet.Alloy (
   unscopedSingleSig,
   )
 import Modelling.PetriNet.Diagram (
-  renderWith,
+  cacheNet,
   )
 import Modelling.PetriNet.Find (
   FindInstance (..),
@@ -93,6 +94,7 @@ import Control.Applicative              ((<|>))
 import Control.Monad.Catch              (MonadThrow)
 import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
+  ExtraText (..),
   GenericOutputCapable (..),
   LangM',
   LangM,
@@ -114,6 +116,8 @@ import Control.Monad.Random (
   mkStdGen
   )
 import Control.Monad.Trans              (MonadTrans (lift))
+import Data.Bifunctor                   (first)
+import Data.Data                        (Data, Typeable)
 import Data.Foldable                    (for_)
 import Data.GraphViz.Commands           (GraphvizCommand (Circo))
 import Data.Maybe                       (isNothing)
@@ -146,7 +150,8 @@ findActivatedTransitionsGenerate config segment seed = flip evalRandT (mkStdGen 
     net = d,
     numberOfPlaces = places bc,
     numberOfTransitions = transitions bc,
-    showSolution = Find.printSolution config
+    showSolution = Find.printSolution config,
+    addText = Find.extraText config
     }
   where
     bc = Find.basicConfig config
@@ -167,12 +172,16 @@ simpleFindActivatedTransitionsTask = findActivatedTransitionsTask
 
 findActivatedTransitionsTask
   :: (
+    Data (n String),
+    Data (p n String),
     MonadCache m,
     MonadDiagrams m,
     MonadGraphviz m,
     MonadThrow m,
     Net p n,
-    OutputCapable m
+    OutputCapable m,
+    Typeable n,
+    Typeable p
     )
   => FilePath
   -> FindInstance (p n String) (ActivatedTransitions Transition)
@@ -182,7 +191,7 @@ findActivatedTransitionsTask path task = do
     english "Consider the following Petri net:"
     german "Betrachten Sie folgendes Petrinetz:"
   image
-    $=<< renderWith path "activatedTransitions" (net task) (drawFindWith task)
+    $=<< cacheNet path (net task) (drawFindWith task)
   paragraph $ translate $ do
     english [iii|
       Which transitions are activated
@@ -223,7 +232,7 @@ findActivatedTransitionsTask path task = do
         |]
 
     pure ()
-  paragraph hoveringInformation
+  hoveringInformation True
   pure ()
 
 findActivatedTransitionsSyntax
@@ -249,9 +258,10 @@ findActivatedTransitionsEvaluation
   -> Rated m
 findActivatedTransitionsEvaluation task x = do
   let what = translations $ do
-        english "The given transitions are activated?"
+        english "The indicated transitions are activated?"
         german "Die angegebenen Transitionen sind aktiviert?"
-  uncurry (printSolutionAndAssert DefiniteArticle)
+  uncurry (printSolutionAndAssert True)
+    . first (fmap (DefiniteArticle,))
     $=<< unLangM $ toFindEvaluationList what withSol active x
   where
     active = findActivatedTransitionsSolution task
@@ -399,5 +409,6 @@ defaultFindActivatedTransitionsInstance = FindInstance {
     },
   numberOfPlaces = 4,
   numberOfTransitions = 3,
-  showSolution = False
+  showSolution = False,
+  addText = NoExtraText
   }

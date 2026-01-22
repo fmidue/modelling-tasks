@@ -53,11 +53,18 @@ import Modelling.PetriNet.TestCommon (
   )
 import Settings                         (configDepth, needsTuning)
 
+import Control.OutputCapable.Blocks     (ExtraText (..))
 import Data.Maybe                       (isNothing)
 import Test.Hspec
 
 spec :: Spec
 spec = do
+  describe "checkFindConflictConfig" $
+    it "accepts the default config" $
+      checkFindConflictConfig defaultFindConflictConfig `shouldBe` Nothing
+  describe "checkPickConflictConfig" $
+    it "accepts the default config" $
+      checkPickConflictConfig defaultPickConflictConfig `shouldBe` Nothing
   describe "validFindConflictConfigs" $
     checkConfigs checkFindConflictConfig findConfigs'
   describe "findConflicts" $ do
@@ -123,7 +130,8 @@ validFindConflictConfigs cs advancedConfig = [
     validGraphConfig
     False
     uniqueConflictPlace
-    alloyTestConfig |
+    alloyTestConfig
+    NoExtraText |
       (bc, ch) <- cs,
       validConflictConfig <- validConflictConfigs bc,
       uniqueConflictPlace <- [Nothing, Just True, Just False]
@@ -157,7 +165,8 @@ validPickConflictConfigs cs = [
     prohibitSourceTransitions
     uniqueConflictPlace
     False
-    alloyTestConfig |
+    alloyTestConfig
+    NoExtraText |
       (bc, ch) <- cs,
       validConflictConfig <- validConflictConfigs bc,
       prohibitSourceTransitions <- [False, True],

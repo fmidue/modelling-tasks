@@ -14,6 +14,7 @@ import Modelling.CdOd.Types (
   RelationshipMutation (..),
   )
 
+import Control.OutputCapable.Blocks     (ExtraText (..))
 import Data.Ratio                       ((%))
 
 {-|
@@ -54,12 +55,12 @@ task2023_14 = MatchCdOdConfig {
   omittedDefaultMultiplicities = OmittedDefaultMultiplicities {
     aggregationWholeOmittedDefaultMultiplicity = Just (0, Nothing),
     associationOmittedDefaultMultiplicity = Just (0, Nothing),
-    compositionWholeOmittedDefaultMultiplicity = Just (1, Just 1)
+    compositionWholeOmittedDefaultMultiplicity = Nothing
     },
   printSolution = True,
   timeout = Nothing,
   withNonTrivialInheritance = Just True,
-  extraText = Nothing
+  extraText = NoExtraText
   }
 
 {-|
@@ -95,17 +96,17 @@ task2023_15 = MatchCdOdConfig {
     completelyInhabited = Just False,
     hasLimitedIsolatedObjects = True,
     hasSelfLoops = Just False,
-    usesEveryRelationshipName = Just False
+    usesEveryRelationshipName = Nothing
     },
   omittedDefaultMultiplicities = OmittedDefaultMultiplicities {
     aggregationWholeOmittedDefaultMultiplicity = Just (0, Nothing),
     associationOmittedDefaultMultiplicity = Just (0, Nothing),
-    compositionWholeOmittedDefaultMultiplicity = Just (1, Just 1)
+    compositionWholeOmittedDefaultMultiplicity = Nothing
     },
   printSolution = True,
   timeout = Nothing,
   withNonTrivialInheritance = Just True,
-  extraText = Nothing
+  extraText = NoExtraText
   }
 
 {-|
@@ -147,7 +148,7 @@ task2024_17 = MatchCdOdConfig {
   printSolution = True,
   timeout = Nothing,
   withNonTrivialInheritance = Just True,
-  extraText = Nothing
+  extraText = NoExtraText
   }
 
 {-|
@@ -189,7 +190,7 @@ task2024_18 = MatchCdOdConfig {
   printSolution = True,
   timeout = Nothing,
   withNonTrivialInheritance = Just True,
-  extraText = Nothing
+  extraText = NoExtraText
   }
 
 {-|
@@ -231,7 +232,7 @@ task2024_19 = MatchCdOdConfig {
   printSolution = True,
   timeout = Nothing,
   withNonTrivialInheritance = Just True,
-  extraText = Nothing
+  extraText = NoExtraText
   }
 
 {-|
@@ -273,7 +274,7 @@ task2024_20 = MatchCdOdConfig {
   printSolution = True,
   timeout = Nothing,
   withNonTrivialInheritance = Just True,
-  extraText = Nothing
+  extraText = NoExtraText
   }
 
 {-|
@@ -315,7 +316,7 @@ task2024_57 = MatchCdOdConfig {
   printSolution = True,
   timeout = Nothing,
   withNonTrivialInheritance = Just False,
-  extraText = Nothing
+  extraText = NoExtraText
   }
 
 {-|
@@ -357,7 +358,7 @@ task2024_58 = MatchCdOdConfig {
   printSolution = True,
   timeout = Nothing,
   withNonTrivialInheritance = Just True,
-  extraText = Nothing
+  extraText = NoExtraText
   }
 
 {-|
@@ -389,7 +390,7 @@ task2024_59 = MatchCdOdConfig {
     completelyInhabited = Nothing,
     hasLimitedIsolatedObjects = True,
     hasSelfLoops = Just False,
-    usesEveryRelationshipName = Just True
+    usesEveryRelationshipName = Nothing
     },
   omittedDefaultMultiplicities = OmittedDefaultMultiplicities {
     aggregationWholeOmittedDefaultMultiplicity = Just (0, Nothing),
@@ -399,5 +400,53 @@ task2024_59 = MatchCdOdConfig {
   printSolution = True,
   timeout = Nothing,
   withNonTrivialInheritance = Just False,
-  extraText = Nothing
+  extraText = NoExtraText
   }
+
+{-|
+points: 0.15
+the amount of generated instances: 100
+maximum concurrent amount of tasks: 50
+average generation time per instance on the cluster (without considering concurrency): 19:18min
+total run time on the cluster (not including queuing time): 1:10:30h
+average CPU usage: 175.75%
+average memory usage: 3777 MB
+-}
+task2025_17 :: MatchCdOdConfig
+task2025_17 = task2024_17
+
+{-|
+points: 0.15
+the amount of generated instances: 100
+maximum concurrent amount of tasks: 50
+average generation time per instance on the cluster (without considering concurrency): 8:20min
+total run time on the cluster (not including queuing time): 18:21min
+average CPU usage: 107.96%
+average memory usage: 3792 MB
+-}
+task2025_18 :: MatchCdOdConfig
+task2025_18 = task2024_18
+
+{-|
+points: 0.15
+the amount of generated instances: 100
+maximum concurrent amount of tasks: 50
+average generation time per instance on the cluster (without considering concurrency): 12:07min
+total run time on the cluster (not including queuing time): 33:51min
+average CPU usage: 106.16%
+average memory usage: 5232.74 MB
+-}
+task2025_19 :: MatchCdOdConfig
+task2025_19 = task2024_19
+
+{-|
+points: 0.15
+the amount of generated instances: 100
+maximum concurrent amount of tasks: 50
+average generation time per instance on the cluster (without considering concurrency): 7:54min
+total run time on the cluster (not including queuing time): 19:07min
+average CPU usage: 105.74%
+average memory usage: 3530.61 MB
+-}
+task2025_20 :: MatchCdOdConfig
+task2025_20 = task2024_20

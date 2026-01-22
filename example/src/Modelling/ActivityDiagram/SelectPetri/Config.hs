@@ -2,6 +2,7 @@
 
 module Modelling.ActivityDiagram.SelectPetri.Config where
 
+import Modelling.ActivityDiagram.Common (finalNodesAdvice)
 import Modelling.ActivityDiagram.Config (AdConfig(..))
 import Modelling.ActivityDiagram.SelectPetri (SelectPetriConfig(..))
 
@@ -24,6 +25,7 @@ task2023_37 = SelectPetriConfig {
     flowFinalNodes = 2,
     cycles = 1
     },
+  countOfPetriNodesBounds = (0, Nothing),
   maxInstances = Just 2000,
   hideNodeNames = False,
   hideBranchConditions = True,
@@ -35,9 +37,9 @@ task2023_37 = SelectPetriConfig {
   modifyAtMid = True,
   auxiliaryPetriNodeAbsent = Nothing,
   presenceOfSinkTransitionsForFinals = Nothing,
-  noActivityFinalInForkBlocks = Just True,
+  withActivityFinalInForkBlocks = Just False,
   printSolution = True,
-  extraText = Nothing
+  extraText = finalNodesAdvice
   }
 
 {-|
@@ -55,6 +57,7 @@ task2023_38 = SelectPetriConfig {
     flowFinalNodes = 2,
     cycles = 1
     },
+  countOfPetriNodesBounds = (0, Nothing),
   maxInstances = Just 1,
   hideNodeNames = True,
   hideBranchConditions = True,
@@ -66,9 +69,9 @@ task2023_38 = SelectPetriConfig {
   modifyAtMid = True,
   auxiliaryPetriNodeAbsent = Nothing,
   presenceOfSinkTransitionsForFinals = Nothing,
-  noActivityFinalInForkBlocks = Just True,
+  withActivityFinalInForkBlocks = Just False,
   printSolution = True,
-  extraText = Nothing
+  extraText = finalNodesAdvice
   }
 
 {-|
@@ -96,6 +99,7 @@ task2024_44 = SelectPetriConfig {
     flowFinalNodes = 2,
     cycles = 1
     },
+  countOfPetriNodesBounds = (0, Nothing),
   maxInstances = Just 2000,
   hideNodeNames = True,
   hideBranchConditions = True,
@@ -107,7 +111,7 @@ task2024_44 = SelectPetriConfig {
   modifyAtMid = True,
   auxiliaryPetriNodeAbsent = Nothing,
   presenceOfSinkTransitionsForFinals = Nothing,
-  noActivityFinalInForkBlocks = Just True,
+  withActivityFinalInForkBlocks = Just False,
   printSolution = True,
-  extraText = Nothing
+  extraText = finalNodesAdvice
   }

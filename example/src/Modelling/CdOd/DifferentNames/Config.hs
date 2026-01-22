@@ -12,6 +12,7 @@ import Modelling.CdOd.Types (
   OmittedDefaultMultiplicities (..),
   )
 
+import Control.OutputCapable.Blocks     (ExtraText (..))
 import Data.Ratio                       ((%))
 
 {-|
@@ -46,12 +47,12 @@ task2023_12 = DifferentNamesConfig {
   omittedDefaultMultiplicities = OmittedDefaultMultiplicities {
     aggregationWholeOmittedDefaultMultiplicity = Just (0, Nothing),
     associationOmittedDefaultMultiplicity = Just (0, Nothing),
-    compositionWholeOmittedDefaultMultiplicity = Just (1, Just 1)
+    compositionWholeOmittedDefaultMultiplicity = Nothing
     },
   printSolution = True,
   timeout = Nothing,
   withObviousMapping = Nothing,
-  extraText = Nothing
+  extraText = NoExtraText
   }
 
 {-|
@@ -86,12 +87,12 @@ task2023_13 = DifferentNamesConfig {
   omittedDefaultMultiplicities = OmittedDefaultMultiplicities {
     aggregationWholeOmittedDefaultMultiplicity = Just (0, Nothing),
     associationOmittedDefaultMultiplicity = Just (0, Nothing),
-    compositionWholeOmittedDefaultMultiplicity = Just (1, Just 1)
+    compositionWholeOmittedDefaultMultiplicity = Nothing
     },
   printSolution = True,
   timeout = Nothing,
   withObviousMapping = Nothing,
-  extraText = Nothing
+  extraText = NoExtraText
   }
 
 {-|
@@ -126,12 +127,12 @@ task2023_25 = DifferentNamesConfig {
   omittedDefaultMultiplicities = OmittedDefaultMultiplicities {
     aggregationWholeOmittedDefaultMultiplicity = Just (0, Nothing),
     associationOmittedDefaultMultiplicity = Just (0, Nothing),
-    compositionWholeOmittedDefaultMultiplicity = Just (1, Just 1)
+    compositionWholeOmittedDefaultMultiplicity = Nothing
     },
   printSolution = True,
   timeout = Nothing,
   withObviousMapping = Nothing,
-  extraText = Nothing
+  extraText = NoExtraText
   }
 
 {-|
@@ -171,7 +172,7 @@ task2024_15 = DifferentNamesConfig {
   printSolution = True,
   timeout = Nothing,
   withObviousMapping = Nothing,
-  extraText = Nothing
+  extraText = NoExtraText
   }
 
 {-|
@@ -211,7 +212,7 @@ task2024_16 = DifferentNamesConfig {
   printSolution = True,
   timeout = Nothing,
   withObviousMapping = Nothing,
-  extraText = Nothing
+  extraText = NoExtraText
   }
 
 {-|
@@ -251,5 +252,130 @@ task2024_56 = DifferentNamesConfig {
   printSolution = True,
   timeout = Nothing,
   withObviousMapping = Nothing,
-  extraText = Nothing
+  extraText = NoExtraText
   }
+
+{-|
+points: 0.15
+-}
+task2025_13 :: DifferentNamesConfig
+task2025_13 = DifferentNamesConfig {
+  classConfig = ClassConfig {
+    classLimits = (5, 5),
+    aggregationLimits = (2, Just 2),
+    associationLimits = (1, Just 1),
+    compositionLimits = (2, Just 2),
+    inheritanceLimits = (1, Just 1),
+    relationshipLimits = (6, Just 6)
+    },
+  withNonTrivialInheritance = Just False,
+  maxInstances = Just 10000,
+  objectConfig = ObjectConfig {
+    linkLimits = (9, Just 9),
+    linksPerObjectLimits = (0, Just 4),
+    objectLimits = (7, 7)
+    },
+  objectProperties = ObjectProperties {
+    anonymousObjectProportion = 1 % 1,
+    completelyInhabited = Just True,
+    hasLimitedIsolatedObjects = True,
+    hasSelfLoops = Just False,
+    usesEveryRelationshipName = Just False
+    },
+  omittedDefaultMultiplicities = OmittedDefaultMultiplicities {
+    aggregationWholeOmittedDefaultMultiplicity = Just (0, Nothing),
+    associationOmittedDefaultMultiplicity = Just (0, Nothing),
+    compositionWholeOmittedDefaultMultiplicity = Nothing
+    },
+  printSolution = True,
+  timeout = Nothing,
+  withObviousMapping = Just True,
+  extraText = NoExtraText
+  }
+
+{-|
+points: 0.15
+the amount of generated instances: 100
+maximum concurrent amount of tasks: 20
+average generation time per instance on the cluster (without considering concurrency): 2:28min
+total run time on the cluster (not including queuing time): 16:14min
+-}
+task2025_14 :: DifferentNamesConfig
+task2025_14 = DifferentNamesConfig {
+  classConfig = ClassConfig {
+    classLimits = (5, 5),
+    aggregationLimits = (1, Just 1),
+    associationLimits = (2, Just 2),
+    compositionLimits = (2, Just 2),
+    inheritanceLimits = (2, Just 2),
+    relationshipLimits = (7, Just 7)
+    },
+  withNonTrivialInheritance = Just True,
+  maxInstances = Just 10000,
+  objectConfig = ObjectConfig {
+    linkLimits = (11, Just 11),
+    linksPerObjectLimits = (1, Just 6),
+    objectLimits = (6, 6)
+    },
+  objectProperties = ObjectProperties {
+    anonymousObjectProportion = 0 % 1,
+    completelyInhabited = Just True,
+    hasLimitedIsolatedObjects = True,
+    hasSelfLoops = Just False,
+    usesEveryRelationshipName = Just True
+    },
+  omittedDefaultMultiplicities = OmittedDefaultMultiplicities {
+    aggregationWholeOmittedDefaultMultiplicity = Just (0, Nothing),
+    associationOmittedDefaultMultiplicity = Just (0, Nothing),
+    compositionWholeOmittedDefaultMultiplicity = Nothing
+    },
+  printSolution = True,
+  timeout = Nothing,
+  withObviousMapping = Just False,
+  extraText = NoExtraText
+  }
+
+{-|
+points: 0.15
+variant 1: concepts are printed in class diagrams
+share same instances as task2025_14
+average concept generation time per instance (no concurrency): 10~15 mins
+used LLM model for generation: gpt-5
+approximate input tokens: 3.575 M (1.25 $ / 1M tokens)
+approximate output tokens: 4.437 M (10 $ / 1M tokens)
+approximate cost: 48.84 $
+-}
+task2025_15 :: DifferentNamesConfig
+task2025_15 = task2025_14 {
+  objectProperties = (objectProperties task2025_14) {
+    anonymousObjectProportion = 1 % 1
+    }
+  }
+
+{-|
+points: 0.15
+variant 2: concepts are printed in object diagrams
+share same instances as task2025_14
+share same concept injection as task2025_15
+-}
+task2025_16 :: DifferentNamesConfig
+task2025_16 = task2025_15
+
+{-|
+points: 0.15
+variant 3: Give scenario descriptions instead of class diagrams with object diagrams
+share same instances as task2025_14
+share same concept injection as task2025_15
+used LLM for story generation: gpt-4o-mini
+-}
+task2025_21 :: DifferentNamesConfig
+task2025_21 = task2025_15
+
+{-|
+points: 0.15
+variant 4: Only give object diagrams
+share same instances as task2025_14
+share same concept injection as task2025_15
+-}
+task2025_22 :: DifferentNamesConfig
+task2025_22 = task2025_15

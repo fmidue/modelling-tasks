@@ -39,7 +39,7 @@ import Modelling.PetriNet.Find (
   prohibitHidePlaceNames,
   )
 import Modelling.PetriNet.Diagram (
-  renderWith,
+  cacheNet,
   )
 import Modelling.PetriNet.Reach.Type (
   Place (Place),
@@ -68,16 +68,19 @@ import Control.Monad                    (void)
 import Control.Monad.Catch              (MonadThrow)
 import Control.OutputCapable.Blocks (
   GenericOutputCapable (..),
+  ExtraText (..),
   LangM',
   LangM,
   OutputCapable,
   ($=<<),
   continueOrAbort,
   english,
+  extra,
   german,
   translate,
   )
 import Data.Bifunctor                   (Bifunctor (bimap))
+import Data.Data                        (Data, Typeable)
 import Data.Function                    ((&))
 import Data.Foldable                    (for_)
 import Data.GraphViz.Commands           (GraphvizCommand (Circo))
@@ -99,34 +102,46 @@ simpleFindConflictPlacesTask
     MonadThrow m,
     OutputCapable m
     )
-  => FilePath
+  => Bool
+  -> FilePath
   -> FindInstance SimplePetriNet Conflict
   -> LangM m
 simpleFindConflictPlacesTask = findConflictPlacesTask
 
 findConflictPlacesTask
   :: (
+    Data (n String),
+    Data (p n String),
     MonadCache m,
     MonadDiagrams m,
     MonadGraphviz m,
     MonadThrow m,
     Net p n,
-    OutputCapable m
+    OutputCapable m,
+    Typeable n,
+    Typeable p
     )
-  => FilePath
+  => Bool
+  -> FilePath
   -> FindInstance (p n String) Conflict
   -> LangM m
-findConflictPlacesTask path task = do
+findConflictPlacesTask showInputHelp path task = do
   paragraph $ translate $ do
     english "Consider the following Petri net:"
     german "Betrachten Sie folgendes Petrinetz:"
-  image $=<< renderWith path "conflict" (net task) (drawFindWith task)
+  image $=<< cacheNet path (net task) (drawFindWith task)
   paragraph $ translate $ do
     english "Which pair of transitions is in conflict, and because of which conflict-causing place(s), under the initial marking?"
     german "Welches Paar von Transitionen steht in Konflikt, und wegen welcher konfliktverursachenden Stelle(n), unter der Startmarkierung?"
-  paragraph $ do
+  if not showInputHelp then
+    paragraph $ translate $ do
+     english [i|You have to indicate all the places that induce the conflict, i.e., all those common places within the
+preconditions which each separately do not have enough tokens for firing the two transitions at the same time.|]
+     german [i|Sie müssen alle Stellen angeben, die den Konflikt verursachen, also all jene gemeinsamen Stellen in den Vorbedingungen,
+die jeweils einzeln nicht ausreichend Marken zum gleichzeitigen Feuern der beiden Transitionen haben.|]
+  else paragraph $ do
     translate $ do
-      english "State your answer by giving a pair of conflicting transitions and a list of all the places that induce the conflict. "
+      english "State your answer by indicating a pair of conflicting transitions and a list of all the places that induce the conflict. "
       german "Geben Sie Ihre Antwort durch Angabe eines Paars von in Konflikt stehenden Transitionen und einer Liste aller Stellen, die den Konflikt verursachen. "
     translate $ do
       english [i|Stating |]
@@ -138,19 +153,20 @@ findConflictPlacesTask path task = do
             (bimap show show)
             (map show)
             ts
-      english [i| as answer would indicate that transitions #{t1} and #{t2} are in conflict under the initial marking
+      english [i| as answer would mean that transitions #{t1} and #{t2} are in conflict under the initial marking
 and that places #{p1} and #{p2} are all those common places within the preconditions
 which each separately do not have enough tokens for firing #{t1} and #{t2} at the same time. |]
       german [i| als Antwort würde bedeuten, dass Transitionen #{t1} und #{t2} unter der Startmarkierung in Konflikt stehen
 und dass die Stellen #{p1} und #{p2} all jene gemeinsamen Stellen in den Vorbedingungen sind,
 die jeweils einzeln nicht ausreichend Marken zum gleichzeitigen Feuern der Transitionen #{t1} und #{t2} haben. |]
     translate $ do
-      english [i|The order of transitions within the firstly given pair does not matter here.
+      english [i|The order of transitions within the firstly indicated pair does not matter here.
 The order of places within the listing of places inducing the conflict is irrelevant as well.|]
       german [i|Die Reihenfolge der Transitionen innerhalb des zuerst angegebenen Paars spielt hierbei keine Rolle.
 Die Reihenfolge von Stellen innerhalb der Auflistung der den Konflikt verursachenden Stellen spielt ebenso keine Rolle.|]
     pure ()
-  paragraph hoveringInformation
+  hoveringInformation True
+  extra $ addText task
   pure ()
 
 conflictInitial :: ConflictPlaces
@@ -244,5 +260,6 @@ defaultFindConflictPlacesInstance = FindInstance {
     },
   numberOfPlaces = 4,
   numberOfTransitions = 3,
-  showSolution = False
+  showSolution = False,
+  addText = NoExtraText
   }

@@ -4,6 +4,7 @@
 {-# LANGUAGE NamedFieldPuns #-}
 {-# Language QuasiQuotes #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE TupleSections #-}
 
 module Modelling.PetriNet.Concurrency (
   checkFindConcurrencyConfig,
@@ -26,7 +27,8 @@ module Modelling.PetriNet.Concurrency (
   simplePickConcurrencyTask,
   ) where
 
-import qualified Modelling.PetriNet.Find          as F (showSolution)
+import qualified Modelling.PetriNet.Find          as Find (FindInstance (..), showSolution)
+import qualified Modelling.PetriNet.Pick          as Pick (PickInstance (..))
 import qualified Modelling.PetriNet.Types         as Find (
   FindConcurrencyConfig (..),
   )
@@ -45,7 +47,6 @@ import Capabilities.Diagrams            (MonadDiagrams)
 import Capabilities.Graphviz            (MonadGraphviz)
 import Modelling.Auxiliary.Common (
   Object,
-  oneOf,
   parseWith,
   )
 import Modelling.Auxiliary.Output (
@@ -67,7 +68,8 @@ import Modelling.PetriNet.Alloy (
   unscopedSingleSig,
   )
 import Modelling.PetriNet.Diagram (
-  renderWith,
+  cacheNet,
+  isNetDrawable,
   )
 import Modelling.PetriNet.Find (
   FindInstance (..),
@@ -101,21 +103,24 @@ import Modelling.PetriNet.Types         (
   Concurrent (Concurrent),
   DrawSettings (..),
   FindConcurrencyConfig (..),
-  GraphConfig (..),
   Net (..),
   PetriLike (PetriLike, allNodes),
   PickConcurrencyConfig (..),
   SimpleNode (..),
   SimplePetriNet,
+  allDrawSettings,
   basicConfigBitWidthInput,
   petriScopeBitWidth,
   transitionPairShow,
   )
 
 import Control.Applicative              (Alternative ((<|>)))
-import Control.Monad.Catch              (MonadThrow)
+import Control.Monad                    (when)
+import Control.Monad.Catch              (MonadCatch, MonadThrow)
+import Control.Monad.Extra              (findM)
 import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
+  ExtraText (..),
   GenericOutputCapable (..),
   LangM',
   LangM,
@@ -123,6 +128,7 @@ import Control.OutputCapable.Blocks (
   Rated,
   ($=<<),
   english,
+  extra,
   german,
   printSolutionAndAssert,
   translate,
@@ -136,13 +142,15 @@ import Control.Monad.Random (
   mkStdGen,
   )
 import Control.Monad.Trans              (MonadTrans (lift))
-import Data.Bifunctor                   (Bifunctor (bimap))
+import Data.Bifunctor                   (Bifunctor (bimap), first)
+import Data.Data                        (Data, Typeable)
 import Data.Either                      (isLeft)
 import Data.GraphViz.Commands           (GraphvizCommand (Circo, Fdp))
 import Data.String.Interpolate          (i, iii)
 import Language.Alloy.Call (
   AlloyInstance,
   )
+import System.Random.Shuffle            (shuffleM)
 
 simpleFindConcurrencyTask
   :: (
@@ -152,29 +160,35 @@ simpleFindConcurrencyTask
     MonadThrow m,
     OutputCapable m
     )
-  => FilePath
+  => Bool
+  -> FilePath
   -> FindInstance SimplePetriNet (Concurrent Transition)
   -> LangM m
 simpleFindConcurrencyTask = findConcurrencyTask
 
 findConcurrencyTask
   :: (
+    Data (n String),
+    Data (p n String),
     MonadCache m,
     MonadDiagrams m,
     MonadGraphviz m,
     MonadThrow m,
     Net p n,
-    OutputCapable m
+    OutputCapable m,
+    Typeable n,
+    Typeable p
     )
-  => FilePath
+  => Bool
+  -> FilePath
   -> FindInstance (p n String) (Concurrent Transition)
   -> LangM m
-findConcurrencyTask path task = do
+findConcurrencyTask showInputHelp path task = do
   paragraph $ translate $ do
     english "Consider the following Petri net:"
     german "Betrachten Sie folgendes Petrinetz:"
   image
-    $=<< renderWith path "concurrent" (net task) (drawFindWith task)
+    $=<< cacheNet path (net task) (drawFindWith task)
   paragraph $ translate $ do
     english [iii|
       Which pair of transitions is concurrently activated
@@ -184,7 +198,7 @@ findConcurrencyTask path task = do
       Welches Paar von Transitionen ist unter der Startmarkierung
       nebenläufig aktiviert?
       |]
-  paragraph $ do
+  when showInputHelp $ paragraph $ do
     translate $ do
       english [iii|
         State your answer by giving a pair
@@ -217,7 +231,8 @@ findConcurrencyTask path task = do
         |]
 
     pure ()
-  paragraph hoveringInformation
+  hoveringInformation True
+  extra $ Find.addText task
   pure ()
 
 findConcurrencySyntax
@@ -234,13 +249,14 @@ findConcurrencyEvaluation
   -> Rated m
 findConcurrencyEvaluation task x = do
   let what = translations $ do
-        english "The given transitions are concurrently activated?"
+        english "The indicated transitions are concurrently activated?"
         german "Die angegebenen Transitionen sind nebenläufig aktiviert?"
-  uncurry (printSolutionAndAssert DefiniteArticle)
+  uncurry (printSolutionAndAssert False)
+    . first (fmap (DefiniteArticle,))
     $=<< unLangM $ toFindEvaluationTuple what withSol concur x
   where
     concur = findConcurrencySolution task
-    withSol = F.showSolution task
+    withSol = Find.showSolution task
 
 findConcurrencySolution :: FindInstance net (Concurrent a) -> (a, a)
 findConcurrencySolution task = concur
@@ -254,24 +270,30 @@ simplePickConcurrencyTask
     MonadThrow m,
     OutputCapable m
     )
-  => FilePath
+  => Bool
+  -> FilePath
   -> PickInstance SimplePetriNet
   -> LangM m
 simplePickConcurrencyTask = pickConcurrencyTask
 
 pickConcurrencyTask
   :: (
+    Data (n String),
+    Data (p n String),
     MonadCache m,
     MonadDiagrams m,
     MonadGraphviz m,
     MonadThrow m,
     Net p n,
-    OutputCapable m
+    OutputCapable m,
+    Typeable n,
+    Typeable p
     )
-  => FilePath
+  => Bool
+  -> FilePath
   -> PickInstance (p n String)
   -> LangM m
-pickConcurrencyTask path task = do
+pickConcurrencyTask showInputHelp path task = do
   paragraph $ translate $ do
     english [iii|
       Which of the following Petri nets has exactly
@@ -283,8 +305,9 @@ pickConcurrencyTask path task = do
       die unter der Startmarkierung nebenläufig aktiviert sind?
       |]
   images show snd
-    $=<< renderPick path "concurrent" task
-  paragraph $ translate $ do
+    $=<< renderPick path task
+  when showInputHelp $ do
+   paragraph $ translate $ do
     english [iii|
       State your answer by giving the number of the Petri net
       having these concurrently activated transitions.
@@ -293,8 +316,8 @@ pickConcurrencyTask path task = do
       Geben Sie Ihre Antwort durch Angabe der Nummer des Petrinetzes an,
       das diese nebenläufig aktivierten Transitionen hat.
       #{" "}|]
-  let plural = wrongInstances task > 1
-  paragraph $ do
+   let plural = wrongInstances task > 1
+   paragraph $ do
     translate $ do
       english [i|Stating |]
       german [i|Die Angabe von |]
@@ -317,38 +340,38 @@ pickConcurrencyTask path task = do
             else "das andere Petrinetz nicht")
         ++ ")."
     pure ()
-  paragraph hoveringInformation
+   pure ()
+  hoveringInformation True
+  extra $ Pick.addText task
   pure ()
 
 findConcurrencyGenerate
-  :: (MonadAlloy m, MonadThrow m, Net p n)
+  :: (MonadAlloy m, MonadCatch m, MonadDiagrams m, MonadGraphviz m, Net p n)
   => FindConcurrencyConfig
   -> Int
   -> Int
   -> m (FindInstance (p n String) (Concurrent Transition))
-findConcurrencyGenerate config segment seed = flip evalRandT (mkStdGen seed) $ do
-  (d, c) <- findConcurrency config segment
-  gl <- oneOf $ graphLayouts gc
-  c' <- lift $ traverse
-     (parseWith parseTransitionPrec)
-     c
-  return $ FindInstance {
-    drawFindWith   = DrawSettings {
-      withPlaceNames = not $ hidePlaceNames gc,
-      withSvgHighlighting = True,
-      withTransitionNames = not $ hideTransitionNames gc,
-      with1Weights = not $ hideWeight1 gc,
-      withGraphvizCommand = gl
-      },
-    toFind = c',
-    net = d,
-    numberOfPlaces = places bc,
-    numberOfTransitions = transitions bc,
-    showSolution = Find.printSolution config
-    }
+findConcurrencyGenerate config segment = evalRandT getInstance . mkStdGen
   where
+    getInstance = do
+      petriConcurrency <- findConcurrency config segment
+      ds <- shuffleM $ allDrawSettings $ Find.graphConfig config
+      d <- findM (lift . isNetDrawable (fst petriConcurrency)) ds
+      maybe getInstance (uncurry toInstance petriConcurrency) d
+    toInstance petri concurrency drawSettings = do
+      c' <- lift $ traverse
+         (parseWith parseTransitionPrec)
+         concurrency
+      return $ FindInstance {
+        drawFindWith = drawSettings,
+        toFind = c',
+        net = petri,
+        numberOfPlaces = places bc,
+        numberOfTransitions = transitions bc,
+        showSolution = Find.printSolution config,
+        addText = Find.extraText config
+        }
     bc = Find.basicConfig config
-    gc = Find.graphConfig config
 
 findConcurrency
   :: (MonadAlloy m, MonadThrow m, Net p n, RandomGen g)
@@ -362,16 +385,17 @@ findConcurrency = taskInstance
   Find.alloyConfig
 
 pickConcurrencyGenerate
-  :: (MonadAlloy m, MonadThrow m, Net p n)
+  :: (MonadAlloy m, MonadCatch m, MonadDiagrams m, MonadGraphviz m, Net p n)
   => PickConcurrencyConfig
   -> Int
   -> Int
   -> m (PickInstance (p n String))
-pickConcurrencyGenerate = pickGenerate pickConcurrency gc ud ws
+pickConcurrencyGenerate = pickGenerate pickConcurrency gc ud ws et
   where
     gc = Pick.graphConfig
     ud = Pick.useDifferentGraphLayouts
     ws = Pick.printSolution
+    et = Pick.extraText
 
 
 pickConcurrency
@@ -501,7 +525,7 @@ checkFindConcurrencyConfig FindConcurrencyConfig {
     additionalCheck BasicConfig {..} AdvConfig {..}
       | Just False /= presenceOfSourceTransitions, atLeastActive > 2
       = Just [iii|
-        When 'atLeastActive' is greater than 2
+        When 'atLeastActive' is greater than 2,
         'presenceOfSourceTransitions' has to be 'Just False'
         |]
       | otherwise
@@ -565,7 +589,8 @@ defaultPickConcurrencyInstance = PickInstance {
         }
       )))
     ],
-  showSolution = False
+  showSolution = False,
+  addText = NoExtraText
   }
 
 defaultFindConcurrencyInstance :: FindInstance SimplePetriNet (Concurrent Transition)
@@ -591,5 +616,6 @@ defaultFindConcurrencyInstance = FindInstance {
     },
   numberOfPlaces = 4,
   numberOfTransitions = 3,
-  showSolution = False
+  showSolution = False,
+  addText = NoExtraText
   }

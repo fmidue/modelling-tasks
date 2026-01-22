@@ -2,6 +2,7 @@
 
 module Modelling.ActivityDiagram.MatchPetri.Config where
 
+import Modelling.ActivityDiagram.Common (finalNodesAdvice)
 import Modelling.ActivityDiagram.Config (AdConfig(..))
 import Modelling.ActivityDiagram.MatchPetri (MatchPetriConfig(..))
 
@@ -24,15 +25,16 @@ task2023_39 = MatchPetriConfig {
     flowFinalNodes = 2,
     cycles = 1
     },
+  countOfPetriNodesBounds = (0, Nothing),
   maxInstances = Just 10000,
   hideBranchConditions = True,
   petriLayout = [Fdp],
   petriSvgHighlighting = True,
   auxiliaryPetriNodeAbsent = Nothing,
   presenceOfSinkTransitionsForFinals = Nothing,
-  noActivityFinalInForkBlocks = Nothing,
+  withActivityFinalInForkBlocks = Nothing,
   printSolution = True,
-  extraText = Nothing
+  extraText = finalNodesAdvice
   }
 
 {-|
@@ -52,15 +54,16 @@ task2023_40 = MatchPetriConfig {
     flowFinalNodes = 3,
     cycles = 3
     },
+  countOfPetriNodesBounds = (0, Nothing),
   maxInstances = Just 2000,
   hideBranchConditions = True,
   petriLayout = [Fdp],
   petriSvgHighlighting = True,
   auxiliaryPetriNodeAbsent = Nothing,
   presenceOfSinkTransitionsForFinals = Nothing,
-  noActivityFinalInForkBlocks = Nothing,
+  withActivityFinalInForkBlocks = Nothing,
   printSolution = True,
-  extraText = Nothing
+  extraText = finalNodesAdvice
   }
 
 {-|
@@ -96,15 +99,16 @@ task2024_70 = MatchPetriConfig {
     flowFinalNodes = 1,
     cycles = 0
     },
+  countOfPetriNodesBounds = (0, Nothing),
   maxInstances = Just 10000,
   hideBranchConditions = True,
   petriLayout = [Fdp],
   petriSvgHighlighting = True,
   auxiliaryPetriNodeAbsent = Just True,
   presenceOfSinkTransitionsForFinals = Just True,
-  noActivityFinalInForkBlocks = Just True,
+  withActivityFinalInForkBlocks = Just False,
   printSolution = True,
-  extraText = Nothing
+  extraText = finalNodesAdvice
   }
 
 {-|
@@ -124,13 +128,14 @@ task2024_71 = MatchPetriConfig {
     flowFinalNodes = 3,
     cycles = 3
     },
+  countOfPetriNodesBounds = (0, Nothing),
   maxInstances = Just 2000,
   hideBranchConditions = True,
   petriLayout = [Fdp],
   petriSvgHighlighting = True,
   auxiliaryPetriNodeAbsent = Just False,
   presenceOfSinkTransitionsForFinals = Nothing,
-  noActivityFinalInForkBlocks = Just True,
+  withActivityFinalInForkBlocks = Just False,
   printSolution = True,
-  extraText = Nothing
+  extraText = finalNodesAdvice
   }

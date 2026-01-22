@@ -23,7 +23,7 @@ import Modelling.CdOd.MatchCdOd (
   )
 import EvaluateArgs                     (evaluateArgs)
 
-import Control.OutputCapable.Blocks     (Language (English))
+import Control.OutputCapable.Blocks     (ExtraText (..), Language (English))
 import Data.Ratio                       ((%))
 import System.Environment               (getArgs)
 
@@ -57,10 +57,10 @@ main = do
           printSolution    = False,
           timeout          = Nothing,
           withNonTrivialInheritance = Nothing,
-          extraText        = Nothing
+          extraText        = NoExtraText
         }
   putStrLn $ "Seed: " ++ show seed
   putStrLn $ "Segment: " ++ show s
   task <- matchCdOd 10 config s seed
   print task
-  matchCdOdTask "" task `withLang` English
+  matchCdOdTask True "" task `withLang` English

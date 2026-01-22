@@ -1,4 +1,5 @@
 {-# LANGUAGE ApplicativeDo #-}
+{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE FlexibleContexts #-}
@@ -6,6 +7,7 @@
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE TupleSections #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE TypeApplications #-}
 
 module Modelling.ActivityDiagram.SelectPetri (
   SelectPetriInstance(..),
@@ -16,6 +18,7 @@ module Modelling.ActivityDiagram.SelectPetri (
   checkPetriInstance,
   selectPetriAlloy,
   selectPetriNet,
+  selectPetriNetWithMatchingNet,
   selectPetriTask,
   selectPetriSyntax,
   selectPetriEvaluation,
@@ -24,25 +27,28 @@ module Modelling.ActivityDiagram.SelectPetri (
   defaultSelectPetriInstance
   ) where
 
+import Autolib.Hash                     (Hashable)
+import Autolib.Reader                   (Reader)
+import Autolib.ToDoc                    (ToDoc)
 import Capabilities.Alloy               (MonadAlloy, getInstances)
 import Capabilities.Cache               (MonadCache)
 import Capabilities.Diagrams            (MonadDiagrams)
 import Capabilities.Graphviz            (MonadGraphviz)
 import Capabilities.PlantUml            (MonadPlantUml)
+import Capabilities.WriteFile           (MonadWriteFile)
 import qualified Data.Map as M (empty, size, fromList, toList, keys, map, filter)
 import qualified Modelling.ActivityDiagram.Datatype as Ad (AdNode(label))
 import qualified Modelling.ActivityDiagram.PetriNet as PK (PetriKey (label))
 
 import Modelling.ActivityDiagram.Alloy  (adConfigToAlloy, modulePetriNet)
-import Modelling.ActivityDiagram.Auxiliary.Util (
-  finalNodesAdvice,
-  weightedShuffle,
+import Modelling.ActivityDiagram.Auxiliary.PetriValidation (
+  validatePetriConfig,
   )
 import qualified Modelling.ActivityDiagram.Config as Config (
   AdConfig(activityFinalNodes,flowFinalNodes),
   )
 import Modelling.ActivityDiagram.Config (
-  AdConfig (actionLimits, cycles, forkJoinPairs),
+  AdConfig,
   checkAdConfig,
   defaultAdConfig,
   )
@@ -67,14 +73,16 @@ import Modelling.ActivityDiagram.Shuffle (shuffleAdNames, shufflePetri)
 import Modelling.Auxiliary.Common (
   TaskGenerationException (NoInstanceAvailable),
   oneOf,
+  weightedShuffle,
   )
 import Modelling.Auxiliary.Output (
   addPretext,
-  extra,
   )
 import Modelling.PetriNet.Diagram (cacheNet)
 import Modelling.PetriNet.Types (
+  checkPetriNodeCount,
   DrawSettings (..),
+  Net (mapNet),
   PetriLike (..),
   SimpleNode (..),
   SimplePetriLike,
@@ -86,12 +94,13 @@ import Control.Monad.Catch              (MonadThrow, throwM)
 import Control.Monad.Extra (loopM, firstJustM)
 import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
+  ExtraText (..),
   GenericOutputCapable (..),
   LangM,
-  Language,
   OutputCapable,
   ($=<<),
   english,
+  extra,
   german,
   reRefuseLangM,
   translate,
@@ -109,10 +118,10 @@ import Control.Monad.Random (
 import Data.Bifunctor (second)
 import Data.List (find, genericLength)
 import Data.Map (Map)
-import Data.Maybe (isJust, fromJust)
+import Data.Maybe (fromJust)
 import Data.Graph.Inductive (Gr, mkGraph, lab, level)
 import Data.GraphViz.Commands (GraphvizCommand(..))
-import Data.String.Interpolate          (i, iii)
+import Data.String.Interpolate          (i)
 import Data.Traversable                 (for)
 import GHC.Generics (Generic)
 import System.Random.Shuffle (shuffleM)
@@ -128,11 +137,15 @@ data SelectPetriInstance = SelectPetriInstance {
   petriDrawConf :: DrawSettings,
   petriNets :: Map Int (Bool, SimplePetriLike PetriKey),
   showSolution :: Bool,
-  addText :: Maybe (Map Language String)
-} deriving (Generic, Show)
+  addText :: ExtraText
+}
+  deriving (Eq, Generic, Hashable, Read, Reader, Show, ToDoc)
 
 data SelectPetriConfig = SelectPetriConfig {
   adConfig :: AdConfig,
+  -- | generate only activity diagrams with a corresponding Petri net
+  -- having a total count of nodes within the given bounds
+  countOfPetriNodesBounds :: !(Int, Maybe Int),
   maxInstances :: Maybe Integer,
   hideNodeNames :: Bool,
   hideBranchConditions :: Bool,
@@ -148,10 +161,11 @@ data SelectPetriConfig = SelectPetriConfig {
   -- | Force presence or absence of new sink transitions for representing finals
   presenceOfSinkTransitionsForFinals :: Maybe Bool,
   -- | Avoid Activity Finals in concurrent flows to reduce confusion
-  noActivityFinalInForkBlocks :: Maybe Bool,
+  withActivityFinalInForkBlocks :: !(Maybe Bool),
   printSolution :: Bool,
-  extraText :: Maybe (Map Language String)
-} deriving (Generic, Show)
+  extraText :: ExtraText
+}
+  deriving (Generic, Read, Reader, Show, ToDoc)
 
 pickRandomLayout :: (MonadRandom m) => SelectPetriConfig -> m GraphvizCommand
 pickRandomLayout conf = oneOf (petriLayout conf)
@@ -162,6 +176,7 @@ defaultSelectPetriConfig = SelectPetriConfig {
     { Config.activityFinalNodes = 0
     , Config.flowFinalNodes = 2
     },
+  countOfPetriNodesBounds = (0, Nothing),
   maxInstances = Just 50,
   hideNodeNames = False,
   hideBranchConditions = False,
@@ -173,9 +188,9 @@ defaultSelectPetriConfig = SelectPetriConfig {
   modifyAtMid = True,
   auxiliaryPetriNodeAbsent = Nothing,
   presenceOfSinkTransitionsForFinals = Nothing,
-  noActivityFinalInForkBlocks = Just True,
+  withActivityFinalInForkBlocks = Just False,
   printSolution = False,
-  extraText = Nothing
+  extraText = NoExtraText
 }
 
 checkSelectPetriConfig :: SelectPetriConfig -> Maybe String
@@ -186,40 +201,34 @@ checkSelectPetriConfig conf =
 checkSelectPetriConfig' :: SelectPetriConfig -> Maybe String
 checkSelectPetriConfig' SelectPetriConfig {
     adConfig,
+    countOfPetriNodesBounds,
     maxInstances,
     petriLayout,
     numberOfWrongAnswers,
     numberOfModifications,
     auxiliaryPetriNodeAbsent,
     presenceOfSinkTransitionsForFinals,
-    noActivityFinalInForkBlocks
-  }
-  | Config.activityFinalNodes adConfig > 1
-  = Just "There is at most one 'activityFinalNode' allowed."
-  | Config.activityFinalNodes adConfig >= 1 && Config.flowFinalNodes adConfig >= 1
-  = Just "There is no 'flowFinalNode' allowed if there is an 'activityFinalNode'."
-  | isJust maxInstances && fromJust maxInstances < 1
-    = Just "The parameter 'maxInstances' must either be set to a positive value or to Nothing"
+    withActivityFinalInForkBlocks
+  } = validateSelectPetriSpecific numberOfWrongAnswers numberOfModifications
+    <|> validatePetriConfig
+          adConfig
+          countOfPetriNodesBounds
+          maxInstances
+          petriLayout
+          auxiliaryPetriNodeAbsent
+          presenceOfSinkTransitionsForFinals
+          withActivityFinalInForkBlocks
+
+-- | Additional validation specific to SelectPetri configurations
+validateSelectPetriSpecific
+  :: Int  -- numberOfWrongAnswers
+  -> Int  -- numberOfModifications
+  -> Maybe String
+validateSelectPetriSpecific numberOfWrongAnswers numberOfModifications
   | numberOfWrongAnswers < 1
     = Just "The parameter 'numberOfWrongAnswers' must be set to a positive value"
   | numberOfModifications < 1
     = Just "The parameter 'numberOfModifications' must be set to a positive value"
-  | auxiliaryPetriNodeAbsent == Just True && cycles adConfig > 0
-  = Just [iii|
-    Setting the parameter 'auxiliaryPetriNodeAbsent' to True
-    prohibits having more than 0 cycles
-    |]
-  | Just False <- presenceOfSinkTransitionsForFinals,
-    fst (actionLimits adConfig) + forkJoinPairs adConfig < 1
-    = Just "The option 'presenceOfSinkTransitionsForFinals = Just False' can only be achieved if the number of Actions, Fork Nodes and Join Nodes together is positive"
-  | noActivityFinalInForkBlocks == Just True && Config.activityFinalNodes adConfig > 1
-    = Just "Setting the parameter 'noActivityFinalInForkBlocks' to True prohibits having more than 1 'activityFinalNodes'"
-  | noActivityFinalInForkBlocks == Just False && Config.activityFinalNodes adConfig == 0
-    = Just "Setting the parameter 'noActivityFinalInForkBlocks' to False implies that there are 'activityFinalNodes'"
-  | null petriLayout
-    = Just "The parameter 'petriLayout' can not be the empty list"
-  | any (`notElem` [Dot, Neato, TwoPi, Circo, Fdp]) petriLayout
-    = Just "The parameter 'petriLayout' can only contain the options Dot, Neato, TwoPi, Circo and Fdp"
   | otherwise
     = Nothing
 
@@ -228,7 +237,7 @@ selectPetriAlloy SelectPetriConfig {
   adConfig,
   auxiliaryPetriNodeAbsent,
   presenceOfSinkTransitionsForFinals,
-  noActivityFinalInForkBlocks
+  withActivityFinalInForkBlocks
 }
   = adConfigToAlloy modules predicates adConfig
   where
@@ -239,7 +248,7 @@ selectPetriAlloy SelectPetriConfig {
             #{f auxiliaryPetriNodeAbsent "auxiliaryPetriNodeAbsent"}
             #{f activityFinalsExist "activityFinalsExist"}
             #{f (not <$> presenceOfSinkTransitionsForFinals) "avoidAddingSinksForFinals"}
-            #{f noActivityFinalInForkBlocks "noActivityFinalInForkBlocks"}
+            #{f (not <$> withActivityFinalInForkBlocks) "noActivityFinalInForkBlocks"}
           |]
     f opt s =
           case opt of
@@ -266,14 +275,27 @@ selectPetriNet
   => Int
   -> Int
   -> Bool
+  -> (Int, Maybe Int)
   -> UMLActivityDiagram
   -> m SelectPetriSolution
-selectPetriNet numberOfWrongNets numberOfModifications modifyAtMid ad = do
-  let matchingNet = convertToPetriNet ad
+selectPetriNet numberOfWrongNets numberOfModifications modifyAtMid countOfPetriNodesBounds ad =
+  selectPetriNetWithMatchingNet numberOfWrongNets numberOfModifications modifyAtMid countOfPetriNodesBounds ad (convertToPetriNet ad)
+
+selectPetriNetWithMatchingNet
+  :: (MonadRandom m)
+  => Int
+  -> Int
+  -> Bool
+  -> (Int, Maybe Int)
+  -> UMLActivityDiagram
+  -> SimplePetriLike PetriKey
+  -> m SelectPetriSolution
+selectPetriNetWithMatchingNet numberOfWrongNets numberOfModifications modifyAtMid countOfPetriNodesBounds ad matchingNet = do
   wrongNets <- loopM (\xs -> do
       modAd <- modifyAd ad numberOfModifications modifyAtMid
       let petri = convertToPetriNet modAd
-      if any (isPetriIsomorphic petri) (matchingNet:xs)
+      if not (checkPetriNodeCount countOfPetriNodesBounds petri)
+         || any (isPetriIsomorphic petri) (matchingNet:xs)
         then return $ Left xs
       else
         if length (petri:xs) < numberOfWrongNets
@@ -342,6 +364,7 @@ selectPetriTask
     MonadGraphviz m,
     MonadPlantUml m,
     MonadThrow m,
+    MonadWriteFile m,
     OutputCapable m
     )
   => FilePath
@@ -360,7 +383,7 @@ selectPetriTask path task = do
   images show id
     $=<< for
       mapping
-      (\c -> cacheNet path (show . PK.label) c drawSetting)
+      (\c -> cacheNet path (mapNet (show . PK.label) c) drawSetting)
   paragraph $ translate $ do
     english [i|Which of these Petri nets is the translation of the given activity diagram?
 Please state your answer by giving a number indicating the matching Petri net.|]
@@ -375,7 +398,6 @@ Bitte geben Sie Ihre Antwort als Zahl an, welche das passende Petrinetz repräse
       english [i|would indicate that Petri net 2 is the matching Petri net.|]
       german  [i|bedeuten, dass Petrinetz 2 das passende Petrinetz ist.|]
     pure ()
-  finalNodesAdvice False
 
   extra $ addText task
 
@@ -407,6 +429,7 @@ selectPetriEvaluation
     MonadGraphviz m,
     MonadPlantUml m,
     MonadThrow m,
+    MonadWriteFile m,
     OutputCapable m
     )
   => FilePath
@@ -421,9 +444,9 @@ selectPetriEvaluation path task n = addPretext $ do
       (solution, _) = head $ M.toList $ M.map snd $ M.filter fst solMap
       maybeSolutionString =
         if showSolution task
-        then Just $ show solution
+        then Just . (DefiniteArticle,) $ show solution
         else Nothing
-  reRefuseLangM (singleChoice DefiniteArticle as maybeSolutionString solution n) $ do
+  reRefuseLangM (singleChoice as maybeSolutionString solution n) $ do
     when (showSolution task) $ do
 
       when (suppressNodeNames $ plantUMLConf task) $ paragraph $ do
@@ -432,7 +455,8 @@ selectPetriEvaluation path task n = addPretext $ do
           german "Das originale Aktivitätsdiagramm sieht mit Knotennamen wie folgt aus:"
 
         let alteredConfig = (plantUMLConf task) { suppressNodeNames = False }
-        image $=<< drawAdToFile path alteredConfig $ activityDiagram task
+        image $=<< drawAdToFile (path ++ "feedback") alteredConfig
+          $ activityDiagram task
         pure ()
 
       let (_, correctNet) = fromJust $ find fst $ petriNets task
@@ -445,7 +469,7 @@ selectPetriEvaluation path task n = addPretext $ do
               { withPlaceNames = True
               , withTransitionNames = True
               }
-        image $=<< cacheNet path (show . PK.label) correctNet drawSetting
+        image $=<< cacheNet path (mapNet (show . PK.label) correctNet) drawSetting
         pure ()
 
       paragraph $ translate $ do
@@ -565,29 +589,35 @@ getSelectPetriTask config = do
         withGraphvizCommand = layout
       }
   ad <- mapM (fmap snd . shuffleAdNames) randomInstances
-  validInstances <- firstJustM (\x -> do
-    sol <- selectPetriNet
-      (numberOfWrongAnswers config)
-      (numberOfModifications config)
-      (modifyAtMid config)
-      x
-    p <- fmap snd $ shufflePetri $ matchingNet sol
-    ps <- mapM (fmap snd . shufflePetri) $ wrongNets sol
-    petriNets <- selectPetriSolutionToMap
-      $ SelectPetriSolution {matchingNet=p, wrongNets=ps}
-    let petriInst = SelectPetriInstance {
-          activityDiagram=x,
-          plantUMLConf=plantUMLConf,
-          petriDrawConf=petriDrawConf,
-          petriNets = petriNets,
-          showSolution = printSolution config,
-          addText = extraText config
-        }
-    case checkPetriInstance petriInst config of
-      Just _ -> return Nothing
-      Nothing -> return $ Just petriInst
-    ) ad
-  case validInstances of
+    >>= firstJustM (\ad -> do
+      let petriNet = convertToPetriNet @PetriLike @SimpleNode ad
+      if not (checkPetriNodeCount (countOfPetriNodesBounds config) petriNet)
+        then return Nothing
+        else do
+          sol <- selectPetriNetWithMatchingNet
+            (numberOfWrongAnswers config)
+            (numberOfModifications config)
+            (modifyAtMid config)
+            (countOfPetriNodesBounds config)
+            ad
+            petriNet
+          p <- fmap snd $ shufflePetri $ matchingNet sol
+          ps <- mapM (fmap snd . shufflePetri) $ wrongNets sol
+          petriNets <- selectPetriSolutionToMap
+            $ SelectPetriSolution {matchingNet=p, wrongNets=ps}
+          let petriInst = SelectPetriInstance {
+                activityDiagram=ad,
+                plantUMLConf=plantUMLConf,
+                petriDrawConf=petriDrawConf,
+                petriNets = petriNets,
+                showSolution = printSolution config,
+                addText = extraText config
+              }
+          case checkPetriInstance petriInst config of
+            Just _ -> return Nothing
+            Nothing -> return $ Just petriInst
+    )
+  case ad of
     Just x -> return x
     Nothing -> throwM NoInstanceAvailable
 
@@ -886,5 +916,5 @@ defaultSelectPetriInstance =  SelectPetriInstance {
     ]
   }))],
   showSolution = False,
-  addText = Nothing
+  addText = NoExtraText
 }

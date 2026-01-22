@@ -38,8 +38,9 @@ import Modelling.CdOd.Types (
   associationNames,
   classNames,
   defaultCdDrawSettings,
-  linkNames,
+  linkLabels,
   normaliseObjectDiagram,
+  renameObjectsWithClassesAndLinksInOd,
   )
 import Modelling.Common                 (withLang)
 import Modelling.Types (
@@ -49,6 +50,7 @@ import Modelling.Types (
   )
 
 import Control.OutputCapable.Blocks (
+  ExtraText (..),
   Language (English),
   )
 import Control.Monad.Trans.Except       (runExceptT)
@@ -69,6 +71,7 @@ import Test.Hspec
 import Test.QuickCheck (
   (==>),
   Arbitrary (arbitrary),
+  NonEmptyList (NonEmpty),
   Property,
   Testable (property),
   ioProperty,
@@ -102,33 +105,33 @@ spec = do
           seed <- randomIO
           differentNames defaultDifferentNamesConfig segment seed
         inst `shouldSatisfy` isRight
-      it "reproducible generates defaultDifferentNamesInstance" $
+      it "reproducibly generates defaultDifferentNamesInstance" $
         differentNames defaultDifferentNamesConfig 0 0
         `shouldReturn` defaultDifferentNamesInstance
   describe "differentNamesEvaluation" $ do
     it "accepts the initial example" $
       let cs = map (bimap unName unName) differentNamesInitial
-      in property $ \bs ->
-        not (null bs) ==> Right 1 == evaluateDifferentNames bs cs cs
+      in property $ \(NonEmpty bs) ->
+        Right 1 == evaluateDifferentNames bs cs cs
     it "accepts correct solutions" $
-      property $ \cs g bs -> not (null cs) && not (null bs)
-        ==> ioProperty $ do
+      property $ \(NonEmpty cs) g (NonEmpty bs) -> ioProperty $ do
           let checkResult = if isValidMapping cs then (Right 1 ==) else isLeft
           cs' <- flipCoin g `mapM` cs >>= shuffleM
           return $ checkResult $ evaluateDifferentNames bs cs cs'
     it "accepts with percentage or rejects too short solutions" $
-      property $ \cs n bs -> not (null cs) && not (null bs) && isValidMapping cs
-        ==> ioProperty $ do
+      property $ \(NonEmpty cs') n (NonEmpty bs) ->
+        let cs = map (\(NonEmpty x, NonEmpty y) -> (x, y)) cs'
+        in isValidMapping cs ==> ioProperty $ do
           let n' = abs n
               l = fromIntegral $ length cs
               r = (l - fromIntegral n') % l
-          cs' <- drop n' <$> shuffleM cs
+          cs'' <- drop n' <$> shuffleM cs
           return $ (if r >= 0.5 then (Right r ==) else isLeft)
-            $ evaluateDifferentNames bs cs cs'
+            $ evaluateDifferentNames bs cs cs''
     it "rejects too long solutions" $
-      property $ \cs w bs ->
+      property $ \cs (NonEmpty w) (NonEmpty bs) ->
         let cs' = cs ++ w
-        in not (null w) && not (null bs) && isValidMapping cs
+        in isValidMapping cs
            ==> isLeft $ evaluateDifferentNames bs cs cs'
   describe "renameInstance" $ do
     it "is reversable" $ renameProperty $ \inst renamedInstance _ _ ->
@@ -136,7 +139,7 @@ spec = do
             od = oDiagram inst
             names = classNames cd
             nonInheritances = associationNames cd
-            linkNs = linkNames od
+            linkNs = linkLabels od
         in (Just inst ==)
            $ renamedInstance
            >>= (\x -> renameInstance x names nonInheritances linkNs)
@@ -144,7 +147,7 @@ spec = do
       let rename xs ys = Name . fromJust . (`lookup` zip xs ys)
           origMap = map (bimap
             (rename (associationNames $ cDiagram inst) as)
-            (rename (linkNames $ oDiagram inst) ls))
+            (rename (linkLabels $ oDiagram inst) ls))
             $ BM.toList (fromNameMapping $ mapping inst)
       in (Right 1 ==)
          $ maybe (Left "instance could not be renamed") return renamedInstance
@@ -179,18 +182,26 @@ spec = do
           Object {isAnonymous = True, objectName = "c1", objectClass = "C"}
           ],
         links = [
-          Link {linkName = "x", linkFrom = "a", linkTo = "c"},
-          Link {linkName = "x", linkFrom = "a", linkTo = "c1"},
-          Link {linkName = "y", linkFrom = "c", linkTo = "a"},
-          Link {linkName = "y", linkFrom = "c1", linkTo = "a"}
+          Link {linkLabel = "x", linkFrom = "a", linkTo = "c"},
+          Link {linkLabel = "x", linkFrom = "a", linkTo = "c1"},
+          Link {linkLabel = "y", linkFrom = "c", linkTo = "a"},
+          Link {linkLabel = "y", linkFrom = "c1", linkTo = "a"}
           ]
         }
 
 odFor :: Cd -> IO Od
-odFor cd = normaliseObjectDiagram . oDiagram <$> do
+odFor cd = normaliseObjectDiagram <$> do
   g <- getStdGen
   evalRandT (getDifferentNamesTask failed fewObjects cd) g
+    >>= getOriginalOd
   where
+    names = classNames cd
+    keepClassNames = BM.fromList $ zip names names
+    getOriginalOd x =
+      renameObjectsWithClassesAndLinksInOd
+      keepClassNames
+      (BM.twist $ fromNameMapping $ mapping x)
+      $ oDiagram x
     failed = error "failed generating instance"
     fewObjects = defaultDifferentNamesConfig { objectConfig = oc }
     oc = ObjectConfig {
@@ -275,9 +286,9 @@ simpleCircleOd = ObjectDiagram {
     Object {isAnonymous = True, objectName = "c", objectClass = "C"}
     ],
   links = [
-    Link {linkName = "x", linkFrom = "a", linkTo = "b"},
-    Link {linkName = "y", linkFrom = "b", linkTo = "c"},
-    Link {linkName = "z", linkFrom = "c", linkTo = "a"}
+    Link {linkLabel = "x", linkFrom = "a", linkTo = "b"},
+    Link {linkLabel = "y", linkFrom = "b", linkTo = "c"},
+    Link {linkLabel = "z", linkFrom = "c", linkTo = "a"}
     ]
   }
 
@@ -337,9 +348,9 @@ evaluateDifferentNames coins cs cs' = flip withLang English $ do
           },
         showSolution = True,
         mapping = toNameMapping $ BM.fromList cs,
-        linkShuffling = ConsecutiveLetters,
+        linkShuffling = ConsecutiveNumbers,
         taskText = defaultDifferentNamesTaskText,
-        addText = Nothing
+        addText = NoExtraText
         }
       cs'' = map (bimap Name Name) cs'
   differentNamesSyntax i cs''

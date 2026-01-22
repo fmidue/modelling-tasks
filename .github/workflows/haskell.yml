@@ -7,11 +7,33 @@ on:
       - dev
       - develop
       - master
+    paths:
+      - '**.hs'
+      - '**/package.yaml'
+      - '**.cabal'
+      - 'stack*.yaml'
+      - 'alloy/**.als'
+      - 'test/unit/**.als'
+      - 'test/unit/**.svg'
+      - '**/hie.yaml'
+      - '.hlint.yaml'
+      - '.github/workflows/haskell.yml'
   pull_request:
     branches:
       - dev
       - develop
       - master
+    paths:
+      - '**.hs'
+      - '**/package.yaml'
+      - '**.cabal'
+      - 'stack*.yaml'
+      - 'alloy/**.als'
+      - 'test/unit/**.als'
+      - 'test/unit/**.svg'
+      - '**/hie.yaml'
+      - '.hlint.yaml'
+      - '.github/workflows/haskell.yml'
 
 permissions: read-all
 
@@ -55,7 +77,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-stack-global-${{ hashFiles('stack-apps.yaml') }}
             ${{ runner.os }}-stack-global-
-        if: contains(matrix.os, 'windows') == false
+        if: contains(matrix.os, 'windows')
 
       - name: Restore .stack-work
         id: cache-stack-work-restore
@@ -77,16 +99,14 @@ jobs:
         run: |
           set -ex
           # shellcheck disable=SC2086
-          stack --no-terminal test --stack-yaml=stack-apps.yaml \
-            --ghc-options="-DMAX_BIT_WIDTH=7" --bench --only-dependencies
+          stack --no-terminal test --stack-yaml=stack-apps.yaml --bench --only-dependencies
           set +ex
         if: contains(matrix.os, 'windows') == false
 
       - name: Install dependencies on windows
         shell: powershell
         run: |
-          stack --no-terminal test --stack-yaml=stack-apps.yaml \
-            --ghc-options="-DMAX_BIT_WIDTH=7" --bench --only-dependencies
+          stack --no-terminal test --stack-yaml=stack-apps.yaml --bench --only-dependencies
         if: contains(matrix.os, 'windows')
 
       - name: Build and test on unix
@@ -94,8 +114,7 @@ jobs:
         run: |
           set -ex
           # shellcheck disable=SC2086
-          stack --no-terminal test --stack-yaml=stack-apps.yaml \
-            --ghc-options="-DMAX_BIT_WIDTH=7" --coverage \
+          stack --no-terminal test --stack-yaml=stack-apps.yaml --coverage \
             --bench --no-run-benchmarks --haddock --no-haddock-deps \
             --test-arguments="--skip-needs-tuning --times --maximum-generated-tests=50"
           set +ex
@@ -105,8 +124,7 @@ jobs:
         id: test-windows
         shell: powershell
         run: |
-          stack --no-terminal test --stack-yaml=stack-apps.yaml \
-            --ghc-options="-DMAX_BIT_WIDTH=7" --coverage \
+          stack --no-terminal test --stack-yaml=stack-apps.yaml --coverage \
             --bench --no-run-benchmarks --haddock --no-haddock-deps \
             --test-arguments="--skip-needs-tuning --times --maximum-generated-tests=50"
         if: contains(matrix.os, 'windows')

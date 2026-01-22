@@ -6,6 +6,7 @@
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE TupleSections #-}
 
 module Modelling.PetriNet.Capacity (
   CapacityInstance (..),
@@ -66,8 +67,8 @@ import Modelling.PetriNet.Alloy (
   randomInSegment,
   )
 import Modelling.PetriNet.Diagram (
-  renderWith,
-  renderWithCapacity,
+  cacheNet,
+  cacheNetWithCapacity,
   )
 import Modelling.PetriNet.Find (
   prohibitHidePlaceNames,
@@ -109,7 +110,7 @@ import Modelling.PetriNet.Types         (
   toChangeList,
   )
 
-import Control.Applicative              ((<|>), liftA2)
+import Control.Applicative              ((<|>))
 import Control.Monad                    (void, when, (>=>))
 import Control.Monad.Catch              (MonadThrow, MonadThrow (throwM))
 import Control.OutputCapable.Blocks (
@@ -134,6 +135,7 @@ import Control.Monad.Random (
   evalRandT,
   mkStdGen
   )
+import Data.Bifunctor                   (first)
 import Data.Bitraversable               (bimapM)
 import Data.Foldable                    (for_)
 import Data.GraphViz.Commands           (GraphvizCommand (Circo))
@@ -242,9 +244,9 @@ capacityTask path task = do
     english "Consider the following Petri net with capacities:"
     german "Betrachten Sie folgendes Petrinetz mit Kapazitäten:"
   image
-    $=<< renderWithCapacity path "capacityTask" (originalNet task) (drawWith task)
+    $=<< cacheNetWithCapacity path (originalNet task) (drawWith task)
   image
-    $=<< renderWith path "capacitySolution" (transformedNet task) (drawWith task)
+    $=<< cacheNet path (transformedNet task) (drawWith task)
   paragraph $ do
     translate $ do
       english [iii|
@@ -294,7 +296,7 @@ capacityTask path task = do
       english "The order of tuples within the lists does not matter here."
       german "Die Reihenfolge der Tupel innerhalb der Listen spielt hierbei keine Rolle."
     pure ()
-  paragraph hoveringInformation
+  hoveringInformation True
   pure ()
 
 capacitySyntax
@@ -337,12 +339,13 @@ capacityEvaluation
   -> Rated m
 capacityEvaluation task (tokenChanges, flowChanges) = do
   let whatTokens = translations $ do
-        english "The given tuples are added complement places?"
+        english "The indicated tuples are added complement places?"
         german "Die angegebenen Tupel sind hinzugefügte Komplementstellen?"
   let whatFlows = translations $ do
-        english "The given tuples are added flows?"
+        english "The indicated tuples are added flows?"
         german "Die angegebenen Tupel sind hinzugefügte Flüsse?"
-  uncurry (printSolutionAndAssert DefiniteArticle)
+  uncurry (printSolutionAndAssert True)
+    . first (fmap (DefiniteArticle,))
     $=<< unLangM $ liftA2 combineResults
       (toFindEvaluationTupleList whatTokens withSol tokens tokenChanges)
       (toFindEvaluationTupleList whatFlows withSol flows flowChanges)

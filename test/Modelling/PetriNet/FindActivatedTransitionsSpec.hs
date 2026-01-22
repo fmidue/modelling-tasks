@@ -41,6 +41,8 @@ import Modelling.PetriNet.TestCommon (
   )
 import Settings                         (configDepth)
 
+import Control.Lens.Lens                ((??))
+import Control.OutputCapable.Blocks     (ExtraText (..))
 import Data.Char                        (isDigit)
 import Data.List                        (nub)
 import Data.Maybe                       (isNothing)
@@ -87,6 +89,7 @@ validFindActivatedTransitionsConfigs cs advancedConfig = do
     <*> pure validGraphConfig
     <*> pure False
     <*> pure alloyTestConfig
+    ?? NoExtraText
 
 validActivatedTransitionsConfigs :: BasicConfig -> [Maybe Int]
 validActivatedTransitionsConfigs bc@BasicConfig{ transitions } = filter (isNothing . checkActivatedTransitionsConfig bc) $

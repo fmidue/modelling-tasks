@@ -13,6 +13,8 @@ import Modelling.PetriNet.Types (
   ChangeConfig (..),
   GraphConfig (..),
   )
+
+import Control.OutputCapable.Blocks     (ExtraText (..))
 import Data.GraphViz.Commands           (GraphvizCommand(..))
 
 {-|
@@ -56,7 +58,8 @@ task2023_19 = MathConfig {
   alloyConfig = AlloyConfig {
     maxInstances = Just 2000,
     timeout = Nothing
-    }
+    },
+  extraText = NoExtraText
   }
 
 {-|
@@ -100,7 +103,8 @@ task2023_20 = MathConfig {
   alloyConfig = AlloyConfig {
     maxInstances = Just 2000,
     timeout = Nothing
-    }
+    },
+  extraText = NoExtraText
   }
 
 {-|
@@ -118,3 +122,29 @@ CPU usage: 107%
 -}
 task2024_24 :: MathConfig
 task2024_24 = task2023_20
+
+{-|
+points: 0.05
+the amount of generated instances: 100
+maximum concurrent amount of tasks: 50
+average generation time per instance on the cluster (without considering concurrency): 11:37min
+total run time on the cluster (not including queuing time): 24:47min
+average CPU usage: 101%
+average max memory usage: 899.33 MB
+Note: No instances were rendered faulty on Autotool regardless of the different graphviz version.
+-}
+task2025_25 :: MathConfig
+task2025_25 = task2024_23
+
+{-|
+points: 0.05
+the amount of generated instances: 100
+maximum concurrent amount of tasks: 50
+average generation time per instance on the cluster (without considering concurrency): 37:58min
+total run time on the cluster (not including queuing time): 01:19:33h
+average CPU usage: 100%
+average max memory usage: 1772.93 MB
+Note: 8 student tasks were rendered faulty on Autotool due to the different graphviz version (manually fixed).
+-}
+task2025_26 :: MathConfig
+task2025_26 = task2024_24

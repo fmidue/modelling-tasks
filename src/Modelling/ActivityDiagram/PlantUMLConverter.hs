@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE NamedFieldPuns #-}
@@ -15,7 +16,11 @@ import Data.List ( delete, intercalate, intersect, union )
 import Data.String.Interpolate ( i, __i )
 import GHC.Generics (Generic)
 
+import Autolib.Hash                     (Hashable)
+import Autolib.Reader                   (Reader)
+import Autolib.ToDoc                    (ToDoc)
 import Capabilities.PlantUml            (MonadPlantUml (drawPlantUmlSvg))
+import Capabilities.WriteFile           (MonadWriteFile (writeToFile))
 import Modelling.ActivityDiagram.Datatype (
   AdNode (..),
   UMLActivityDiagram(..),
@@ -26,7 +31,8 @@ import Modelling.ActivityDiagram.Datatype (
 data PlantUmlConfig = PlantUmlConfig {
   suppressNodeNames :: Bool,
   suppressBranchConditions :: Bool
-} deriving (Generic, Read, Show, Eq)
+}
+  deriving (Eq, Generic, Hashable, Read, Reader, Show, ToDoc)
 
 defaultPlantUmlConfig :: PlantUmlConfig
 defaultPlantUmlConfig = PlantUmlConfig {
@@ -35,13 +41,14 @@ defaultPlantUmlConfig = PlantUmlConfig {
 }
 
 drawAdToFile
-  :: MonadPlantUml m
+  :: (MonadPlantUml m, MonadWriteFile m)
   => FilePath
   -> PlantUmlConfig
   -> UMLActivityDiagram
   -> m FilePath
 drawAdToFile path conf ad = do
-  drawPlantUmlSvg adFilename $ convertToPlantUML' conf ad
+  renderedAd <- drawPlantUmlSvg $ convertToPlantUML' conf ad
+  writeToFile adFilename renderedAd
   return adFilename
   where
     adFilename :: FilePath

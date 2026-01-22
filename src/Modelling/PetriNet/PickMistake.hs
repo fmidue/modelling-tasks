@@ -66,8 +66,9 @@ import Modelling.PetriNet.Types         (
   )
 
 import Control.Applicative              ((<|>))
-import Control.Monad.Catch              (MonadThrow)
+import Control.Monad.Catch              (MonadCatch, MonadThrow)
 import Control.OutputCapable.Blocks (
+  ExtraText (..),
   GenericOutputCapable (..),
   LangM,
   OutputCapable,
@@ -80,21 +81,23 @@ import Control.Monad.Random (
   RandT,
   RandomGen,
   )
+import Data.Data                        (Data, Typeable)
 import Data.GraphViz.Commands           (GraphvizCommand (Fdp))
 import Data.Functor.Const               (Const(..))
 import Data.String.Interpolate          (i, iii)
 
 pickMistakeGenerate
-  :: (MonadAlloy m, MonadThrow m, Net p n)
+  :: (MonadAlloy m, MonadCatch m, MonadDiagrams m, MonadGraphviz m, Net p n)
   => PickMistakeConfig
   -> Int
   -> Int
   -> m (PickInstance (p n String))
-pickMistakeGenerate = pickGenerate pickMistake gc ud ws
+pickMistakeGenerate = pickGenerate pickMistake gc ud ws et
   where
     gc = Pick.graphConfig
     ud = Pick.useDifferentGraphLayouts
     ws = Pick.printSolution
+    et = Pick.extraText
 
 simplePickMistakeTask
   :: (MonadCache m,
@@ -110,12 +113,16 @@ simplePickMistakeTask = pickMistakeTask
 
 pickMistakeTask
   :: (
+    Data (n String),
+    Data (p n String),
     MonadCache m,
     MonadDiagrams m,
     MonadGraphviz m,
     MonadThrow m,
     Net p n,
-    OutputCapable m
+    OutputCapable m,
+    Typeable n,
+    Typeable p
     )
   => FilePath
   -> PickInstance (p n String)
@@ -129,7 +136,7 @@ pickMistakeTask path task = do
       Welcher der folgenden Petrinetzkandidaten ist nicht korrekt geformt?
       |]
   images show snd
-    $=<< renderPick path "pickMistake" task
+    $=<< renderPick path task
   paragraph $ translate $ do
     english [iii|
       State your answer by giving the number of the Petri net candidate
@@ -159,7 +166,7 @@ pickMistakeTask path task = do
             then "die anderen zumindest syntaktisch korrekt sind."
             else "der andere zumindest syntaktisch korrekt ist.")
     pure ()
-  paragraph hoveringInformation
+  hoveringInformation True
   pure ()
 
 
@@ -336,5 +343,6 @@ defaultPickMistakeInstance = PickInstance {
         }
       )))
     ],
-  showSolution = False
+  showSolution = False,
+  addText = NoExtraText
   }

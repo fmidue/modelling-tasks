@@ -4,7 +4,6 @@
 (?:^|/)go\.sum$
 (?:^|/)package(?:-lock|)\.json$
 (?:^|/)vendor/
-ignore$
 \.ai$
 \.avi$
 \.bat$
@@ -43,10 +42,14 @@ ignore$
 \.yml$
 \.zip$
 ^\.github/actions/spelling/
+^\.github/copilot-.*\.md$
 ^\.github/linters/
-^app/
-^legacy-app/
+^\Q.github/pull_request_template.md\E$
 ^\Qalloy-guidelines/alloy-style.sty\E$
+^\Qscripts/check-no-runaway-io.sh\E$
 ^\Qtest/Modelling/CdOd/MatchCdOdSpec.hs\E$
 ^\Qtest/Spec.hs\E$
+^app/
+^legacy-app/
 ^test/unit/
+ignore$

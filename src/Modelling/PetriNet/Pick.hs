@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE FlexibleContexts #-}
@@ -27,34 +28,44 @@ import qualified Data.Map                         as M (
   insert,
   )
 
+import Autolib.Hash                     (Hashable)
+import Autolib.Reader.Class             (Reader)
+import Autolib.ToDoc                    (ToDoc)
 import Capabilities.Cache               (MonadCache)
 import Capabilities.Diagrams            (MonadDiagrams)
 import Capabilities.Graphviz            (MonadGraphviz)
 import Modelling.Auxiliary.Common (
   Object,
+  findFittingRandomElements,
   )
-import Modelling.PetriNet.Diagram       (getDefaultNet, getNet, renderWith)
+import Modelling.PetriNet.Diagram (
+  cacheNet,
+  getDefaultNet,
+  getNet,
+  isNetDrawable,
+  )
 import Modelling.PetriNet.Types         (
   BasicConfig (..),
   ChangeConfig (..),
   Drawable,
   GraphConfig (..),
   Net (..),
+  allDrawSettings,
   checkBasicConfig,
   checkChangeConfig,
   checkGraphLayouts,
-  manyRandomDrawSettings,
   placeNames,
   prohibitPatchworkRenderer,
-  randomDrawSettings,
   transitionNames,
   )
 
 import Control.Applicative              (Alternative ((<|>)))
 import Control.Arrow                    (Arrow (second))
-import Control.Monad.Catch              (MonadThrow)
+import Control.Monad.Catch              (MonadCatch, MonadThrow)
+import Control.Monad.Extra              (maybeM)
 import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
+  ExtraText,
   LangM,
   OutputCapable,
   english,
@@ -72,6 +83,7 @@ import Control.Monad.Random (
 import Control.Monad.Trans              (MonadTrans (lift))
 import Data.Bitraversable               (bimapM)
 import Data.Containers.ListUtils        (nubOrd)
+import Data.Data                        (Data, Typeable)
 import Data.Map                         (Map)
 import Data.Maybe                       (isJust)
 import GHC.Generics                     (Generic)
@@ -82,9 +94,10 @@ import System.Random.Shuffle            (shuffleM)
 
 data PickInstance n = PickInstance {
   nets :: !(Map Int (Bool, Drawable n)),
-  showSolution :: !Bool
+  showSolution :: !Bool,
+  addText :: !ExtraText
   }
-  deriving (Generic, Read, Show)
+  deriving (Eq, Generic, Hashable, Read, Reader, Show, ToDoc)
 
 -- TODO: replace 'wrong' in 'pickGenerate' by 'wrongInstances'
 -- if this value might be greater than 1 on task generation.
@@ -105,39 +118,45 @@ pickTaskInstance parseSpecial inst = do
   return [special, net]
 
 pickGenerate
-  :: (MonadThrow m, Net p n, Ord b)
+  :: (MonadCatch m, MonadDiagrams m, MonadGraphviz m, Net p n)
   => (c
     -> Int
-    -> RandT StdGen m [(p n b, Maybe a)]
+    -> RandT StdGen m [(p n String, Maybe a)]
     )
   -> (c -> GraphConfig)
   -> (c -> Bool)
   -> (c -> Bool)
+  -> (c -> ExtraText)
   -> c
   -> Int
   -> Int
-  -> m (PickInstance (p n b))
-pickGenerate pick gc useDifferent withSol config segment seed
-  = flip evalRandT (mkStdGen seed) $ do
-  ns <- pick config segment
-  ns'  <- shuffleM ns
-  let ts = nubOrd $ concatMap (transitionNames . fst) ns'
-      ps = nubOrd $ concatMap (placeNames . fst) ns'
-  ts' <- shuffleM ts
-  ps' <- shuffleM ps
-  let mapping = BM.fromList $ zip (ps ++ ts) (ps' ++ ts')
-  ns'' <- lift $ bimapM (traverseNet (`BM.lookup` mapping)) return `mapM` ns'
-  s <- randomDrawSettings (gc config)
-  ns''' <- addDrawingSettings s ns''
-  return $ PickInstance {
-    nets = M.fromList $ zip [1 ..] [(isJust m, (n, d)) | ((n, m), d) <- ns'''],
-    showSolution = withSol config
-    }
+  -> m (PickInstance (p n String))
+pickGenerate pick gc useDifferent withSol getExtraText config segment seed
+  = evalRandT getInstance (mkStdGen seed)
   where
-    addDrawingSettings s ps = zip ps <$>
-      if useDifferent config
-      then manyRandomDrawSettings (gc config) (wrong + 1)
-      else return $ replicate (wrong + 1) s
+    getInstance = do
+      ns <- pick config segment
+      ns'  <- shuffleM ns
+      let ts = nubOrd $ concatMap (transitionNames . fst) ns'
+          ps = nubOrd $ concatMap (placeNames . fst) ns'
+      ts' <- shuffleM ts
+      ps' <- shuffleM ps
+      let mapping = BM.fromList $ zip (ps ++ ts) (ps' ++ ts')
+      ns'' <- lift $ bimapM (traverseNet (`BM.lookup` mapping)) return `mapM` ns'
+      getPickInstance ns''
+    toPickInstance ns ds =
+      pure $ PickInstance {
+        nets = M.fromList
+          $ zip [1 ..] [(isJust m, (n, d)) | ((n, m), d) <- zip ns ds],
+        showSolution = withSol config,
+        addText = getExtraText config
+        }
+    getPickInstance petriNets =
+      let predicates = map (\(x,_) -> lift . isNetDrawable x) petriNets
+          availableLayouts = allDrawSettings (gc config)
+      in
+        maybeM getInstance (toPickInstance petriNets)
+        $ findFittingRandomElements (useDifferent config) availableLayouts predicates
 
 pickSyntax
   :: OutputCapable m
@@ -158,11 +177,11 @@ pickEvaluation task = do
   let what = translations $ do
         english "Petri net"
         german "Petrinetz"
-  singleChoice DefiniteArticle what maybeSolutionString solution
+  singleChoice what maybeSolutionString solution
   where
     maybeSolutionString =
       if withSol
-      then Just $ show solution
+      then Just . (DefiniteArticle,) $ show solution
       else Nothing
     solution = pickSolution task
     withSol = showSolution task
@@ -171,16 +190,25 @@ pickSolution :: PickInstance n -> Int
 pickSolution = head . M.keys . M.filter fst . nets
 
 renderPick
-  :: (MonadCache m, MonadDiagrams m, MonadGraphviz m, MonadThrow m, Net p n)
-  => String
-  -> String
+  :: (
+    Data (n String),
+    Data (p n String),
+    MonadCache m,
+    MonadDiagrams m,
+    MonadGraphviz m,
+    MonadThrow m,
+    Net p n,
+    Typeable n,
+    Typeable p
+    )
+  => FilePath
   -> PickInstance (p n String)
   -> m (Map Int (Bool, String))
-renderPick path task config =
+renderPick path config =
   M.foldrWithKey render' (pure mempty) $ nets config
   where
     render' x (b, (net, ds)) ns =
-      renderWith path (task ++ '-' : show x) net ds
+      cacheNet path net ds
       >>= \file -> M.insert x (b, file) <$> ns
 
 checkConfigForPick

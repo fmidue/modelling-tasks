@@ -2,6 +2,10 @@
 
 module ExamplesSpec where
 
+import qualified Modelling.Auxiliary.Shuffle.All as All (
+  ShuffleInstance (taskInstance),
+  )
+
 import Modelling.ActivityDiagram.EnterAS (
   checkEnterASConfig,
   )
@@ -63,9 +67,6 @@ import Modelling.ActivityDiagram.SelectPetri.Config (
   task2024_43,
   task2024_44,
   )
-import Modelling.Auxiliary.Common (
-  ShuffleInstance (taskInstance),
-  )
 import Modelling.CdOd.DifferentNames (
   checkDifferentNamesConfig,
   )
@@ -76,6 +77,12 @@ import Modelling.CdOd.DifferentNames.Config (
   task2024_15,
   task2024_16,
   task2024_56,
+  task2025_13,
+  task2025_14,
+  task2025_15,
+  task2025_16,
+  task2025_21,
+  task2025_22,
   )
 import Modelling.CdOd.MatchCdOd (
   checkMatchCdOdConfig,
@@ -90,6 +97,10 @@ import Modelling.CdOd.MatchCdOd.Config (
   task2024_57,
   task2024_58,
   task2024_59,
+  task2025_17,
+  task2025_18,
+  task2025_19,
+  task2025_20,
   )
 import Modelling.CdOd.NameCdError (
   checkNameCdErrorConfig,
@@ -101,9 +112,12 @@ import Modelling.CdOd.NameCdError.Config (
   task2024_10,
   task2024_11,
   task2024_54,
+  task2025_08,
+  task2025_09,
   )
 import Modelling.CdOd.NameCdError.Instance (
   task2024_14,
+  task2025_12,
   )
 import Modelling.CdOd.RepairCd (
   checkRepairCdConfig,
@@ -114,6 +128,8 @@ import Modelling.CdOd.RepairCd.Config (
   task2024_12,
   task2024_13,
   task2024_55,
+  task2025_10,
+  task2025_11,
   )
 import Modelling.CdOd.SelectValidCd (
   checkSelectValidCdConfig,
@@ -127,12 +143,16 @@ import Modelling.CdOd.SelectValidCd.Config (
   task2024_08,
   task2024_51,
   task2024_52,
+  task2025_04,
+  task2025_05,
+  task2025_06,
   )
 import Modelling.CdOd.SelectValidCd.Instance (
   task2024_05,
   task2024_06picked,
   task2024_09,
   task2024_53,
+  task2025_07,
   )
 import Modelling.PetriNet.Concurrency (
   checkFindConcurrencyConfig,
@@ -170,12 +190,16 @@ import Modelling.PetriNet.PetriGraphToMath.Config (
   task2023_18,
   task2024_21,
   task2024_22,
+  task2025_23,
+  task2025_24,
   )
 import Modelling.PetriNet.PetriMathToGraph.Config (
   task2023_19,
   task2023_20,
   task2024_23,
   task2024_24,
+  task2025_25,
+  task2025_26,
   )
 import Modelling.PetriNet.PetriPickConcurrency.Config (
   task2023_21,
@@ -186,6 +210,26 @@ import Modelling.PetriNet.PetriPickConflict.Config (
   task2023_16,
   task2024_30,
   task2024_31,
+  )
+import Modelling.PetriNet.Reach.Deadlock (
+  checkDeadlockConfig,
+  )
+import Modelling.PetriNet.PetriDeadlock.Config (
+  task2023_29,
+  task2023_30,
+  task2024_27,
+  task2024_28,
+  task2024_61,
+  )
+import Modelling.PetriNet.Reach.Reach (
+  checkReachConfig,
+  )
+import Modelling.PetriNet.PetriReach.Config (
+  task2023_27,
+  task2023_28,
+  task2024_25,
+  task2024_26,
+  task2024_60,
   )
 
 import Test.Hspec
@@ -236,6 +280,14 @@ spec =
         checkDifferentNamesConfig task2023_25 `shouldBe` Nothing
       it "task26" $
         checkFindConflictPlacesConfig task2023_26 `shouldBe` Nothing
+      it "task27" $
+        checkReachConfig task2023_27 `shouldBe` Nothing
+      it "task28" $
+        checkReachConfig task2023_28 `shouldBe` Nothing
+      it "task29" $
+        checkDeadlockConfig task2023_29 `shouldBe` Nothing
+      it "task30" $
+        checkDeadlockConfig task2023_30 `shouldBe` Nothing
       it "task31" $
         checkMatchAdConfig task2023_31 `shouldBe` Nothing
       it "task32" $
@@ -266,14 +318,15 @@ spec =
       it "task06" $
         checkSelectValidCdConfig task2024_06 `shouldBe` Nothing
       it "task06 picked" $
-        checkSelectValidCdInstance (taskInstance task2024_06picked)
+        checkSelectValidCdInstance (All.taskInstance task2024_06picked)
         `shouldBe` Nothing
       it "task07" $
         checkSelectValidCdConfig task2024_07 `shouldBe` Nothing
       it "task08" $
         checkSelectValidCdConfig task2024_08 `shouldBe` Nothing
       it "task09" $
-        checkSelectValidCdInstance (taskInstance task2024_09) `shouldBe` Nothing
+        checkSelectValidCdInstance (All.taskInstance task2024_09)
+        `shouldBe` Nothing
       it "task10" $
         checkNameCdErrorConfig task2024_10 `shouldBe` Nothing
       it "task11" $
@@ -283,7 +336,8 @@ spec =
       it "task13" $
         checkRepairCdConfig task2024_13 `shouldBe` Nothing
       it "task14" $
-        checkNameCdErrorInstance task2024_14 `shouldBe` Nothing
+        checkNameCdErrorInstance (All.taskInstance task2024_14)
+        `shouldBe` Nothing
       it "task15" $
         checkDifferentNamesConfig task2024_15 `shouldBe` Nothing
       it "task16" $
@@ -304,6 +358,14 @@ spec =
         checkMathConfig task2024_23 `shouldBe` Nothing
       it "task24" $
         checkMathConfig task2024_24 `shouldBe` Nothing
+      it "task25" $
+        checkReachConfig task2024_25 `shouldBe` Nothing
+      it "task26" $
+        checkReachConfig task2024_26 `shouldBe` Nothing
+      it "task27" $
+        checkDeadlockConfig task2024_27 `shouldBe` Nothing
+      it "task28" $
+        checkDeadlockConfig task2024_28 `shouldBe` Nothing
       it "task29" $
         checkPickConcurrencyConfig task2024_29 `shouldBe` Nothing
       it "task30" $
@@ -349,7 +411,8 @@ spec =
       it "task52" $
         checkSelectValidCdConfig task2024_52 `shouldBe` Nothing
       it "task53" $
-        checkSelectValidCdInstance (taskInstance task2024_53) `shouldBe` Nothing
+        checkSelectValidCdInstance (All.taskInstance task2024_53)
+        `shouldBe` Nothing
       it "task54" $
         checkNameCdErrorConfig task2024_54 `shouldBe` Nothing
       it "task55" $
@@ -362,6 +425,10 @@ spec =
         checkMatchCdOdConfig task2024_58 `shouldBe` Nothing
       it "task59" $
         checkMatchCdOdConfig task2024_59 `shouldBe` Nothing
+      it "task60" $
+        checkReachConfig task2024_60 `shouldBe` Nothing
+      it "task61" $
+        checkDeadlockConfig task2024_61 `shouldBe` Nothing
       it "task62" $
         checkFindConcurrencyConfig task2024_62 `shouldBe` Nothing
       it "task63" $
@@ -386,3 +453,52 @@ spec =
         checkFindAuxiliaryPetriNodesConfig task2024_72 `shouldBe` Nothing
       it "task73" $
         checkFindAuxiliaryPetriNodesConfig task2024_73 `shouldBe` Nothing
+    describe "2025" $ do
+      it "task04" $
+        checkSelectValidCdConfig task2025_04 `shouldBe` Nothing
+      it "task05" $
+        checkSelectValidCdConfig task2025_05 `shouldBe` Nothing
+      it "task06" $
+        checkSelectValidCdConfig task2025_06 `shouldBe` Nothing
+      it "task07" $
+        checkSelectValidCdInstance (All.taskInstance task2025_07)
+        `shouldBe` Nothing
+      it "task08" $
+        checkNameCdErrorConfig task2025_08 `shouldBe` Nothing
+      it "task09" $
+        checkNameCdErrorConfig task2025_09 `shouldBe` Nothing
+      it "task10" $
+        checkRepairCdConfig task2025_10 `shouldBe` Nothing
+      it "task11" $
+        checkRepairCdConfig task2025_11 `shouldBe` Nothing
+      it "task12" $
+        checkNameCdErrorInstance (All.taskInstance task2025_12)
+        `shouldBe` Nothing
+      it "task13" $
+        checkDifferentNamesConfig task2025_13 `shouldBe` Nothing
+      it "task14" $
+        checkDifferentNamesConfig task2025_14 `shouldBe` Nothing
+      it "task15" $
+        checkDifferentNamesConfig task2025_15 `shouldBe` Nothing
+      it "task16" $
+        checkDifferentNamesConfig task2025_16 `shouldBe` Nothing
+      it "task17" $
+        checkMatchCdOdConfig task2025_17 `shouldBe` Nothing
+      it "task18" $
+        checkMatchCdOdConfig task2025_18 `shouldBe` Nothing
+      it "task19" $
+        checkMatchCdOdConfig task2025_19 `shouldBe` Nothing
+      it "task20" $
+        checkMatchCdOdConfig task2025_20 `shouldBe` Nothing
+      it "task21" $
+        checkDifferentNamesConfig task2025_21 `shouldBe` Nothing
+      it "task22" $
+        checkDifferentNamesConfig task2025_22 `shouldBe` Nothing
+      it "task23" $
+        checkGraphToMathConfig task2025_23 `shouldBe` Nothing
+      it "task24" $
+        checkGraphToMathConfig task2025_24 `shouldBe` Nothing
+      it "task25" $
+        checkMathConfig task2025_25 `shouldBe` Nothing
+      it "task26" $
+        checkMathConfig task2025_26 `shouldBe` Nothing

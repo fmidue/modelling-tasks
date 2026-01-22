@@ -11,6 +11,8 @@ import Modelling.PetriNet.Types (
   GraphConfig (..),
   FindConflictConfig (..),
   )
+
+import Control.OutputCapable.Blocks     (ExtraText (..))
 import Data.GraphViz.Commands           (GraphvizCommand(..))
 
 {-|
@@ -59,7 +61,8 @@ task2023_24 = FindConflictConfig {
   alloyConfig = AlloyConfig {
     maxInstances = Just 2000,
     timeout = Nothing
-    }
+    },
+  extraText = NoExtraText
   }
 
 {-|
@@ -108,7 +111,8 @@ task2023_26 = FindConflictConfig {
   alloyConfig = AlloyConfig {
     maxInstances = Just 2000,
     timeout = Nothing
-    }
+    },
+  extraText = NoExtraText
   }
 
 {-|
@@ -173,7 +177,8 @@ task2024_36 = FindConflictConfig {
   alloyConfig = AlloyConfig {
     maxInstances = Just 2000,
     timeout = Nothing
-    }
+    },
+  extraText = NoExtraText
   }
 
 {-|
@@ -222,7 +227,8 @@ task2024_64 = FindConflictConfig {
   alloyConfig = AlloyConfig {
     maxInstances = Just 2000,
     timeout = Nothing
-    }
+    },
+  extraText = NoExtraText
   }
 
 {-|
@@ -271,7 +277,8 @@ task2024_65 = FindConflictConfig {
   alloyConfig = AlloyConfig {
     maxInstances = Just 2000,
     timeout = Nothing
-    }
+    },
+  extraText = NoExtraText
   }
 
 {-|
@@ -320,5 +327,6 @@ task2024_66 = FindConflictConfig {
   alloyConfig = AlloyConfig {
     maxInstances = Just 2000,
     timeout = Nothing
-    }
+    },
+  extraText = NoExtraText
   }

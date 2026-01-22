@@ -1,4 +1,5 @@
 {-# LANGUAGE ApplicativeDo #-}
+{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE NamedFieldPuns #-}
@@ -25,6 +26,7 @@ import qualified Data.Map as M (fromList, keys)
 
 import Capabilities.Alloy               (MonadAlloy, getInstances)
 import Capabilities.PlantUml            (MonadPlantUml)
+import Capabilities.WriteFile           (MonadWriteFile)
 import Modelling.ActivityDiagram.Alloy  (adConfigToAlloy)
 import Modelling.ActivityDiagram.Config (
   AdConfig (..),
@@ -45,17 +47,21 @@ import Modelling.ActivityDiagram.PlantUMLConverter (
 import Modelling.ActivityDiagram.Shuffle (shuffleAdNames)
 import Modelling.Auxiliary.Common       (getFirstInstance)
 
+import Autolib.Hash                     (Hashable)
+import Autolib.Reader                   (Reader)
+import Autolib.ToDoc                    (ToDoc)
 import Control.Applicative (Alternative ((<|>)))
 import Control.Monad.Catch              (MonadThrow)
 import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
+  ExtraText (..),
   GenericOutputCapable (..),
   LangM,
-  Language,
   Rated,
   OutputCapable,
   ($=<<),
   english,
+  extra,
   german,
   translate,
   translations,
@@ -74,7 +80,6 @@ import Data.String.Interpolate (i, iii)
 import GHC.Generics (Generic)
 import Modelling.Auxiliary.Output (
   addPretext,
-  extra
   )
 import System.Random.Shuffle (shuffleM)
 
@@ -82,26 +87,28 @@ data MatchAdInstance = MatchAdInstance {
   activityDiagram :: UMLActivityDiagram,
   plantUMLConf :: PlantUmlConfig,
   showSolution :: Bool,
-  addText :: Maybe (Map Language String)
-} deriving (Generic, Read, Show)
+  addText :: ExtraText
+}
+  deriving (Eq, Generic, Hashable, Read, Reader, Show, ToDoc)
 
 data MatchAdConfig = MatchAdConfig {
   adConfig :: AdConfig,
   maxInstances :: Maybe Integer,
   hideBranchConditions :: Bool,
-  noActivityFinalInForkBlocks :: Maybe Bool,
+  withActivityFinalInForkBlocks :: !(Maybe Bool),
   printSolution :: Bool,
-  extraText :: Maybe (Map Language String)
-} deriving (Generic, Read, Show)
+  extraText :: ExtraText
+}
+  deriving (Generic, Read, Reader, Show, ToDoc)
 
 defaultMatchAdConfig :: MatchAdConfig
 defaultMatchAdConfig = MatchAdConfig {
   adConfig = defaultAdConfig,
   maxInstances = Just 50,
   hideBranchConditions = False,
-  noActivityFinalInForkBlocks = Just False,
+  withActivityFinalInForkBlocks = Just True,
   printSolution = False,
-  extraText = Nothing
+  extraText = NoExtraText
 }
 
 checkMatchAdConfig :: MatchAdConfig -> Maybe String
@@ -113,29 +120,29 @@ checkMatchAdConfig' :: MatchAdConfig -> Maybe String
 checkMatchAdConfig' MatchAdConfig {
     adConfig,
     maxInstances,
-    noActivityFinalInForkBlocks
+    withActivityFinalInForkBlocks
   }
   | isJust maxInstances && fromJust maxInstances < 1
     = Just "The parameter 'maxInstances' must either be set to a positive value or to Nothing"
-  | noActivityFinalInForkBlocks == Just True && activityFinalNodes adConfig > 1
-    = Just "Setting the parameter 'noActivityFinalInForkBlocks' to 'Just True' prohibits having more than 1 Activity Final Node"
-  | noActivityFinalInForkBlocks == Just False && activityFinalNodes adConfig < 1
-    = Just "Setting the parameter 'noActivityFinalInForkBlocks' to 'Just False' requires having at least 1 Activity Final Node"
-  | isNothing noActivityFinalInForkBlocks && activityFinalNodes adConfig < 1
-    = Just "Having no Activity Final Node means setting the parameter 'noActivityFinalInForkBlocks' to Nothing makes no sense."
+  | withActivityFinalInForkBlocks == Just False && activityFinalNodes adConfig > 1
+    = Just "Setting the parameter 'withActivityFinalInForkBlocks' to 'Just False' prohibits having more than 1 Activity Final Node"
+  | withActivityFinalInForkBlocks == Just True && activityFinalNodes adConfig < 1
+    = Just "Setting the parameter 'withActivityFinalInForkBlocks' to 'Just True' requires having at least 1 Activity Final Node"
+  | isNothing withActivityFinalInForkBlocks && activityFinalNodes adConfig < 1
+    = Just "Having no Activity Final Node means setting the parameter 'withActivityFinalInForkBlocks' to Nothing makes no sense."
   | otherwise
     = Nothing
 
 matchAdAlloy :: MatchAdConfig -> String
 matchAdAlloy MatchAdConfig {
     adConfig,
-    noActivityFinalInForkBlocks
+    withActivityFinalInForkBlocks
   }
   = adConfigToAlloy "" predicates adConfig
   where
     predicates =
       [i|
-        #{f noActivityFinalInForkBlocks "noActivityFinalInForkBlocks"}
+        #{f (not <$> withActivityFinalInForkBlocks) "noActivityFinalInForkBlocks"}
       |]
     f opt s =
       case opt of
@@ -153,7 +160,8 @@ data MatchAdSolution = MatchAdSolution {
   countOfInitialNodes :: Int,
   countOfActivityFinalNodes :: Int,
   countOfFlowFinalNodes :: Int
-} deriving (Generic, Eq, Show, Read)
+}
+  deriving (Eq, Generic, Hashable, Read, Reader, Show, ToDoc)
 
 matchAdSolution :: MatchAdInstance -> MatchAdSolution
 matchAdSolution task =
@@ -171,7 +179,7 @@ matchAdSolution task =
     }
 
 matchAdTask
-  :: (MonadPlantUml m, OutputCapable m)
+  :: (MonadPlantUml m, MonadWriteFile m, OutputCapable m)
   => FilePath
   -> MatchAdInstance
   -> LangM m
@@ -238,11 +246,11 @@ matchAdEvaluation task sub = addPretext $ do
       sol = matchAdSolution task
       solutionString =
         if showSolution task
-        then Just $ show sol
+        then Just . (DefiniteArticle,) $ show sol
         else Nothing
       solution = matchAdSolutionMap sol
       sub' = M.keys $ matchAdSolutionMap sub
-  multipleChoice DefiniteArticle as solutionString solution sub'
+  multipleChoice as solutionString solution sub'
 
 matchAdSolutionMap
   :: MatchAdSolution
@@ -337,5 +345,5 @@ defaultMatchAdInstance = MatchAdInstance {
   },
   plantUMLConf = defaultPlantUmlConfig,
   showSolution = False,
-  addText = Nothing
+  addText = NoExtraText
 }

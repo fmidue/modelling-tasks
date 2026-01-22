@@ -12,8 +12,11 @@ ghc-options:
   - -Werror
   - -Wwarn=incomplete-uni-patterns
   - -Wwarn=orphans
+  - -Wwarn=unrecognised-warning-flags
+  - -Wwarn=x-partial
 dependencies:
   - base
+  - bytestring
 executables:
   cd2alloy:
     main: cd2alloy.hs
@@ -34,6 +37,7 @@ executables:
       - parser
     dependencies:
       - array
+      - autotool-capabilities-io-instances
       - diagrams-lib
       - graphviz
       - modelling-tasks
@@ -48,6 +52,8 @@ executables:
       - generate
     dependencies:
       - MonadRandom
+      - autotool-capabilities
+      - autotool-capabilities-io-instances
       - bytestring
       - call-alloy
       - containers
@@ -74,6 +80,7 @@ executables:
     dependencies:
       - MonadRandom
       - array
+      - autotool-capabilities-io-instances
       - bytestring
       - call-alloy
       - containers
@@ -90,6 +97,8 @@ executables:
       - generate
     dependencies:
       - MonadRandom
+      - autotool-capabilities
+      - autotool-capabilities-io-instances
       - bytestring
       - call-alloy
       - containers

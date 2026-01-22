@@ -1,5 +1,6 @@
 {-# LANGUAGE ApplicativeDo #-}
 {-# LANGUAGE CPP #-}
+{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE LambdaCase #-}
@@ -41,14 +42,17 @@ import qualified Data.Map                         as M (
   traverseWithKey,
   )
 
+import Autolib.Hash                     (Hashable)
+import Autolib.Reader                   (Reader)
+import Autolib.ToDoc                    (ToDoc)
 import Capabilities.Alloy               (MonadAlloy, getInstances)
 import Capabilities.Cache               (MonadCache)
 import Capabilities.Diagrams            (MonadDiagrams)
 import Capabilities.Graphviz            (MonadGraphviz)
 import Modelling.Auxiliary.Common (
-  Randomise (isRandomisable, randomise),
+  Randomise (randomise),
   RandomiseLayout (randomiseLayout),
-  shuffleEverything,
+  RandomiseNames (hasRandomisableNames, randomiseNames),
   )
 import Modelling.Auxiliary.Output (
   addPretext,
@@ -57,6 +61,7 @@ import Modelling.Auxiliary.Output (
   simplifiedInformation,
   uniform,
   )
+import Modelling.Auxiliary.Shuffle.All  (shuffleEverything)
 import Modelling.CdOd.CD2Alloy.Transform (
   LinguisticReuse (None),
   combineParts,
@@ -77,7 +82,7 @@ import Modelling.CdOd.Output            (cacheCd, cacheOd)
 import Modelling.CdOd.Types (
   Cd,
   CdDrawSettings (..),
-  CdMutation,
+  CdMutation (..),
   ClassConfig (..),
   ClassDiagram (..),
   LimitedLinking (..),
@@ -89,11 +94,13 @@ import Modelling.CdOd.Types (
   Od,
   OmittedDefaultMultiplicities (..),
   Relationship (..),
+  RelationshipMutation (ChangeKind),
   allCdMutations,
   anonymiseObjects,
   associationNames,
   checkCdDrawSettings,
   checkCdMutations,
+  checkClassConfigAndObjectProperties,
   checkClassConfigWithProperties,
   checkObjectDiagram,
   checkObjectProperties,
@@ -103,7 +110,7 @@ import Modelling.CdOd.Types (
   defaultProperties,
   fromClassDiagram,
   isObjectDiagramRandomisable,
-  linkNames,
+  linkLabels,
   relationshipName,
   renameClassesAndRelationships,
   renameObjectsWithClassesAndLinksInOd,
@@ -118,20 +125,21 @@ import Modelling.Types (
 
 import Control.Applicative              (Alternative ((<|>)))
 import Control.Exception                (Exception)
-import Control.Monad                    ((<=<))
+import Control.Monad                    ((<=<), when)
 import Control.Monad.Catch              (MonadCatch, MonadThrow, throwM)
 #if __GLASGOW_HASKELL__ < 808
 import Control.Monad.Fail               (MonadFail)
 #endif
 import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
+  ExtraText (..),
   GenericOutputCapable (..),
   LangM,
-  Language,
   OutputCapable,
   Rated,
   ($=<<),
   english,
+  extra,
   german,
   multipleChoice,
   translate,
@@ -141,8 +149,10 @@ import Control.OutputCapable.Blocks.Generic.Type (
   GenericOutput (Code, Paragraph, Special, Translated),
   )
 import Control.OutputCapable.Blocks.Type (
+  Output,
   SpecialOutput,
   specialToOutputCapable,
+  toOutputCapable,
   )
 import Control.Monad.Random (
   MonadRandom,
@@ -155,7 +165,7 @@ import Data.Containers.ListUtils        (nubOrd)
 import Data.GraphViz                    (DirType (Forward))
 import Data.List                        (singleton)
 import Data.Map                         (Map)
-import Data.Maybe                       (fromJust, listToMaybe, mapMaybe)
+import Data.Maybe                       (fromJust, isJust, listToMaybe, mapMaybe)
 import Data.Ratio                       ((%))
 import Data.String.Interpolate          (iii)
 import GHC.Generics                     (Generic)
@@ -174,8 +184,8 @@ data MatchCdOdInstance
     instances      :: Map Char ([Int], Od),
     showSolution   :: !Bool,
     taskText       :: !MatchCdOdTaskText,
-    addText        :: Maybe (Map Language String)
-  } deriving (Eq, Generic, Read, Show)
+    addText        :: ExtraText
+  } deriving (Eq, Generic, Hashable, Read, Reader, Show, ToDoc)
 
 data MatchCdOdConfig
   = MatchCdOdConfig {
@@ -188,8 +198,8 @@ data MatchCdOdConfig
     printSolution    :: Bool,
     timeout          :: Maybe Int,
     withNonTrivialInheritance :: Maybe Bool,
-    extraText        :: Maybe (Map Language String)
-  } deriving (Generic, Read, Show)
+    extraText        :: ExtraText
+  } deriving (Generic, Read, Reader, Show, ToDoc)
 
 defaultMatchCdOdConfig :: MatchCdOdConfig
 defaultMatchCdOdConfig
@@ -220,7 +230,7 @@ defaultMatchCdOdConfig
     printSolution    = False,
     timeout          = Nothing,
     withNonTrivialInheritance = Just True,
-    extraText        = Nothing
+    extraText        = NoExtraText
   }
 
 toMatching :: Map Char [Int] -> Map (Int, Char) Bool
@@ -238,10 +248,21 @@ checkMatchCdOdConfig MatchCdOdConfig {..}
     You might want to change 'hasSelfLoops' to 'Nothing' in order
     to have self-loops (by chance) in some (or even all) of the object diagrams.
     |]
+  | isJust (usesEveryRelationshipName objectProperties)
+  , any
+    (`elem` allowedCdMutations)
+    [AddRelationship, RemoveRelationship, MutateRelationship ChangeKind]
+  = Just [iii|
+    Setting 'usesEveryRelationshipName' to anything but 'Nothing' is not
+    supported, if relationship names are not forcibly the same across all
+    class diagrams, i.e. if 'allowedCdMutations' include any of
+    'AddRelationship', 'RemoveRelationship' or 'MutateRelationship ChangeKind'.
+    |]
   | otherwise
   = checkClassConfigWithProperties classConfig defaultProperties
   <|> checkCdMutations allowedCdMutations
   <|> checkObjectProperties objectProperties
+  <|> checkClassConfigAndObjectProperties classConfig objectProperties
   <|> checkOmittedDefaultMultiplicities omittedDefaultMultiplicities
 
 checkMatchCdOdInstance :: MatchCdOdInstance -> Maybe String
@@ -259,7 +280,7 @@ type MatchCdOdTaskText = [SpecialOutput MatchCdOdTaskTextElement]
 data MatchCdOdTaskTextElement
   = GivenCds
   | GivenOds
-  deriving (Bounded, Enum, Eq, Generic, Ord, Read, Show)
+  deriving (Bounded, Enum, Eq, Generic, Hashable, Ord, Read, Reader, Show, ToDoc)
 
 matchCdOdTask
   :: (
@@ -269,14 +290,15 @@ matchCdOdTask
     MonadThrow m,
     OutputCapable m
     )
-  => FilePath
+  => Bool
+  -> FilePath
   -> MatchCdOdInstance
   -> LangM m
-matchCdOdTask path task = do
-  toTaskText path task
-  paragraph simplifiedInformation
-  paragraph directionsAdvice
-  paragraph hoveringInformation
+matchCdOdTask showInputHelp path task = do
+  toTaskText showInputHelp path task
+  directionsAdvice True
+  simplifiedInformation True
+  hoveringInformation True
   pure ()
 
 toTaskText
@@ -287,11 +309,16 @@ toTaskText
     MonadThrow m,
     OutputCapable m
     )
-  => FilePath
+  => Bool
+  -> FilePath
   -> MatchCdOdInstance
   -> LangM m
-toTaskText path task =
+toTaskText showInputHelp path task = do
   specialToOutputCapable (toTaskSpecificText path task) (taskText task)
+  when showInputHelp $
+    toOutputCapable inputHelpText
+  extra $ addText task
+  pure ()
 
 toTaskSpecificText
   :: (
@@ -317,7 +344,7 @@ defaultMatchCdOdTaskText :: MatchCdOdTaskText
 defaultMatchCdOdTaskText = [
   Paragraph $ singleton $ Translated $ translations $ do
     english "Consider the following two (valid) class diagrams:"
-    german "Betrachten Sie die folgenden zwei (validen) Klassendiagramme:",
+    german "Betrachten Sie die folgenden zwei (gültigen) Klassendiagramme:",
   Special GivenCds,
   Paragraph $ singleton $ Translated $ translations $ do
     english [iii|
@@ -332,7 +359,11 @@ defaultMatchCdOdTaskText = [
       Ein Objektdiagramm kann zu keinem,
       einem oder beiden Klassendiagrammen passen.
       |],
-  Special GivenOds,
+  Special GivenOds
+  ]
+
+inputHelpText :: [Output]
+inputHelpText = [
   Paragraph [
     Translated $ translations $ do
       english [iii|
@@ -413,9 +444,10 @@ matchCdOdEvaluation task sub' = do
         german "Instanzen"
       solution =
         if showSolution task
-        then Just . show . matchingShow $ matchCdOdSolution task
+        then Just . (DefiniteArticle,) . show . matchingShow
+          $ matchCdOdSolution task
         else Nothing
-  multipleChoice DefiniteArticle what solution matching sub
+  multipleChoice what solution matching sub
   where
     toMatching' :: Foldable f => f (Int, Letters) -> [(Int, Char)]
     toMatching' =
@@ -486,162 +518,185 @@ defaultMatchCdOdInstance = MatchCdOdInstance {
     },
   diagrams = M.fromList [
     (1, ClassDiagram {
-      classNames = ["D", "B", "C", "A"],
-      relationships = [
-        Inheritance {subClass = "C", superClass = "A"},
-        Composition {
-          compositionName = "x",
-          compositionPart = LimitedLinking {
-            linking = "D",
-            limits = (0, Just 1)
-            },
-          compositionWhole = LimitedLinking {
-            linking = "C",
-            limits = (1, Just 1)
-            }
-          },
-        Aggregation {
-          aggregationName = "z",
-          aggregationPart = LimitedLinking {
-            linking = "B",
-            limits = (0, Nothing)
-            },
-          aggregationWhole = LimitedLinking {
-            linking = "C",
-            limits = (1, Just 2)
-            }
-          },
-        Association {
-          associationName = "y",
-          associationFrom = LimitedLinking {
-            linking = "A",
-            limits = (1, Just 2)
-            },
-          associationTo = LimitedLinking {linking = "D", limits = (0, Nothing)}
-          }
-        ]
-      }),
-    (2, ClassDiagram {
       classNames = ["C", "D", "B", "A"],
       relationships = [
         Aggregation {
           aggregationName = "z",
           aggregationPart = LimitedLinking {
             linking = "B",
-            limits = (0, Nothing)
+            limits = (0, Just 2)
             },
           aggregationWhole = LimitedLinking {
-            linking = "C",
-            limits = (1, Just 2)
+            linking = "A",
+            limits = (1, Nothing)
             }
           },
-        Inheritance {subClass = "A", superClass = "C"},
+        Association {
+          associationName = "w",
+          associationFrom = LimitedLinking {
+            linking = "C",
+            limits = (1, Nothing)
+            },
+          associationTo = LimitedLinking {
+            linking = "D",
+            limits = (1, Nothing)
+            }
+          },
         Composition {
           compositionName = "x",
           compositionPart = LimitedLinking {
             linking = "D",
-            limits = (0, Just 1)
+            limits = (1, Just 2)
             },
           compositionWhole = LimitedLinking {
-            linking = "C",
-            limits = (1, Just 1)
+            linking = "A",
+            limits = (0, Just 1)
             }
+          },
+        Inheritance {
+          subClass = "C",
+          superClass = "A"
+          }
+        ]
+      }),
+    (2, ClassDiagram {
+      classNames = ["B", "D", "A", "C"],
+      relationships = [
+        Association {
+          associationName = "w",
+          associationFrom = LimitedLinking {
+            linking = "C",
+            limits = (1, Nothing)
+            },
+          associationTo = LimitedLinking {
+            linking = "D",
+            limits = (1, Nothing)
+            }
+          },
+        Aggregation {
+          aggregationName = "z",
+          aggregationPart = LimitedLinking {
+            linking = "B",
+            limits = (0, Just 2)
+            },
+          aggregationWhole = LimitedLinking {
+            linking = "A",
+            limits = (1, Nothing)
+            }
+          },
+        Composition {
+          compositionName = "x",
+          compositionPart = LimitedLinking {
+            linking = "A",
+            limits = (2, Nothing)
+            },
+          compositionWhole = LimitedLinking {
+            linking = "D",
+            limits = (0, Just 1)
+            }
+          },
+        Inheritance {
+          subClass = "C",
+          superClass = "A"
           }
         ]
       })
     ],
   instances = M.fromList [
-    ('a', ([2], ObjectDiagram {
+    ('a', ([1], ObjectDiagram {
       objects = [
-        Object {isAnonymous = True, objectName = "a", objectClass = "A"},
+        Object {isAnonymous = False, objectName = "b", objectClass = "B"},
+        Object {isAnonymous = False, objectName = "d", objectClass = "D"},
         Object {isAnonymous = False, objectName = "c", objectClass = "C"},
-        Object {isAnonymous = False, objectName = "b1", objectClass = "B"},
-        Object {isAnonymous = False, objectName = "b", objectClass = "B"}
+        Object {isAnonymous = True, objectName = "b1", objectClass = "B"}
         ],
       links = [
-        Link {linkName = "z", linkFrom = "b", linkTo = "a"},
-        Link {linkName = "z", linkFrom = "b1", linkTo = "c"},
-        Link {linkName = "z", linkFrom = "b1", linkTo = "a"},
-        Link {linkName = "z", linkFrom = "b", linkTo = "c"}
+        Link {linkLabel = "z", linkFrom = "b1", linkTo = "c"},
+        Link {linkLabel = "z", linkFrom = "b", linkTo = "c"},
+        Link {linkLabel = "x", linkFrom = "d", linkTo = "c"},
+        Link {linkLabel = "w", linkFrom = "c", linkTo = "d"}
         ]
       })),
-    ('b', ([2], ObjectDiagram {
+    ('b', ([], ObjectDiagram {
       objects = [
-        Object {isAnonymous = False, objectName = "b1", objectClass = "B"},
+        Object {isAnonymous = False, objectName = "d", objectClass = "D"},
+        Object {isAnonymous = True, objectName = "c", objectClass = "C"},
         Object {isAnonymous = False, objectName = "b", objectClass = "B"},
+        Object {isAnonymous = False, objectName = "a", objectClass = "A"}
+        ],
+      links = [
+        Link {linkLabel = "w", linkFrom = "c", linkTo = "d"},
+        Link {linkLabel = "z", linkFrom = "b", linkTo = "c"},
+        Link {linkLabel = "z", linkFrom = "b", linkTo = "a"},
+        Link {linkLabel = "x", linkFrom = "a", linkTo = "d"}
+        ]
+      })),
+    ('c', ([2], ObjectDiagram {
+      objects = [
+        Object {isAnonymous = False, objectName = "c", objectClass = "C"},
+        Object {isAnonymous = True, objectName = "a1", objectClass = "A"},
         Object {isAnonymous = False, objectName = "a", objectClass = "A"},
-        Object {isAnonymous = True, objectName = "a1", objectClass = "A"}
+        Object {isAnonymous = False, objectName = "d", objectClass = "D"}
         ],
       links = [
-        Link {linkName = "z", linkFrom = "b", linkTo = "a"},
-        Link {linkName = "z", linkFrom = "b", linkTo = "a1"},
-        Link {linkName = "z", linkFrom = "b1", linkTo = "a1"},
-        Link {linkName = "z", linkFrom = "b1", linkTo = "a"}
+        Link {linkLabel = "w", linkFrom = "c", linkTo = "d"},
+        Link {linkLabel = "x", linkFrom = "c", linkTo = "d"},
+        Link {linkLabel = "x", linkFrom = "a1", linkTo = "d"},
+        Link {linkLabel = "x", linkFrom = "a", linkTo = "d"}
         ]
       })),
-    ('c', ([1], ObjectDiagram {
+    ('d', ([2], ObjectDiagram {
       objects = [
-        Object {isAnonymous = False, objectName = "c", objectClass = "C"},
+        Object {isAnonymous = False, objectName = "d", objectClass = "D"},
+        Object {isAnonymous = True, objectName = "c", objectClass = "C"},
         Object {isAnonymous = False, objectName = "c1", objectClass = "C"},
-        Object {isAnonymous = True, objectName = "d", objectClass = "D"},
-        Object {isAnonymous = False, objectName = "b", objectClass = "B"}
+        Object {isAnonymous = False, objectName = "a", objectClass = "A"}
         ],
       links = [
-        Link {linkName = "y", linkFrom = "c1", linkTo = "d"},
-        Link {linkName = "z", linkFrom = "b", linkTo = "c"},
-        Link {linkName = "x", linkFrom = "d", linkTo = "c1"},
-        Link {linkName = "z", linkFrom = "b", linkTo = "c1"}
-        ]
-      })),
-    ('d', ([2,1], ObjectDiagram {
-      objects = [
-        Object {isAnonymous = False, objectName = "b1", objectClass = "B"},
-        Object {isAnonymous = False, objectName = "c", objectClass = "C"},
-        Object {isAnonymous = False, objectName = "b", objectClass = "B"},
-        Object {isAnonymous = True, objectName = "c1", objectClass = "C"}
-        ],
-      links = [
-        Link {linkName = "z", linkFrom = "b", linkTo = "c1"},
-        Link {linkName = "z", linkFrom = "b1", linkTo = "c"},
-        Link {linkName = "z", linkFrom = "b1", linkTo = "c1"},
-        Link {linkName = "z", linkFrom = "b", linkTo = "c"}
+        Link {linkLabel = "w", linkFrom = "c", linkTo = "d"},
+        Link {linkLabel = "w", linkFrom = "c1", linkTo = "d"},
+        Link {linkLabel = "x", linkFrom = "c", linkTo = "d"},
+        Link {linkLabel = "x", linkFrom = "c1", linkTo = "d"}
         ]
       })),
     ('e', ([1], ObjectDiagram {
       objects = [
-        Object {isAnonymous = True, objectName = "c1", objectClass = "C"},
-        Object {isAnonymous = False, objectName = "b", objectClass = "B"},
         Object {isAnonymous = False, objectName = "d", objectClass = "D"},
+        Object {isAnonymous = True, objectName = "d1", objectClass = "D"},
+        Object {isAnonymous = False, objectName = "a", objectClass = "A"},
         Object {isAnonymous = False, objectName = "c", objectClass = "C"}
         ],
       links = [
-        Link {linkName = "y", linkFrom = "c1", linkTo = "d"},
-        Link {linkName = "z", linkFrom = "b", linkTo = "c"},
-        Link {linkName = "x", linkFrom = "d", linkTo = "c1"},
-        Link {linkName = "y", linkFrom = "c", linkTo = "d"}
+        Link {linkLabel = "w", linkFrom = "c", linkTo = "d"},
+        Link {linkLabel = "w", linkFrom = "c", linkTo = "d1"},
+        Link {linkLabel = "x", linkFrom = "d", linkTo = "a"},
+        Link {linkLabel = "x", linkFrom = "d1", linkTo = "c"}
         ]
       }))
     ],
   showSolution = False,
   taskText = defaultMatchCdOdTaskText,
-  addText = Nothing
+  addText = NoExtraText
   }
 
 classAndNonInheritanceNames :: MatchCdOdInstance -> ([String], [String])
 classAndNonInheritanceNames inst =
   let names = nubOrd $ concatMap classNames (diagrams inst)
       nonInheritances = nubOrd $ concatMap associationNames (diagrams inst)
-        ++ concatMap (linkNames . snd) (instances inst)
+        ++ concatMap (linkLabels . snd) (instances inst)
   in (names, nonInheritances)
 
 instance Randomise MatchCdOdInstance where
-  randomise inst = do
+  randomise = shuffleInstance
+
+instance RandomiseNames MatchCdOdInstance where
+  randomiseNames inst = do
     let (names, nonInheritances) = classAndNonInheritanceNames inst
     names'  <- shuffleM names
     nonInheritances' <- shuffleM nonInheritances
     renameInstance inst names' nonInheritances'
-      >>= shuffleInstance
-  isRandomisable MatchCdOdInstance {..} = listToMaybe
+
+  hasRandomisableNames MatchCdOdInstance {..} = listToMaybe
     $ mapMaybe (isObjectDiagramRandomisable . snd) $ M.elems instances
 
 instance RandomiseLayout MatchCdOdInstance where

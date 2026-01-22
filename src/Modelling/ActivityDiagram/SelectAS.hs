@@ -1,4 +1,5 @@
 {-# LANGUAGE ApplicativeDo #-}
+{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE NamedFieldPuns #-}
@@ -25,13 +26,20 @@ module Modelling.ActivityDiagram.SelectAS (
 import qualified Data.Map as M (fromList, toList, keys, filter, map)
 import qualified Data.Vector as V (fromList)
 
+import Autolib.Hash                     (Hashable)
+import Autolib.Reader                   (Reader)
+import Autolib.ToDoc                    (ToDoc)
 import Capabilities.Alloy               (MonadAlloy, getInstances)
 import Capabilities.PlantUml            (MonadPlantUml)
-import Modelling.ActivityDiagram.ActionSequences (generateActionSequence, validActionSequence)
-import Modelling.ActivityDiagram.Alloy (
-  adConfigToAlloy,
-  moduleActionSequencesRules,
+import Capabilities.WriteFile           (MonadWriteFile)
+import Modelling.ActivityDiagram.ActionSequences (
+  generateActionSequencesWithPetri,
+  generateActionSequenceWithPetriAndRepetition,
+  validActionSequenceWithPetri,
+  netAndMap
   )
+import Modelling.ActivityDiagram.Auxiliary.ActionSequences (actionSequencesAlloy)
+import Modelling.ActivityDiagram.PetriNet (convertToPetriNet)
 import Modelling.ActivityDiagram.Config (
   AdConfig (..),
   checkAdConfig,
@@ -55,15 +63,17 @@ import Modelling.Auxiliary.Common (
 
 import Control.Applicative (Alternative ((<|>)))
 import Control.Monad.Catch              (MonadThrow, throwM)
+import Control.Monad.Trans.Class (lift)
 import Control.Monad.Extra (firstJustM)
 import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
+  ExtraText (..),
   GenericOutputCapable (..),
   LangM,
-  Language,
   OutputCapable,
   ($=<<),
   english,
+  extra,
   german,
   translate,
   translations,
@@ -74,10 +84,14 @@ import Control.Monad.Random (
   MonadRandom,
   RandT,
   RandomGen,
+  uniform,
   evalRandT,
   mkStdGen
   )
+import Control.Monad.Trans.Maybe (MaybeT(..), runMaybeT)
 import Data.List (permutations, sortBy)
+import Data.List.Extra (groupOn, nubOrd)
+import Data.Ord (comparing)
 import Data.Map (Map)
 import Data.Monoid (Sum(..), getSum)
 import Data.String.Interpolate          (i, iii)
@@ -85,7 +99,6 @@ import Data.Vector.Distance (Params(..), leastChanges)
 import GHC.Generics (Generic)
 import Modelling.Auxiliary.Output (
   addPretext,
-  extra
   )
 import System.Random.Shuffle (shuffleM)
 
@@ -94,8 +107,9 @@ data SelectASInstance = SelectASInstance {
   actionSequences :: Map Int (Bool, [String]),
   drawSettings :: PlantUmlConfig,
   showSolution :: Bool,
-  addText :: Maybe (Map Language String)
-} deriving (Generic, Show, Eq)
+  addText :: ExtraText
+}
+  deriving (Eq, Generic, Hashable, Read, Reader, Show, ToDoc)
 
 data SelectASConfig = SelectASConfig {
   adConfig :: AdConfig,
@@ -105,14 +119,16 @@ data SelectASConfig = SelectASConfig {
   numberOfWrongAnswers :: Int,
   answerLength :: !(Int, Int),
   printSolution :: Bool,
-  extraText :: Maybe (Map Language String)
-} deriving (Generic, Read, Show)
+  withActionRepetition :: Bool,
+  extraText :: ExtraText
+}
+  deriving (Generic, Read, Reader, Show, ToDoc)
 
 defaultSelectASConfig :: SelectASConfig
 defaultSelectASConfig = SelectASConfig {
   adConfig = defaultAdConfig {
-    actionLimits = (6, 8),
-    objectNodeLimits = (1, 3),
+    actionLimits = (6, 6),
+    objectNodeLimits = (1, 1),
     maxNamedNodes = 7,
     activityFinalNodes = 0,
     flowFinalNodes = 2
@@ -121,9 +137,10 @@ defaultSelectASConfig = SelectASConfig {
   maxInstances = Just 50,
   objectNodeOnEveryPath = Just True,
   numberOfWrongAnswers = 2,
-  answerLength = (5, 8),
+  answerLength = (5, 6),
   printSolution = False,
-  extraText = Nothing
+  withActionRepetition = False,
+  extraText = NoExtraText
 }
 
 checkSelectASConfig :: SelectASConfig -> Maybe String
@@ -137,7 +154,8 @@ checkSelectASConfig' SelectASConfig {
     maxInstances,
     objectNodeOnEveryPath,
     numberOfWrongAnswers,
-    answerLength
+    answerLength,
+    withActionRepetition
   }
   | Just instances <- maxInstances, instances < 1
     = Just "The parameter 'maxInstances' must either be set to a positive value or to Nothing"
@@ -152,6 +170,18 @@ checkSelectASConfig' SelectASConfig {
     The second value of parameter 'answerLength' should be greater or equal to
     its first value.
     |]
+  | fst answerLength > 0 && fst (actionLimits adConfig) < 1
+    = Just "If you want non-empty sequences, there must be action nodes in the first place."
+  | withActionRepetition && cycles adConfig < 1
+    = Just "Setting 'withActionRepetition' to True requires at least 1 cycle in the activity diagram configuration"
+  | withActionRepetition && forkJoinPairs adConfig < 1
+    = Just "Setting 'withActionRepetition' to True requires at least 1 fork/join pair in the activity diagram configuration"
+  | withActionRepetition && fst answerLength < 2
+    = Just "Setting 'withActionRepetition' to True requires sequences of at least 2 actions"
+  | not withActionRepetition && snd answerLength > snd (actionLimits adConfig)
+    = Just "Setting 'withActionRepetition' to False prevents sequences that are longer than action nodes exist"
+  | not withActionRepetition && fst answerLength > fst (actionLimits adConfig)
+    = Just "Setting 'withActionRepetition' to False means it doesn't make sense to have fewer action nodes than the minimum desired sequence length"
   | otherwise
     = Nothing
 
@@ -159,20 +189,7 @@ selectASAlloy :: SelectASConfig -> String
 selectASAlloy SelectASConfig {
     adConfig,
     objectNodeOnEveryPath
-  }
-  = adConfigToAlloy modules predicates adConfig
-  where modules = moduleActionSequencesRules
-        predicates =
-          [i|
-            noActivityFinalNodes
-            someActionNodesExistInEachBlock
-            #{f objectNodeOnEveryPath "checkIfStudentKnowsDifferenceBetweenObjectAndActionNodes"}
-          |]
-        f opt s =
-          case opt of
-            Just True -> s
-            Just False -> [i| not #{s}|]
-            Nothing -> ""
+  } = actionSequencesAlloy adConfig objectNodeOnEveryPath
 
 checkSelectASInstance :: SelectASInstance -> Maybe String
 checkSelectASInstance inst
@@ -181,35 +198,82 @@ checkSelectASInstance inst
   | otherwise
   = Nothing
 
-checkSelectASInstanceForConfig
-  :: SelectASInstance
-  -> SelectASConfig
-  -> Maybe String
-checkSelectASInstanceForConfig inst SelectASConfig {
-  answerLength
-  }
-  | length solution < fst answerLength
-  = Just "Solution should not be shorter than the minimal 'answerLength'"
-  | length solution > snd answerLength
-  = Just "Solution should not be longer than the maximal 'answerLength'"
-  | otherwise
-    = Nothing
-  where (_, solution) = head $ M.toList $ M.map snd $ M.filter fst $ actionSequences inst
 
 data SelectASSolution = SelectASSolution {
   correctSequence :: [String],
   wrongSequences :: [[String]]
 } deriving (Show, Eq)
 
-selectActionSequence :: Int -> UMLActivityDiagram -> SelectASSolution
-selectActionSequence numberOfWrongSequences ad =
-  let correctSequence = generateActionSequence ad
-      wrongSequences =
-        take numberOfWrongSequences $
-        sortBy (compareDistToCorrect correctSequence) $
-        filter (not . (`validActionSequence` ad)) $
-        permutations correctSequence
-  in SelectASSolution {correctSequence=correctSequence, wrongSequences=wrongSequences}
+{-|
+Generate a set of one correct and multiple wrong sequences.
+-}
+selectActionSequence
+  :: MonadRandom m
+  => Bool
+  -- ^ if sequences should contain at least one action twice
+  -> Int
+  -- ^ the number of wrong sequences to return
+  -> (Int, Int)
+  -- ^ how long the returned sequences should be
+  -- specified by (lower, upper) bound
+  -> UMLActivityDiagram
+  -- ^ For which AD diagram the correct sequence should be valid
+  -> MaybeT m SelectASSolution
+selectActionSequence withRepetition numberOfWrongSequences lengthBounds ad = MaybeT $ do
+  let petri = convertToPetriNet ad
+  maybeCorrectSequence <- case (withRepetition, generateActionSequenceWithPetriAndRepetition petri lengthBounds) of
+    (True, Just genAction) -> Just <$> genAction
+    (True, Nothing) -> return Nothing
+    (False, _) ->
+      let
+        validSequences = generateActionSequencesWithPetri petri (Just lengthBounds)
+      in
+        if null validSequences
+        then
+          return Nothing
+        else
+          Just <$> uniform validSequences
+  case maybeCorrectSequence of
+    Nothing -> return Nothing
+    Just correctSequence -> do
+      let (net, actionNameToPetriKey) = netAndMap petri
+          allWrongCandidates =
+            filter (\actionSeq -> not (validActionSequenceWithPetri actionSeq net actionNameToPetriKey)) $
+            (if withRepetition then nubOrd else id) $
+            permutations correctSequence
+      -- Early check: reject if insufficient candidates
+      if length allWrongCandidates < numberOfWrongSequences
+        then return Nothing
+        else do
+          let -- Precompute edit distance parameters
+              editDistParams = asEditDistParams correctSequence
+              correctSeqVec = V.fromList correctSequence
+              -- Pair each candidate with its distance
+              candidatesWithDist = map (\actionSeq ->
+                (actionSeq, getSum $ fst $ leastChanges editDistParams correctSeqVec (V.fromList actionSeq))) allWrongCandidates
+              -- Sort by distance
+              sortedByDist = sortBy (comparing snd) candidatesWithDist
+              -- Group by distance
+              groupedByDist = groupOn snd sortedByDist
+              -- Determine how many groups we need
+              (fullGroups, maybePartialGroup) = takeGroupsUntil numberOfWrongSequences groupedByDist
+          -- Only shuffle the last group if it's partial, keep full groups as-is
+          wrongSequences <- case maybePartialGroup of
+            Nothing -> return fullGroups
+            Just (numberLeft, lastGroup) -> do
+              shuffledLast <- shuffleM lastGroup
+              return (take numberLeft shuffledLast ++ fullGroups)
+          return $ Just SelectASSolution {correctSequence = correctSequence, wrongSequences = wrongSequences}
+  where
+    -- Helper to take groups until we have enough elements
+    -- Returns (fullGroupsWeNeed, maybePartialGroupToShuffle)
+    takeGroupsUntil :: Int -> [[(a,b)]] -> ([a], Maybe (Int, [a]))
+    takeGroupsUntil _ [] = ([], Nothing)
+    takeGroupsUntil n (g:gs)
+      | n <= 0 = ([], Nothing)
+      | length g > n = ([], Just (n, map fst g))  -- This group is enough, needs shuffling
+      | otherwise = let (rest, partial) = takeGroupsUntil (n - length g) gs
+                    in (map fst g ++ rest, partial)
 
 asEditDistParams :: [String] -> Params String (String, Int, String) (Sum Int)
 asEditDistParams xs = Params
@@ -221,17 +285,8 @@ asEditDistParams xs = Params
     , positionOffset = \ (op, _, _) -> if op == "delete" then 0 else 1
     }
 
-compareDistToCorrect :: [String] -> [String] -> [String] -> Ordering
-compareDistToCorrect correctSequence xs ys =
-  compare (distToCorrect xs) (distToCorrect ys)
-  where
-    distToCorrect zs =
-      getSum
-      $ fst
-      $ leastChanges (asEditDistParams correctSequence) (V.fromList correctSequence) (V.fromList zs)
-
 selectASTask
-  :: (MonadPlantUml m, OutputCapable m)
+  :: (MonadPlantUml m, MonadWriteFile m, OutputCapable m)
   => FilePath
   -> SelectASInstance
   -> LangM m
@@ -242,14 +297,14 @@ selectASTask path task = do
     german "Betrachten Sie folgendes Aktivitätsdiagramm:"
   image $=<< drawAdToFile path (drawSettings task) $ activityDiagram task
   paragraph $ translate $ do
-    english "Consider the following sequences:"
-    german "Betrachten Sie die folgenden Folgen:"
+    english "Consider the sequences given here:"
+    german "Betrachten Sie die hier gegebenen Folgen:"
   enumerateM (code . show) $ map (\(n,xs) -> (n, code $ show xs)) mapping
   paragraph $ translate $ do
     english [i|Which of these sequences is a valid action sequence?
 State your answer by giving a number indicating the one valid action sequence among the above sequences.|]
-    german [i|Welche dieser Folgen ist eine valide Aktionsfolge?
-Geben Sie Ihre Antwort als Zahl an, welche die eine valide Aktionsfolge unter den obigen Folgen repräsentiert.|]
+    german [i|Welche dieser Folgen ist eine gültige Aktionsfolge?
+Geben Sie Ihre Antwort als Zahl an, welche die eine gültige Aktionsfolge unter den obigen Folgen repräsentiert.|]
   paragraph $ do
     translate $ do
       english [i|For example,|]
@@ -257,10 +312,10 @@ Geben Sie Ihre Antwort als Zahl an, welche die eine valide Aktionsfolge unter de
     code "2"
     translate $ do
       english [i|
-        would indicate that sequence 2 is a valid sequence of action nodes.
+        would indicate that sequence 2 is an executable sequence of action nodes.
         |]
       german  [i|
-        bedeuten, dass Folge 2 eine valide Folge von Aktionsknoten ist.
+        bedeuten, dass Folge 2 eine ausführbare Folge von Aktionsknoten ist.
         |]
     pure ()
   extra $ addText task
@@ -297,9 +352,9 @@ selectASEvaluation task n = addPretext $ do
       (solution, validAS) = head $ M.toList $ M.map snd $ M.filter fst solMap
       solutionString =
         if showSolution task
-        then Just $ show validAS
+        then Just . (DefiniteArticle,) $ show validAS
         else Nothing
-  singleChoice DefiniteArticle as solutionString solution n
+  singleChoice as solutionString solution n
 
 selectASSolution
   :: SelectASInstance
@@ -327,20 +382,18 @@ getSelectASTask config = do
     $ selectASAlloy config
   randomInstances <- shuffleM instances >>= mapM parseInstance
   ad <- mapM (fmap snd . shuffleAdNames) randomInstances
-  validInstances <- firstJustM (\x -> do
-    actionSequences <- selectASSolutionToMap $ selectActionSequence (numberOfWrongAnswers config) x
-    let selectASInst = SelectASInstance {
-          activityDiagram=x,
-          actionSequences = actionSequences,
-          drawSettings = defaultPlantUmlConfig {
-            suppressBranchConditions = hideBranchConditions config
-            },
-          showSolution = printSolution config,
-          addText = extraText config
-        }
-    case checkSelectASInstanceForConfig selectASInst config of
-      Just _ -> return Nothing
-      Nothing -> return $ Just selectASInst
+  validInstances <- firstJustM (\x -> runMaybeT $ do
+      solution <- selectActionSequence (withActionRepetition config) (numberOfWrongAnswers config) (answerLength config) x
+      actionSequences <- lift $ selectASSolutionToMap solution
+      return SelectASInstance {
+            activityDiagram = x,
+            actionSequences = actionSequences,
+            drawSettings = defaultPlantUmlConfig {
+              suppressBranchConditions = hideBranchConditions config
+              },
+            showSolution = printSolution config,
+            addText = extraText config
+          }
     ) ad
   case validInstances of
     Just x -> return x
@@ -393,5 +446,5 @@ defaultSelectASInstance = SelectASInstance {
     ],
   drawSettings = defaultPlantUmlConfig,
   showSolution = False,
-  addText = Nothing
+  addText = NoExtraText
 }

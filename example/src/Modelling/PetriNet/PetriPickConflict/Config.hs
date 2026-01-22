@@ -10,6 +10,8 @@ import Modelling.PetriNet.Types (
   GraphConfig (..),
   PickConflictConfig (..),
   )
+
+import Control.OutputCapable.Blocks     (ExtraText (..))
 import Data.GraphViz.Commands           (GraphvizCommand(..))
 
 {-|
@@ -55,7 +57,8 @@ task2023_22 = PickConflictConfig {
   alloyConfig = AlloyConfig {
     maxInstances = Just 2000,
     timeout = Nothing
-    }
+    },
+  extraText = NoExtraText
   }
 
 {-|
@@ -101,7 +104,8 @@ task2023_16 = PickConflictConfig {
   alloyConfig = AlloyConfig {
     maxInstances = Just 1000,
     timeout = Nothing
-    }
+    },
+  extraText = NoExtraText
   }
 
 {-|

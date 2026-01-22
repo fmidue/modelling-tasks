@@ -1,20 +1,22 @@
 {-# LANGUAGE DuplicateRecordFields #-}
 module Modelling.ActivityDiagram.ActionSequences (
   validActionSequence,
+  validActionSequenceWithPetri,
   generateActionSequence,
+  generateActionSequencesWithPetri,
+  generateActionSequenceWithPetriAndRepetition,
+  actionRepetitionDistance,
+  netAndMap,
+  computeActionSequenceLevels,
+  isFinalPetriNode
 ) where
 
-import qualified Modelling.ActivityDiagram.Datatype as Ad (
-  AdNode (label),
-  )
-
-import qualified Data.Set as S (fromList)
+import qualified Data.Set as S (fromList, singleton, insert, notMember)
 import qualified Data.Map as M (filter, map, keys, fromList, toList)
 
 import Modelling.ActivityDiagram.Datatype (
   AdNode (..),
-  UMLActivityDiagram (..),
-  isActionNode
+  UMLActivityDiagram (..)
   )
 
 import Modelling.ActivityDiagram.PetriNet (
@@ -34,11 +36,15 @@ import Modelling.PetriNet.Reach.Type (
   Net(..)
   )
 
-import Modelling.PetriNet.Reach.Step (levels', successors)
+import Modelling.PetriNet.Reach.Reach (levelsWithAlternatives)
+import Modelling.PetriNet.Reach.Step (successors)
 
 import Control.Monad (guard)
-import Data.List (find, union)
-import Data.Maybe(mapMaybe, isJust, fromJust)
+import Control.Monad.Random (MonadRandom, uniform)
+import Data.Bifunctor (second)
+import Data.List (union)
+import Data.List.Extra (nubOrd)
+import Data.Maybe (mapMaybe, isJust)
 
 
 fromPetriLike :: Ord a => PetriLike Node a -> Net a a
@@ -51,55 +57,92 @@ fromPetriLike petri =
       start = State {unState = M.map initial $ M.filter isPlaceNode $ allNodes petri}
   }
 
---Generate one valid action sequence to each of the final nodes
+-- | Generate a valid action sequence reaching each of the final nodes
 generateActionSequence :: UMLActivityDiagram -> [String]
 generateActionSequence diag =
-  let tSeq = generateActionSequence' diag
-      tSeqLabels = map (Ad.label . sourceNode) $ filter isNormalPetriNode tSeq
-      actions = map
-        (\n -> (Ad.label n, name n))
-        $ filter isActionNode $ nodes diag
-  in mapMaybe (`lookup` actions) tSeqLabels
+  head $ generateActionSequencesWithPetri (convertToPetriNet diag) Nothing
 
-isNormalPetriNode :: PetriKey -> Bool
-isNormalPetriNode pk =
-  case pk of
-    NormalPetriNode {} -> True
-    _ -> False
+-- | Generate valid action sequences, using a pre-computed Petri net.
+-- The returned list may be infinite or some of its tails even diverge,
+-- if no length constraints are passed.
+generateActionSequencesWithPetri
+  :: PetriLike Node PetriKey
+  -> Maybe (Int, Int)  -- Optional (minLength, maxLength) constraints
+  -> [[String]]
+generateActionSequencesWithPetri =
+  generateSequencesWithLevels (map (map (second head)) . levelsWithAlternatives)
 
---Generate at one sequence of transitions to each final node
-generateActionSequence' :: UMLActivityDiagram -> [PetriKey]
-generateActionSequence' diag =
-  let petri = fromPetriLike $ convertToPetriNet diag
+-- | Generate one valid action sequence with repetition, using a pre-computed Petri net.
+-- This version allows cycle exploration to generate sequences with repeated actions.
+-- Returns Nothing if no sequence with repetition can be found within the length constraints.
+-- Uses randomness to select among sequences with equal maximum repetition distance.
+generateActionSequenceWithPetriAndRepetition
+  :: MonadRandom m
+  => PetriLike Node PetriKey
+  -> (Int, Int)  -- (minLength, maxLength) constraints
+  -> Maybe (m [String])
+generateActionSequenceWithPetriAndRepetition petri lengthBounds =
+  let allActionSequences = generateSequencesWithLevels levelsWithCycles petri (Just lengthBounds)
+      sequencesWithDistances = [(seq', d) | seq' <- allActionSequences, Just d <- [actionRepetitionDistance seq']]
+  in if null sequencesWithDistances
+     then Nothing
+     else
+       let maxDist = maximum $ map snd sequencesWithDistances
+       in Just $ uniform [seq' | (seq', d) <- sequencesWithDistances, d == maxDist]
+
+-- | Helper to generate sequences using a specific levels function
+generateSequencesWithLevels
+  :: (Net PetriKey PetriKey -> [[(State PetriKey, [PetriKey])]])
+  -> PetriLike Node PetriKey
+  -> Maybe (Int, Int)  -- Optional (minLength, maxLength) constraints
+  -> [[String]]
+generateSequencesWithLevels levelsFunction petriLike maybeLengthBounds =
+  let petri = fromPetriLike petriLike
       zeroState = State $ M.map (const 0) $ unState $ start petri
-      sequences = fromJust $ find (isJust . lookup zeroState) $ levels' petri
-  in reverse $ fromJust $ lookup zeroState sequences
+      relevantLevels = maybe id (\(minLength, maxLength) -> take (5 * maxLength) . drop minLength) maybeLengthBounds
+                       $ levelsFunction petri
+      convertAndFilterSequence transitionSequence =
+        let actionSequence = [ actionName | NormalPetriNode {sourceNode = AdActionNode {name = actionName}} <- transitionSequence ]
+            seqLength = length actionSequence
+        in case maybeLengthBounds of
+             Just (minLength, maxLength) | seqLength < minLength || seqLength > maxLength
+               -> Nothing
+             _ -> Just actionSequence
+  in [ reverse a | level <- relevantLevels, (s, p) <- level, s == zeroState, Just a <- [convertAndFilterSequence p] ]
 
 
 validActionSequence :: [String] -> UMLActivityDiagram -> Bool
-validActionSequence input diag =
-  let nameMap = map
-        (\n -> (name n, Ad.label n))
-        $ filter isActionNode $ nodes diag
-      labels = mapMaybe (`lookup` nameMap) input
-      petri = convertToPetriNet diag
-      petriKeyMap = map
-        (\k -> (Ad.label $ sourceNode k, k))
-        $ filter isNormalPetriNode $ M.keys $ allNodes petri
-      input' = mapMaybe (`lookup` petriKeyMap) labels
-      actions = map snd $ filter (\(l,_) -> l `elem` map snd nameMap) petriKeyMap
-  in length input == length labels && validActionSequence' input' actions petri
+validActionSequence input =
+  uncurry (validActionSequenceWithPetri input) . netAndMap . convertToPetriNet
 
+-- | Check if an action sequence is valid, using a pre-computed Petri net.
+validActionSequenceWithPetri :: [String] -> Net PetriKey PetriKey -> [(String, PetriKey)] -> Bool
+validActionSequenceWithPetri input net actionNameToPetriKey =
+  let zeroState = State $ M.map (const 0) $ unState $ start net
+      levels = computeActionSequenceLevels input net actionNameToPetriKey
+  in any (isJust . lookup zeroState) levels
 
-validActionSequence'
-  :: [PetriKey]
-  -> [PetriKey]
-  -> PetriLike Node PetriKey
-  -> Bool
-validActionSequence' input actions petri =
-  let net = fromPetriLike petri
-      zeroState = State $ M.map (const 0) $ unState $ start net
-  in any (isJust . lookup zeroState) (levelsCheckAS input actions net)
+netAndMap :: PetriLike Node PetriKey -> (Net PetriKey PetriKey, [(String, PetriKey)])
+netAndMap petri =
+  let -- Build map from action name to PetriKey by directly checking sourceNode
+      actionNameToPetriKey =
+        [ (actionName, k) | k@NormalPetriNode {sourceNode = AdActionNode {name = actionName}} <- M.keys $ allNodes petri ]
+  in (fromPetriLike petri, actionNameToPetriKey)
+
+-- | Common computation for action sequence validation.
+computeActionSequenceLevels :: [String] -> Net PetriKey PetriKey -> [(String, PetriKey)] -> [[(State PetriKey, [PetriKey])]]
+computeActionSequenceLevels input net actionNameToPetriKey =
+  let -- Convert input action names to PetriKeys
+      input' = mapMaybe (`lookup` actionNameToPetriKey) input
+      -- Extract all action PetriKeys
+      actions = map snd actionNameToPetriKey
+      levels = levelsCheckAS input' actions net
+  in levels
+
+-- | Check if a PetriKey represents a final node transition
+isFinalPetriNode :: PetriKey -> Bool
+isFinalPetriNode (FinalPetriNode {}) = True
+isFinalPetriNode _ = False
 
 
 levelsCheckAS :: [PetriKey] -> [PetriKey] -> Net PetriKey PetriKey-> [[(State PetriKey, [PetriKey])]]
@@ -119,3 +162,54 @@ levelsCheckAS input actions n =
             notConsume = g (`notElem` actions) xs         -- Case: Next transition is not an action, therefore is processed but not removed from input
         in union (f as consume) (f (a:as) notConsume)
   in f input [(start n, [])]
+
+-- | Variant of levelsWithAlternatives that computes only one path per state, while managing visited states per path rather than globally.
+-- The latter aspect in particular allows exploring cycles while preventing infinite loops within each path.
+levelsWithCycles :: Ord s => Net s t -> [[(State s, [t])]]
+levelsWithCycles n =
+  let f [] = []
+      f xs = xs' : f next'
+        where
+          xs' = map (\(x, p, _) -> (x, p)) xs
+          next' = [ (y, t:p, S.insert y visited)
+                  | (x, p, visited) <- xs
+                  , (t, y) <- successors n x
+                  , y `S.notMember` visited
+                  ]
+  in f [(start n, [], S.singleton (start n))]
+
+{-|
+Calculate the maximum distance between any two occurrences of the same action.
+Returns Nothing if there are no repeated actions.
+
+For example:
+
+immediate repetition:
+
+>>> actionRepetitionDistance ["A", "A"]
+Just 0
+
+1 action between repetitions:
+
+>>> actionRepetitionDistance ["A", "B", "A"]
+Just 1
+
+2 actions between repetitions:
+
+>>> actionRepetitionDistance ["A", "B", "C", "A"]
+Just 2
+
+no repetitions:
+
+>>> actionRepetitionDistance ["A", "B", "C"]
+Nothing
+-}
+actionRepetitionDistance :: [String] -> Maybe Int
+actionRepetitionDistance actionSequence =
+  let maxDistanceForAction action =
+        let indices = [i | (i, a) <- zip [0..] actionSequence, a == action]
+        in if length indices < 2
+           then Nothing
+           else Just (last indices - head indices - 1)
+      distances = [d | action <- nubOrd actionSequence, Just d <- [maxDistanceForAction action]]
+  in if null distances then Nothing else Just (maximum distances)

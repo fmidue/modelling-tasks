@@ -1,3 +1,5 @@
+{-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# Language DeriveTraversable #-}
 {-# Language DuplicateRecordFields #-}
@@ -7,7 +9,6 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE TupleSections #-}
 {-# LANGUAGE TypeApplications #-}
-{-# LANGUAGE DeriveAnyClass #-}
 {-|
 This module provides types to represent Petri nets.
 
@@ -55,11 +56,13 @@ module Modelling.PetriNet.Types (
   SimpleNode (..),
   SimplePetriLike,
   SimplePetriNet,
+  allDrawSettings,
   basicConfigBitWidthInput,
   checkActivatedSourceConfig,
   checkBasicConfig,
   checkChangeConfig,
   checkGraphLayouts,
+  checkPetriNodeCount,
   defaultAdvConfig,
   defaultAlloyConfig,
   defaultBasicConfig,
@@ -81,6 +84,7 @@ module Modelling.PetriNet.Types (
   lConflictConfig,
   lConflictPlaces,
   lConflictTrans,
+  lExtraText,
   lFlowOverall,
   lGraphConfig,
   lGraphLayouts,
@@ -95,7 +99,6 @@ module Modelling.PetriNet.Types (
   lTokensOverall,
   lTransitions,
   lUniqueConflictPlace,
-  manyRandomDrawSettings,
   mapChange,
   maybeCapacity,
   maybeInitial,
@@ -103,7 +106,6 @@ module Modelling.PetriNet.Types (
   petriScopeBitWidth,
   placeNames,
   prohibitPatchworkRenderer,
-  randomDrawSettings,
   shuffleNames,
   toChangeList,
   transformNet,
@@ -131,19 +133,26 @@ import qualified Data.Map.Lazy                    as M (
   member,
   null,
   toList,
+  size,
   )
 import qualified Data.Set                         as S (empty, union)
 
+import Autolib.Hash                     (Hashable)
+import Autolib.Reader                   (Reader)
+import Autolib.ToDoc                    (ToDoc)
 import Capabilities.Alloy               (maxBitWidth)
-import Modelling.Auxiliary.Common       (lensRulesL, oneOf)
+import Modelling.Auxiliary.Common       (lensRulesL)
 import Modelling.PetriNet.Reach.Type    (Place, ShowTransition (ShowTransition))
+import Modelling.Types                  ()
 
 import Control.Lens                     (makeLensesWith)
 import Control.Monad                    ((<=<))
 import Control.Monad.Catch              (Exception, MonadThrow (throwM))
-import Control.Monad.Random             (MonadRandom, RandT, RandomGen)
+import Control.Monad.Random             (RandT, RandomGen)
 import Control.Monad.Trans              (MonadTrans(lift))
+import Control.OutputCapable.Blocks     (ExtraText (..))
 import Data.Bimap                       (Bimap)
+import Data.Data                        (Data)
 import Data.GraphViz.Attributes.Complete (GraphvizCommand (..))
 import Data.List                        (intercalate)
 import Data.Map.Lazy                    (Map)
@@ -158,7 +167,7 @@ data AlloyConfig = AlloyConfig {
   maxInstances :: Maybe Integer,
   timeout      :: Maybe Int
   }
-  deriving (Show, Read, Generic)
+  deriving (Generic, Read, Reader, Show, ToDoc)
 
 defaultAlloyConfig :: AlloyConfig
 defaultAlloyConfig = AlloyConfig {
@@ -183,12 +192,12 @@ data PetriChange a = Change {
   --   nodes to the flow change (if any) at the edge between source and target.
   flowChange  :: Map a (Map a Int)
   }
-  deriving (Eq, Generic, Show)
+  deriving (Eq, Generic, Hashable, Read, Reader, Show, ToDoc)
 
 data PetriChangeList a = ChangeList {
   tokenChanges :: [(a, Int)],
   flowChanges  :: [(a, a, Int)]
-} deriving (Eq, Show, Functor, Foldable, Traversable)
+} deriving (Eq, Generic, Hashable, Show, Functor, Foldable, Reader, Traversable, ToDoc)
 
 toChangeList :: PetriChange a -> PetriChangeList a
 toChangeList (Change tokenMap flowMap) = ChangeList {
@@ -222,7 +231,7 @@ data PetriConflict p t = Conflict {
   -- | The set of source nodes having not enough tokens to fire both transitions.
   conflictPlaces :: [p]
   }
-  deriving (Functor, Generic, Read, Show)
+  deriving (Functor, Generic, Read, Reader, Show, ToDoc)
 
 makeLensesWith lensRulesL ''PetriConflict
 
@@ -257,10 +266,10 @@ instance Bitraversable PetriConflict where
     <*> traverse f as
 
 newtype Concurrent a = Concurrent (a, a)
-  deriving (Foldable, Functor, Generic, Read, Show, Traversable)
+  deriving (Eq, Foldable, Functor, Generic, Hashable, Read, Reader, Show, ToDoc, Traversable)
 
 newtype ActivatedTransitions a = ActivatedTransitions [a]
-  deriving (Functor, Foldable, Traversable, Generic, Read, Show)
+  deriving (Functor, Foldable, Traversable, Generic, Read, Reader, Show, ToDoc)
 
 newtype Capacity = Capacity ([(Place, Int)], [(String, String, Int)])
   deriving (Generic, Read, Show)
@@ -326,7 +335,7 @@ data Node a =
   flowIn  :: Map a Int,
   flowOut :: Map a Int
   }
-  deriving (Eq, Generic, Read, Show)
+  deriving (Data, Eq, Generic, Hashable, Read, Reader, Show, ToDoc)
 
 instance PetriNode Node where
   initialTokens PlaceNode {initial} = initial
@@ -357,7 +366,7 @@ data SimpleNode a =
   SimpleTransition {
   flowOut           :: Map a Int
   }
-  deriving (Eq, Generic, Read, Show)
+  deriving (Data, Eq, Generic, Hashable, Read, Reader, Show, ToDoc)
 
 instance PetriNode SimpleNode where
   initialTokens SimplePlace {initial} = initial
@@ -390,7 +399,7 @@ data CapacityNode a =
   CapacityTransition {
   flowOut :: Map a Int
   }
-  deriving (Eq, Generic, Read, Show)
+  deriving (Data, Eq, Generic, Hashable, Read, Reader, Show, ToDoc)
 
 instance PetriNode CapacityNode where
   initialTokens CapacityPlace {initial} = initial
@@ -535,7 +544,7 @@ The 'PetriLike' graph is a valid Petri net only if
 newtype PetriLike n a = PetriLike {
   -- | the 'Map' of all nodes the Petri net like graph is made of
   allNodes :: Map a (n a)
-  } deriving (Eq, Generic, Read, Show)
+  } deriving (Data, Eq, Generic, Hashable, Read, Reader, Show, ToDoc)
 
 instance Net PetriLike Node where
   emptyNet = PetriLike M.empty
@@ -807,7 +816,8 @@ data PetriMath a = PetriMath {
   initialMarkingMath :: a,
   -- | the order of places used for notation of token changes ('tokenChangeMath')
   placeOrderMath     :: Maybe a
-  } deriving (Foldable, Functor, Generic, Read, Show, Traversable)
+  }
+  deriving (Data, Eq, Foldable, Functor, Generic, Hashable, Read, Reader, Show, ToDoc, Traversable)
 
 data Petri = Petri
   { initialMarking :: Marking
@@ -825,7 +835,8 @@ data BasicConfig = BasicConfig
   , tokensOverall :: (Int, Int)
   -- ^ allowed range of tokens in total (over all places)
   , isConnected :: Maybe Bool
-  } deriving (Generic, Read, Show)
+  }
+  deriving (Generic, Read, Reader, Show, ToDoc)
 
 makeLensesWith lensRulesL ''BasicConfig
 
@@ -846,7 +857,8 @@ data GraphConfig = GraphConfig {
   hidePlaceNames :: Bool,
   hideTransitionNames :: Bool,
   hideWeight1 :: Bool
-  } deriving (Generic, Read, Show)
+  }
+  deriving (Generic, Read, Reader, Show, ToDoc)
 
 defaultGraphConfig :: GraphConfig
 defaultGraphConfig = GraphConfig {
@@ -862,7 +874,8 @@ data AdvConfig = AdvConfig
   { presenceOfSelfLoops :: Maybe Bool
   , presenceOfSinkTransitions :: Maybe Bool
   , presenceOfSourceTransitions :: Maybe Bool
-  } deriving (Generic, Read, Show)
+  }
+  deriving (Generic, Read, Reader, Show, ToDoc)
 
 defaultAdvConfig :: AdvConfig
 defaultAdvConfig = AdvConfig
@@ -876,7 +889,8 @@ data ChangeConfig = ChangeConfig
   , maxTokenChangePerPlace :: Int
   , flowChangeOverall :: Int
   , maxFlowChangePerEdge :: Int
-  } deriving (Generic, Read, Show)
+  }
+  deriving (Generic, Read, Reader, Show, ToDoc)
 
 defaultChangeConfig :: ChangeConfig
 defaultChangeConfig = ChangeConfig
@@ -900,7 +914,7 @@ data ConflictConfig = ConflictConfig {
   -- | to enforce that at least one distractor looks concurrent like
   conflictDistractorOnlyConcurrentLike  :: Bool
   }
-  deriving (Generic, Read, Show)
+  deriving (Generic, Read, Reader, Show, ToDoc)
 
 defaultConflictConfig :: ConflictConfig
 defaultConflictConfig = ConflictConfig {
@@ -920,7 +934,9 @@ data FindConflictConfig = FindConflictConfig
   , printSolution :: Bool
   , uniqueConflictPlace :: Maybe Bool
   , alloyConfig  :: AlloyConfig
-  } deriving (Generic, Read, Show)
+  , extraText :: ExtraText
+  }
+  deriving (Generic, Read, Reader, Show, ToDoc)
 
 makeLensesWith lensRulesL ''FindConflictConfig
 
@@ -934,6 +950,7 @@ defaultFindConflictConfig = FindConflictConfig
   , printSolution = False
   , uniqueConflictPlace = Just True
   , alloyConfig  = defaultAlloyConfig
+  , extraText = NoExtraText
   }
 
 data PickConflictConfig = PickConflictConfig
@@ -946,7 +963,9 @@ data PickConflictConfig = PickConflictConfig
   , uniqueConflictPlace :: Maybe Bool
   , useDifferentGraphLayouts :: Bool
   , alloyConfig  :: AlloyConfig
-  } deriving (Generic, Read, Show)
+  , extraText :: ExtraText
+  }
+  deriving (Generic, Read, Reader, Show, ToDoc)
 
 defaultPickConflictConfig :: PickConflictConfig
 defaultPickConflictConfig = PickConflictConfig
@@ -959,6 +978,7 @@ defaultPickConflictConfig = PickConflictConfig
   , uniqueConflictPlace = Nothing
   , useDifferentGraphLayouts = False
   , alloyConfig  = defaultAlloyConfig
+  , extraText = NoExtraText
   }
 
 data FindConcurrencyConfig = FindConcurrencyConfig
@@ -968,16 +988,19 @@ data FindConcurrencyConfig = FindConcurrencyConfig
   , graphConfig :: GraphConfig
   , printSolution :: Bool
   , alloyConfig  :: AlloyConfig
-  } deriving (Generic, Read, Show)
+  , extraText :: ExtraText
+  }
+  deriving (Generic, Read, Reader, Show, ToDoc)
 
 defaultFindConcurrencyConfig :: FindConcurrencyConfig
 defaultFindConcurrencyConfig = FindConcurrencyConfig
   { basicConfig = defaultBasicConfig { atLeastActive = 3 }
-  , advConfig = defaultAdvConfig { presenceOfSourceTransitions = Nothing }
+  , advConfig = defaultAdvConfig { presenceOfSourceTransitions = Just False }
   , changeConfig = defaultChangeConfig
   , graphConfig = defaultGraphConfig { hidePlaceNames = True }
   , printSolution = False
   , alloyConfig  = defaultAlloyConfig
+  , extraText = NoExtraText
   }
 
 data PickConcurrencyConfig = PickConcurrencyConfig
@@ -988,7 +1011,9 @@ data PickConcurrencyConfig = PickConcurrencyConfig
   , prohibitSourceTransitions :: Bool
   , useDifferentGraphLayouts :: Bool
   , alloyConfig  :: AlloyConfig
-  } deriving (Generic, Read, Show)
+  , extraText :: ExtraText
+  }
+  deriving (Generic, Read, Reader, Show, ToDoc)
 
 defaultPickConcurrencyConfig :: PickConcurrencyConfig
 defaultPickConcurrencyConfig = PickConcurrencyConfig
@@ -999,6 +1024,7 @@ defaultPickConcurrencyConfig = PickConcurrencyConfig
   , prohibitSourceTransitions = False
   , useDifferentGraphLayouts = False
   , alloyConfig  = defaultAlloyConfig { timeout = Just 60000000 }
+  , extraText = NoExtraText
   }
 
 data PickMistakeConfig = PickMistakeConfig
@@ -1009,24 +1035,28 @@ data PickMistakeConfig = PickMistakeConfig
   , printSolution :: Bool
   , useDifferentGraphLayouts :: Bool
   , alloyConfig  :: AlloyConfig
-  } deriving (Generic, Read, Show)
+  , extraText :: ExtraText
+  }
+  deriving (Generic, Read, Reader, Show, ToDoc)
 
 defaultPickMistakeConfig :: PickMistakeConfig
 defaultPickMistakeConfig = PickMistakeConfig
   { basicConfig = defaultBasicConfig { atLeastActive = 0 }
   , changeConfig = defaultChangeConfig
+  , mistakeConfig = defaultMistakeConfig
   , graphConfig = defaultGraphConfig { hidePlaceNames = True, hideTransitionNames = True }
   , printSolution = False
   , useDifferentGraphLayouts = False
   , alloyConfig  = defaultAlloyConfig
-  , mistakeConfig = defaultMistakeConfig
+  , extraText = NoExtraText
   }
 
 data MistakeConfig = MistakeConfig
   { canHaveNegativeWeight :: Bool
   , canHaveTransitionToTransition :: Bool
   , canHavePlaceToPlace :: Bool
-  } deriving (Generic, Read, Show)
+  }
+  deriving (Generic, Read, Reader, Show, ToDoc)
 
 defaultMistakeConfig :: MistakeConfig
 defaultMistakeConfig = MistakeConfig
@@ -1043,8 +1073,9 @@ data FindActivatedTransitionsConfig = FindActivatedTransitionsConfig
   , graphConfig :: GraphConfig
   , printSolution :: Bool
   , alloyConfig  :: AlloyConfig
-  } deriving (Generic, Read, Show)
-
+  , extraText :: ExtraText
+  }
+  deriving (Generic, Read, Reader, Show, ToDoc)
 
 defaultFindActivatedTransitionsConfig :: FindActivatedTransitionsConfig
 defaultFindActivatedTransitionsConfig = FindActivatedTransitionsConfig
@@ -1055,6 +1086,7 @@ defaultFindActivatedTransitionsConfig = FindActivatedTransitionsConfig
   , graphConfig = defaultGraphConfig
   , printSolution = False
   , alloyConfig  = defaultAlloyConfig
+  , extraText = NoExtraText
   }
 
 data CapacityConfig = CapacityConfig
@@ -1068,7 +1100,8 @@ data CapacityConfig = CapacityConfig
   , graphConfig :: GraphConfig
   , printSolution :: Bool
   , alloyConfig :: AlloyConfig
-  } deriving (Generic, Read, Show)
+  }
+  deriving (Generic, Read, Reader, Show, ToDoc)
 
 defaultCapacityConfig :: CapacityConfig
 defaultCapacityConfig = CapacityConfig
@@ -1090,46 +1123,44 @@ data DrawSettings = DrawSettings {
   withTransitionNames  :: Bool,
   with1Weights         :: Bool,
   withGraphvizCommand  :: GraphvizCommand
-  } deriving (Generic, Read, Show)
+  }
+  deriving (Eq, Generic, Hashable, Read, Reader, Show, ToDoc)
 
 type Drawable n = (n, DrawSettings)
 
+{-|
+Converts a 'GraphConfig' into 'DrawSettings' by choosing
+the provided 'GraphvizCommand'.
+
+Raises a runtime error if the provided 'GraphvizCommand' is not in the
+'graphLayouts' list of the 'GraphConfig'.
+-}
 drawSettingsWithCommand :: GraphConfig -> GraphvizCommand -> DrawSettings
-drawSettingsWithCommand config c = DrawSettings {
-  withPlaceNames = not $ hidePlaceNames config,
-  withSvgHighlighting = True,
-  withTransitionNames = not $ hideTransitionNames config,
-  with1Weights = not $ hideWeight1 config,
-  withGraphvizCommand = c
-  }
+drawSettingsWithCommand config c
+  | c `elem` graphLayouts config = DrawSettings {
+      withPlaceNames = not $ hidePlaceNames config,
+      withSvgHighlighting = True,
+      withTransitionNames = not $ hideTransitionNames config,
+      with1Weights = not $ hideWeight1 config,
+      withGraphvizCommand = c
+    }
+  | otherwise = error $ "drawSettingsWithCommand: GraphvizCommand " ++ show c
+                     ++ " is not in the allowed graphLayouts: " ++ show (graphLayouts config)
 
 {-|
-Provides a 'DrawSetting' by using 'drawSettingsWithCommand' and randomly picking
-one of the provided 'graphLayout's.
+Provides a list of all 'DrawSetting' that can be obtained by using
+'drawSettingsWithCommand' and all possible 'graphLayout's of the given config.
 -}
-randomDrawSettings :: MonadRandom m => GraphConfig -> m DrawSettings
-randomDrawSettings config =
-  drawSettingsWithCommand config <$> oneOf (graphLayouts config)
-
-{-|
-Provides a list of 'DrawSettings' with as many entries as specified by randomly
-picking while ensuring as few repetitions of provided 'graphLayout's as possible.
--}
-manyRandomDrawSettings
-  :: MonadRandom m
-  => GraphConfig
-  -- ^ providing layouts to pick from
-  -> Int
-  -- ^ how many entries to return
-  -> m [DrawSettings]
-manyRandomDrawSettings config n = map (drawSettingsWithCommand config) <$> do
-  layouts <- shuffleM $ graphLayouts config
-  shuffleM $ take n $ cycle layouts
+allDrawSettings :: GraphConfig -> [DrawSettings]
+allDrawSettings config =
+  map (drawSettingsWithCommand config) $ graphLayouts config
 
 transitionPairShow
   :: (Petri.Transition, Petri.Transition)
   -> (ShowTransition, ShowTransition)
-transitionPairShow = bimap ShowTransition ShowTransition
+transitionPairShow (t1, t2) =
+  let (first, second) = if t1 <= t2 then (t1, t2) else (t2, t1)
+  in bimap ShowTransition ShowTransition (first, second)
 
 transitionListShow :: [Petri.Transition] -> [ShowTransition]
 transitionListShow = map ShowTransition
@@ -1243,6 +1274,10 @@ checkChangeConfig
   = Just "The parameter 'flowChangeOverall' is set unreasonable high, given the maximal flow overall."
  | 2 * places * transitions * maxFlowChangePerEdge < flowChangeOverall
   = Just "The parameter 'flowChangeOverall' is set unreasonably high, given the other parameters."
+ | odd tokenChangeOverall && uncurry (==) tokensOverall
+  = Just "If 'tokenChangeOverall' is odd, then 'tokensOverall' should not contain two equal values (configuration would be unsatisfiable)."
+ | odd flowChangeOverall && uncurry (==) flowOverall
+  = Just "If 'flowChangeOverall' is odd, then 'flowOverall' should not contain two equal values (configuration would be unsatisfiable)."
  | otherwise
   = Nothing
 
@@ -1250,10 +1285,26 @@ checkGraphLayouts :: Bool -> Int -> GraphConfig -> Maybe String
 checkGraphLayouts useDifferent wrongInstances gc
   | null (graphLayouts gc)
   = Just "At least one graph layout needs to be provided."
-  | useDifferent && length (graphLayouts gc) <= wrongInstances
-  = Just "The parameter 'graphLayout' has to contain more entries than the number of 'wrongInstances' if 'useDifferentGraphLayouts' is set."
+  | useDifferent && not (hasValidLayoutDistribution numberOfGraphs (length $ graphLayouts gc))
+  = Just "The parameter 'graphLayout' needs to allow even distribution of graphs when 'useDifferentGraphLayouts' is set."
   | otherwise
   = Nothing
+  where
+    -- Total number of graphs: 1 correct + wrongInstances wrong graphs
+    numberOfGraphs = 1 + wrongInstances
+
+-- | Check if we can distribute numberOfGraphs graphs among numLayouts layouts
+-- such that we use n different layouts where 1 < n <= numLayouts and numberOfGraphs mod n == 0
+hasValidLayoutDistribution :: Int -> Int -> Bool
+hasValidLayoutDistribution numberOfGraphs numLayouts =
+  any (\n -> numberOfGraphs `mod` n == 0) [2..numLayouts]
+
+-- | Check if the count of nodes in a Petri net falls within the given bounds
+checkPetriNodeCount :: (Net p n, Ord a) => (Int, Maybe Int) -> p n a -> Bool
+checkPetriNodeCount countOfPetriNodesBounds petri =
+  let count = M.size $ nodes petri
+  in fst countOfPetriNodesBounds <= count
+     && maybe True (count <=) (snd countOfPetriNodesBounds)
 
 prohibitPatchworkRenderer :: GraphConfig -> Maybe String
 prohibitPatchworkRenderer gc

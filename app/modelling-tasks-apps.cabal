@@ -1,6 +1,6 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.38.0.
+-- This file has been generated from package.yaml by hpack version 0.39.1.
 --
 -- see: https://github.com/sol/hpack
 
@@ -38,12 +38,13 @@ executable check-cds
   main-is: check-cds.hs
   hs-source-dirs:
       ./
-  ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Widentities -Wredundant-constraints -Werror -Wwarn=incomplete-uni-patterns -Wwarn=orphans
+  ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Widentities -Wredundant-constraints -Werror -Wwarn=incomplete-uni-patterns -Wwarn=orphans -Wwarn=unrecognised-warning-flags -Wwarn=x-partial
   build-tools:
       alex
     , happy
   build-depends:
       MonadRandom
+    , autotool-capabilities-io-instances
     , base
     , bytestring
     , call-alloy
@@ -64,12 +65,13 @@ executable concurrency
   hs-source-dirs:
       ./
       common
-  ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Widentities -Wredundant-constraints -Werror -Wwarn=incomplete-uni-patterns -Wwarn=orphans
+  ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Widentities -Wredundant-constraints -Werror -Wwarn=incomplete-uni-patterns -Wwarn=orphans -Wwarn=unrecognised-warning-flags -Wwarn=x-partial
   build-tools:
       alex
     , happy
   build-depends:
       MonadRandom
+    , autotool-capabilities-io-instances
     , base
     , bytestring
     , containers
@@ -90,12 +92,13 @@ executable conflicts
   hs-source-dirs:
       ./
       common
-  ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Widentities -Wredundant-constraints -Werror -Wwarn=incomplete-uni-patterns -Wwarn=orphans
+  ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Widentities -Wredundant-constraints -Werror -Wwarn=incomplete-uni-patterns -Wwarn=orphans -Wwarn=unrecognised-warning-flags -Wwarn=x-partial
   build-tools:
       alex
     , happy
   build-depends:
       MonadRandom
+    , autotool-capabilities-io-instances
     , base
     , bytestring
     , containers
@@ -117,12 +120,13 @@ executable different-names
   hs-source-dirs:
       ./
       common
-  ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Widentities -Wredundant-constraints -Werror -Wwarn=incomplete-uni-patterns -Wwarn=orphans
+  ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Widentities -Wredundant-constraints -Werror -Wwarn=incomplete-uni-patterns -Wwarn=orphans -Wwarn=unrecognised-warning-flags -Wwarn=x-partial
   build-tools:
       alex
     , happy
   build-depends:
       MonadRandom
+    , autotool-capabilities-io-instances
     , base
     , bytestring
     , containers
@@ -142,12 +146,13 @@ executable enterASTaskDemo
   hs-source-dirs:
       ./
       common
-  ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Widentities -Wredundant-constraints -Werror -Wwarn=incomplete-uni-patterns -Wwarn=orphans
+  ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Widentities -Wredundant-constraints -Werror -Wwarn=incomplete-uni-patterns -Wwarn=orphans -Wwarn=unrecognised-warning-flags -Wwarn=x-partial
   build-tools:
       alex
     , happy
   build-depends:
       MonadRandom
+    , autotool-capabilities-io-instances
     , base
     , containers
     , diagrams-lib
@@ -164,7 +169,7 @@ executable evalIsomorphic
       Paths_modelling_tasks_apps
   hs-source-dirs:
       ./
-  ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Widentities -Wredundant-constraints -Werror -Wwarn=incomplete-uni-patterns -Wwarn=orphans
+  ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Widentities -Wredundant-constraints -Werror -Wwarn=incomplete-uni-patterns -Wwarn=orphans -Wwarn=unrecognised-warning-flags -Wwarn=x-partial
   build-tools:
       alex
     , happy
@@ -191,7 +196,7 @@ executable evalTimeToGenerate
       Paths_modelling_tasks_apps
   hs-source-dirs:
       ./
-  ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Widentities -Wredundant-constraints -Werror -Wwarn=incomplete-uni-patterns -Wwarn=orphans
+  ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Widentities -Wredundant-constraints -Werror -Wwarn=incomplete-uni-patterns -Wwarn=orphans -Wwarn=unrecognised-warning-flags -Wwarn=x-partial
   build-tools:
       alex
     , happy
@@ -243,12 +248,13 @@ executable findAuxiliaryPetriNodesTaskDemo
   hs-source-dirs:
       ./
       common
-  ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Widentities -Wredundant-constraints -Werror -Wwarn=incomplete-uni-patterns -Wwarn=orphans
+  ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Widentities -Wredundant-constraints -Werror -Wwarn=incomplete-uni-patterns -Wwarn=orphans -Wwarn=unrecognised-warning-flags -Wwarn=x-partial
   build-tools:
       alex
     , happy
   build-depends:
       MonadRandom
+    , autotool-capabilities-io-instances
     , base
     , containers
     , diagrams-lib
@@ -267,12 +273,13 @@ executable match-cd-od
   hs-source-dirs:
       ./
       common
-  ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Widentities -Wredundant-constraints -Werror -Wwarn=incomplete-uni-patterns -Wwarn=orphans
+  ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Widentities -Wredundant-constraints -Werror -Wwarn=incomplete-uni-patterns -Wwarn=orphans -Wwarn=unrecognised-warning-flags -Wwarn=x-partial
   build-tools:
       alex
     , happy
   build-depends:
       MonadRandom
+    , autotool-capabilities-io-instances
     , base
     , bytestring
     , containers
@@ -292,12 +299,13 @@ executable matchAdTaskDemo
   hs-source-dirs:
       ./
       common
-  ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Widentities -Wredundant-constraints -Werror -Wwarn=incomplete-uni-patterns -Wwarn=orphans
+  ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Widentities -Wredundant-constraints -Werror -Wwarn=incomplete-uni-patterns -Wwarn=orphans -Wwarn=unrecognised-warning-flags -Wwarn=x-partial
   build-tools:
       alex
     , happy
   build-depends:
       MonadRandom
+    , autotool-capabilities-io-instances
     , base
     , containers
     , diagrams-lib
@@ -315,12 +323,13 @@ executable matchPetriTaskDemo
   hs-source-dirs:
       ./
       common
-  ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Widentities -Wredundant-constraints -Werror -Wwarn=incomplete-uni-patterns -Wwarn=orphans
+  ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Widentities -Wredundant-constraints -Werror -Wwarn=incomplete-uni-patterns -Wwarn=orphans -Wwarn=unrecognised-warning-flags -Wwarn=x-partial
   build-tools:
       alex
     , happy
   build-depends:
       MonadRandom
+    , autotool-capabilities-io-instances
     , base
     , containers
     , diagrams-lib
@@ -338,12 +347,13 @@ executable matchToMath
   hs-source-dirs:
       ./
       common
-  ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Widentities -Wredundant-constraints -Werror -Wwarn=incomplete-uni-patterns -Wwarn=orphans
+  ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Widentities -Wredundant-constraints -Werror -Wwarn=incomplete-uni-patterns -Wwarn=orphans -Wwarn=unrecognised-warning-flags -Wwarn=x-partial
   build-tools:
       alex
     , happy
   build-depends:
       MonadRandom
+    , autotool-capabilities-io-instances
     , base
     , bytestring
     , containers
@@ -391,12 +401,13 @@ executable repair-incorrect
   hs-source-dirs:
       ./
       common
-  ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Widentities -Wredundant-constraints -Werror -Wwarn=incomplete-uni-patterns -Wwarn=orphans
+  ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Widentities -Wredundant-constraints -Werror -Wwarn=incomplete-uni-patterns -Wwarn=orphans -Wwarn=unrecognised-warning-flags -Wwarn=x-partial
   build-tools:
       alex
     , happy
   build-depends:
       MonadRandom
+    , autotool-capabilities-io-instances
     , base
     , bytestring
     , containers
@@ -416,12 +427,13 @@ executable selectASTaskDemo
   hs-source-dirs:
       ./
       common
-  ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Widentities -Wredundant-constraints -Werror -Wwarn=incomplete-uni-patterns -Wwarn=orphans
+  ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Widentities -Wredundant-constraints -Werror -Wwarn=incomplete-uni-patterns -Wwarn=orphans -Wwarn=unrecognised-warning-flags -Wwarn=x-partial
   build-tools:
       alex
     , happy
   build-depends:
       MonadRandom
+    , autotool-capabilities-io-instances
     , base
     , containers
     , diagrams-lib
@@ -439,12 +451,13 @@ executable selectPetriTaskDemo
   hs-source-dirs:
       ./
       common
-  ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Widentities -Wredundant-constraints -Werror -Wwarn=incomplete-uni-patterns -Wwarn=orphans
+  ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Widentities -Wredundant-constraints -Werror -Wwarn=incomplete-uni-patterns -Wwarn=orphans -Wwarn=unrecognised-warning-flags -Wwarn=x-partial
   build-tools:
       alex
     , happy
   build-depends:
       MonadRandom
+    , autotool-capabilities-io-instances
     , base
     , containers
     , diagrams-lib

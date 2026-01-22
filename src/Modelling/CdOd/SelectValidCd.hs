@@ -1,4 +1,5 @@
 {-# LANGUAGE ApplicativeDo #-}
+{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE LambdaCase #-}
@@ -33,6 +34,9 @@ import qualified Data.Map                         as M (
   traverseWithKey,
   )
 
+import Autolib.Hash                     (Hashable)
+import Autolib.Reader                   (Reader)
+import Autolib.ToDoc                    (ToDoc)
 import Capabilities.Alloy               (MonadAlloy)
 import Capabilities.Cache               (MonadCache)
 import Capabilities.Diagrams            (MonadDiagrams)
@@ -41,7 +45,7 @@ import Modelling.Auxiliary.Common (
   ModellingTasksException (NeverHappens),
   Randomise (randomise),
   RandomiseLayout (randomiseLayout),
-  shuffleEverything,
+  RandomiseNames (randomiseNames),
   )
 import Modelling.Auxiliary.Output (
   addPretext,
@@ -49,8 +53,8 @@ import Modelling.Auxiliary.Output (
   hoveringInformation,
   simplifiedInformation,
   uniform,
-  extra,
   )
+import Modelling.Auxiliary.Shuffle.All  (shuffleEverything)
 import Modelling.CdOd.CdAndChanges.Instance (
   AnnotatedChangeAndCd (..),
   )
@@ -61,10 +65,11 @@ import Modelling.CdOd.Phrasing (
 import Modelling.CdOd.RepairCd (
   InValidOption (..),
   RelationshipChangeWithArticle,
+  WeakeningKind (..),
   checkClassConfigAndChanges,
+  generateSetOfCds,
   mapInValidOption,
   mapInValidOptionM,
-  repairIncorrect,
   )
 import Modelling.CdOd.Output            (cacheCd, cacheOd)
 import Modelling.CdOd.Types (
@@ -90,12 +95,14 @@ import Modelling.CdOd.Types (
   anyAssociationNames,
   anyRelationshipName,
   checkCdConstraints,
+  checkCdDrawProperties,
   checkCdDrawSettings,
   checkCdMutations,
+  checkClassConfigAndObjectProperties,
   checkObjectProperties,
   defaultCdConstraints,
   defaultCdDrawSettings,
-  linkNames,
+  linkLabels,
   shuffleAnyClassAndConnectionOrder,
   renameClassesAndRelationships,
   renameObjectsWithClassesAndLinksInOd,
@@ -109,6 +116,7 @@ import Control.Monad                    ((>=>), unless, void, when)
 import Control.Monad.Catch              (MonadCatch, MonadThrow (throwM))
 import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
+  ExtraText (..),
   GenericOutputCapable (..),
   LangM,
   Language (English, German),
@@ -116,6 +124,7 @@ import Control.OutputCapable.Blocks (
   Rated,
   ($=<<),
   english,
+  extra,
   german,
   multipleChoice,
   multipleChoiceSyntax,
@@ -127,8 +136,10 @@ import Control.OutputCapable.Blocks.Generic.Type (
   GenericOutput (Code, Paragraph, Special, Translated),
   )
 import Control.OutputCapable.Blocks.Type (
+  Output,
   SpecialOutput,
   specialToOutputCapable,
+  toOutputCapable,
   )
 import Control.Monad.Random             (evalRandT, mkStdGen)
 import Control.Monad.Random.Class       (MonadRandom)
@@ -150,6 +161,8 @@ data SelectValidCdConfig
     allowedProperties :: AllowedProperties,
     -- | the preferred article to use when referring to relationships
     articleToUse      :: ArticlePreference,
+    -- | influences the validity of the base class diagram (see 'WeakeningKind')
+    basePropertiesOfBaseCdOn :: !WeakeningKind,
     cdConstraints :: CdConstraints,
     classConfig      :: ClassConfig,
     drawSettings     :: !CdDrawSettings,
@@ -161,8 +174,8 @@ data SelectValidCdConfig
     printSolution    :: Bool,
     shuffleEachCd    :: Bool,
     timeout          :: Maybe Int,
-    extraText        :: Maybe (Map Language String)
-  } deriving (Generic, Read, Show)
+    extraText        :: ExtraText
+  } deriving (Generic, Read, Reader, Show, ToDoc)
 
 defaultSelectValidCdConfig :: SelectValidCdConfig
 defaultSelectValidCdConfig
@@ -173,6 +186,7 @@ defaultSelectValidCdConfig
       reverseInheritances = True
       },
     articleToUse = UseDefiniteArticleWherePossible,
+    basePropertiesOfBaseCdOn = AnyStructuralWeakening,
     cdConstraints = defaultCdConstraints,
     classConfig = ClassConfig {
         classLimits        = (4, 4),
@@ -188,14 +202,14 @@ defaultSelectValidCdConfig
       anonymousObjectProportion = 0 % 1,
       completelyInhabited = Just True,
       hasLimitedIsolatedObjects = False,
-      hasSelfLoops = Nothing,
+      hasSelfLoops = Just False,
       usesEveryRelationshipName = Just True
       },
     printExtendedFeedback = True,
     printSolution    = True,
     shuffleEachCd    = False,
     timeout          = Nothing,
-    extraText        = Nothing
+    extraText        = NoExtraText
   }
 
 checkSelectValidCdConfig :: SelectValidCdConfig -> Maybe String
@@ -217,6 +231,8 @@ checkSelectValidCdConfig SelectValidCdConfig {..}
   <|> checkCdMutations allowedCdMutations
   <|> checkCdDrawSettings drawSettings
   <|> checkObjectProperties objectProperties
+  <|> checkClassConfigAndObjectProperties classConfig objectProperties
+  <|> checkCdDrawProperties drawSettings allowedProperties
 
 type CdChange = InValidOption
   AnyCd
@@ -227,13 +243,13 @@ data SelectValidCdInstance
   = SelectValidCdInstance {
     cdDrawSettings  :: !CdDrawSettings,
     classDiagrams   :: Map Int CdChange,
-    -- | when enabled feedback for wrong answers will be shown
+    -- | when enabled, feedback for wrong answers will be shown;
     -- this might include ODs
     showExtendedFeedback :: Bool,
     showSolution    :: !Bool,
     taskText        :: !SelectValidCdTaskText,
-    addText         :: Maybe (Map Language String)
-  } deriving (Eq, Generic, Read, Show)
+    addText         :: ExtraText
+  } deriving (Eq, Generic, Hashable, Read, Reader, Show, ToDoc)
 
 checkSelectValidCdInstance :: SelectValidCdInstance -> Maybe String
 checkSelectValidCdInstance SelectValidCdInstance {..}
@@ -258,26 +274,30 @@ type SelectValidCdTaskText = [SpecialOutput SelectValidCdTaskTextElement]
 
 data SelectValidCdTaskTextElement
   = CdCandidates
-  deriving (Bounded, Enum, Eq, Generic, Ord, Read, Show)
+  deriving (Bounded, Enum, Eq, Generic, Hashable, Ord, Read, Reader, Show, ToDoc)
 
 selectValidCdTask
   :: (MonadCache m, MonadDiagrams m, MonadGraphviz m, OutputCapable m)
-  => FilePath
+  => Bool
+  -> FilePath
   -> SelectValidCdInstance
   -> LangM m
-selectValidCdTask path task = do
-  toTaskText path task
-  paragraph simplifiedInformation
-  paragraph hoveringInformation
+selectValidCdTask showInputHelp path task = do
+  toTaskText showInputHelp path task
+  simplifiedInformation True
+  hoveringInformation True
   pure ()
 
 toTaskText
   :: (MonadCache m, MonadDiagrams m, MonadGraphviz m, OutputCapable m)
-  => FilePath
+  => Bool
+  -> FilePath
   -> SelectValidCdInstance
   -> LangM m
-toTaskText path task = do
+toTaskText showInputHelp path task = do
   specialToOutputCapable (toTaskSpecificText path task) (taskText task)
+  when showInputHelp $
+    toOutputCapable inputHelpText
   extra $ addText task
   pure ()
 
@@ -306,18 +326,22 @@ defaultSelectValidCdTaskText = [
     german [i|Betrachten Sie die folgenden Klassendiagrammkandidaten:|],
   Special CdCandidates,
   Paragraph $ singleton $ Translated $ translations $ do
-    english [i|Which of these class diagram candidates are valid class diagrams?
-Please state your answer by giving a list of numbers, indicating all valid class diagrams.|]
-    german [i|Welche dieser Klassendiagrammkandidaten sind valide Klassendiagramme?
-Bitte geben Sie Ihre Antwort in Form einer Liste von Zahlen an, die alle gültigen Klassendiagramme enthält.|],
+    english [i|Which of these class diagram candidates are valid class diagrams?|]
+    german [i|Welche dieser Klassendiagrammkandidaten sind gültige Klassendiagramme?|]
+  ]
+
+inputHelpText :: [Output]
+inputHelpText = [
   Paragraph [
     Translated $ translations $ do
-      english [i|For example,|]
-      german [i|Zum Beispiel würde|],
+      english [i|State your answer by giving a list of numbers, indicating exactly all valid class diagrams.
+For example,|]
+      german [i|Geben Sie Ihre Antwort in Form einer Liste von Zahlen an, die genau alle gültigen Klassendiagramme enthält.
+Zum Beispiel würde|],
     Code $ uniform "[1, 2]",
     Translated $ translations $ do
-      english [i|would indicate that only class diagram candidates 1 and 2 of the given ones are valid class diagrams.|]
-      german [i|bedeuten, dass nur die Klassendiagrammkandidaten 1 und 2 der angegebenen Klassendiagrammkandidaten gültige Klassendiagramme sind.|]
+      english [i|would mean that only class diagram candidates 1 and 2 of the given ones are valid class diagrams.|]
+      german [i|bedeuten, dass nur die Klassendiagrammkandidaten 1 und 2 der gegebenen Klassendiagrammkandidaten gültige Klassendiagramme sind.|]
     ]
   ]
 
@@ -341,9 +365,10 @@ selectValidCdEvaluation path inst@SelectValidCdInstance{..} xs = addPretext $ do
         ]
       solution = isRight . hint <$> classDiagrams
       correctAnswer
-        | showSolution = Just $ show $ selectValidCdSolution inst
+        | showSolution
+        = Just . (DefiniteArticle,) $ show $ selectValidCdSolution inst
         | otherwise = Nothing
-  reRefuse (multipleChoice DefiniteArticle cds correctAnswer solution xs)
+  reRefuse (multipleChoice cds correctAnswer solution xs)
     $ when showExtendedFeedback
     $ void $ M.traverseWithKey
       (selectValidCdFeedback path cdDrawSettings xs)
@@ -365,10 +390,10 @@ selectValidCdFeedback path drawSettings xs x cdChange =
       notCorrect
       paragraph $ translate $ do
         english [iii|
-          Class diagram #{x} is invalid.
+          Class diagram candidate #{x} is invalid.
           |]
         german [iii|
-          Klassendiagramm #{x} ist ungültig.
+          Klassendiagrammkandidat #{x} ist ungültig.
           |]
       let sufficient = byName || maybe True isInheritance (remove change)
       unless sufficient showNamedCd
@@ -384,13 +409,14 @@ selectValidCdFeedback path drawSettings xs x cdChange =
                 withDir
                 relation
           english [iii|
-            If for example #{phrase English} would not be there,
-            it would be valid.
+            #{if sufficient then "But if" else "If now"} for example
+            #{phrase English} would not be there,
+            the candidate #{if sufficient then "" else "(even without the added names) "}would be a valid class diagram.
             |]
           german [iii|
-            Wenn es zum Beispiel
-            #{trailingCommaGerman $ phrase German}
-            nicht gäbe, wäre es gültig.
+            #{if sufficient then "Aber wenn es" else "Wenn es nun"} zum Beispiel
+            #{trailingCommaGerman $ phrase German} nicht gäbe,
+            wäre der Kandidat #{if sufficient then "" else "(selbst ohne die hinzugefügten Namen) "}ein gültiges Klassendiagramm.
             |]
       pure ()
     Right od | x `notElem` xs -> do
@@ -406,12 +432,12 @@ selectValidCdFeedback path drawSettings xs x cdChange =
       unless sufficient showNamedCd
       paragraph $ translate $ do
         english [iii|
-          #{if sufficient then "Consider" else "Now consider"} the following object diagram, which is an instance of this
+          The following object diagram #{if sufficient then "" else "then "}conforms to this
           class diagram:
           |]
         german [iii|
-          #{if sufficient then "Betrachten Sie" else "Betrachten Sie nun"} das folgende Objektdiagramm,
-          welches eine Instanz dieses Klassendiagramms ist:
+          Das folgende Objektdiagramm
+          passt #{if sufficient then "" else "dann "}zu diesem Klassendiagramm:
           |]
       paragraph $ image $=<< cacheOd od dir True path
       pure ()
@@ -423,8 +449,8 @@ selectValidCdFeedback path drawSettings xs x cdChange =
       | withDir = Forward
       | otherwise = NoDir
     notCorrect = paragraph $ translate $ do
-      english [iii|Your answer to class diagram #{x} is not correct.|]
-      german [iii|Ihre Antwort zu Klassendiagramm #{x} ist nicht richtig.|]
+      english [iii|Your answer about class diagram candidate #{x} is not correct.|]
+      german [iii|Ihre Antwort zu Klassendiagrammkandidat #{x} ist nicht korrekt.|]
     isInheritance = \case
       Right Inheritance {} -> True
       Right {} -> False
@@ -433,10 +459,10 @@ selectValidCdFeedback path drawSettings xs x cdChange =
     showNamedCd = do
         paragraph $ translate $ do
           english [iii|
-            The relationships in the class diagram could be named in the following way:
+            The relationships in the diagram could be named in the following way:
             |]
           german [iii|
-            Die Beziehungen in dem Klassendiagramm könnten auf folgende Weise
+            Die Beziehungen in dem Diagramm könnten auf folgende Weise
             mit Namen versehen werden:
             |]
         let withNames = drawSettings {printNames = True}
@@ -454,7 +480,8 @@ selectValidCd
   -> Int
   -> m SelectValidCdInstance
 selectValidCd SelectValidCdConfig {..} segment seed = flip evalRandT g $ do
-  (_, chs)  <- repairIncorrect
+  (_, chs)  <- generateSetOfCds
+    basePropertiesOfBaseCdOn
     allowedProperties
     classConfig
     cdConstraints
@@ -479,12 +506,14 @@ selectValidCd SelectValidCdConfig {..} segment seed = flip evalRandT g $ do
       | otherwise            = return
 
 instance Randomise SelectValidCdInstance where
-  randomise inst = do
+  randomise = shuffleInstance
+
+instance RandomiseNames SelectValidCdInstance where
+  randomiseNames inst = do
     let (names, nonInheritances) = classAndNonInheritanceNames inst
     names' <- shuffleM names
     nonInheritances' <- shuffleM nonInheritances
     renameInstance inst names' nonInheritances'
-      >>= shuffleInstance
 
 instance RandomiseLayout SelectValidCdInstance where
   randomiseLayout SelectValidCdInstance {..} = do
@@ -562,7 +591,7 @@ classAndNonInheritanceNames inst =
       nonInheritances = nubOrd $ concatMap (anyAssociationNames . option) cds
         ++ mapMaybe (add . annotated >=> anyRelationshipName) improves
         ++ mapMaybe (remove . annotated >=> anyRelationshipName) improves
-        ++ concatMap linkNames evidences
+        ++ concatMap linkLabels evidences
   in (names, nonInheritances)
 
 renameInstance
@@ -604,80 +633,84 @@ defaultSelectValidCdInstance = SelectValidCdInstance {
     },
   classDiagrams = M.fromList [
     (1, InValidOption {
-      hint = Left (Annotation {
-        annotated = Change {
-          add = Nothing,
-          remove = Just (Right Inheritance {
-            subClass = "C",
-            superClass = "A"
-            })
-          },
-        annotation = DefiniteArticle
-        }),
+      hint = Right ObjectDiagram {
+        objects = [
+          Object {isAnonymous = False, objectName = "a", objectClass = "A"},
+          Object {isAnonymous = False, objectName = "c", objectClass = "C"},
+          Object {isAnonymous = False, objectName = "d", objectClass = "D"},
+          Object {isAnonymous = False, objectName = "b", objectClass = "B"}
+          ],
+        links = []
+        },
       option = AnyClassDiagram {
         anyClassNames = ["B", "C", "D", "A"],
         anyRelationships = [
-          Right Inheritance {subClass = "D", superClass = "C"},
-          Right Inheritance {subClass = "C", superClass = "A"},
-          Right Inheritance {subClass = "B", superClass = "D"},
-          Right Inheritance {subClass = "A", superClass = "C"}
+          Right Inheritance {subClass = "D", superClass = "A"},
+          Right Inheritance {subClass = "A", superClass = "C"},
+          Right Inheritance {subClass = "B", superClass = "D"}
           ]
         }
       }),
     (2, InValidOption {
-      hint = Right ObjectDiagram {
-        objects = [
-          Object {isAnonymous = False, objectName = "b", objectClass = "B"},
-          Object {isAnonymous = False, objectName = "c", objectClass = "C"},
-          Object {isAnonymous = False, objectName = "d", objectClass = "D"},
-          Object {isAnonymous = False, objectName = "a", objectClass = "A"}
-          ],
-        links = []
+      hint = Left Annotation {
+        annotated = Change {
+          add = Nothing,
+          remove = Just (Right Inheritance {
+            subClass = "A",
+            superClass = "D"
+            })
+          },
+        annotation = DefiniteArticle
         },
       option = AnyClassDiagram {
-        anyClassNames = ["B", "A", "D", "C"],
+        anyClassNames = ["A", "B", "D", "C"],
         anyRelationships = [
+          Right Inheritance {subClass = "A", superClass = "D"},
           Right Inheritance {subClass = "C", superClass = "A"},
-          Right Inheritance {subClass = "D", superClass = "C"}
+          Right Inheritance {subClass = "D", superClass = "A"},
+          Right Inheritance {subClass = "B", superClass = "D"}
           ]
         }
       }),
     (3, InValidOption {
-      hint = Left (Annotation {
+      hint = Left Annotation {
         annotated = Change {
           add = Nothing,
           remove = Just (Right Inheritance {
-            subClass = "C",
-            superClass = "A"
+            subClass = "B",
+            superClass = "D"
             })
           },
         annotation = DefiniteArticle
-        }),
+        },
       option = AnyClassDiagram {
-        anyClassNames = ["B", "D", "C", "A"],
+        anyClassNames = ["A", "C", "D", "B"],
         anyRelationships = [
-          Right Inheritance {subClass = "B", superClass = "A"},
-          Right Inheritance {subClass = "A", superClass = "C"},
-          Right Inheritance {subClass = "D", superClass = "C"},
-          Right Inheritance {subClass = "C", superClass = "A"}
+          Right Inheritance {subClass = "C", superClass = "A"},
+          Right Inheritance {subClass = "B", superClass = "D"},
+          Right Inheritance {subClass = "D", superClass = "A"},
+          Right Inheritance {subClass = "A", superClass = "B"}
           ]
         }
       }),
     (4, InValidOption {
-      hint = Right ObjectDiagram {
-        objects = [
-          Object {isAnonymous = False, objectName = "d", objectClass = "D"},
-          Object {isAnonymous = False, objectName = "a", objectClass = "A"},
-          Object {isAnonymous = False, objectName = "b", objectClass = "B"},
-          Object {isAnonymous = False, objectName = "c", objectClass = "C"}
-          ],
-        links = []
+      hint = Left Annotation {
+        annotated = Change {
+          add = Nothing,
+          remove = Just (Right Inheritance {
+            subClass = "A",
+            superClass = "C"
+            })
+          },
+        annotation = DefiniteArticle
         },
       option = AnyClassDiagram {
-        anyClassNames = ["D", "C", "B", "A"],
+        anyClassNames = ["B", "A", "C", "D"],
         anyRelationships = [
+          Right Inheritance {subClass = "D", superClass = "A"},
+          Right Inheritance {subClass = "B", superClass = "D"},
           Right Inheritance {subClass = "A", superClass = "C"},
-          Right Inheritance {subClass = "D", superClass = "C"}
+          Right Inheritance {subClass = "C", superClass = "A"}
           ]
         }
       })
@@ -685,5 +718,5 @@ defaultSelectValidCdInstance = SelectValidCdInstance {
   showExtendedFeedback = True,
   showSolution = True,
   taskText = defaultSelectValidCdTaskText,
-  addText = Nothing
+  addText = NoExtraText
   }

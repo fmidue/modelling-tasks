@@ -10,6 +10,8 @@ import Modelling.PetriNet.Types (
   GraphConfig (..),
   FindConcurrencyConfig (..),
   )
+
+import Control.OutputCapable.Blocks     (ExtraText (..))
 import Data.GraphViz.Commands           (GraphvizCommand(..))
 
 {-|
@@ -50,7 +52,8 @@ task2023_23 = FindConcurrencyConfig {
   alloyConfig = AlloyConfig {
     maxInstances = Just 2000,
     timeout = Nothing
-    }
+    },
+  extraText = NoExtraText
   }
 
 {-|
@@ -99,7 +102,8 @@ task2024_33 = FindConcurrencyConfig {
   alloyConfig = AlloyConfig {
     maxInstances = Just 2000,
     timeout = Nothing
-    }
+    },
+  extraText = NoExtraText
   }
 
 {-|
@@ -140,7 +144,8 @@ task2024_62 = FindConcurrencyConfig {
   alloyConfig = AlloyConfig {
     maxInstances = Just 2000,
     timeout = Nothing
-    }
+    },
+  extraText = NoExtraText
   }
 
 {-|
@@ -181,5 +186,6 @@ task2024_63 = FindConcurrencyConfig {
   alloyConfig = AlloyConfig {
     maxInstances = Just 2000,
     timeout = Nothing
-    }
+    },
+  extraText = NoExtraText
   }

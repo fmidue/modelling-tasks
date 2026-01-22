@@ -1,27 +1,28 @@
 {-# LANGUAGE ApplicativeDo #-}
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE TypeApplications #-}
 
 {-|
 Provides the ability to render Petri nets.
 -}
 module Modelling.PetriNet.Diagram (
   cacheNet,
-  cacheNetCapacity,
+  cacheNetWithCapacity,
   drawNet,
   drawNetWithCapacity,
   getDefaultNet,
   getNet,
-  renderWith,
-  renderWithCapacity,
+  isNetDrawable,
   ) where
 
 import qualified Diagrams.TwoD.GraphViz           as GV (getGraph)
 import qualified Data.Bimap                       as BM (lookup)
-import qualified Data.Map                         as M (foldlWithKey)
+import qualified Data.Map                         as M (foldlWithKey, lookupMin)
 
 import Capabilities.Cache               (MonadCache, cache, short)
-import Capabilities.Diagrams            (MonadDiagrams (lin, writeSvg))
+import Capabilities.Diagrams            (MonadDiagrams (lin, renderDiagram))
 import Capabilities.Graphviz            (MonadGraphviz (layoutGraph))
 import Modelling.Auxiliary.Common       (Object)
 import Modelling.Auxiliary.Diagrams (
@@ -32,38 +33,77 @@ import Modelling.Auxiliary.Diagrams (
   )
 import Modelling.PetriNet.Parser (
   netToGr,
-  netToGrCapacity,
+  netToGrWithCapacity,
   parseRenamedNet,
   singleSig,
   )
 import Modelling.PetriNet.Types (
   CapacityNode,
   DrawSettings (..),
-  Net (mapNet),
+  Net (nodes),
   )
 
-import Control.Arrow                    (first)
-import Control.Monad.Catch              (MonadThrow (throwM), Exception)
+import Control.Monad.Catch (
+  Exception,
+  MonadCatch,
+  MonadThrow (throwM),
+  handle,
+  )
+#if !MIN_VERSION_base(4,20,0)
+import Data.Foldable                    (Foldable (foldl'))
+#endif
 import Data.Graph.Inductive             (Gr)
-import Data.GraphViz                    hiding (Path)
-import Data.List                        (foldl')
+import Data.GraphViz                    (AttributeNode, AttributeEdge)
+import Data.GraphViz.Exception          (GraphvizException)
+import Data.Data (
+  Data,
+  Typeable,
+  dataTypeName,
+  dataTypeOf,
+  )
 import Diagrams.Backend.SVG             (B, svgClass)
 import Diagrams.Prelude
 import Graphics.SVGFonts.ReadFont       (PreparedFont)
 import Language.Alloy.Call              (AlloyInstance)
 
+{-|
+Uses 'cache' in order to cache the provided Petri net like graph ('Net').
+by distributing places and transitions using GraphViz.
+The provided 'GraphvizCommand' is used for this distribution.
+-}
 cacheNet
-  :: (MonadCache m, MonadDiagrams m, MonadGraphviz m, MonadThrow m, Net p n)
-  => String
-  -> (a -> String)
-  -> p n a
+  :: (
+    Data (n String),
+    Data (p n String),
+    MonadCache m,
+    MonadDiagrams m,
+    MonadGraphviz m,
+    MonadThrow m,
+    Net p n,
+    Typeable n,
+    Typeable p
+    )
+  => FilePath
+  -- ^ a prefix to use for resulting files
+  -> p n String
+  -- ^ the graph to draw
   -> DrawSettings
+  -- ^ how to draw the graph
   -> m FilePath
-cacheNet path labelOf pl drawSettings@DrawSettings {..} =
-  cache path ext "petri" (mapNet labelOf pl) $ \svg pl' -> do
-    dia <- drawNet id pl' drawSettings
-    writeSvg svg dia
+cacheNet path pl drawSettings@DrawSettings {..} =
+  cache path ext prefix pl $ \pl' -> do
+    dia <- drawNet pl' drawSettings
+    renderDiagram dia
   where
+    prefix =
+      "petri-"
+      ++ petriType
+      ++ nodeType
+    petriType = dataTypeName . dataTypeOf $ pl
+    nodeType = maybe
+      ""
+      (('-' :) . dataTypeName . dataTypeOf . snd)
+      $ M.lookupMin $ nodes pl
     ext = short withPlaceNames
       ++ short withTransitionNames
       ++ short with1Weights
@@ -71,18 +111,37 @@ cacheNet path labelOf pl drawSettings@DrawSettings {..} =
       ++ short withGraphvizCommand
       ++ ".svg"
 
-cacheNetCapacity
-  :: (MonadCache m, MonadDiagrams m, MonadGraphviz m, MonadThrow m, Net p CapacityNode)
-  => String
-  -> (a -> String)
-  -> p CapacityNode a
+cacheNetWithCapacity
+  :: (
+    Data (p CapacityNode String),
+    MonadCache m,
+    MonadDiagrams m,
+    MonadGraphviz m,
+    MonadThrow m,
+    Net p CapacityNode,
+    Typeable p
+    )
+  => FilePath
+  -- ^ a prefix to use for resulting files
+  -> p CapacityNode String
+  -- ^ the graph to draw
   -> DrawSettings
+  -- ^ how to draw the graph
   -> m FilePath
-cacheNetCapacity path labelOf pl drawSettings@DrawSettings {..} =
-  cache path ext "petri" (mapNet labelOf pl) $ \svg pl' -> do
-    dia <- drawNetWithCapacity id pl' drawSettings
-    writeSvg svg dia
+cacheNetWithCapacity path pl drawSettings@DrawSettings {..} =
+  cache path ext prefix pl $ \pl' -> do
+    dia <- drawNetWithCapacity pl' drawSettings
+    renderDiagram dia
   where
+    prefix =
+      "petri-with-capacity-"
+      ++ petriType
+      ++ nodeType
+    petriType = dataTypeName . dataTypeOf $ pl
+    nodeType = maybe
+      ""
+      (('-' :) . dataTypeName . dataTypeOf . snd)
+      $ M.lookupMin $ nodes pl
     ext = short withPlaceNames
       ++ short withTransitionNames
       ++ short with1Weights
@@ -101,33 +160,47 @@ by distributing places and transitions using GraphViz.
 The provided 'GraphvizCommand' is used for this distribution.
 -}
 drawNet
-  :: (MonadDiagrams m, MonadGraphviz m, MonadThrow m, Net p n, Ord a)
-  => (a -> String)
-  -- ^ how to obtain labels of the nodes
-  -> p n a
+  :: (MonadDiagrams m, MonadGraphviz m, MonadThrow m, Net p n)
+  => p n String
   -- ^ the graph definition
   -> DrawSettings
   -- ^ how to draw the graph
   -> m (Diagram B)
-drawNet labelOf pl drawSettings@DrawSettings {..} = do
-  gr    <- either (throwM . CouldNotFindNodeWithinGraph . labelOf) return
+drawNet pl drawSettings@DrawSettings {..} = do
+  gr <- either (throwM . CouldNotFindNodeWithinGraph) return
     $ netToGr pl
   graph <- layoutGraph withGraphvizCommand gr
   preparedFont <- lin
-  return $ drawGraph labelOf drawSettings preparedFont graph
+  return $ drawGraph drawSettings preparedFont graph
+
+{-|
+Attempts to draw the net.
+As Graphviz might fail to layout the net,
+this function indicates such failure by returning 'False' if that is the case
+or 'True' in case of success.
+-}
+isNetDrawable
+  :: (MonadCatch m, MonadDiagrams m, MonadGraphviz m, Net p n)
+  => p n String
+  -- ^ the net to attempt to draw
+  -> DrawSettings
+  -- ^ settings to use
+  -> m Bool
+isNetDrawable pl =
+  handle (const (pure False) . id @GraphvizException)
+  . (>> pure True) . drawNet pl
 
 drawNetWithCapacity
-  :: (MonadDiagrams m, MonadGraphviz m, MonadThrow m, Net p CapacityNode, Ord a)
-  => (a -> String)
-  -> p CapacityNode a
+  :: (MonadDiagrams m, MonadGraphviz m, MonadThrow m, Net p CapacityNode)
+  => p CapacityNode String
   -> DrawSettings
   -> m (Diagram B)
-drawNetWithCapacity labelOf pl drawSettings@DrawSettings {..} = do
-  gr <- either (throwM . CouldNotFindNodeWithinGraph . labelOf) return
-        $ netToGrCapacity pl
+drawNetWithCapacity pl drawSettings@DrawSettings {..} = do
+  gr <- either (throwM . CouldNotFindNodeWithinGraph) return
+        $ netToGrWithCapacity pl
   graph <- layoutGraph withGraphvizCommand gr
   preparedFont <- lin
-  return $ drawGraphWithCapacity labelOf drawSettings preparedFont graph
+  return $ drawGraphWithCapacity drawSettings preparedFont graph
 
 getNet
   :: (MonadThrow m, Net p n, Traversable t)
@@ -152,27 +225,24 @@ Obtain the Petri net like graph by drawing Nodes and connections between them
 using the specific functions @drawNode@ and @drawEdge@.
 -}
 drawGraph
-  :: Ord a
-  => (a -> String)
-  -- ^ how to obtain labels from nodes
-  -> DrawSettings
+  :: DrawSettings
   -- ^ how to draw the graph
   -> PreparedFont Double
   -- ^ the font to be used for labels
-  -> Gr (AttributeNode (a, Maybe Int)) (AttributeEdge Int)
+  -> Gr (AttributeNode (String, Maybe Int)) (AttributeEdge Int)
   -- ^ the graph consisting of nodes and edges
   -> Diagram B
-drawGraph labelOf drawSettings@DrawSettings {..} preparedFont graph =
+drawGraph drawSettings@DrawSettings {..} preparedFont graph =
   graphEdges' # frame 1
   where
-    (nodes, edges) = GV.getGraph graph
+    (nodes', edges) = GV.getGraph graph
     graphNodes' = M.foldlWithKey
       (\g l p -> g
         `atop`
-        drawNode drawSettings preparedFont (withLabel l) p)
+        drawNode drawSettings preparedFont l p)
       mempty
-      nodes
-    graphEdges' = foldl
+      nodes'
+    graphEdges' = foldl'
       (\g (s, t, l, p) ->
         let ls = labelOnly s
             lt = labelOnly t
@@ -186,26 +256,23 @@ drawGraph labelOf drawSettings@DrawSettings {..} preparedFont graph =
       )
       graphNodes'
       edges
-    withLabel = first labelOf
-    labelOnly = labelOf . fst
+    labelOnly = fst
 
 drawGraphWithCapacity
-  :: Ord a
-  => (a -> String)
-  -> DrawSettings
+  :: DrawSettings
   -> PreparedFont Double
-  -> Gr (AttributeNode (a, Maybe Int, Maybe Integer)) (AttributeEdge Int)
+  -> Gr (AttributeNode (String, Maybe Int, Maybe Integer)) (AttributeEdge Int)
   -> Diagram B
-drawGraphWithCapacity labelOf drawSettings@DrawSettings {..} preparedFont graph =
+drawGraphWithCapacity drawSettings@DrawSettings {..} preparedFont graph =
   graphEdges' # frame 1
   where
-    (nodes, edges) = GV.getGraph graph
+    (nodes', edges) = GV.getGraph graph
     graphNodes' = M.foldlWithKey
       (\g l p -> g
         `atop`
-        drawNodeCapacity drawSettings preparedFont (withLabelC l) p)
+        drawNodeWithCapacity drawSettings preparedFont l p)
       mempty
-      nodes
+      nodes'
     graphEdges' = foldl
       (\g (s, t, l, p) ->
         let ls = labelOnly s
@@ -221,9 +288,7 @@ drawGraphWithCapacity labelOf drawSettings@DrawSettings {..} preparedFont graph 
       graphNodes'
       edges
 
-    withLabelC (x, tokens, cap) = (labelOf x, tokens, cap)
-
-    labelOnly = labelOf . (\(x, _, _) -> x)
+    labelOnly (x, _, _) = x
 
 {-|
 Nodes are either Places (having 'Just' tokens), or Transitions (having
@@ -282,14 +347,14 @@ drawNode DrawSettings {..} preparedFont (l, Just i) p
       # translate (r2 (8 * sqrt(fromIntegral (i - 1)), 0))
       # rotateBy (fromIntegral j / fromIntegral i)
 
-drawNodeCapacity
+drawNodeWithCapacity
   :: DrawSettings
   -> PreparedFont Double
   -> (String, Maybe Int, Maybe Integer)
   -- ^ a capacity node (the first part is used for its label) with a capacity
   -> Point V2 Double
   -> Diagram B
-drawNodeCapacity DrawSettings {..} preparedFont (l, Nothing, cap) p =
+drawNodeWithCapacity DrawSettings {..} preparedFont (l, Nothing, cap) p =
   place
     (addTransitionName $ rect 20 20 # lwL 0.5 # named l # svgClass "rect" # additionalLabel <> capacityLabel)
     p
@@ -302,7 +367,7 @@ drawNodeCapacity DrawSettings {..} preparedFont (l, Nothing, cap) p =
       | otherwise = (center (text' preparedFont 18 l) `atop`)
     capacityLabel = maybe mempty (drawCapacity preparedFont) cap
 
-drawNodeCapacity DrawSettings {..} preparedFont (l, Just i, cap) p
+drawNodeWithCapacity DrawSettings {..} preparedFont (l, Just i, cap) p
   | i == 0 && cap == Just 0 =
       place (foldl' atop mempty tokens) p
   | i < 5 =
@@ -379,21 +444,3 @@ drawEdge hide1 f l l1 l2 path d =
   in addLabel (connectOutside'' opts l1 l2 d # lwL 0.5) # svgClass "."
   where
     trail = trailBetween path l1 l2 d
-
-renderWith
-  :: (MonadCache m, MonadDiagrams m, MonadGraphviz m, MonadThrow m, Net p n)
-  => String
-  -> String
-  -> p n String
-  -> DrawSettings
-  -> m FilePath
-renderWith path task = cacheNet (path ++ task) id
-
-renderWithCapacity
-  :: (MonadCache m, MonadDiagrams m, MonadGraphviz m, MonadThrow m, Net p CapacityNode)
-  => String
-  -> String
-  -> p CapacityNode String
-  -> DrawSettings
-  -> m FilePath
-renderWithCapacity path task = cacheNetCapacity (path ++ task) id

@@ -37,6 +37,7 @@ import Modelling.PetriNet.TestCommon (
 import Settings                         (configDepth)
 
 import Control.Lens.Lens                ((??))
+import Control.OutputCapable.Blocks     (ExtraText (..))
 import Data.Functor.Const               (Const(..))
 import Data.Maybe                       (isNothing)
 import Test.Hspec
@@ -89,3 +90,4 @@ validPickMistakeConfigs cs = do
     <*> pure False
     ?? False
     ?? alloyTestConfig
+    ?? NoExtraText

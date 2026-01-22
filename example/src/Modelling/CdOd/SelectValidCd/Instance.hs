@@ -1,4 +1,4 @@
--- | 
+-- |
 
 module Modelling.CdOd.SelectValidCd.Instance where
 
@@ -9,7 +9,7 @@ import Modelling.CdOd.SelectValidCd (
   SelectValidCdTaskTextElement (..),
   )
 
-import Modelling.Auxiliary.Common       (ShuffleInstance (..))
+import Modelling.Auxiliary.Shuffle.All  (ShuffleInstance (..))
 import Modelling.CdOd.RepairCd          (InValidOption (..))
 import Modelling.CdOd.Types (
   Annotation (..),
@@ -26,6 +26,7 @@ import Modelling.Types                  (Change (..))
 
 import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
+  ExtraText (..),
   Language (English, German),
   )
 import Control.OutputCapable.Blocks.Generic.Type (
@@ -45,7 +46,7 @@ task2024_05 = SelectValidCdInstance {
     omittedDefaults = OmittedDefaultMultiplicities {
       aggregationWholeOmittedDefaultMultiplicity = Just (0, Nothing),
       associationOmittedDefaultMultiplicity = Just (0, Nothing),
-      compositionWholeOmittedDefaultMultiplicity = Just (1, Just 1)
+      compositionWholeOmittedDefaultMultiplicity = Nothing
       },
     printNames = True,
     printNavigations = True
@@ -192,7 +193,7 @@ task2024_05 = SelectValidCdInstance {
         ])
       ]
     ],
-  addText = Nothing
+  addText = NoExtraText
   }
 
 {-|
@@ -221,11 +222,11 @@ task2024_06picked = ShuffleInstance {
             Object { isAnonymous = False, objectName = "d", objectClass = "D" }
             ],
           links = [
-            Link { linkName = "s", linkFrom = "d", linkTo = "b" },
-            Link { linkName = "z", linkFrom = "a", linkTo = "d" },
-            Link { linkName = "v", linkFrom = "a", linkTo = "c" },
-            Link { linkName = "y", linkFrom = "d", linkTo = "c" },
-            Link { linkName = "u", linkFrom = "a", linkTo = "b" }
+            Link { linkLabel = "s", linkFrom = "d", linkTo = "b" },
+            Link { linkLabel = "z", linkFrom = "a", linkTo = "d" },
+            Link { linkLabel = "v", linkFrom = "a", linkTo = "c" },
+            Link { linkLabel = "y", linkFrom = "d", linkTo = "c" },
+            Link { linkLabel = "u", linkFrom = "a", linkTo = "b" }
             ]
           }),
         option = AnyClassDiagram {
@@ -358,12 +359,12 @@ task2024_06picked = ShuffleInstance {
             Object { isAnonymous = False, objectName = "c", objectClass = "C" }
             ],
           links = [
-            Link { linkName = "w", linkFrom = "b", linkTo = "d" },
-            Link { linkName = "x", linkFrom = "b", linkTo = "e" },
-            Link { linkName = "v", linkFrom = "c", linkTo = "d" },
-            Link { linkName = "t", linkFrom = "e", linkTo = "a" },
-            Link { linkName = "s", linkFrom = "b", linkTo = "a" },
-            Link { linkName = "z", linkFrom = "e", linkTo = "d" }
+            Link { linkLabel = "w", linkFrom = "b", linkTo = "d" },
+            Link { linkLabel = "x", linkFrom = "b", linkTo = "e" },
+            Link { linkLabel = "v", linkFrom = "c", linkTo = "d" },
+            Link { linkLabel = "t", linkFrom = "e", linkTo = "a" },
+            Link { linkLabel = "s", linkFrom = "b", linkTo = "a" },
+            Link { linkLabel = "z", linkFrom = "e", linkTo = "d" }
             ]
           }),
         option = AnyClassDiagram {
@@ -435,10 +436,11 @@ task2024_06picked = ShuffleInstance {
           ])
         ]
       ],
-    addText = Nothing
+    addText = NoExtraText
     },
   allowLayoutMangling = True,
-  shuffleNames = True
+  shuffleNames = True,
+  shuffleOptions = True
   }
 
 {-|
@@ -487,13 +489,13 @@ task2024_09 = ShuffleInstance {
               }
             ],
           links = [
-            Link { linkName = "u", linkFrom = "a", linkTo = "d" },
-            Link { linkName = "r", linkFrom = "e", linkTo = "b" },
-            Link { linkName = "t", linkFrom = "a", linkTo = "e" },
-            Link { linkName = "y", linkFrom = "e", linkTo = "c" },
-            Link { linkName = "z", linkFrom = "b", linkTo = "e" },
-            Link { linkName = "r", linkFrom = "d", linkTo = "b" },
-            Link { linkName = "q", linkFrom = "e", linkTo = "c" }
+            Link { linkLabel = "u", linkFrom = "a", linkTo = "d" },
+            Link { linkLabel = "r", linkFrom = "e", linkTo = "b" },
+            Link { linkLabel = "t", linkFrom = "a", linkTo = "e" },
+            Link { linkLabel = "y", linkFrom = "e", linkTo = "c" },
+            Link { linkLabel = "z", linkFrom = "b", linkTo = "e" },
+            Link { linkLabel = "r", linkFrom = "d", linkTo = "b" },
+            Link { linkLabel = "q", linkFrom = "e", linkTo = "c" }
             ]
           }),
         option = AnyClassDiagram {
@@ -762,13 +764,13 @@ task2024_09 = ShuffleInstance {
               }
             ],
           links = [
-            Link { linkName = "s", linkFrom = "c", linkTo = "d" },
-            Link { linkName = "t", linkFrom = "c", linkTo = "e" },
-            Link { linkName = "r", linkFrom = "a", linkTo = "b" },
-            Link { linkName = "t", linkFrom = "b", linkTo = "e" },
-            Link { linkName = "q", linkFrom = "a", linkTo = "c" },
-            Link { linkName = "y", linkFrom = "c", linkTo = "d" },
-            Link { linkName = "z", linkFrom = "e", linkTo = "c" }
+            Link { linkLabel = "s", linkFrom = "c", linkTo = "d" },
+            Link { linkLabel = "t", linkFrom = "c", linkTo = "e" },
+            Link { linkLabel = "r", linkFrom = "a", linkTo = "b" },
+            Link { linkLabel = "t", linkFrom = "b", linkTo = "e" },
+            Link { linkLabel = "q", linkFrom = "a", linkTo = "c" },
+            Link { linkLabel = "y", linkFrom = "c", linkTo = "d" },
+            Link { linkLabel = "z", linkFrom = "e", linkTo = "c" }
             ]
           }),
         option = AnyClassDiagram {
@@ -865,10 +867,11 @@ task2024_09 = ShuffleInstance {
           ])
         ]
       ],
-    addText = Nothing
+    addText = NoExtraText
     },
   allowLayoutMangling = True,
-  shuffleNames = True
+  shuffleNames = True,
+  shuffleOptions = True
   }
 
 {-|
@@ -1011,12 +1014,12 @@ task2024_53 = ShuffleInstance {
             Object {isAnonymous = False, objectName = "a", objectClass = "A"}
             ],
           links = [
-            Link {linkName = "z", linkFrom = "e", linkTo = "b"},
-            Link {linkName = "t", linkFrom = "b", linkTo = "d"},
-            Link {linkName = "x", linkFrom = "d", linkTo = "c"},
-            Link {linkName = "y", linkFrom = "c", linkTo = "d"},
-            Link {linkName = "x", linkFrom = "a", linkTo = "e"},
-            Link {linkName = "v", linkFrom = "d", linkTo = "b"}
+            Link {linkLabel = "z", linkFrom = "e", linkTo = "b"},
+            Link {linkLabel = "t", linkFrom = "b", linkTo = "d"},
+            Link {linkLabel = "x", linkFrom = "d", linkTo = "c"},
+            Link {linkLabel = "y", linkFrom = "c", linkTo = "d"},
+            Link {linkLabel = "x", linkFrom = "a", linkTo = "e"},
+            Link {linkLabel = "v", linkFrom = "d", linkTo = "b"}
             ]
           }),
         option = AnyClassDiagram {
@@ -1072,12 +1075,12 @@ task2024_53 = ShuffleInstance {
             Object {isAnonymous = False, objectName = "d", objectClass = "D"}
             ],
           links = [
-            Link {linkName = "y", linkFrom = "d", linkTo = "c"},
-            Link {linkName = "v", linkFrom = "d", linkTo = "b"},
-            Link {linkName = "s", linkFrom = "e", linkTo = "b"},
-            Link {linkName = "t", linkFrom = "b", linkTo = "d"},
-            Link {linkName = "x", linkFrom = "d", linkTo = "c"},
-            Link {linkName = "x", linkFrom = "a", linkTo = "e"}
+            Link {linkLabel = "y", linkFrom = "d", linkTo = "c"},
+            Link {linkLabel = "v", linkFrom = "d", linkTo = "b"},
+            Link {linkLabel = "s", linkFrom = "e", linkTo = "b"},
+            Link {linkLabel = "t", linkFrom = "b", linkTo = "d"},
+            Link {linkLabel = "x", linkFrom = "d", linkTo = "c"},
+            Link {linkLabel = "x", linkFrom = "a", linkTo = "e"}
             ]
           }),
         option = AnyClassDiagram {
@@ -1158,8 +1161,15 @@ task2024_53 = ShuffleInstance {
           ])
         ]
       ],
-    addText = Nothing
+    addText = NoExtraText
     },
   allowLayoutMangling = True,
-  shuffleNames = False
+  shuffleNames = False,
+  shuffleOptions = True
   }
+
+{-|
+points: 0.15
+-}
+task2025_07 :: ShuffleInstance SelectValidCdInstance
+task2025_07 = task2024_09

@@ -13,7 +13,7 @@ module Modelling.PetriNet.Parser (
   asSingleton,
   doubleSig,
   netToGr,
-  netToGrCapacity,
+  netToGrWithCapacity,
   parseChange,
   parseNet,
   parseRenamedNet,
@@ -282,11 +282,11 @@ netToGr petriLike = do
     convertEdge source target flow rs =
       (indexOf source, indexOf target, flow) : rs
 
-netToGrCapacity
+netToGrWithCapacity
   :: (Monad m, Net p CapacityNode, Ord a)
   => p CapacityNode a
   -> m (Gr (a, Maybe Int, Maybe Integer) Int)
-netToGrCapacity petriLike = do
+netToGrWithCapacity petriLike = do
   nodes <- Map.foldrWithKey convertNode (return []) $ PN.nodes petriLike
   let edges = Map.foldrWithKey convertTransition [] $ PN.nodes petriLike
   return $ mkGraph nodes edges

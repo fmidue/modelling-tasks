@@ -52,10 +52,17 @@ import Modelling.PetriNet.TestCommon (
 import Settings                         (configDepth, needsTuning)
 
 import Control.Lens.Lens                ((??))
+import Control.OutputCapable.Blocks     (ExtraText (..))
 import Test.Hspec
 
 spec :: Spec
 spec = do
+  describe "checkFindConcurrencyConfig" $
+    it "accepts the default config" $
+      checkFindConcurrencyConfig defaultFindConcurrencyConfig `shouldBe` Nothing
+  describe "checkPickConcurrencyConfig" $
+    it "accepts the default config" $
+      checkPickConcurrencyConfig defaultPickConcurrencyConfig `shouldBe` Nothing
   describe "validFindConcurrencyConfigs" $
     checkConfigs checkFindConcurrencyConfig findConfigs'
   describe "findConcurrency" $ do
@@ -122,6 +129,7 @@ validFindConcurrencyConfigs cs advancedConfig =
     ?? validGraphConfig
     ?? False
     ?? alloyTestConfig
+    ?? NoExtraText
  )
 
 validPickConcurrencyConfigs
@@ -135,7 +143,8 @@ validPickConcurrencyConfigs cs = [
     False
     printSolution
     False
-    alloyTestConfig |
+    alloyTestConfig
+    NoExtraText |
       (basic,change) <- cs,
       printSolution <- [False, True]
     ]

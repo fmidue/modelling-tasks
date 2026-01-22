@@ -12,6 +12,8 @@ ghc-options:
   - -Werror
   - -Wwarn=incomplete-uni-patterns
   - -Wwarn=orphans
+  - -Wwarn=unrecognised-warning-flags
+  - -Wwarn=x-partial
 dependencies:
   - MonadRandom
   - base
@@ -38,6 +40,7 @@ executables:
     main: check-cds.hs
     source-dirs: .
     dependencies:
+      - autotool-capabilities-io-instances
       - bytestring
       - call-alloy
       - digest
@@ -50,6 +53,7 @@ executables:
       - .
       - common
     dependencies:
+      - autotool-capabilities-io-instances
       - bytestring
       - digest
       - modelling-tasks
@@ -63,6 +67,7 @@ executables:
       - .
       - common
     dependencies:
+      - autotool-capabilities-io-instances
       - bytestring
       - digest
       - modelling-tasks
@@ -76,6 +81,7 @@ executables:
       - .
       - common
     dependencies:
+      - autotool-capabilities-io-instances
       - bytestring
       - digest
       - modelling-tasks
@@ -89,6 +95,7 @@ executables:
       - .
       - common
     dependencies:
+      - autotool-capabilities-io-instances
       - modelling-tasks
       - output-blocks
     other-modules:
@@ -132,6 +139,7 @@ executables:
       - .
       - common
     dependencies:
+      - autotool-capabilities-io-instances
       - modelling-tasks
       - output-blocks
     other-modules:
@@ -142,6 +150,7 @@ executables:
       - .
       - common
     dependencies:
+      - autotool-capabilities-io-instances
       - modelling-tasks
       - output-blocks
     other-modules:
@@ -152,6 +161,7 @@ executables:
       - .
       - common
     dependencies:
+      - autotool-capabilities-io-instances
       - modelling-tasks
       - output-blocks
     other-modules:
@@ -162,6 +172,7 @@ executables:
       - .
       - common
     dependencies:
+      - autotool-capabilities-io-instances
       - bytestring
       - digest
       - modelling-tasks
@@ -175,6 +186,7 @@ executables:
       - .
       - common
     dependencies:
+      - autotool-capabilities-io-instances
       - bytestring
       - digest
       - modelling-tasks
@@ -201,6 +213,7 @@ executables:
       - .
       - common
     dependencies:
+      - autotool-capabilities-io-instances
       - bytestring
       - digest
       - modelling-tasks
@@ -214,6 +227,7 @@ executables:
       - .
       - common
     dependencies:
+      - autotool-capabilities-io-instances
       - modelling-tasks
       - output-blocks
     other-modules:
@@ -224,6 +238,7 @@ executables:
       - .
       - common
     dependencies:
+      - autotool-capabilities-io-instances
       - modelling-tasks
       - output-blocks
     other-modules:

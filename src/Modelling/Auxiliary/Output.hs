@@ -1,11 +1,13 @@
+{-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE DeriveDataTypeable #-}
 -- | This module provides common skeletons for printing tasks
 module Modelling.Auxiliary.Output (
   addPretext,
   checkTaskText,
   directionsAdvice,
-  extra,
   hoveringInformation,
   simplifiedInformation,
   uniform,
@@ -13,73 +15,80 @@ module Modelling.Auxiliary.Output (
 
 import qualified Data.Map                         as M (empty, insert)
 
-import Control.Monad.State (put)
 import Control.OutputCapable.Blocks     (
   GenericOutputCapable (paragraph),
-  Language,
+  Language(..),
   LangM,
   LangM',
   OutputCapable,
   english,
   german,
   translate,
+  translations,
+  collapsed,
   )
 import Control.OutputCapable.Blocks.Type (
   SpecialOutput,
   checkTranslations,
-  withRefusal,
   )
 import Data.List                        ((\\), singleton)
 import Data.Map                         (Map)
 import Data.String.Interpolate          (iii)
 
-hoveringInformation :: OutputCapable m => LangM m
-hoveringInformation = translate $ do
+hoveringInformation :: OutputCapable m => Bool -> LangM m
+hoveringInformation isCollapsed = collapsed isCollapsed (translations $ do
+  english "Note on hovering"
+  german "Anmerkung zum Hovern"
+  ) $ translate $ do
   english [iii|
-    Please note: When hovering over or clicking on edges / nodes or their
-    labels, the respective components that belong together are highlighted.
+    When hovering over or clicking on nodes / edges or their
+    labels, the respective diagram elements that belong together are highlighted.
     |]
   german [iii|
-    Bitte beachten Sie: Beim Bewegen über oder Klicken auf
-    Kanten / Knoten bzw. ihre Beschriftungen
-    werden die jeweils zusammengehörenden Komponenten hervorgehoben.
+    Beim Bewegen über oder Klicken auf
+    Knoten / Kanten bzw. ihre Beschriftungen
+    werden die jeweils zusammengehörenden Diagrammelemente hervorgehoben.
     |]
 
-directionsAdvice :: OutputCapable m => LangM m
-directionsAdvice = translate $ do
+directionsAdvice :: OutputCapable m => Bool -> LangM m
+directionsAdvice isCollapsed = collapsed isCollapsed (translations $ do
+  english "Note on navigation directions"
+  german "Anmerkung zu Navigationsrichtungen"
+  ) $ translate $ do
   english [iii|
-    As navigation directions are used,
-    please note that aggregations and compositions are only navigable
+    Aggregations and compositions are only navigable
     from the "part" toward the "whole",
     i.e., they are not navigable in the opposite direction!
     |]
   german [iii|
-    Da Navigationsrichtungen verwendet werden, beachten Sie bitte,
-    dass Aggregationen und Kompositionen
-    nur vom "Teil" zum "Ganzen" navigierbar sind,
+    Aggregationen und Kompositionen
+    sind nur vom "Teil" zum "Ganzen" navigierbar,
     d.h., sie sind nicht in der entgegengesetzten Richtung navigierbar!
     |]
 
-simplifiedInformation :: OutputCapable m => LangM m
-simplifiedInformation = translate $ do
+simplifiedInformation :: OutputCapable m => Bool -> LangM m
+simplifiedInformation isCollapsed = collapsed isCollapsed (translations $ do
+  english "Note on class representation"
+  german "Anmerkung zur Klassendarstellung"
+  ) $ translate $ do
   english [iii|
-    Please note: Classes are represented simplified here.
+    Classes are represented simplified here.
     #{endLine}
     That means they consist of a single box containing only the class name
     but no sections for attributes or methods.
     #{endLine}
-    Nevertheless you should treat these simplified class representations
+    Nevertheless, you should treat these simplified class representations
     as valid classes.
     |]
   german [iii|
-    Bitte beachten Sie: Klassen werden hier vereinfacht dargestellt.
+    Klassen werden hier vereinfacht dargestellt.
     #{endLine}
     Das heißt, sie bestehen aus einer einfachen Box,
     die nur den Klassennamen enthält,
     aber keine Abschnitte für Attribute oder Methoden.
     #{endLine}
     Trotzdem sollten Sie diese vereinfachten Klassendarstellungen
-    als valide Klassen ansehen.
+    als gültige Klassen ansehen.
     |]
   where
     endLine :: String
@@ -108,16 +117,8 @@ checkTaskText taskText
       |]
   | x:_ <- concatMap (checkTranslations (const [])) taskText
   = Just $ [iii|Problem within your task text: |] ++ x
-  | any (withRefusal (const False)) taskText
-  = Just [iii|
-    Your task text must not refuse output! (i.e. use Refuse or Assertion)
-    |]
   | otherwise
   = Nothing
   where
     usedElements = concatMap (concatMap singleton) taskText
     allElements = [minBound ..]
-
-extra :: OutputCapable m => Maybe (Map Language String) -> LangM m
-extra (Just extraMap) = paragraph $ translate $ put extraMap
-extra _ = pure ()

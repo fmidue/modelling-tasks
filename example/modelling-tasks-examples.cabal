@@ -1,6 +1,6 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.38.0.
+-- This file has been generated from package.yaml by hpack version 0.39.1.
 --
 -- see: https://github.com/sol/hpack
 
@@ -10,6 +10,7 @@ build-type:     Simple
 
 library
   exposed-modules:
+      Modelling.ActivityDiagram.Common
       Modelling.ActivityDiagram.EnterAs.Config
       Modelling.ActivityDiagram.FindAuxiliaryPetriNodes.Config
       Modelling.ActivityDiagram.MatchAd.Config

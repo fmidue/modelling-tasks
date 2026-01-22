@@ -2,6 +2,9 @@
 
 module Modelling.CdOd.SelectValidCd.Config where
 
+import Modelling.CdOd.RepairCd (
+  WeakeningKind (..),
+  )
 import Modelling.CdOd.SelectValidCd (
   SelectValidCdConfig (..),
   )
@@ -17,6 +20,7 @@ import Modelling.CdOd.Types (
   RelationshipMutation (..),
   )
 
+import Control.OutputCapable.Blocks     (ExtraText (..))
 import Data.Ratio                       ((%))
 
 {-|
@@ -46,6 +50,7 @@ task2023_05 = SelectValidCdConfig {
     wrongCompositionLimits = False
     },
   articleToUse = UseDefiniteArticleWherePossible,
+  basePropertiesOfBaseCdOn = IllegalStructuralWeakening,
   cdConstraints = CdConstraints {
     anyCompositionCyclesInvolveInheritances = Just True
     },
@@ -61,7 +66,7 @@ task2023_05 = SelectValidCdConfig {
     omittedDefaults = OmittedDefaultMultiplicities {
       aggregationWholeOmittedDefaultMultiplicity = Just (0, Nothing),
       associationOmittedDefaultMultiplicity = Just (0, Nothing),
-      compositionWholeOmittedDefaultMultiplicity = Just (1, Just 1)
+      compositionWholeOmittedDefaultMultiplicity = Nothing
       },
     printNames = True,
     printNavigations = False
@@ -78,7 +83,7 @@ task2023_05 = SelectValidCdConfig {
   printSolution = True,
   shuffleEachCd = True,
   timeout = Nothing,
-  extraText = Nothing
+  extraText = NoExtraText
   }
 
 {-|
@@ -108,6 +113,7 @@ task2023_06 = SelectValidCdConfig {
     wrongCompositionLimits = False
     },
   articleToUse = UseDefiniteArticleWherePossible,
+  basePropertiesOfBaseCdOn = IllegalStructuralWeakening,
   cdConstraints = CdConstraints {
     anyCompositionCyclesInvolveInheritances = Nothing
     },
@@ -123,9 +129,9 @@ task2023_06 = SelectValidCdConfig {
     omittedDefaults = OmittedDefaultMultiplicities {
       aggregationWholeOmittedDefaultMultiplicity = Just (0, Nothing),
       associationOmittedDefaultMultiplicity = Just (0, Nothing),
-      compositionWholeOmittedDefaultMultiplicity = Just (1, Just 1)
+      compositionWholeOmittedDefaultMultiplicity = Nothing
       },
-    printNames = False,
+    printNames = True,
     printNavigations = True
     },
   maxInstances = Just 4000,
@@ -140,7 +146,7 @@ task2023_06 = SelectValidCdConfig {
   printSolution = True,
   shuffleEachCd = True,
   timeout = Nothing,
-  extraText = Nothing
+  extraText = NoExtraText
   }
 
 {-|
@@ -168,6 +174,7 @@ task2024_06 = SelectValidCdConfig {
     wrongCompositionLimits = False
     },
   articleToUse = UseDefiniteArticleWherePossible,
+  basePropertiesOfBaseCdOn = IllegalStructuralWeakening,
   cdConstraints = CdConstraints {
     anyCompositionCyclesInvolveInheritances = Just True
     },
@@ -200,7 +207,7 @@ task2024_06 = SelectValidCdConfig {
   printSolution = True,
   shuffleEachCd = True,
   timeout = Nothing,
-  extraText = Nothing
+  extraText = NoExtraText
   }
 
 {-|
@@ -229,6 +236,7 @@ task2024_07 = SelectValidCdConfig {
     wrongCompositionLimits = False
     },
   articleToUse = UseDefiniteArticleWherePossible,
+  basePropertiesOfBaseCdOn = IllegalStructuralWeakening,
   cdConstraints = CdConstraints {
     anyCompositionCyclesInvolveInheritances = Nothing
     },
@@ -246,7 +254,7 @@ task2024_07 = SelectValidCdConfig {
       associationOmittedDefaultMultiplicity = Just (0, Nothing),
       compositionWholeOmittedDefaultMultiplicity = Nothing
       },
-    printNames = False,
+    printNames = True,
     printNavigations = True
     },
   maxInstances = Just 4000,
@@ -261,7 +269,7 @@ task2024_07 = SelectValidCdConfig {
   printSolution = True,
   shuffleEachCd = True,
   timeout = Nothing,
-  extraText = Nothing
+  extraText = NoExtraText
   }
 
 {-|
@@ -288,6 +296,7 @@ task2024_08 = SelectValidCdConfig {
     wrongCompositionLimits = True
     },
   articleToUse = UseDefiniteArticleWherePossible,
+  basePropertiesOfBaseCdOn = IllegalStructuralWeakening,
   cdConstraints = CdConstraints {
     anyCompositionCyclesInvolveInheritances = Nothing
     },
@@ -305,7 +314,7 @@ task2024_08 = SelectValidCdConfig {
       associationOmittedDefaultMultiplicity = Just (0, Nothing),
       compositionWholeOmittedDefaultMultiplicity = Nothing
       },
-    printNames = False,
+    printNames = True,
     printNavigations = True
     },
   maxInstances = Just 4000,
@@ -320,7 +329,7 @@ task2024_08 = SelectValidCdConfig {
   printSolution = True,
   shuffleEachCd = True,
   timeout = Nothing,
-  extraText = Nothing
+  extraText = NoExtraText
   }
 
 {-|
@@ -348,6 +357,7 @@ task2024_51 = SelectValidCdConfig {
     wrongCompositionLimits = False
     },
   articleToUse = UseDefiniteArticleWherePossible,
+  basePropertiesOfBaseCdOn = IllegalStructuralWeakening,
   cdConstraints = CdConstraints {
     anyCompositionCyclesInvolveInheritances = Just True
     },
@@ -380,7 +390,7 @@ task2024_51 = SelectValidCdConfig {
   printSolution = True,
   shuffleEachCd = False,
   timeout = Nothing,
-  extraText = Nothing
+  extraText = NoExtraText
   }
 
 {-|
@@ -407,6 +417,7 @@ task2024_52 = SelectValidCdConfig {
     wrongCompositionLimits = True
     },
   articleToUse = UseDefiniteArticleWherePossible,
+  basePropertiesOfBaseCdOn = IllegalStructuralWeakening,
   cdConstraints = CdConstraints {
     anyCompositionCyclesInvolveInheritances = Nothing
     },
@@ -424,7 +435,7 @@ task2024_52 = SelectValidCdConfig {
       associationOmittedDefaultMultiplicity = Just (0, Nothing),
       compositionWholeOmittedDefaultMultiplicity = Nothing
       },
-    printNames = False,
+    printNames = True,
     printNavigations = False
     },
   maxInstances = Just 4000,
@@ -439,5 +450,23 @@ task2024_52 = SelectValidCdConfig {
   printSolution = True,
   shuffleEachCd = False,
   timeout = Nothing,
-  extraText = Nothing
+  extraText = NoExtraText
   }
+
+{-|
+points: 0.15
+-}
+task2025_04 :: SelectValidCdConfig
+task2025_04 = task2024_06
+
+{-|
+points: 0.15
+-}
+task2025_05 :: SelectValidCdConfig
+task2025_05 = task2024_07
+
+{-|
+points: 0.15
+-}
+task2025_06 :: SelectValidCdConfig
+task2025_06 = task2024_08

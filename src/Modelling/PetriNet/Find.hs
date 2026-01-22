@@ -1,4 +1,5 @@
 {-# LANGUAGE ApplicativeDo #-}
+{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DuplicateRecordFields #-}
@@ -53,10 +54,14 @@ import Modelling.PetriNet.Types (
   transitionPairShow,
   )
 
+import Autolib.Hash                     (Hashable)
+import Autolib.Reader.Class             (Reader)
+import Autolib.ToDoc                    (ToDoc)
 import Control.Applicative              (Alternative ((<|>)))
 import Control.Lens                     (makeLensesFor)
 import Control.Monad.Catch              (MonadThrow)
 import Control.OutputCapable.Blocks (
+  ExtraText,
   LangM',
   Language (English, German),
   OutputCapable,
@@ -84,9 +89,10 @@ data FindInstance n a = FindInstance {
   net :: !n,
   numberOfPlaces :: !Int,
   numberOfTransitions :: !Int,
-  showSolution :: !Bool
+  showSolution :: !Bool,
+  addText :: !ExtraText
   }
-  deriving (Functor, Generic, Read, Show)
+  deriving (Eq, Functor, Generic, Hashable, Read, Reader, Show, ToDoc)
 
 makeLensesFor [("toFind", "lToFind")] ''FindInstance
 

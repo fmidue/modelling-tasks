@@ -1,4 +1,6 @@
 {-# LANGUAGE ApplicativeDo #-}
+{-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DeriveFoldable #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE FlexibleContexts #-}
@@ -29,15 +31,18 @@ module Modelling.CdOd.NameCdError (
   nameCdErrorSolution,
   nameCdErrorSyntax,
   nameCdErrorTask,
-  parseNameCdErrorAnswer,
+  nameCdErrorTaskText,
+  relevantRelationships,
   renameInstance,
-  showNameCdErrorAnswer,
+  translateReason,
+  translateRelationship,
   ) where
 
 import qualified Modelling.CdOd.CdAndChanges.Transform as Changes (
   transformGetNextFix,
   )
 
+import qualified Autolib.ToDoc                    as ToDoc (text)
 import qualified Data.Bimap                       as BM (fromList)
 import qualified Data.Map                         as M (
   elems,
@@ -54,14 +59,18 @@ import qualified Data.Set                         as S (
   toList,
   )
 
+import Autolib.Hash                     (Hashable)
+import Autolib.Reader                   (Reader (atomic_readerPrec))
+import Autolib.ToDoc                    (ToDoc (toDocPrec))
 import Capabilities.Alloy               (MonadAlloy, getInstances)
 import Capabilities.Cache               (MonadCache)
 import Capabilities.Diagrams            (MonadDiagrams)
 import Capabilities.Graphviz            (MonadGraphviz)
+import Data.Data                        (Data)
 import Modelling.Auxiliary.Common (
   Randomise (randomise),
   RandomiseLayout (randomiseLayout),
-  shuffleEverything,
+  RandomiseNames (randomiseNames),
   upperToDash,
   )
 import Modelling.Auxiliary.Output (
@@ -70,8 +79,8 @@ import Modelling.Auxiliary.Output (
   hoveringInformation,
   simplifiedInformation,
   uniform,
-  extra,
   )
+import Modelling.Auxiliary.Shuffle.All  (shuffleEverything)
 import Modelling.CdOd.Auxiliary.Util    (alloyInstanceToOd)
 import Modelling.CdOd.CD2Alloy.Transform (
   ExtendsAnd (FieldPlacement),
@@ -123,7 +132,9 @@ import Modelling.CdOd.Types (
   anonymiseObjects,
   anyAssociationNames,
   checkCdConstraints,
+  checkCdDrawProperties,
   checkCdDrawSettings,
+  checkClassConfigAndObjectProperties,
   checkObjectProperties,
   classNames,
   defaultCdConstraints,
@@ -142,11 +153,12 @@ import Modelling.CdOd.Types (
 import Modelling.Types                  (Change (..))
 
 import Control.Applicative              (Alternative ((<|>)))
-import Control.Monad                    ((>=>), forM, join)
+import Control.Monad                    ((>=>), forM, join, when)
 import Control.Monad.Catch              (MonadCatch, MonadThrow)
 import Control.Monad.Except             (runExceptT)
 import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
+  ExtraText (..),
   GenericOutputCapable (..),
   LangM,
   Language (English, German),
@@ -155,6 +167,7 @@ import Control.OutputCapable.Blocks (
   ($=<<),
   english,
   enumerateM,
+  extra,
   german,
   multipleChoice,
   multipleChoiceSyntax,
@@ -170,9 +183,11 @@ import Control.OutputCapable.Blocks.Generic.Type (
   GenericOutput (Code, Paragraph, Special, Translated),
   )
 import Control.OutputCapable.Blocks.Type (
+  Output,
   SpecialOutput,
   checkTranslation,
   specialToOutputCapable,
+  toOutputCapable,
   )
 import Control.Monad.Random
   (MonadRandom, RandT, RandomGen, evalRandT, mkStdGen)
@@ -208,10 +223,16 @@ data NameCdErrorAnswer = NameCdErrorAnswer {
 
 $(deriveJSON defaultOptions {fieldLabelModifier = upperToDash} ''NameCdErrorAnswer)
 
+instance Reader NameCdErrorAnswer where
+  atomic_readerPrec = const parseNameCdErrorAnswer
+
+instance ToDoc NameCdErrorAnswer where
+  toDocPrec _ = ToDoc.text . showNameCdErrorAnswer
+
 data Reason
   = Custom (Map Language String)
   | PreDefined Property
-  deriving (Eq, Generic, Ord, Read, Show)
+  deriving (Data, Eq, Generic, Hashable, Ord, Read, Reader, Show, ToDoc)
 
 isCustom :: Reason -> Bool
 isCustom = \case
@@ -219,10 +240,10 @@ isCustom = \case
   PreDefined {} -> False
 
 renderReason :: OutputCapable m => Bool -> Reason -> LangM m
-renderReason withDirections = translate . put . toTranslations withDirections
+renderReason withDirections = translate . put . translateReason withDirections
 
-toTranslations :: Bool -> Reason -> Map Language String
-toTranslations withDirections = \case
+translateReason :: Bool -> Reason -> Map Language String
+translateReason withDirections = \case
   Custom x -> x
   PreDefined x -> translateProperty withDirections x
 
@@ -230,7 +251,7 @@ data NumberOfReasons = NumberOfReasons {
   customReasons :: Int,
   preDefinedInvalid :: Int,
   preDefinedValid :: Int
-  } deriving (Generic, Read, Show)
+  } deriving (Generic, Read, Reader, Show, ToDoc)
 
 data NameCdErrorConfig = NameCdErrorConfig {
   allowedProperties           :: AllowedProperties,
@@ -246,8 +267,8 @@ data NameCdErrorConfig = NameCdErrorConfig {
   reasonsPerInstance          :: NumberOfReasons,
   timeout                     :: Maybe Int,
   useNames                    :: Bool,
-  extraText                   :: Maybe (Map Language String)
-  } deriving (Generic, Read, Show)
+  extraText                   :: ExtraText
+  } deriving (Generic, Read, Reader, Show, ToDoc)
 
 defaultNameCdErrorConfig :: NameCdErrorConfig
 defaultNameCdErrorConfig = NameCdErrorConfig {
@@ -283,7 +304,7 @@ defaultNameCdErrorConfig = NameCdErrorConfig {
     },
   timeout = Nothing,
   useNames = True,
-  extraText = Nothing
+  extraText = NoExtraText
   }
 
 checkNameCdErrorConfig :: NameCdErrorConfig -> Maybe String
@@ -333,7 +354,9 @@ checkNameCdErrorConfig NameCdErrorConfig {..}
   = checkClassConfigAndChanges classConfig allowedProperties
   <|> checkCdConstraints allowedProperties cdConstraints
   <|> checkObjectProperties objectProperties
+  <|> checkClassConfigAndObjectProperties classConfig objectProperties
   <|> checkCdDrawSettings drawSettings
+  <|> checkCdDrawProperties drawSettings allowedProperties
   where
     predefined = concatMap
       (\case Custom {} -> []; PreDefined x -> [x])
@@ -367,15 +390,19 @@ data NameCdErrorTaskTextElement =
   IncorrectCd |
   ReasonsList |
   RelationshipsList
-  deriving (Bounded, Enum, Eq, Generic, Ord, Read, Show)
+  deriving (Bounded, Data, Enum, Eq, Generic, Hashable, Ord, Read, Reader, Show, ToDoc)
 
 toTaskText
   :: (MonadCache m, MonadDiagrams m, MonadGraphviz m, OutputCapable m)
-  => FilePath
+  => Bool
+  -> FilePath
   -> NameCdErrorInstance
   -> LangM m
-toTaskText path task =
+toTaskText showInputHelp path task = do
   specialToOutputCapable (toTaskSpecificText path task) (taskText task)
+  when showInputHelp $
+    toOutputCapable inputHelpText
+  pure ()
 
 toTaskSpecificText
   :: (MonadCache m, MonadDiagrams m, MonadGraphviz m, OutputCapable m)
@@ -393,18 +420,28 @@ toTaskSpecificText path task@NameCdErrorInstance {..} = \case
       $ map (second (renderReason (printNavigations cdDrawSettings) . snd))
       $ M.toList errorReasons
     RelationshipsList -> do
-      let defaults = omittedDefaults cdDrawSettings
-          phrase article x y z = translate $ do
-            english $ phraseRelationship English defaults article Denoted x y z
-            german $ phraseRelationship German defaults article Denoted x y z
-          phraseRelationship' Annotation {..} = phrase
-            (referenceUsing annotation)
+      let phraseRelationship' = translateRelationship
+            cdDrawSettings
             byName
-            (printNavigations cdDrawSettings)
-            annotated
       enumerateM (text . show)
-        $ map (second phraseRelationship')
+        $ map (second (translate . put . phraseRelationship'))
         $ relevantRelationships task
+
+translateRelationship
+  :: CdDrawSettings
+  -> Bool
+  -> Annotation Relevance (AnyRelationship String String)
+  -> Map Language String
+translateRelationship cdDrawSettings byName Annotation {..} =
+  let defaults = omittedDefaults cdDrawSettings
+      phrase article x y z = translations $ do
+        english $ phraseRelationship English defaults article Denoted x y z
+        german $ phraseRelationship German defaults article Denoted x y z
+  in phrase
+    (referenceUsing annotation)
+    byName
+    (printNavigations cdDrawSettings)
+    annotated
 
 data NameCdErrorInstance = NameCdErrorInstance {
   byName                      :: !Bool,
@@ -413,8 +450,8 @@ data NameCdErrorInstance = NameCdErrorInstance {
   errorReasons                :: !(Map Char (Bool, Reason)),
   showSolution                :: Bool,
   taskText                    :: !NameCdErrorTaskText,
-  addText                     :: Maybe (Map Language String)
-  } deriving (Eq, Generic, Read, Show)
+  addText                     :: ExtraText
+  } deriving (Data, Eq, Generic, Hashable, Read, Reader, Show, ToDoc)
 
 relevantRelationships
   :: NameCdErrorInstance
@@ -437,7 +474,7 @@ data Relevance
     listingPriority           :: Int,
     referenceUsing            :: ArticleToUse
     }
-  deriving (Eq, Generic, Read, Show)
+  deriving (Data, Eq, Generic, Hashable, Read, Reader, Show, ToDoc)
 
 isRelevant :: Annotation Relevance annotated -> Bool
 isRelevant =
@@ -467,7 +504,7 @@ checkNameCdErrorInstance NameCdErrorInstance {..}
   = Just [iii|
       'errorReasons' contains duplicate '#{x}' which is not allowed.
       |]
-  | x:_ <- concatMap (checkTranslation . toTranslations True) reasons
+  | x:_ <- concatMap (checkTranslation . translateReason True) reasons
   = Just $ [i|Problem within 'errorReasons': |] ++ x
   | otherwise
   = checkTaskText taskText
@@ -480,52 +517,68 @@ checkNameCdErrorInstance NameCdErrorInstance {..}
       $ annotatedRelationships classDiagram
 
 defaultNameCdErrorTaskText :: NameCdErrorTaskText
-defaultNameCdErrorTaskText = [
+defaultNameCdErrorTaskText = nameCdErrorTaskText True
+
+nameCdErrorTaskText :: Bool -> NameCdErrorTaskText
+nameCdErrorTaskText withAnswerChoices = concat [
+ [
   Paragraph $ singleton $ Translated $ translations $ do
     english "Consider the following class diagram, which unfortunately is invalid:"
     german "Betrachten Sie folgendes Klassendiagramm, welches leider ungültig ist:",
-  Paragraph $ singleton $ Special IncorrectCd,
+  Paragraph $ singleton $ Special IncorrectCd
+ ],
+ optional withAnswerChoices [
   Paragraph $ singleton $ Translated $ translations $ do
     english "It contains the following relationships between classes:"
     german "Es enthält die folgenden Beziehungen zwischen Klassen:",
-  Paragraph $ singleton $ Special RelationshipsList,
+  Paragraph $ singleton $ Special RelationshipsList
+ ],
+ [
   Paragraph $ singleton $ Translated $ translations $ do
     english [iii|
-      Choose what you think is the single reason that this class diagram is incorrect,
+      Choose what you think is the single reason that this class diagram is invalid,
       and mention all relationships that definitely contribute to the problem,
-      i.e., removing any of them would fix the problem.
+      i.e., removing any of them would fix the invalidity.
       |]
     german [iii|
       Wählen Sie aus, was Sie für den einen Grund dafür halten,
       dass dieses Klassendiagramm ungültig ist,
       und nennen Sie alle Beziehungen, die definitiv zum Problem beitragen,
-      d.h., deren Entfernung das Problem jeweils beheben würde.
-      |],
+      d.h., deren Entfernung die Ungültigkeit jeweils beheben würde.
+      |]
+ ],
+ optional withAnswerChoices [
   Paragraph $ singleton $ Translated $ translations $ do
     english [i|Reasons available to choose from are:|]
     german [i|Gründe, die hierfür zur Auswahl stehen, sind:|],
   Paragraph $ singleton $ Translated $ translations $ do
     english [i|The class diagram ...|]
     german [i|Das Klassendiagramm ...|],
-  Paragraph $ singleton $ Special ReasonsList,
+  Paragraph $ singleton $ Special ReasonsList
+ ]]
+ where
+    optional cond xs = if cond then xs else []
+
+inputHelpText :: [Output]
+inputHelpText = [
   Paragraph [
     Paragraph $ singleton $ Translated $ translations $ do
       english [iii|
-        Please state your answer by providing a letter for the reason,
+        State your answer by providing a letter for the reason,
         indicating the most specifically expressed reason
         for which you think this class diagram is invalid,
-        and a listing of numbers for those relationships
-        on whose individual presence the problem depends.
+        and a listing of numbers for all those relationships
+        on whose individual presence the invalidity depends.
         For example,
         |]
       german [iii|
-        Bitte geben Sie Ihre Antwort an, indem Sie Folgendes angeben:
+        Geben Sie Ihre Antwort an, indem Sie Folgendes angeben:
         einen Buchstaben für den Grund,
         der Ihrer Meinung nach der am spezifischsten
         ausgedrückte Grund dafür ist,
         dass dieses Klassendiagramm ungültig ist,
-        und eine Auflistung von Zahlen für diejenigen Beziehungen,
-        von deren individueller Präsenz das Problem abhängt.
+        und eine Auflistung von Zahlen für all diejenigen Beziehungen,
+        von deren individueller Präsenz die Ungültigkeit abhängt.
         Zum Beispiel würde
         |],
     Paragraph $ singleton $ Code $ uniform $ showNameCdErrorAnswer answer,
@@ -534,12 +587,12 @@ defaultNameCdErrorTaskText = [
         would indicate that the class diagram is invalid
         because of reason #{singleton $ reason answer}
         and that the #{dueTo1}. and #{dueTo2}. relationship (appearing together)
-        create the problem.
+        create the invalidity.
         |]
       german [iii|
         bedeuten, dass das Klassendiagramm wegen Grund #{singleton $ reason answer} ungültig ist
         und dass die #{dueTo1}. und #{dueTo2}. Beziehung (zusammen auftretend)
-        das Problem erzeugen.
+        die Ungültigkeit erzeugen.
         |]
     ]
   ]
@@ -548,13 +601,14 @@ defaultNameCdErrorTaskText = [
 
 nameCdErrorTask
   :: (MonadCache m, MonadDiagrams m, MonadGraphviz m, OutputCapable m)
-  => FilePath
+  => Bool
+  -> FilePath
   -> NameCdErrorInstance
   -> LangM m
-nameCdErrorTask path task = do
-  toTaskText path task
-  paragraph simplifiedInformation
-  paragraph hoveringInformation
+nameCdErrorTask showInputHelp path task = do
+  toTaskText showInputHelp path task
+  simplifiedInformation False
+  hoveringInformation False
   extra $ addText task
   pure ()
 
@@ -602,11 +656,18 @@ nameCdErrorSyntax inst x = do
  * otherwise, multiple choice grading for answer on dueTo relationships
 -}
 nameCdErrorEvaluation
-  :: (Alternative m, Monad m, OutputCapable m)
-  => NameCdErrorInstance
+  :: (
+    Alternative m,
+    MonadCache m,
+    MonadDiagrams m,
+    MonadGraphviz m,
+    OutputCapable m
+    )
+  => FilePath
+  -> NameCdErrorInstance
   -> NameCdErrorAnswer
   -> Rated m
-nameCdErrorEvaluation inst x = addPretext $ do
+nameCdErrorEvaluation path inst@NameCdErrorInstance {..} x = addPretext $ do
   let reasonTranslation = M.fromAscList [
         (English, "reason"),
         (German, "Grund")
@@ -615,22 +676,67 @@ nameCdErrorEvaluation inst x = addPretext $ do
         (English, "relationships constituting the problem"),
         (German, "das Problem ausmachenden Beziehungen")
         ]
-      solutionReason = head . M.keys . M.filter fst $ errorReasons inst
+      solutionReason = head . M.keys . M.filter fst $ errorReasons
       solutionDueTo = M.fromAscList
         $ map (second (contributingToProblem . annotation))
-        $ relevantRelationships inst
+        relevant
       correctAnswer
-        | showSolution inst = Just $ toString $ encode $ nameCdErrorSolution inst
+        | showSolution = Just . (DefiniteArticle,)
+          $ toString $ encode $ nameCdErrorSolution inst
         | otherwise = Nothing
   recoverWith 0 (
-    singleChoice DefiniteArticle reasonTranslation Nothing solutionReason (reason x)
-      $>> multipleChoice DefiniteArticle
+    singleChoice reasonTranslation Nothing solutionReason (reason x)
+      $>> multipleChoice
         dueToTranslation
         Nothing
         solutionDueTo
         (dueTo x)
     )
-    $>>= printSolutionAndAssert DefiniteArticle correctAnswer . fromEither
+    $>>= \points -> do
+      paragraph $ translate $ classDiagramDescription points
+      paragraph $ image $=<< cacheCd cdDrawSettings mempty changedCd path
+      pure ()
+    $>> printSolutionAndAssert True correctAnswer $ fromEither points
+  where
+    relevant = relevantRelationships inst
+    changedCd = unannotateCd $ classDiagram {
+      annotatedRelationships = annotatedRelationships classDiagram
+        \\ map snd chosenRelevant
+      }
+    chosenRelevant = filter ((`elem` nubOrd (dueTo x)) . fst) relevant
+    classDiagramDescription points
+      | points == Right 1 = do
+        english [iii|
+          If all relationships you correctly gave as constituting the problem
+          would be removed, the following valid class diagram would result:
+          |]
+        german [iii|
+          Wenn alle von Ihnen korrekterweise als das Problem ausmachend angegebenen
+          Beziehungen entfernt würden,
+          würde das folgende gültige Klassendiagramm entstehen:
+          |]
+      | any (contributingToProblem . annotation . snd) chosenRelevant = do
+        english [iii|
+          Nevertheless, the removal of all relationships you gave as
+          contributing to the problem results in resolving the invalidity
+          as the class diagram would then look like this:
+          |]
+        german [iii|
+          Dennoch behebt das Entfernen aller von Ihnen als zum Problem beitragend
+          angegebenen Beziehungen die Ungültigkeit,
+          da das Klassendiagramm dann so aussehen würde:
+          |]
+      | otherwise = do
+        english [iii|
+          The removal of all relationships you gave as contributing to the problem
+          still does not resolve the underlying issue
+          as the class diagram would then look like this and still be invalid:
+          |]
+        german [iii|
+          Das Entfernen aller von Ihnen als zum Problem beitragend angegebenen
+          Beziehungen behebt das vorliegende Problem nicht,
+          da das Klassendiagramm dann so aussehen würde und immer noch ungültig wäre:
+          |]
 
 nameCdErrorSolution :: NameCdErrorInstance -> NameCdErrorAnswer
 nameCdErrorSolution x = NameCdErrorAnswer {
@@ -648,12 +754,14 @@ classAndNonInheritanceNames inst =
   in (names, nonInheritances)
 
 instance Randomise NameCdErrorInstance where
-  randomise inst = do
+  randomise = shuffleInstance
+
+instance RandomiseNames NameCdErrorInstance where
+  randomiseNames inst = do
     let (names, nonInheritances) = classAndNonInheritanceNames inst
     names' <- shuffleM names
     nonInheritances' <- shuffleM nonInheritances
     renameInstance inst names' nonInheritances'
-      >>= shuffleInstance
 
 instance RandomiseLayout NameCdErrorInstance where
   randomiseLayout NameCdErrorInstance {..} = do
@@ -887,7 +995,7 @@ translatePropertyWithDirections x = translations $ case x of
   InvalidInheritanceLimits -> do
     english "contains at least one invalid multiplicity at some inheritance."
     german [iii|
-      enthält mindestens eine nicht erlaubte Multiplizität an einer Vererbung.
+      enthält mindestens eine ungültige Multiplizität an einer Vererbung.
       |]
   MultipleInheritances -> do
     english "contains at least one multiple inheritance."
@@ -919,7 +1027,7 @@ translatePropertyWithDirections x = translations $ case x of
       that is no inheritance.
       |]
     german [iii|
-      enthält mindestens eine nicht erlaubte Multiplizität an einer Beziehung,
+      enthält mindestens eine ungültige Multiplizität an einer Beziehung,
       die keine Vererbung ist.
       |]
   WrongCompositionLimits -> do
@@ -927,7 +1035,7 @@ translatePropertyWithDirections x = translations $ case x of
       contains at least one invalid multiplicity near the whole of a composition.
       |]
     german [iii|
-      enthält mindestens eine nicht erlaubte Multiplizität am Ganzen einer Komposition.
+      enthält mindestens eine ungültige Multiplizität am Ganzen einer Komposition.
       |]
 
 defaultNameCdErrorInstance :: NameCdErrorInstance
@@ -1010,5 +1118,5 @@ defaultNameCdErrorInstance = NameCdErrorInstance {
     ],
   showSolution = False,
   taskText = defaultNameCdErrorTaskText,
-  addText = Nothing
+  addText = NoExtraText
   }
