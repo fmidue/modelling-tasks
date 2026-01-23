@@ -29,6 +29,7 @@ executables:
       - .
       - common
     dependencies:
+      - autotool-capabilities-io-instances
       - bytestring
       - digest
       - modelling-tasks
@@ -126,6 +127,7 @@ executables:
       - .
       - common
     dependencies:
+      - autotool-capabilities-io-instances
       - bytestring
       - digest
       - modelling-tasks
@@ -200,6 +202,7 @@ executables:
       - .
       - common
     dependencies:
+      - autotool-capabilities-io-instances
       - bytestring
       - digest
       - modelling-tasks
