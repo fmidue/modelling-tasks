@@ -296,7 +296,7 @@ defaultNameCdErrorConfig = NameCdErrorConfig {
     usesEveryRelationshipName = Just True
     },
   possibleReasons = map PreDefined [minBound ..],
-  printSolution = False,
+  printSolution = True,
   reasonsPerInstance = NumberOfReasons {
     customReasons = 0,
     preDefinedInvalid = length $ filter isIllegal [minBound ..],
@@ -1116,7 +1116,7 @@ defaultNameCdErrorInstance = NameCdErrorInstance {
     ('j', (False, PreDefined MultipleInheritances)),
     ('k', (False, PreDefined ReverseRelationships))
     ],
-  showSolution = False,
+  showSolution = True,
   taskText = defaultNameCdErrorTaskText,
   addText = NoExtraText
   }

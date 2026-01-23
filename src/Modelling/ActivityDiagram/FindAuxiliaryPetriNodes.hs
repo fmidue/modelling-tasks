@@ -146,7 +146,7 @@ defaultFindAuxiliaryPetriNodesConfig =
     hideNodeNames = False,
     hideBranchConditions = False,
     presenceOfSinkTransitionsForFinals = Nothing,
-    printSolution = False,
+    printSolution = True,
     extraText = NoExtraText
   }
 
@@ -366,6 +366,6 @@ defaultFindAuxiliaryPetriNodesInstance =
     activityDiagram = ad,
     matchingNet = convertToSimple ad,
     plantUMLConf = defaultPlantUmlConfig,
-    showSolution = False,
+    showSolution = True,
     addText = NoExtraText
   }

@@ -175,7 +175,7 @@ defaultMatchPetriConfig =
     auxiliaryPetriNodeAbsent = Nothing,
     presenceOfSinkTransitionsForFinals = Nothing,
     withActivityFinalInForkBlocks = Just False,
-    printSolution = False,
+    printSolution = True,
     extraText = NoExtraText
   }
 
@@ -971,6 +971,6 @@ defaultMatchPetriInstance = MatchPetriInstance
       with1Weights = False,
       withGraphvizCommand = Dot
     },
-  showSolution = False,
+  showSolution = True,
   addText = NoExtraText
   }

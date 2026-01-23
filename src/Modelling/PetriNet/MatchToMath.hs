@@ -187,7 +187,7 @@ defaultMathConfig = MathConfig {
     },
   generatedWrongInstances = 50,
   graphConfig = defaultGraphConfig,
-  printSolution = False,
+  printSolution = True,
   useDifferentGraphLayouts = False,
   wrongInstances = 3,
   alloyConfig = defaultAlloyConfig,
@@ -703,7 +703,7 @@ defaultGraphToMathInstance = MatchInstance {
       withGraphvizCommand = Sfdp
       }
     ),
-  showSolution = False,
+  showSolution = True,
   to = fromList [
     (1,(False,PetriMath {
       netMath = "N = \\left(S, T, \\vphantom{()}^{\\bullet}(), ()^{\\bullet}, m_0\\right)",
@@ -771,7 +771,7 @@ defaultMathToGraphInstance = MatchInstance {
     initialMarkingMath = "m_0 = \\left(1,1,0,1\\right)",
     placeOrderMath = Just "\\left(s_{1},s_{2},s_{3},s_{4}\\right)"
     },
-  showSolution = False,
+  showSolution = True,
   to = fromList [
     (1,(True,(
       PetriLike {
