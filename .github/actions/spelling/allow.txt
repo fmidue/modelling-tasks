@@ -8,6 +8,7 @@ Bifoldable
 Bifunctor
 Bitraversable
 Circo
+DMAX
 DPoint
 DSL
 DVal
@@ -22,6 +23,9 @@ HXT
 Hashable
 Hovern
 Hspec
+Ints
+Komplementstelle
+Komplementstellen
 Leftrightarrow
 Lexer
 Linkbeschriftung
@@ -36,6 +40,8 @@ Perim
 Petrinetz
 Petrinetze
 Petrinetzes
+Petrinetzkandidat
+Petrinetzkandidaten
 Petrinetzknoten
 Programmierparadigmen
 QDiagram
@@ -83,6 +89,7 @@ forkagain
 forkend
 fst
 fusable
+ghc
 ghci
 github
 gpt
