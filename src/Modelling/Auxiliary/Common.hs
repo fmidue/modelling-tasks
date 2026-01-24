@@ -115,10 +115,7 @@ mapIndicesToHelper ((k, x):xs) ys = do
 newtype ShuffleExcept g a = ShuffleExcept {
   unShuffleExcept :: RandT g (Either SomeException) a
   }
-  deriving (Applicative, Functor, Monad, MonadRandom)
-
-instance MonadThrow (ShuffleExcept g) where
-  throwM = ShuffleExcept . lift . throwM
+  deriving (Applicative, Functor, Monad, MonadRandom, MonadThrow)
 
 {-|
 The class of types that allow some form of randomisation.
