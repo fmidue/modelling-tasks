@@ -600,7 +600,7 @@ renameInstance inst@RepairCdInstance {..} names' nonInheritances' = do
     }
 
 repairCd
-  :: (MonadAlloy m, MonadCatch m)
+  :: (MonadAlloy m, MonadCatch m, MonadThrow m)
   => RepairCdConfig
   -> Int
   -> Int
@@ -968,7 +968,7 @@ generateSetOfCds
             (toProperty initialWeakening)
             (Just config)
             $ map toProperty otherWeakenings
-      instances <- getInstances maxInstances to alloyCode
+      instances <- lift $ getInstances maxInstances to alloyCode
       randomInstances <- shuffleM instances
       getInstanceWithODs weakeningSets otherWeakenings randomInstances
     article = toArticleToUse preference

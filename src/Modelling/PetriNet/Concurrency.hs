@@ -405,7 +405,7 @@ pickConcurrency
     m
     [(p n String, Maybe (Concurrent String))]
 pickConcurrency = taskInstance
-  pickTaskInstance
+  (\f -> lift . pickTaskInstance f)
   petriNetPickConcur
   parseConcurrency
   Pick.alloyConfig

@@ -356,20 +356,20 @@ matchToMath
   -> RandT g m (p n String, Math, [(p n String, Change)])
 matchToMath config segment = do
   (f, net, math) <- netMathInstance config segment
-  fList <- getInstances
+  fList <- lift $ getInstances
     (Just $ toInteger $ generatedWrongInstances config)
     Nothing
     f
   fList' <- take (wrongInstances config) <$> shuffleM fList
   if wrongInstances config == length fList'
     then do
-    alloyChanges <- mapM addChange fList'
+    alloyChanges <- mapM (lift . addChange) fList'
     changes <- firstM parse `mapM` alloyChanges
     let changes' = uncurry zip $ unzip changes
     return (net, math, changes')
     else matchToMath config segment
   where
-    parse = parseRenamedNet "flow" "tokens"
+    parse = lift . parseRenamedNet "flow" "tokens"
 
 firstM :: Monad m => (a -> m b) -> (a, c) -> m (b, c)
 firstM f (p, c) = (,c) <$> f p
@@ -392,7 +392,7 @@ mathInstance
   -> AlloyInstance
   -> RandT g m (String, p n String, Math)
 mathInstance config inst = do
-  petriLike <- parseRenamedNet "flow" "tokens" inst
+  petriLike <- lift $ parseRenamedNet "flow" "tokens" inst
   petriLike' <- fst <$> shuffleNames petriLike
   let math = toPetriMath petriLike'
   let f = renderFalse petriLike' config

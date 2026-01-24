@@ -127,6 +127,7 @@ import Control.Applicative              (Alternative ((<|>)))
 import Control.Exception                (Exception)
 import Control.Monad                    ((<=<), when)
 import Control.Monad.Catch              (MonadCatch, MonadThrow, throwM)
+import Control.Monad.Trans.Class (lift)
 #if __GLASGOW_HASKELL__ < 808
 import Control.Monad.Fail               (MonadFail)
 #endif
@@ -468,7 +469,7 @@ matchCdOd
   -> Int
   -> m MatchCdOdInstance
 matchCdOd config segment seed = flip evalRandT g $ do
-  inst <- getMatchCdOdTask getRandomTask config
+  inst <- lift $ getMatchCdOdTask (lift . getRandomTask) config
   shuffleEverything inst
   where
     g = mkStdGen $ (segment +) $ 4 * seed

@@ -124,6 +124,7 @@ import Modelling.Types (
 import Control.Applicative              (Alternative ((<|>)))
 import Control.Monad.Catch              (MonadCatch, MonadThrow, throwM)
 import Control.Monad.Extra              (when, whenJust)
+import Control.Monad.Trans.Class (lift)
 import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
   ExtraText (..),
@@ -591,21 +592,21 @@ differentNames
   -> m DifferentNamesInstance
 differentNames config segment seed = do
   let g = mkStdGen (segment + 4 * seed)
-  flip evalRandT g $ do
-    is <- generateCds
-      (withNonTrivialInheritance config)
-      (classConfig config)
-      defaultProperties
-      (maxInstances config)
-      (timeout config)
-    tryGettingValidInstanceFor is
+  is <- generateCds
+    (withNonTrivialInheritance config)
+    (classConfig config)
+    defaultProperties
+    (maxInstances config)
+    (timeout config)
+  flip evalRandT g $ tryGettingValidInstanceFor is
   where
-    tryGettingValidInstanceFor []             = throwM NoInstanceAvailable
+    tryGettingValidInstanceFor []             = lift $ throwM NoInstanceAvailable
     tryGettingValidInstanceFor (inst:instances) = do
-      cd <- instanceToCd inst >>= shuffleClassAndConnectionOrder
+      cd <- lift $ instanceToCd inst >>= shuffleClassAndConnectionOrder
         >>= fmap runIdentity . shuffleCdNames . Identity
-      taskInstance <- getDifferentNamesTask
-        (tryGettingValidInstanceFor instances)
+      let nextG = mkStdGen (segment + 4 * seed + length instances)
+      taskInstance <- lift $ getDifferentNamesTask
+        (evalRandT (tryGettingValidInstanceFor instances) nextG)
         config
         cd
       shuffleEverything taskInstance

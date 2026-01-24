@@ -93,6 +93,7 @@ import Modelling.PetriNet.Types (
 
 import Control.Applicative (Alternative ((<|>)))
 import Control.Monad.Catch              (MonadThrow)
+import Control.Monad.Trans.Class (lift)
 import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
   ExtraText (..),
@@ -481,13 +482,13 @@ getMatchPetriTask
   => MatchPetriConfig
   -> RandT g m MatchPetriInstance
 getMatchPetriTask config = do
-  alloyInstances <- getInstances
+  alloyInstances <- lift $ getInstances
     (maxInstances config)
     Nothing
     $ matchPetriAlloy config
-  randomInstances <- shuffleM alloyInstances >>= mapM parseInstance
+  randomInstances <- shuffleM alloyInstances >>= mapM (lift . parseInstance)
   activityDiagrams <- mapM (fmap snd . shuffleAdNames) randomInstances
-  (ad, petri) <- getFirstInstance
+  (ad, petri) <- lift $ getFirstInstance
         $ filter (not . petriHasMultipleAutomorphisms . snd)
         $ filter (checkPetriNodeCount (countOfPetriNodesBounds config) . snd)
         $ map (second convertToPetriNet . dupe) activityDiagrams

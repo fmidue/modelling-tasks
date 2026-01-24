@@ -52,6 +52,7 @@ import Autolib.Reader                   (Reader)
 import Autolib.ToDoc                    (ToDoc)
 import Control.Applicative (Alternative ((<|>)))
 import Control.Monad.Catch              (MonadThrow)
+import Control.Monad.Trans.Class (lift)
 import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
   ExtraText (..),
@@ -284,12 +285,12 @@ getMatchAdTask
   => MatchAdConfig
   -> RandT g m MatchAdInstance
 getMatchAdTask config = do
-  alloyInstances <- getInstances
+  alloyInstances <- lift $ getInstances
     (maxInstances config)
     Nothing
     $ matchAdAlloy config
-  randomInstances <- shuffleM alloyInstances >>= mapM parseInstance
-  ad <- mapM (fmap snd . shuffleAdNames) randomInstances >>= getFirstInstance
+  randomInstances <- shuffleM alloyInstances >>= mapM (lift . parseInstance)
+  ad <- mapM (fmap snd . shuffleAdNames) randomInstances >>= lift . getFirstInstance
   return $ MatchAdInstance {
     activityDiagram = ad,
     plantUMLConf = defaultPlantUmlConfig {
