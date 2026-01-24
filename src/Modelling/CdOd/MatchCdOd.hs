@@ -469,7 +469,7 @@ matchCdOd
   -> Int
   -> m MatchCdOdInstance
 matchCdOd config segment seed = flip evalRandT g $ do
-  inst <- lift $ getMatchCdOdTask (lift . getRandomTask) config
+  inst <- getMatchCdOdTask (lift . getRandomTask) config
   shuffleEverything inst
   where
     g = mkStdGen $ (segment +) $ 4 * seed
