@@ -30,6 +30,7 @@ import Language.Alloy.Call              as Alloy (
   )
 import Language.Alloy.Exceptions        (AlloyLookupFailed (..))
 
+import Capabilities.Monad.Random        ()
 import Control.Monad.Catch              (MonadCatch (catch), MonadThrow (throwM))
 import Data.GraphViz                    (X11Color (..))
 import Data.GraphViz.Attributes.Complete (
@@ -44,7 +45,6 @@ import Data.GraphViz.Attributes.HTML    as Html
   (Label, Format (..), Label (Text), TextItem (..))
 import Data.List.Extra                  (nubOrd)
 import Data.Text.Lazy                   (pack)
-import Control.Monad.Trans.Random       (RandT, liftCatch)
 
 filterFirst :: Eq a => a -> [a] -> [a]
 filterFirst _ []     = []
@@ -61,9 +61,6 @@ emptyArr = AType [(openMod, Normal)]
 
 redColor :: Attribute
 redColor = Color [toWColor Red]
-
-instance {-# OVERLAPPABLE #-} MonadCatch m => MonadCatch (RandT g m) where
-  catch = liftCatch catch
 
 {-|
 Parses the Alloy object diagram instance.

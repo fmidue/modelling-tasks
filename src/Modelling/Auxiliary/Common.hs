@@ -43,7 +43,7 @@ import Control.Monad.Random (
   RandT,
   fromList,
   )
-import Control.Monad.Trans.Class        (lift)
+import Capabilities.Monad.Random        ()
 import Data.Char (
   digitToInt,
   isSpace,
@@ -88,9 +88,6 @@ data ModellingTasksException
   deriving Show
 
 instance Exception ModellingTasksException
-
-instance {-# OVERLAPPABLE #-} MonadThrow m => MonadThrow (RandT g m) where
-  throwM = lift . throwM
 
 mapIndicesTo :: (Eq a, MonadThrow m) => [a] -> [a] -> m [(Int, Int)]
 mapIndicesTo xs ys = mapIndicesToHelper (zip [0 ..] xs) (zip [0 ..] ys)
