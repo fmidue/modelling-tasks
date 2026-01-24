@@ -503,7 +503,7 @@ getMatchCdOdTask f config@MatchCdOdConfig {..} = do
   where
     toOd possibleLinkNames =
       anonymiseObjects (anonymousObjectProportion objectProperties)
-      <=< lift (alloyInstanceToOd Nothing possibleLinkNames)
+      <=< lift . alloyInstanceToOd Nothing possibleLinkNames
 
 {-|
 A 'defaultMatchCdOdInstance' as generated using 'defaultMatchCdOdConfig'.
