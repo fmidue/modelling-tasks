@@ -6,6 +6,7 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TupleSections #-}
 module Modelling.CdOd.RepairCd (
   InValidOption (..),
@@ -600,13 +601,13 @@ renameInstance inst@RepairCdInstance {..} names' nonInheritances' = do
     }
 
 repairCd
-  :: (MonadAlloy m, MonadCatch m, MonadThrow m)
+  :: forall m. (MonadAlloy m, MonadCatch m)
   => RepairCdConfig
   -> Int
   -> Int
   -> m RepairCdInstance
 repairCd RepairCdConfig {..} segment seed = flip evalRandT g $ do
-  (cd, chs) <- generateSetOfCds
+  (cd, chs) <- lift $ generateSetOfCds
     IllegalStructuralWeakening
     allowedProperties
     classConfig
@@ -921,7 +922,7 @@ together with changes to repair invalid class diagram candidates
 and object diagrams witnessing correct class diagrams.
 -}
 generateSetOfCds
-  :: (MonadAlloy m, MonadCatch m, RandomGen g)
+  :: forall m g. (MonadAlloy m, MonadCatch m, RandomGen g)
   => WeakeningKind
   -- ^ to be used for the base class diagram
   -> AllowedProperties
@@ -959,6 +960,7 @@ generateSetOfCds
     $ possibleWeakenings basisCd cdProperties
   tryNextWeakeningSet weakeningSets
   where
+    tryNextWeakeningSet :: [WeakeningSet StructuralWeakening] -> RandT g m (AnyCd, [CdChangeAndCd])
     tryNextWeakeningSet [] = lift $ throwM NoInstanceAvailable
     tryNextWeakeningSet (WeakeningSet {..} : weakeningSets) = do
       let alloyCode = Changes.transformChanges

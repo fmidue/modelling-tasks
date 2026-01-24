@@ -6,6 +6,7 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TupleSections #-}
 module Modelling.CdOd.DifferentNames (
   DifferentNamesConfig (..),
@@ -156,6 +157,8 @@ import Control.Monad.Random (
   evalRandT,
   mkStdGen,
   )
+import Control.Monad.Trans.Random       (RandT)
+import System.Random.Internal           (StdGen)
 import Control.Monad.Trans.Except       (runExceptT)
 import Data.Bifunctor                   (Bifunctor (bimap, first))
 import Data.Bimap                       (Bimap)
@@ -585,31 +588,32 @@ differentNamesSolution :: DifferentNamesInstance -> [(Name, Name)]
 differentNamesSolution = BM.toAscList . nameMapping . mapping
 
 differentNames
-  :: (MonadAlloy m, MonadCatch m)
+  :: forall m. (MonadAlloy m, MonadCatch m)
   => DifferentNamesConfig
   -> Int
   -> Int
   -> m DifferentNamesInstance
 differentNames config segment seed = do
   let g = mkStdGen (segment + 4 * seed)
-  is <- generateCds
-    (withNonTrivialInheritance config)
-    (classConfig config)
-    defaultProperties
-    (maxInstances config)
-    (timeout config)
-  flip evalRandT g $ tryGettingValidInstanceFor is
+  flip evalRandT g $ do
+    is <- generateCds
+      (withNonTrivialInheritance config)
+      (classConfig config)
+      defaultProperties
+      (maxInstances config)
+      (timeout config)
+    tryGettingValidInstanceFor g is
   where
-    tryGettingValidInstanceFor []             = lift $ throwM NoInstanceAvailable
-    tryGettingValidInstanceFor (inst:instances) = do
-      cd <- lift $ instanceToCd inst >>= shuffleClassAndConnectionOrder
+    tryGettingValidInstanceFor :: StdGen -> [AlloyInstance] -> RandT StdGen m DifferentNamesInstance
+    tryGettingValidInstanceFor g []             = lift $ throwM NoInstanceAvailable
+    tryGettingValidInstanceFor g (inst:instances) = do
+      cd <- lift (instanceToCd inst) >>= shuffleClassAndConnectionOrder
         >>= fmap runIdentity . shuffleCdNames . Identity
-      let nextG = mkStdGen (segment + 4 * seed + length instances)
-      taskInstance <- lift $ getDifferentNamesTask
-        (evalRandT (tryGettingValidInstanceFor instances) nextG)
+      getDifferentNamesTask
+        (tryGettingValidInstanceFor g instances)
         config
         cd
-      shuffleEverything taskInstance
+        >>= shuffleEverything
 
 {-|
 A 'defaultDifferentNamesInstance' as generated
