@@ -160,6 +160,8 @@ import Control.Monad.Random (
   evalRandT,
   mkStdGen,
   )
+import Control.Monad.Trans.Random (RandT)
+import System.Random (RandomGen)
 import Data.Bifunctor                   (Bifunctor (second))
 import Data.Bitraversable               (bimapM)
 import Data.Containers.ListUtils        (nubOrd)
@@ -469,17 +471,17 @@ matchCdOd
   -> Int
   -> m MatchCdOdInstance
 matchCdOd config segment seed = flip evalRandT g $ do
-  inst <- getMatchCdOdTask (lift . getRandomTask) config
+  inst <- getMatchCdOdTask getRandomTask config
   shuffleEverything inst
   where
     g = mkStdGen $ (segment +) $ 4 * seed
 
 getMatchCdOdTask
-  :: (MonadCatch m, MonadRandom m)
+  :: (MonadCatch m, RandomGen g)
   => (MatchCdOdConfig
-    -> m (Map Int Cd, Map Char ([Int], AlloyInstance)))
+    -> RandT g m (Map Int Cd, Map Char ([Int], AlloyInstance)))
   -> MatchCdOdConfig
-  -> m MatchCdOdInstance
+  -> RandT g m MatchCdOdInstance
 getMatchCdOdTask f config@MatchCdOdConfig {..} = do
   (cds, ods) <- f config
   let possibleLinkNames = concatMap
