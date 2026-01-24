@@ -44,10 +44,6 @@ import Control.Monad.Random (
   fromList,
   )
 import Control.Monad.Trans.Class        (lift)
-import Control.Monad.Trans.Except       (ExceptT)
-import Capabilities.Alloy               (MonadAlloy (getInstancesWith))
-import Capabilities.Diagrams            (MonadDiagrams (lin, renderDiagram))
-import Capabilities.Graphviz            (MonadGraphviz (errorWithoutGraphviz, layoutGraph, layoutGraph'))
 import Data.Char (
   digitToInt,
   isSpace,
@@ -92,33 +88,6 @@ data ModellingTasksException
   deriving Show
 
 instance Exception ModellingTasksException
-
-instance {-# OVERLAPPABLE #-} MonadThrow m => MonadThrow (RandT g m) where
-  throwM = lift . throwM
-
-instance {-# OVERLAPPABLE #-} MonadAlloy m => MonadAlloy (RandT g m) where
-  getInstancesWith config = lift . getInstancesWith config
-
-instance {-# OVERLAPPABLE #-} MonadAlloy m => MonadAlloy (ExceptT e m) where
-  getInstancesWith config = lift . getInstancesWith config
-
-instance {-# OVERLAPPABLE #-} MonadDiagrams m => MonadDiagrams (RandT g m) where
-  lin = lift lin
-  renderDiagram = lift . renderDiagram
-
-instance {-# OVERLAPPABLE #-} MonadDiagrams m => MonadDiagrams (ExceptT e m) where
-  lin = lift lin
-  renderDiagram = lift . renderDiagram
-
-instance {-# OVERLAPPABLE #-} MonadGraphviz m => MonadGraphviz (RandT g m) where
-  errorWithoutGraphviz = lift errorWithoutGraphviz
-  layoutGraph command = lift . layoutGraph command
-  layoutGraph' params command = lift . layoutGraph' params command
-
-instance {-# OVERLAPPABLE #-} MonadGraphviz m => MonadGraphviz (ExceptT e m) where
-  errorWithoutGraphviz = lift errorWithoutGraphviz
-  layoutGraph command = lift . layoutGraph command
-  layoutGraph' params command = lift . layoutGraph' params command
 
 mapIndicesTo :: (Eq a, MonadThrow m) => [a] -> [a] -> m [(Int, Int)]
 mapIndicesTo xs ys = mapIndicesToHelper (zip [0 ..] xs) (zip [0 ..] ys)
