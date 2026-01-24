@@ -7,6 +7,7 @@ import qualified Language.Alloy.Call              as Alloy (getInstances)
 import Capabilities.Diagrams.IO         ()
 import Capabilities.Graphviz.IO         ()
 import Capabilities.WriteFile.IO        ()
+import Capabilities.Exceptions.IO       ()
 import Modelling.CdOd.CD2Alloy.Transform (
   LinguisticReuse (None),
   combineParts,

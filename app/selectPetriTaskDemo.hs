@@ -6,6 +6,7 @@ import Capabilities.Diagrams.IO         ()
 import Capabilities.Graphviz.IO         ()
 import Capabilities.PlantUml.IO         ()
 import Capabilities.WriteFile.IO        ()
+import Capabilities.Exceptions.IO       ()
 import Modelling.ActivityDiagram.SelectPetri (
   defaultSelectPetriConfig,
   selectPetri,

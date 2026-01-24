@@ -3,6 +3,7 @@ module Modelling.CdOd.SelectValidCdSpec where
 import qualified Data.Map                         as M (null)
 
 import Capabilities.Alloy.IO            ()
+import Capabilities.Exceptions.IO       ()
 import Modelling.CdOd.SelectValidCd (
   SelectValidCdInstance (classDiagrams),
   checkSelectValidCdConfig,
