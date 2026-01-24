@@ -471,7 +471,7 @@ matchCdOd
   -> Int
   -> m MatchCdOdInstance
 matchCdOd config segment seed = flip evalRandT g $ do
-  inst <- getMatchCdOdTask getRandomTask config
+  inst <- getMatchCdOdTask (lift . getRandomTask) config
   shuffleEverything inst
   where
     g = mkStdGen $ (segment +) $ 4 * seed
@@ -503,7 +503,7 @@ getMatchCdOdTask f config@MatchCdOdConfig {..} = do
   where
     toOd possibleLinkNames =
       anonymiseObjects (anonymousObjectProportion objectProperties)
-      <=< alloyInstanceToOd Nothing possibleLinkNames
+      <=< lift (alloyInstanceToOd Nothing possibleLinkNames)
 
 {-|
 A 'defaultMatchCdOdInstance' as generated using 'defaultMatchCdOdConfig'.
