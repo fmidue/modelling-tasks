@@ -602,18 +602,18 @@ differentNames config segment seed = do
       defaultProperties
       (maxInstances config)
       (timeout config)
-    tryGettingValidInstanceFor g is
+    tryGettingValidInstanceFor is
   where
-    tryGettingValidInstanceFor :: StdGen -> [AlloyInstance] -> RandT StdGen m DifferentNamesInstance
-    tryGettingValidInstanceFor g []             = lift $ throwM NoInstanceAvailable
-    tryGettingValidInstanceFor g (inst:instances) = do
+    tryGettingValidInstanceFor :: [AlloyInstance] -> RandT StdGen m DifferentNamesInstance
+    tryGettingValidInstanceFor []               = lift $ throwM NoInstanceAvailable
+    tryGettingValidInstanceFor (inst:instances) = do
       cd <- lift (instanceToCd inst) >>= shuffleClassAndConnectionOrder
         >>= fmap runIdentity . shuffleCdNames . Identity
-      getDifferentNamesTask
-        (tryGettingValidInstanceFor g instances)
+      taskInstance <- getDifferentNamesTask
+        (tryGettingValidInstanceFor instances)
         config
         cd
-        >>= shuffleEverything
+      shuffleEverything taskInstance
 
 {-|
 A 'defaultDifferentNamesInstance' as generated
