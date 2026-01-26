@@ -7,7 +7,6 @@ module Modelling.Auxiliary.Common (
   Randomise (..),
   RandomiseLayout (..),
   RandomiseNames (..),
-  ShuffleExcept (..),
   TaskGenerationException (..),
   findFittingRandomElements,
   getFirstInstance,
@@ -109,14 +108,6 @@ mapIndicesToHelper ((k, x):xs) ys = do
     getFirstIn ((l, y) : ys')
       | x == y = pure (l, ys')
       | otherwise = fmap ((l, y) :) <$> getFirstIn ys'
-
-newtype ShuffleExcept g a = ShuffleExcept {
-  unShuffleExcept :: RandT g (Either SomeException) a
-  }
-  deriving (Applicative, Functor, Monad, MonadRandom)
-
-instance MonadThrow (ShuffleExcept g) where
-  throwM = ShuffleExcept . lift . throwM
 
 {-|
 The class of types that allow some form of randomisation.
