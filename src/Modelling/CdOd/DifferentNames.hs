@@ -153,7 +153,7 @@ import Control.OutputCapable.Blocks.Type (
   toOutputCapable,
   )
 import Control.Monad.Random (
-  MonadRandom,
+  RandomGen,
   evalRandT,
   mkStdGen,
   )
@@ -689,11 +689,11 @@ defaultDifferentNamesInstance = DifferentNamesInstance {
   }
 
 getDifferentNamesTask
-  :: (MonadAlloy m, MonadCatch m, MonadRandom m)
-  => m DifferentNamesInstance
+  :: (MonadAlloy m, MonadCatch m, RandomGen g)
+  => RandT g m DifferentNamesInstance
   -> DifferentNamesConfig
   -> Cd
-  -> m DifferentNamesInstance
+  -> RandT g m DifferentNamesInstance
 getDifferentNamesTask tryNext DifferentNamesConfig {..} cd = do
     let cd0    = (0 :: Integer, cd)
         parts0 = uncurry alloyFor cd0
@@ -714,14 +714,14 @@ getDifferentNamesTask tryNext DifferentNamesConfig {..} cd = do
           objectConfig
           (concatMap relationships cds)
         partsList' = foldr mergeParts parts0 partsList
-    instances  <- getInstances
+    instances  <- lift $ getInstances
       maxInstances
       timeout
       (combineParts partsList' ++ unlines overlappingPredicates ++ onlyCd0)
     instances' <- shuffleM (instances :: [AlloyInstance])
     continueWithHead instances' $ \od1 -> do
       labels' <- shuffleM labels
-      used <- usedLabels labels od1
+      used <- lift $ usedLabels labels od1
       let usedFirst = uncurry (++) $ partition (`elem` used) labels'
           bm  = BM.fromList $ zip usedFirst (map (\n -> show n ++ ".") [1 :: Int ..])
           bm' = BM.filter (const . (`elem` used)) bm
@@ -734,9 +734,9 @@ getDifferentNamesTask tryNext DifferentNamesConfig {..} cd = do
         then do
         let keepClassNames = BM.fromList $ zip names names
             renameOd = renameObjectsWithClassesAndLinksInOd keepClassNames bm
-        od1' <- either error id
+        od1' <- lift $ either error id
           <$> runExceptT (alloyInstanceToOd Nothing labels od1)
-        od1'' <- renameOd od1'
+        od1'' <- lift (renameOd od1')
           >>= anonymiseObjects (anonymousObjectProportion objectProperties)
         return $ DifferentNamesInstance {
               cDiagram  = cd,
@@ -808,7 +808,7 @@ instance RandomiseNames DifferentNamesInstance where
     names'  <- shuffleM names
     nonInheritances' <- shuffleM nonInheritances
     links' <- shuffleM lNames
-    renameInstance inst names' nonInheritances' links'
+    lift $ renameInstance inst names' nonInheritances' links'
 
 instance RandomiseLayout DifferentNamesInstance where
   randomiseLayout DifferentNamesInstance {..} = do

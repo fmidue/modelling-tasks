@@ -535,7 +535,7 @@ instance RandomiseNames RepairCdInstance where
     let (names, nonInheritances) = classAndNonInheritanceNames inst
     names' <- shuffleM names
     nonInheritances' <- shuffleM nonInheritances
-    renameInstance inst names' nonInheritances'
+    lift $ renameInstance inst names' nonInheritances'
 
 instance RandomiseLayout RepairCdInstance where
   randomiseLayout RepairCdInstance {..} = do
@@ -977,7 +977,7 @@ generateSetOfCds
     getInstanceWithODs weakeningSets _  [] =
       tryNextWeakeningSet weakeningSets
     getInstanceWithODs cs structuralWeakenings (alloyInstance : alloyInstances) = do
-      cdInstance <- fromInstance alloyInstance >>= nameClassDiagramInstance
+      cdInstance <- lift (fromInstance alloyInstance >>= nameClassDiagramInstance)
       (shuffledStructuralWeakenings, shuffledChangesAndCds) <-
         unzip <$> shuffleM (zip structuralWeakenings $ instanceChangesAndCds cdInstance)
       let shuffledCdInstance = cdInstance {
@@ -993,13 +993,14 @@ generateSetOfCds
               chs' = map (uniformlyAnnotateChangeAndCd article) chs
           return (cd, zipWith InValidOption odsAndCdWithArticle chs')
     addArticle = (`Annotation` article)
+    getOdOrImprovedCd :: StructuralWeakening -> ChangeAndCd String String -> RandT g m (Maybe (Either (Change (AnyRelationship String String)) Od))
     getOdOrImprovedCd structuralWeakenings change
       | isValidWeakening structuralWeakenings
       = do
-        cd <- toValidCd $ changeClassDiagram change
+        cd <- lift $ toValidCd $ changeClassDiagram change
         fmap Right <$> getOD cd
       | otherwise = fmap Left
-        <$> getImprovedCd (changeClassDiagram change) (toProperty structuralWeakenings)
+        <$> lift (getImprovedCd (changeClassDiagram change) (toProperty structuralWeakenings))
     getImprovedCd cd properties = do
       let alloyCode = Changes.transformImproveCd
             cd
@@ -1009,7 +1010,7 @@ generateSetOfCds
       changes <- listToMaybe <$> getInstances (Just 1) to alloyCode
       fmap (relationshipChange . head . instanceChangesAndCds)
         <$> traverse fromInstanceWithPredefinedNames changes
-    getOD :: (MonadAlloy m, MonadCatch m, MonadRandom m) => Cd -> m (Maybe Od)
+    getOD :: Cd -> RandT g m (Maybe Od)
     getOD cd = do
       let maxNumberOfObjects = maxObjects $ snd $ classLimits config
           parts = transform
@@ -1028,8 +1029,8 @@ generateSetOfCds
             maxNumberOfObjects
             (relationships cd)
       od <- listToMaybe
-        <$> getInstances (Just 1) to (combineParts parts ++ command)
-      od' <- forM od $ alloyInstanceToOd
+        <$> lift (getInstances (Just 1) to (combineParts parts ++ command))
+      od' <- lift $ forM od $ alloyInstanceToOd
         (Just $ classNames cd)
         $ mapMaybe relationshipName $ relationships cd
       mapM (anonymiseObjects (anonymousObjectProportion objectProperties)) od'
