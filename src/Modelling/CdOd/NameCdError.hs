@@ -761,7 +761,7 @@ instance RandomiseNames NameCdErrorInstance where
     let (names, nonInheritances) = classAndNonInheritanceNames inst
     names' <- shuffleM names
     nonInheritances' <- shuffleM nonInheritances
-    renameInstance inst names' nonInheritances'
+    lift $ renameInstance inst names' nonInheritances'
 
 instance RandomiseLayout NameCdErrorInstance where
   randomiseLayout NameCdErrorInstance {..} = do
@@ -953,8 +953,8 @@ nameCdError NameCdErrorConfig {..}  = do
             (relationships cd)
           possibleLinkNames = mapMaybe relationshipName $ relationships cd
       od <- listToMaybe
-        <$> getInstances (Just 1) timeout (combineParts parts ++ command)
-      od' <- fmap join $ forM od
+        <$> lift (getInstances (Just 1) timeout (combineParts parts ++ command))
+      od' <- fmap join $ lift $ forM od
         $ runExceptT . alloyInstanceToOd (Just $ classNames cd) possibleLinkNames
         >=> return . eitherToMaybe
       mapM (anonymiseObjects (anonymousObjectProportion objectProperties)) od'

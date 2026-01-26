@@ -42,7 +42,6 @@ import Capabilities.Cache               (MonadCache)
 import Capabilities.Diagrams            (MonadDiagrams)
 import Capabilities.Graphviz            (MonadGraphviz)
 import Modelling.Auxiliary.Common (
-  ModellingTasksException (NeverHappens),
   Randomise (randomise),
   RandomiseLayout (randomiseLayout),
   RandomiseNames (randomiseNames),
@@ -111,9 +110,8 @@ import Modelling.CdOd.Types (
 import Modelling.Types                  (Change (..))
 
 import Control.Applicative              (Alternative ((<|>)))
-import Control.Functor.Trans            (FunctorTrans (lift))
 import Control.Monad                    ((>=>), unless, void, when)
-import Control.Monad.Catch              (MonadCatch, MonadThrow (throwM))
+import Control.Monad.Catch              (MonadCatch, MonadThrow)
 import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
   ExtraText (..),
@@ -142,7 +140,7 @@ import Control.OutputCapable.Blocks.Type (
   toOutputCapable,
   )
 import Control.Monad.Random             (RandT, RandomGen, evalRandT, mkStdGen)
-import Control.Monad.Trans.Class        (lift)
+import qualified Control.Monad.Trans.Class as MTrans
 import Control.Monad.Random.Class       (MonadRandom)
 import Data.Bitraversable               (bimapM)
 import Data.Containers.ListUtils        (nubOrd)
@@ -399,7 +397,7 @@ selectValidCdFeedback path drawSettings xs x cdChange =
       let sufficient = byName || maybe True isInheritance (remove change)
       unless sufficient showNamedCd
       paragraph $ case remove change of
-        Nothing -> lift $ throwM NeverHappens
+        Nothing -> error "NeverHappens: remove change returned Nothing"
         Just relation -> translate $ do
           let phrase l = phraseRelationship
                 l
@@ -514,7 +512,7 @@ instance RandomiseNames SelectValidCdInstance where
     let (names, nonInheritances) = classAndNonInheritanceNames inst
     names' <- shuffleM names
     nonInheritances' <- shuffleM nonInheritances
-    renameInstance inst names' nonInheritances'
+    MTrans.lift $ renameInstance inst names' nonInheritances'
 
 instance RandomiseLayout SelectValidCdInstance where
   randomiseLayout SelectValidCdInstance {..} = do
@@ -562,9 +560,9 @@ shuffleCdChange inst x = do
       renameEdge = renameClassesAndRelationships bmNames bmNonInheritances
       renameEdge' = renameClassesAndRelationships bmNames bmNonInheritances
   mapInValidOptionM
-    renameCd
-    (mapM $ mapM $ bimapM renameEdge renameEdge')
-    renameOd
+    (MTrans.lift . renameCd)
+    (mapM $ mapM $ bimapM (MTrans.lift . renameEdge) (MTrans.lift . renameEdge'))
+    (MTrans.lift . renameOd)
     x
   where
     (names, nonInheritances) = classAndNonInheritanceNames inst
