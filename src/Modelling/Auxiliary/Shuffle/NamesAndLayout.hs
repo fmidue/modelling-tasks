@@ -69,4 +69,4 @@ shuffleInstanceWith
   => ShuffleInstance a
   -> g
   -> Either SomeException a
-shuffleInstanceWith x g = evalRandT (shuffleInstance x) g
+shuffleInstanceWith = evalRandT . shuffleInstance
