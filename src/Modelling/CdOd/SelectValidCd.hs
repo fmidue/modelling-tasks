@@ -42,6 +42,7 @@ import Capabilities.Cache               (MonadCache)
 import Capabilities.Diagrams            (MonadDiagrams)
 import Capabilities.Graphviz            (MonadGraphviz)
 import Modelling.Auxiliary.Common (
+  ModellingTasksException (NeverHappens),
   Randomise (randomise),
   RandomiseLayout (randomiseLayout),
   RandomiseNames (randomiseNames),
@@ -110,8 +111,9 @@ import Modelling.CdOd.Types (
 import Modelling.Types                  (Change (..))
 
 import Control.Applicative              (Alternative ((<|>)))
+import Control.Functor.Trans            (FunctorTrans (lift))
 import Control.Monad                    ((>=>), unless, void, when)
-import Control.Monad.Catch              (MonadCatch, MonadThrow)
+import Control.Monad.Catch              (MonadCatch, MonadThrow (throwM))
 import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
   ExtraText (..),
@@ -140,8 +142,8 @@ import Control.OutputCapable.Blocks.Type (
   toOutputCapable,
   )
 import Control.Monad.Random             (RandT, RandomGen, evalRandT, mkStdGen)
-import qualified Control.Monad.Trans.Class as MTrans
 import Control.Monad.Random.Class       (MonadRandom)
+import qualified Control.Monad.Trans.Class as MTrans
 import Data.Bitraversable               (bimapM)
 import Data.Containers.ListUtils        (nubOrd)
 import Data.Either                      (isRight, partitionEithers)
@@ -397,7 +399,7 @@ selectValidCdFeedback path drawSettings xs x cdChange =
       let sufficient = byName || maybe True isInheritance (remove change)
       unless sufficient showNamedCd
       paragraph $ case remove change of
-        Nothing -> error "NeverHappens: remove change returned Nothing"
+        Nothing -> lift $ throwM NeverHappens
         Just relation -> translate $ do
           let phrase l = phraseRelationship
                 l
