@@ -697,7 +697,7 @@ instance RandomiseNames MatchCdOdInstance where
     let (names, nonInheritances) = classAndNonInheritanceNames inst
     names'  <- shuffleM names
     nonInheritances' <- shuffleM nonInheritances
-    renameInstance inst names' nonInheritances'
+    lift $ renameInstance inst names' nonInheritances'
 
   hasRandomisableNames MatchCdOdInstance {..} = listToMaybe
     $ mapMaybe (isObjectDiagramRandomisable . snd) $ M.elems instances
@@ -768,7 +768,7 @@ renameInstance inst@MatchCdOdInstance {..} names' nonInheritances' = do
     }
 
 getRandomTask
-  :: (MonadAlloy m, RandomGen g, MonadThrow m)
+  :: (MonadAlloy m, MonadFail m, RandomGen g, MonadThrow m)
   => MatchCdOdConfig
   -> RandT g m (Map Int Cd, Map Char ([Int], AlloyInstance))
 getRandomTask config = do
