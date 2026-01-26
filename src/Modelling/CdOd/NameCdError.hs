@@ -520,14 +520,14 @@ defaultNameCdErrorTaskText :: NameCdErrorTaskText
 defaultNameCdErrorTaskText = nameCdErrorTaskText True
 
 nameCdErrorTaskText :: Bool -> NameCdErrorTaskText
-nameCdErrorTaskText withAnswerChoices = concat [
+nameCdErrorTaskText withRelationshipChoices = concat [
  [
   Paragraph $ singleton $ Translated $ translations $ do
     english "Consider the following class diagram, which unfortunately is invalid:"
     german "Betrachten Sie folgendes Klassendiagramm, welches leider ungültig ist:",
   Paragraph $ singleton $ Special IncorrectCd
  ],
- optional withAnswerChoices [
+ optional withRelationshipChoices [
   Paragraph $ singleton $ Translated $ translations $ do
     english "It contains the following relationships between classes:"
     german "Es enthält die folgenden Beziehungen zwischen Klassen:",
@@ -545,9 +545,7 @@ nameCdErrorTaskText withAnswerChoices = concat [
       dass dieses Klassendiagramm ungültig ist,
       und nennen Sie alle Beziehungen, die definitiv zum Problem beitragen,
       d.h., deren Entfernung die Ungültigkeit jeweils beheben würde.
-      |]
- ],
- optional withAnswerChoices [
+      |],
   Paragraph $ singleton $ Translated $ translations $ do
     english [i|Reasons available to choose from are:|]
     german [i|Gründe, die hierfür zur Auswahl stehen, sind:|],
