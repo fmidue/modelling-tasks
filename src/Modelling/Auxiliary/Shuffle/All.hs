@@ -17,13 +17,12 @@ import Modelling.Auxiliary.Common (
   RandomiseNames (randomiseNames),
   RandomiseLayout (randomiseLayout),
   Randomise (randomise),
-  ShuffleExcept (unShuffleExcept),
   )
 
 import Control.Exception                (SomeException)
 import Control.Monad                    ((>=>))
 import Control.Monad.Catch              (MonadThrow)
-import Control.Monad.Random             (MonadRandom, RandomGen, evalRandT)
+import Control.Monad.Random             (RandomGen, RandT, evalRandT)
 import GHC.Generics                     (Generic)
 
 -- | A datatype that allows setting all available shuffling methods
@@ -42,9 +41,9 @@ data ShuffleInstance a = ShuffleInstance {
 Set all shuffling methods of 'ShuffleInstance' to enabled.
 -}
 shuffleEverything
-  :: (MonadRandom m, MonadThrow m, Randomise a, RandomiseLayout a, RandomiseNames a)
+  :: (RandomGen g, MonadThrow m, Randomise a, RandomiseLayout a, RandomiseNames a)
   => a
-  -> m a
+  -> RandT g m a
 shuffleEverything inst = shuffleInstance ShuffleInstance {
   taskInstance = inst,
   allowLayoutMangling = True,
@@ -56,9 +55,9 @@ shuffleEverything inst = shuffleInstance ShuffleInstance {
 Shuffle a 'taskInstance' based on enabled shuffling methods.
 -}
 shuffleInstance
-  :: (MonadRandom m, MonadThrow m, Randomise a, RandomiseLayout a, RandomiseNames a)
+  :: (RandomGen g, MonadThrow m, Randomise a, RandomiseLayout a, RandomiseNames a)
   => ShuffleInstance a
-  -> m a
+  -> RandT g m a
 shuffleInstance ShuffleInstance {..} =
   whenM shuffleNames randomiseNames
   >=> whenM shuffleOptions randomise
@@ -75,4 +74,4 @@ shuffleInstanceWith
   => ShuffleInstance a
   -> g
   -> Either SomeException a
-shuffleInstanceWith x = evalRandT (unShuffleExcept $ shuffleInstance x)
+shuffleInstanceWith x g = evalRandT (shuffleInstance x) g

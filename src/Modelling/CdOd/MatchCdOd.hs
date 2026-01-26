@@ -722,16 +722,16 @@ shuffleNodesAndEdges MatchCdOdInstance {..} = do
     }
 
 shuffleInstance
-  :: (MonadThrow m, MonadRandom m)
+  :: (MonadThrow m, RandomGen g)
   => MatchCdOdInstance
-  -> m MatchCdOdInstance
+  -> RandT g m MatchCdOdInstance
 shuffleInstance MatchCdOdInstance {..} = do
   cds <- shuffleM $ M.toList diagrams
   ods <- shuffleM $ M.toList instances
   let changeId x (y, cd) = ((y, x), (x, cd))
       (idMap, cds') = unzip $ zipWith changeId [1..] cds
       replaceId x (_, od) = (x, od)
-      rename = maybe (throwM InvalidMatchCdOdInstance) return
+      rename = maybe (lift $ throwM InvalidMatchCdOdInstance) return
         . (`lookup` idMap)
   ods' <- mapM (mapM $ bimapM (mapM rename) return)
     $ zipWith replaceId ['a'..] ods

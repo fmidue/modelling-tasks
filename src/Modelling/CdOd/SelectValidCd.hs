@@ -141,7 +141,8 @@ import Control.OutputCapable.Blocks.Type (
   specialToOutputCapable,
   toOutputCapable,
   )
-import Control.Monad.Random             (evalRandT, mkStdGen)
+import Control.Monad.Random             (RandT, RandomGen, evalRandT, mkStdGen)
+import Control.Monad.Trans.Class        (lift)
 import Control.Monad.Random.Class       (MonadRandom)
 import Data.Bitraversable               (bimapM)
 import Data.Containers.ListUtils        (nubOrd)
@@ -532,9 +533,9 @@ instance RandomiseLayout SelectValidCdInstance where
       }
 
 shuffleEach
-  :: (MonadRandom m, MonadThrow m)
+  :: (RandomGen g, MonadThrow m)
   => SelectValidCdInstance
-  -> m SelectValidCdInstance
+  -> RandT g m SelectValidCdInstance
 shuffleEach inst@SelectValidCdInstance {..} = do
   cds <- shuffleCdChange inst `mapM` classDiagrams
   return $ SelectValidCdInstance {
@@ -547,10 +548,10 @@ shuffleEach inst@SelectValidCdInstance {..} = do
     }
 
 shuffleCdChange
-  :: (MonadRandom m, MonadThrow m)
+  :: (RandomGen g, MonadThrow m)
   => SelectValidCdInstance
   -> CdChange
-  -> m CdChange
+  -> RandT g m CdChange
 shuffleCdChange inst x = do
   names' <- shuffleM names
   nonInheritances' <- shuffleM nonInheritances
