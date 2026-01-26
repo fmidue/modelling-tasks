@@ -601,13 +601,13 @@ renameInstance inst@RepairCdInstance {..} names' nonInheritances' = do
     }
 
 repairCd
-  :: forall m. (MonadAlloy m, MonadCatch m)
+  :: (MonadAlloy m, MonadCatch m)
   => RepairCdConfig
   -> Int
   -> Int
   -> m RepairCdInstance
 repairCd RepairCdConfig {..} segment seed = flip evalRandT g $ do
-  (cd, chs) <- lift $ generateSetOfCds
+  (cd, chs) <- generateSetOfCds
     IllegalStructuralWeakening
     allowedProperties
     classConfig
