@@ -33,7 +33,7 @@ import qualified Data.Set                         as S (
   union,
   )
 
-import Control.Exception                (Exception, SomeException)
+import Control.Exception                (Exception)
 import Control.Monad.Catch              (MonadThrow (throwM))
 import Control.Monad.Extra              (firstJustM, ifM, maybeM)
 import Control.Monad.Random (
@@ -42,7 +42,6 @@ import Control.Monad.Random (
   RandomGen,
   fromList,
   )
-import Control.Monad.Trans.Class        (lift)
 import Data.Char (
   digitToInt,
   isSpace,
