@@ -143,7 +143,7 @@ import Control.OutputCapable.Blocks.Type (
   )
 import Control.Monad.Random             (RandT, RandomGen, evalRandT, mkStdGen)
 import Control.Monad.Random.Class       (MonadRandom)
-import qualified Control.Monad.Trans.Class as MTrans
+import qualified Control.Monad.Trans.Class as Monad (lift)
 import Data.Bitraversable               (bimapM)
 import Data.Containers.ListUtils        (nubOrd)
 import Data.Either                      (isRight, partitionEithers)
@@ -514,7 +514,7 @@ instance RandomiseNames SelectValidCdInstance where
     let (names, nonInheritances) = classAndNonInheritanceNames inst
     names' <- shuffleM names
     nonInheritances' <- shuffleM nonInheritances
-    MTrans.lift $ renameInstance inst names' nonInheritances'
+    Monad.lift $ renameInstance inst names' nonInheritances'
 
 instance RandomiseLayout SelectValidCdInstance where
   randomiseLayout SelectValidCdInstance {..} = do
@@ -561,10 +561,10 @@ shuffleCdChange inst x = do
       renameOd = renameObjectsWithClassesAndLinksInOd bmNames bmNonInheritances
       renameEdge = renameClassesAndRelationships bmNames bmNonInheritances
       renameEdge' = renameClassesAndRelationships bmNames bmNonInheritances
-  mapInValidOptionM
-    (MTrans.lift . renameCd)
-    (mapM $ mapM $ bimapM (MTrans.lift . renameEdge) (MTrans.lift . renameEdge'))
-    (MTrans.lift . renameOd)
+  Monad.lift $ mapInValidOptionM
+    renameCd
+    (mapM $ mapM $ bimapM renameEdge renameEdge')
+    renameOd
     x
   where
     (names, nonInheritances) = classAndNonInheritanceNames inst
