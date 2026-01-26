@@ -471,7 +471,7 @@ matchCdOd
   -> Int
   -> m MatchCdOdInstance
 matchCdOd config segment seed = flip evalRandT g $ do
-  inst <- getMatchCdOdTask (lift . getRandomTask) config
+  inst <- getMatchCdOdTask getRandomTask config
   shuffleEverything inst
   where
     g = mkStdGen $ (segment +) $ 4 * seed
@@ -768,34 +768,35 @@ renameInstance inst@MatchCdOdInstance {..} names' nonInheritances' = do
     }
 
 getRandomTask
-  :: (MonadAlloy m, MonadFail m, MonadRandom m, MonadThrow m)
+  :: (MonadAlloy m, RandomGen g, MonadThrow m)
   => MatchCdOdConfig
-  -> m (Map Int Cd, Map Char ([Int], AlloyInstance))
+  -> RandT g m (Map Int Cd, Map Char ([Int], AlloyInstance))
 getRandomTask config = do
   let alloyCode = Changes.transform
         (classConfig config)
         (allowedCdMutations config)
         defaultProperties
         (withNonTrivialInheritance config)
-  alloyInstances <- getInstances (maxInstances config) (timeout config) alloyCode
+  alloyInstances <- lift $ getInstances (maxInstances config) (timeout config) alloyCode
   randomInstances <- shuffleM alloyInstances
   ods <- getODsFor config { timeout = Nothing } randomInstances
   maybe (error "could not find instance") return ods
 
 getODsFor
-  :: (MonadAlloy m, MonadFail m, MonadRandom m, MonadThrow m)
+  :: (MonadAlloy m, MonadFail m, RandomGen g, MonadThrow m)
   => MatchCdOdConfig
   -> [AlloyInstance]
-  -> m (Maybe (Map Int Cd, Map Char ([Int], AlloyInstance)))
+  -> RandT g m (Maybe (Map Int Cd, Map Char ([Int], AlloyInstance)))
 getODsFor _      []       = return Nothing
 getODsFor config (cd:cds) = do
-  cds' <- instanceChangesAndCds
+  cds' <- lift (instanceChangesAndCds
     <$> (nameClassDiagramInstance <=< fromInstanceWithNameOverlap) cd
-  cds'' <- mapM validChangeClassDiagram cds'
+    )
+  cds'' <- lift $ mapM validChangeClassDiagram cds'
   [cd1', cd2', cd3] <- mapM shuffleClassAndConnectionOrder cds''
     >>= shuffleCdNames
   [cd1, cd2] <- shuffleM [cd1', cd2']
-  alloyInstances <- getODInstances config cd1 cd2 cd3 $ length $ classNames cd1
+  alloyInstances <- lift $ getODInstances config cd1 cd2 cd3 $ length $ classNames cd1
   maybeRandomInstances <- takeRandomInstances alloyInstances
   case maybeRandomInstances of
     Nothing      -> getODsFor config cds
