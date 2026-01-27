@@ -714,7 +714,7 @@ getDifferentNamesTask tryNext DifferentNamesConfig {..} cd = do
           objectConfig
           (concatMap relationships cds)
         partsList' = foldr mergeParts parts0 partsList
-    instances  <- lift $ getInstances
+    instances <- lift $ getInstances
       maxInstances
       timeout
       (combineParts partsList' ++ unlines overlappingPredicates ++ onlyCd0)
