@@ -149,7 +149,7 @@ executable evalIsomorphic
     , happy
   build-depends:
       MonadRandom
-    , autotool-capabilities-io-instance
+    , autotool-capabilities-io-instances
     , base
     , bytestring
     , call-plantuml
@@ -176,7 +176,7 @@ executable evalTimeToGenerate
     , happy
   build-depends:
       MonadRandom
-    , autotool-capabilities-io-instance
+    , autotool-capabilities-io-instances
     , base
     , containers
     , criterion-measurement
