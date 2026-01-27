@@ -3,8 +3,10 @@
 module Modelling.PetriNet.PetriDeadlock.Config where
 
 import Modelling.PetriNet.Reach.Deadlock (DeadlockConfig(..))
-import Modelling.PetriNet.Reach.Type    (Capacity(..))
+import Modelling.PetriNet.Reach.Filter  (defaultFilterConfig, FilterConfig(..))
+import Modelling.PetriNet.Reach.Type    (Capacity(..), TransitionBehaviorConstraints(..), ArrowDensityConstraints(..))
 import Data.GraphViz.Commands           (GraphvizCommand(..))
+import Data.Ratio                       ((%))
 
 {-|
 points: 0.2
@@ -14,16 +16,26 @@ task2023_29 = DeadlockConfig {
   numPlaces = 4,
   numTransitions = 4,
   capacity = Unbounded,
-  drawCommands = [Circo],
+  graphLayouts = [Circo],
   maxTransitionLength = 7,
   minTransitionLength = 7,
-  postconditionsRange = (1, Just 2),
-  preconditionsRange = (1, Just 2),
-  printSolution = True,
+  transitionBehaviorConstraints = TransitionBehaviorConstraints { allowedTokenChanges = Nothing, areNonPreserving = Nothing },
+  arrowDensityConstraints = ArrowDensityConstraints {
+    incomingArrowsPerTransition = (1, Just 2),
+    outgoingArrowsPerTransition = (1, Just 2),
+    incomingArrowsPerPlace = (0, Nothing),
+    outgoingArrowsPerPlace = (0, Nothing),
+    totalArrowsFromPlacesToTransitions = (4, Just 8),
+    totalArrowsFromTransitionsToPlaces = (4, Just 8)
+    },
+  maxPrintedSolutions = 10,
   rejectLongerThan = Just 7,
   showLengthHint = False,
   showMinLengthHint = True,
-  showPlaceNamesInNet = False
+  showPlaceNamesInNet = False,
+  fusableTransitionsConsumingAreExactly = Nothing,
+  fusableTransitionsProducingAreExactly = Nothing,
+  filterConfig = defaultFilterConfig { forbiddenCycleLengths = [], absentTransitionsRequirement = 0, requireCycleLengthsAny = [] }
   }
 
 {-|
@@ -34,16 +46,26 @@ task2023_30 = DeadlockConfig {
   numPlaces = 6,
   numTransitions = 8,
   capacity = Unbounded,
-  drawCommands = [Circo],
+  graphLayouts = [Circo],
   maxTransitionLength = 14,
   minTransitionLength = 14,
-  postconditionsRange = (1, Just 2),
-  preconditionsRange = (1, Just 2),
-  printSolution = True,
+  transitionBehaviorConstraints = TransitionBehaviorConstraints { allowedTokenChanges = Nothing, areNonPreserving = Nothing },
+  arrowDensityConstraints = ArrowDensityConstraints {
+    incomingArrowsPerTransition = (1, Just 2),
+    outgoingArrowsPerTransition = (1, Just 2),
+    incomingArrowsPerPlace = (0, Nothing),
+    outgoingArrowsPerPlace = (0, Nothing),
+    totalArrowsFromPlacesToTransitions = (8, Just 16),
+    totalArrowsFromTransitionsToPlaces = (8, Just 16)
+    },
+  maxPrintedSolutions = 10,
   rejectLongerThan = Just 14,
   showLengthHint = False,
   showMinLengthHint = True,
-  showPlaceNamesInNet = False
+  showPlaceNamesInNet = False,
+  fusableTransitionsConsumingAreExactly = Nothing,
+  fusableTransitionsProducingAreExactly = Nothing,
+  filterConfig = defaultFilterConfig { forbiddenCycleLengths = [], requireCycleLengthsAny = [] }
   }
 
 {-|
@@ -68,14 +90,122 @@ task2024_61 = DeadlockConfig {
   numPlaces = 4,
   numTransitions = 4,
   capacity = Unbounded,
-  drawCommands = [Circo],
+  graphLayouts = [Circo],
   maxTransitionLength = 8,
   minTransitionLength = 8,
-  postconditionsRange = (1, Just 2),
-  preconditionsRange = (1, Just 2),
-  printSolution = True,
+  transitionBehaviorConstraints = TransitionBehaviorConstraints { allowedTokenChanges = Nothing, areNonPreserving = Nothing },
+  arrowDensityConstraints = ArrowDensityConstraints {
+    incomingArrowsPerTransition = (1, Just 2),
+    outgoingArrowsPerTransition = (1, Just 2),
+    incomingArrowsPerPlace = (0, Nothing),
+    outgoingArrowsPerPlace = (0, Nothing),
+    totalArrowsFromPlacesToTransitions = (4, Just 8),
+    totalArrowsFromTransitionsToPlaces = (4, Just 8)
+    },
+  maxPrintedSolutions = 10,
   rejectLongerThan = Just 8,
   showLengthHint = False,
   showMinLengthHint = True,
-  showPlaceNamesInNet = False
+  showPlaceNamesInNet = False,
+  fusableTransitionsConsumingAreExactly = Nothing,
+  fusableTransitionsProducingAreExactly = Nothing,
+  filterConfig = defaultFilterConfig { absentTransitionsRequirement = 0, forbiddenCycleLengths = [], requireCycleLengthsAny = [] }
+  }
+
+{-|
+points: 0.2
+the amount of generated instances: 100
+maximum concurrent amount of tasks: 50
+average generation time per instance on the cluster (without considering concurrency): 3.26s
+total run time on the cluster (not including queuing time): 1:55min
+average CPU usage: 97.54%
+average memory usage: 378.04 MB
+-}
+task2025_29 :: DeadlockConfig
+task2025_29 = DeadlockConfig {
+  numPlaces = 4,
+  numTransitions = 4,
+  capacity = Unbounded,
+  graphLayouts = [Circo],
+  maxTransitionLength = 7,
+  minTransitionLength = 7,
+  transitionBehaviorConstraints = TransitionBehaviorConstraints {
+    allowedTokenChanges = Nothing,
+    areNonPreserving = Nothing
+    },
+  arrowDensityConstraints = ArrowDensityConstraints {
+    incomingArrowsPerTransition = (1, Just 2),
+    outgoingArrowsPerTransition = (1, Just 2),
+    incomingArrowsPerPlace = (1, Nothing),
+    outgoingArrowsPerPlace = (1, Nothing),
+    totalArrowsFromPlacesToTransitions = (5, Just 5),
+    totalArrowsFromTransitionsToPlaces = (4, Just 6)
+    },
+  maxPrintedSolutions = 10,
+  rejectLongerThan = Just 7,
+  showLengthHint = False,
+  showMinLengthHint = True,
+  showPlaceNamesInNet = False,
+  fusableTransitionsConsumingAreExactly  = Nothing,
+  fusableTransitionsProducingAreExactly  = Just 1,
+  filterConfig = FilterConfig {
+    rejectGroupedRepeats = True,
+    repetitiveSubsequenceThreshold = Just 3,
+    spaceballsPrefixThreshold = Just 4,
+    forbiddenCycleLengths = [],
+    requireCycleLengthsAny = [],
+    solutionSetLimit = Just 15,
+    requireSolutionsArePermutations = False,
+    absentTransitionsRequirement = 0,
+    transitionCoverageRequirement = 1 % 1
+    }
+  }
+
+{-|
+points: 0.25
+the amount of generated instances: 100
+maximum concurrent amount of tasks: 50
+average generation time per instance on the cluster (without considering concurrency): 2:30:44h
+total run time on the cluster (not including queuing time): 11:08:20h
+average CPU usage: 98.99%
+average memory usage: 372.13 MB
+-}
+task2025_30 :: DeadlockConfig
+task2025_30 = DeadlockConfig {
+  numPlaces = 6,
+  numTransitions = 8,
+  capacity = Unbounded,
+  graphLayouts = [Circo],
+  maxTransitionLength = 14,
+  minTransitionLength = 14,
+  transitionBehaviorConstraints = TransitionBehaviorConstraints {
+    allowedTokenChanges = Nothing,
+    areNonPreserving = Nothing
+    },
+  arrowDensityConstraints = ArrowDensityConstraints {
+    incomingArrowsPerTransition = (1, Just 2),
+    outgoingArrowsPerTransition = (1, Just 2),
+    incomingArrowsPerPlace = (1, Just 3),
+    outgoingArrowsPerPlace = (1, Just 2),
+    totalArrowsFromPlacesToTransitions = (9, Just 10),
+    totalArrowsFromTransitionsToPlaces = (10, Just 14)
+    },
+  maxPrintedSolutions = 10,
+  rejectLongerThan = Just 14,
+  showLengthHint = False,
+  showMinLengthHint = True,
+  showPlaceNamesInNet = False,
+  fusableTransitionsConsumingAreExactly  = Just 2,
+  fusableTransitionsProducingAreExactly  = Just 2,
+  filterConfig = FilterConfig {
+    rejectGroupedRepeats = True,
+    repetitiveSubsequenceThreshold = Just 4,
+    spaceballsPrefixThreshold = Just 4,
+    forbiddenCycleLengths = [],
+    requireCycleLengthsAny = [],
+    solutionSetLimit = Just 15,
+    requireSolutionsArePermutations = False,
+    absentTransitionsRequirement = 1,
+    transitionCoverageRequirement = 3 % 4
+    }
   }

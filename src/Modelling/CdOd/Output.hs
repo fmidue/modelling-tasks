@@ -82,7 +82,6 @@ import Data.GraphViz (
   shape,
   toLabel,
   toLabelValue,
-  undirCommand,
   vee,
   )
 import Data.GraphViz.Attributes.Complete (Attribute (..), DPoint (..), Label)
@@ -239,7 +238,7 @@ drawCd config marking cd@AnyClassDiagram {..} = do
         (\(s, t, (isThick, r), p) g -> g # drawEdge font s t isThick r p)
         graphNodes
         edges
-  renderDiagram graphEdges
+  renderDiagram $ frame 10 graphEdges
   where
     getFromToInvalid = \case
       InvalidInheritance {..} -> both linking (invalidSubClass, invalidSuperClass)
@@ -383,7 +382,7 @@ drawOdFromInstance
   printNames
   path
   = do
-  g <- alloyInstanceToOd possibleClassNames possibleLinkNames alloyInstance
+  g <- lift $ alloyInstanceToOd possibleClassNames possibleLinkNames alloyInstance
   od <- anonymiseObjects (fromMaybe (1 % 3) anonymous) g
   lift $ do
     renderedOd <- drawOd od direction printNames
@@ -436,7 +435,7 @@ drawOd ObjectDiagram {..} direction printNames = do
           ++ [ArrowSize 0.4, FontSize 16]
           ++ [toLabel linkLabel | printNames] }
   errorWithoutGraphviz
-  graph' <- layoutGraph' params undirCommand graph
+  graph' <- layoutGraph' params dirCommand graph
   font <- lin
   let (nodes, edges) = GV.getGraph graph'
       graphNodes = M.foldrWithKey
@@ -448,7 +447,7 @@ drawOd ObjectDiagram {..} direction printNames = do
            g # drawLink font direction printNames s t l p)
         graphNodes
         edges
-  renderDiagram graphEdges
+  renderDiagram $ frame 10 graphEdges
   where
     arrowHeads = case direction of
       NoDir  -> [edgeEnds NoDir]

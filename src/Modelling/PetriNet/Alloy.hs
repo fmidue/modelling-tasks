@@ -45,6 +45,7 @@ import qualified Modelling.PetriNet.Types         as T (
 
 import Control.Monad                    (when)
 import Control.Monad.Catch              (MonadThrow (throwM))
+import Control.Monad.Trans.Class (lift)
 import Control.Monad.Random (
   RandT,
   Random (randomR),
@@ -219,9 +220,9 @@ taskInstance
   -> RandT g m a
 taskInstance taskF alloyF parseF alloyC config segment = do
   let is = T.maxInstances (alloyC config)
-  list <- getInstances is (T.timeout $ alloyC config) (alloyF config)
+  list <- lift $ getInstances is (T.timeout $ alloyC config) (alloyF config)
   when (null $ drop segment list)
-    $ throwM NoInstanceAvailable
+    $ lift $ throwM NoInstanceAvailable
   inst <- case fromIntegral <$> is of
     Nothing -> randomInstance list
     Just n -> do

@@ -405,7 +405,7 @@ pickConcurrency
     m
     [(p n String, Maybe (Concurrent String))]
 pickConcurrency = taskInstance
-  pickTaskInstance
+  (\f -> lift . pickTaskInstance f)
   petriNetPickConcur
   parseConcurrency
   Pick.alloyConfig
@@ -520,7 +520,7 @@ checkFindConcurrencyConfig FindConcurrencyConfig {
     additionalCheck BasicConfig {..} AdvConfig {..}
       | Just False /= presenceOfSourceTransitions, atLeastActive > 2
       = Just [iii|
-        When 'atLeastActive' is greater than 2
+        When 'atLeastActive' is greater than 2,
         'presenceOfSourceTransitions' has to be 'Just False'
         |]
       | otherwise
@@ -584,7 +584,7 @@ defaultPickConcurrencyInstance = PickInstance {
         }
       )))
     ],
-  showSolution = False,
+  showSolution = True,
   addText = NoExtraText
   }
 
@@ -611,6 +611,6 @@ defaultFindConcurrencyInstance = FindInstance {
     },
   numberOfPlaces = 4,
   numberOfTransitions = 3,
-  showSolution = False,
+  showSolution = True,
   addText = NoExtraText
   }

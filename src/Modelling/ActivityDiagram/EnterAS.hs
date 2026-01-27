@@ -67,6 +67,7 @@ import Modelling.PetriNet.Reach.Type (State(..), Net(start))
 import Control.Applicative (Alternative ((<|>)))
 import Control.Monad (unless, when)
 import Control.Monad.Catch              (MonadThrow)
+import Control.Monad.Trans.Class (lift)
 import Control.OutputCapable.Blocks (
   ArticleToUse (IndefiniteArticle),
   ExtraText(..),
@@ -134,7 +135,7 @@ defaultEnterASConfig = EnterASConfig {
   maxInstances = Just 50,
   objectNodeOnEveryPath = Just True,
   answerLength = (5, 8),
-  printSolution = False,
+  printSolution = True,
   extraText = NoExtraText
 }
 
@@ -325,13 +326,13 @@ getEnterASTask
   => EnterASConfig
   -> RandT g m EnterASInstance
 getEnterASTask config = do
-  alloyInstances <- getInstances
+  alloyInstances <- lift $ getInstances
     (maxInstances config)
     Nothing
     $ enterASAlloy config
-  randomInstances <- shuffleM alloyInstances >>= mapM parseInstance
+  randomInstances <- shuffleM alloyInstances >>= mapM (lift . parseInstance)
   ad <- mapM (fmap snd . shuffleAdNames) randomInstances
-  getFirstInstance
+  lift $ getFirstInstance
         $ filter (isNothing . (`checkEnterASInstanceForConfig` config))
         $ map (\x -> let petri = convertToPetriNet x
                      in EnterASInstance {
@@ -394,6 +395,6 @@ defaultEnterASInstance =
   petriNet = convertToPetriNet ad,
   drawSettings = defaultPlantUmlConfig,
   sampleSequence = ["D","E","G","B","F"],
-  showSolution = False,
+  showSolution = True,
   addText = NoExtraText
 }

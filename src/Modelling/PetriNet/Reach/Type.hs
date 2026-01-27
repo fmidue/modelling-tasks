@@ -5,6 +5,7 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE MonoLocalBinds #-}
+{-# LANGUAGE RecordWildCards #-}
 
 {-|
 originally from Autotool (https://gitlab.imn.htwk-leipzig.de/autotool/all0)
@@ -17,6 +18,7 @@ import qualified Data.Map                         as M (
   filter,
   findWithDefault,
   fromList,
+  fromListWith,
   lookup,
   mapKeys,
   toList,
@@ -35,7 +37,7 @@ import Autolib.ToDoc                    (ToDoc (toDocPrec), text)
 import Control.Monad                    (void)
 import Data.Data                        (Data)
 import Data.List                        (intercalate)
-import Data.Map                         (Map)
+import Data.Map                         (Map, (!))
 import Data.Set                         (Set)
 import GHC.Generics                     (Generic)
 import Text.ParserCombinators.Parsec (
@@ -84,6 +86,56 @@ mapCapacity :: Ord a => (s -> a) -> Capacity s -> Capacity a
 mapCapacity _ Unbounded      = Unbounded
 mapCapacity _ (AllBounded x) = AllBounded x
 mapCapacity f (Bounded m)    = Bounded $ M.mapKeys f m
+
+-- | Constraints on transition token behavior in the net
+data TransitionBehaviorConstraints = TransitionBehaviorConstraints {
+  -- | Specify which token-changing transitions to allow.
+  -- @Just LT@: allow only token-decreasing transitions (forbid increasing)
+  -- @Just GT@: allow only token-increasing transitions (forbid decreasing)
+  -- @Nothing@: allow both increasing and decreasing transitions
+  -- Note: @Just EQ@ is rejected during config validation as meaningless
+  -- (would only allow preserving transitions, conflicting with areNonPreserving)
+  allowedTokenChanges :: Maybe Ordering,
+  -- | Require exactly this many transitions to not be token-preserving.
+  -- If @Nothing@, no restriction on number of non-preserving transitions.
+  areNonPreserving :: Maybe Int
+  }
+  deriving (Data, Eq, Generic, Hashable, Ord, Read, Reader, Show, ToDoc)
+
+-- | No transition behavior constraints
+noTransitionBehaviorConstraints :: TransitionBehaviorConstraints
+noTransitionBehaviorConstraints = TransitionBehaviorConstraints {
+  allowedTokenChanges = Nothing,
+  areNonPreserving = Nothing
+  }
+
+-- | Arrow density constraints for net generation
+data ArrowDensityConstraints = ArrowDensityConstraints {
+  -- | Constrain arrows entering each transition (from places)
+  incomingArrowsPerTransition :: (Int, Maybe Int),
+  -- | Constrain arrows leaving each transition (to places)
+  outgoingArrowsPerTransition :: (Int, Maybe Int),
+  -- | Constrain arrows entering each place (from transitions)
+  incomingArrowsPerPlace :: (Int, Maybe Int),
+  -- | Constrain arrows leaving each place (to transitions)
+  outgoingArrowsPerPlace :: (Int, Maybe Int),
+  -- | Global constraint on total arrows from places to transitions
+  totalArrowsFromPlacesToTransitions :: (Int, Maybe Int),
+  -- | Global constraint on total arrows from transitions to places
+  totalArrowsFromTransitionsToPlaces :: (Int, Maybe Int)
+  }
+  deriving (Data, Eq, Generic, Hashable, Ord, Read, Reader, Show, ToDoc)
+
+-- | Default arrow density constraints (no restrictions)
+noArrowDensityConstraints :: ArrowDensityConstraints
+noArrowDensityConstraints = ArrowDensityConstraints {
+  incomingArrowsPerTransition = (0, Nothing),
+  outgoingArrowsPerTransition = (0, Nothing),
+  incomingArrowsPerPlace = (0, Nothing),
+  outgoingArrowsPerPlace = (0, Nothing),
+  totalArrowsFromPlacesToTransitions = (0, Nothing),
+  totalArrowsFromTransitionsToPlaces = (0, Nothing)
+  }
 
 data Net s t = Net {
   places :: Set s,
@@ -223,3 +275,63 @@ hasIsolatedNodes (Net ps ts cs _ _) =
   let connectedPlaces = S.fromList $ concatMap (\(pre, _, post) -> pre ++ post) cs
       connectedTransitions = S.fromList $ map (\(_, t, _) -> t) cs
   in not (S.isSubsetOf ps connectedPlaces && S.isSubsetOf ts connectedTransitions)
+
+-- | Determine the token behavior of a connection
+-- Returns: (consumed, produced)
+connectionTokenBehavior :: Connection s t -> (Int, Int)
+connectionTokenBehavior (prePlaces, _, postPlaces) =
+  (length prePlaces, length postPlaces)
+
+-- | Check if a net satisfies the given transition behavior constraints
+satisfiesTransitionBehaviorConstraints
+  :: Net s t
+  -> TransitionBehaviorConstraints
+  -> Bool
+satisfiesTransitionBehaviorConstraints net TransitionBehaviorConstraints {..} =
+  checkAllowedTypes && checkAreNonPreserving
+  where
+    checkAllowedTypes = case allowedTokenChanges of
+      Nothing -> True
+      Just LT -> all (uncurry (>=) . connectionTokenBehavior) (connections net)
+      Just GT -> all (uncurry (<=) . connectionTokenBehavior) (connections net)
+      Just EQ -> error "satisfiesTransitionBehaviorConstraints: Just EQ should be rejected already by config validation"
+    checkAreNonPreserving = case areNonPreserving of
+      Nothing -> True
+      Just 0 -> all (uncurry (==) . connectionTokenBehavior) $ connections net
+      Just expected ->
+        let nonPreserving = length $ filter (uncurry (/=) . connectionTokenBehavior) $ connections net
+        in nonPreserving == expected
+
+{- | Count transitions with exactly one input place which moreover is exclusively consumed from by that transition.
+More specifically, a "fusable transition consuming" is a transition t where:
+- t consumes (truly) from exactly one input place s, AND
+- t is the only transition that consumes from s (except for trivial back-and-forth looping transitions)
+-}
+countFusableTransitionsConsuming :: Ord s => [([s], t, [s])] -> Int
+countFusableTransitionsConsuming connections =
+  length $ filter isFusableTransitionConsuming connections
+  where
+    isFusableTransitionConsuming (inputPlaces, _, outputPlaces) =
+      case inputPlaces of
+        [singlePlace] -> singlePlace `notElem` outputPlaces &&
+                         null (tail (filter (\(pre, _, post) -> pre /= [singlePlace] || post /= [singlePlace]) (consumerMap ! singlePlace)))
+        _ -> False
+    consumerMap = M.fromListWith (++)
+      [(place, [conn]) | conn@(pre, _, _) <- connections, place <- pre]
+
+{- | Count transitions with exactly one output place which moreover is exclusively produced to by that transition.
+More specifically, a "fusable transition producing" is a transition t where:
+- t produces (truly) to exactly one place s, AND
+- t is the only transition that produces to s (except for trivial back-and-forth looping transitions)
+-}
+countFusableTransitionsProducing :: Ord s => [([s], t, [s])] -> Int
+countFusableTransitionsProducing connections =
+  length $ filter isFusableTransitionProducing connections
+  where
+    isFusableTransitionProducing (inputPlaces, _, outputPlaces) =
+      case outputPlaces of
+        [singlePlace] -> singlePlace `notElem` inputPlaces &&
+                         null (tail (filter (\(pre, _, post) -> pre /= [singlePlace] || post /= [singlePlace]) (producerMap ! singlePlace)))
+        _ -> False
+    producerMap = M.fromListWith (++)
+      [(place, [conn]) | conn@(_, _, post) <- connections, place <- post]

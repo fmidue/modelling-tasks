@@ -57,6 +57,12 @@ import Test.Hspec
 
 spec :: Spec
 spec = do
+  describe "checkFindConcurrencyConfig" $
+    it "accepts the default config" $
+      checkFindConcurrencyConfig defaultFindConcurrencyConfig `shouldBe` Nothing
+  describe "checkPickConcurrencyConfig" $
+    it "accepts the default config" $
+      checkPickConcurrencyConfig defaultPickConcurrencyConfig `shouldBe` Nothing
   describe "validFindConcurrencyConfigs" $
     checkConfigs checkFindConcurrencyConfig findConfigs'
   describe "findConcurrency" $ do

@@ -3,6 +3,7 @@ module Modelling.CdOd.MatchCdOdSpec where
 import qualified Data.Map                         as M (lookup, null)
 
 import Capabilities.Alloy.IO            ()
+import Capabilities.Exceptions.IO       ()
 import Modelling.CdOd.MatchCdOd (
   MatchCdOdConfig (objectConfig),
   checkMatchCdOdConfig,
@@ -50,7 +51,7 @@ spec = do
           not . M.null . diagrams
             <$> matchCdOd defaultMatchCdOdConfig segment seed
         `shouldReturn` True
-      it "reproducible generates defaultMatchCdOdInstance" $
+      it "reproducibly generates defaultMatchCdOdInstance" $
         matchCdOd defaultMatchCdOdConfig 0 0
         `shouldReturn` defaultMatchCdOdInstance
   describe "getODsFor" $ do

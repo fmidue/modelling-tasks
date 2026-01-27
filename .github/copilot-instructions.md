@@ -82,10 +82,32 @@ stack --stack-yaml=stack-apps.yaml test --no-run-tests
 
 **Build times**: Remember that builds can take 30-45 minutes. Set appropriate timeout values (60+ minutes) and never cancel builds.
 
+### 🔴 NEVER COMMIT CODE WHERE TESTS DON'T COMPILE OR EXAMPLE DIRECTORY FAILS
+
+**ABSOLUTE REQUIREMENT**: The test suite must always compile, and the example directory must always compile and run successfully.
+
+**BEFORE ANY COMMIT**: Run these commands to validate:
+
+```bash
+# Test suite must compile (must succeed)
+stack --stack-yaml=stack-apps.yaml test --no-run-tests
+
+# Example directory must compile and run (must succeed)
+stack --stack-yaml=stack-examples.yaml test
+```
+
+**If either fails**: Fix all errors before committing. Only then proceed with committing.
+
+**IF VALIDATION FAILS**:
+
+- **DO NOT COMMIT**
+- **DO NOT USE `report_progress`**
+- **FIX ALL ERRORS FIRST**
+
 ### ⏰ NEVER CANCEL BUILDS OR TESTS
 
 - **Project builds**: 30-45 minutes (set timeout to 60+ minutes)
-- **Test suites**: 15-30 minutes (set timeout to 45+ minutes)
+- **Targeted test runs**: 5-15 minutes (set timeout to 30+ minutes)
 - Builds resume from cache when interrupted properly - canceling wastes progress
 
 ## Working Effectively
@@ -100,8 +122,6 @@ This project uses Haskell Stack as its primary build tool. Three Stack configura
 
 ### Building the Project
 
-**NEVER CANCEL builds or dependency installations - they can take 60+ minutes**
-
 Dependencies are pre-installed by the automated setup workflow. Build the project with:
 
 - `stack --stack-yaml=stack-apps.yaml build` -- Builds the main library plus all applications in `/app`, `/legacy-app`, and `/example` (30-45 minutes)
@@ -110,13 +130,22 @@ Dependencies are pre-installed by the automated setup workflow. Build the projec
 
 ### Running Tests
 
-- `stack test` -- Takes 15-30 minutes. Set timeout to 45+ minutes.
-- `stack --stack-yaml=stack-apps.yaml test` -- includes all test suites
-- Test-specific options:
-  - `--test-arguments="--skip-needs-tuning"` -- excludes unstable/long-running tests
-  - `--test-arguments="--times --maximum-generated-tests=50"` -- limits test case generation
+**CRITICAL**: **NEVER run the full test suite**. Always use targeted tests with `--match` patterns.
 
-**NEVER CANCEL**: Allow adequate time for tests to complete.
+**Targeted testing examples**:
+
+- `stack test --test-arguments="-m SelectAS"` -- Test specific module
+- `stack test --test-arguments="-m Modelling.CdOd"` -- Test category
+- `stack test --test-arguments="-m \"is valid\""` -- Test specific description
+
+**Additional test options**:
+
+- `--test-arguments="--skip-needs-tuning"` -- excludes unstable/long-running tests
+- `--test-arguments="--qc-max-success=50"` -- limits test case generation
+
+**Combine matching with options**:
+
+- `stack test --test-arguments="-m SelectAS --skip-needs-tuning --qc-max-success=10"`
 
 ### Running Applications
 
@@ -160,46 +189,7 @@ runLangMReport (return ()) (>>) (nameCdErrorTask "/tmp/" inst) >>= \(Just (), x)
 
 ## Validation and Linting
 
-Always run these commands before committing changes:
-
-### Build Success (MANDATORY)
-
-**CRITICAL**: Code must successfully build before any commit:
-
-```bash
-stack --stack-yaml=stack-apps.yaml test --no-run-tests modelling-tasks
-```
-
-For the full application suite:
-
-```bash
-stack --stack-yaml=stack-apps.yaml test --no-run-tests
-```
-
-**Never commit code that doesn't build**. This is a fundamental requirement.
-
-### EditorConfig Compliance (MANDATORY)
-
-**ALWAYS run this first before any commit**:
-
-```bash
-./scripts/check-editorconfig.sh
-```
-
-This script enforces:
-
-- No trailing whitespace
-- Final newlines on all files (except test/unit/\*\* files)
-
-**If violations found**, fix them immediately with:
-
-```bash
-# Remove trailing whitespace from specific file:
-sed -i 's/[[:space:]]*$//' filename
-
-# Add final newline to specific file:
-echo >> filename
-```
+Always run these commands before committing changes. See "CRITICAL WARNINGS" section above for detailed build and EditorConfig requirements.
 
 ### Linting
 
@@ -268,38 +258,113 @@ num :: Int              -- Use: number, numberOfItems
 - Widely accepted mathematical notation in domain-specific contexts (e.g., `n` for count in mathematical functions)
 - Standard abbreviations from the problem domain (e.g., `cd` for "class diagram", `od` for "object diagram" when these are established terms in the codebase)
 
-### Code Formatting
-
-**MANDATORY .editorconfig compliance**:
-
-```bash
-# ALWAYS run before committing:
-./scripts/check-editorconfig.sh
-```
-
-Follow `.editorconfig` standards (enforced by CI):
-
-- **2-space indentation** (where specified)
-- **LF line endings** (except test/unit/\*\* files)
-- **TRIM TRAILING WHITESPACE** (except test/unit/\*\* files)
-- **INSERT FINAL NEWLINE** (except test/unit/\*\* files)
-- **175 character line limit** (160 for .als files)
-- **No line length limits** for YAML, Markdown, or TeX files
-- **Special handling** for test/unit/ files (formatting rules relaxed)
-
-**Quick fix commands for violations**:
-
-```bash
-# Remove trailing whitespace:
-sed -i 's/[[:space:]]*$//' filename
-
-# Add final newline:
-echo >> filename
-```
-
 ## Haskell Development Guidelines
 
 When writing Haskell code for this project, follow these best practices:
+
+### Git Diff Management
+
+**CRITICAL**: Always favor minimal Git diffs over code alignment when modifying existing code.
+
+This principle is particularly important when working with Haskell records:
+
+- **When modifying record type definitions**: Only change the lines that need to be changed
+- **When modifying record value assignments**: Only change the lines that need to be changed
+- **NEVER realign existing fields** just to make them line up with new or modified fields
+- **When adding new fields to records (or to other entity listings in the code)**:
+  - **PREFERRED**: Add new fields somewhere BEFORE the last field (not at the end) to minimize the diff
+  - Adding at the end requires modifying the previously-last field to add a trailing comma (1 existing line changed + new lines added)
+  - Adding before the last field requires no modifications to existing lines (0 existing lines changed + new lines added)
+  - This same principle **also** applies to export lists, import lists, and other comma-separated lists given as separate lines in the code
+
+**Examples for record type definitions**:
+
+❌ **BAD** - Realigning all fields (creates large diff):
+
+```haskell
+-- Adding maxDisplayedSolutions field
+-- DO NOT realign other fields like this:
+data DeadlockInstance s t = DeadlockInstance {
+  drawUsing             :: GraphvizCommand,  -- realigned (unnecessary change)
+  minLength             :: Int,              -- realigned (unnecessary change)
+  noLongerThan          :: Maybe Int,        -- realigned (unnecessary change)
+  petriNet              :: Net s t,          -- realigned (unnecessary change)
+  showPlaceNames        :: Bool,             -- realigned (unnecessary change)
+  withLengthHint        :: Maybe Int,        -- realigned (unnecessary change)
+  withMinLengthHint     :: Bool,             -- realigned (unnecessary change)
+  solutions             :: Either [t] [[t]], -- realigned and added trailing comma (unnecessary changes)
+  maxDisplayedSolutions :: Maybe Int         -- new field
+```
+
+✅ **GOOD** - Minimal diff (only changed lines):
+
+```haskell
+-- Adding maxDisplayedSolutions field
+-- Keep existing alignment, only modify necessary lines:
+data DeadlockInstance s t = DeadlockInstance {
+  drawUsing         :: GraphvizCommand,
+  minLength         :: Int,
+  noLongerThan      :: Maybe Int,
+  petriNet          :: Net s t,
+  showPlaceNames    :: Bool,
+  withLengthHint    :: Maybe Int,
+  withMinLengthHint :: Bool,
+  maxDisplayedSolutions :: Maybe Int,  -- new field (added without realigning others and without requiring trailing comma in the last line)
+  solutions         :: Either [t] [[t]]
+```
+
+**Examples for record value assignments**:
+
+❌ **BAD** - Realigning all fields and changing order (creates large diff):
+
+```haskell
+-- Replacing showSolution field with two new fields: instanceMaxDisplayedSolutions and solutions
+-- DO NOT realign other fields or reorder like this:
+defaultDeadlockInstance = DeadlockInstance {
+  drawUsing                     = Circo,     -- realigned (unnecessary change)
+  minLength                     = 6,         -- realigned (unnecessary change)
+  noLongerThan                  = Nothing,   -- realigned (unnecessary change)
+  petriNet                      = fst example, -- realigned (unnecessary change)
+  showPlaceNames                = False,     -- realigned (unnecessary change)
+  -- THIS IS WHERE the showSolution field was previously
+  withLengthHint                = Just 9,    -- realigned (unnecessary change)
+  withMinLengthHint             = True,      -- realigned and added trailing comma (unnecessary changes)
+  instanceMaxDisplayedSolutions = Nothing,   -- new field (replacing showSolution)
+  solutions                     = Left []    -- new field (replacing showSolution)
+  }
+```
+
+✅ **GOOD** - Minimal diff (only changed lines):
+
+```haskell
+-- Replacing showSolution field with two new fields: instanceMaxDisplayedSolutions and solutions
+-- Keep existing alignment, replace field at same location, no reordering:
+defaultDeadlockInstance = DeadlockInstance {
+  drawUsing         = Circo,
+  minLength         = 6,
+  noLongerThan      = Nothing,
+  petriNet          = fst example,
+  showPlaceNames    = False,
+  instanceMaxDisplayedSolutions = Nothing,  -- new field (replacing showSolution)
+  solutions         = Left [],              -- new field (replacing showSolution)
+  withLengthHint    = Just 9,
+  withMinLengthHint = True
+  }
+```
+
+**Note**: The `solutions` field uses padding spaces here to fit the previous alignment. This is fine because:
+
+- It doesn't change the line count of the diff
+- It maintains consistency with existing field alignment
+- What would be problematic is realigning all existing fields to match the new longer `instanceMaxDisplayedSolutions` field
+
+**Rationale**:
+
+- Smaller diffs are easier to review
+- Smaller diffs reduce merge conflicts
+- Smaller diffs make Git history more meaningful
+- Code alignment is less important than diff clarity
+- The goal is to show what actually changed, not to make everything perfectly aligned
 
 ### Code Reuse and Refactoring
 
@@ -347,6 +412,30 @@ When writing Haskell code for this project, follow these best practices:
 - Then it is sometimes better to simply inline it directly instead
 - Balance this with readability - don't inline if it makes code harder to understand
 
+### Deriving ToDoc and Reader Instances
+
+**CRITICAL**: All Config and Instance data types MUST derive `ToDoc` and `Reader` instances for Autotool compatibility.
+
+**Background**:
+
+- This project generates tasks that are used in [Autotool](https://git.uni-due.de/fmi/autotool-dev)
+- Autotool requires `ToDoc` and `Reader` instances for serialization/deserialization
+- Forgetting these instances causes build failures in Autotool (not locally)
+
+**When to derive ToDoc and Reader**:
+
+1. **Always derive for Config types**: Any data type named `*Config` (e.g., `MatchAdConfig`, `NameCdErrorConfig`)
+2. **Always derive for Instance types**: Any data type named `*Instance` (e.g., `MatchAdInstance`, `SelectASInstance`)
+3. **Always derive for nested types**: Any custom data type used as a field in Config or Instance types
+4. **Always derive for task-related enums**: Enumeration types used in task configuration or instances
+
+**Required language extensions**:
+
+```haskell
+{-# LANGUAGE DeriveAnyClass #-}  -- Required for deriving Reader and ToDoc
+{-# LANGUAGE DeriveGeneric #-}   -- Required for Generic derivation
+```
+
 ## Repository Structure
 
 ### Key Directories
@@ -380,12 +469,16 @@ When writing Haskell code for this project, follow these best practices:
 
 After making changes, always validate:
 
-1. **Build succeeds**: `stack --stack-yaml=stack-apps.yaml test --no-run-tests modelling-tasks` or `stack --stack-yaml=stack-apps.yaml test --no-run-tests` **MUST PASS BEFORE COMMIT**
-2. **EditorConfig compliance**: `./scripts/check-editorconfig.sh` **MUST PASS**
-3. **HLint does not complain**: `hlint src/ test/ app/` **MUST PASS WITHOUT EVEN JUST SUGGESTIONS**
-4. **Tests pass**: `stack --stack-yaml=stack-apps.yaml test` (30+ minutes)
-5. **App execution**: Test at least one app with `stack exec <app-name>`
-6. **GHCi interaction**: Load examples and generate task instances
+1. **Library build succeeds**: `stack --stack-yaml=stack-apps.yaml test --no-run-tests modelling-tasks` **MUST PASS BEFORE COMMIT**
+2. **Test suite compiles**: `stack --stack-yaml=stack-apps.yaml test --no-run-tests` **MUST PASS BEFORE COMMIT**
+3. **Example directory compiles and its tests pass**: `stack --stack-yaml=stack-examples.yaml test` **MUST PASS BEFORE COMMIT**
+4. **EditorConfig compliance**: `./scripts/check-editorconfig.sh` **MUST PASS**
+5. **HLint does not complain**: `hlint src/ test/ app/` **MUST PASS WITHOUT EVEN JUST SUGGESTIONS**
+6. **Targeted tests pass**: Run targeted tests for code you modified using `--match` patterns
+7. **App execution** (if applicable): Test relevant apps with `stack exec <app-name>`
+8. **GHCi interaction** (if applicable): Load examples and generate task instances
+
+**NEVER run the full test suite** (`stack test` or `stack --stack-yaml=stack-apps.yaml test` without `--match`). Always use targeted testing.
 
 ### Manual Testing Workflow
 
@@ -421,27 +514,7 @@ Tests are matched using a hierarchical path consisting of:
 
 The `--match` (or `-m`) option accepts patterns that match against the full hierarchical test path. Matching is substring-based and case-sensitive.
 
-**CRITICAL QUOTING RULES**: When using `stack test --test-arguments`, the entire argument string is already in double quotes. Therefore:
-
-- **DO NOT** use single quotes around patterns - they become part of the pattern itself
-- For patterns with spaces, use escaped double quotes: `\"`
-- For simple patterns without spaces, no quotes are needed
-
-**IMPORTANT**: When using `stack test --test-arguments`, patterns with spaces MUST be quoted with escaped quotes:
-
-```bash
-# CORRECT - Pattern with spaces requires escaped quotes
-stack test --test-arguments="-m \"is valid\""
-
-# CORRECT - Simple patterns without spaces don't need quotes
-stack test --test-arguments="-m SelectAS"
-
-# WRONG - Do NOT use single quotes around the pattern
-stack test --test-arguments="--match 'SelectAS'"  # This will match 0 tests!
-
-# WRONG - This is also incorrect (single quotes become part of the pattern)
-stack test --test-arguments="-m 'Modelling.CdOd'"  # Will match nothing!
-```
+**Quoting Rules**: When using `stack test --test-arguments`, patterns with spaces MUST be quoted with escaped double quotes (`\"`). Simple patterns without spaces don't need quotes. DO NOT use single quotes - they become part of the pattern and will match nothing.
 
 **Examples with actual tests from this repository**:
 
@@ -462,7 +535,7 @@ stack test --test-arguments="-m Modelling.CdOd"
 stack test --test-arguments="-m \"is valid\""
 
 # Combine with other test options
-stack test --test-arguments="-m SelectAS --skip-needs-tuning --maximum-generated-tests=10"
+stack test --test-arguments="-m SelectAS --skip-needs-tuning --qc-max-success=10"
 ```
 
 **Common Test Modules**:

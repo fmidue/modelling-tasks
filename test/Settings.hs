@@ -18,6 +18,13 @@ needsTuning spec = do
     then xdescribe "needs tuning (skipping)" spec
     else describe "needs tuning" spec
 
+nightly :: Spec -> Spec
+nightly spec = do
+  skip <- runIO $ readIORef skipNeedsTuning
+  if skip
+    then xdescribe "runs only nightly (skipping)" spec
+    else describe "runs only nightly" spec
+
 configDepth :: Int
 configDepth =
 #if QUICK_TESTING

@@ -141,8 +141,9 @@ import Control.OutputCapable.Blocks.Type (
   specialToOutputCapable,
   toOutputCapable,
   )
-import Control.Monad.Random             (evalRandT, mkStdGen)
+import Control.Monad.Random             (RandT, RandomGen, evalRandT, mkStdGen)
 import Control.Monad.Random.Class       (MonadRandom)
+import qualified Control.Monad.Trans.Class as Monad (lift)
 import Data.Bitraversable               (bimapM)
 import Data.Containers.ListUtils        (nubOrd)
 import Data.Either                      (isRight, partitionEithers)
@@ -513,7 +514,7 @@ instance RandomiseNames SelectValidCdInstance where
     let (names, nonInheritances) = classAndNonInheritanceNames inst
     names' <- shuffleM names
     nonInheritances' <- shuffleM nonInheritances
-    renameInstance inst names' nonInheritances'
+    Monad.lift $ renameInstance inst names' nonInheritances'
 
 instance RandomiseLayout SelectValidCdInstance where
   randomiseLayout SelectValidCdInstance {..} = do
@@ -532,9 +533,9 @@ instance RandomiseLayout SelectValidCdInstance where
       }
 
 shuffleEach
-  :: (MonadRandom m, MonadThrow m)
+  :: (RandomGen g, MonadThrow m)
   => SelectValidCdInstance
-  -> m SelectValidCdInstance
+  -> RandT g m SelectValidCdInstance
 shuffleEach inst@SelectValidCdInstance {..} = do
   cds <- shuffleCdChange inst `mapM` classDiagrams
   return $ SelectValidCdInstance {
@@ -547,10 +548,10 @@ shuffleEach inst@SelectValidCdInstance {..} = do
     }
 
 shuffleCdChange
-  :: (MonadRandom m, MonadThrow m)
+  :: (RandomGen g, MonadThrow m)
   => SelectValidCdInstance
   -> CdChange
-  -> m CdChange
+  -> RandT g m CdChange
 shuffleCdChange inst x = do
   names' <- shuffleM names
   nonInheritances' <- shuffleM nonInheritances
@@ -560,7 +561,7 @@ shuffleCdChange inst x = do
       renameOd = renameObjectsWithClassesAndLinksInOd bmNames bmNonInheritances
       renameEdge = renameClassesAndRelationships bmNames bmNonInheritances
       renameEdge' = renameClassesAndRelationships bmNames bmNonInheritances
-  mapInValidOptionM
+  Monad.lift $ mapInValidOptionM
     renameCd
     (mapM $ mapM $ bimapM renameEdge renameEdge')
     renameOd

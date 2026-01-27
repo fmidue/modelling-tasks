@@ -70,6 +70,8 @@ withMinimalLabels n config
       + fst (aggregationLimits config)
       + fst (associationLimits config)
       + fst (compositionLimits config)
+    min' :: Int -> Maybe Int -> Int
     min' l1 Nothing   = l1
     min' l1 (Just l2) = min l1 l2
+    range :: (ClassConfig -> (Int, Maybe Int)) -> Int -> Int -> [Int]
     range f low high  = [low + fst (f config) .. min' high (snd $ f config)]

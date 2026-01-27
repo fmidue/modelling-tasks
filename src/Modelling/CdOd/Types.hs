@@ -109,7 +109,8 @@ import Control.Enumerable.Values        (allValues)
 import Control.Exception                (Exception)
 import Control.Monad                    (void)
 import Control.Monad.Catch              (MonadThrow (throwM))
-import Control.Monad.Random             (MonadRandom)
+import Control.Monad.Random             (MonadRandom, RandT, RandomGen)
+import Control.Monad.Trans.Class        (lift)
 import Control.OutputCapable.Blocks     (ArticleToUse (..))
 import Data.Bifunctor                   (Bifunctor (bimap, first, second))
 import Data.Bifunctor.TH (
@@ -1268,9 +1269,9 @@ Given a collection of CDs use all used class and relationship names
 and shuffle them respectively.
 -}
 shuffleCdNames
-  :: (MonadRandom m, Traversable t, MonadThrow m)
+  :: (RandomGen g, Traversable t, MonadThrow m)
   => t Cd
-  -> m (t Cd)
+  -> RandT g m (t Cd)
 shuffleCdNames cds = do
   let names = nubOrd $ concatMap classNames cds
       nonInheritances = nubOrd $ concatMap associationNames cds
@@ -1279,7 +1280,7 @@ shuffleCdNames cds = do
   let bmNames  = BM.fromList $ zip names names'
       bmNonInheritances = BM.fromList $ zip nonInheritances nonInheritances'
       renameCds = renameClassesAndRelationships bmNames bmNonInheritances
-  mapM renameCds cds
+  mapM (lift . renameCds) cds
 
 {-|
 Renaming 'AnnotatedClassDiagram'gs, `ClassDiagram`s and `Relationship`s

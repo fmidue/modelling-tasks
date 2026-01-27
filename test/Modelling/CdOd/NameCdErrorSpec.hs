@@ -3,6 +3,7 @@ module Modelling.CdOd.NameCdErrorSpec where
 import qualified Data.Map                         as M (null)
 
 import Capabilities.Alloy.IO            ()
+import Capabilities.Exceptions.IO       ()
 import Modelling.CdOd.NameCdError (
   NameCdErrorInstance (classDiagram, errorReasons),
   checkNameCdErrorConfig,
@@ -41,7 +42,7 @@ spec = do
                 && not (M.null $ errorReasons x)
           check <$> nameCdErrorGenerate defaultNameCdErrorConfig segment seed
         `shouldReturn` True
-      it "reproducible generates defaultNameCdErrorInstance" $
+      it "reproducibly generates defaultNameCdErrorInstance" $
         nameCdErrorGenerate defaultNameCdErrorConfig 0 0
         `shouldReturn` defaultNameCdErrorInstance
   describe "renameInstance" $
