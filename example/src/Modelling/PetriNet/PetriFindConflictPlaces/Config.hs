@@ -330,3 +330,39 @@ task2024_66 = FindConflictConfig {
     },
   extraText = NoExtraText
   }
+
+{-|
+points: 0.2
+the amount of generated instances: 100
+maximum concurrent amount of tasks: 100
+average generation time per instance on the cluster (without considering concurrency): 1:02:12h
+total run time on the cluster (not including queuing time): 02:00:56h
+average CPU usage: 99%
+average max memory usage: 2465.03 MB
+-}
+task2025_36 :: FindConflictConfig
+task2025_36 = task2024_34
+
+{-|
+points: 0.2
+the amount of generated instances: 100
+maximum concurrent amount of tasks: 100
+average generation time per instance on the cluster (without considering concurrency): 59:59min
+total run time on the cluster (not including queuing time): 01:00:20h
+average CPU usage: 99%
+average max memory usage: 2341.11 MB
+-}
+task2025_37 :: FindConflictConfig
+task2025_37 = task2024_35
+
+{-|
+points: 0.2
+the amount of generated instances: 100
+maximum concurrent amount of tasks: 100
+average generation time per instance on the cluster (without considering concurrency): 1:11:18h:
+total run time on the cluster (not including queuing time): 01:15:18h
+average CPU usage: 99%
+average max memory usage: 2819.17 MB
+-}
+task2025_38 :: FindConflictConfig
+task2025_38 = task2024_36

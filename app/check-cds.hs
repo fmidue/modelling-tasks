@@ -18,6 +18,7 @@ import Modelling.CdOd.CD2Alloy.Transform (
   )
 import Modelling.CdOd.Output            (drawCd, drawOdFromInstance)
 import Modelling.CdOd.Types (
+  AnyCd,
   Cd,
   ClassDiagram (..),
   LimitedLinking (..),
@@ -241,7 +242,7 @@ drawCdAndOdsFor is c cds cmd = do
       Back
       True
       (c ++ '-' : shorten cmd ++ "-od" ++ show i ++ ".svg")
-    drawCd' :: Cd -> Int -> IO String
+    drawCd' :: AnyCd -> Int -> IO String
     drawCd' cd i = do
       renderedCd <- drawCd defaultCdDrawSettings mempty cd
       BS.writeFile (c ++ "-cd" ++ show i ++ ".svg") renderedCd
