@@ -1,5 +1,4 @@
 {-# LANGUAGE CPP #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# OPTIONS_GHC -Wno-orphans #-}
 module Modelling.Auxiliary.Common (
   ModellingTasksException (..),
@@ -7,7 +6,6 @@ module Modelling.Auxiliary.Common (
   Randomise (..),
   RandomiseLayout (..),
   RandomiseNames (..),
-  ShuffleExcept (..),
   TaskGenerationException (..),
   findFittingRandomElements,
   getFirstInstance,
@@ -35,15 +33,15 @@ import qualified Data.Set                         as S (
   union,
   )
 
-import Control.Exception                (Exception, SomeException)
+import Control.Exception                (Exception)
 import Control.Monad.Catch              (MonadThrow (throwM))
 import Control.Monad.Extra              (firstJustM, ifM, maybeM)
 import Control.Monad.Random (
   MonadRandom (getRandomR),
   RandT,
+  RandomGen,
   fromList,
   )
-import Control.Monad.Trans.Class        (lift)
 import Data.Char (
   digitToInt,
   isSpace,
@@ -89,9 +87,6 @@ data ModellingTasksException
 
 instance Exception ModellingTasksException
 
-instance {-# OVERLAPPABLE #-} MonadThrow m => MonadThrow (RandT g m) where
-  throwM = lift . throwM
-
 mapIndicesTo :: (Eq a, MonadThrow m) => [a] -> [a] -> m [(Int, Int)]
 mapIndicesTo xs ys = mapIndicesToHelper (zip [0 ..] xs) (zip [0 ..] ys)
 
@@ -112,20 +107,12 @@ mapIndicesToHelper ((k, x):xs) ys = do
       | x == y = pure (l, ys')
       | otherwise = fmap ((l, y) :) <$> getFirstIn ys'
 
-newtype ShuffleExcept g a = ShuffleExcept {
-  unShuffleExcept :: RandT g (Either SomeException) a
-  }
-  deriving (Applicative, Functor, Monad, MonadRandom)
-
-instance MonadThrow (ShuffleExcept g) where
-  throwM = ShuffleExcept . lift . throwM
-
 {-|
 The class of types that allow some form of randomisation.
 -}
 class Randomise a where
   -- | Shuffles every component without affecting basic overall properties
-  randomise :: (MonadRandom m, MonadThrow m) => a -> m a
+  randomise :: (RandomGen g, MonadThrow m) => a -> RandT g m a
 
   -- | Checks the randomisability of the given value
   --     * returns Nothing, if it is randomisable
@@ -145,7 +132,7 @@ class RandomiseLayout a where
   For a graph, for example, by changing the order of edges and nodes which affects
   how the used algorithm is laying out the graph.
   -}
-  randomiseLayout :: (MonadRandom m, MonadThrow m) => a -> m a
+  randomiseLayout :: (RandomGen g, MonadThrow m) => a -> RandT g m a
 
 {-|
 The class of types that allow swapping (some of) its components names randomly.
@@ -158,7 +145,7 @@ class RandomiseNames a where
   hasRandomisableNames _ = Nothing
 
   -- | Shuffles the order of names of an instance, swapping names of components
-  randomiseNames :: (MonadRandom m, MonadThrow m) => a -> m a
+  randomiseNames :: (RandomGen g, MonadThrow m) => a -> RandT g m a
 
 upperToDash :: String -> String
 upperToDash [] = []

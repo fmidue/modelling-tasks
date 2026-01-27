@@ -220,6 +220,8 @@ import Modelling.PetriNet.PetriDeadlock.Config (
   task2024_27,
   task2024_28,
   task2024_61,
+  task2025_29,
+  task2025_30,
   )
 import Modelling.PetriNet.Reach.Reach (
   checkReachConfig,
@@ -230,6 +232,8 @@ import Modelling.PetriNet.PetriReach.Config (
   task2024_25,
   task2024_26,
   task2024_60,
+  task2025_27,
+  task2025_28,
   )
 
 import Test.Hspec
@@ -502,3 +506,11 @@ spec =
         checkMathConfig task2025_25 `shouldBe` Nothing
       it "task26" $
         checkMathConfig task2025_26 `shouldBe` Nothing
+      it "task27" $
+        checkReachConfig task2025_27 `shouldBe` Nothing
+      it "task28" $
+        checkReachConfig task2025_28 `shouldBe` Nothing
+      it "task29" $
+        checkDeadlockConfig task2025_29 `shouldBe` Nothing
+      it "task30" $
+        checkDeadlockConfig task2025_30 `shouldBe` Nothing

@@ -189,3 +189,28 @@ task2024_63 = FindConcurrencyConfig {
     },
   extraText = NoExtraText
   }
+
+
+{-|
+points: 0.15
+the amount of generated instances: 100
+maximum concurrent amount of tasks: 100
+average generation time per instance on the cluster (without considering concurrency): 27:32min
+total run time on the cluster (not including queuing time): 28:25min
+average CPU usage: 99.85%
+average max memory usage: 1542.47 MB
+-}
+task2025_34 :: FindConcurrencyConfig
+task2025_34 = task2024_32
+
+{-|
+points: 0.15
+the amount of generated instances: 100
+maximum concurrent amount of tasks: 100
+average generation time per instance on the cluster (without considering concurrency): 1:11:03h
+total run time on the cluster (not including queuing time): 2:01:28h
+average CPU usage: 99.08%
+average max memory usage: 2023.23 MB
+-}
+task2025_35 :: FindConcurrencyConfig
+task2025_35 = task2024_33

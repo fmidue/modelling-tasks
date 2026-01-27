@@ -127,6 +127,7 @@ import Control.Applicative              (Alternative ((<|>)))
 import Control.Exception                (Exception)
 import Control.Monad                    ((<=<), when)
 import Control.Monad.Catch              (MonadCatch, MonadThrow, throwM)
+import Control.Monad.Trans.Class (lift)
 #if __GLASGOW_HASKELL__ < 808
 import Control.Monad.Fail               (MonadFail)
 #endif
@@ -159,6 +160,8 @@ import Control.Monad.Random (
   evalRandT,
   mkStdGen,
   )
+import Control.Monad.Trans.Random (RandT)
+import System.Random (RandomGen)
 import Data.Bifunctor                   (Bifunctor (second))
 import Data.Bitraversable               (bimapM)
 import Data.Containers.ListUtils        (nubOrd)
@@ -227,7 +230,7 @@ defaultMatchCdOdConfig
       usesEveryRelationshipName = Nothing
       },
     omittedDefaultMultiplicities = defaultOmittedDefaultMultiplicities,
-    printSolution    = False,
+    printSolution    = True,
     timeout          = Nothing,
     withNonTrivialInheritance = Just True,
     extraText        = NoExtraText
@@ -474,11 +477,11 @@ matchCdOd config segment seed = flip evalRandT g $ do
     g = mkStdGen $ (segment +) $ 4 * seed
 
 getMatchCdOdTask
-  :: (MonadCatch m, MonadRandom m)
+  :: (MonadCatch m, RandomGen g)
   => (MatchCdOdConfig
-    -> m (Map Int Cd, Map Char ([Int], AlloyInstance)))
+    -> RandT g m (Map Int Cd, Map Char ([Int], AlloyInstance)))
   -> MatchCdOdConfig
-  -> m MatchCdOdInstance
+  -> RandT g m MatchCdOdInstance
 getMatchCdOdTask f config@MatchCdOdConfig {..} = do
   (cds, ods) <- f config
   let possibleLinkNames = concatMap
@@ -500,7 +503,7 @@ getMatchCdOdTask f config@MatchCdOdConfig {..} = do
   where
     toOd possibleLinkNames =
       anonymiseObjects (anonymousObjectProportion objectProperties)
-      <=< alloyInstanceToOd Nothing possibleLinkNames
+      <=< lift . alloyInstanceToOd Nothing possibleLinkNames
 
 {-|
 A 'defaultMatchCdOdInstance' as generated using 'defaultMatchCdOdConfig'.
@@ -674,7 +677,7 @@ defaultMatchCdOdInstance = MatchCdOdInstance {
         ]
       }))
     ],
-  showSolution = False,
+  showSolution = True,
   taskText = defaultMatchCdOdTaskText,
   addText = NoExtraText
   }
@@ -694,7 +697,7 @@ instance RandomiseNames MatchCdOdInstance where
     let (names, nonInheritances) = classAndNonInheritanceNames inst
     names'  <- shuffleM names
     nonInheritances' <- shuffleM nonInheritances
-    renameInstance inst names' nonInheritances'
+    lift $ renameInstance inst names' nonInheritances'
 
   hasRandomisableNames MatchCdOdInstance {..} = listToMaybe
     $ mapMaybe (isObjectDiagramRandomisable . snd) $ M.elems instances
@@ -719,16 +722,16 @@ shuffleNodesAndEdges MatchCdOdInstance {..} = do
     }
 
 shuffleInstance
-  :: (MonadThrow m, MonadRandom m)
+  :: (MonadThrow m, RandomGen g)
   => MatchCdOdInstance
-  -> m MatchCdOdInstance
+  -> RandT g m MatchCdOdInstance
 shuffleInstance MatchCdOdInstance {..} = do
   cds <- shuffleM $ M.toList diagrams
   ods <- shuffleM $ M.toList instances
   let changeId x (y, cd) = ((y, x), (x, cd))
       (idMap, cds') = unzip $ zipWith changeId [1..] cds
       replaceId x (_, od) = (x, od)
-      rename = maybe (throwM InvalidMatchCdOdInstance) return
+      rename = maybe (lift $ throwM InvalidMatchCdOdInstance) return
         . (`lookup` idMap)
   ods' <- mapM (mapM $ bimapM (mapM rename) return)
     $ zipWith replaceId ['a'..] ods
@@ -765,34 +768,35 @@ renameInstance inst@MatchCdOdInstance {..} names' nonInheritances' = do
     }
 
 getRandomTask
-  :: (MonadAlloy m, MonadFail m, MonadRandom m, MonadThrow m)
+  :: (MonadAlloy m, MonadFail m, RandomGen g, MonadThrow m)
   => MatchCdOdConfig
-  -> m (Map Int Cd, Map Char ([Int], AlloyInstance))
+  -> RandT g m (Map Int Cd, Map Char ([Int], AlloyInstance))
 getRandomTask config = do
   let alloyCode = Changes.transform
         (classConfig config)
         (allowedCdMutations config)
         defaultProperties
         (withNonTrivialInheritance config)
-  alloyInstances <- getInstances (maxInstances config) (timeout config) alloyCode
+  alloyInstances <- lift $ getInstances (maxInstances config) (timeout config) alloyCode
   randomInstances <- shuffleM alloyInstances
   ods <- getODsFor config { timeout = Nothing } randomInstances
   maybe (error "could not find instance") return ods
 
 getODsFor
-  :: (MonadAlloy m, MonadFail m, MonadRandom m, MonadThrow m)
+  :: (MonadAlloy m, MonadFail m, RandomGen g, MonadThrow m)
   => MatchCdOdConfig
   -> [AlloyInstance]
-  -> m (Maybe (Map Int Cd, Map Char ([Int], AlloyInstance)))
+  -> RandT g m (Maybe (Map Int Cd, Map Char ([Int], AlloyInstance)))
 getODsFor _      []       = return Nothing
 getODsFor config (cd:cds) = do
-  cds' <- instanceChangesAndCds
+  cds' <- lift (instanceChangesAndCds
     <$> (nameClassDiagramInstance <=< fromInstanceWithNameOverlap) cd
-  cds'' <- mapM validChangeClassDiagram cds'
+    )
+  cds'' <- lift $ mapM validChangeClassDiagram cds'
   [cd1', cd2', cd3] <- mapM shuffleClassAndConnectionOrder cds''
     >>= shuffleCdNames
   [cd1, cd2] <- shuffleM [cd1', cd2']
-  alloyInstances <- getODInstances config cd1 cd2 cd3 $ length $ classNames cd1
+  alloyInstances <- lift $ getODInstances config cd1 cd2 cd3 $ length $ classNames cd1
   maybeRandomInstances <- takeRandomInstances alloyInstances
   case maybeRandomInstances of
     Nothing      -> getODsFor config cds

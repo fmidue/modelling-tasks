@@ -87,6 +87,7 @@ import Modelling.PetriNet.Types (
 
 import Control.Applicative (Alternative ((<|>)))
 import Control.Monad.Catch              (MonadThrow)
+import Control.Monad.Trans.Class (lift)
 import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
   ExtraText (..),
@@ -146,7 +147,7 @@ defaultFindAuxiliaryPetriNodesConfig =
     hideNodeNames = False,
     hideBranchConditions = False,
     presenceOfSinkTransitionsForFinals = Nothing,
-    printSolution = False,
+    printSolution = True,
     extraText = NoExtraText
   }
 
@@ -298,13 +299,14 @@ getFindAuxiliaryPetriNodesTask
   => FindAuxiliaryPetriNodesConfig
   -> RandT g m FindAuxiliaryPetriNodesInstance
 getFindAuxiliaryPetriNodesTask config@FindAuxiliaryPetriNodesConfig {..} = do
-  alloyInstances <- getInstances
+  alloyInstances <- lift $ getInstances
     maxInstances
     Nothing
     $ findAuxiliaryPetriNodesAlloy config
-  randomInstances <- shuffleM alloyInstances >>= mapM parseInstance
+  randomInstances <- shuffleM alloyInstances >>= mapM (lift . parseInstance)
   (ad, matchingNet) <- mapM (fmap snd . shuffleAdNames) randomInstances
-    >>= getFirstInstance . filter (checkPetriNodeCount countOfPetriNodesBounds . snd)
+    >>= lift
+      . getFirstInstance . filter (checkPetriNodeCount countOfPetriNodesBounds . snd)
                          . map (\x -> (x, convertToPetriNet @PetriLike @SimpleNode x))
   return $ FindAuxiliaryPetriNodesInstance {
     activityDiagram = ad,
@@ -366,6 +368,6 @@ defaultFindAuxiliaryPetriNodesInstance =
     activityDiagram = ad,
     matchingNet = convertToSimple ad,
     plantUMLConf = defaultPlantUmlConfig,
-    showSolution = False,
+    showSolution = True,
     addText = NoExtraText
   }

@@ -382,7 +382,7 @@ drawOdFromInstance
   printNames
   path
   = do
-  g <- alloyInstanceToOd possibleClassNames possibleLinkNames alloyInstance
+  g <- lift $ alloyInstanceToOd possibleClassNames possibleLinkNames alloyInstance
   od <- anonymiseObjects (fromMaybe (1 % 3) anonymous) g
   lift $ do
     renderedOd <- drawOd od direction printNames

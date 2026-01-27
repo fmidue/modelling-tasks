@@ -14,6 +14,7 @@ import qualified Data.ByteString.Char8            as BS (
 import Capabilities.Diagrams.IO         ()
 import Capabilities.Graphviz.IO         ()
 import Capabilities.WriteFile.IO        ()
+import Capabilities.Exceptions.IO       ()
 import Modelling.CdOd.Output            (drawCd, drawOdFromInstance)
 import Modelling.CdOd.Types             (defaultCdDrawSettings)
 import Modelling.Common                 (withUnitTestsUsingPath)

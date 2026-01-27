@@ -16,6 +16,7 @@ module Modelling.PetriNet.TestCommon (
 
 import Capabilities.Alloy               (getInstances)
 import Capabilities.Alloy.IO            ()
+import Capabilities.Exceptions.IO       ()
 import Modelling.PetriNet.Alloy         (TaskGenerationException (..))
 import Modelling.PetriNet.Types (
   AlloyConfig (..),

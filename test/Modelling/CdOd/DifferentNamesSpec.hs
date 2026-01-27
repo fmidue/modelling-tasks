@@ -8,6 +8,7 @@ module Modelling.CdOd.DifferentNamesSpec where
 import qualified Data.Bimap                       as BM
 
 import Capabilities.Alloy.IO            ()
+import Capabilities.Exceptions.IO       ()
 import Modelling.CdOd.DifferentNames (
   DifferentNamesConfig (objectConfig),
   ShufflingOption (..),
