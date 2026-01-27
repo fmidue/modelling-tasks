@@ -36,7 +36,8 @@ import qualified Data.Bimap                       as BM (
   keys,
   lookup,
   mapMonotonicR,
-  pairMember,
+  member,
+  memberR,
   toAscList,
   )
 import qualified Data.Map                         as M (
@@ -560,10 +561,10 @@ differentNamesEvaluation task cs = do
       mStripped = BM.mapMonotonicR stripName $ nameMapping $ mapping task
       -- Swap answer tuples around if necessary
       -- The preceding syntax check guarantees only valid pairs can be submitted here
-      readMapping pair =
-        if BM.pairMember pair mStripped
-        then pair
-        else swap pair
+      readMapping pair@(left,right)
+        | BM.member left mStripped ||
+          BM.memberR right mStripped = pair
+        | otherwise = swap pair
       what = translations $ do
         german "Zuordnungen"
         english "mappings"
