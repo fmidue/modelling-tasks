@@ -36,6 +36,7 @@ import Control.Monad.Random (
   evalRandT,
   mkStdGen,
   )
+import Control.Monad.Trans.Class        (lift)
 import Data.Map                         (Map)
 import Data.Set                         (singleton)
 import Language.Alloy.Call              (AlloyInstance)
@@ -61,7 +62,7 @@ getRandomTask
   -> RandT g m (Map Int Cd, Map Char ([Int], AlloyInstance))
 getRandomTask searchSpace config = do
   (cd1, cd2, cd3, numClasses) <- getRandomCDs searchSpace config
-  alloyInstances <- getODInstances config cd1 cd2 cd3 numClasses
+  alloyInstances <- lift $ getODInstances config cd1 cd2 cd3 numClasses
   maybeRandomInstances <- takeRandomInstances alloyInstances
   case maybeRandomInstances of
     Nothing      -> getRandomTask searchSpace config

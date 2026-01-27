@@ -7,6 +7,7 @@ import qualified Language.Alloy.Call              as Alloy (getInstances)
 import Capabilities.Diagrams.IO         ()
 import Capabilities.Graphviz.IO         ()
 import Capabilities.WriteFile.IO        ()
+import Capabilities.Exceptions.IO       ()
 import Modelling.CdOd.CD2Alloy.Transform (
   LinguisticReuse (None),
   Parts (..),
@@ -30,12 +31,13 @@ import Modelling.CdOd.Types (
   relationshipName,
   )
 
-import Control.Monad.Random             (evalRandT, getStdGen)
+import Control.Monad.Random             (RandT, RandomGen, evalRandT, getStdGen)
 import Control.Monad.Trans.Class        (MonadTrans (lift))
 import Data.Foldable                    (toList)
 import Data.GraphViz                    (DirType (..))
 import Data.Maybe                       (mapMaybe)
 import Data.Ratio                       ((%))
+import Language.Alloy.Call              (AlloyInstance)
 
 v :: Relationship String String
 v = Aggregation {
@@ -231,6 +233,7 @@ drawCdAndOdsFor is c cds cmd = do
     mapM_ (\(od, i) -> drawOd possibleLinks od i >>= lift . putStrLn)
     $ zip (maybe id (take . fromInteger) is ods) [1..]
   where
+    drawOd :: RandomGen g => [String] -> AlloyInstance -> Int -> RandT g IO FilePath
     drawOd allRelationshipNames od i = drawOdFromInstance
       od
       Nothing

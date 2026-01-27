@@ -92,6 +92,7 @@ import Control.Applicative (Alternative ((<|>)))
 import Control.Monad (unless, when)
 import Control.Monad.Catch              (MonadThrow, throwM)
 import Control.Monad.Extra (loopM, firstJustM)
+import Control.Monad.Trans.Class (lift)
 import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
   ExtraText (..),
@@ -571,11 +572,11 @@ getSelectPetriTask
   => SelectPetriConfig
   -> RandT g m SelectPetriInstance
 getSelectPetriTask config = do
-  instances <- getInstances
+  instances <- lift $ getInstances
     (maxInstances config)
     Nothing
     $ selectPetriAlloy config
-  randomInstances <- shuffleM instances >>= mapM parseInstance
+  randomInstances <- shuffleM instances >>= mapM (lift . parseInstance)
   layout <- pickRandomLayout config
   let plantUMLConf = PlantUmlConfig {
         suppressNodeNames = hideNodeNames config,
@@ -619,7 +620,7 @@ getSelectPetriTask config = do
     )
   case ad of
     Just x -> return x
-    Nothing -> throwM NoInstanceAvailable
+    Nothing -> lift $ throwM NoInstanceAvailable
 
 defaultSelectPetriInstance :: SelectPetriInstance
 defaultSelectPetriInstance =  SelectPetriInstance {

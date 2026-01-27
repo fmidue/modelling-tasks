@@ -29,23 +29,24 @@ import Modelling.CdOd.Types (
   )
 
 import Control.Monad.Catch              (MonadThrow)
-import Control.Monad.Random             (MonadRandom)
+import Control.Monad.Random             (RandT, RandomGen)
+import Control.Monad.Trans.Class        (lift)
 import Data.List (singleton)
 import Data.Maybe                       (mapMaybe)
 import Language.Alloy.Call              (AlloyInstance)
 import System.Random.Shuffle            (shuffleM)
 
 generateCds
-  :: (MonadAlloy m, MonadRandom m)
+  :: (MonadAlloy m, RandomGen g)
   => Maybe Bool
   -> ClassConfig
   -> RelationshipProperties
   -> Maybe Integer
   -> Maybe Int
-  -> m [AlloyInstance]
+  -> RandT g m [AlloyInstance]
 generateCds withNonTrivialInheritance config props maxInstances to = do
   let alloyCode = transformNoChanges config props withNonTrivialInheritance
-  alloyInstances <- getInstances maxInstances to alloyCode
+  alloyInstances <- lift $ getInstances maxInstances to alloyCode
   shuffleM alloyInstances
 
 instanceToAnyCd :: MonadThrow m => AlloyInstance -> m AnyCd

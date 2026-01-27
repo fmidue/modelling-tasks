@@ -4,6 +4,7 @@ module Modelling.PetriNet.MatchToMathSpec where
 import Capabilities.Alloy.IO            ()
 import Capabilities.Diagrams.IO         ()
 import Capabilities.Graphviz.IO         ()
+import Capabilities.Exceptions.IO       ()
 import Modelling.PetriNet.MatchToMath
 import Modelling.PetriNet.Types (
   ChangeConfig(..),
