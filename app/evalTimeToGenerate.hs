@@ -11,7 +11,7 @@ import Modelling.ActivityDiagram.Config (
   defaultAdConfig,
   )
 import Data.String.Interpolate ( i )
-import Capabilities.Alloy.IO (getInstances)
+import Language.Alloy.Call (getInstances)
 import Criterion.Measurement (secs, initializeTime, getTime)
 
 main :: IO ()

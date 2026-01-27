@@ -152,6 +152,7 @@ executable evalIsomorphic
     , autotool-capabilities-io-instances
     , base
     , bytestring
+    , call-alloy
     , call-plantuml
     , containers
     , diagrams-lib
@@ -178,6 +179,7 @@ executable evalTimeToGenerate
       MonadRandom
     , autotool-capabilities-io-instances
     , base
+    , call-alloy
     , containers
     , criterion-measurement
     , diagrams-lib

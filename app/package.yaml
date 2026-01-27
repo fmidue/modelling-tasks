@@ -93,6 +93,7 @@ executables:
     dependencies:
       - bytestring
       - autotool-capabilities-io-instances
+      - call-alloy
       - call-plantuml
       - directory
       - filepath
@@ -103,6 +104,7 @@ executables:
     source-dirs: .
     dependencies:
       - autotool-capabilities-io-instances
+      - call-alloy
       - filepath
       - criterion-measurement
       - modelling-tasks

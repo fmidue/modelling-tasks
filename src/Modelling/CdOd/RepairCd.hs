@@ -60,6 +60,7 @@ import Capabilities.Alloy               (MonadAlloy, getInstances)
 import Capabilities.Cache               (MonadCache)
 import Capabilities.Diagrams            (MonadDiagrams)
 import Capabilities.Graphviz            (MonadGraphviz)
+import Language.Alloy.Call              (AlloyInstance)
 import Modelling.Auxiliary.Common (
   Randomise (randomise),
   RandomiseLayout (randomiseLayout),
@@ -974,6 +975,7 @@ generateSetOfCds
       randomInstances <- shuffleM instances
       getInstanceWithODs weakeningSets otherWeakenings randomInstances
     article = toArticleToUse preference
+    getInstanceWithODs :: [WeakeningSet StructuralWeakening] -> [StructuralWeakening] -> [AlloyInstance] -> RandT g m (AnyCd, [CdChangeAndCd])
     getInstanceWithODs weakeningSets _  [] =
       tryNextWeakeningSet weakeningSets
     getInstanceWithODs cs structuralWeakenings (alloyInstance : alloyInstances) = do
