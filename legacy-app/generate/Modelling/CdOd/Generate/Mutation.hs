@@ -57,12 +57,15 @@ getMutationResults c vs es m = map newName $ case m of
   LimitShift Increase t -> allShiftDownLimitsRange c t es
   LimitShift Decrease t -> allShiftUpLimitsRange c t es
   where
+    newName :: [DiagramEdge] -> [DiagramEdge]
     newName xs = case xs of
       []                           -> []
       (s,e,NonInheritance k "" sl se b):xs' ->
         (s,e,NonInheritance k (firstFree (allNames xs') $ map (:[]) ['z','y'..]) sl se b):xs'
       xs'                          -> xs'
+    allNames :: [DiagramEdge] -> [String]
     allNames xs = [n | (_, _, NonInheritance _ n _ _ _) <- xs]
+    firstFree :: [String] -> [String] -> String
     firstFree _  []     = error "There are no free variables left"
     firstFree xs (y:ys) =
       if y `elem` xs then firstFree xs ys else y
@@ -78,6 +81,7 @@ transform c s t es =
   ++ concat [allOtherTransformations c sa ta es
             | sa <- toList sc, ta <- toList tc, sa /= ta]
   where
+    addWhen :: Bool -> [[DiagramEdge]] -> [[DiagramEdge]]
     addWhen b xs = if b then xs else []
     ti = delete TInheritance t
     si = delete TInheritance s
@@ -153,9 +157,11 @@ allAdds c ts vs es =
         , sl <- fst $ allLimits c t, el <- snd $ allLimits c t
         , x <- addEdges s e t sl el]
   where
+    addEdges :: String -> String -> Target -> Limit -> Limit -> [DiagramEdge]
     addEdges s e TInheritance _  _  = [(s, e, Inheritance'), (e, s, Inheritance')]
     addEdges s e TAssociation sl el = addEdge s e TAssociation sl el
     addEdges s e t            sl el = addEdge s e t sl el ++ addEdge e s t sl el
+    addEdge :: String -> String -> Target -> Limit -> Limit -> [DiagramEdge]
     addEdge s e t sl el =
       map (\k -> (s, e, NonInheritance k "" sl el False)) $ maybeToList (relationshipType t)
 
@@ -219,9 +225,12 @@ allLimitsWith c op ts es =
   | e@(sv, ev, NonInheritance k n sl el _) <- targets ts es, t <- toList ts
   , (sl', el') <- bothLimits sl el t]
   where
+    bothLimits :: Limit -> Limit -> Target -> [(Limit, Limit)]
     bothLimits s e t = map (s,) (endLimits e t)
                     ++ map (,e) (startLimits s t)
+    startLimits :: Limit -> Target -> [Limit]
     startLimits l t = [l' | l' <- fst $ allLimits c t, l' `op` l]
+    endLimits :: Limit -> Target -> [Limit]
     endLimits   l t = [l' | l' <- snd $ allLimits c t, l' `op` l]
 
 {-|
@@ -237,6 +246,7 @@ allFlipTransformations
 allFlipTransformations _c t es =
   [ flipEdge e : filter (e /=) es | e <- es, isTargetEdge e t ]
   where
+    flipEdge :: DiagramEdge -> DiagramEdge
     flipEdge (s, e, k) = (e, s, k)
 
 allFromInheritances
@@ -268,6 +278,7 @@ allToCompositions c ts es =
   | isAddable c TComposition es
   , e@(se, ee, NonInheritance k _ sl el _) <- removableTargets c ts es, k /= Composition']
   where
+    reduce :: Limit -> Limit
     reduce (0, _) = (0, Just 1)
     reduce _      = (1, Just 1)
 

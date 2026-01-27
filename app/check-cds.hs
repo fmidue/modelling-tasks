@@ -9,6 +9,7 @@ import Capabilities.Graphviz.IO         ()
 import Capabilities.WriteFile.IO        ()
 import Modelling.CdOd.CD2Alloy.Transform (
   LinguisticReuse (None),
+  Parts (..),
   combineParts,
   createRunCommand,
   mergeParts,
@@ -237,12 +238,15 @@ drawCdAndOdsFor is c cds cmd = do
       Back
       True
       (c ++ '-' : shorten cmd ++ "-od" ++ show i ++ ".svg")
+    drawCd' :: Cd -> Int -> IO String
     drawCd' cd i = do
       renderedCd <- drawCd defaultCdDrawSettings mempty cd
       BS.writeFile (c ++ "-cd" ++ show i ++ ".svg") renderedCd
       pure $ c ++ "-cd" ++ show i ++ ".svg"
     maxThreeObjects = maxFiveObjects { objectLimits = (1, 3) }
+    getParts :: [String] -> [Parts]
     getParts relationshipNames = zipWith (cdToAlloy relationshipNames) cds [0..]
+    cdToAlloy :: [String] -> Cd -> Int -> Parts
     cdToAlloy relationshipNames cd i = transform
       None
       cd
@@ -252,6 +256,7 @@ drawCdAndOdsFor is c cds cmd = do
       objectProperties
       (show i)
       ""
+    shorten :: String -> String
     shorten (' ':'a':'n':'d':' ':'c':'d':ys) =
       "and" ++ shorten ys
     shorten (' ':'a':'n':'d':' ':'n':'o':'t':' ':'c':'d':ys) =
