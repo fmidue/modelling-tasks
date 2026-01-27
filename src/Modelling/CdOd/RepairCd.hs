@@ -974,6 +974,7 @@ generateSetOfCds
       randomInstances <- shuffleM instances
       getInstanceWithODs weakeningSets otherWeakenings randomInstances
     article = toArticleToUse preference
+    getInstanceWithODs :: [WeakeningSet StructuralWeakening] -> [StructuralWeakening] -> [AlloyInstance] -> RandT g m (AnyCd, [CdChangeAndCd])
     getInstanceWithODs weakeningSets _  [] =
       tryNextWeakeningSet weakeningSets
     getInstanceWithODs cs structuralWeakenings (alloyInstance : alloyInstances) = do
