@@ -92,7 +92,6 @@ executables:
     source-dirs: .
     dependencies:
       - bytestring
-      - autotool-capabilities-io-instances
       - call-alloy
       - call-plantuml
       - directory
@@ -103,7 +102,6 @@ executables:
     main: evalTimeToGenerate.hs
     source-dirs: .
     dependencies:
-      - autotool-capabilities-io-instances
       - call-alloy
       - filepath
       - criterion-measurement
