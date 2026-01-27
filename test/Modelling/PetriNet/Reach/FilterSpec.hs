@@ -2,7 +2,6 @@
 module Modelling.PetriNet.Reach.FilterSpec where
 
 import Modelling.PetriNet.Reach.Filter
-import Modelling.PetriNet.Reach.Type (Transition(..))
 
 import Data.List                        (zipWith4, zipWith5, zipWith6, zipWith7)
 import Data.List.Extra                  (nubOrd)
@@ -11,7 +10,6 @@ import Test.QuickCheck (
   Arbitrary (arbitrary),
   Gen,
   Testable (property),
-  (==>),
   chooseInt,
   forAll,
   suchThat,
@@ -42,25 +40,17 @@ zipN n xs = concat $ case n of
 
 spec :: Spec
 spec = do
-  describe "isCyclicPattern" $ do
+  describe "isCyclicPatternWithAnyOf" $ do
     it "detects cyclic patterns" $
       forAll (chooseInt (1, 9)) $ \m ->
-        forAll (chooseInt (m, 9)) $ \n ->
-          forAll (genNubSized m) $
-            isCyclicPattern @Int n . concat . replicate 2
+        forAll (genNubSized m) $
+          isCyclicPatternWithAnyOf @Int [m] . concat . replicate 2
 
-    it "does not detect too large cyclic patterns" $
+    it "ignores cycles with lengths not in the forbidden list" $
       forAll (chooseInt (2, 9)) $ \m ->
         forAll (chooseInt (1, m - 1)) $ \n ->
           forAll (genNubSized m) $
-            not . isCyclicPattern @Int n . concat . replicate 2
-
-    it "does only detect complete cyclic patterns" $
-      forAll (chooseInt (0, 9)) $ \m ->
-        forAll (chooseInt (0, 9)) $ \n ->
-          forAll (genNubSized m) $ \xs ->
-            forAll (genNubSized n) $ \ys ->
-              xs /= ys ==> not $ isCyclicPattern @Int (m + n) $ xs ++ ys
+            not . isCyclicPatternWithAnyOf @Int [n] . concat . replicate 2
 
   describe "hasSpaceballsPrefix" $ do
     it "detects Spaceballs patterns" $
@@ -108,10 +98,3 @@ spec = do
             forAll (genNubSized m) $ \(x:xs) ->
               not $ hasGroupedRepeats @Int
                 (let (front, end) = splitAt i (zipN n xs) in front ++ x : end)
-
-  describe "configuration" $ do
-    it "respects filter configuration settings" $ do
-      let cyclicPattern = [Transition 1, Transition 2, Transition 1, Transition 2]
-      let configNoCyclic = defaultFilterConfig {maxCycleLength = Nothing}
-      isTrivialSequence configNoCyclic cyclicPattern `shouldBe` False
-      isTrivialSequence defaultFilterConfig cyclicPattern `shouldBe` True

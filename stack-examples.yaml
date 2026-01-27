@@ -14,12 +14,12 @@ extra-deps:
     subdirs:
       - output-blocks
   - git: https://github.com/fmidue/autotool-capabilities.git
-    commit: 9001e5040f2a48337359c6d93f600420d17b3dcc
+    commit: 73a7688fe3249b2bd20d44c3c3359e35e2529517
     subdirs:
       - autotool-capabilities
       - autotool-capabilities-io-instances
   - git: https://git.uni-due.de/fmi/autotool-dev
-    commit: 56e75cd74d44f81ae52baa3b886025bd4d158bbb
+    commit: 849d725e7284e87e077af136ccc3140d824679e8
     subdirs:
       - base
       - data

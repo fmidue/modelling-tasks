@@ -93,6 +93,7 @@ import Modelling.PetriNet.Types (
 
 import Control.Applicative (Alternative ((<|>)))
 import Control.Monad.Catch              (MonadThrow)
+import Control.Monad.Trans.Class (lift)
 import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
   ExtraText (..),
@@ -175,7 +176,7 @@ defaultMatchPetriConfig =
     auxiliaryPetriNodeAbsent = Nothing,
     presenceOfSinkTransitionsForFinals = Nothing,
     withActivityFinalInForkBlocks = Just False,
-    printSolution = False,
+    printSolution = True,
     extraText = NoExtraText
   }
 
@@ -481,13 +482,13 @@ getMatchPetriTask
   => MatchPetriConfig
   -> RandT g m MatchPetriInstance
 getMatchPetriTask config = do
-  alloyInstances <- getInstances
+  alloyInstances <- lift $ getInstances
     (maxInstances config)
     Nothing
     $ matchPetriAlloy config
-  randomInstances <- shuffleM alloyInstances >>= mapM parseInstance
+  randomInstances <- shuffleM alloyInstances >>= mapM (lift . parseInstance)
   activityDiagrams <- mapM (fmap snd . shuffleAdNames) randomInstances
-  (ad, petri) <- getFirstInstance
+  (ad, petri) <- lift $ getFirstInstance
         $ filter (not . petriHasMultipleAutomorphisms . snd)
         $ filter (checkPetriNodeCount (countOfPetriNodesBounds config) . snd)
         $ map (second convertToPetriNet . dupe) activityDiagrams
@@ -971,6 +972,6 @@ defaultMatchPetriInstance = MatchPetriInstance
       with1Weights = False,
       withGraphvizCommand = Dot
     },
-  showSolution = False,
+  showSolution = True,
   addText = NoExtraText
   }

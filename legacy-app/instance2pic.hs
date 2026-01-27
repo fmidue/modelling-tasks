@@ -2,6 +2,7 @@ module Main (main) where
 import qualified Data.ByteString.Char8            as BS (pack)
 
 import Capabilities.Diagrams.IO         ()
+import Capabilities.Exceptions.IO       ()
 import Capabilities.Graphviz.IO         ()
 import Capabilities.WriteFile.IO        ()
 import Modelling.CdOd.Output            (drawOdFromInstance)

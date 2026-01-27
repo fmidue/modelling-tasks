@@ -138,7 +138,7 @@ defaultSelectASConfig = SelectASConfig {
   objectNodeOnEveryPath = Just True,
   numberOfWrongAnswers = 2,
   answerLength = (5, 6),
-  printSolution = False,
+  printSolution = True,
   withActionRepetition = False,
   extraText = NoExtraText
 }
@@ -376,11 +376,11 @@ getSelectASTask
   => SelectASConfig
   -> RandT g m SelectASInstance
 getSelectASTask config = do
-  instances <- getInstances
+  instances <- lift $ getInstances
     (maxInstances config)
     Nothing
     $ selectASAlloy config
-  randomInstances <- shuffleM instances >>= mapM parseInstance
+  randomInstances <- shuffleM instances >>= mapM (lift . parseInstance)
   ad <- mapM (fmap snd . shuffleAdNames) randomInstances
   validInstances <- firstJustM (\x -> runMaybeT $ do
       solution <- selectActionSequence (withActionRepetition config) (numberOfWrongAnswers config) (answerLength config) x
@@ -397,7 +397,7 @@ getSelectASTask config = do
     ) ad
   case validInstances of
     Just x -> return x
-    Nothing -> throwM NoInstanceAvailable
+    Nothing -> lift $ throwM NoInstanceAvailable
 
 defaultSelectASInstance :: SelectASInstance
 defaultSelectASInstance = SelectASInstance {
@@ -445,6 +445,6 @@ defaultSelectASInstance = SelectASInstance {
     (3, (False,["A","F","B","C","D"]))
     ],
   drawSettings = defaultPlantUmlConfig,
-  showSolution = False,
+  showSolution = True,
   addText = NoExtraText
 }

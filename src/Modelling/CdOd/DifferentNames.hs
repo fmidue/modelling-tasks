@@ -6,6 +6,7 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TupleSections #-}
 module Modelling.CdOd.DifferentNames (
   DifferentNamesConfig (..),
@@ -65,7 +66,7 @@ import Modelling.Auxiliary.Output (
 import Modelling.Auxiliary.Shuffle.NamesAndLayout (
   shuffleEverything,
   )
-import Modelling.CdOd.Auxiliary.Util
+import Modelling.CdOd.Auxiliary.Util (alloyInstanceToOd)
 import Modelling.CdOd.CD2Alloy.Transform (
   ExtendsAnd (NothingMore),
   LinguisticReuse (ExtendsAnd),
@@ -124,6 +125,7 @@ import Modelling.Types (
 import Control.Applicative              (Alternative ((<|>)))
 import Control.Monad.Catch              (MonadCatch, MonadThrow, throwM)
 import Control.Monad.Extra              (when, whenJust)
+import Control.Monad.Trans.Class (lift)
 import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
   ExtraText (..),
@@ -151,10 +153,12 @@ import Control.OutputCapable.Blocks.Type (
   toOutputCapable,
   )
 import Control.Monad.Random (
-  MonadRandom,
+  RandomGen,
   evalRandT,
   mkStdGen,
   )
+import Control.Monad.Trans.Random       (RandT)
+import System.Random.Internal           (StdGen)
 import Control.Monad.Trans.Except       (runExceptT)
 import Data.Bifunctor                   (Bifunctor (bimap, first))
 import Data.Bimap                       (Bimap)
@@ -305,7 +309,7 @@ defaultDifferentNamesConfig = DifferentNamesConfig {
       usesEveryRelationshipName = Just True
       },
     omittedDefaultMultiplicities = defaultOmittedDefaultMultiplicities,
-    printSolution    = False,
+    printSolution    = True,
     withNonTrivialInheritance = Just True,
     withObviousMapping = Nothing,
     maxInstances     = Just 200,
@@ -326,7 +330,9 @@ type DifferentNamesTaskText = [SpecialOutput DifferentNamesTaskTextElement]
 data DifferentNamesTaskTextElement
   = GivenCd
   | GivenOd
+  | DirectionsAdvice
   | MappingAdvice
+  | SimplifiedInformation
   deriving (Bounded, Enum, Eq, Generic, Hashable, Ord, Read, Reader, Show, ToDoc)
 
 differentNamesTask
@@ -337,8 +343,6 @@ differentNamesTask
   -> LangM m
 differentNamesTask showInputHelp path task = do
   toTaskText showInputHelp path task
-  directionsAdvice False
-  simplifiedInformation True
   hoveringInformation True
   pure ()
 
@@ -354,15 +358,17 @@ toTaskText
   -> FilePath
   -> DifferentNamesInstance
   -> LangM m
-toTaskText showInputHelp path task = do
-  specialToOutputCapable (toTaskSpecificText path task) (taskText task)
+toTaskText showInputHelp path task@DifferentNamesInstance {..} = do
+  specialToOutputCapable (toTaskSpecificText path task) taskText
   when showInputHelp $
-    toOutputCapable [inputHelpText]
-  extra $ addText task
+    toOutputCapable [inputHelpText hasGivenCd]
+  extra addText
   pure ()
+  where
+    hasGivenCd = Special GivenCd `elem` taskText
 
 mappingAdvice :: OutputCapable m => Bool -> LangM m
-mappingAdvice isCollapsed = collapsed isCollapsed (translations $ do
+mappingAdvice hasGivenCd = collapsed (not hasGivenCd) (translations $ do
   english "Note on link grouping"
   german "Anmerkung zur Link-Gruppierung"
   ) $ do
@@ -370,13 +376,13 @@ mappingAdvice isCollapsed = collapsed isCollapsed (translations $ do
     english [iii|
       Links are already grouped correctly and fully,
       i.e., all links with the same label (and only links with the same label!)
-      in the OD correspond to exactly the same relationship in the CD.
+      in the OD correspond to exactly the same relationship#{if hasGivenCd then " in the CD" else ""}.
       |]
     german [iii|
       Links sind bereits vollständig und korrekt gruppiert,
       d.h., alle Links mit der selben Beschriftung
       (and auch nur Links mit der selben Beschriftung!)
-      im OD entsprechen genau der selben Beziehung im CD.
+      im OD entsprechen genau der selben Beziehung#{if hasGivenCd then " im CD" else ""}.
       |]
   paragraph $ translate $ do
     english [iii|
@@ -406,9 +412,12 @@ toTaskSpecificText path DifferentNamesInstance {..} = \case
     paragraph $ image $=<< cacheCd cdDrawSettings mempty cd path
   GivenOd -> paragraph $ image $=<<
     cacheOd oDiagram Forward True path
-  MappingAdvice -> mappingAdvice False
+  MappingAdvice -> mappingAdvice hasGivenCd
+  DirectionsAdvice -> directionsAdvice False
+  SimplifiedInformation -> simplifiedInformation True
   where
     cd = fromClassDiagram cDiagram
+    hasGivenCd = Special GivenCd `elem` taskText
 
 defaultDifferentNamesTaskText :: DifferentNamesTaskText
 defaultDifferentNamesTaskText = [
@@ -429,11 +438,14 @@ defaultDifferentNamesTaskText = [
       Welche Beziehung im Klassendiagramm (CD)
       entspricht welchen Links im Objektdiagramm (OD)?
       |],
-  Special MappingAdvice
+  Special MappingAdvice,
+  Special DirectionsAdvice,
+  Special SimplifiedInformation
   ]
 
-inputHelpText :: Output
-inputHelpText =
+inputHelpText :: Bool -> Output
+inputHelpText hasGivenCd =
+  if hasGivenCd then
   Paragraph [
     Translated $ translations $ do
       english [iii|
@@ -452,6 +464,28 @@ inputHelpText =
         |],
     Code . uniform . show $ mappingShow differentNamesInitial
     ]
+  else
+  Paragraph[
+    Translated $ translations $ do
+      english
+        [iii|
+          State your answer by giving a mapping of
+          real-world relationship names to links in the OD.
+          \n
+          To state that a relationship x corresponds to 1. in the OD and
+          another one y corresponds to 2. in the OD, write the mapping as:
+        |]
+      german
+        [iii|
+          Geben Sie Ihre Antwort als eine Zuordnung von
+          realweltlichen Beziehungsnamen zu Links im OD an.
+          \n
+          Um anzugeben, dass eine Beziehung x zu 1. im OD und eine andere y
+          zu 2. im OD korrespondiert, schreiben Sie die Zuordnung als:
+        |],
+    Code . uniform . show $ mappingShow differentNamesInitial
+    ]
+
 
 differentNamesInitial :: [(Name, Name)]
 differentNamesInitial = map (bimap Name Name) [("x", "1"), ("y", "2")]
@@ -554,7 +588,7 @@ differentNamesSolution :: DifferentNamesInstance -> [(Name, Name)]
 differentNamesSolution = BM.toAscList . nameMapping . mapping
 
 differentNames
-  :: (MonadAlloy m, MonadCatch m)
+  :: forall m. (MonadAlloy m, MonadCatch m)
   => DifferentNamesConfig
   -> Int
   -> Int
@@ -570,9 +604,10 @@ differentNames config segment seed = do
       (timeout config)
     tryGettingValidInstanceFor is
   where
-    tryGettingValidInstanceFor []             = throwM NoInstanceAvailable
+    tryGettingValidInstanceFor :: [AlloyInstance] -> RandT StdGen m DifferentNamesInstance
+    tryGettingValidInstanceFor []               = lift $ throwM NoInstanceAvailable
     tryGettingValidInstanceFor (inst:instances) = do
-      cd <- instanceToCd inst >>= shuffleClassAndConnectionOrder
+      cd <- lift (instanceToCd inst) >>= shuffleClassAndConnectionOrder
         >>= fmap runIdentity . shuffleCdNames . Identity
       taskInstance <- getDifferentNamesTask
         (tryGettingValidInstanceFor instances)
@@ -646,7 +681,7 @@ defaultDifferentNamesInstance = DifferentNamesInstance {
       Link {linkLabel = "3.", linkFrom = "c1", linkTo = "d1"}
       ]
     },
-  showSolution = False,
+  showSolution = True,
   mapping = toNameMapping $ BM.fromList [("x", "2."), ("y", "3."), ("z", "1.")],
   linkShuffling = ConsecutiveNumbers,
   taskText = defaultDifferentNamesTaskText,
@@ -654,11 +689,11 @@ defaultDifferentNamesInstance = DifferentNamesInstance {
   }
 
 getDifferentNamesTask
-  :: (MonadAlloy m, MonadCatch m, MonadRandom m)
-  => m DifferentNamesInstance
+  :: (MonadAlloy m, MonadCatch m, RandomGen g)
+  => RandT g m DifferentNamesInstance
   -> DifferentNamesConfig
   -> Cd
-  -> m DifferentNamesInstance
+  -> RandT g m DifferentNamesInstance
 getDifferentNamesTask tryNext DifferentNamesConfig {..} cd = do
     let cd0    = (0 :: Integer, cd)
         parts0 = uncurry alloyFor cd0
@@ -679,14 +714,14 @@ getDifferentNamesTask tryNext DifferentNamesConfig {..} cd = do
           objectConfig
           (concatMap relationships cds)
         partsList' = foldr mergeParts parts0 partsList
-    instances  <- getInstances
+    instances <- lift $ getInstances
       maxInstances
       timeout
       (combineParts partsList' ++ unlines overlappingPredicates ++ onlyCd0)
     instances' <- shuffleM (instances :: [AlloyInstance])
     continueWithHead instances' $ \od1 -> do
       labels' <- shuffleM labels
-      used <- usedLabels labels od1
+      used <- lift $ usedLabels labels od1
       let usedFirst = uncurry (++) $ partition (`elem` used) labels'
           bm  = BM.fromList $ zip usedFirst (map (\n -> show n ++ ".") [1 :: Int ..])
           bm' = BM.filter (const . (`elem` used)) bm
@@ -699,9 +734,9 @@ getDifferentNamesTask tryNext DifferentNamesConfig {..} cd = do
         then do
         let keepClassNames = BM.fromList $ zip names names
             renameOd = renameObjectsWithClassesAndLinksInOd keepClassNames bm
-        od1' <- either error id
+        od1' <- lift $ either error id
           <$> runExceptT (alloyInstanceToOd Nothing labels od1)
-        od1'' <- renameOd od1'
+        od1'' <- lift (renameOd od1')
           >>= anonymiseObjects (anonymousObjectProportion objectProperties)
         return $ DifferentNamesInstance {
               cDiagram  = cd,
@@ -773,7 +808,7 @@ instance RandomiseNames DifferentNamesInstance where
     names'  <- shuffleM names
     nonInheritances' <- shuffleM nonInheritances
     links' <- shuffleM lNames
-    renameInstance inst names' nonInheritances' links'
+    lift $ renameInstance inst names' nonInheritances' links'
 
 instance RandomiseLayout DifferentNamesInstance where
   randomiseLayout DifferentNamesInstance {..} = do

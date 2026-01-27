@@ -48,6 +48,7 @@ import Modelling.PetriNet.Reach.Step (successors)
 
 import qualified Control.Monad as Monad (guard)
 import Control.Monad.Random (MonadRandom, uniform)
+import Data.Bifunctor (second)
 import Data.List (union)
 import Data.List.Extra (nubOrd)
 import Data.Maybe (mapMaybe, isJust)
@@ -120,7 +121,7 @@ generateSequencesWithLevels levelsFunction petriLike maybeLengthBounds =
              _ -> Just actionSequence
   in [ reverse a | level <- relevantLevels, (s, p) <- level, s == zeroState, Just a <- [convertAndFilterSequence p] ]
 
--- Modified version of levels' that handles Activity Final nodes
+-- Variant of levelsWithAlternatives that computes only one path per state, while handling Activity Final nodes
 levelsAS :: Ord s => [Int] -> Net s PetriKey -> [[(State s, [PetriKey])]]
 levelsAS actionsLeadingToActivityFinals n =
   let -- Create zero state using all places in the network for consistency
@@ -226,8 +227,8 @@ levelsCheckAS input actions n actionsLeadingToActivityFinals =
         in union (f as consume) (f (a:as) notConsume)
   in f input [(start n, [])]
 
--- | Variant of levels' that manages visited states per path rather than globally.
--- This allows exploring cycles while preventing infinite loops within each path.
+-- | Variant of levelsWithAlternatives that computes only one path per state, while managing visited states per path rather than globally.
+-- The latter aspect in particular allows exploring cycles while preventing infinite loops within each path.
 levelsWithCycles :: Ord s => Net s t -> [[(State s, [t])]]
 levelsWithCycles n =
   let f [] = []
