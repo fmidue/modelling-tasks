@@ -66,7 +66,7 @@ import Modelling.Auxiliary.Output (
 import Modelling.Auxiliary.Shuffle.NamesAndLayout (
   shuffleEverything,
   )
-import Modelling.CdOd.Auxiliary.Util    (alloyInstanceToOd)
+import Modelling.CdOd.Auxiliary.Util (alloyInstanceToOd)
 import Modelling.CdOd.CD2Alloy.Transform (
   ExtendsAnd (NothingMore),
   LinguisticReuse (ExtendsAnd),
