@@ -107,7 +107,7 @@ defaultMatchAdConfig = MatchAdConfig {
   maxInstances = Just 50,
   hideBranchConditions = False,
   withActivityFinalInForkBlocks = Just True,
-  printSolution = False,
+  printSolution = True,
   extraText = NoExtraText
 }
 
@@ -344,6 +344,6 @@ defaultMatchAdInstance = MatchAdInstance {
     ]
   },
   plantUMLConf = defaultPlantUmlConfig,
-  showSolution = False,
+  showSolution = True,
   addText = NoExtraText
 }

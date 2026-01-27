@@ -189,7 +189,7 @@ defaultSelectPetriConfig = SelectPetriConfig {
   auxiliaryPetriNodeAbsent = Nothing,
   presenceOfSinkTransitionsForFinals = Nothing,
   withActivityFinalInForkBlocks = Just False,
-  printSolution = False,
+  printSolution = True,
   extraText = NoExtraText
 }
 
@@ -915,6 +915,6 @@ defaultSelectPetriInstance =  SelectPetriInstance {
         flowOut = M.fromList [(NormalPetriNode {label = 10, sourceNode = AdActionNode {label = 4, name = "G"}},1)]})
     ]
   }))],
-  showSolution = False,
+  showSolution = True,
   addText = NoExtraText
 }

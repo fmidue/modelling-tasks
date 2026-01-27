@@ -138,7 +138,7 @@ defaultSelectASConfig = SelectASConfig {
   objectNodeOnEveryPath = Just True,
   numberOfWrongAnswers = 2,
   answerLength = (5, 6),
-  printSolution = False,
+  printSolution = True,
   withActionRepetition = False,
   extraText = NoExtraText
 }
@@ -445,6 +445,6 @@ defaultSelectASInstance = SelectASInstance {
     (3, (False,["A","F","B","C","D"]))
     ],
   drawSettings = defaultPlantUmlConfig,
-  showSolution = False,
+  showSolution = True,
   addText = NoExtraText
 }

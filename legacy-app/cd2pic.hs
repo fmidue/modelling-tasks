@@ -9,6 +9,7 @@ import Modelling.CdOd.Auxiliary.Lexer (lexer)
 import Modelling.CdOd.Auxiliary.Parser (parser)
 import Modelling.CdOd.Output
 import Modelling.CdOd.Types (
+  AnyCd,
   CdDrawSettings (..),
   ClassDiagram (..),
   Relationship (..),
@@ -39,10 +40,12 @@ run withNames howToMark input file = do
   BS.writeFile file output
   putStrLn $ "Output written to " ++ file
   where
+    toCd :: [(String, Maybe String)] -> [Relationship String String] -> AnyCd
     toCd cs es = fromClassDiagram ClassDiagram {
       classNames = map fst cs,
       relationships = mapMaybe (uncurry toInheritance) cs ++ es
       }
+    toInheritance :: String -> Maybe String -> Maybe (Relationship String String)
     toInheritance sub super = Inheritance sub <$> super
     drawSettings = CdDrawSettings {
       omittedDefaults = defaultOmittedDefaultMultiplicities,
@@ -70,6 +73,7 @@ main = do
           ++ "is not supported, only SVG is supported"
     _ -> error "zu viele Parameter"
   where
+    stripPrintNamesArg :: [String] -> (Bool, [String])
     stripPrintNamesArg ("-p":args) = (True, args)
     stripPrintNamesArg args        = (False, args)
     redColor = mempty # lc red

@@ -227,7 +227,7 @@ defaultMatchCdOdConfig
       usesEveryRelationshipName = Nothing
       },
     omittedDefaultMultiplicities = defaultOmittedDefaultMultiplicities,
-    printSolution    = False,
+    printSolution    = True,
     timeout          = Nothing,
     withNonTrivialInheritance = Just True,
     extraText        = NoExtraText
@@ -674,7 +674,7 @@ defaultMatchCdOdInstance = MatchCdOdInstance {
         ]
       }))
     ],
-  showSolution = False,
+  showSolution = True,
   taskText = defaultMatchCdOdTaskText,
   addText = NoExtraText
   }

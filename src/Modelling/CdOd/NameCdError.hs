@@ -31,7 +31,11 @@ module Modelling.CdOd.NameCdError (
   nameCdErrorSolution,
   nameCdErrorSyntax,
   nameCdErrorTask,
+  nameCdErrorTaskText,
+  relevantRelationships,
   renameInstance,
+  translateReason,
+  translateRelationship,
   ) where
 
 import qualified Modelling.CdOd.CdAndChanges.Transform as Changes (
@@ -236,10 +240,10 @@ isCustom = \case
   PreDefined {} -> False
 
 renderReason :: OutputCapable m => Bool -> Reason -> LangM m
-renderReason withDirections = translate . put . toTranslations withDirections
+renderReason withDirections = translate . put . translateReason withDirections
 
-toTranslations :: Bool -> Reason -> Map Language String
-toTranslations withDirections = \case
+translateReason :: Bool -> Reason -> Map Language String
+translateReason withDirections = \case
   Custom x -> x
   PreDefined x -> translateProperty withDirections x
 
@@ -292,7 +296,7 @@ defaultNameCdErrorConfig = NameCdErrorConfig {
     usesEveryRelationshipName = Just True
     },
   possibleReasons = map PreDefined [minBound ..],
-  printSolution = False,
+  printSolution = True,
   reasonsPerInstance = NumberOfReasons {
     customReasons = 0,
     preDefinedInvalid = length $ filter isIllegal [minBound ..],
@@ -416,18 +420,28 @@ toTaskSpecificText path task@NameCdErrorInstance {..} = \case
       $ map (second (renderReason (printNavigations cdDrawSettings) . snd))
       $ M.toList errorReasons
     RelationshipsList -> do
-      let defaults = omittedDefaults cdDrawSettings
-          phrase article x y z = translate $ do
-            english $ phraseRelationship English defaults article Denoted x y z
-            german $ phraseRelationship German defaults article Denoted x y z
-          phraseRelationship' Annotation {..} = phrase
-            (referenceUsing annotation)
+      let phraseRelationship' = translateRelationship
+            cdDrawSettings
             byName
-            (printNavigations cdDrawSettings)
-            annotated
       enumerateM (text . show)
-        $ map (second phraseRelationship')
+        $ map (second (translate . put . phraseRelationship'))
         $ relevantRelationships task
+
+translateRelationship
+  :: CdDrawSettings
+  -> Bool
+  -> Annotation Relevance (AnyRelationship String String)
+  -> Map Language String
+translateRelationship cdDrawSettings byName Annotation {..} =
+  let defaults = omittedDefaults cdDrawSettings
+      phrase article x y z = translations $ do
+        english $ phraseRelationship English defaults article Denoted x y z
+        german $ phraseRelationship German defaults article Denoted x y z
+  in phrase
+    (referenceUsing annotation)
+    byName
+    (printNavigations cdDrawSettings)
+    annotated
 
 data NameCdErrorInstance = NameCdErrorInstance {
   byName                      :: !Bool,
@@ -490,7 +504,7 @@ checkNameCdErrorInstance NameCdErrorInstance {..}
   = Just [iii|
       'errorReasons' contains duplicate '#{x}' which is not allowed.
       |]
-  | x:_ <- concatMap (checkTranslation . toTranslations True) reasons
+  | x:_ <- concatMap (checkTranslation . translateReason True) reasons
   = Just $ [i|Problem within 'errorReasons': |] ++ x
   | otherwise
   = checkTaskText taskText
@@ -503,15 +517,23 @@ checkNameCdErrorInstance NameCdErrorInstance {..}
       $ annotatedRelationships classDiagram
 
 defaultNameCdErrorTaskText :: NameCdErrorTaskText
-defaultNameCdErrorTaskText = [
+defaultNameCdErrorTaskText = nameCdErrorTaskText True
+
+nameCdErrorTaskText :: Bool -> NameCdErrorTaskText
+nameCdErrorTaskText withRelationshipChoices = concat [
+ [
   Paragraph $ singleton $ Translated $ translations $ do
     english "Consider the following class diagram, which unfortunately is invalid:"
     german "Betrachten Sie folgendes Klassendiagramm, welches leider ungültig ist:",
-  Paragraph $ singleton $ Special IncorrectCd,
+  Paragraph $ singleton $ Special IncorrectCd
+ ],
+ optional withRelationshipChoices [
   Paragraph $ singleton $ Translated $ translations $ do
     english "It contains the following relationships between classes:"
     german "Es enthält die folgenden Beziehungen zwischen Klassen:",
-  Paragraph $ singleton $ Special RelationshipsList,
+  Paragraph $ singleton $ Special RelationshipsList
+ ],
+ [
   Paragraph $ singleton $ Translated $ translations $ do
     english [iii|
       Choose what you think is the single reason that this class diagram is invalid,
@@ -531,7 +553,9 @@ defaultNameCdErrorTaskText = [
     english [i|The class diagram ...|]
     german [i|Das Klassendiagramm ...|],
   Paragraph $ singleton $ Special ReasonsList
-  ]
+ ]]
+ where
+    optional cond xs = if cond then xs else []
 
 inputHelpText :: [Output]
 inputHelpText = [
@@ -1090,7 +1114,7 @@ defaultNameCdErrorInstance = NameCdErrorInstance {
     ('j', (False, PreDefined MultipleInheritances)),
     ('k', (False, PreDefined ReverseRelationships))
     ],
-  showSolution = False,
+  showSolution = True,
   taskText = defaultNameCdErrorTaskText,
   addText = NoExtraText
   }

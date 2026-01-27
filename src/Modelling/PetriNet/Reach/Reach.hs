@@ -5,6 +5,7 @@
 #if !MIN_VERSION_base(4,18,0)
 {-# LANGUAGE DerivingStrategies #-}
 #endif
+{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
@@ -61,6 +62,8 @@ import qualified Control.Monad.Trans              as Monad (lift)
 import qualified Data.Map                         as M (elems, empty, fromDistinctAscList, map, unionWith)
 import qualified Data.Set                         as S (fromList, member, toList, union, empty)
 
+import Autolib.Reader                   (Reader)
+import Autolib.ToDoc                    (ToDoc)
 import Data.List.NonEmpty                 (NonEmpty((:|)), fromList)
 
 import Capabilities.Cache               (MonadCache)
@@ -82,9 +85,10 @@ import Modelling.PetriNet.Reach.Property (
   Property (Default),
   validate,
   )
-import Modelling.PetriNet.Reach.Roll    (netLimitsFiltered)
+import Modelling.PetriNet.Reach.Roll    (netLimitsFiltered, simpleConnectionGenerator)
 import Modelling.PetriNet.Reach.Step    (executes, successors)
 import Modelling.PetriNet.Reach.Type (
+  ArrowDensityConstraints(..),
   Capacity (Unbounded),
   Net (start, transitions),
   Place (..),
@@ -98,6 +102,7 @@ import Modelling.PetriNet.Reach.Type (
   example,
   mapState,
   mark,
+  noArrowDensityConstraints,
   )
 
 import Control.Applicative              (Alternative, (<|>))
@@ -109,7 +114,6 @@ import Control.Monad.Trans.Maybe        (MaybeT (MaybeT, runMaybeT))
 import Modelling.PetriNet.Reach.ConfigValidation (
   checkBasicPetriConfig,
   checkFilterConfigWith,
-  checkTransitionBehaviorConstraints,
   )
 import Control.OutputCapable.Blocks (
   ArticleToUse (IndefiniteArticle),
@@ -261,7 +265,7 @@ reportReachFor showInputHelp img noLonger lengthHint minLength showMinLengthHint
           englishConstraint, " ", show maxL, " steps."]
         german $ concat [
           "Ihre Lösung ", germanConstraint, " ", show maxL,
-          "Schritte enthalten."]
+          " Schritte enthalten."]
 
   let maxStepsHint = case lengthHint of
         Just maxSteps | showMinLengthHint && maxSteps == minLength -> singleton $ paragraph $ translate $ do
@@ -327,7 +331,7 @@ provideSolutionsFeedback maxDisplayedSolutions solutionsList
       Left (firstSolution :| restSolutions) ->
         let displayedSolutions = firstSolution : restSolutions
             solutionsText = unlines $ map (show . TransitionsList) displayedSolutions
-        in solutionsText ++
+        in "Any of:\n\n" ++ solutionsText ++
           if 1 + length restSolutions < maxDisplayedSolutions
             then "\n(These are all the shortest solutions.)"
             else "\n(These are shortest solutions, but more may exist.)"
@@ -337,10 +341,10 @@ provideSolutionsFeedback maxDisplayedSolutions solutionsList
       Right (firstSolution :| restSolutions) ->
         let displayedSolutions = firstSolution : take (maxDisplayedSolutions - 1) restSolutions
             solutionsText = unlines $ map (show . TransitionsList) displayedSolutions
-        in solutionsText ++
+        in (if maxDisplayedSolutions < 2 then "" else "Any of:\n\n") ++ solutionsText ++
           if length restSolutions < maxDisplayedSolutions
-            then "\n(These are all the solutions.)"
-            else "\n(These are solutions, but more exist.)"
+            then (if null restSolutions then "\n(This is the only solution.)" else "\n(These are all the solutions.)")
+            else if maxDisplayedSolutions == 1 then "\n(This is a solution, but more exist.)" else "\n(These are solutions, but more exist.)"
 
 reachEvaluation
   :: (
@@ -486,7 +490,7 @@ data ReachInstance s t = ReachInstance {
   -- (e.g., @[t1, t2, t3, t4]@) will be rejected.
   rejectSpaceballsLength :: Maybe Int
   }
-  deriving (Generic, Read, Show, Data)
+  deriving (Generic, Read, Show, Data, Reader, ToDoc)
 #if !MIN_VERSION_base(4,18,0)
   deriving Typeable
 #endif
@@ -496,7 +500,7 @@ data NetGoal s t = NetGoal {
   petriNet          :: Net s t,
   goal              :: State s
   }
-  deriving (Generic, Read, Show, Data)
+  deriving (Generic, Read, Show, Data, Reader, ToDoc)
 #if !MIN_VERSION_base(4,18,0)
   deriving Typeable
 #endif
@@ -561,16 +565,15 @@ data NetGoalConfig = NetGoalConfig {
   numPlaces :: Int,
   numTransitions :: Int,
   capacity :: Capacity Place,
-  -- | Draw commands in order of preference
-  drawPreferenceOrder :: [GraphvizCommand],
+  -- | Graph layout commands to choose from (randomly selected during generation)
+  graphLayouts :: [GraphvizCommand],
   maxTransitionLength :: Int,
   minTransitionLength :: Int,
   -- | Maximum number of places where token counts may differ between start and goal state.
   -- Must be in the range @1..numPlaces@.
   maxPlacesChanged    :: Int,
   transitionBehaviorConstraints :: TransitionBehaviorConstraints,
-  postconditionsRange :: (Int, Maybe Int),
-  preconditionsRange  :: (Int, Maybe Int)
+  arrowDensityConstraints :: ArrowDensityConstraints
   }
   deriving (Generic, Read, Show)
 #if !MIN_VERSION_base(4,18,0)
@@ -583,7 +586,7 @@ defaultReachConfig = ReachConfig {
     numPlaces           = 6,
     numTransitions      = 6,
     Modelling.PetriNet.Reach.Reach.capacity = Unbounded,
-    drawPreferenceOrder = [Dot, Neato, TwoPi, Circo, Fdp, Sfdp, Osage, Patchwork],
+    graphLayouts = [Dot, Neato, TwoPi, Circo, Fdp, Sfdp, Osage, Patchwork],
     maxTransitionLength = 6,
     minTransitionLength = 6,
     maxPlacesChanged    = 3,
@@ -591,8 +594,12 @@ defaultReachConfig = ReachConfig {
       allowedTokenChanges = Nothing,
       areNonPreserving = Just 2
       },
-    postconditionsRange = (0, Just 3),
-    preconditionsRange  = (0, Just 3)
+    arrowDensityConstraints = noArrowDensityConstraints {
+      incomingArrowsPerTransition = (0, Just 3),
+      outgoingArrowsPerTransition = (0, Just 3),
+      incomingArrowsPerPlace = (0, Just 2),
+      outgoingArrowsPerPlace = (0, Just 2)
+      }
     },
   maxPrintedSolutions = 1,
   rejectLongerThan    = Just 6,
@@ -632,9 +639,8 @@ findNetGoalWithSolutions filterConfig maxPrintedSolutions NetGoalConfig {..} =
       try :: RandT StdGen m [[(Int, MaybeT (RandT StdGen m) (NetGoal Place Transition, Either (NonEmpty [Transition]) (NonEmpty [Transition])))]]
       try = do
         let generateNet =
-              maybe generateNet return =<< netLimitsFiltered
-                preconditionsRange
-                postconditionsRange
+              maybe generateNet return =<< netLimitsFiltered simpleConnectionGenerator
+                arrowDensityConstraints
                 numPlaces
                 ps
                 ts
@@ -658,7 +664,7 @@ findNetGoalWithSolutions filterConfig maxPrintedSolutions NetGoalConfig {..} =
           guard (maxPlacesChanged == numPlaces || maxPlacesChanged >= length placeDifferences)
           return (d, do
             (cmd, solutionsList) <- validateDrawabilityAndSolutionFiltering
-              n drawPreferenceOrder allShortestSolutions filterConfig numTransitions maxPrintedSolutions
+              n graphLayouts allShortestSolutions filterConfig numTransitions maxPrintedSolutions
             let netGoal = NetGoal {
                   drawUsing   = cmd,
                   goal        = z',
@@ -679,7 +685,7 @@ validateDrawabilityAndSolutionFiltering
   => Net p t
        -- ^ Petri net to validate for drawability and from which the solutions were derived.
   -> [GraphvizCommand]
-       -- ^ Ordered list of Graphviz commands (drawing backends) to try for rendering the net.
+       -- ^ List of Graphviz commands (drawing backends) to try for rendering the net. A random order is used.
   -> [[t]]
        -- ^ All shortest solutions found, represented as sequences of transitions.
   -> FilterConfig
@@ -692,7 +698,8 @@ validateDrawabilityAndSolutionFiltering
        (GraphvizCommand, Either (NonEmpty [t]) (NonEmpty [t]))
 validateDrawabilityAndSolutionFiltering petri drawCommands allShortestSolutions filterConfig numTransitions maxPrintedSolutions = do
   guard (not $ shouldDiscardSolutions filterConfig numTransitions allShortestSolutions)
-  cmd <- MaybeT $ findM (Monad.lift . isPetriDrawable petri) drawCommands
+  shuffledCommands <- shuffleM drawCommands
+  cmd <- MaybeT $ findM (Monad.lift . isPetriDrawable petri) shuffledCommands
   solutionsList <-
     if filterConfig == noFiltering
       then pure $ Left $ fromList (take (max 1 maxPrintedSolutions) allShortestSolutions)
@@ -725,9 +732,9 @@ checkReachConfig ReachConfig {..} =
     (capacity netGoalConfig)
     (minTransitionLength netGoalConfig)
     (maxTransitionLength netGoalConfig)
-    (preconditionsRange netGoalConfig)
-    (postconditionsRange netGoalConfig)
-    (drawPreferenceOrder netGoalConfig)
+    (transitionBehaviorConstraints netGoalConfig)
+    (arrowDensityConstraints netGoalConfig)
+    (graphLayouts netGoalConfig)
     rejectLongerThan
     showLengthHint
   <|>
@@ -750,13 +757,6 @@ checkReachConfig ReachConfig {..} =
       Just maxSolutions | maxPrintedSolutions > maxSolutions ->
         Just "maxPrintedSolutions cannot be greater than solutionSetLimit"
       _ -> Nothing)
-  <|>
-  checkTransitionBehaviorConstraints
-    (numPlaces netGoalConfig)
-    (preconditionsRange netGoalConfig)
-    (postconditionsRange netGoalConfig)
-    (numTransitions netGoalConfig)
-    (transitionBehaviorConstraints netGoalConfig)
   <|>
   if showTargetNet || showPlaceNamesInNet
       then Nothing

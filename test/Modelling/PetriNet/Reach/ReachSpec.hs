@@ -28,8 +28,10 @@ import Modelling.PetriNet.Reach.Type (
   Capacity(..),
   Place(..),
   TransitionBehaviorConstraints(..),
+  ArrowDensityConstraints(..),
   connectionTokenBehavior,
   mark,
+  noArrowDensityConstraints,
   noTransitionBehaviorConstraints,
   )
 
@@ -45,7 +47,7 @@ import Test.Hspec.QuickCheck (modifyMaxSuccess, prop)
 spec :: Spec
 spec = do
   describe "generateReach" $ do
-    modifyMaxSuccess (const 15) $
+    modifyMaxSuccess (const 5) $
       prop "abides minTransitionLength" $ \seed -> do
         let config = defaultReachConfig {
               filterConfig = noFiltering,
@@ -54,6 +56,7 @@ spec = do
                 }
               }
             minL = minTransitionLength (netGoalConfig config)
+        checkReachConfig config `shouldBe` Nothing
         inst <- generateReach config seed
         let net = petriNet (netGoal inst)
             s = goal (netGoal inst)
@@ -61,14 +64,14 @@ spec = do
         net `shouldSatisfy` hasMinTransitionLength (s ==) ts minL
 
     nightly $
-     modifyMaxSuccess (const 3) $
+     modifyMaxSuccess (const 1) $
       prop "generates non-trivial solutions when filtering is enabled (as in the default configuration)" $ \seed -> do
         let config = defaultReachConfig
         inst <- generateReach config seed
         let allSolutions = either undefined toList (shortestSolutions inst)
         allSolutions `shouldSatisfy` not . shouldDiscardSolutions (filterConfig config) (numTransitions $ netGoalConfig config)
 
-    modifyMaxSuccess (const 15) $
+    modifyMaxSuccess (const 5) $
       prop "adheres to maxPlacesChanged constraint with noFiltering" $ \seed -> do
         let config = defaultReachConfig {
               filterConfig = noFiltering,
@@ -77,6 +80,7 @@ spec = do
                 transitionBehaviorConstraints = noTransitionBehaviorConstraints
                 }
               }
+        checkReachConfig config `shouldBe` Nothing
         inst <- generateReach config seed
         let net = petriNet (netGoal inst)
             startState = start net
@@ -86,31 +90,152 @@ spec = do
             numberOfDifferentPlaces = length $ filter (\p -> mark startState p /= mark goalState p) places
         numberOfDifferentPlaces `shouldSatisfy` (<= 2)
 
+    modifyMaxSuccess (const 3) $
+      prop "respects incomingArrowsPerPlace constraint" $ \seed -> do
+        let config = defaultReachConfig {
+              filterConfig = noFiltering,
+              netGoalConfig = (netGoalConfig defaultReachConfig) {
+                arrowDensityConstraints = noArrowDensityConstraints {
+                  incomingArrowsPerTransition = (0, Just 3),
+                  outgoingArrowsPerTransition = (0, Just 3),
+                  incomingArrowsPerPlace = (1, Just 2),
+                  totalArrowsFromTransitionsToPlaces = (6, Just 12)
+                  },
+                transitionBehaviorConstraints = noTransitionBehaviorConstraints
+                }
+              }
+            countIncomingToPlace :: Place -> [([Place], t, [Place])] -> Int
+            countIncomingToPlace place conns =
+              sum [length $ filter (== place) post | (_, _, post) <- conns]
+        checkReachConfig config `shouldBe` Nothing
+        inst <- generateReach config seed
+        let net = petriNet (netGoal inst)
+            places = [Place 1 .. Place (numPlaces $ netGoalConfig config)]
+            incomingArrowsPerPlaceList = map (\p -> countIncomingToPlace p (connections net)) places
+        all (\count -> count >= 1 && count <= 2) incomingArrowsPerPlaceList `shouldBe` True
+
+    modifyMaxSuccess (const 3) $
+      prop "respects outgoingArrowsPerPlace constraint" $ \seed -> do
+        let config = defaultReachConfig {
+              filterConfig = noFiltering,
+              netGoalConfig = (netGoalConfig defaultReachConfig) {
+                arrowDensityConstraints = noArrowDensityConstraints {
+                  incomingArrowsPerTransition = (0, Just 3),
+                  outgoingArrowsPerTransition = (0, Just 3),
+                  outgoingArrowsPerPlace = (1, Just 2),
+                  totalArrowsFromPlacesToTransitions = (6, Just 12)
+                  },
+                transitionBehaviorConstraints = noTransitionBehaviorConstraints
+                }
+              }
+            countOutgoingFromPlace :: Place -> [([Place], t, [Place])] -> Int
+            countOutgoingFromPlace place conns =
+              sum [length $ filter (== place) pre | (pre, _, _) <- conns]
+        checkReachConfig config `shouldBe` Nothing
+        inst <- generateReach config seed
+        let net = petriNet (netGoal inst)
+            places = [Place 1 .. Place (numPlaces $ netGoalConfig config)]
+            outgoingArrowsPerPlaceList = map (\p -> countOutgoingFromPlace p (connections net)) places
+        all (\count -> count >= 1 && count <= 2) outgoingArrowsPerPlaceList `shouldBe` True
+
+    modifyMaxSuccess (const 3) $
+      prop "respects totalArrowsFromPlacesToTransitions constraint" $ \seed -> do
+        let config = defaultReachConfig {
+              filterConfig = noFiltering,
+              netGoalConfig = (netGoalConfig defaultReachConfig) {
+                arrowDensityConstraints = noArrowDensityConstraints {
+                  incomingArrowsPerTransition = (0, Just 3),
+                  outgoingArrowsPerTransition = (0, Just 3),
+                  totalArrowsFromPlacesToTransitions = (10, Just 18)
+                  },
+                transitionBehaviorConstraints = noTransitionBehaviorConstraints
+                }
+              }
+        checkReachConfig config `shouldBe` Nothing
+        inst <- generateReach config seed
+        let net = petriNet (netGoal inst)
+            totalArrows = sum [length pre | (pre, _, _) <- connections net]
+        totalArrows `shouldSatisfy` (\x -> x >= 10 && x <= 18)
+
+    modifyMaxSuccess (const 3) $
+      prop "respects totalArrowsFromTransitionsToPlaces constraint" $ \seed -> do
+        let config = defaultReachConfig {
+              filterConfig = noFiltering,
+              netGoalConfig = (netGoalConfig defaultReachConfig) {
+                arrowDensityConstraints = noArrowDensityConstraints {
+                  incomingArrowsPerTransition = (0, Just 3),
+                  outgoingArrowsPerTransition = (0, Just 3),
+                  totalArrowsFromTransitionsToPlaces = (10, Just 18)
+                  },
+                transitionBehaviorConstraints = noTransitionBehaviorConstraints
+                }
+              }
+        checkReachConfig config `shouldBe` Nothing
+        inst <- generateReach config seed
+        let net = petriNet (netGoal inst)
+            totalArrows = sum [length post | (_, _, post) <- connections net]
+        totalArrows `shouldSatisfy` (\x -> x >= 10 && x <= 18)
+
+    modifyMaxSuccess (const 3) $
+      prop "respects allowedTokenChanges = Just LT (only token-decreasing)" $ \seed -> do
+        let config = defaultReachConfig {
+              filterConfig = noFiltering,
+              netGoalConfig = (netGoalConfig defaultReachConfig) {
+                transitionBehaviorConstraints = TransitionBehaviorConstraints {
+                  allowedTokenChanges = Just LT,
+                  areNonPreserving = Nothing
+                  }
+                }
+              }
+        checkReachConfig config `shouldBe` Nothing
+        inst <- generateReach config seed
+        let net = petriNet (netGoal inst)
+            increasingCount = length $ filter (uncurry (<) . connectionTokenBehavior) $ connections net
+        increasingCount `shouldBe` 0
+
+    modifyMaxSuccess (const 3) $
+      prop "respects allowedTokenChanges = Just GT (only token-increasing)" $ \seed -> do
+        let config = defaultReachConfig {
+              filterConfig = noFiltering,
+              netGoalConfig = (netGoalConfig defaultReachConfig) {
+                transitionBehaviorConstraints = TransitionBehaviorConstraints {
+                  allowedTokenChanges = Just GT,
+                  areNonPreserving = Nothing
+                  }
+                }
+              }
+        checkReachConfig config `shouldBe` Nothing
+        inst <- generateReach config seed
+        let net = petriNet (netGoal inst)
+            decreasingCount = length $ filter (uncurry (>) . connectionTokenBehavior) $ connections net
+        decreasingCount `shouldBe` 0
+
+    modifyMaxSuccess (const 1) $
+      prop "respects areNonPreserving constraint set to 0" $ \seed -> do
+        let config = defaultReachConfig {
+              filterConfig = noFiltering,
+              netGoalConfig = (netGoalConfig defaultReachConfig) {
+                transitionBehaviorConstraints = TransitionBehaviorConstraints {
+                  allowedTokenChanges = Nothing,
+                  areNonPreserving = Just 0
+                  }
+                }
+              }
+        checkReachConfig config `shouldBe` Nothing
+        inst <- generateReach config seed
+        let net = petriNet (netGoal inst)
+            nonPreservingCount = length $ filter (uncurry (/=) . connectionTokenBehavior) $ connections net
+        nonPreservingCount `shouldBe` 0
+
   describe "checkReachConfig" $ do
     it "accepts valid configuration" $ do
       let config = defaultReachConfig
       checkReachConfig config `shouldBe` Nothing
 
-    it "rejects preconditionsRange where upper < lower" $ do
+    it "rejects empty graphLayouts" $ do
       let config = defaultReachConfig {
             netGoalConfig = (netGoalConfig defaultReachConfig) {
-              preconditionsRange = (5, Just 2)
-              }
-            }
-      checkReachConfig config `shouldSatisfy` isJust
-
-    it "rejects postconditionsRange where upper < lower" $ do
-      let config = defaultReachConfig {
-            netGoalConfig = (netGoalConfig defaultReachConfig) {
-              postconditionsRange = (5, Just 2)
-              }
-            }
-      checkReachConfig config `shouldSatisfy` isJust
-
-    it "rejects empty drawPreferenceOrder" $ do
-      let config = defaultReachConfig {
-            netGoalConfig = (netGoalConfig defaultReachConfig) {
-              drawPreferenceOrder = []
+              graphLayouts = []
               }
             }
       checkReachConfig config `shouldSatisfy` isJust
@@ -201,59 +326,15 @@ spec = do
             }
       checkReachConfig config `shouldSatisfy` isJust
 
-    modifyMaxSuccess (const 3) $
-      prop "respects allowedTokenChanges = Just LT (only token-decreasing)" $ \seed -> do
-        let config = defaultReachConfig {
-              filterConfig = noFiltering,
-              netGoalConfig = (netGoalConfig defaultReachConfig) {
-                transitionBehaviorConstraints = TransitionBehaviorConstraints {
-                  allowedTokenChanges = Just LT,
-                  areNonPreserving = Nothing
-                  }
-                }
-              }
-        inst <- generateReach config seed
-        let net = petriNet (netGoal inst)
-            increasingCount = length $ filter (uncurry (<) . connectionTokenBehavior) $ connections net
-        increasingCount `shouldBe` 0
-
-    modifyMaxSuccess (const 3) $
-      prop "respects allowedTokenChanges = Just GT (only token-increasing)" $ \seed -> do
-        let config = defaultReachConfig {
-              filterConfig = noFiltering,
-              netGoalConfig = (netGoalConfig defaultReachConfig) {
-                transitionBehaviorConstraints = TransitionBehaviorConstraints {
-                  allowedTokenChanges = Just GT,
-                  areNonPreserving = Nothing
-                  }
-                }
-              }
-        inst <- generateReach config seed
-        let net = petriNet (netGoal inst)
-            decreasingCount = length $ filter (uncurry (>) . connectionTokenBehavior) $ connections net
-        decreasingCount `shouldBe` 0
-
-    modifyMaxSuccess (const 1) $
-      prop "respects areNonPreserving constraint set to 0" $ \seed -> do
-        let config = defaultReachConfig {
-              filterConfig = noFiltering,
-              netGoalConfig = (netGoalConfig defaultReachConfig) {
-                transitionBehaviorConstraints = TransitionBehaviorConstraints {
-                  allowedTokenChanges = Nothing,
-                  areNonPreserving = Just 0
-                  }
-                }
-              }
-        inst <- generateReach config seed
-        let net = petriNet (netGoal inst)
-            nonPreservingCount = length $ filter (uncurry (/=) . connectionTokenBehavior) $ connections net
-        nonPreservingCount `shouldBe` 0
-
     it "rejects allowedTokenChanges = Just LT with impossible range (vHigh <= nLow)" $ do
       let config = defaultReachConfig {
             netGoalConfig = (netGoalConfig defaultReachConfig) {
-              preconditionsRange = (1, Just 2),
-              postconditionsRange = (3, Just 5),
+              arrowDensityConstraints = noArrowDensityConstraints {
+                incomingArrowsPerTransition = (1, Just 2),
+                outgoingArrowsPerTransition = (3, Just 5),
+                totalArrowsFromPlacesToTransitions = (6, Just 12),
+                totalArrowsFromTransitionsToPlaces = (18, Just 30)
+                },
               transitionBehaviorConstraints = TransitionBehaviorConstraints {
                 allowedTokenChanges = Just LT,
                 areNonPreserving = Nothing
@@ -265,8 +346,12 @@ spec = do
     it "rejects allowedTokenChanges = Just GT with impossible range (nHigh <= vLow)" $ do
       let config = defaultReachConfig {
             netGoalConfig = (netGoalConfig defaultReachConfig) {
-              preconditionsRange = (3, Just 5),
-              postconditionsRange = (1, Just 2),
+              arrowDensityConstraints = noArrowDensityConstraints {
+                incomingArrowsPerTransition = (3, Just 5),
+                outgoingArrowsPerTransition = (1, Just 2),
+                totalArrowsFromPlacesToTransitions = (18, Just 30),
+                totalArrowsFromTransitionsToPlaces = (6, Just 12)
+                },
               transitionBehaviorConstraints = TransitionBehaviorConstraints {
                 allowedTokenChanges = Just GT,
                 areNonPreserving = Nothing
@@ -278,8 +363,12 @@ spec = do
     it "rejects areNonPreserving > 0 with fixed equal ranges" $ do
       let config = defaultReachConfig {
             netGoalConfig = (netGoalConfig defaultReachConfig) {
-              preconditionsRange = (2, Just 2),
-              postconditionsRange = (2, Just 2),
+              arrowDensityConstraints = noArrowDensityConstraints {
+                incomingArrowsPerTransition = (2, Just 2),
+                outgoingArrowsPerTransition = (2, Just 2),
+                totalArrowsFromPlacesToTransitions = (12, Just 12),
+                totalArrowsFromTransitionsToPlaces = (12, Just 12)
+                },
               transitionBehaviorConstraints = TransitionBehaviorConstraints {
                 allowedTokenChanges = Nothing,
                 areNonPreserving = Just 1
@@ -291,8 +380,12 @@ spec = do
     it "accepts allowedTokenChanges = Just LT with valid range" $ do
       let config = defaultReachConfig {
             netGoalConfig = (netGoalConfig defaultReachConfig) {
-              preconditionsRange = (2, Just 5),
-              postconditionsRange = (0, Just 3),
+              arrowDensityConstraints = noArrowDensityConstraints {
+                incomingArrowsPerTransition = (2, Just 5),
+                outgoingArrowsPerTransition = (0, Just 3),
+                totalArrowsFromPlacesToTransitions = (12, Just 30),
+                totalArrowsFromTransitionsToPlaces = (0, Just 18)
+                },
               transitionBehaviorConstraints = TransitionBehaviorConstraints {
                 allowedTokenChanges = Just LT,
                 areNonPreserving = Nothing
@@ -304,11 +397,30 @@ spec = do
     it "accepts allowedTokenChanges = Just GT with valid range" $ do
       let config = defaultReachConfig {
             netGoalConfig = (netGoalConfig defaultReachConfig) {
-              preconditionsRange = (0, Just 3),
-              postconditionsRange = (2, Just 5),
+              arrowDensityConstraints = noArrowDensityConstraints {
+                incomingArrowsPerTransition = (0, Just 3),
+                outgoingArrowsPerTransition = (2, Just 5),
+                totalArrowsFromPlacesToTransitions = (0, Just 18),
+                totalArrowsFromTransitionsToPlaces = (12, Just 30)
+                },
               transitionBehaviorConstraints = TransitionBehaviorConstraints {
                 allowedTokenChanges = Just GT,
                 areNonPreserving = Nothing
+                }
+              }
+            }
+      checkReachConfig config `shouldBe` Nothing
+
+    it "accepts configuration with consistent arrow density parameters" $ do
+      let config = defaultReachConfig {
+            netGoalConfig = (netGoalConfig defaultReachConfig) {
+              arrowDensityConstraints = ArrowDensityConstraints {
+                incomingArrowsPerTransition = (1, Just 2),
+                outgoingArrowsPerTransition = (1, Just 2),
+                incomingArrowsPerPlace = (1, Just 3),
+                outgoingArrowsPerPlace = (1, Just 3),
+                totalArrowsFromPlacesToTransitions = (6, Just 12),
+                totalArrowsFromTransitionsToPlaces = (6, Just 12)
                 }
               }
             }

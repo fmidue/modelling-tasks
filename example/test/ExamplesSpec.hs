@@ -81,6 +81,8 @@ import Modelling.CdOd.DifferentNames.Config (
   task2025_14,
   task2025_15,
   task2025_16,
+  task2025_21,
+  task2025_22,
   )
 import Modelling.CdOd.MatchCdOd (
   checkMatchCdOdConfig,
@@ -188,12 +190,16 @@ import Modelling.PetriNet.PetriGraphToMath.Config (
   task2023_18,
   task2024_21,
   task2024_22,
+  task2025_23,
+  task2025_24,
   )
 import Modelling.PetriNet.PetriMathToGraph.Config (
   task2023_19,
   task2023_20,
   task2024_23,
   task2024_24,
+  task2025_25,
+  task2025_26,
   )
 import Modelling.PetriNet.PetriPickConcurrency.Config (
   task2023_21,
@@ -214,6 +220,8 @@ import Modelling.PetriNet.PetriDeadlock.Config (
   task2024_27,
   task2024_28,
   task2024_61,
+  task2025_29,
+  task2025_30,
   )
 import Modelling.PetriNet.Reach.Reach (
   checkReachConfig,
@@ -224,6 +232,8 @@ import Modelling.PetriNet.PetriReach.Config (
   task2024_25,
   task2024_26,
   task2024_60,
+  task2025_27,
+  task2025_28,
   )
 
 import Test.Hspec
@@ -484,3 +494,23 @@ spec =
         checkMatchCdOdConfig task2025_19 `shouldBe` Nothing
       it "task20" $
         checkMatchCdOdConfig task2025_20 `shouldBe` Nothing
+      it "task21" $
+        checkDifferentNamesConfig task2025_21 `shouldBe` Nothing
+      it "task22" $
+        checkDifferentNamesConfig task2025_22 `shouldBe` Nothing
+      it "task23" $
+        checkGraphToMathConfig task2025_23 `shouldBe` Nothing
+      it "task24" $
+        checkGraphToMathConfig task2025_24 `shouldBe` Nothing
+      it "task25" $
+        checkMathConfig task2025_25 `shouldBe` Nothing
+      it "task26" $
+        checkMathConfig task2025_26 `shouldBe` Nothing
+      it "task27" $
+        checkReachConfig task2025_27 `shouldBe` Nothing
+      it "task28" $
+        checkReachConfig task2025_28 `shouldBe` Nothing
+      it "task29" $
+        checkDeadlockConfig task2025_29 `shouldBe` Nothing
+      it "task30" $
+        checkDeadlockConfig task2025_30 `shouldBe` Nothing

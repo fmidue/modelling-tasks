@@ -4,6 +4,7 @@
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DerivingStrategies #-}
 #endif
+{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
@@ -44,9 +45,12 @@ module Modelling.PetriNet.Reach.Deadlock (
   exampleInstance,
 ) where
 
+import qualified Data.Bimap                       as BM (lookup)
 import qualified Data.Map                         as M (fromList)
 import qualified Data.Set                         as S (fromList, toList)
 
+import Autolib.Reader                   (Reader)
+import Autolib.ToDoc                    (ToDoc)
 import Data.List.NonEmpty                 (NonEmpty((:|)))
 
 import Capabilities.Cache               (MonadCache)
@@ -64,7 +68,6 @@ import Modelling.PetriNet.Reach.Property (
 import Modelling.PetriNet.Reach.ConfigValidation (
   checkBasicPetriConfig,
   checkFilterConfigWith,
-  checkTransitionBehaviorConstraints,
   )
 import Modelling.PetriNet.Reach.Reach   (
   assertReachPoints,
@@ -76,9 +79,10 @@ import Modelling.PetriNet.Reach.Reach   (
   provideSolutionsFeedback,
   validateDrawabilityAndSolutionFiltering,
   )
-import Modelling.PetriNet.Reach.Roll    (netLimitsFiltered)
+import Modelling.PetriNet.Reach.Roll    (netLimitsFiltered, simpleConnectionGenerator, generateValidConnection, generateFusableConnections)
 import Modelling.PetriNet.Reach.Step    (executes, successors)
 import Modelling.PetriNet.Reach.Type (
+  ArrowDensityConstraints(..),
   Capacity (Unbounded),
   Net (..),
   Place (..),
@@ -89,7 +93,10 @@ import Modelling.PetriNet.Reach.Type (
   TransitionBehaviorConstraints,
   TransitionsList (TransitionsList),
   bimapNet,
+  countFusableTransitionsConsuming,
+  countFusableTransitionsProducing,
   example,
+  noArrowDensityConstraints,
   noTransitionBehaviorConstraints,
   )
 
@@ -114,9 +121,11 @@ import Data.Either.Combinators          (whenRight)
 import Control.Functor.Trans            (FunctorTrans (lift))
 import Control.Monad                    (guard)
 import Control.Monad.Catch              (MonadCatch, MonadThrow)
+import Control.Monad.Extra              (whenJust)
 import Control.Monad.Random             (evalRandT, mkStdGen)
 import Control.Monad.Trans.Maybe        (MaybeT (MaybeT), runMaybeT)
 import Control.Monad.Trans.Random       (RandT)
+import Data.Maybe                       (fromMaybe)
 import System.Random.Internal           (StdGen)
 import Data.GraphViz                    (GraphvizCommand (..))
 #if !MIN_VERSION_base(4,18,0)
@@ -224,7 +233,7 @@ data DeadlockInstance s t = DeadlockInstance {
   -- If set to @Just n@, sequences starting with @n@ or more consecutive transitions
   -- (e.g., @[t1, t2, t3, t4]@) will be rejected.
   rejectSpaceballsLength :: Maybe Int
-  } deriving (Generic, Read, Show)
+  } deriving (Generic, Read, Show, Reader, ToDoc)
 #if !MIN_VERSION_base(4,18,0)
   deriving Typeable
 #endif
@@ -253,22 +262,33 @@ toShowDeadlockInstance
   -> DeadlockInstance ShowPlace ShowTransition
 toShowDeadlockInstance = bimapDeadlockInstance ShowPlace ShowTransition
 
+-- | Configuration for deadlock task generation.
+-- Note: The two kinds of fusable transition/place situations (consuming-fusable and producing-fusable)
+-- are guaranteed to be non-overlapping. No transition will be both consuming-fusable and producing-fusable
+-- and no such transitions will share a fusing-relevant place.
 data DeadlockConfig = DeadlockConfig {
   numPlaces :: Int,
   numTransitions :: Int,
   capacity :: Capacity Place,
-  -- | Draw commands in order of preference
-  drawPreferenceOrder :: [GraphvizCommand],
+  -- | Graph layout commands to choose from (randomly selected during generation)
+  graphLayouts :: [GraphvizCommand],
   maxTransitionLength :: Int,
   minTransitionLength :: Int,
   transitionBehaviorConstraints :: TransitionBehaviorConstraints,
-  postconditionsRange :: (Int, Maybe Int),
-  preconditionsRange  :: (Int, Maybe Int),
+  arrowDensityConstraints :: ArrowDensityConstraints,
   maxPrintedSolutions :: Int,
   rejectLongerThan    :: Maybe Int,
   showLengthHint      :: Bool,
   showMinLengthHint   :: Bool,
   showPlaceNamesInNet :: Bool,
+  -- | Require exactly this many transitions with exactly one input place,
+  -- which is exclusively consumed from by that transition.
+  -- If @Nothing@, no constraint on fusable transitions consuming.
+  fusableTransitionsConsumingAreExactly :: Maybe Int,
+  -- | Require exactly this many transitions with exactly one output place,
+  -- which is exclusively produced to by that transition.
+  -- If @Nothing@, no constraint on fusable transitions producing.
+  fusableTransitionsProducingAreExactly :: Maybe Int,
   filterConfig        :: FilterConfig
   }
   deriving (Generic, Read, Show)
@@ -282,17 +302,18 @@ defaultDeadlockConfig =
   numPlaces = 6,
   numTransitions = 6,
   Modelling.PetriNet.Reach.Deadlock.capacity = Unbounded,
-  drawPreferenceOrder = [Dot, Neato, TwoPi, Circo, Fdp, Sfdp, Osage, Patchwork],
+  graphLayouts = [Dot, Neato, TwoPi, Circo, Fdp, Sfdp, Osage, Patchwork],
   maxTransitionLength = 8,
   minTransitionLength = 8,
   transitionBehaviorConstraints = noTransitionBehaviorConstraints,
-  postconditionsRange = (0, Nothing),
-  preconditionsRange  = (0, Nothing),
-  maxPrintedSolutions = 0,
+  arrowDensityConstraints = noArrowDensityConstraints,
+  maxPrintedSolutions = 1,
   rejectLongerThan    = Just 8,
   showLengthHint      = False,
   showMinLengthHint   = True,
   showPlaceNamesInNet = False,
+  fusableTransitionsConsumingAreExactly = Nothing,
+  fusableTransitionsProducingAreExactly = Nothing,
   filterConfig        = defaultFilterConfig { solutionSetLimit = Nothing, forbiddenCycleLengths = [4], requireCycleLengthsAny = [], transitionCoverageRequirement = 1 % 2 }
   }
 
@@ -310,6 +331,38 @@ defaultDeadlockInstance = DeadlockInstance {
   rejectSpaceballsLength = Nothing
   }
 
+checkFusableNodeConfig
+  :: Maybe Int  -- ^ fusableTransitionsConsumingAreExactly
+  -> Maybe Int  -- ^ fusableTransitionsProducingAreExactly
+  -> Int        -- ^ numTransitions
+  -> Int        -- ^ numPlaces
+  -> ArrowDensityConstraints
+  -> Maybe String
+checkFusableNodeConfig maybeConsuming maybeProducing numTrans numPlaces ArrowDensityConstraints {..}
+  | let relevantConsumingCount = fromMaybe 0 maybeConsuming
+  , let relevantProducingCount = fromMaybe 0 maybeProducing
+  , relevantConsumingCount < 0 || relevantProducingCount < 0
+    || relevantConsumingCount + relevantProducingCount > min numTrans numPlaces
+  = Just "fusable transitions requirements must not be negative and together cannot exceed numTransitions or numPlaces"
+  | otherwise
+  = checkConflicts maybeConsuming incomingArrowsPerTransition "Consuming" "incomingArrowsPerTransition"
+    <|> checkConflicts maybeProducing outgoingArrowsPerTransition "Producing" "outgoingArrowsPerTransition"
+    <|> checkConflicts maybeConsuming outgoingArrowsPerPlace "Consuming" "outgoingArrowsPerPlace"
+    <|> checkConflicts maybeProducing incomingArrowsPerPlace "Producing" "incomingArrowsPerPlace"
+    <|> checkTotalLower maybeConsuming (fst totalArrowsFromPlacesToTransitions) "Consuming" "totalArrowsFromPlacesToTransitions"
+    <|> checkTotalLower maybeProducing (fst totalArrowsFromTransitionsToPlaces) "Producing" "totalArrowsFromTransitionsToPlaces"
+  where
+    checkConflicts maybeCount (minVal, maxVal) nodeType constraintName
+      | Just count <- maybeCount, count > 0, minVal > 1
+      = Just $ "fusableTransitions" ++ nodeType ++ "AreExactly > 0 conflicts with " ++ constraintName ++ " minimum > 1"
+      | Just count <- maybeCount, count > 0, maxVal == Just 0
+      = Just $ "fusableTransitions" ++ nodeType ++ "AreExactly > 0 conflicts with " ++ constraintName ++ " maximum = 0"
+      | otherwise = Nothing
+    checkTotalLower maybeCount totalMin nodeType constraintName
+      | Just count <- maybeCount, totalMin < count
+      = Just $ "having fewer " ++ constraintName ++ " than fusableTransitions" ++ nodeType ++ "AreExactly makes no sense"
+      | otherwise = Nothing
+
 checkDeadlockConfig :: DeadlockConfig -> Maybe String
 checkDeadlockConfig DeadlockConfig {..} =
   checkBasicPetriConfig
@@ -318,9 +371,9 @@ checkDeadlockConfig DeadlockConfig {..} =
     capacity
     minTransitionLength
     maxTransitionLength
-    preconditionsRange
-    postconditionsRange
-    drawPreferenceOrder
+    transitionBehaviorConstraints
+    arrowDensityConstraints
+    graphLayouts
     rejectLongerThan
     showLengthHint
   <|>
@@ -330,12 +383,12 @@ checkDeadlockConfig DeadlockConfig {..} =
     numTransitions
     filterConfig
   <|>
-  checkTransitionBehaviorConstraints
-    numPlaces
-    preconditionsRange
-    postconditionsRange
+  checkFusableNodeConfig
+    fusableTransitionsConsumingAreExactly
+    fusableTransitionsProducingAreExactly
     numTransitions
-    transitionBehaviorConstraints
+    numPlaces
+    arrowDensityConstraints
   <|>
   if maxPrintedSolutions < 0
     then Just "maxPrintedSolutions must be non-negative"
@@ -385,14 +438,40 @@ try
 try conf = do
     let ps = [Place 1 .. Place (numPlaces conf)]
         ts = [Transition 1 .. Transition (numTransitions conf)]
-    n <- MaybeT $ netLimitsFiltered
-      (preconditionsRange conf)
-      (postconditionsRange conf)
+        requiredFusableTransitionsConsuming = fromMaybe 0 $ fusableTransitionsConsumingAreExactly conf
+        requiredFusableTransitionsProducing = fromMaybe 0 $ fusableTransitionsProducingAreExactly conf
+    -- Pre-generate fusable node connections and bind appropriate version of netLimitsFiltered
+    netGenerator <-
+      if requiredFusableTransitionsConsuming == 0 && requiredFusableTransitionsProducing == 0
+      then return $ netLimitsFiltered simpleConnectionGenerator
+      else do
+        (transitionConsumingBimap, transitionProducingBimap) <-
+          generateFusableConnections ps ts requiredFusableTransitionsConsuming requiredFusableTransitionsProducing
+        return $ netLimitsFiltered
+          $ \inputPlacesAction outputPlacesAction t -> do
+              (vor, nach) <- generateValidConnection transitionConsumingBimap transitionProducingBimap inputPlacesAction outputPlacesAction t
+              case BM.lookup t transitionConsumingBimap of
+                Just preVor
+                  -> return (preVor : vor, t, nach)
+                _
+                  -> case BM.lookup t transitionProducingBimap of
+                       Just preNach
+                         -> return (vor, t, preNach : nach)
+                       _
+                         -> return (vor, t, nach)
+                -- impossible for both lookups to return Just
+    n <- MaybeT $ netGenerator
+      (arrowDensityConstraints conf)
       (numPlaces conf)
       ps
       ts
       (Modelling.PetriNet.Reach.Deadlock.capacity conf)
       (transitionBehaviorConstraints conf)
+    -- Check fusable transitions constraints
+    whenJust (fusableTransitionsConsumingAreExactly conf) $ \expected ->
+      guard $ countFusableTransitionsConsuming (connections n) <= expected
+    whenJust (fusableTransitionsProducingAreExactly conf) $ \expected ->
+      guard $ countFusableTransitionsProducing (connections n) <= expected
     let deadlockLevels = map (filter (null . successors n . fst)) (levelsWithAlternatives n)
         (no, yeah) = span null
           $ take (maxTransitionLength conf + 1)
@@ -401,7 +480,7 @@ try conf = do
     let allShortestSolutions = map reverse . concatMap snd $ head yeah
     guard $ length no >= minTransitionLength conf
     (cmd, solutionsList) <- validateDrawabilityAndSolutionFiltering
-      n (drawPreferenceOrder conf) allShortestSolutions
+      n (graphLayouts conf) allShortestSolutions
       (filterConfig conf) (numTransitions conf) (maxPrintedSolutions conf)
     pure (n, cmd, solutionsList)
 

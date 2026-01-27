@@ -303,7 +303,7 @@ defaultDifferentNamesConfig = DifferentNamesConfig {
       usesEveryRelationshipName = Just True
       },
     omittedDefaultMultiplicities = defaultOmittedDefaultMultiplicities,
-    printSolution    = False,
+    printSolution    = True,
     withNonTrivialInheritance = Just True,
     withObviousMapping = Nothing,
     maxInstances     = Just 200,
@@ -671,7 +671,7 @@ defaultDifferentNamesInstance = DifferentNamesInstance {
       Link {linkLabel = "3.", linkFrom = "c1", linkTo = "d1"}
       ]
     },
-  showSolution = False,
+  showSolution = True,
   mapping = toNameMapping $ BM.fromList [("x", "2."), ("y", "3."), ("z", "1.")],
   linkShuffling = ConsecutiveNumbers,
   taskText = defaultDifferentNamesTaskText,

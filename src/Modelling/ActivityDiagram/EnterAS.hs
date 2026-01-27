@@ -134,7 +134,7 @@ defaultEnterASConfig = EnterASConfig {
   maxInstances = Just 50,
   objectNodeOnEveryPath = Just True,
   answerLength = (5, 8),
-  printSolution = False,
+  printSolution = True,
   extraText = NoExtraText
 }
 
@@ -394,6 +394,6 @@ defaultEnterASInstance =
   petriNet = convertToPetriNet ad,
   drawSettings = defaultPlantUmlConfig,
   sampleSequence = ["D","E","G","B","F"],
-  showSolution = False,
+  showSolution = True,
   addText = NoExtraText
 }

@@ -734,7 +734,7 @@ defaultPickConflictInstance = PickInstance {
         }
       )))
     ],
-  showSolution = False,
+  showSolution = True,
   addText = NoExtraText
   }
 
@@ -764,6 +764,6 @@ defaultFindConflictInstance = FindInstance {
     },
   numberOfPlaces = 4,
   numberOfTransitions = 3,
-  showSolution = False,
+  showSolution = True,
   addText = NoExtraText
   }

@@ -50,7 +50,7 @@ spec = do
           not . M.null . diagrams
             <$> matchCdOd defaultMatchCdOdConfig segment seed
         `shouldReturn` True
-      it "reproducible generates defaultMatchCdOdInstance" $
+      it "reproducibly generates defaultMatchCdOdInstance" $
         matchCdOd defaultMatchCdOdConfig 0 0
         `shouldReturn` defaultMatchCdOdInstance
   describe "getODsFor" $ do
