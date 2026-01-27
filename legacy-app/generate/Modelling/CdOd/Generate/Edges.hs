@@ -100,6 +100,7 @@ multipleInheritances es =
 inheritanceCycles :: [DiagramEdge] -> [[DiagramEdge]]
 inheritanceCycles = cycles isInheritance
   where
+    isInheritance :: Connection -> Bool
     isInheritance Inheritance' = True
     isInheritance _           = False
 
@@ -109,6 +110,7 @@ compositionCycles es = cycles isComposition (flatten es)
            , c@(s', e', _) <- filter (isComposition . thd3) es
            , s' == e && s == e' || s' == s && e' == e]
   where
+    isInheritance :: Connection -> Bool
     isInheritance Inheritance' = True
     isInheritance _           = False
 
@@ -143,6 +145,7 @@ wrongLimits es =
        || not (inLimit s)
        || not (inLimit e)]
   where
+    inLimit :: (Int, Maybe Int) -> Bool
     inLimit (l, Nothing)
       | 0 <= l && l <= 2 = True
       | otherwise        = False
@@ -157,6 +160,7 @@ cycles connectionFilter es =
         , c@(s', e', _) <- edges, s' == e, s == e']
   where
     edges               = filter (connectionFilter . connection) es
+    connection :: DiagramEdge -> Connection
     connection  (_,_,c) = c
 
 getPaths :: (Connection -> Bool) -> [DiagramEdge] -> [(String, String, [DiagramEdge])]
@@ -164,8 +168,11 @@ getPaths connectionFilter es =
   [path | c@(s, e, _) <- edges, s /= e, path <- getPath s e [c] edges]
   where
     edges               = filter (connectionFilter . connection) es
+    start :: DiagramEdge -> String
     start       (s,_,_) = s
+    end :: DiagramEdge -> String
     end         (_,e,_) = e
+    connection :: DiagramEdge -> Connection
     connection  (_,_,c) = c
     getPath :: String
             -> String
@@ -194,9 +201,12 @@ checkObvious cs =
 hasAssociationAtOneSuperclass :: [String] -> [DiagramEdge] -> Bool
 hasAssociationAtOneSuperclass cs es = any inheritanceHasOtherEdge cs
   where
+    inheritanceHasOtherEdge :: String -> Bool
     inheritanceHasOtherEdge x = any (x `isInheritedUsing`) es
       && any (x `hasAssociation`) es
+    isInheritedUsing :: String -> DiagramEdge -> Bool
     isInheritedUsing x (_, e, Inheritance') = x == e
     isInheritedUsing _ _                   = False
+    hasAssociation :: String -> DiagramEdge -> Bool
     hasAssociation _ (_, _, Inheritance') = False
     hasAssociation x (s, e, _)           = x == s || x == e
