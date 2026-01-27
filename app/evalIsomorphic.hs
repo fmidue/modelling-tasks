@@ -21,7 +21,7 @@ import Modelling.ActivityDiagram.Datatype (UMLActivityDiagram)
 import Modelling.ActivityDiagram.Instance (parseInstance)
 import Modelling.ActivityDiagram.Isomorphism (isAdIsomorphic)
 import Modelling.ActivityDiagram.PlantUMLConverter (convertToPlantUML)
-import Language.Alloy.Call (getInstances)
+import Capabilities.Alloy.IO (getInstances)
 import Language.PlantUML.Call (DiagramType(SVG), drawPlantUMLDiagram)
 
 main :: IO ()

@@ -51,6 +51,7 @@ generate withNonTrivialInheritance c searchSpace = do
            ++ "; check your configuration"
       else generate withNonTrivialInheritance smallerC searchSpace
     smallerC = shrink c searchSpace
+    classNames :: Int -> [String]
     classNames x = map (:[]) $ take x ['A'..]
     toAvailable :: (Int, Maybe Int) -> [Int]
     toAvailable (x, Nothing) = [x ..]
@@ -66,6 +67,7 @@ generate withNonTrivialInheritance c searchSpace = do
     maxLength _ []     = 0
     maxLength s (_:xs) = 1 + maxLength (s - 1) xs
     -- checks for cases which surely lead to unsolvable problems
+    isPossible :: Int -> Int -> Int -> Int -> Int -> Bool
     isPossible cla inh com ass agg
       | inh >= cla                                      = False
       | cla * (cla - 1) `div` 2 < inh + com + ass + agg = False
@@ -136,7 +138,7 @@ generateEdge (conf, cs) mt
   | null cs, isNothing mt, Just (cl, _) <- withConnection conf = do
       t <- oneOf [ (x, y) | (x, y) <- available conf, x == cl || y == cl]
       let (s, e) = if fst t == cl then swap t else t
-      finish (deletePair t conf, [(s, e, Inheritance')])
+      return $ finish (deletePair t conf, [(s, e, Inheritance')])
   | otherwise = do
       t <- oneOf $ case withConnection conf of
         Just (cl, 0) ->
@@ -153,12 +155,13 @@ generateEdge (conf, cs) mt
         let del = if isNothing mt && withNoFurtherConnection conf
               then deleteAllForClass e
               else deletePair t
-        finish (del conf, c:cs)
+        return $ finish (del conf, c:cs)
         else generateEdge (conf, cs) mt
   where
+    finish :: (GenerationConfig, [DiagramEdge]) -> Maybe (GenerationConfig, [DiagramEdge])
     finish (gc, des)
-      | null (available conf) = return Nothing
-      | otherwise             = return $ Just (next gc, des)
+      | null (available conf) = Nothing
+      | otherwise             = Just (next gc, des)
     generateLimits :: MonadRandom m => Maybe AssociationType -> m Connection
     generateLimits Nothing            = return Inheritance'
     generateLimits (Just Composition') = do
@@ -184,9 +187,11 @@ shrink c searchSpace = c {
     inheritanceLimits = decrease $ inheritanceLimits c
   }
   where
+    increase :: (Int, Int) -> (Int, Int)
     increase (x, y)
       | x < y     = (x + 1, y)
       | otherwise = (x, y)
+    decrease :: (Int, Maybe Int) -> (Int, Maybe Int)
     decrease (x, Nothing) = (x, Just $ x + searchSpace)
     decrease (x, Just  y)
       | x < y     = (x, Just $ y - 1)

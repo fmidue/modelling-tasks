@@ -53,10 +53,12 @@ run input output template index = do
       when template $ let out = file ++ ".part4" in writeFile out p4 >> putStrLn ("Some output written to " ++ out)
     Nothing -> putStrLn $ (if template then p1 else "") ++ p2 ++ p3 ++ (if template then p4 else "")
   where
+    toCd :: [(String, Maybe String)] -> [Relationship String String] -> ClassDiagram String String
     toCd cs es = ClassDiagram {
       classNames = map fst cs,
       relationships = mapMaybe (uncurry toInheritance) cs ++ es
       }
+    toInheritance :: String -> Maybe String -> Maybe (Relationship String String)
     toInheritance sub super = Inheritance sub <$> super
     objectProperties = ObjectProperties {
       anonymousObjectProportion = 0 % 1,
