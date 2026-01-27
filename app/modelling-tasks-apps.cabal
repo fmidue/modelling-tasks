@@ -149,7 +149,6 @@ executable evalIsomorphic
     , happy
   build-depends:
       MonadRandom
-    , autotool-capabilities-io-instances
     , base
     , bytestring
     , call-alloy
@@ -177,7 +176,6 @@ executable evalTimeToGenerate
     , happy
   build-depends:
       MonadRandom
-    , autotool-capabilities-io-instances
     , base
     , call-alloy
     , containers
