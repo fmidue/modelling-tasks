@@ -48,7 +48,6 @@ import Modelling.PetriNet.Reach.Step (successors)
 
 import qualified Control.Monad as Monad (guard)
 import Control.Monad.Random (MonadRandom, uniform)
-import Data.Bifunctor (second)
 import Data.List (union)
 import Data.List.Extra (nubOrd)
 import Data.Maybe (mapMaybe, isJust)
