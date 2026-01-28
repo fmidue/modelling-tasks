@@ -25,7 +25,7 @@ task2023_37 = SelectPetriConfig {
     flowFinalNodes = 2,
     cycles = 1
     },
-  countOfPetriNodesBounds = (22, Just 26),
+  countOfPetriNodesBounds = (22, Just 26),  -- generates successfully
   maxInstances = Just 2000,
   hideNodeNames = False,
   hideBranchConditions = True,
@@ -57,8 +57,8 @@ task2023_38 = SelectPetriConfig {
     flowFinalNodes = 2,
     cycles = 1
     },
-  countOfPetriNodesBounds = (17, Just 20),
-  maxInstances = Just 1,
+  countOfPetriNodesBounds = (17, Just 20),  -- generates successfully
+  maxInstances = Just 2000,
   hideNodeNames = True,
   hideBranchConditions = True,
   hidePetriNodeLabels = True,
@@ -99,7 +99,7 @@ task2024_44 = SelectPetriConfig {
     flowFinalNodes = 2,
     cycles = 1
     },
-  countOfPetriNodesBounds = (17, Just 20),
+  countOfPetriNodesBounds = (17, Just 20),  -- generates successfully
   maxInstances = Just 2000,
   hideNodeNames = True,
   hideBranchConditions = True,
