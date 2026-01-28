@@ -947,7 +947,7 @@ defaultFindConflictConfig = FindConflictConfig
   , changeConfig = defaultChangeConfig
   , conflictConfig = defaultConflictConfig
   , graphConfig = defaultGraphConfig { hidePlaceNames = True }
-  , printSolution = False
+  , printSolution = True
   , uniqueConflictPlace = Just True
   , alloyConfig  = defaultAlloyConfig
   , extraText = NoExtraText
@@ -973,7 +973,7 @@ defaultPickConflictConfig = PickConflictConfig
   , changeConfig = defaultChangeConfig
   , conflictConfig = defaultConflictConfig
   , graphConfig = defaultGraphConfig { hidePlaceNames = True, hideTransitionNames = True }
-  , printSolution = False
+  , printSolution = True
   , prohibitSourceTransitions = False
   , uniqueConflictPlace = Nothing
   , useDifferentGraphLayouts = False
@@ -998,7 +998,7 @@ defaultFindConcurrencyConfig = FindConcurrencyConfig
   , advConfig = defaultAdvConfig { presenceOfSourceTransitions = Just False }
   , changeConfig = defaultChangeConfig
   , graphConfig = defaultGraphConfig { hidePlaceNames = True }
-  , printSolution = False
+  , printSolution = True
   , alloyConfig  = defaultAlloyConfig
   , extraText = NoExtraText
   }
@@ -1020,7 +1020,7 @@ defaultPickConcurrencyConfig = PickConcurrencyConfig
   { basicConfig = defaultBasicConfig { atLeastActive = 2 }
   , changeConfig = defaultChangeConfig
   , graphConfig = defaultGraphConfig { hidePlaceNames = True, hideTransitionNames = True }
-  , printSolution = False
+  , printSolution = True
   , prohibitSourceTransitions = False
   , useDifferentGraphLayouts = False
   , alloyConfig  = defaultAlloyConfig { timeout = Just 60000000 }

@@ -3,6 +3,7 @@ module Modelling.CdOd.RepairCdSpec where
 import qualified Data.Map                         as M (null)
 
 import Capabilities.Alloy.IO            ()
+import Capabilities.Exceptions.IO       ()
 import Modelling.CdOd.RepairCd (
   RepairCdInstance (changes),
   checkRepairCdConfig,

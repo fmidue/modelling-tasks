@@ -6,6 +6,7 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TupleSections #-}
 module Modelling.CdOd.DifferentNames (
   DifferentNamesConfig (..),
@@ -65,7 +66,7 @@ import Modelling.Auxiliary.Output (
 import Modelling.Auxiliary.Shuffle.NamesAndLayout (
   shuffleEverything,
   )
-import Modelling.CdOd.Auxiliary.Util
+import Modelling.CdOd.Auxiliary.Util (alloyInstanceToOd)
 import Modelling.CdOd.CD2Alloy.Transform (
   ExtendsAnd (NothingMore),
   LinguisticReuse (ExtendsAnd),
@@ -124,6 +125,7 @@ import Modelling.Types (
 import Control.Applicative              (Alternative ((<|>)))
 import Control.Monad.Catch              (MonadCatch, MonadThrow, throwM)
 import Control.Monad.Extra              (when, whenJust)
+import Control.Monad.Trans.Class (lift)
 import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
   ExtraText (..),
@@ -151,10 +153,12 @@ import Control.OutputCapable.Blocks.Type (
   toOutputCapable,
   )
 import Control.Monad.Random (
-  MonadRandom,
+  RandomGen,
   evalRandT,
   mkStdGen,
   )
+import Control.Monad.Trans.Random       (RandT)
+import System.Random.Internal           (StdGen)
 import Control.Monad.Trans.Except       (runExceptT)
 import Data.Bifunctor                   (Bifunctor (bimap, first))
 import Data.Bimap                       (Bimap)
@@ -305,7 +309,7 @@ defaultDifferentNamesConfig = DifferentNamesConfig {
       usesEveryRelationshipName = Just True
       },
     omittedDefaultMultiplicities = defaultOmittedDefaultMultiplicities,
-    printSolution    = False,
+    printSolution    = True,
     withNonTrivialInheritance = Just True,
     withObviousMapping = Nothing,
     maxInstances     = Just 200,
@@ -584,7 +588,7 @@ differentNamesSolution :: DifferentNamesInstance -> [(Name, Name)]
 differentNamesSolution = BM.toAscList . nameMapping . mapping
 
 differentNames
-  :: (MonadAlloy m, MonadCatch m)
+  :: forall m. (MonadAlloy m, MonadCatch m)
   => DifferentNamesConfig
   -> Int
   -> Int
@@ -600,9 +604,10 @@ differentNames config segment seed = do
       (timeout config)
     tryGettingValidInstanceFor is
   where
-    tryGettingValidInstanceFor []             = throwM NoInstanceAvailable
+    tryGettingValidInstanceFor :: [AlloyInstance] -> RandT StdGen m DifferentNamesInstance
+    tryGettingValidInstanceFor []               = lift $ throwM NoInstanceAvailable
     tryGettingValidInstanceFor (inst:instances) = do
-      cd <- instanceToCd inst >>= shuffleClassAndConnectionOrder
+      cd <- lift (instanceToCd inst) >>= shuffleClassAndConnectionOrder
         >>= fmap runIdentity . shuffleCdNames . Identity
       taskInstance <- getDifferentNamesTask
         (tryGettingValidInstanceFor instances)
@@ -676,7 +681,7 @@ defaultDifferentNamesInstance = DifferentNamesInstance {
       Link {linkLabel = "3.", linkFrom = "c1", linkTo = "d1"}
       ]
     },
-  showSolution = False,
+  showSolution = True,
   mapping = toNameMapping $ BM.fromList [("x", "2."), ("y", "3."), ("z", "1.")],
   linkShuffling = ConsecutiveNumbers,
   taskText = defaultDifferentNamesTaskText,
@@ -684,11 +689,11 @@ defaultDifferentNamesInstance = DifferentNamesInstance {
   }
 
 getDifferentNamesTask
-  :: (MonadAlloy m, MonadCatch m, MonadRandom m)
-  => m DifferentNamesInstance
+  :: (MonadAlloy m, MonadCatch m, RandomGen g)
+  => RandT g m DifferentNamesInstance
   -> DifferentNamesConfig
   -> Cd
-  -> m DifferentNamesInstance
+  -> RandT g m DifferentNamesInstance
 getDifferentNamesTask tryNext DifferentNamesConfig {..} cd = do
     let cd0    = (0 :: Integer, cd)
         parts0 = uncurry alloyFor cd0
@@ -709,14 +714,14 @@ getDifferentNamesTask tryNext DifferentNamesConfig {..} cd = do
           objectConfig
           (concatMap relationships cds)
         partsList' = foldr mergeParts parts0 partsList
-    instances  <- getInstances
+    instances <- lift $ getInstances
       maxInstances
       timeout
       (combineParts partsList' ++ unlines overlappingPredicates ++ onlyCd0)
     instances' <- shuffleM (instances :: [AlloyInstance])
     continueWithHead instances' $ \od1 -> do
       labels' <- shuffleM labels
-      used <- usedLabels labels od1
+      used <- lift $ usedLabels labels od1
       let usedFirst = uncurry (++) $ partition (`elem` used) labels'
           bm  = BM.fromList $ zip usedFirst (map (\n -> show n ++ ".") [1 :: Int ..])
           bm' = BM.filter (const . (`elem` used)) bm
@@ -729,9 +734,9 @@ getDifferentNamesTask tryNext DifferentNamesConfig {..} cd = do
         then do
         let keepClassNames = BM.fromList $ zip names names
             renameOd = renameObjectsWithClassesAndLinksInOd keepClassNames bm
-        od1' <- either error id
+        od1' <- lift $ either error id
           <$> runExceptT (alloyInstanceToOd Nothing labels od1)
-        od1'' <- renameOd od1'
+        od1'' <- lift (renameOd od1')
           >>= anonymiseObjects (anonymousObjectProportion objectProperties)
         return $ DifferentNamesInstance {
               cDiagram  = cd,
@@ -803,7 +808,7 @@ instance RandomiseNames DifferentNamesInstance where
     names'  <- shuffleM names
     nonInheritances' <- shuffleM nonInheritances
     links' <- shuffleM lNames
-    renameInstance inst names' nonInheritances' links'
+    lift $ renameInstance inst names' nonInheritances' links'
 
 instance RandomiseLayout DifferentNamesInstance where
   randomiseLayout DifferentNamesInstance {..} = do

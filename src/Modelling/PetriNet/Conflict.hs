@@ -477,7 +477,7 @@ pickConflict
     m
     [(p n String, Maybe (PetriConflict' String))]
 pickConflict = taskInstance
-  pickTaskInstance
+  (\f -> lift . pickTaskInstance f)
   petriNetPickConflict
   parseConflict
   Pick.alloyConfig
@@ -738,7 +738,7 @@ defaultPickConflictInstance = PickInstance {
         }
       )))
     ],
-  showSolution = False,
+  showSolution = True,
   addText = NoExtraText
   }
 
@@ -768,6 +768,6 @@ defaultFindConflictInstance = FindInstance {
     },
   numberOfPlaces = 4,
   numberOfTransitions = 3,
-  showSolution = False,
+  showSolution = True,
   addText = NoExtraText
   }

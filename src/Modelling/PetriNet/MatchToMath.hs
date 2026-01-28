@@ -194,7 +194,7 @@ defaultMathConfig = MathConfig {
     },
   generatedWrongInstances = 50,
   graphConfig = defaultGraphConfig,
-  printSolution = False,
+  printSolution = True,
   useDifferentGraphLayouts = False,
   wrongInstances = 3,
   alloyConfig = defaultAlloyConfig,
@@ -363,20 +363,20 @@ matchToMath
   -> RandT g m (p n String, Math, [(p n String, Change)])
 matchToMath config segment = do
   (f, net, math) <- netMathInstance config segment
-  fList <- getInstances
+  fList <- lift $ getInstances
     (Just $ toInteger $ generatedWrongInstances config)
     Nothing
     f
   fList' <- take (wrongInstances config) <$> shuffleM fList
   if wrongInstances config == length fList'
     then do
-    alloyChanges <- mapM addChange fList'
+    alloyChanges <- mapM (lift . addChange) fList'
     changes <- firstM parse `mapM` alloyChanges
     let changes' = uncurry zip $ unzip changes
     return (net, math, changes')
     else matchToMath config segment
   where
-    parse = fmap fst . parseRenamedNet (singleSig "this" "Nodes" "") "flow" "tokens"
+    parse = fmap fst . lift . parseRenamedNet (singleSig "this" "Nodes" "") "flow" "tokens"
 
 firstM :: Monad m => (a -> m b) -> (a, c) -> m (b, c)
 firstM f (p, c) = (,c) <$> f p
@@ -399,7 +399,7 @@ mathInstance
   -> AlloyInstance
   -> RandT g m (String, p n String, Math)
 mathInstance config inst = do
-  petriLike <- fst <$> parseRenamedNet (singleSig "this" "Nodes" "") "flow" "tokens" inst
+  petriLike <- fst <$> lift (parseRenamedNet (singleSig "this" "Nodes" "") "flow" "tokens" inst)
   petriLike' <- fst <$> shuffleNames petriLike
   let math = toPetriMath petriLike'
   let f = renderFalse petriLike' config
@@ -707,7 +707,7 @@ defaultGraphToMathInstance = MatchInstance {
       withGraphvizCommand = Sfdp
       }
     ),
-  showSolution = False,
+  showSolution = True,
   to = fromList [
     (1,(False,PetriMath {
       netMath = "N = \\left(S, T, \\vphantom{()}^{\\bullet}(), ()^{\\bullet}, m_0\\right)",
@@ -775,7 +775,7 @@ defaultMathToGraphInstance = MatchInstance {
     initialMarkingMath = "m_0 = \\left(1,1,0,1\\right)",
     placeOrderMath = Just "\\left(s_{1},s_{2},s_{3},s_{4}\\right)"
     },
-  showSolution = False,
+  showSolution = True,
   to = fromList [
     (1,(True,(
       PetriLike {

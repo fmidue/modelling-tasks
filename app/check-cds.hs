@@ -7,8 +7,10 @@ import qualified Language.Alloy.Call              as Alloy (getInstances)
 import Capabilities.Diagrams.IO         ()
 import Capabilities.Graphviz.IO         ()
 import Capabilities.WriteFile.IO        ()
+import Capabilities.Exceptions.IO       ()
 import Modelling.CdOd.CD2Alloy.Transform (
   LinguisticReuse (None),
+  Parts (..),
   combineParts,
   createRunCommand,
   mergeParts,
@@ -16,6 +18,7 @@ import Modelling.CdOd.CD2Alloy.Transform (
   )
 import Modelling.CdOd.Output            (drawCd, drawOdFromInstance)
 import Modelling.CdOd.Types (
+  AnyCd,
   Cd,
   ClassDiagram (..),
   LimitedLinking (..),
@@ -28,12 +31,13 @@ import Modelling.CdOd.Types (
   relationshipName,
   )
 
-import Control.Monad.Random             (evalRandT, getStdGen)
+import Control.Monad.Random             (RandT, RandomGen, evalRandT, getStdGen)
 import Control.Monad.Trans.Class        (MonadTrans (lift))
 import Data.Foldable                    (toList)
 import Data.GraphViz                    (DirType (..))
 import Data.Maybe                       (mapMaybe)
 import Data.Ratio                       ((%))
+import Language.Alloy.Call              (AlloyInstance)
 
 v :: Relationship String String
 v = Aggregation {
@@ -229,6 +233,7 @@ drawCdAndOdsFor is c cds cmd = do
     mapM_ (\(od, i) -> drawOd possibleLinks od i >>= lift . putStrLn)
     $ zip (maybe id (take . fromInteger) is ods) [1..]
   where
+    drawOd :: RandomGen g => [String] -> AlloyInstance -> Int -> RandT g IO FilePath
     drawOd allRelationshipNames od i = drawOdFromInstance
       od
       Nothing
@@ -237,12 +242,15 @@ drawCdAndOdsFor is c cds cmd = do
       Back
       True
       (c ++ '-' : shorten cmd ++ "-od" ++ show i ++ ".svg")
+    drawCd' :: AnyCd -> Int -> IO String
     drawCd' cd i = do
       renderedCd <- drawCd defaultCdDrawSettings mempty cd
       BS.writeFile (c ++ "-cd" ++ show i ++ ".svg") renderedCd
       pure $ c ++ "-cd" ++ show i ++ ".svg"
     maxThreeObjects = maxFiveObjects { objectLimits = (1, 3) }
+    getParts :: [String] -> [Parts]
     getParts relationshipNames = zipWith (cdToAlloy relationshipNames) cds [0..]
+    cdToAlloy :: [String] -> Cd -> Int -> Parts
     cdToAlloy relationshipNames cd i = transform
       None
       cd
@@ -252,6 +260,7 @@ drawCdAndOdsFor is c cds cmd = do
       objectProperties
       (show i)
       ""
+    shorten :: String -> String
     shorten (' ':'a':'n':'d':' ':'c':'d':ys) =
       "and" ++ shorten ys
     shorten (' ':'a':'n':'d':' ':'n':'o':'t':' ':'c':'d':ys) =

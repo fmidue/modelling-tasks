@@ -40,6 +40,7 @@ import Modelling.PetriNet.TestCommon (
   validGraphConfig,
   )
 import Settings                         (configDepth)
+import Control.Monad.Trans              (lift)
 import Data.Maybe                       (fromMaybe, isNothing)
 
 import Test.Hspec
@@ -71,7 +72,7 @@ checkCapacityInstance (_, _, change, _) = isValidCapacity change
 testCapacityConfig :: [CapacityConfig] -> Spec
 testCapacityConfig = testTaskGeneration
   petriNetFindCapacity
-  findCapacityInstance
+  (lift . findCapacityInstance)
   $ checkCapacityInstance @(SimplePetriLike _)
 
 validFindCapacityConfigs :: [(BasicConfig, _)] -> AdvConfig -> [CapacityConfig]

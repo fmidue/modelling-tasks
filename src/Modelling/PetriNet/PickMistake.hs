@@ -81,6 +81,7 @@ import Control.Monad.Random (
   RandT,
   RandomGen,
   )
+import Control.Monad.Trans              (MonadTrans (lift))
 import Data.Data                        (Data, Typeable)
 import Data.GraphViz.Commands           (GraphvizCommand (Fdp))
 import Data.Functor.Const               (Const(..))
@@ -179,7 +180,7 @@ pickMistake
     m
     [(p n String, Maybe (Const () String))]
 pickMistake = taskInstance
-  pickTaskInstance
+  (\f -> lift . pickTaskInstance f)
   petriNetPickMistake
   (\_ -> return (Const ()))
   Pick.alloyConfig

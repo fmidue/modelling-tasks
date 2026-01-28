@@ -135,6 +135,7 @@ import Control.Monad.Random (
   evalRandT,
   mkStdGen
   )
+import Control.Monad.Trans              (MonadTrans (lift))
 import Data.Bifunctor                   (first)
 import Data.Bitraversable               (bimapM)
 import Data.Foldable                    (for_)
@@ -369,9 +370,9 @@ combinedCapacity
   -> RandT g m (PetriLike CapacityNode String, p n String, PetriChangeList String, [(String, String)])
 combinedCapacity alloyF alloyC config segment = do
   let is = Find.maxInstances (alloyC config)
-  list <- getInstances is (Find.timeout $ alloyC config) (alloyF config)
+  list <- lift $ getInstances is (Find.timeout $ alloyC config) (alloyF config)
   when (null $ drop segment list)
-    $ throwM NoInstanceAvailable
+    $ lift $ throwM NoInstanceAvailable
   inst <- case fromIntegral <$> is of
     Nothing -> randomInstance list
     Just n -> do
@@ -380,7 +381,7 @@ combinedCapacity alloyF alloyC config segment = do
         x':_ -> return x'
         []   -> randomInstance list
 
-  findCapacityInstance inst
+  lift $ findCapacityInstance inst
   where
     randomInstance list = do
       n <- randomInSegment segment (1 + ((length list - segment - 1) `div` 4))
@@ -389,7 +390,7 @@ combinedCapacity alloyF alloyC config segment = do
 findCapacityInstance
   :: (MonadThrow m, Net p n)
   => AlloyInstance
-  -> RandT g m (PetriLike CapacityNode String, p n String, PetriChangeList String, [(String, String)])
+  -> m (PetriLike CapacityNode String, p n String, PetriChangeList String, [(String, String)])
 findCapacityInstance inst = do
   (transformed, nameMap) <-
     parseRenamedNet (singleSig "this" "Nodes" "") "flow" "tokens" inst

@@ -296,7 +296,7 @@ defaultNameCdErrorConfig = NameCdErrorConfig {
     usesEveryRelationshipName = Just True
     },
   possibleReasons = map PreDefined [minBound ..],
-  printSolution = False,
+  printSolution = True,
   reasonsPerInstance = NumberOfReasons {
     customReasons = 0,
     preDefinedInvalid = length $ filter isIllegal [minBound ..],
@@ -520,14 +520,14 @@ defaultNameCdErrorTaskText :: NameCdErrorTaskText
 defaultNameCdErrorTaskText = nameCdErrorTaskText True
 
 nameCdErrorTaskText :: Bool -> NameCdErrorTaskText
-nameCdErrorTaskText withAnswerChoices = concat [
+nameCdErrorTaskText withRelationshipChoices = concat [
  [
   Paragraph $ singleton $ Translated $ translations $ do
     english "Consider the following class diagram, which unfortunately is invalid:"
     german "Betrachten Sie folgendes Klassendiagramm, welches leider ungültig ist:",
   Paragraph $ singleton $ Special IncorrectCd
  ],
- optional withAnswerChoices [
+ optional withRelationshipChoices [
   Paragraph $ singleton $ Translated $ translations $ do
     english "It contains the following relationships between classes:"
     german "Es enthält die folgenden Beziehungen zwischen Klassen:",
@@ -545,9 +545,7 @@ nameCdErrorTaskText withAnswerChoices = concat [
       dass dieses Klassendiagramm ungültig ist,
       und nennen Sie alle Beziehungen, die definitiv zum Problem beitragen,
       d.h., deren Entfernung die Ungültigkeit jeweils beheben würde.
-      |]
- ],
- optional withAnswerChoices [
+      |],
   Paragraph $ singleton $ Translated $ translations $ do
     english [i|Reasons available to choose from are:|]
     german [i|Gründe, die hierfür zur Auswahl stehen, sind:|],
@@ -761,7 +759,7 @@ instance RandomiseNames NameCdErrorInstance where
     let (names, nonInheritances) = classAndNonInheritanceNames inst
     names' <- shuffleM names
     nonInheritances' <- shuffleM nonInheritances
-    renameInstance inst names' nonInheritances'
+    lift $ renameInstance inst names' nonInheritances'
 
 instance RandomiseLayout NameCdErrorInstance where
   randomiseLayout NameCdErrorInstance {..} = do
@@ -953,8 +951,8 @@ nameCdError NameCdErrorConfig {..}  = do
             (relationships cd)
           possibleLinkNames = mapMaybe relationshipName $ relationships cd
       od <- listToMaybe
-        <$> getInstances (Just 1) timeout (combineParts parts ++ command)
-      od' <- fmap join $ forM od
+        <$> lift (getInstances (Just 1) timeout (combineParts parts ++ command))
+      od' <- fmap join $ lift $ forM od
         $ runExceptT . alloyInstanceToOd (Just $ classNames cd) possibleLinkNames
         >=> return . eitherToMaybe
       mapM (anonymiseObjects (anonymousObjectProportion objectProperties)) od'
@@ -1116,7 +1114,7 @@ defaultNameCdErrorInstance = NameCdErrorInstance {
     ('j', (False, PreDefined MultipleInheritances)),
     ('k', (False, PreDefined ReverseRelationships))
     ],
-  showSolution = False,
+  showSolution = True,
   taskText = defaultNameCdErrorTaskText,
   addText = NoExtraText
   }

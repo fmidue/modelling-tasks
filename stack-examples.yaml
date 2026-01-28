@@ -16,7 +16,7 @@ extra-deps:
     subdirs:
       - output-blocks
   - git: https://github.com/fmidue/autotool-capabilities.git
-    commit: ebd8d2b045148d774257183b7dda0d34416eef49
+    commit: 73a7688fe3249b2bd20d44c3c3359e35e2529517
     subdirs:
       - autotool-capabilities
       - autotool-capabilities-io-instances
