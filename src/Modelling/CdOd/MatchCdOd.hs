@@ -38,6 +38,7 @@ import qualified Data.Map                         as M (
   fromList,
   keys,
   lookup,
+  size,
   toList,
   traverseWithKey,
   )
@@ -79,6 +80,7 @@ import Modelling.CdOd.Auxiliary.Util (
   alloyInstanceToOd,
   )
 import Modelling.CdOd.Output            (cacheCd, cacheOd)
+import Modelling.CdOd.Phrasing          (num2word)
 import Modelling.CdOd.Types (
   Cd,
   CdDrawSettings (..),
@@ -145,6 +147,7 @@ import Control.OutputCapable.Blocks (
   multipleChoice,
   translate,
   translations,
+  Language (English, German),
   )
 import Control.OutputCapable.Blocks.Generic.Type (
   GenericOutput (Code, Paragraph, Special, Translated),
@@ -168,7 +171,7 @@ import Data.Containers.ListUtils        (nubOrd)
 import Data.GraphViz                    (DirType (Forward))
 import Data.List                        (singleton)
 import Data.Map                         (Map)
-import Data.Maybe                       (fromJust, isJust, listToMaybe, mapMaybe)
+import Data.Maybe                       (fromJust, isJust, listToMaybe, mapMaybe, fromMaybe)
 import Data.Ratio                       ((%))
 import Data.String.Interpolate          (iii)
 import GHC.Generics                     (Generic)
@@ -343,27 +346,65 @@ toTaskSpecificText path MatchCdOdInstance {..} = \case
     $=<< (\_ (is,o) -> (is,) <$> cacheOd o Forward True path)
     `M.traverseWithKey` instances
 
-defaultMatchCdOdTaskText :: MatchCdOdTaskText
-defaultMatchCdOdTaskText = [
+defaultMatchCdOdTaskText
+    :: Int
+    -> Int
+    -> MatchCdOdTaskText
+defaultMatchCdOdTaskText diagramCount instanceCount =  [
   Paragraph $ singleton $ Translated $ translations $ do
-    english "Consider the following two (valid) class diagrams:"
-    german "Betrachten Sie die folgenden zwei (gültigen) Klassendiagramme:",
+    let plural     = diagramCount > 1
+    let numberWord = num2wordNumeralFallback diagramCount
+
+    english $ "Consider the following " ++
+              if plural
+              then [iii|#{numberWord English} (valid)
+                   class diagrams:|]
+              else "(valid) class diagram:"
+    german  $ "Betrachten Sie " ++
+              if plural
+              then [iii|die folgenden #{numberWord German}
+                   (gültigen) Klassendiagramme:|]
+              else "das folgende (gültige) Klassendiagramm:",
   Special GivenCds,
   Paragraph $ singleton $ Translated $ translations $ do
-    english [iii|
-      Which of the following five object diagrams conform to which class diagram?
-      \n
-      An object diagram can conform to neither, either, or both class diagrams.
-      |]
-    german [iii|
-      Welche der folgenden fünf Objektdiagramme
-      passen zu welchem Klassendiagramm?
-      \n
-      Ein Objektdiagramm kann zu keinem,
-      einem oder beiden Klassendiagrammen passen.
-      |],
+    let plural      = instanceCount > 1
+    let multipleCds = diagramCount > 1
+    let numberWord  = num2wordNumeralFallback instanceCount
+
+    english $
+      (if plural
+      then [iii|
+        Which of the following #{numberWord English} object diagrams
+        conform to #{if multipleCds then "which" else "the"}
+        class diagram?|]
+      else
+        if multipleCds
+        then "To which class diagram does the following object diagram conform?"
+        else "Does the following object diagram conform to the class diagram?") ++
+      if multipleCds
+      then [iii|
+        \nAn object diagram can conform to none, one,
+        or multiple class diagrams.|]
+      else ""
+    german $
+      (if plural
+      then [iii|
+        Welche der folgenden #{numberWord German} Objektdiagramme
+        passen zu #{if multipleCds then "welchem" else "dem"}
+        Klassendiagramm?|]
+      else
+        if multipleCds
+        then "Zu welchem Klassendiagramm passt das folgende Objektdiagramm?"
+        else "Passt das folgende Objektdiagramm zu dem Klassendiagramm?") ++
+      if multipleCds
+      then [iii|
+        \nEin Objektdiagramm kann zu keinem, einem
+        oder mehreren Klassendiagrammen passen.|]
+      else "",
   Special GivenOds
   ]
+  where
+    num2wordNumeralFallback n lang = fromMaybe (show n) (num2word n lang)
 
 inputHelpText :: [Output]
 inputHelpText = [
@@ -497,7 +538,7 @@ getMatchCdOdTask f config@MatchCdOdConfig {..} = do
         diagrams       = cds,
         instances      = ods',
         showSolution = printSolution,
-        taskText = defaultMatchCdOdTaskText,
+        taskText = defaultMatchCdOdTaskText (M.size cds) (M.size ods),
         addText = extraText
         }
   where
@@ -678,7 +719,7 @@ defaultMatchCdOdInstance = MatchCdOdInstance {
       }))
     ],
   showSolution = True,
-  taskText = defaultMatchCdOdTaskText,
+  taskText = defaultMatchCdOdTaskText 2 5,
   addText = NoExtraText
   }
 
