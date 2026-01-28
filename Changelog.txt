@@ -1,0 +1,19 @@
+bei PetriReach:
++ das Highlighting der Petrinetze in der Aufgabenstellung permanent ausstellen
++ den bisher existierenden Hovering-Hinweis dort wegnehmen
++ im Feedback hingegen die Petrinetz-Ausgabe mit Highlighting (wegen dortiger Bezüge auf Stellennamen)
+- Hovering Info im Feedback text?
+
+bei PetriDeadlock :
++ das Highlighting der Petrinetze in der Aufgabenstellung permanent ausstellen
++ den bisher existierenden Hovering-Hinweis dort wegnehmen
++ im Feedback hingegen die Petrinetz-Ausgabe mit Highlighting (wegen dortiger Bezüge auf Stellennamen)
+- Hovering Info im Feedback text?
+
+bei MatchPetri :
++ einen Hovering-Hinweis neu ausgeben sofern petriSvgHighlighting = True gesetzt ist
++ per Konfigurations-Checker erzwingen, dass in der Tat immer petriSvgHighlighting = True gesetzt ist
+
+bei SelectPetri:
++ einen Hovering-Hinweis neu ausgeben sofern petriSvgHighlighting = True gesetzt wäre
++ per Konfigurations-Checker zunächst erzwingen, dass immer petriSvgHighlighting = False gesetzt ist

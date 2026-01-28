@@ -70,9 +70,6 @@ import Capabilities.Cache               (MonadCache)
 import Capabilities.Diagrams            (MonadDiagrams)
 import Capabilities.Graphviz            (MonadGraphviz)
 import Data.Data                        (Data)
-import Modelling.Auxiliary.Output (
-  hoveringInformation,
-  )
 import Modelling.PetriNet.Reach.Draw    (drawToFile, isPetriDrawable)
 import Modelling.PetriNet.Reach.Filter (
   FilterConfig (..),
