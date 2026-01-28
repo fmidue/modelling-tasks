@@ -77,6 +77,7 @@ import Modelling.Auxiliary.Common (
   )
 import Modelling.Auxiliary.Output (
   addPretext,
+  hoveringInformation,
   )
 import Modelling.PetriNet.Diagram (cacheNet)
 import Modelling.PetriNet.Types (
@@ -205,12 +206,14 @@ checkSelectPetriConfig' SelectPetriConfig {
     countOfPetriNodesBounds,
     maxInstances,
     petriLayout,
+    petriSvgHighlighting,
     numberOfWrongAnswers,
     numberOfModifications,
     auxiliaryPetriNodeAbsent,
     presenceOfSinkTransitionsForFinals,
     withActivityFinalInForkBlocks
   } = validateSelectPetriSpecific numberOfWrongAnswers numberOfModifications
+    <|> if petriSvgHighlighting then Nothing else Just "petriSvgHighlighting must be enabled for this task."
     <|> validatePetriConfig
           adConfig
           countOfPetriNodesBounds
@@ -399,6 +402,8 @@ Bitte geben Sie Ihre Antwort als Zahl an, welche das passende Petrinetz repräse
       english [i|would indicate that Petri net 2 is the matching Petri net.|]
       german  [i|bedeuten, dass Petrinetz 2 das passende Petrinetz ist.|]
     pure ()
+
+  hoveringInformation True
 
   extra $ addText task
 

@@ -80,6 +80,7 @@ import Modelling.ActivityDiagram.PlantUMLConverter (
 import Modelling.Auxiliary.Common (getFirstInstance, oneOf)
 import Modelling.Auxiliary.Output (
   addPretext,
+  hoveringInformation,
   )
 import Modelling.PetriNet.Diagram (cacheNet)
 import Modelling.PetriNet.Types (
@@ -194,15 +195,17 @@ checkMatchPetriConfig' MatchPetriConfig {
     petriLayout,
     auxiliaryPetriNodeAbsent,
     presenceOfSinkTransitionsForFinals,
+    petriSvgHighlighting,
     withActivityFinalInForkBlocks
-  } = validatePetriConfig
-        adConfig
-        countOfPetriNodesBounds
-        maxInstances
-        petriLayout
-        auxiliaryPetriNodeAbsent
-        presenceOfSinkTransitionsForFinals
-        withActivityFinalInForkBlocks
+  } = if petriSvgHighlighting then Nothing else Just "petriSvgHighlighting must be enabled for this task."
+    <|> validatePetriConfig
+          adConfig
+          countOfPetriNodesBounds
+          maxInstances
+          petriLayout
+          auxiliaryPetriNodeAbsent
+          presenceOfSinkTransitionsForFinals
+          withActivityFinalInForkBlocks
 
 matchPetriAlloy :: MatchPetriConfig -> String
 matchPetriAlloy MatchPetriConfig {
@@ -373,6 +376,8 @@ matchPetriTask path task = do
         und kein Petrinetzknoten entspricht einem Flussende.
         |]
     pure ()
+
+  hoveringInformation True
 
   extra $ addText task
 
