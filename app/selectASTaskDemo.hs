@@ -24,7 +24,7 @@ main = do
       putStrLn $ "Seed: " ++ seed
       task <- selectAS defaultSelectASConfig (read s) (read seed)
       print task
-      selectASTask path task `withLang` English
+      selectASTask True path task `withLang` English
       sub <- read <$> getLine
       selectASSyntax task sub `withLang` English
       _ <- selectASEvaluation task sub `withLang` English
