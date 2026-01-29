@@ -371,10 +371,11 @@ selectPetriTask
     MonadWriteFile m,
     OutputCapable m
     )
-  => FilePath
+  => Bool
+  -> FilePath
   -> SelectPetriInstance
   -> LangM m
-selectPetriTask path task = do
+selectPetriTask showInputHelp path task = do
   let mapping = M.map snd $ petriNets task
   paragraph $ translate $ do
     english "Consider the following activity diagram:"
@@ -388,12 +389,20 @@ selectPetriTask path task = do
     $=<< for
       mapping
       (\c -> cacheNet path (mapNet (show . PK.label) c) drawSetting)
-  paragraph $ translate $ do
-    english [i|Which of these Petri nets is the translation of the given activity diagram?
-State your answer by giving a number indicating the matching Petri net.|]
-    german [i|Welches dieser Petrinetze ist die Übersetzung des gegebenen Aktivitätsdiagramms?
-Geben Sie Ihre Antwort als Zahl an, welche das passende Petrinetz repräsentiert.|]
   paragraph $ do
+   translate $ do
+    english [i|Which of these Petri nets is the translation of the given activity diagram?
+    |]
+    german [i|Welches dieser Petrinetze ist die Übersetzung des gegebenen Aktivitätsdiagramms?
+    |]
+   when showInputHelp $ translate $ do
+    english [i|
+State your answer by giving a number indicating the matching Petri net.|]
+    german [i|
+Geben Sie Ihre Antwort als Zahl an, welche das passende Petrinetz repräsentiert.|]
+   pure ()
+
+  when showInputHelp $ paragraph $ do
     translate $ do
       english [i|For example,|]
       german [i|Zum Beispiel würde|]
