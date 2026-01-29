@@ -15,12 +15,13 @@ executable capacity
   hs-source-dirs:
       ./
       common
-  ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Widentities -Wredundant-constraints -Werror -Wwarn=incomplete-uni-patterns -Wwarn=orphans
+  ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Widentities -Wredundant-constraints -Werror -Wwarn=incomplete-uni-patterns -Wwarn=orphans -Wwarn=unrecognised-warning-flags -Wwarn=x-partial
   build-tools:
       alex
     , happy
   build-depends:
       MonadRandom
+    , autotool-capabilities-io-instances
     , base
     , bytestring
     , containers
@@ -222,12 +223,13 @@ executable findActivatedTransitions
   hs-source-dirs:
       ./
       common
-  ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Widentities -Wredundant-constraints -Werror -Wwarn=incomplete-uni-patterns -Wwarn=orphans
+  ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Widentities -Wredundant-constraints -Werror -Wwarn=incomplete-uni-patterns -Wwarn=orphans -Wwarn=unrecognised-warning-flags -Wwarn=x-partial
   build-tools:
       alex
     , happy
   build-depends:
       MonadRandom
+    , autotool-capabilities-io-instances
     , base
     , bytestring
     , containers
@@ -374,12 +376,13 @@ executable pickMistake
   hs-source-dirs:
       ./
       common
-  ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Widentities -Wredundant-constraints -Werror -Wwarn=incomplete-uni-patterns -Wwarn=orphans
+  ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Widentities -Wredundant-constraints -Werror -Wwarn=incomplete-uni-patterns -Wwarn=orphans -Wwarn=unrecognised-warning-flags -Wwarn=x-partial
   build-tools:
       alex
     , happy
   build-depends:
       MonadRandom
+    , autotool-capabilities-io-instances
     , base
     , bytestring
     , containers
