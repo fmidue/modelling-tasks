@@ -1,3 +1,4 @@
+
 {-# LANGUAGE ApplicativeDo #-}
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
@@ -206,10 +207,11 @@ enterActionSequence petri =
 
 enterASTask
   :: (MonadPlantUml m, MonadWriteFile m, OutputCapable m)
-  => FilePath
+  => Bool
+  -> FilePath
   -> EnterASInstance
   -> LangM m
-enterASTask path task = do
+enterASTask showInputHelp path task = do
   paragraph $ translate $ do
     english "Consider the following activity diagram:"
     german "Betrachten Sie folgendes Aktivitätsdiagramm:"
@@ -218,20 +220,25 @@ enterASTask path task = do
     translate $ do
       english [iii|
         State the action sequence (i.e., a sequence of action nodes)
-        of an execution of this diagram which lets all flows terminate,
-        by entering a list of action names.
-        \n
-        For example, |]
+        of an execution of this diagram which lets all flows terminate.|]
       german [iii|
         Geben Sie die Aktionsfolge (d.h., eine Folge von Aktionsknoten)
-        eines Ablaufs dieses Diagramms an, welcher alle Flüsse terminieren lässt,
-        indem Sie eine Liste von Aktionsnamen angeben.
+        eines Ablaufs dieses Diagramms an, welcher alle Flüsse terminieren lässt.|]
+    when showInputHelp $ do
+     translate $ do
+      english [i|
+        Give your answer by entering a list of action names.
+        \n
+        For example, |]
+      german [i|
+        Geben Sie Ihre Antwort ein, indem Sie eine Liste von Aktionsnamen angeben.
         \n
         Zum Beispiel drückt |]
-    code $ show enterASInitial
-    translate $ do
+     code $ show enterASInitial
+     translate $ do
       english [i|expresses the execution of A followed by B (under the assumption that both are action nodes of the diagram).|]
       german [i|die Ausführung von A gefolgt von B aus (unter der Annahme, dass beides Aktionsknoten des Diagramms sind).|]
+     pure ()
     pure ()
   extra $ addText task
   pure ()
