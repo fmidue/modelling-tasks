@@ -149,12 +149,12 @@ enforceConstraints underDefault atMostActive activated BasicConfig {
     places = given "Places"
     tokens = prepend "tokens"
     activatedConstraint = unlines $
-      [ [i|\##{activated} >= #{atLeastActive}|] | atLeastActive > 0 ]
+      [ '#' : activated ++ " >= " ++ show atLeastActive | atLeastActive > 0 ]
       ++
-      [ [i|  theActivated#{upperFirst which}Transitions[#{activated}]|] | atLeastActive > 0 || isJust atMostActive ]
+      [ "  theActivated" ++ upperFirst which ++ "Transitions[" ++ activated ++ "]" | atLeastActive > 0 || isJust atMostActive ]
       ++ case atMostActive of
-           Just 0     -> [[i|  no #{activated}|]]
-           Just atMost -> [[i|  \##{activated} =< #{atMost}|]]
+           Just 0     -> [ "  no " ++ activated ]
+           Just atMost -> [ "  #" ++ activated ++ " =< " ++ show atMost ]
            Nothing    -> []
 
 connected :: String -> Maybe Bool -> String
