@@ -39,7 +39,7 @@ import Modelling.PetriNet.TestCommon (
   validConfigsForFind,
   validGraphConfig,
   )
-import Settings                         (configDepth)
+import Settings                         (configDepth, nightly)
 import Control.Monad.Trans              (lift)
 import Data.Maybe                       (fromMaybe, isNothing)
 
@@ -51,13 +51,15 @@ spec = do
     checkConfigs checkCapacityConfigs [defaultCapacityConfig]
   describe "validFindCapacityConfigs" $
     checkConfigs checkCapacityConfigs findConfigs'
-  describe "combinedCapacity" $ do
+  describe "combinedCapacity, part 1" $
     defaultConfigTaskGeneration
       (combinedCapacityInstance defaultCapacityConfig {
           Find.alloyConfig = firstInstanceConfig
           } 0)
       0
       $ checkCapacityInstance @(SimplePetriLike _)
+  nightly $
+   describe "combinedCapacity, part 2" $
     testCapacityConfig findConfigs
   where
     findConfigs' = validFindCapacityConfigs
