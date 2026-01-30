@@ -51,7 +51,7 @@ task2023_42 = FindAuxiliaryPetriNodesConfig {
     flowFinalNodes = 0,
     cycles = 2
     },
-  countOfPetriNodesBounds = (23, Just 28),  -- fails to generate, but works with (0, Nothing)
+  countOfPetriNodesBounds = (23, Just 28),  -- fails to generate, but works with (0, Nothing) and (22, Just 40)
   maxInstances = Just 2000,
   hideNodeNames = False,
   hideBranchConditions = True,
