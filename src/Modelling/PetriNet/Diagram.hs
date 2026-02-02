@@ -110,7 +110,7 @@ cacheNet path pl drawSettings@DrawSettings {..} =
       ++ ".svg"
     disableHover = if withSvgHighlighting
       then id
-      else encodeUtf8 . replace (pack "<svg") (pack $ "<svg class=\"no-highlights\"") . decodeUtf8Lenient
+      else encodeUtf8 . replace (pack "<svg") (pack "<svg class=\"no-highlights\"") . decodeUtf8Lenient
 
 newtype UnknownPetriNetNodeException
   = CouldNotFindNodeWithinGraph String
