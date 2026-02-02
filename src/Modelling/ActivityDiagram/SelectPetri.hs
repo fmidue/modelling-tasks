@@ -155,6 +155,8 @@ data SelectPetriConfig = SelectPetriConfig {
   petriLayout :: [GraphvizCommand],
   -- | Whether highlighting on hover should be enabled
   petriSvgHighlighting :: Bool,
+  -- | Whether label annotations should be enabled
+  petriLabelAnnotations :: Bool,
   numberOfWrongAnswers :: Int,
   numberOfModifications :: Int,
   modifyAtMid :: Bool,
@@ -185,6 +187,7 @@ defaultSelectPetriConfig = SelectPetriConfig {
   hidePetriNodeLabels = False,
   petriLayout = [Dot],
   petriSvgHighlighting = True,
+  petriLabelAnnotations = False,
   numberOfWrongAnswers = 2,
   numberOfModifications = 3,
   modifyAtMid = True,
@@ -209,10 +212,11 @@ checkSelectPetriConfig' SelectPetriConfig {
     petriSvgHighlighting,
     numberOfWrongAnswers,
     numberOfModifications,
+    petriLabelAnnotations,
     auxiliaryPetriNodeAbsent,
     presenceOfSinkTransitionsForFinals,
     withActivityFinalInForkBlocks
-  } = validateSelectPetriSpecific numberOfWrongAnswers numberOfModifications
+  } = validateSelectPetriSpecific numberOfWrongAnswers numberOfModifications petriLabelAnnotations petriSvgHighlighting
     <|> (if petriSvgHighlighting then Nothing else Just "petriSvgHighlighting must be enabled for this task.")
     <|> validatePetriConfig
           adConfig
@@ -227,12 +231,16 @@ checkSelectPetriConfig' SelectPetriConfig {
 validateSelectPetriSpecific
   :: Int  -- numberOfWrongAnswers
   -> Int  -- numberOfModifications
+  -> Bool -- petriLabelAnnotations
+  -> Bool -- petriSvgHighlighting
   -> Maybe String
-validateSelectPetriSpecific numberOfWrongAnswers numberOfModifications
+validateSelectPetriSpecific numberOfWrongAnswers numberOfModifications petriLabelAnnotations petriSvgHighlighting
   | numberOfWrongAnswers < 1
     = Just "The parameter 'numberOfWrongAnswers' must be set to a positive value"
   | numberOfModifications < 1
     = Just "The parameter 'numberOfModifications' must be set to a positive value"
+  | petriLabelAnnotations && petriSvgHighlighting
+    = Just "SVG highlighting does not work when label annotations are enabled"
   | otherwise
     = Nothing
 
@@ -590,6 +598,7 @@ getSelectPetriTask config = do
       petriDrawConf = DrawSettings {
         withPlaceNames = not $ hidePetriNodeLabels config,
         withSvgHighlighting = petriSvgHighlighting config,
+        withLabelAnnotations = petriLabelAnnotations config,
         withTransitionNames = not $ hidePetriNodeLabels config,
         with1Weights = False,
         withGraphvizCommand = layout
@@ -675,6 +684,7 @@ defaultSelectPetriInstance =  SelectPetriInstance {
   petriDrawConf = DrawSettings {
     withPlaceNames = True,
     withSvgHighlighting = True,
+    withLabelAnnotations = False,
     withTransitionNames = True,
     with1Weights = False,
     withGraphvizCommand = Dot

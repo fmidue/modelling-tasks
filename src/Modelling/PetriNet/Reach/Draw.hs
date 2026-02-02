@@ -50,6 +50,7 @@ reachDrawSettings hidePlaceNames highlightSvg cmd =
       with1Weights = False,
       withPlaceNames = not hidePlaceNames,
       withSvgHighlighting = highlightSvg,
+      withLabelAnnotations = not highlightSvg,
       withTransitionNames = True,
       withGraphvizCommand = cmd
       }

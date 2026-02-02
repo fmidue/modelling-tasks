@@ -558,6 +558,7 @@ defaultPickConcurrencyInstance = PickInstance {
       DrawSettings {
         withPlaceNames = False,
         withSvgHighlighting = True,
+        withLabelAnnotations = False,
         withTransitionNames = False,
         with1Weights = False,
         withGraphvizCommand = Fdp
@@ -578,6 +579,7 @@ defaultPickConcurrencyInstance = PickInstance {
       DrawSettings {
         withPlaceNames = False,
         withSvgHighlighting = True,
+        withLabelAnnotations = False,
         withTransitionNames = False,
         with1Weights = False,
         withGraphvizCommand = Fdp
@@ -593,6 +595,7 @@ defaultFindConcurrencyInstance = FindInstance {
   drawFindWith = DrawSettings {
     withPlaceNames = False,
     withSvgHighlighting = True,
+    withLabelAnnotations = False,
     withTransitionNames = True,
     with1Weights = False,
     withGraphvizCommand = Circo

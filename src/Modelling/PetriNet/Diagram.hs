@@ -56,6 +56,8 @@ import Data.Data (
   dataTypeName,
   dataTypeOf,
   )
+import Data.Text (replace, pack)
+import Data.Text.Encoding (decodeUtf8Lenient, encodeUtf8)
 import Diagrams.Backend.SVG             (B, svgClass)
 import Diagrams.Prelude
 import Graphics.SVGFonts.ReadFont       (PreparedFont)
@@ -88,7 +90,7 @@ cacheNet
 cacheNet path pl drawSettings@DrawSettings {..} =
   cache path ext prefix pl $ \pl' -> do
     dia <- drawNet pl' drawSettings
-    renderDiagram dia
+    disableHover <$> renderDiagram dia
   where
     prefix =
       "petri-"
@@ -103,8 +105,12 @@ cacheNet path pl drawSettings@DrawSettings {..} =
       ++ short withTransitionNames
       ++ short with1Weights
       ++ short withSvgHighlighting
+      ++ short withLabelAnnotations
       ++ short withGraphvizCommand
       ++ ".svg"
+    disableHover = if withSvgHighlighting
+      then id
+      else encodeUtf8 . replace (pack "<svg") (pack $ "<svg class=\"no-highlights\"") . decodeUtf8Lenient
 
 newtype UnknownPetriNetNodeException
   = CouldNotFindNodeWithinGraph String
@@ -249,8 +255,8 @@ drawNode DrawSettings {..} preparedFont (l, Nothing) p  = place
   p
   where
     additionalLabel
-      | withSvgHighlighting = id
-      | otherwise = svgClass $ ' ' : l
+      | withLabelAnnotations = svgClass $ ' ' : l
+      | otherwise = id
     addTransitionName
       | not withTransitionNames = id
       | otherwise = (center (text' preparedFont 18 l) `atop`)
@@ -267,8 +273,8 @@ drawNode DrawSettings {..} preparedFont (l, Just i) p
     p
   where
     additionalLabel
-      | withSvgHighlighting = id
-      | otherwise = svgClass $ ' ' : l
+      | withLabelAnnotations = svgClass $ ' ' : l
+      | otherwise = id
     spacer = 9
     emptyPlace = circle 20 # lwL 0.5 # named l # svgClass "node" # additionalLabel
     label

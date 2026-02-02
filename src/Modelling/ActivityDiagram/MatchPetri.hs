@@ -148,6 +148,8 @@ data MatchPetriConfig = MatchPetriConfig {
   petriLayout :: [GraphvizCommand],
   -- | Whether highlighting on hover should be enabled
   petriSvgHighlighting :: Bool,
+  -- | Whether label annotations should be enabled
+  petriLabelAnnotations :: Bool,
   -- | Option to prevent auxiliary PetriNodes from occurring
   auxiliaryPetriNodeAbsent :: Maybe Bool,
   -- | Force presence or absence of new sink transitions for representing finals
@@ -174,6 +176,7 @@ defaultMatchPetriConfig =
     hideBranchConditions = False,
     petriLayout = [Dot],
     petriSvgHighlighting = True,
+    petriLabelAnnotations = False,
     auxiliaryPetriNodeAbsent = Nothing,
     presenceOfSinkTransitionsForFinals = Nothing,
     withActivityFinalInForkBlocks = Just False,
@@ -193,11 +196,15 @@ checkMatchPetriConfig' MatchPetriConfig {
     countOfPetriNodesBounds,
     maxInstances,
     petriLayout,
+    petriSvgHighlighting,
+    petriLabelAnnotations,
     auxiliaryPetriNodeAbsent,
     presenceOfSinkTransitionsForFinals,
-    petriSvgHighlighting,
     withActivityFinalInForkBlocks
   } = (if petriSvgHighlighting then Nothing else Just "petriSvgHighlighting must be enabled for this task.")
+    <|> (if petriLabelAnnotations && petriSvgHighlighting
+          then Just "SVG highlighting does not work when label annotations are enabled"
+          else Nothing)
     <|> validatePetriConfig
           adConfig
           countOfPetriNodesBounds
@@ -511,6 +518,7 @@ getMatchPetriTask config = do
       DrawSettings {
         withPlaceNames = True,
         withSvgHighlighting = petriSvgHighlighting config,
+        withLabelAnnotations = petriLabelAnnotations config,
         withTransitionNames = True,
         with1Weights = False,
         withGraphvizCommand = layout
@@ -973,6 +981,7 @@ defaultMatchPetriInstance = MatchPetriInstance
     DrawSettings {
       withPlaceNames = True,
       withSvgHighlighting = True,
+      withLabelAnnotations = False,
       withTransitionNames = True,
       with1Weights = False,
       withGraphvizCommand = Dot

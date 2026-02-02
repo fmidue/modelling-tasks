@@ -908,9 +908,11 @@ defaultPickConcurrencyConfig = PickConcurrencyConfig
   , extraText = NoExtraText
   }
 
+-- SVG highlighting does not work correctly when having label annotations enabled at the same time
 data DrawSettings = DrawSettings {
   withPlaceNames       :: Bool,
   withSvgHighlighting  :: Bool,
+  withLabelAnnotations :: Bool,
   withTransitionNames  :: Bool,
   with1Weights         :: Bool,
   withGraphvizCommand  :: GraphvizCommand
@@ -931,6 +933,7 @@ drawSettingsWithCommand config c
   | c `elem` graphLayouts config = DrawSettings {
       withPlaceNames = not $ hidePlaceNames config,
       withSvgHighlighting = True,
+      withLabelAnnotations = False,
       withTransitionNames = not $ hideTransitionNames config,
       with1Weights = not $ hideWeight1 config,
       withGraphvizCommand = c

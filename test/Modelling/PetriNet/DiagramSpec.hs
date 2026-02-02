@@ -33,6 +33,7 @@ spec =
         dia <- drawNet (mapNet show (pl :: SimplePetriLike Object)) DrawSettings {
           withPlaceNames = True,
           withSvgHighlighting = True,
+          withLabelAnnotations = False,
           withTransitionNames = False,
           with1Weights = False,
           withGraphvizCommand = TwoPi

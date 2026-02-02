@@ -244,6 +244,7 @@ defaultFindConflictPlacesInstance = FindInstance {
   drawFindWith = DrawSettings {
     withPlaceNames = True,
     withSvgHighlighting = True,
+    withLabelAnnotations = False,
     withTransitionNames = True,
     with1Weights = False,
     withGraphvizCommand = Circo
