@@ -105,3 +105,27 @@ CPU usage: 109%
 -}
 task2024_69 :: EnterASConfig
 task2024_69 = task2023_36
+
+{-|
+points: 0.15
+the amount of generated instances: 100
+maximum concurrent amount of tasks: 100
+average generation time per instance on the cluster (without considering concurrency): 19:11min
+total run time on the cluster (not including queuing time): 19:42min
+average CPU usage: 100%
+average memory usage: 2297.78 MB
+-}
+task2025_44 :: EnterASConfig
+task2025_44 = task2024_41
+
+{-|
+points: 0.15
+the amount of generated instances: 100
+maximum concurrent amount of tasks: 100
+average generation time per instance on the cluster (without considering concurrency): 18:08min
+total run time on the cluster (not including queuing time): 19:10min
+average CPU usage: 100%
+average memory usage: 2273.13 MB
+-}
+task2025_45 :: EnterASConfig
+task2025_45 = task2024_42
