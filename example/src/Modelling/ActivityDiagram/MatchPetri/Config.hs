@@ -55,7 +55,7 @@ task2023_40 = MatchPetriConfig {
     cycles = 3
     },
   countOfPetriNodesBounds = (28, Just 34),  -- fails to generate, but works with (0, Nothing) and (28, Just 46)
-  maxInstances = Just 2000,
+  maxInstances = Just 2000, -- fails to generate with Nothing, it diverges
   hideBranchConditions = True,
   petriLayout = [Fdp],
   petriSvgHighlighting = True,
