@@ -25,7 +25,7 @@ task2023_37 = SelectPetriConfig {
     flowFinalNodes = 2,
     cycles = 1
     },
-  countOfPetriNodesBounds = (22, Just 26),  -- generates successfully
+  countOfPetriNodesBounds = (26, Just 26),  -- generates successfully, but smaller upper bound leads to NoInstanceAvailable
   maxInstances = Just 2000,
   hideNodeNames = False,
   hideBranchConditions = True,
@@ -99,7 +99,7 @@ task2024_44 = SelectPetriConfig {
     flowFinalNodes = 2,
     cycles = 1
     },
-  countOfPetriNodesBounds = (17, Just 20),  -- generates successfully
+  countOfPetriNodesBounds = (17, Just 19),  -- generates successfully, but with upper bound smaller than 19 leads to NoInstanceAvailable
   maxInstances = Just 2000,
   hideNodeNames = True,
   hideBranchConditions = True,
