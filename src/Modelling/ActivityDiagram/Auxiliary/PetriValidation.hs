@@ -94,11 +94,10 @@ validateBasePetriConfig adConfig countOfPetriNodesBounds maxInstances presenceOf
       #{Config.forkJoinPairs adConfig * 2} fork/join auxiliary nodes +
       #{Config.decisionMergePairs adConfig * 2} decision/merge auxiliary nodes.
       |]
-  | Just high <- snd countOfPetriNodesBounds, high > 0 && high < calculateMaximumPetriNodes adConfig
+  | Just high <- snd countOfPetriNodesBounds, high > calculateMaximumPetriNodes adConfig
     = Just [iii|
-      The maximum value of 'countOfPetriNodesBounds' (#{high}) is too small.
-      Based on the AdConfig values, the actually achievable number of Petri net nodes can be up to #{calculateMaximumPetriNodes adConfig}.
-      This means the upper bound should be at least #{calculateMaximumPetriNodes adConfig} to allow for all possible configurations.
+      The maximum value of 'countOfPetriNodesBounds' (#{high}) is too large.
+      Based on the AdConfig values, the maximum number of Petri net nodes should be at most #{calculateMaximumPetriNodes adConfig}.
       |]
   | otherwise
     = Nothing
