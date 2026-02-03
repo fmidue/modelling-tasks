@@ -163,3 +163,63 @@ task2024_73 = FindAuxiliaryPetriNodesConfig {
   printSolution = True,
   extraText = finalNodesAndTransitionsAdvice
   }
+
+{-|
+points: 0.15
+the amount of generated instances: 100
+maximum concurrent amount of tasks: 100
+average generation time per instance on the cluster (without considering concurrency): 6:30min
+total run time on the cluster (not including queuing time): 6:34min
+average CPU usage: 100.80%
+average memory usage: 1356.30 MB
+-}
+task2025_50 :: FindAuxiliaryPetriNodesConfig
+task2025_50 = FindAuxiliaryPetriNodesConfig {
+    adConfig = AdConfig {
+      actionLimits = (6, 6),
+      objectNodeLimits = (4, 4),
+      maxNamedNodes = 10,
+      decisionMergePairs = 2,
+      forkJoinPairs = 1,
+      activityFinalNodes = 0,
+      flowFinalNodes = 2,
+      cycles = 0
+      },
+    countOfPetriNodesBounds = (23, Just 24),
+    maxInstances = Just 2000,
+    hideNodeNames = False,
+    hideBranchConditions = True,
+    presenceOfSinkTransitionsForFinals = Nothing,
+    printSolution = True,
+    extraText = finalNodesAndTransitionsAdvice
+    }
+
+{-|
+points: 0.15
+the amount of generated instances: 100
+maximum concurrent amount of tasks: 100
+average generation time per instance on the cluster (without considering concurrency): 12:11min
+total run time on the cluster (not including queuing time): 12:32min
+average CPU usage: 100.00%
+average memory usage: 1775.43 MB
+-}
+task2025_51 :: FindAuxiliaryPetriNodesConfig
+task2025_51 = FindAuxiliaryPetriNodesConfig {
+    adConfig = AdConfig {
+      actionLimits = (8, 8),
+      objectNodeLimits = (4, 4),
+      maxNamedNodes = 12,
+      decisionMergePairs = 3,
+      forkJoinPairs = 1,
+      activityFinalNodes = 1,
+      flowFinalNodes = 0,
+      cycles = 2
+      },
+    countOfPetriNodesBounds = (33, Just 34),
+    maxInstances = Just 2000,
+    hideNodeNames = False,
+    hideBranchConditions = True,
+    presenceOfSinkTransitionsForFinals = Nothing,
+    printSolution = True,
+    extraText = finalNodesAndTransitionsAdvice
+    }
