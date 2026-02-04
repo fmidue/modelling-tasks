@@ -91,7 +91,7 @@ import Modelling.PetriNet.Types (
 import Control.Applicative (Alternative ((<|>)))
 import Control.Monad (unless, when)
 import Control.Monad.Catch              (MonadCatch, MonadThrow, throwM)
-import Control.Monad.Extra (loopM, firstJustM, (&&^))
+import Control.Monad.Extra (loopM, firstJustM)
 import Control.Monad.Trans.Class (lift)
 import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
@@ -558,7 +558,7 @@ selectPetriSolution
 selectPetriSolution = head . M.keys . M.filter fst . petriNets
 
 selectPetri
-  :: (MonadAlloy m, MonadCatch m, MonadDiagrams m, MonadGraphviz m, MonadThrow m)
+  :: (MonadAlloy m, MonadCatch m, MonadDiagrams m, MonadGraphviz m)
   => SelectPetriConfig
   -> Int
   -> Int
@@ -568,7 +568,7 @@ selectPetri config segment seed = do
   evalRandT (getSelectPetriTask config) g
 
 getSelectPetriTask
-  :: (MonadAlloy m, MonadCatch m, MonadDiagrams m, MonadGraphviz m, MonadThrow m, RandomGen g)
+  :: (MonadAlloy m, MonadCatch m, MonadDiagrams m, MonadGraphviz m, RandomGen g)
   => SelectPetriConfig
   -> RandT g m SelectPetriInstance
 getSelectPetriTask config = do

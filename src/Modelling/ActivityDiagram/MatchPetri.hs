@@ -79,7 +79,6 @@ import Modelling.ActivityDiagram.PlantUMLConverter (
   )
 import Modelling.Auxiliary.Common (
   TaskGenerationException (NoInstanceAvailable),
-  getFirstInstance,
   oneOf
   )
 import Modelling.Auxiliary.Output (
@@ -96,8 +95,7 @@ import Modelling.PetriNet.Types (
   )
 
 import Control.Applicative (Alternative ((<|>)))
-import Control.Monad (guard)
-import Control.Monad.Catch              (MonadCatch, MonadThrow)
+import Control.Monad.Catch              (MonadCatch, MonadThrow, throwM)
 import Control.Monad.Extra              (firstJustM)
 import Control.Monad.Trans.Class (lift)
 import Control.OutputCapable.Blocks (
@@ -474,7 +472,7 @@ matchPetriSolutionMap MatchPetriSolution {..} =
   in M.fromList $ zipWith (curry (,True)) [1..] xs
 
 matchPetri
-  :: (MonadAlloy m, MonadCatch m, MonadDiagrams m, MonadGraphviz m, MonadThrow m)
+  :: (MonadAlloy m, MonadCatch m, MonadDiagrams m, MonadGraphviz m)
   => MatchPetriConfig
   -> Int
   -> Int
@@ -484,7 +482,7 @@ matchPetri config segment seed = do
   evalRandT (getMatchPetriTask config) g
 
 getMatchPetriTask
-  :: (MonadAlloy m, MonadCatch m, MonadDiagrams m, MonadGraphviz m, MonadThrow m, RandomGen g)
+  :: (MonadAlloy m, MonadCatch m, MonadDiagrams m, MonadGraphviz m, RandomGen g)
   => MatchPetriConfig
   -> RandT g m MatchPetriInstance
 getMatchPetriTask config = do
