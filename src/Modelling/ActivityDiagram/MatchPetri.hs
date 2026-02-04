@@ -509,7 +509,7 @@ getMatchPetriTask config = do
       if not isDrawable
         then return Nothing
         else return $ Just $ MatchPetriInstance {
-          activityDiagram=ad,
+          activityDiagram = ad,
           petriNet = shuffledPetri,
           plantUMLConf =
             PlantUmlConfig {
