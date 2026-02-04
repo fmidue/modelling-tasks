@@ -139,3 +139,69 @@ task2024_71 = MatchPetriConfig {
   printSolution = True,
   extraText = finalNodesAdvice
   }
+
+{-|
+points: 0.15
+the amount of generated instances: 100
+maximum concurrent amount of tasks: 100
+average generation time per instance on the cluster (without considering concurrency): 39:44min
+total run time on the cluster (not including queuing time): 40:26min
+average CPU usage: 100%
+average memory usage: 9190.32 MB
+-}
+task2025_48 :: MatchPetriConfig
+task2025_48 = MatchPetriConfig {
+    adConfig = AdConfig {
+      actionLimits = (8, 8),
+      objectNodeLimits = (4, 4),
+      maxNamedNodes = 12,
+      decisionMergePairs = 2,
+      forkJoinPairs = 1,
+      activityFinalNodes = 0,
+      flowFinalNodes = 2,
+      cycles = 1
+      },
+    countOfPetriNodesBounds = (25, Just 26),
+    maxInstances = Just 10000,
+    hideBranchConditions = True,
+    petriLayout = [Fdp],
+    petriSvgHighlighting = True,
+    auxiliaryPetriNodeAbsent = Nothing,
+    presenceOfSinkTransitionsForFinals = Nothing,
+    withActivityFinalInForkBlocks = Nothing,
+    printSolution = True,
+    extraText = finalNodesAdvice
+    }
+
+{-|
+points: 0.15
+the amount of generated instances: 100
+maximum concurrent amount of tasks: 100
+average generation time per instance on the cluster (without considering concurrency): 41:20min
+total run time on the cluster (not including queuing time): 49:04min
+average CPU usage: 99.24%
+average memory usage: 2268.47 MB
+-}
+task2025_49 :: MatchPetriConfig
+task2025_49 = MatchPetriConfig {
+    adConfig = AdConfig {
+      actionLimits = (8, 8),
+      objectNodeLimits = (5, 5),
+      maxNamedNodes = 13,
+      decisionMergePairs = 3,
+      forkJoinPairs = 2,
+      activityFinalNodes = 0,
+      flowFinalNodes = 3,
+      cycles = 3
+      },
+    countOfPetriNodesBounds = (37, Just 38),
+    maxInstances = Just 2000,
+    hideBranchConditions = True,
+    petriLayout = [Fdp],
+    petriSvgHighlighting = True,
+    auxiliaryPetriNodeAbsent = Nothing,
+    presenceOfSinkTransitionsForFinals = Nothing,
+    withActivityFinalInForkBlocks = Nothing,
+    printSolution = True,
+    extraText = finalNodesAdvice
+    }

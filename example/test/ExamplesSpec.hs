@@ -29,6 +29,8 @@ import Modelling.ActivityDiagram.FindAuxiliaryPetriNodes.Config (
   task2024_48,
   task2024_72,
   task2024_73,
+  task2025_50,
+  task2025_51,
   )
 import Modelling.ActivityDiagram.MatchAd (
   checkMatchAdConfig,
@@ -52,6 +54,8 @@ import Modelling.ActivityDiagram.MatchPetri.Config (
   task2024_46,
   task2024_70,
   task2024_71,
+  task2025_48,
+  task2025_49,
   )
 import Modelling.ActivityDiagram.SelectAS (
   checkSelectASConfig,
@@ -73,6 +77,8 @@ import Modelling.ActivityDiagram.SelectPetri.Config (
   task2023_38,
   task2024_43,
   task2024_44,
+  task2025_46,
+  task2025_47,
   )
 import Modelling.CdOd.DifferentNames (
   checkDifferentNamesConfig,
@@ -559,3 +565,15 @@ spec =
         checkEnterASConfig task2025_44 `shouldBe` Nothing
       it "task45" $
         checkEnterASConfig task2025_45 `shouldBe` Nothing
+      it "task46" $
+        checkSelectPetriConfig task2025_46 `shouldBe` Nothing
+      it "task47" $
+        checkSelectPetriConfig task2025_47 `shouldBe` Nothing
+      it "task48" $
+        checkMatchPetriConfig task2025_48 `shouldBe` Nothing
+      it "task49" $
+        checkMatchPetriConfig task2025_49 `shouldBe` Nothing
+      it "task50" $
+        checkFindAuxiliaryPetriNodesConfig task2025_50 `shouldBe` Nothing
+      it "task51" $
+        checkFindAuxiliaryPetriNodesConfig task2025_51 `shouldBe` Nothing
