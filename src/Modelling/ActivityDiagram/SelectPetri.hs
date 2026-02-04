@@ -622,9 +622,9 @@ getSelectPetriTask config = do
               petriNets <- selectPetriSolutionToMap
                 $ SelectPetriSolution {matchingNet=p, wrongNets=ps}
               let petriInst = SelectPetriInstance {
-                    activityDiagram=ad,
-                    plantUMLConf=plantUMLConf,
-                    petriDrawConf=petriDrawConf,
+                    activityDiagram = ad,
+                    plantUMLConf = plantUMLConf,
+                    petriDrawConf = petriDrawConf,
                     petriNets = petriNets,
                     showSolution = printSolution config,
                     addText = extraText config
