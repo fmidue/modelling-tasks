@@ -25,7 +25,7 @@ task2023_39 = MatchPetriConfig {
     flowFinalNodes = 2,
     cycles = 1
     },
-  countOfPetriNodesBounds = (25, Just 25),  -- generates successfully, but smaller upper bound leads to NoInstanceAvailable
+  countOfPetriNodesBounds = (25, Just 25),  -- generates successfully, but smaller value than 25 leads to NoInstanceAvailable
   maxInstances = Just 10000,
   hideBranchConditions = True,
   petriLayout = [Fdp],
@@ -54,7 +54,7 @@ task2023_40 = MatchPetriConfig {
     flowFinalNodes = 3,
     cycles = 3
     },
-  countOfPetriNodesBounds = (28, Just 34),  -- fails to generate, but works with (0, Nothing) and (28, Just 46) as well as (37, Just 37); upper bound smaller than 37 leads to NoInstanceAvailable
+  countOfPetriNodesBounds = (28, Just 34),  -- fails to generate, but works with (37, Just 37); value smaller than 37 leads to NoInstanceAvailable
   maxInstances = Just 2000, -- fails to generate with Nothing, it diverges
   hideBranchConditions = True,
   petriLayout = [Fdp],
