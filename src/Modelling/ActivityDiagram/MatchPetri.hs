@@ -77,11 +77,15 @@ import Modelling.ActivityDiagram.PlantUMLConverter (
   defaultPlantUmlConfig,
   drawAdToFile,
   )
-import Modelling.Auxiliary.Common (getFirstInstance, oneOf)
+import Modelling.Auxiliary.Common (
+  TaskGenerationException (NoInstanceAvailable),
+  getFirstInstance,
+  oneOf
+  )
 import Modelling.Auxiliary.Output (
   addPretext,
   )
-import Modelling.PetriNet.Diagram (cacheNet)
+import Modelling.PetriNet.Diagram (cacheNet, isNetDrawable)
 import Modelling.PetriNet.Types (
   checkPetriNodeCount,
   DrawSettings (..),
@@ -92,7 +96,9 @@ import Modelling.PetriNet.Types (
   )
 
 import Control.Applicative (Alternative ((<|>)))
-import Control.Monad.Catch              (MonadThrow)
+import Control.Monad (guard)
+import Control.Monad.Catch              (MonadCatch, MonadThrow)
+import Control.Monad.Extra              (firstJustM)
 import Control.Monad.Trans.Class (lift)
 import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
@@ -468,7 +474,7 @@ matchPetriSolutionMap MatchPetriSolution {..} =
   in M.fromList $ zipWith (curry (,True)) [1..] xs
 
 matchPetri
-  :: (MonadAlloy m, MonadThrow m)
+  :: (MonadAlloy m, MonadCatch m, MonadDiagrams m, MonadGraphviz m, MonadThrow m)
   => MatchPetriConfig
   -> Int
   -> Int
@@ -478,7 +484,7 @@ matchPetri config segment seed = do
   evalRandT (getMatchPetriTask config) g
 
 getMatchPetriTask
-  :: (MonadAlloy m, MonadThrow m, RandomGen g)
+  :: (MonadAlloy m, MonadCatch m, MonadDiagrams m, MonadGraphviz m, MonadThrow m, RandomGen g)
   => MatchPetriConfig
   -> RandT g m MatchPetriInstance
 getMatchPetriTask config = do
@@ -488,31 +494,38 @@ getMatchPetriTask config = do
     $ matchPetriAlloy config
   randomInstances <- shuffleM alloyInstances >>= mapM (lift . parseInstance)
   activityDiagrams <- mapM (fmap snd . shuffleAdNames) randomInstances
-  (ad, petri) <- lift $ getFirstInstance
-        $ filter (not . petriHasMultipleAutomorphisms . snd)
+  let candidates = filter (not . petriHasMultipleAutomorphisms . snd)
         $ filter (checkPetriNodeCount (countOfPetriNodesBounds config) . snd)
         $ map (second convertToPetriNet . dupe) activityDiagrams
-  shuffledPetri <- snd <$> shufflePetri petri
   layout <- pickRandomLayout config
-  return $ MatchPetriInstance {
-    activityDiagram=ad,
-    petriNet = shuffledPetri,
-    plantUMLConf =
-      PlantUmlConfig {
-        suppressNodeNames = False,
-        suppressBranchConditions = hideBranchConditions config
-      },
-    petriDrawConf =
-      DrawSettings {
+  let drawSettings = DrawSettings {
         withPlaceNames = True,
         withSvgHighlighting = petriSvgHighlighting config,
         withTransitionNames = True,
         with1Weights = False,
         withGraphvizCommand = layout
-      },
-    showSolution = printSolution config,
-    addText = extraText config
-  }
+      }
+  maybeInstance <- firstJustM (\(ad, petri) -> do
+      shuffledPetri <- snd <$> shufflePetri petri
+      isDrawable <- lift $ isNetDrawable (mapNet (show . PK.label) shuffledPetri) drawSettings
+      if not isDrawable
+        then return Nothing
+        else return $ Just $ MatchPetriInstance {
+          activityDiagram=ad,
+          petriNet = shuffledPetri,
+          plantUMLConf =
+            PlantUmlConfig {
+              suppressNodeNames = False,
+              suppressBranchConditions = hideBranchConditions config
+            },
+          petriDrawConf = drawSettings,
+          showSolution = printSolution config,
+          addText = extraText config
+        }
+    ) candidates
+  case maybeInstance of
+    Just inst -> return inst
+    Nothing -> lift $ throwM NoInstanceAvailable
 
 defaultMatchPetriInstance :: MatchPetriInstance
 defaultMatchPetriInstance = MatchPetriInstance

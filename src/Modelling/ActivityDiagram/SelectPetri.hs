@@ -78,7 +78,7 @@ import Modelling.Auxiliary.Common (
 import Modelling.Auxiliary.Output (
   addPretext,
   )
-import Modelling.PetriNet.Diagram (cacheNet)
+import Modelling.PetriNet.Diagram (cacheNet, isNetDrawable)
 import Modelling.PetriNet.Types (
   checkPetriNodeCount,
   DrawSettings (..),
@@ -90,8 +90,8 @@ import Modelling.PetriNet.Types (
 
 import Control.Applicative (Alternative ((<|>)))
 import Control.Monad (unless, when)
-import Control.Monad.Catch              (MonadThrow, throwM)
-import Control.Monad.Extra (loopM, firstJustM)
+import Control.Monad.Catch              (MonadCatch, MonadThrow, throwM)
+import Control.Monad.Extra (loopM, firstJustM, (&&^))
 import Control.Monad.Trans.Class (lift)
 import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
@@ -558,7 +558,7 @@ selectPetriSolution
 selectPetriSolution = head . M.keys . M.filter fst . petriNets
 
 selectPetri
-  :: (MonadAlloy m, MonadThrow m)
+  :: (MonadAlloy m, MonadCatch m, MonadDiagrams m, MonadGraphviz m, MonadThrow m)
   => SelectPetriConfig
   -> Int
   -> Int
@@ -568,7 +568,7 @@ selectPetri config segment seed = do
   evalRandT (getSelectPetriTask config) g
 
 getSelectPetriTask
-  :: (MonadAlloy m, MonadThrow m, RandomGen g)
+  :: (MonadAlloy m, MonadCatch m, MonadDiagrams m, MonadGraphviz m, MonadThrow m, RandomGen g)
   => SelectPetriConfig
   -> RandT g m SelectPetriInstance
 getSelectPetriTask config = do
@@ -604,19 +604,34 @@ getSelectPetriTask config = do
             petriNet
           p <- fmap snd $ shufflePetri $ matchingNet sol
           ps <- mapM (fmap snd . shufflePetri) $ wrongNets sol
-          petriNets <- selectPetriSolutionToMap
-            $ SelectPetriSolution {matchingNet=p, wrongNets=ps}
-          let petriInst = SelectPetriInstance {
-                activityDiagram=ad,
-                plantUMLConf=plantUMLConf,
-                petriDrawConf=petriDrawConf,
-                petriNets = petriNets,
-                showSolution = printSolution config,
-                addText = extraText config
+          let allPetriNets = p : ps
+              feedbackDrawSettings = petriDrawConf {
+                withPlaceNames = True,
+                withTransitionNames = True
               }
-          case checkPetriInstance petriInst config of
-            Just _ -> return Nothing
-            Nothing -> return $ Just petriInst
+          allDrawable <- lift $ and <$> mapM
+            (\net -> isNetDrawable (mapNet (show . PK.label) net) petriDrawConf)
+            allPetriNets
+          feedbackDrawable <- lift $
+            if hidePetriNodeLabels config
+              then isNetDrawable (mapNet (show . PK.label) p) feedbackDrawSettings
+              else return True
+          if not (allDrawable && feedbackDrawable)
+            then return Nothing
+            else do
+              petriNets <- selectPetriSolutionToMap
+                $ SelectPetriSolution {matchingNet=p, wrongNets=ps}
+              let petriInst = SelectPetriInstance {
+                    activityDiagram=ad,
+                    plantUMLConf=plantUMLConf,
+                    petriDrawConf=petriDrawConf,
+                    petriNets = petriNets,
+                    showSolution = printSolution config,
+                    addText = extraText config
+                  }
+              case checkPetriInstance petriInst config of
+                Just _ -> return Nothing
+                Nothing -> return $ Just petriInst
     )
   case ad of
     Just x -> return x
