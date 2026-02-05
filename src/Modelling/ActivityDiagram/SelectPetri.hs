@@ -589,7 +589,7 @@ getSelectPetriTask config = do
         with1Weights = False,
         withGraphvizCommand = layout
       }
-  ad <- mapM (fmap snd . shuffleAdNames) randomInstances
+  maybeInstance <- mapM (fmap snd . shuffleAdNames) randomInstances
     >>= firstJustM (\ad -> do
       let petriNet = convertToPetriNet @PetriLike @SimpleNode ad
       if not (checkPetriNodeCount (countOfPetriNodesBounds config) petriNet)
@@ -636,7 +636,7 @@ getSelectPetriTask config = do
                     then return Nothing
                     else return $ Just petriInst
     )
-  case ad of
+  case maybeInstance of
     Just x -> return x
     Nothing -> lift $ throwM NoInstanceAvailable
 
