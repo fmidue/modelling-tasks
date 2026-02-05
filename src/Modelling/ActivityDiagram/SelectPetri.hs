@@ -91,7 +91,7 @@ import Modelling.PetriNet.Types (
 import Control.Applicative (Alternative ((<|>)))
 import Control.Monad (unless, when)
 import Control.Monad.Catch              (MonadCatch, MonadThrow, throwM)
-import Control.Monad.Extra (loopM, firstJustM)
+import Control.Monad.Extra (loopM, firstJustM, allM)
 import Control.Monad.Trans.Class (lift)
 import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
@@ -609,29 +609,34 @@ getSelectPetriTask config = do
                 withPlaceNames = True,
                 withTransitionNames = True
               }
-          allDrawable <- lift $ and <$> mapM
+          -- Check if all Petri nets are drawable (short-circuits on first failure)
+          allDrawable <- lift $ allM
             (\net -> isNetDrawable (mapNet (show . PK.label) net) petriDrawConf)
             allPetriNets
-          feedbackDrawable <- lift $
-            if hidePetriNodeLabels config
-              then isNetDrawable (mapNet (show . PK.label) p) feedbackDrawSettings
-              else return True
-          if not (allDrawable && feedbackDrawable)
+          -- Only check feedback drawable if allDrawable succeeded
+          if not allDrawable
             then return Nothing
             else do
-              petriNets <- selectPetriSolutionToMap
-                $ SelectPetriSolution {matchingNet=p, wrongNets=ps}
-              let petriInst = SelectPetriInstance {
-                    activityDiagram = ad,
-                    plantUMLConf = plantUMLConf,
-                    petriDrawConf = petriDrawConf,
-                    petriNets = petriNets,
-                    showSolution = printSolution config,
-                    addText = extraText config
-                  }
-              case checkPetriInstance petriInst config of
-                Just _ -> return Nothing
-                Nothing -> return $ Just petriInst
+              feedbackDrawable <- lift $
+                if hidePetriNodeLabels config
+                  then isNetDrawable (mapNet (show . PK.label) p) feedbackDrawSettings
+                  else return True
+              if not feedbackDrawable
+                then return Nothing
+                else do
+                  petriNets <- selectPetriSolutionToMap
+                    $ SelectPetriSolution {matchingNet=p, wrongNets=ps}
+                  let petriInst = SelectPetriInstance {
+                        activityDiagram = ad,
+                        plantUMLConf = plantUMLConf,
+                        petriDrawConf = petriDrawConf,
+                        petriNets = petriNets,
+                        showSolution = printSolution config,
+                        addText = extraText config
+                      }
+                  case checkPetriInstance petriInst config of
+                    Just _ -> return Nothing
+                    Nothing -> return $ Just petriInst
     )
   case ad of
     Just x -> return x
