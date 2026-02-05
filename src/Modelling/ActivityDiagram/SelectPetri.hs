@@ -609,11 +609,9 @@ getSelectPetriTask config = do
                 withPlaceNames = True,
                 withTransitionNames = True
               }
-          -- Check if all Petri nets are drawable (short-circuits on first failure)
           allDrawable <- lift $ allM
             (\net -> isNetDrawable (mapNet (show . PK.label) net) petriDrawConf)
             allPetriNets
-          -- Only check feedback drawable if allDrawable succeeded
           if not allDrawable
             then return Nothing
             else do
@@ -625,7 +623,7 @@ getSelectPetriTask config = do
                 then return Nothing
                 else do
                   petriNets <- selectPetriSolutionToMap
-                    $ SelectPetriSolution {matchingNet=p, wrongNets=ps}
+                    $ SelectPetriSolution {matchingNet = p, wrongNets = ps}
                   let petriInst = SelectPetriInstance {
                         activityDiagram = ad,
                         plantUMLConf = plantUMLConf,
