@@ -617,17 +617,16 @@ getSelectPetriTask config = do
           case checkPetriInstance petriInst config of
             Just _ -> return Nothing
             Nothing -> do
-              let allPetriNets = p : ps
-                  feedbackDrawSettings = petriDrawConf {
-                    withPlaceNames = True,
-                    withTransitionNames = True
-                  }
               allDrawable <- lift $ allM
                 (\net -> isNetDrawable (mapNet (show . PK.label) net) petriDrawConf)
-                allPetriNets
+                (p : ps)
               if not allDrawable
                 then return Nothing
                 else do
+                  let feedbackDrawSettings = petriDrawConf {
+                        withPlaceNames = True,
+                        withTransitionNames = True
+                      }
                   feedbackDrawable <- lift $
                     if hidePetriNodeLabels config
                       then isNetDrawable (mapNet (show . PK.label) p) feedbackDrawSettings
