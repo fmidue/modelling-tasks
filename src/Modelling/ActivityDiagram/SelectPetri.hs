@@ -604,37 +604,38 @@ getSelectPetriTask config = do
             petriNet
           p <- fmap snd $ shufflePetri $ matchingNet sol
           ps <- mapM (fmap snd . shufflePetri) $ wrongNets sol
-          let allPetriNets = p : ps
-              feedbackDrawSettings = petriDrawConf {
-                withPlaceNames = True,
-                withTransitionNames = True
+          petriNets <- selectPetriSolutionToMap
+            $ SelectPetriSolution {matchingNet = p, wrongNets = ps}
+          let petriInst = SelectPetriInstance {
+                activityDiagram = ad,
+                plantUMLConf = plantUMLConf,
+                petriDrawConf = petriDrawConf,
+                petriNets = petriNets,
+                showSolution = printSolution config,
+                addText = extraText config
               }
-          allDrawable <- lift $ allM
-            (\net -> isNetDrawable (mapNet (show . PK.label) net) petriDrawConf)
-            allPetriNets
-          if not allDrawable
-            then return Nothing
-            else do
-              feedbackDrawable <- lift $
-                if hidePetriNodeLabels config
-                  then isNetDrawable (mapNet (show . PK.label) p) feedbackDrawSettings
-                  else return True
-              if not feedbackDrawable
+          -- First check the pure validation before expensive drawability checks
+          case checkPetriInstance petriInst config of
+            Just _ -> return Nothing
+            Nothing -> do
+              let allPetriNets = p : ps
+                  feedbackDrawSettings = petriDrawConf {
+                    withPlaceNames = True,
+                    withTransitionNames = True
+                  }
+              allDrawable <- lift $ allM
+                (\net -> isNetDrawable (mapNet (show . PK.label) net) petriDrawConf)
+                allPetriNets
+              if not allDrawable
                 then return Nothing
                 else do
-                  petriNets <- selectPetriSolutionToMap
-                    $ SelectPetriSolution {matchingNet = p, wrongNets = ps}
-                  let petriInst = SelectPetriInstance {
-                        activityDiagram = ad,
-                        plantUMLConf = plantUMLConf,
-                        petriDrawConf = petriDrawConf,
-                        petriNets = petriNets,
-                        showSolution = printSolution config,
-                        addText = extraText config
-                      }
-                  case checkPetriInstance petriInst config of
-                    Just _ -> return Nothing
-                    Nothing -> return $ Just petriInst
+                  feedbackDrawable <- lift $
+                    if hidePetriNodeLabels config
+                      then isNetDrawable (mapNet (show . PK.label) p) feedbackDrawSettings
+                      else return True
+                  if not feedbackDrawable
+                    then return Nothing
+                    else return $ Just petriInst
     )
   case ad of
     Just x -> return x
