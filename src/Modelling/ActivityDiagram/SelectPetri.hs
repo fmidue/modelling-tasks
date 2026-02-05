@@ -589,8 +589,8 @@ getSelectPetriTask config = do
         with1Weights = False,
         withGraphvizCommand = layout
       }
-  maybeInstance <- mapM (fmap snd . shuffleAdNames) randomInstances
-    >>= firstJustM (\ad -> do
+  maybeInstance <- firstJustM (\inst -> do
+      ad <- snd <$> shuffleAdNames inst
       let petriNet = convertToPetriNet @PetriLike @SimpleNode ad
       if not (checkPetriNodeCount (countOfPetriNodesBounds config) petriNet)
         then return Nothing
@@ -635,7 +635,7 @@ getSelectPetriTask config = do
                   if not feedbackDrawable
                     then return Nothing
                     else return $ Just petriInst
-    )
+    ) randomInstances
   case maybeInstance of
     Just x -> return x
     Nothing -> lift $ throwM NoInstanceAvailable
