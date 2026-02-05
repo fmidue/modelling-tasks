@@ -605,16 +605,15 @@ getSelectPetriTask config = do
           p <- fmap snd $ shufflePetri $ matchingNet sol
           ps <- mapM (fmap snd . shufflePetri) $ wrongNets sol
           petriNets <- selectPetriSolutionToMap
-            $ SelectPetriSolution {matchingNet = p, wrongNets = ps}
+            $ SelectPetriSolution {matchingNet=p, wrongNets=ps}
           let petriInst = SelectPetriInstance {
-                activityDiagram = ad,
-                plantUMLConf = plantUMLConf,
-                petriDrawConf = petriDrawConf,
+                activityDiagram=ad,
+                plantUMLConf=plantUMLConf,
+                petriDrawConf=petriDrawConf,
                 petriNets = petriNets,
                 showSolution = printSolution config,
                 addText = extraText config
               }
-          -- First check the pure validation before expensive drawability checks
           case checkPetriInstance petriInst config of
             Just _ -> return Nothing
             Nothing -> do
