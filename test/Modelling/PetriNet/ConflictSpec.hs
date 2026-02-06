@@ -115,7 +115,7 @@ testFindConflictConfig = testTaskGeneration
 testPickConflictConfig :: [PickConflictConfig] -> Spec
 testPickConflictConfig = testTaskGeneration
   petriNetPickConflict
-  (\inst -> lift $ pickTaskInstance parseConflict inst)
+  (lift . pickTaskInstance parseConflict)
   $ checkPickConflictInstance @(SimplePetriLike _)
 
 validFindConflictConfigs

@@ -113,7 +113,7 @@ testFindConcurrencyConfig = testTaskGeneration
 testPickConcurrencyConfig :: [PickConcurrencyConfig] -> Spec
 testPickConcurrencyConfig = testTaskGeneration
   petriNetPickConcur
-  (\inst -> lift $ pickTaskInstance parseConcurrency inst)
+  (lift . pickTaskInstance parseConcurrency)
   $ checkPickConcurrencyInstance @(SimplePetriLike _)
 
 validFindConcurrencyConfigs
