@@ -97,7 +97,7 @@ simplifiedInformation isCollapsed = collapsed isCollapsed (translations $ do
 addPretext :: OutputCapable m => LangM' m a -> LangM' m a
 addPretext = (*>) $
   paragraph $ translate $ do
-    english "Remarks on your solution:"
+    english "Remarks on the submitted solution:"
     german "Anmerkungen zur eingereichten Lösung:"
 
 uniform :: a -> Map Language a

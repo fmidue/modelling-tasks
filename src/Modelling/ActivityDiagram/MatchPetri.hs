@@ -440,7 +440,7 @@ matchPetriEvaluation
   => MatchPetriInstance
   -> MatchPetriSolution
   -> Rated m
-matchPetriEvaluation task sub = addPretext $ do
+matchPetriEvaluation task sub = do
   let as = translations $ do
         english "answer parts"
         german "Teilantworten"

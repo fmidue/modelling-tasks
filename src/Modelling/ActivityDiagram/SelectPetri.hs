@@ -437,7 +437,7 @@ selectPetriEvaluation
   -> SelectPetriInstance
   -> Int
   -> LangM m
-selectPetriEvaluation path task n = addPretext $ do
+selectPetriEvaluation path task n = do
   let as = translations $ do
         english "Petri net"
         german "Petrinetz"
