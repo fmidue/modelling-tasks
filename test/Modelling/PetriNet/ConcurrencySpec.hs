@@ -10,7 +10,6 @@ import qualified Modelling.PetriNet.Types         as Pick (
   PickConcurrencyConfig (..),
   )
 
-import Capabilities.Exceptions.IO.Trans ()
 import Modelling.PetriNet.Concurrency (
   checkFindConcurrencyConfig,
   checkPickConcurrencyConfig,
@@ -53,6 +52,7 @@ import Modelling.PetriNet.TestCommon (
 import Settings                         (configDepth, needsTuning)
 
 import Control.Lens.Lens                ((??))
+import Control.Monad.Trans.Class        (lift)
 import Control.OutputCapable.Blocks     (ExtraText (..))
 import Test.Hspec
 
@@ -113,7 +113,7 @@ testFindConcurrencyConfig = testTaskGeneration
 testPickConcurrencyConfig :: [PickConcurrencyConfig] -> Spec
 testPickConcurrencyConfig = testTaskGeneration
   petriNetPickConcur
-  (pickTaskInstance parseConcurrency)
+  (\inst -> lift $ pickTaskInstance parseConcurrency inst)
   $ checkPickConcurrencyInstance @(SimplePetriLike _)
 
 validFindConcurrencyConfigs
