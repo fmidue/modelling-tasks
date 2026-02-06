@@ -1,12 +1,11 @@
 module Main (main) where
 
-import Capabilities.Alloy.IO.Trans            ()
+import Capabilities.Alloy.IO            ()
 import Capabilities.Cache.IO            ()
-import Capabilities.Diagrams.IO.Trans         ()
-import Capabilities.Graphviz.IO.Trans         ()
+import Capabilities.Diagrams.IO         ()
+import Capabilities.Graphviz.IO         ()
 import Capabilities.PlantUml.IO         ()
 import Capabilities.WriteFile.IO        ()
-import Capabilities.Exceptions.IO.Trans       ()
 import Modelling.ActivityDiagram.SelectPetri (
   defaultSelectPetriConfig,
   selectPetri,

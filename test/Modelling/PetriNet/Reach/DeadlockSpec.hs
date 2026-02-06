@@ -1,9 +1,8 @@
 module Modelling.PetriNet.Reach.DeadlockSpec where
 
 import Data.List.NonEmpty                 (toList)
-import Capabilities.Diagrams.IO.Trans         ()
-import Capabilities.Graphviz.IO.Trans         ()
-import Capabilities.Exceptions.IO.Trans       ()
+import Capabilities.Diagrams.IO         ()
+import Capabilities.Graphviz.IO         ()
 import Modelling.PetriNet.Reach.Deadlock (
   DeadlockConfig (..),
   DeadlockInstance (..),

@@ -1,10 +1,10 @@
 module Main (main) where
 
-import Capabilities.Alloy.IO.Trans            ()
+import Capabilities.Alloy.IO.Trans      ()
 import Capabilities.Cache.IO            ()
-import Capabilities.Diagrams.IO.Trans         ()
-import Capabilities.Graphviz.IO.Trans         ()
-import Capabilities.Exceptions.IO.Trans       ()
+import Capabilities.Diagrams.IO.Trans   ()
+import Capabilities.Graphviz.IO.Trans   ()
+import Capabilities.Exceptions.IO.Trans ()
 import Common                           (withLang)
 
 import Modelling.CdOd.DifferentNames

@@ -3,11 +3,10 @@ module Main (main) where
 
 import Common                           (withLang)
 
-import Capabilities.Alloy.IO.Trans            ()
+import Capabilities.Alloy.IO            ()
 import Capabilities.Cache.IO            ()
-import Capabilities.Diagrams.IO.Trans         ()
-import Capabilities.Exceptions.IO.Trans       ()
-import Capabilities.Graphviz.IO.Trans         ()
+import Capabilities.Diagrams.IO         ()
+import Capabilities.Graphviz.IO         ()
 import Modelling.CdOd.Types (
   ClassConfig (..),
   ObjectConfig (..),

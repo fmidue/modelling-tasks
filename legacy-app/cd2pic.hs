@@ -2,8 +2,8 @@ module Main (main) where
 
 import qualified Data.ByteString                  as BS (writeFile)
 
-import Capabilities.Diagrams.IO.Trans         ()
-import Capabilities.Graphviz.IO.Trans         ()
+import Capabilities.Diagrams.IO         ()
+import Capabilities.Graphviz.IO         ()
 import Capabilities.WriteFile.IO        ()
 import Modelling.CdOd.Auxiliary.Lexer (lexer)
 import Modelling.CdOd.Auxiliary.Parser (parser)

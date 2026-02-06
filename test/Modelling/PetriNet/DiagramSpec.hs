@@ -1,8 +1,7 @@
 module Modelling.PetriNet.DiagramSpec where
 
-import Capabilities.Diagrams.IO.Trans          ()
-import Capabilities.Graphviz.IO.Trans          ()
-import Capabilities.Exceptions.IO.Trans        ()
+import Capabilities.Diagrams.IO          ()
+import Capabilities.Graphviz.IO          ()
 import Modelling.Auxiliary.Common        (Object)
 import Modelling.PetriNet.Diagram
 import Modelling.PetriNet.MatchToMath    (petriNetRnd)
