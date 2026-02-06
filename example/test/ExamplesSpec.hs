@@ -135,11 +135,11 @@ import Modelling.CdOd.NameCdError.Config (
   task2024_54,
   task2025_08,
   task2025_09,
+  task2025_54,
   )
 import Modelling.CdOd.NameCdError.Instance (
   task2024_14,
   task2025_12,
-  task2025_54,
   )
 import Modelling.CdOd.RepairCd (
   checkRepairCdConfig,
