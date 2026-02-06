@@ -53,8 +53,7 @@ import Control.OutputCapable.Blocks (
   ExtraText (..),
   Language (English),
   )
-import Control.Monad.Trans.Class        (lift)
-import Control.Monad.Trans.Except       (runExceptT)
+import Control.Monad                    (void)
 import Control.Monad.Random (
   evalRandT,
   mkStdGen,
@@ -64,7 +63,7 @@ import Control.Monad.Random (
 import Data.Bifunctor                   (Bifunctor (bimap))
 import Data.Char                        (toUpper)
 import Data.Containers.ListUtils        (nubOrd)
-import Data.Either                      (isLeft, isRight)
+import Data.Either                      (isLeft)
 import Data.Maybe                       (fromJust)
 import Data.Ratio                       ((%))
 import Data.Tuple                       (swap)
@@ -101,11 +100,9 @@ spec = do
   describe "differentNames" $ do
     context "using defaultDifferentNamesConfig" $ do
       it "generates an instance" $ do
-        inst <- runExceptT @String $ do
-          segment <- oneOf [0 .. 3]
-          seed <- randomIO
-          lift $ differentNames defaultDifferentNamesConfig segment seed
-        inst `shouldSatisfy` isRight
+        segment <- oneOf [0 .. 3]
+        seed <- randomIO
+        void (differentNames defaultDifferentNamesConfig segment seed :: IO DifferentNamesInstance)
       it "reproducibly generates defaultDifferentNamesInstance" $
         differentNames defaultDifferentNamesConfig 0 0
         `shouldReturn` defaultDifferentNamesInstance
