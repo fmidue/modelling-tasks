@@ -14,7 +14,6 @@ import Capabilities.Alloy.IO            ()
 import Capabilities.Cache.IO            ()
 import Capabilities.Diagrams.IO         ()
 import Capabilities.Graphviz.IO         ()
-import Capabilities.Exceptions.IO       ()
 import Common (
   forceErrors,
   instanceInput,

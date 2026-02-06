@@ -2,7 +2,6 @@ module Main (main) where
 import qualified Data.ByteString.Char8            as BS (pack)
 
 import Capabilities.Diagrams.IO         ()
-import Capabilities.Exceptions.IO       ()
 import Capabilities.Graphviz.IO         ()
 import Capabilities.WriteFile.IO        ()
 import Modelling.CdOd.Output            (drawOdFromInstance)
@@ -32,7 +31,7 @@ main = do
 
 drawOd :: [String] -> FilePath -> String -> IO ()
 drawOd possibleLinks file contents = flip evalRandT (mkStdGen 0) $ do
-  i <- parseInstance $ BS.pack contents
+  i <- lift $ parseInstance $ BS.pack contents
   output <- drawOdFromInstance
     i
     Nothing

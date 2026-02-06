@@ -9,6 +9,7 @@ import qualified Modelling.PetriNet.Types         as Pick (
   PickConflictConfig (alloyConfig),
   )
 
+import Capabilities.Exceptions.IO.Trans ()
 import Modelling.PetriNet.Conflict (
   checkConflictConfig,
   checkFindConflictConfig,
