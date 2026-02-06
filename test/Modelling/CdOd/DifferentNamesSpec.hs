@@ -7,7 +7,7 @@ module Modelling.CdOd.DifferentNamesSpec where
 
 import qualified Data.Bimap                       as BM
 
-import Capabilities.Alloy.IO.Trans      ()
+import Capabilities.Alloy.IO            ()
 import Modelling.CdOd.DifferentNames (
   DifferentNamesConfig (objectConfig),
   ShufflingOption (..),
@@ -53,6 +53,7 @@ import Control.OutputCapable.Blocks (
   ExtraText (..),
   Language (English),
   )
+import Control.Monad.Trans.Class        (lift)
 import Control.Monad.Trans.Except       (runExceptT)
 import Control.Monad.Random (
   evalRandT,
@@ -103,7 +104,7 @@ spec = do
         inst <- runExceptT @String $ do
           segment <- oneOf [0 .. 3]
           seed <- randomIO
-          differentNames defaultDifferentNamesConfig segment seed
+          lift $ differentNames defaultDifferentNamesConfig segment seed
         inst `shouldSatisfy` isRight
       it "reproducibly generates defaultDifferentNamesInstance" $
         differentNames defaultDifferentNamesConfig 0 0
