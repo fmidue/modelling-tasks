@@ -9,11 +9,11 @@ import qualified Modelling.PetriNet.Types         as Pick (
   PickConcurrencyConfig (..),
   )
 
-import Capabilities.Alloy.IO            ()
+import Capabilities.Alloy.IO.Trans            ()
 import Capabilities.Cache.IO            ()
-import Capabilities.Diagrams.IO         ()
-import Capabilities.Graphviz.IO         ()
-import Capabilities.Exceptions.IO       ()
+import Capabilities.Diagrams.IO.Trans         ()
+import Capabilities.Graphviz.IO.Trans         ()
+import Capabilities.Exceptions.IO.Trans       ()
 import Common (
   forceErrors,
   instanceInput,

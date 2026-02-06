@@ -1,8 +1,8 @@
 {-# LANGUAGE TupleSections #-}
 module Modelling.CdOd.GenerateSpec where
 
-import Capabilities.Alloy.IO            ()
-import Capabilities.Exceptions.IO       ()
+import Capabilities.Alloy.IO.Trans            ()
+import Capabilities.Exceptions.IO.Trans       ()
 import Modelling.CdOd.Edges (
   DiagramEdge,
   compositionCycles,

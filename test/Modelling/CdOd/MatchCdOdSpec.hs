@@ -2,8 +2,8 @@ module Modelling.CdOd.MatchCdOdSpec where
 
 import qualified Data.Map                         as M (lookup, null)
 
-import Capabilities.Alloy.IO            ()
-import Capabilities.Exceptions.IO       ()
+import Capabilities.Alloy.IO.Trans            ()
+import Capabilities.Exceptions.IO.Trans       ()
 import Modelling.CdOd.MatchCdOd (
   MatchCdOdConfig (objectConfig),
   checkMatchCdOdConfig,

@@ -11,10 +11,10 @@ import qualified Data.ByteString.Char8            as BS (
   writeFile,
   unpack
   )
-import Capabilities.Diagrams.IO         ()
-import Capabilities.Graphviz.IO         ()
+import Capabilities.Diagrams.IO.Trans         ()
+import Capabilities.Graphviz.IO.Trans         ()
 import Capabilities.WriteFile.IO        ()
-import Capabilities.Exceptions.IO       ()
+import Capabilities.Exceptions.IO.Trans       ()
 import Modelling.CdOd.Output            (drawCd, drawOdFromInstance)
 import Modelling.CdOd.Types             (defaultCdDrawSettings)
 import Modelling.Common                 (withUnitTestsUsingPath)

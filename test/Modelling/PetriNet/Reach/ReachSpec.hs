@@ -3,9 +3,9 @@ module Modelling.PetriNet.Reach.ReachSpec where
 import qualified Data.Set                         as S
 
 import Data.List.NonEmpty                 (toList)
-import Capabilities.Diagrams.IO         ()
-import Capabilities.Graphviz.IO         ()
-import Capabilities.Exceptions.IO       ()
+import Capabilities.Diagrams.IO.Trans         ()
+import Capabilities.Graphviz.IO.Trans         ()
+import Capabilities.Exceptions.IO.Trans       ()
 import Modelling.PetriNet.Reach.Reach (
   ReachConfig (..),
   NetGoalConfig (..),

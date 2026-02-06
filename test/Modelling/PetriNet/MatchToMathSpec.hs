@@ -1,10 +1,10 @@
 {-# LANGUAGE TypeApplications #-}
 module Modelling.PetriNet.MatchToMathSpec where
 
-import Capabilities.Alloy.IO            ()
-import Capabilities.Diagrams.IO         ()
-import Capabilities.Graphviz.IO         ()
-import Capabilities.Exceptions.IO       ()
+import Capabilities.Alloy.IO.Trans            ()
+import Capabilities.Diagrams.IO.Trans         ()
+import Capabilities.Graphviz.IO.Trans         ()
+import Capabilities.Exceptions.IO.Trans       ()
 import Modelling.PetriNet.MatchToMath
 import Modelling.PetriNet.Types (
   ChangeConfig(..),
