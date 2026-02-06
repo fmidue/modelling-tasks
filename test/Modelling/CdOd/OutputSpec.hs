@@ -11,8 +11,8 @@ import qualified Data.ByteString.Char8            as BS (
   writeFile,
   unpack
   )
-import Capabilities.Diagrams.IO.Trans   ()
-import Capabilities.Graphviz.IO.Trans   ()
+import Capabilities.Diagrams.IO         ()
+import Capabilities.Graphviz.IO         ()
 import Capabilities.WriteFile.IO        ()
 import Modelling.CdOd.Output            (drawCd, drawOdFromInstance)
 import Modelling.CdOd.Types             (defaultCdDrawSettings)
