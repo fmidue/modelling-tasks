@@ -10,6 +10,7 @@ import qualified Modelling.PetriNet.Types         as Pick (
   PickConcurrencyConfig (..),
   )
 
+import Capabilities.Exceptions.IO.Trans ()
 import Modelling.PetriNet.Concurrency (
   checkFindConcurrencyConfig,
   checkPickConcurrencyConfig,
