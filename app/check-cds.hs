@@ -4,7 +4,7 @@ module Main where
 import qualified Data.ByteString.Char8            as BS (writeFile)
 import qualified Language.Alloy.Call              as Alloy (getInstances)
 
-import Capabilities.Diagrams.IO.        ()
+import Capabilities.Diagrams.IO         ()
 import Capabilities.Graphviz.IO         ()
 import Capabilities.WriteFile.IO        ()
 import Modelling.CdOd.CD2Alloy.Transform (
