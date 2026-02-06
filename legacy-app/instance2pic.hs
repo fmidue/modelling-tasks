@@ -31,7 +31,7 @@ main = do
 
 drawOd :: [String] -> FilePath -> String -> IO ()
 drawOd possibleLinks file contents = flip evalRandT (mkStdGen 0) $ do
-  i <- parseInstance $ BS.pack contents
+  i <- lift $ parseInstance $ BS.pack contents
   output <- drawOdFromInstance
     i
     Nothing
