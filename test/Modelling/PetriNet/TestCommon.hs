@@ -15,7 +15,7 @@ module Modelling.PetriNet.TestCommon (
   ) where
 
 import Capabilities.Alloy               (getInstances)
-import Capabilities.Alloy.IO.Trans      ()
+import Capabilities.Alloy.IO            ()
 import Modelling.PetriNet.Alloy         (TaskGenerationException (..))
 import Modelling.PetriNet.Types (
   AlloyConfig (..),
@@ -83,7 +83,7 @@ testTaskGeneration alloyGen taskInst checkInst cs =
     $ flip evalRandT g $ do
       let conf = cs !! r
       r' <- getRandomR (1, maxJavaInt)
-      is <- getInstances
+      is <- lift $ getInstances
         (Just $ toInteger r')
         (Just 5000000)
         $ alloyGen conf

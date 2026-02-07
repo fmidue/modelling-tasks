@@ -1,13 +1,12 @@
 {-# LANGUAGE ApplicativeDo #-}
 {-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE TypeApplications #-}
 -- |
 
 module Modelling.CdOd.DifferentNamesSpec where
 
 import qualified Data.Bimap                       as BM
 
-import Capabilities.Alloy.IO.Trans      ()
+import Capabilities.Alloy.IO            ()
 import Modelling.CdOd.DifferentNames (
   DifferentNamesConfig (objectConfig),
   ShufflingOption (..),
@@ -53,7 +52,6 @@ import Control.OutputCapable.Blocks (
   ExtraText (..),
   Language (English),
   )
-import Control.Monad.Trans.Except       (runExceptT)
 import Control.Monad.Random (
   evalRandT,
   mkStdGen,
@@ -63,7 +61,7 @@ import Control.Monad.Random (
 import Data.Bifunctor                   (Bifunctor (bimap))
 import Data.Char                        (toUpper)
 import Data.Containers.ListUtils        (nubOrd)
-import Data.Either                      (isLeft, isRight)
+import Data.Either                      (isLeft)
 import Data.Maybe                       (fromJust)
 import Data.Ratio                       ((%))
 import Data.Tuple                       (swap)
@@ -99,12 +97,11 @@ spec = do
         `shouldBe` Nothing
   describe "differentNames" $ do
     context "using defaultDifferentNamesConfig" $ do
-      it "generates an instance" $ do
-        inst <- runExceptT @String $ do
-          segment <- oneOf [0 .. 3]
-          seed <- randomIO
-          differentNames defaultDifferentNamesConfig segment seed
-        inst `shouldSatisfy` isRight
+      it "generates an okay instance" $ do
+        segment <- oneOf [0 .. 3]
+        seed <- randomIO
+        inst <- differentNames defaultDifferentNamesConfig segment seed
+        checkDifferentNamesInstance inst `shouldBe` Nothing
       it "reproducibly generates defaultDifferentNamesInstance" $
         differentNames defaultDifferentNamesConfig 0 0
         `shouldReturn` defaultDifferentNamesInstance
