@@ -97,7 +97,7 @@ spec = do
         `shouldBe` Nothing
   describe "differentNames" $ do
     context "using defaultDifferentNamesConfig" $ do
-      it "generates an instance" $ do
+      it "generates an okay instance" $ do
         segment <- oneOf [0 .. 3]
         seed <- randomIO
         inst <- differentNames defaultDifferentNamesConfig segment seed
