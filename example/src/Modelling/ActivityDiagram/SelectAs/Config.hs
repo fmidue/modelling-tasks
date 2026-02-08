@@ -146,3 +146,16 @@ task2025_43 = SelectASConfig {
   withActionRepetition = True,
   extraText = NoExtraText
 }
+
+{-|
+points: 0.1
+the amount of generated instances: 100
+maximum concurrent amount of tasks: 100
+average generation time per instance on the cluster (without considering concurrency): 32:17min
+total run time on the cluster (not including queuing time): 39:31min
+average CPU usage: 99.03%
+average memory usage: 11647.41 MB
+-}
+task2025_63 :: SelectASConfig
+task2025_63 = task2025_42
+

@@ -223,3 +223,15 @@ task2025_51 = FindAuxiliaryPetriNodesConfig {
     printSolution = True,
     extraText = finalNodesAndTransitionsAdvice
     }
+
+{-|
+points: 0.1
+the amount of generated instances: 100
+maximum concurrent amount of tasks: 100
+average generation time per instance on the cluster (without considering concurrency): 6:30min
+total run time on the cluster (not including queuing time): 6:37min
+average CPU usage: 100.96%
+average memory usage: 1290.99 MB
+-}
+task2025_67 :: FindAuxiliaryPetriNodesConfig
+task2025_67 = task2025_50

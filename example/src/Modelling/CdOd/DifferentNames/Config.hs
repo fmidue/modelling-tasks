@@ -379,3 +379,22 @@ share same concept injection as task2025_15
 -}
 task2025_22 :: DifferentNamesConfig
 task2025_22 = task2025_15
+
+{-|
+points: 0.1
+the amount of generated instances: 100
+maximum concurrent amount of tasks: 100
+average generation time per instance on the cluster (without considering concurrency): 2:23min
+total run time on the cluster (not including queuing time): 7:34min
+average CPU usage: 168.75%
+average memory usage: 2785.06 MB
+-}
+task2025_55 :: DifferentNamesConfig
+task2025_55 = task2025_14
+
+{-
+points: 0.1
+share same instances as task2025_21
+-}
+task2025_57 :: DifferentNamesConfig
+task2025_57 = task2025_21

@@ -191,3 +191,15 @@ task2025_47 = SelectPetriConfig {
     printSolution = True,
     extraText = finalNodesAdvice
   }
+
+{-|
+points: 0.1
+the amount of generated instances: 100
+maximum concurrent amount of tasks: 100
+average generation time per instance on the cluster (without considering concurrency): 8:39min
+total run time on the cluster (not including queuing time): 8:51min
+average CPU usage: 100%
+average max memory usage: 1644.37 MB
+-}
+task2025_65 :: SelectPetriConfig
+task2025_65 = task2025_46
