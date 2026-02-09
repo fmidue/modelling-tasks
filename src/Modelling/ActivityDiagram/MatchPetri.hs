@@ -123,7 +123,7 @@ import Control.Monad.Random (
 import Data.Bifunctor                   (second)
 import Data.Containers.ListUtils (nubOrd)
 import Data.GraphViz.Commands (GraphvizCommand(..))
-import Data.List (intersect, sort)
+import Data.List.Extra (intersect, notNull, sort)
 import Data.Map (Map)
 import Data.String.Interpolate (i, iii)
 import Data.Tuple.Extra                 (dupe)
@@ -283,7 +283,7 @@ matchPetriSolution task = mapTypesToLabels $ petriNet task
 petriSolutionPairwiseDisjunct :: MatchPetriSolution -> Bool
 petriSolutionPairwiseDisjunct MatchPetriSolution{..} =
   and [ null (xs `intersect` ys) | xs <- allLists, ys <- allLists, xs /= ys ] && length allLists == length (nubOrd allLists)
-    where allLists =
+    where allLists = filter notNull
             [ map snd actionNodes
             , map snd objectNodes
             , decisionNodes
