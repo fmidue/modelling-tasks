@@ -35,12 +35,11 @@ import qualified Data.Bimap                       as BM (
   filter,
   fromList,
   keys,
+  keysR,
   lookup,
-  map,
   mapR,
   member,
   toAscList,
-  toList,
   )
 import qualified Data.Map                         as M (
   fromDistinctAscList,
@@ -232,18 +231,18 @@ checkDifferentNamesInstance DifferentNamesInstance {..}
       but currently "#{x}" is among both.
       |]
   | let mappingBimap = nameMapping mapping
-        allNames = BM.keys mappingBimap ++ map snd (BM.toList mappingBimap)
+        allNames = BM.keys mappingBimap ++ BM.keysR mappingBimap
         strippedNames = [(original, stripName original) | original <- allNames]
         collisions = [stripped | (original, stripped) <- strippedNames
                                , original /= stripped
                                , stripped `elem` allNames]
-    , (collision:_) <- nubOrd collisions
+    , (collision:_) <- collisions
   = Just [iii|
       Stripped names must not collide with original names in mapping,
       but "#{showName collision}" appears as both a stripped and original name.
       |]
-  | let strippedODMapping = BM.map
-          stripName
+  | let strippedODMapping = BM.mapR
+          (Name . stripNumericPeriod . unName)
           $ nameMapping mapping,
     any ((`BM.member` strippedODMapping) . Name) strippedLinks
   = Just [iii|
