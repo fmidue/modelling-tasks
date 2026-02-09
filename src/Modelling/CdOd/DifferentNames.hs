@@ -36,12 +36,13 @@ import qualified Data.Bimap                       as BM (
   fromList,
   keys,
   lookup,
-  lookupR,
-  mapMonotonicR,
+  map,
+  mapR,
+  member,
   toAscList,
   )
 import qualified Data.Map                         as M (
-  fromAscList,
+  fromDistinctAscList,
   )
 
 import Autolib.Hash                     (Hashable)
@@ -161,7 +162,6 @@ import Control.Monad.Trans.Random       (RandT)
 import System.Random.Internal           (StdGen)
 import Control.Monad.Trans.Except       (runExceptT)
 import Data.Bifunctor                   (Bifunctor (bimap, first))
-import Data.Bimap                       (Bimap)
 import Data.Bitraversable               (bitraverse)
 import Data.Bool                        (bool)
 import Data.Char                        (isDigit)
@@ -179,7 +179,6 @@ import Data.List (
   )
 import Data.Maybe (
   catMaybes,
-  isJust,
   isNothing,
   listToMaybe,
   mapMaybe,
@@ -226,10 +225,18 @@ checkDifferentNamesInstance DifferentNamesInstance {..}
       i.e., for which an association in the Class diagram exists
       but not a link in the Object diagram.
       |]
-  | (x:_) <- nubOrd links `intersect` nubOrd associations
+  | (x:_) <- nubOrd strippedLinks `intersect` nubOrd associations
   = Just [iii|
       Link names and association names must be disjoint
       but currently "#{x}" is among both.
+      |]
+  | let strippedODMapping = BM.map
+          stripNumericPeriod
+          $ fromNameMapping mapping,
+    any (`BM.member` strippedODMapping) strippedLinks
+  = Just [iii|
+      Pairs given in mapping must follow this order:
+      (CD association, OD link)
       |]
   | otherwise
   = checkObjectDiagram oDiagram
@@ -237,6 +244,7 @@ checkDifferentNamesInstance DifferentNamesInstance {..}
   where
     associations = associationNames cDiagram
     links = linkLabels oDiagram
+    strippedLinks = map stripNumericPeriod links
 
 data DifferentNamesConfig
   = DifferentNamesConfig {
@@ -555,15 +563,6 @@ differentNamesSyntax DifferentNamesInstance {..} cs = addPretext $ do
       (not . null . tail)
       $ group $ sort (map fst choicesStripped ++ map snd choicesStripped)
 
-readMapping :: Ord a => Bimap a a -> (a, a) -> Maybe (a, a)
-readMapping m (x, y)
-  | isJust $ BM.lookup x m, isJust $ BM.lookupR y m
-  = Just (x, y)
-  | isJust $ BM.lookup y m, isJust $ BM.lookupR x m
-  = Just (y, x)
-  | otherwise
-  = Nothing
-
 differentNamesEvaluation
   :: OutputCapable m
   => DifferentNamesInstance
@@ -571,18 +570,23 @@ differentNamesEvaluation
   -> Rated m
 differentNamesEvaluation task cs = do
   let csStripped = map (bimap stripName stripName) cs
-      -- Strip periods from the mapping's link labels (second element of each pair)
-      mStripped = BM.mapMonotonicR stripName $ nameMapping $ mapping task
+      correctMapping = nameMapping $ mapping task
+      -- Swap answer tuples around if necessary
+      -- The preceding syntax check guarantees only valid pairs can be submitted here
+      readMapping pair@(_, right)
+        | BM.member right correctMapping = swap pair
+        | otherwise = pair
       what = translations $ do
         german "Zuordnungen"
         english "mappings"
-      ms = M.fromAscList $ map (,True) $ BM.toAscList mStripped
+      -- Strip periods from the mapping's link labels (second element of each pair)
+      ms = M.fromDistinctAscList $ map (,True) $ BM.toAscList $ BM.mapR stripName correctMapping
       solution =
         if showSolution task
         then Just . (DefiniteArticle,) . show . mappingShow
           $ differentNamesSolution task
         else Nothing
-  multipleChoice what solution ms (mapMaybe (readMapping mStripped) csStripped)
+  multipleChoice what solution ms (map readMapping csStripped)
 
 differentNamesSolution :: DifferentNamesInstance -> [(Name, Name)]
 differentNamesSolution = BM.toAscList . nameMapping . mapping
