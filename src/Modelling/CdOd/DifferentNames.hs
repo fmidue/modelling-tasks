@@ -35,6 +35,7 @@ import qualified Data.Bimap                       as BM (
   filter,
   fromList,
   keys,
+  keysR,
   lookup,
   map,
   mapR,
@@ -166,6 +167,7 @@ import Data.Bitraversable               (bitraverse)
 import Data.Bool                        (bool)
 import Data.Char                        (isDigit)
 import Data.Containers.ListUtils        (nubOrd, nubOrdOn)
+import Data.Foldable                    (find)
 import Data.Functor.Identity            (Identity (Identity, runIdentity))
 import Data.GraphViz                    (DirType (Forward))
 import Data.List (
@@ -184,6 +186,11 @@ import Data.Maybe (
   mapMaybe,
   )
 import Data.Ratio                       ((%))
+import qualified Data.Set          as S (
+  fromList,
+  member,
+  union,
+  )
 import Data.String.Interpolate          (i, iii)
 import Data.Tuple.Extra                 (swap)
 import GHC.Generics                     (Generic)
@@ -230,9 +237,17 @@ checkDifferentNamesInstance DifferentNamesInstance {..}
       Link names and association names must be disjoint
       but currently "#{x}" is among both.
       |]
+  | let mappingBimap = nameMapping mapping
+        allNamesSet = S.union (S.fromList $ BM.keys mappingBimap) (S.fromList $ BM.keysR mappingBimap),
+    Just collision <- find (\name -> let stripped = stripName name
+                                     in stripped /= name && S.member stripped allNamesSet) allNamesSet
+  = Just [iii|
+      Stripped names must not collide with original names in mapping,
+      but "#{showName collision}" violates that.
+      |]
   | let strippedODMapping = BM.map
-          stripNumericPeriod
-          $ fromNameMapping mapping,
+          (stripNumericPeriod . unName)
+          $ nameMapping mapping,
     any (`BM.member` strippedODMapping) strippedLinks
   = Just [iii|
       Pairs given in mapping must follow this order:
