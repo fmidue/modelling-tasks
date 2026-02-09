@@ -40,6 +40,7 @@ import qualified Data.Bimap                       as BM (
   mapR,
   member,
   toAscList,
+  toList,
   )
 import qualified Data.Map                         as M (
   fromDistinctAscList,
@@ -230,10 +231,21 @@ checkDifferentNamesInstance DifferentNamesInstance {..}
       Link names and association names must be disjoint
       but currently "#{x}" is among both.
       |]
+  | let mappingBimap = nameMapping mapping
+        allNames = BM.keys mappingBimap ++ map snd (BM.toList mappingBimap)
+        strippedNames = [(original, stripName original) | original <- allNames]
+        collisions = [stripped | (original, stripped) <- strippedNames
+                               , original /= stripped
+                               , stripped `elem` allNames]
+    , (collision:_) <- nubOrd collisions
+  = Just [iii|
+      Stripped names must not collide with original names in mapping,
+      but "#{showName collision}" appears as both a stripped and original name.
+      |]
   | let strippedODMapping = BM.map
-          stripNumericPeriod
-          $ fromNameMapping mapping,
-    any (`BM.member` strippedODMapping) strippedLinks
+          stripName
+          $ nameMapping mapping,
+    any ((`BM.member` strippedODMapping) . Name) strippedLinks
   = Just [iii|
       Pairs given in mapping must follow this order:
       (CD association, OD link)
