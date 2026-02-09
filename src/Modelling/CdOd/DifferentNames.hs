@@ -239,7 +239,7 @@ checkDifferentNamesInstance DifferentNamesInstance {..}
   | let mappingBimap = nameMapping mapping
         allNames = BM.keys mappingBimap ++ BM.keysR mappingBimap
         allNamesSet = S.fromList allNames
-        strippedNamesSet = S.fromList [stripName name | name <- allNames, stripName name /= name]
+        strippedNamesSet = S.fromList [stripped | name <- allNames, let stripped = stripName name, stripped /= name]
         collisions = S.toList $ S.intersection strippedNamesSet allNamesSet
     , (collision:_) <- collisions
   = Just [iii|
