@@ -131,7 +131,7 @@ spec = do
         in isValidMapping cs
            ==> isLeft $ evaluateDifferentNames bs cs cs'
   describe "renameInstance" $ do
-    it "is reversable" $ renameProperty $ \inst renamedInstance _ _ ->
+    it "is reversible" $ renameProperty $ \inst renamedInstance _ _ ->
         let cd = cDiagram inst
             od = oDiagram inst
             names = classNames cd

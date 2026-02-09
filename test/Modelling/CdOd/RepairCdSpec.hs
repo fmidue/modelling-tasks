@@ -39,7 +39,7 @@ spec = do
         repairCd defaultRepairCdConfig 0 0
         `shouldReturn` defaultRepairCdInstance
   describe "renameInstance" $
-    it "is reversable" $ do
+    it "is reversible" $ do
       let inst = defaultRepairCdInstance
           (names, nonInheritances) = classAndNonInheritanceNames inst
       names' <- shuffleM names
