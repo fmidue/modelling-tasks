@@ -37,7 +37,6 @@ import qualified Data.Bimap                       as BM (
   keys,
   keysR,
   lookup,
-  map,
   mapR,
   member,
   toAscList,
@@ -185,6 +184,10 @@ import Data.Maybe (
   mapMaybe,
   )
 import Data.Ratio                       ((%))
+import qualified Data.Set                         as S (
+  fromList,
+  member,
+  )
 import Data.String.Interpolate          (i, iii)
 import Data.Tuple.Extra                 (swap)
 import GHC.Generics                     (Generic)
@@ -233,19 +236,20 @@ checkDifferentNamesInstance DifferentNamesInstance {..}
       |]
   | let mappingBimap = nameMapping mapping
         allNames = BM.keys mappingBimap ++ BM.keysR mappingBimap
+        allNamesSet = S.fromList allNames
         strippedNames = [(original, stripName original) | original <- allNames]
         collisions = [stripped | (original, stripped) <- strippedNames
                                , original /= stripped
-                               , stripped `elem` allNames]
+                               , S.member stripped allNamesSet]
     , (collision:_) <- collisions
   = Just [iii|
       Stripped names must not collide with original names in mapping,
       but "#{showName collision}" appears as both a stripped and original name.
       |]
-  | let strippedODMapping = BM.map
-          (stripNumericPeriod . unName)
+  | let strippedODMapping = BM.mapR
+          (Name . stripNumericPeriod . unName)
           $ nameMapping mapping,
-    any (`BM.member` strippedODMapping) strippedLinks
+    any ((`BM.member` strippedODMapping) . Name) strippedLinks
   = Just [iii|
       Pairs given in mapping must follow this order:
       (CD association, OD link)
