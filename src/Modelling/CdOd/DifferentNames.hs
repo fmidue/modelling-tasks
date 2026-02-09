@@ -226,7 +226,7 @@ checkDifferentNamesInstance DifferentNamesInstance {..}
       Link names and association names must be disjoint
       but currently "#{x}" is among both.
       |]
-  | strippedODMapping <- BM.map
+  | let strippedODMapping = BM.map
       stripNumericPeriod
       $ fromNameMapping mapping,
     any (`BM.member` strippedODMapping) strippedLinks
