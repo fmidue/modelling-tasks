@@ -41,7 +41,7 @@ import qualified Data.Bimap                       as BM (
   toAscList,
   )
 import qualified Data.Map                         as M (
-  fromAscList,
+  fromDistinctAscList,
   )
 
 import Autolib.Hash                     (Hashable)
@@ -576,7 +576,7 @@ differentNamesEvaluation task cs = do
         german "Zuordnungen"
         english "mappings"
       -- Strip periods from the mapping's link labels (second element of each pair)
-      ms = M.fromAscList $ map (,True) $ BM.toAscList
+      ms = M.fromDistinctAscList $ map (,True) $ BM.toAscList
         $ BM.mapR stripName correctMapping
       solution =
         if showSolution task
