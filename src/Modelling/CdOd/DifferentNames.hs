@@ -239,12 +239,10 @@ checkDifferentNamesInstance DifferentNamesInstance {..}
       |]
   | let mappingBimap = nameMapping mapping
         allNamesSet = S.union (S.fromList $ BM.keys mappingBimap) (S.fromList $ BM.keysR mappingBimap),
-    Just collision <- S.foldr (\name acc -> case acc of
-                               Just c -> Just c
-                               Nothing -> let stripped = stripName name
-                                          in if stripped /= name && S.member stripped allNamesSet
-                                             then Just stripped
-                                             else Nothing) Nothing allNamesSet
+    Just collision <- S.foldr (\name acc -> let stripped = stripName name
+                                            in if stripped /= name && S.member stripped allNamesSet
+                                               then Just stripped
+                                               else acc) Nothing allNamesSet
   = Just [iii|
       Stripped names must not collide with original names in mapping,
       but "#{showName collision}" appears as both a stripped and original name.
