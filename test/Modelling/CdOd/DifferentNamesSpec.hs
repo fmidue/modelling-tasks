@@ -304,7 +304,7 @@ renameProperty p = property $ \n1 n2 n3 n4 a1 a2 a3 l1 l2 l3 ->
       ls = map unName [l1, l2, l3]
       distinct xs = length (nubOrd xs) == length xs
       renamedInstance = renameInstance inst ns as ls
-  in distinct (map lowerFirst ns ++ as ++ ls)
+  in distinct (map lowerFirst ns) && distinct (ns ++ as ++ ls)
      ==> p inst renamedInstance as ls
 
 instance Arbitrary Name where
