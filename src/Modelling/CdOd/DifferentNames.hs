@@ -186,8 +186,10 @@ import Data.Maybe (
   )
 import Data.Ratio                       ((%))
 import qualified Data.Set                         as S (
+  filter,
   fromList,
   intersection,
+  map,
   toList,
   )
 import Data.String.Interpolate          (i, iii)
@@ -239,7 +241,7 @@ checkDifferentNamesInstance DifferentNamesInstance {..}
   | let mappingBimap = nameMapping mapping
         allNames = BM.keys mappingBimap ++ BM.keysR mappingBimap
         allNamesSet = S.fromList allNames
-        strippedNamesSet = S.fromList [stripped | name <- allNames, let stripped = stripName name, stripped /= name]
+        strippedNamesSet = S.map stripName $ S.filter (\name -> stripName name /= name) allNamesSet
         collisions = S.toList $ S.intersection strippedNamesSet allNamesSet
     , (collision:_) <- collisions
   = Just [iii|
