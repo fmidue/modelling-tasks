@@ -35,6 +35,7 @@ import qualified Data.Bimap                       as BM (
   fromList,
   keys,
   lookup,
+  mapMonotonic,
   mapMonotonicR,
   member,
   toAscList,
@@ -220,10 +221,18 @@ checkDifferentNamesInstance DifferentNamesInstance {..}
       i.e., for which an association in the Class diagram exists
       but not a link in the Object diagram.
       |]
-  | (x:_) <- nubOrd links `intersect` nubOrd associations
+  | (x:_) <- nubOrd strippedLinks `intersect` nubOrd associations
   = Just [iii|
       Link names and association names must be disjoint
       but currently "#{x}" is among both.
+      |]
+  | strippedODMapping <- BM.mapMonotonic
+      stripNumericPeriod
+      $ fromNameMapping mapping,
+    any (`BM.member` strippedODMapping) strippedLinks
+  = Just [iii|
+      Pairs given in mapping must follow this order:
+      (CD association, OD link)
       |]
   | otherwise
   = checkObjectDiagram oDiagram
@@ -231,6 +240,7 @@ checkDifferentNamesInstance DifferentNamesInstance {..}
   where
     associations = associationNames cDiagram
     links = linkLabels oDiagram
+    strippedLinks = map stripNumericPeriod links
 
 data DifferentNamesConfig
   = DifferentNamesConfig {
