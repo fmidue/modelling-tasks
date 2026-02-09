@@ -37,6 +37,7 @@ import qualified Data.Bimap                       as BM (
   keys,
   keysR,
   lookup,
+  map,
   mapR,
   member,
   toAscList,
@@ -246,10 +247,10 @@ checkDifferentNamesInstance DifferentNamesInstance {..}
       Stripped names must not collide with original names in mapping,
       but "#{showName collision}" appears as both a stripped and original name.
       |]
-  | let strippedODMapping = BM.mapR
-          (Name . stripNumericPeriod . unName)
+  | let strippedODMapping = BM.map
+          (stripNumericPeriod . unName)
           $ nameMapping mapping,
-    any ((`BM.member` strippedODMapping) . Name) strippedLinks
+    any (`BM.member` strippedODMapping) strippedLinks
   = Just [iii|
       Pairs given in mapping must follow this order:
       (CD association, OD link)
