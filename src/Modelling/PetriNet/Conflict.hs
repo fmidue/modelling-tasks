@@ -70,8 +70,6 @@ import Modelling.PetriNet.Alloy (
   modulePetriConcepts,
   modulePetriConstraints,
   modulePetriSignature,
-  petriScopeBitWidth,
-  petriScopeMaxSeq,
   signatures,
   skolemVariable,
   taskInstance,
@@ -84,10 +82,11 @@ import Modelling.PetriNet.Diagram (
 import Modelling.PetriNet.Find (
   FindInstance (..),
   checkConfigForFind,
-  findInitial,
+  checkFindTwoActive,
+  findInitialTuple,
   findTaskInstance,
   lToFind,
-  toFindEvaluation,
+  toFindEvaluationTuple,
   toFindSyntax,
   )
 import Modelling.PetriNet.Parser        (
@@ -126,7 +125,9 @@ import Modelling.PetriNet.Types         (
   SimpleNode (..),
   SimplePetriNet,
   allDrawSettings,
+  basicConfigBitWidthInput,
   lConflictPlaces,
+  petriScopeBitWidth,
   transitionPairShow,
   )
 
@@ -226,7 +227,7 @@ findConflictTask showInputHelp path task = do
     translate $ do
       english [i|Stating |]
       german [i|Die Angabe von |]
-    let ts = transitionPairShow findInitial
+    let ts = transitionPairShow findInitialTuple
     code $ show ts
     translate $ do
       let (t1, t2) = bimap show show ts
@@ -278,7 +279,7 @@ findConflictPlacesEvaluation
   -> ConflictPlaces
   -> Rated m
 findConflictPlacesEvaluation task (conflict, ps) =
-  toFindEvaluation what withSol conf conflict $>>= \(ms, res) -> do
+  toFindEvaluationTuple what withSol conf conflict $>>= \(ms, res) -> do
   recoverFrom $ unless (null inducing || res == 0) $ do
     for_ ps' $ \x -> assert (x `elem` inducing) $ translate $ do
       let x' = show $ ShowPlace x
@@ -306,8 +307,8 @@ findConflictPlacesEvaluation task (conflict, ps) =
     base = fromIntegral $ 2 + numberOfPlaces task
     size = fromIntegral . length
     what = translations $ do
-        english "have a conflict"
-        german "haben einen Konflikt"
+        english "The indicated transitions have a conflict?"
+        german "Die angegebenen Transitionen haben einen Konflikt?"
 
 findConflictPlacesSolution :: FindInstance n (PetriConflict p t) -> ((t, t), [p])
 findConflictPlacesSolution task =
@@ -516,10 +517,8 @@ petriNetConflictAlloy basicC changeC conflictC uniqueConflictP specific
 #{modulePetriConcepts}
 #{modulePetriConstraints}
 
-pred #{conflictPredicateName}[#{p} : some Places,#{defaultActiveTrans}#{activated} : set Transitions, #{t1}, #{t2} : Transitions] {
-  \#Places = #{places basicC}
-  \#Transitions = #{transitions basicC}
-  #{compBasicConstraints activated basicC}
+pred #{conflictPredicateName}[#{p} : some Places, #{skolemSets}#{t1}, #{t2} : Transitions] {
+  #{compBasicConstraints True Nothing activated basicC}
   #{compChange changeC}
   #{multiplePlaces uniqueConflictP}
   #{sourceTransitionConstraints}
@@ -535,14 +534,14 @@ pred #{conflictPredicateName}[#{p} : some Places,#{defaultActiveTrans}#{activate
   #{compConstraints}
 }
 
-run #{conflictPredicateName} for exactly #{petriScopeMaxSeq basicC} Nodes, #{petriScopeBitWidth basicC} Int
+run #{conflictPredicateName} for exactly #{places basicC} Places, exactly #{transitions basicC} Transitions, #{petriScopeBitWidth (basicConfigBitWidthInput basicC)} Int
 |]
   where
     activated        = "activatedTrans"
     activatedDefault = "defaultActiveTrans"
     compConstraints = either
       (const $ defaultConstraints activatedDefault basicC)
-      compAdvConstraints
+      (compAdvConstraints False)
       specific
     sourceTransitionConstraints
       | Left True <- specific = [i|
@@ -579,7 +578,7 @@ run #{conflictPredicateName} for exactly #{petriScopeMaxSeq basicC} Nodes, #{pet
       let ps = common#{upperFirst which}Preconditions[t1, t2] |
         \#ps > 1 and all p : ps | p.#{tokens} >= p.#{flow}[t1] and p.#{tokens} >= p.#{flow}[t2]|]
     defaultActiveTrans
-      | isLeft specific    = [i|#{activatedDefault} : set givenTransitions,|]
+      | isLeft specific    = [i|#{activatedDefault} : set givenTransitions, |]
       | otherwise          = ""
     multiplePlaces unique
       | unique == Just True
@@ -592,6 +591,9 @@ run #{conflictPredicateName} for exactly #{petriScopeMaxSeq basicC} Nodes, #{pet
     sigs = signatures "given" (places basicC) (transitions basicC)
     t1 = transition1
     t2 = transition2
+    skolemSets
+      | atLeastActive basicC > 0 = [i|#{defaultActiveTrans}#{activated} : set Transitions, |]
+      | otherwise                = ""
 
 conflictPredicateName :: String
 conflictPredicateName = "showConflict"
@@ -621,9 +623,9 @@ It returns an error message instead if unexpected behaviour occurs.
 -}
 parseConflict :: MonadThrow m => AlloyInstance -> m (PetriConflict' Object)
 parseConflict inst = do
-  tc1 <- unscopedSingleSig inst conflictTransition1 ""
-  tc2 <- unscopedSingleSig inst conflictTransition2 ""
-  pc  <- unscopedSingleSig inst conflictPlaces1 ""
+  tc1 <- unscopedSingleSig conflictTransition1 "" inst
+  tc2 <- unscopedSingleSig conflictTransition2 "" inst
+  pc  <- unscopedSingleSig conflictPlaces1 "" inst
   PetriConflict' . flip Conflict (Set.toList pc)
     <$> ((,) <$> asSingleton tc1 <*> asSingleton tc2)
 
@@ -673,7 +675,9 @@ checkFindConflictConfig FindConflictConfig {
   conflictConfig,
   graphConfig
   }
-  = checkConfigForFind basicConfig changeConfig graphConfig
+  =
+  checkFindTwoActive basicConfig
+  <|> checkConfigForFind basicConfig changeConfig graphConfig
   <|> checkConflictConfig basicConfig conflictConfig
 
 checkPickConflictConfig :: PickConflictConfig -> Maybe String

@@ -11,12 +11,19 @@
 
 module Modelling.PetriNet.Find (
   FindInstance (..),
-  checkFindBasicConfig,
   checkConfigForFind,
-  findInitial,
+  checkFindTwoActive,
+  findInitialList,
+  findInitialTuple,
   findTaskInstance,
   lToFind,
+  prohibitHidePlaceNames,
+  prohibitHideTransitionNames,
+  prohibitPatchworkRenderer,
   toFindEvaluation,
+  toFindEvaluationList,
+  toFindEvaluationTuple,
+  toFindEvaluationTupleList,
   toFindSyntax,
   ) where
 
@@ -41,7 +48,9 @@ import Modelling.PetriNet.Types (
   Net (..),
   checkBasicConfig,
   checkChangeConfig,
+  prohibitPatchworkRenderer,
   shuffleNames,
+  transitionListShow,
   transitionPairShow,
   )
 
@@ -67,6 +76,7 @@ import Control.Monad.Random (
   RandomGen,
   )
 import Control.Monad.Trans.Class        (MonadTrans (lift))
+import Data.List                        (sort)
 import Data.Map                         (Map)
 import Language.Alloy.Call (
   AlloyInstance,
@@ -86,8 +96,11 @@ data FindInstance n a = FindInstance {
 
 makeLensesFor [("toFind", "lToFind")] ''FindInstance
 
-findInitial :: (Transition, Transition)
-findInitial = (Transition 0, Transition 1)
+findInitialTuple :: (Transition, Transition)
+findInitialTuple = (Transition 0, Transition 1)
+
+findInitialList :: [Transition]
+findInitialList = [Transition 0, Transition 1]
 
 toFindSyntax
   :: OutputCapable m
@@ -122,35 +135,77 @@ toFindEvaluation
   :: (Num a, OutputCapable m)
   => Map Language String
   -> Bool
-  -> (Transition, Transition)
-  -> (Transition, Transition)
+  -> (b -> b -> Bool)
+  -> (b -> String)
+  -> b
+  -> b
   -> LangM' m (Maybe String, a)
-toFindEvaluation what withSol (ft, st) (fi, si) = do
-  let correct = ft == fi && st == si || ft == si && st == fi
+toFindEvaluation what withSol isCorrect format correctValue inputValue = do
+  let correct = isCorrect correctValue inputValue
       points = if correct then 1 else 0
       maybeSolutionString =
         if withSol
-        then Just $ show $ transitionPairShow (ft, st)
+        then Just $ format correctValue
         else Nothing
   assert correct $ translate $ do
-    english $ "The indicated transitions " ++ localise English what ++ "?"
-    german $ "Die angegebenen Transitionen " ++ localise German what ++ "?"
+    english $ localise English what
+    german $ localise German what
   pure (maybeSolutionString, points)
   where
     assert = continueOrAbort withSol
 
-checkFindBasicConfig :: BasicConfig -> Maybe String
-checkFindBasicConfig BasicConfig { atLeastActive }
+toFindEvaluationTuple
+  :: (Num a, OutputCapable m)
+  => Map Language String
+  -> Bool
+  -> (Transition, Transition)
+  -> (Transition, Transition)
+  -> LangM' m (Maybe String, a)
+toFindEvaluationTuple what withSol =
+  toFindEvaluation what withSol pairEquals (show . transitionPairShow)
+  where
+    pairEquals (ft, st) (fi, si) =
+      (ft == fi && st == si) || (ft == si && st == fi)
+
+toFindEvaluationList
+  :: (Num a, OutputCapable m)
+  => Map Language String
+  -> Bool
+  -> [Transition]
+  -> [Transition]
+  -> LangM' m (Maybe String, a)
+toFindEvaluationList what withSol =
+  toFindEvaluation what withSol (\x y -> sort x == sort y) (show . transitionListShow)
+
+toFindEvaluationTupleList
+  :: (Num a, Ord b, OutputCapable m, Show b)
+  => Map Language String
+  -> Bool
+  -> [b]
+  -> [b]
+  -> LangM' m (Maybe String, a)
+toFindEvaluationTupleList what withSol =
+  toFindEvaluation what withSol (\xs ys -> sort xs == sort ys) (show . sort)
+
+checkFindTwoActive :: BasicConfig -> Maybe String
+checkFindTwoActive BasicConfig { atLeastActive }
  | atLeastActive < 2
   = Just "The parameter 'atLeastActive' must be at least 2 to create the task."
  | otherwise = Nothing
 
 checkConfigForFind :: BasicConfig -> ChangeConfig -> GraphConfig -> Maybe String
 checkConfigForFind basic change graph =
-  checkFindBasicConfig basic
-  <|> prohibitHideTransitionNames graph
-  <|> checkBasicConfig basic
+  prohibitHideTransitionNames graph
+  <|> checkBasicConfig [] basic
   <|> checkChangeConfig basic change
+  <|> prohibitPatchworkRenderer graph
+
+prohibitHidePlaceNames :: GraphConfig -> Maybe String
+prohibitHidePlaceNames gc
+  | hidePlaceNames gc
+  = Just "Place names are required for this task type."
+  | otherwise
+  = Nothing
 
 prohibitHideTransitionNames :: GraphConfig -> Maybe String
 prohibitHideTransitionNames gc

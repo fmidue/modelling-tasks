@@ -20,9 +20,13 @@ The 'Modelling.PetriNet.Types' module defines basic type class instances and
 functions to work on and transform Petri net representations.
 -}
 module Modelling.PetriNet.Types (
+  ActivatedTransitions (ActivatedTransitions),
   AdvConfig (..),
   AlloyConfig (..),
   BasicConfig (..),
+  Capacity (Capacity),
+  CapacityConfig (..),
+  CapacityNode (..),
   Change,
   ChangeConfig (..),
   Concurrent (..),
@@ -30,14 +34,17 @@ module Modelling.PetriNet.Types (
   ConflictConfig (..),
   Drawable,
   DrawSettings (..),
+  FindActivatedTransitionsConfig (..),
   FindConcurrencyConfig (..),
   FindConflictConfig (..),
   GraphConfig (..),
   InvalidPetriNetException (..),
+  MistakeConfig (..),
   Net (..),
   Node (..),
   Petri (..),
   PetriChange (..),
+  PetriChangeList (..),
   PetriConflict (..),
   PetriConflict' (..),
   PetriLike (..),
@@ -45,10 +52,13 @@ module Modelling.PetriNet.Types (
   PetriNode (..),
   PickConcurrencyConfig (..),
   PickConflictConfig (..),
+  PickMistakeConfig (..),
   SimpleNode (..),
   SimplePetriLike,
   SimplePetriNet,
   allDrawSettings,
+  basicConfigBitWidthInput,
+  checkActivatedSourceConfig,
   checkBasicConfig,
   checkChangeConfig,
   checkGraphLayouts,
@@ -56,9 +66,12 @@ module Modelling.PetriNet.Types (
   defaultAdvConfig,
   defaultAlloyConfig,
   defaultBasicConfig,
+  defaultCapacityConfig,
   defaultChangeConfig,
+  defaultFindActivatedTransitionsConfig,
   defaultFindConcurrencyConfig,
   defaultFindConflictConfig,
+  defaultPickMistakeConfig,
   defaultGraphConfig,
   defaultPickConcurrencyConfig,
   defaultPickConflictConfig,
@@ -87,11 +100,16 @@ module Modelling.PetriNet.Types (
   lTransitions,
   lUniqueConflictPlace,
   mapChange,
+  maybeCapacity,
   maybeInitial,
   petriLikeToPetri,
+  petriScopeBitWidth,
   placeNames,
+  prohibitPatchworkRenderer,
   shuffleNames,
+  toChangeList,
   transformNet,
+  transitionListShow,
   transitionNames,
   transitionPairShow,
   ) where
@@ -114,6 +132,7 @@ import qualified Data.Map.Lazy                    as M (
   mapKeys,
   member,
   null,
+  toList,
   size,
   )
 import qualified Data.Set                         as S (empty, union)
@@ -121,6 +140,7 @@ import qualified Data.Set                         as S (empty, union)
 import Autolib.Hash                     (Hashable)
 import Autolib.Reader                   (Reader)
 import Autolib.ToDoc                    (ToDoc)
+import Capabilities.Alloy               (maxBitWidth)
 import Modelling.Auxiliary.Common       (lensRulesL)
 import Modelling.PetriNet.Reach.Type    (Place, ShowTransition (ShowTransition))
 import Modelling.Types                  ()
@@ -134,6 +154,7 @@ import Control.OutputCapable.Blocks     (ExtraText (..))
 import Data.Bimap                       (Bimap)
 import Data.Data                        (Data)
 import Data.GraphViz.Attributes.Complete (GraphvizCommand (..))
+import Data.List                        (intercalate)
 import Data.Map.Lazy                    (Map)
 import Data.Maybe                       (fromMaybe)
 import GHC.Generics                     (Generic)
@@ -172,6 +193,18 @@ data PetriChange a = Change {
   flowChange  :: Map a (Map a Int)
   }
   deriving (Eq, Generic, Hashable, Read, Reader, Show, ToDoc)
+
+data PetriChangeList a = ChangeList {
+  tokenChanges :: [(a, Int)],
+  flowChanges  :: [(a, a, Int)]
+} deriving (Eq, Generic, Hashable, Show, Functor, Foldable, Reader, Traversable, ToDoc)
+
+toChangeList :: PetriChange a -> PetriChangeList a
+toChangeList (Change tokenMap flowMap) = ChangeList {
+    tokenChanges = M.toList tokenMap,
+    flowChanges  = [ (source, target, n) | (source, targets) <- M.toList flowMap
+                                        , (target, n) <- M.toList targets ]
+}
 
 {-|
 This function acts like 'fmap' on other 'Functor's.
@@ -234,6 +267,12 @@ instance Bitraversable PetriConflict where
 
 newtype Concurrent a = Concurrent (a, a)
   deriving (Eq, Foldable, Functor, Generic, Hashable, Read, Reader, Show, ToDoc, Traversable)
+
+newtype ActivatedTransitions a = ActivatedTransitions [a]
+  deriving (Functor, Foldable, Traversable, Generic, Read, Reader, Show, ToDoc)
+
+newtype Capacity = Capacity ([(Place, Int)], [(String, String, Int)])
+  deriving (Generic, Read, Show)
 
 class Show (n String) => PetriNode n where
   initialTokens     :: n a -> Int
@@ -350,6 +389,39 @@ instance PetriNode SimpleNode where
   traverseNode f (SimpleTransition o) =
     SimpleTransition <$> traverseKeyMap f o
 
+data CapacityNode a =
+  CapacityPlace {
+    capacity :: Integer,
+    -- | max allowed token number of a 'CapacityNode'
+    initial  :: Int,
+    flowOut  :: Map a Int
+  } |
+  CapacityTransition {
+  flowOut :: Map a Int
+  }
+  deriving (Data, Eq, Generic, Hashable, Read, Reader, Show, ToDoc)
+
+instance PetriNode CapacityNode where
+  initialTokens CapacityPlace {initial} = initial
+  initialTokens CapacityTransition {} =
+    error "A CapacityTransition does not have initial tokens!"
+
+  isPlaceNode CapacityPlace {} = True
+  isPlaceNode _                = False
+
+  isTransitionNode CapacityTransition {} = True
+  isTransitionNode _                   = False
+
+  mapNode f (CapacityPlace c s o) =
+    CapacityPlace c s (M.mapKeys f o)
+  mapNode f (CapacityTransition o) =
+    CapacityTransition (M.mapKeys f o)
+
+  traverseNode f (CapacityPlace c s o) =
+    CapacityPlace c s <$> traverseKeyMap f o
+  traverseNode f (CapacityTransition o) =
+    CapacityTransition <$> traverseKeyMap f o
+
 {-|
 Returns 'Just' the 'initial' tokens of the given node, if it is a place 'PetriNode',
 otherwise it returns 'Nothing'.
@@ -358,6 +430,10 @@ maybeInitial :: PetriNode n => n a -> Maybe Int
 maybeInitial n
   | isPlaceNode n = Just $ initialTokens n
   | otherwise     = Nothing
+
+maybeCapacity :: CapacityNode a -> Maybe Integer
+maybeCapacity CapacityPlace{capacity} = Just capacity
+maybeCapacity _ = Nothing
 
 {-|
 A specific traversal for 'Map's changing the keys rather than values.
@@ -483,7 +559,7 @@ instance Net PetriLike Node where
     $ ns
 
   deleteNode x (PetriLike ns) = PetriLike
-    . adjustAll (updateNode id (M.delete x)) (M.keys . flowIn <$> n)
+    . adjustAll (updateNode id (M.delete x)) (M.keys . flowInN <$> n)
     . adjustAll (updateNode (M.delete x) id) (M.keys . flowOutN <$> n)
     . M.delete x
     $ ns
@@ -550,6 +626,45 @@ updateSimpleNode g (SimpleTransition o) = SimpleTransition (g o)
 
 type SimplePetriLike = PetriLike SimpleNode
 type SimplePetriNet = SimplePetriLike String
+
+instance Net PetriLike CapacityNode where
+  emptyNet = PetriLike M.empty
+
+  flow x y = (M.lookup y . flowOutCN) <=< (M.lookup x . allNodes)
+
+  nodes = allNodes
+
+  deleteFlow x y (PetriLike ns) = PetriLike
+    . M.adjust (updateCapacityNode (M.delete y)) x
+    $ ns
+
+  deleteNode x ns = PetriLike
+    . adjustAll (updateCapacityNode (M.delete x)) (Just $ M.keys $ allNodes ns)
+    . M.delete x
+    . allNodes
+    $ ns
+
+  alterFlow x f y = PetriLike
+    . M.adjust (updateCapacityNode (M.insert y f)) x
+    . allNodes
+
+  alterNode x mt = PetriLike . M.alter alterNode' x . allNodes
+    where
+      alterNode' = Just . fromMaybe
+        (maybe CapacityTransition (CapacityPlace undefined) mt M.empty)
+
+  outFlow x = maybe M.empty flowOutCN . M.lookup x . allNodes
+
+  mapNet = mapPetriLike
+  traverseNet = traversePetriLike
+
+flowOutCN :: CapacityNode a -> Map a Int
+flowOutCN CapacityPlace {flowOut} = flowOut
+flowOutCN CapacityTransition {flowOut} = flowOut
+
+updateCapacityNode :: (Map a Int -> Map b Int) -> CapacityNode a -> CapacityNode b
+updateCapacityNode h (CapacityPlace c t o) = CapacityPlace c t (h o)
+updateCapacityNode h (CapacityTransition o) = CapacityTransition (h o)
 
 {-|
 A 'Functor' like 'fmap' on 'PetriLike'.
@@ -661,21 +776,25 @@ petriLikeToPetri p = do
       = throwM RelatedNodesOfTransitionsContainTransitions
       | any (`M.member` ps) (allRelatedNodes ps)
       = throwM RelatedNodesOfPlacesContainPlaces
-      | any (any (<= 0) . flowIn) ts
+      | any (any (<= 0) . flowInN) ts
       = throwM FlowToATransitionIsZeroOrLess
       | any (any (<= 0) . flowOutN) ts
       = throwM FlowFromATransitionIsZeroOrLess
       | otherwise
       = pure ()
-    toChangeTuple n = (toFlowList flowIn n, toFlowList flowOutN n)
+    toChangeTuple n = (toFlowList flowInN n, toFlowList flowOutN n)
     toFlowList f n = M.foldrWithKey
       (\k _ xs -> fromMaybe 0 (M.lookup k $ f n) : xs)
       []
       ps
-    relatedNodes n = M.keysSet (flowIn n) `S.union` M.keysSet (flowOutN n)
+    relatedNodes n = M.keysSet (flowInN n) `S.union` M.keysSet (flowOutN n)
     allRelatedNodes = foldr
       (S.union . relatedNodes)
       S.empty
+
+flowInN :: Node a -> Map a Int
+flowInN (PlaceNode _ flowIn _ ) = flowIn
+flowInN (TransitionNode flowIn _) = flowIn
 
 type Marking = [Int]
 type Transition = (Marking,Marking)
@@ -743,7 +862,7 @@ data GraphConfig = GraphConfig {
 
 defaultGraphConfig :: GraphConfig
 defaultGraphConfig = GraphConfig {
-  graphLayouts = [Dot, Neato, TwoPi, Circo, Fdp, Sfdp, Osage, Patchwork],
+  graphLayouts = [Dot, Neato, TwoPi, Circo, Fdp, Sfdp, Osage],
   hidePlaceNames = False,
   hideTransitionNames = False,
   hideWeight1 = True
@@ -876,7 +995,7 @@ data FindConcurrencyConfig = FindConcurrencyConfig
 defaultFindConcurrencyConfig :: FindConcurrencyConfig
 defaultFindConcurrencyConfig = FindConcurrencyConfig
   { basicConfig = defaultBasicConfig { atLeastActive = 3 }
-  , advConfig = defaultAdvConfig{ presenceOfSourceTransitions = Just False }
+  , advConfig = defaultAdvConfig { presenceOfSourceTransitions = Just False }
   , changeConfig = defaultChangeConfig
   , graphConfig = defaultGraphConfig { hidePlaceNames = True }
   , printSolution = True
@@ -904,8 +1023,98 @@ defaultPickConcurrencyConfig = PickConcurrencyConfig
   , printSolution = True
   , prohibitSourceTransitions = False
   , useDifferentGraphLayouts = False
+  , alloyConfig  = defaultAlloyConfig { timeout = Just 60000000 }
+  , extraText = NoExtraText
+  }
+
+data PickMistakeConfig = PickMistakeConfig
+  { basicConfig :: BasicConfig
+  , changeConfig :: ChangeConfig
+  , mistakeConfig :: MistakeConfig
+  , graphConfig :: GraphConfig
+  , printSolution :: Bool
+  , useDifferentGraphLayouts :: Bool
+  , alloyConfig  :: AlloyConfig
+  , extraText :: ExtraText
+  }
+  deriving (Generic, Read, Reader, Show, ToDoc)
+
+defaultPickMistakeConfig :: PickMistakeConfig
+defaultPickMistakeConfig = PickMistakeConfig
+  { basicConfig = defaultBasicConfig { atLeastActive = 0 }
+  , changeConfig = defaultChangeConfig
+  , mistakeConfig = defaultMistakeConfig
+  , graphConfig = defaultGraphConfig { hidePlaceNames = True, hideTransitionNames = True }
+  , printSolution = False
+  , useDifferentGraphLayouts = False
   , alloyConfig  = defaultAlloyConfig
   , extraText = NoExtraText
+  }
+
+data MistakeConfig = MistakeConfig
+  { canHaveNegativeWeight :: Bool
+  , canHaveTransitionToTransition :: Bool
+  , canHavePlaceToPlace :: Bool
+  }
+  deriving (Generic, Read, Reader, Show, ToDoc)
+
+defaultMistakeConfig :: MistakeConfig
+defaultMistakeConfig = MistakeConfig
+  { canHaveNegativeWeight = True
+  , canHaveTransitionToTransition = True
+  , canHavePlaceToPlace = True
+  }
+
+data FindActivatedTransitionsConfig = FindActivatedTransitionsConfig
+  { basicConfig :: BasicConfig
+  , advConfig :: AdvConfig
+  , changeConfig :: ChangeConfig
+  , atMostActive :: Maybe Int
+  , graphConfig :: GraphConfig
+  , printSolution :: Bool
+  , alloyConfig  :: AlloyConfig
+  , extraText :: ExtraText
+  }
+  deriving (Generic, Read, Reader, Show, ToDoc)
+
+defaultFindActivatedTransitionsConfig :: FindActivatedTransitionsConfig
+defaultFindActivatedTransitionsConfig = FindActivatedTransitionsConfig
+  { basicConfig = defaultBasicConfig { atLeastActive = 1 }
+  , advConfig = defaultAdvConfig
+  , changeConfig = defaultChangeConfig
+  , atMostActive = Nothing
+  , graphConfig = defaultGraphConfig
+  , printSolution = False
+  , alloyConfig  = defaultAlloyConfig
+  , extraText = NoExtraText
+  }
+
+data CapacityConfig = CapacityConfig
+  { basicConfig :: BasicConfig
+  , advConfig :: AdvConfig
+  , maxCapacity :: Int
+  , newArrowsWithComplement :: (Int, Int)
+  , oneMinCapacity :: Int
+  , distractors :: (Int, Int)
+  , atMostActive :: Maybe Int
+  , graphConfig :: GraphConfig
+  , printSolution :: Bool
+  , alloyConfig :: AlloyConfig
+  }
+  deriving (Generic, Read, Reader, Show, ToDoc)
+
+defaultCapacityConfig :: CapacityConfig
+defaultCapacityConfig = CapacityConfig
+  { basicConfig = defaultBasicConfig { places = 2, transitions = 2, atLeastActive = 1, maxTokensPerPlace = 4, tokensOverall = (2, 8)}
+  , advConfig = defaultAdvConfig { presenceOfSinkTransitions = Just True }
+  , maxCapacity = 4
+  , newArrowsWithComplement = (2, 6)
+  , oneMinCapacity = 2
+  , atMostActive = Nothing
+  , distractors = (0, 1)
+  , graphConfig = defaultGraphConfig { hidePlaceNames = False, hideTransitionNames = False }
+  , printSolution = True
+  , alloyConfig = defaultAlloyConfig
   }
 
 data DrawSettings = DrawSettings {
@@ -953,8 +1162,21 @@ transitionPairShow (t1, t2) =
   let (first, second) = if t1 <= t2 then (t1, t2) else (t2, t1)
   in bimap ShowTransition ShowTransition (first, second)
 
-checkBasicConfig :: BasicConfig -> Maybe String
-checkBasicConfig BasicConfig{
+transitionListShow :: [Petri.Transition] -> [ShowTransition]
+transitionListShow = map ShowTransition
+
+petriScopeBitWidth :: [Int] -> Int
+petriScopeBitWidth values =
+  floor
+     (2 + ((logBase :: Double -> Double -> Double) 2.0 . fromIntegral)
+       (maximum values)
+     )
+
+basicConfigBitWidthInput :: BasicConfig -> [Int]
+basicConfigBitWidthInput BasicConfig {places, transitions, flowOverall, tokensOverall} = [places, transitions, snd flowOverall, snd tokensOverall]
+
+checkBasicConfig :: [Int] -> BasicConfig -> Maybe String
+checkBasicConfig values basicC@BasicConfig{
   atLeastActive,
   flowOverall,
   maxFlowPerEdge,
@@ -997,7 +1219,19 @@ checkBasicConfig BasicConfig{
   = Just "The maximum 'flowOverall' is set unreasonably high, given the other parameters."
  | transitions + places > 1 + fst flowOverall
   = Just "The number of transitions and places exceeds the minimum 'flowOverall' too much to create a connected net."
+ | Just maxValue <- maxBitWidth, petriScopeBitWidth (basicConfigBitWidthInput basicC ++ values) > maxValue
+  = Just ("'places', 'transitions', " ++ addStrings values ++ "and the maximum 'flowOverall' and 'tokensOverall' should not be set too high.")
  | otherwise
+  = Nothing
+
+addStrings :: [Int] -> String
+addStrings xs = intercalate ", " (map (\x -> "'" ++ show x ++ "'") xs)
+
+checkActivatedSourceConfig :: BasicConfig -> AdvConfig -> Maybe String
+checkActivatedSourceConfig BasicConfig{ atLeastActive } AdvConfig{ presenceOfSourceTransitions }
+  | presenceOfSourceTransitions == Just True && atLeastActive == 0
+  = Just "atLeastActive has to be at least 1 for source transitions to exist."
+  | otherwise
   = Nothing
 
 checkChangeConfig :: BasicConfig -> ChangeConfig -> Maybe String
@@ -1071,3 +1305,10 @@ checkPetriNodeCount countOfPetriNodesBounds petri =
   let count = M.size $ nodes petri
   in fst countOfPetriNodesBounds <= count
      && maybe True (count <=) (snd countOfPetriNodesBounds)
+
+prohibitPatchworkRenderer :: GraphConfig -> Maybe String
+prohibitPatchworkRenderer gc
+  | Patchwork `elem` graphLayouts gc
+  = Just "Do not use 'Patchwork' as a GraphViz Renderer as it does not work properly."
+  | otherwise
+  = Nothing

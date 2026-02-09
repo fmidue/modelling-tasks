@@ -12,14 +12,14 @@ module Modelling.PetriNet.Alloy (
   compChange,
   connected,
   defaultConstraints,
+  enforceConstraints,
   isolated,
   moduleHelpers,
   modulePetriAdditions,
   modulePetriConcepts,
   modulePetriConstraints,
   modulePetriSignature,
-  petriScopeBitWidth,
-  petriScopeMaxSeq,
+  randomInSegment,
   signatures,
   skolemVariable,
   taskInstance,
@@ -55,6 +55,7 @@ import Control.Monad.Random (
 import Data.Composition                 ((.:))
 import Data.FileEmbed                   (embedStringFile)
 import Data.List                        (intercalate)
+import Data.Maybe                       (isJust)
 import Data.Set                         (Set)
 import Data.String.Interpolate          (i)
 import Language.Alloy.Call (
@@ -63,17 +64,6 @@ import Language.Alloy.Call (
   lookupSig,
   unscoped,
   )
-
-petriScopeBitWidth :: BasicConfig -> Int
-petriScopeBitWidth BasicConfig
- { flowOverall, places, tokensOverall, transitions } =
-  floor
-     (2 + ((logBase :: Double -> Double -> Double) 2.0 . fromIntegral)
-       (maximum [snd flowOverall, snd tokensOverall, places, transitions])
-     )
-
-petriScopeMaxSeq :: BasicConfig -> Int
-petriScopeMaxSeq BasicConfig{places,transitions} = places+transitions
 
 modulePetriSignature :: String
 modulePetriSignature = removeLines 2 $(embedStringFile "alloy/petri/PetriSignature.als")
@@ -98,12 +88,18 @@ A set of constraints enforcing settings of 'BasicConfig'.
 (Besides 'defaultConstraints')
 -}
 compBasicConstraints
-  :: String
+  :: Bool
+  -- ^ 'True' for legal petri nets, `False` for illegal petri nets.
+  -> Maybe Int
+  -- ^ Whether or not to enforce a maximum number of activated transitions.
+  -> String
   -- ^ The name of the Alloy variable for the set of activated Transitions.
   -> BasicConfig
   -- ^ the configuration to enforce.
   -> String
-compBasicConstraints = enforceConstraints False
+compBasicConstraints legal atMostActive activated basicConfig = [i|
+  #{enforceConstraints False atMostActive activated basicConfig}
+  #{if legal then "isLegalPetriNet" else "not isLegalPetriNet"}|]
 
 {-|
 A set of constraints enforcing settings of 'BasicConfig' for the net under
@@ -115,17 +111,19 @@ defaultConstraints
   -> BasicConfig
   -- ^ the configuration to enforce.
   -> String
-defaultConstraints = enforceConstraints True
+defaultConstraints = enforceConstraints True Nothing
 
 enforceConstraints
   :: Bool
   -- ^ If to generate constraints under default conditions.
+  -> Maybe Int
+  -- ^ Whether or not to enforce a maximum number of activated transitions.
   -> String
   -- ^ The name of the Alloy variable for the set of activated Transitions.
   -> BasicConfig
   -- ^ the configuration to enforce.
   -> String
-enforceConstraints underDefault activated BasicConfig {
+enforceConstraints underDefault atMostActive activated BasicConfig {
   atLeastActive,
   isConnected,
   flowOverall,
@@ -139,8 +137,7 @@ enforceConstraints underDefault activated BasicConfig {
   all w : #{nodes}.#{flow}[#{nodes}] | w =< #{maxFlowPerEdge}
   let theFlow = (sum f, t : #{nodes} | f.#{flow}[t]) |
     #{fst flowOverall} =< theFlow and theFlow =< #{snd flowOverall}
-  \##{activated} >= #{atLeastActive}
-  theActivated#{upperFirst which}Transitions[#{activated}]
+  #{activatedConstraint}
   #{connected (prepend "graphIsConnected") isConnected}
   #{isolated (prepend "noIsolatedNodes") isConnected}|]
   where
@@ -151,6 +148,14 @@ enforceConstraints underDefault activated BasicConfig {
     nodes = given "Nodes"
     places = given "Places"
     tokens = prepend "tokens"
+    activatedConstraint = unlines $
+      [ '#' : activated ++ " >= " ++ show atLeastActive | atLeastActive > 0 ]
+      ++
+      [ "  theActivated" ++ upperFirst which ++ "Transitions[" ++ activated ++ "]" | atLeastActive > 0 || isJust atMostActive ]
+      ++ case atMostActive of
+           Just 0     -> [ "  no " ++ activated ]
+           Just atMost -> [ "  #" ++ activated ++ " =< " ++ show atMost ]
+           Nothing    -> []
 
 connected :: String -> Maybe Bool -> String
 connected p = maybe "" $ \c -> (if c then "" else "not ") ++ p
@@ -158,8 +163,8 @@ connected p = maybe "" $ \c -> (if c then "" else "not ") ++ p
 isolated :: String -> Maybe Bool -> String
 isolated p = maybe p $ \c -> if c then "" else p
 
-compAdvConstraints :: AdvConfig -> String
-compAdvConstraints AdvConfig
+compAdvConstraints :: Bool -> AdvConfig -> String
+compAdvConstraints underDefault AdvConfig
                         { presenceOfSelfLoops, presenceOfSinkTransitions
                         , presenceOfSourceTransitions
                         } = [i|
@@ -172,11 +177,13 @@ compAdvConstraints AdvConfig
       True  -> "some n : Nodes | selfLoop[n]"
       False -> "no n : Nodes | selfLoop[n]"
     petriSink = \case
-      True  -> "some t : Transitions | sinkTransitions[t]"
-      False -> "no t : Transitions | sinkTransitions[t]"
+      True  -> "some t : " ++ addGiven ++ "Transitions | sinkTransitions" ++ addDefault ++ "[t]"
+      False -> "no t : " ++ addGiven ++ "Transitions | sinkTransitions" ++ addDefault ++ "[t]"
     petriSource = \case
-      True  -> "some t : Transitions | sourceTransitions[t]"
-      False -> "no t : Transitions | sourceTransitions[t]"
+      True  -> "some t : " ++ addGiven ++ "Transitions | sourceTransitions" ++ addDefault ++ "[t]"
+      False -> "no t : " ++ addGiven ++ "Transitions | sourceTransitions" ++ addDefault ++ "[t]"
+    addDefault = if underDefault then "Default" else ""
+    addGiven = if underDefault then "given" else ""
 
 compChange :: ChangeConfig -> String
 compChange ChangeConfig
@@ -243,11 +250,11 @@ randomInSegment segment segLength = do
 
 unscopedSingleSig
   :: MonadThrow m
-  => AlloyInstance
+  => String
   -> String
-  -> String
+  -> AlloyInstance
   -> m (Set Object)
-unscopedSingleSig inst st nd = do
+unscopedSingleSig st nd inst = do
   sig <- lookupSig (unscoped st) inst
   getSingleAs nd (return .: Object) sig
 

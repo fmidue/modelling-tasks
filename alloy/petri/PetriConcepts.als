@@ -39,7 +39,7 @@ pred concurrentDefault[ts : set givenTransitions]{
   all p : givenPlaces | p.defaultTokens >= (sum t : ts | p.defaultFlow[t])
 }
 
-//check if there is a loop between two nodes
+//check if there is a loop between two nodes (in legal Petri nets; otherwise has slightly different meaning)
 pred selfLoop[n : Nodes]{
   n in n.flow.Int.flow.Int
 }
@@ -52,4 +52,14 @@ pred sinkTransitions[ts : set Transitions]{
 //check if some transitions are source transitions
 pred sourceTransitions[ts : set Transitions]{
   no Nodes.flow[ts]  // under assumption of valid Petri nets, could use Places instead of Nodes here
+}
+
+//check if some transitions are sink transitions under default condition
+pred sinkTransitionsDefault[ts : set givenTransitions]{
+  no ts.defaultFlow
+}
+
+//check if some transitions are source transitions under default condition
+pred sourceTransitionsDefault[ts : set givenTransitions]{
+  no givenPlaces.defaultFlow[ts]
 }

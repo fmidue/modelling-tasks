@@ -9,6 +9,19 @@ The diagram types covered are
 - Object diagram (UML)
 - Petri net
 
+## Configuration
+
+You may limit the maximal bit width by adding a limit (here 5) to your
+`stack.yaml` or `stack-*.yaml` like:
+
+```haskell
+ghc-options:
+  autotool-capabilities: -DMAX_BIT_WIDTH=5
+```
+
+This configuration is then used in order to reject configurations that do not
+adhere to this limit.
+
 ## Compatibility
 
 On Windows, you may have to use `SAT4J` instead of `MiniSat`.

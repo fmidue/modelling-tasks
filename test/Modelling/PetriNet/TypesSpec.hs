@@ -27,10 +27,10 @@ spec :: Spec
 spec = do
   describe "checkBasicConfig" $ do
     it "checks if the basic Input is in given boundaries" $
-      checkBasicConfig defaultBasicConfig `shouldBe` Nothing
+      checkBasicConfig [] defaultBasicConfig `shouldBe` Nothing
     context "when provided with Input out of the constraints" $
       it "it returns a String with necessary changes" $
-        checkBasicConfig defaultBasicConfig{places = 0}
+        checkBasicConfig [] defaultBasicConfig{places = 0}
           `shouldSatisfy` isJust
   describe "checkChangeConfig" $ do
     it "checks if the input for Changes is in given boundaries" $

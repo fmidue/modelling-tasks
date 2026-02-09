@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE RecordWildCards #-}
 {-|
 A module for parsing Petri Alloy instances into Haskell representations defined
@@ -8,13 +9,16 @@ of graphs which are similar to Petri nets.
 -}
 module Modelling.PetriNet.Parser (
   NoSingletonException (..),
+  addCapacities,
   asSingleton,
-  convertPetri,
+  doubleSig,
   netToGr,
+  netToGrWithCapacity,
   parseChange,
   parseNet,
   parseRenamedNet,
-  simpleNameMap, simpleRename, simpleRenameWith,
+  singleSig,
+  simpleNameMap, simpleRename,
   ) where
 
 import qualified Modelling.PetriNet.Types         as PN (
@@ -28,21 +32,27 @@ import qualified Data.Set                         as Set (
   Set, findMin, fromList, lookupMin, null, size, toList,
   )
 import qualified Data.Map.Lazy                    as Map (
+  alter,
+  empty,
   findIndex,
   foldlWithKey',
   foldrWithKey,
   lookup,
   )
+import Data.Maybe                       (fromMaybe)
 
 import Modelling.Auxiliary.Common       (Object (Object, oName, oIndex), toMap)
 import Modelling.PetriNet.Types (
+  CapacityNode (..),
   Net (emptyNet, outFlow, alterFlow, alterNode, traverseNet),
-  Petri,
   PetriChange (..),
+  PetriLike (..),
   PetriNode (..),
+  maybeCapacity,
   maybeInitial,
-  petriLikeToPetri,
   )
+
+import GHC.Num (integerFromInt)
 
 import Control.Arrow                    (second)
 import Control.Monad.Catch              (Exception, MonadThrow (throwM))
@@ -63,60 +73,42 @@ import Language.Alloy.Call (
   )
 
 {-|
-Given the name of a flow set and a token set the given alloy instance is parsed
-to a 'Net' graph and a 'Petri' is returned if the instance is indeed a
-valid Petri net (after applying 'petriLikeToPetri').
--}
-convertPetri
-  :: MonadThrow m
-  => String              -- ^ the name of the flow set
-  -> String              -- ^ the name of the token set
-  -> AlloyInstance       -- ^ the Petri net 'AlloyInstance'
-  -> m Petri
-convertPetri f t inst = do
-  p <- parseNet f t inst
-  petriLikeToPetri p
-
-{-|
-Parse a 'Net' graph from an 'AlloyInstance' given the instances flow and
-token set names.
-And return an already renamed Petri net.
+Parse a 'Net' graph from an 'AlloyInstance', using a certain node set accessor,
+and given the instance's flow and token set names.
+Return an already renamed Petri net, along with the renaming map.
 -}
 parseRenamedNet
   :: (MonadThrow m, Net p n)
-  => String
+  => (AlloyInstance -> m (Set Object))
+  -> String
   -> String
   -> AlloyInstance
-  -> m (p n String)
-parseRenamedNet flowSetName tokenSetName inst = do
-  petriLike <- parseNet flowSetName tokenSetName inst
-  let rename = simpleRenameWith petriLike
-  traverseNet rename petriLike
-
-{-|
-Transform a given value into a 'String' by replacing it according to the
-'simpleNameMap' retrieved by the given 'Net'.
--}
-simpleRenameWith :: (MonadThrow m, Net p n, Ord a) => p n a -> a -> m String
-simpleRenameWith petriLike x = do
+  -> m (p n String, Bimap Object String)
+parseRenamedNet getNodes flowSetName tokenSetName inst = do
+  petriLike <- parseNet getNodes flowSetName tokenSetName inst
   let nameMap = simpleNameMap petriLike
-  BM.lookup x nameMap
+  net <- traverseNet (`BM.lookup` nameMap) petriLike
+  return (net, nameMap)
 
 {-|
-Parse a `Net' graph from an 'AlloyInstance' given the instances flow and
-token set names.
+Parse a 'Net' graph from an 'AlloyInstance', using a certain node set accessor,
+and given the instance's flow and token set names.
 -}
 parseNet
   :: (MonadThrow m, Net p n)
-  => String                           -- ^ the name of the flow set
+  => (AlloyInstance -> m (Set Object))-- ^ how to get the relevant node set
+  -> String                           -- ^ the name of the flow set
   -> String                           -- ^ the name of the token set
   -> AlloyInstance                    -- ^ the Petri net 'AlloyInstance'
   -> m (p n Object)
-parseNet flowSetName tokenSetName inst = do
-  nodes  <- singleSig inst "this" "Nodes" ""
-  rawTokens <- doubleSig inst "this" "Places" tokenSetName
+parseNet getNodes flowSetName tokenSetName inst = do
+  nodes <- getNodes inst
+
+  rawTokens <- doubleSig "this" "Places" tokenSetName inst
   let tokens = relToMap (second oIndex) rawTokens
-  flow   <- tripleSig inst "this" "Nodes" flowSetName
+
+  flow   <- tripleSig "this" "Nodes" flowSetName inst
+
   return
     . foldrFlip (\(x, y, z) -> alterFlow x (oIndex z) y) flow
     . foldrFlip
@@ -125,6 +117,32 @@ parseNet flowSetName tokenSetName inst = do
     $ emptyNet
   where
     foldrFlip f = flip $ foldr f
+
+addCapacities
+  :: MonadThrow m
+  => AlloyInstance
+  -> PetriLike CapacityNode Object
+  -> m (PetriLike CapacityNode Object)
+addCapacities inst net = do
+  nodes <- singleSig "this" "placesWithCapacity" "" inst
+
+  rawCapacity <- doubleSig "this" "placesWithCapacity" "capacity" inst
+
+  let capacities = relToMap (second (integerFromInt . oIndex)) rawCapacity
+
+  return $ foldr (\x -> updateCapacity x $ Map.lookup x capacities >>= Set.lookupMin) net nodes
+
+updateCapacity
+    :: Object
+    -> Maybe Integer
+    -> PetriLike CapacityNode Object
+    -> PetriLike CapacityNode Object
+updateCapacity x y (PetriLike ns) =
+    PetriLike $ Map.alter updateCapacity' x ns
+    where
+      updateCapacity' Nothing = Just $ CapacityPlace (fromMaybe undefined y) 0 Map.empty
+      updateCapacity' (Just (CapacityPlace _ t o)) = Just $ CapacityPlace (fromMaybe undefined y) t o
+      updateCapacity' (Just (CapacityTransition o)) = Just $ CapacityTransition o
 
 relToMap :: (Ord b, Ord c) => (a -> (b, c)) -> Set a -> Map b (Set c)
 relToMap f = toMap . Set.fromList . map f . Set.toList
@@ -153,8 +171,8 @@ On error a 'Left' error message will be returned.
 -}
 parseChange :: MonadThrow m => AlloyInstance -> m (PetriChange Object)
 parseChange inst = do
-  flow <- tripleSig inst "this" "Nodes" "flowChange"
-  token <- doubleSig inst "this" "Places" "tokenChange"
+  flow <- tripleSig "this" "Nodes" "flowChange" inst
+  token <- doubleSig "this" "Places" "tokenChange" inst
   let tokenMap = relToMap (second oIndex) token
   tokenChange <- asSingleton `mapM` tokenMap
   let flowMap = relToMap tripleToOut flow
@@ -187,35 +205,35 @@ asSingleton s
 
 singleSig
   :: MonadThrow m
-  => AlloyInstance
+  => String
   -> String
   -> String
-  -> String
+  -> AlloyInstance
   -> m (Set.Set Object)
-singleSig inst st nd rd = do
+singleSig st nd rd inst = do
   sig <- lookupSig (scoped st nd) inst
   getSingleAs rd (return .: Object) sig
 
 doubleSig
   :: MonadThrow m
-  => AlloyInstance
+  => String
   -> String
   -> String
-  -> String
+  -> AlloyInstance
   -> m (Set.Set (Object,Object))
-doubleSig inst st nd rd = do
+doubleSig st nd rd inst = do
   sig <- lookupSig (scoped st nd) inst
   let obj = return .: Object
   getDoubleAs rd obj obj sig
 
 tripleSig
   :: MonadThrow m
-  => AlloyInstance
+  => String
   -> String
   -> String
-  -> String
+  -> AlloyInstance
   -> m (Set.Set (Object,Object,Object))
-tripleSig inst st nd rd = do
+tripleSig st nd rd inst = do
   sig <- lookupSig (scoped st nd) inst
   let obj = return .: Object
   getTripleAs rd obj obj obj sig
@@ -258,6 +276,24 @@ netToGr petriLike = do
     convertNode k x ns = do
       ns' <- ns
       return $ (indexOf k, (k, maybeInitial x)):ns'
+    convertTransition k _ ns =
+      Map.foldrWithKey (convertEdge k) ns $ outFlow k petriLike
+    indexOf x = Map.findIndex x $ PN.nodes petriLike
+    convertEdge source target flow rs =
+      (indexOf source, indexOf target, flow) : rs
+
+netToGrWithCapacity
+  :: (Monad m, Net p CapacityNode, Ord a)
+  => p CapacityNode a
+  -> m (Gr (a, Maybe Int, Maybe Integer) Int)
+netToGrWithCapacity petriLike = do
+  nodes <- Map.foldrWithKey convertNode (return []) $ PN.nodes petriLike
+  let edges = Map.foldrWithKey convertTransition [] $ PN.nodes petriLike
+  return $ mkGraph nodes edges
+  where
+    convertNode k x ns = do
+      ns' <- ns
+      return $ (indexOf k, (k, maybeInitial x, maybeCapacity x)):ns'
     convertTransition k _ ns =
       Map.foldrWithKey (convertEdge k) ns $ outFlow k petriLike
     indexOf x = Map.findIndex x $ PN.nodes petriLike

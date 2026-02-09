@@ -7,6 +7,8 @@ flags:
     quick-testing: true
   autotool-capabilities:
     alloy-use-sat4j: false
+ghc-options:
+  autotool-capabilities: -DMAX_BIT_WIDTH=7
 extra-deps:
   - git: https://github.com/fmidue/output-blocks.git
     commit: d67590cb2e1a72ed72437a8cfe2972b680405569

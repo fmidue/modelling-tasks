@@ -59,16 +59,19 @@ import Modelling.PetriNet.Alloy (
   modulePetriConcepts,
   modulePetriConstraints,
   modulePetriSignature,
-  petriScopeBitWidth,
-  petriScopeMaxSeq,
   signatures,
   taskInstance,
   )
 import Modelling.PetriNet.Diagram       (cacheNet, isNetDrawable)
 import Modelling.PetriNet.LaTeX         (toPetriMath)
+import Modelling.PetriNet.Find (
+  prohibitHidePlaceNames,
+  prohibitHideTransitionNames,
+  )
 import Modelling.PetriNet.Parser (
   parseChange,
   parseRenamedNet,
+  singleSig,
   )
 import Modelling.PetriNet.Types (
   AdvConfig,
@@ -86,6 +89,8 @@ import Modelling.PetriNet.Types (
   SimpleNode (..),
   SimplePetriLike,
   allDrawSettings,
+  basicConfigBitWidthInput,
+  checkActivatedSourceConfig,
   checkBasicConfig,
   checkChangeConfig,
   checkGraphLayouts,
@@ -96,6 +101,8 @@ import Modelling.PetriNet.Types (
   defaultGraphConfig,
   isPlaceNode,
   mapChange,
+  petriScopeBitWidth,
+  prohibitPatchworkRenderer,
   shuffleNames,
   )
 
@@ -369,7 +376,7 @@ matchToMath config segment = do
     return (net, math, changes')
     else matchToMath config segment
   where
-    parse = lift . parseRenamedNet "flow" "tokens"
+    parse = fmap fst . lift . parseRenamedNet (singleSig "this" "Nodes" "") "flow" "tokens"
 
 firstM :: Monad m => (a -> m b) -> (a, c) -> m (b, c)
 firstM f (p, c) = (,c) <$> f p
@@ -392,7 +399,7 @@ mathInstance
   -> AlloyInstance
   -> RandT g m (String, p n String, Math)
 mathInstance config inst = do
-  petriLike <- lift $ parseRenamedNet "flow" "tokens" inst
+  petriLike <- fst <$> lift (parseRenamedNet (singleSig "this" "Nodes" "") "flow" "tokens" inst)
   petriLike' <- fst <$> shuffleNames petriLike
   let math = toPetriMath petriLike'
   let f = renderFalse petriLike' config
@@ -568,24 +575,19 @@ checkGraphToMathConfig c@MathConfig {
 checkMathConfig :: MathConfig -> Maybe String
 checkMathConfig c@MathConfig {
   basicConfig,
+  advConfig,
   changeConfig,
   graphConfig,
   useDifferentGraphLayouts,
   wrongInstances
-  } = checkBasicConfig basicConfig
-  <|> prohibitHideNames graphConfig
+  } = checkBasicConfig [] basicConfig
+  <|> prohibitHidePlaceNames graphConfig
+  <|> prohibitHideTransitionNames graphConfig
+  <|> checkActivatedSourceConfig basicConfig advConfig
   <|> checkChangeConfig basicConfig changeConfig
   <|> checkConfig c
   <|> checkGraphLayouts useDifferentGraphLayouts wrongInstances graphConfig
-
-prohibitHideNames :: GraphConfig -> Maybe String
-prohibitHideNames gc
-  | hidePlaceNames gc
-  = Just "Place names are required for this task type"
-  | hideTransitionNames gc
-  = Just "Transition names are required for this task type"
-  | otherwise
-  = Nothing
+  <|> prohibitPatchworkRenderer graphConfig
 
 checkConfig :: MathConfig -> Maybe String
 checkConfig MathConfig {
@@ -619,16 +621,16 @@ fact{
   no givenTransitions
 }
 
-pred showNets[#{activated} : set Transitions] {
-  \#Places = #{places}
-  \#Transitions = #{transitions}
-  #{compBasicConstraints activated basicC}
-  #{compAdvConstraints advConfig}
+pred showNets[#{skolemSet}] {
+  #{compBasicConstraints True Nothing activated basicC}
+  #{compAdvConstraints False advConfig}
 }
-run showNets for exactly #{petriScopeMaxSeq basicC} Nodes, #{petriScopeBitWidth basicC} Int
+run showNets for exactly #{places} Places, exactly #{transitions} Transitions, #{petriScopeBitWidth (basicConfigBitWidthInput basicC)} Int
 |]
   where
-    activated = "activatedTrans"
+    (skolemSet, activated)
+      | atLeastActive basicC > 0 = ([i|#{activated} : set Transitions|], "activatedTrans")
+      | otherwise                = ("", undefined)
 
 renderFalse :: Net p n => p n String -> MathConfig -> String
 renderFalse
@@ -640,28 +642,27 @@ renderFalse
 #{modulePetriConcepts}
 #{modulePetriConstraints}
 
-#{places}
-#{transitions}
+#{thePlaces}
+#{theTransitions}
 
 fact{
 #{initialMark}
 #{defaultFlow}
 }
 
-pred showFalseNets[#{activated} : set Transitions]{
-  #{compBasicConstraints activated basicConfig}
-  #{compAdvConstraints advConfig}
+pred showFalseNets[#{skolemSet}]{
+  #{compBasicConstraints True Nothing activated basicConfig}
+  #{compAdvConstraints False advConfig}
   #{compChange changeConfig}
 }
 
-run showFalseNets for exactly #{petriScopeMaxSeq basicConfig} Nodes, #{petriScopeBitWidth basicConfig} Int
+run showFalseNets for exactly #{places basicConfig} Places, exactly #{transitions basicConfig} Transitions, #{petriScopeBitWidth (basicConfigBitWidthInput basicConfig)} Int
 |]
   where
     allNodes    = nodes net
     (ps, ts)    = M.partition isPlaceNode allNodes
-    activated   = "activatedTrans"
-    places      = unlines [extendLine p "givenPlaces" | p <- M.keys ps]
-    transitions = unlines [extendLine t "givenTransitions" | t <- M.keys ts]
+    thePlaces      = unlines [extendLine p "givenPlaces" | p <- M.keys ps]
+    theTransitions = unlines [extendLine t "givenTransitions" | t <- M.keys ts]
     initialMark = M.foldrWithKey (\k -> (++) . tokenLine k) "" $ initialTokens <$> ps
     defaultFlow = M.foldrWithKey (\k _ -> (printFlow k ++)) "" allNodes
     printFlow :: String -> String
@@ -680,6 +681,9 @@ run showFalseNets for exactly #{petriScopeMaxSeq basicConfig} Nodes, #{petriScop
 |]
     flowLine from to (Just f) = [i|  #{from}.defaultFlow[#{to}] = #{f}
 |]
+    (skolemSet, activated)
+      | atLeastActive basicConfig > 0 = ([i|#{activated} : set Transitions|], "activatedTrans")
+      | otherwise                     = ("", undefined)
 
 defaultGraphToMathInstance :: GraphToMathInstance
 defaultGraphToMathInstance = MatchInstance {

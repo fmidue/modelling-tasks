@@ -33,8 +33,10 @@ import Modelling.PetriNet.Conflict (
 import Modelling.PetriNet.Find (
   FindInstance (..),
   checkConfigForFind,
+  checkFindTwoActive,
   drawFindWith,
-  findInitial,
+  findInitialTuple,
+  prohibitHidePlaceNames,
   )
 import Modelling.PetriNet.Diagram (
   cacheNet,
@@ -50,7 +52,6 @@ import Modelling.PetriNet.Types (
   Conflict,
   DrawSettings (..),
   FindConflictConfig (..),
-  GraphConfig (..),
   Net,
   PetriConflict (..),
   PetriLike (..),
@@ -169,7 +170,7 @@ Die Reihenfolge von Stellen innerhalb der Auflistung der den Konflikt verursache
   pure ()
 
 conflictInitial :: ConflictPlaces
-conflictInitial = (findInitial, [Place 0, Place 1])
+conflictInitial = (findInitialTuple, [Place 0, Place 1])
 
 findConflictPlacesSyntax
   :: OutputCapable m
@@ -229,15 +230,9 @@ checkFindConflictPlacesConfig FindConflictConfig {
   graphConfig
   }
   = prohibitHidePlaceNames graphConfig
+  <|> checkFindTwoActive basicConfig
   <|> checkConfigForFind basicConfig changeConfig graphConfig
   <|> checkConflictConfig basicConfig conflictConfig
-
-prohibitHidePlaceNames :: GraphConfig -> Maybe String
-prohibitHidePlaceNames gc
-  | hidePlaceNames gc
-  = Just "Place names are required for this task type."
-  | otherwise
-  = Nothing
 
 defaultFindConflictPlacesInstance :: FindInstance SimplePetriNet Conflict
 defaultFindConflictPlacesInstance = FindInstance {

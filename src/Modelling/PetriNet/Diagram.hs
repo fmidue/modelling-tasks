@@ -9,13 +9,16 @@ Provides the ability to render Petri nets.
 -}
 module Modelling.PetriNet.Diagram (
   cacheNet,
+  cacheNetWithCapacity,
   drawNet,
+  drawNetWithCapacity,
   getDefaultNet,
   getNet,
   isNetDrawable,
   ) where
 
 import qualified Diagrams.TwoD.GraphViz           as GV (getGraph)
+import qualified Data.Bimap                       as BM (lookup)
 import qualified Data.Map                         as M (foldlWithKey, lookupMin)
 
 import Capabilities.Cache               (MonadCache, cache, short)
@@ -30,12 +33,14 @@ import Modelling.Auxiliary.Diagrams (
   )
 import Modelling.PetriNet.Parser (
   netToGr,
-  parseNet,
-  simpleRenameWith,
+  netToGrWithCapacity,
+  parseRenamedNet,
+  singleSig,
   )
 import Modelling.PetriNet.Types (
+  CapacityNode,
   DrawSettings (..),
-  Net (traverseNet, nodes),
+  Net (nodes),
   )
 
 import Control.Monad.Catch (
@@ -106,6 +111,44 @@ cacheNet path pl drawSettings@DrawSettings {..} =
       ++ short withGraphvizCommand
       ++ ".svg"
 
+cacheNetWithCapacity
+  :: (
+    Data (p CapacityNode String),
+    MonadCache m,
+    MonadDiagrams m,
+    MonadGraphviz m,
+    MonadThrow m,
+    Net p CapacityNode,
+    Typeable p
+    )
+  => FilePath
+  -- ^ a prefix to use for resulting files
+  -> p CapacityNode String
+  -- ^ the graph to draw
+  -> DrawSettings
+  -- ^ how to draw the graph
+  -> m FilePath
+cacheNetWithCapacity path pl drawSettings@DrawSettings {..} =
+  cache path ext prefix pl $ \pl' -> do
+    dia <- drawNetWithCapacity pl' drawSettings
+    renderDiagram dia
+  where
+    prefix =
+      "petri-with-capacity-"
+      ++ petriType
+      ++ nodeType
+    petriType = dataTypeName . dataTypeOf $ pl
+    nodeType = maybe
+      ""
+      (('-' :) . dataTypeName . dataTypeOf . snd)
+      $ M.lookupMin $ nodes pl
+    ext = short withPlaceNames
+      ++ short withTransitionNames
+      ++ short with1Weights
+      ++ short withSvgHighlighting
+      ++ short withGraphvizCommand
+      ++ ".svg"
+
 newtype UnknownPetriNetNodeException
   = CouldNotFindNodeWithinGraph String
   deriving Show
@@ -147,45 +190,35 @@ isNetDrawable pl =
   handle (const (pure False) . id @GraphvizException)
   . (>> pure True) . drawNet pl
 
+drawNetWithCapacity
+  :: (MonadDiagrams m, MonadGraphviz m, MonadThrow m, Net p CapacityNode)
+  => p CapacityNode String
+  -> DrawSettings
+  -> m (Diagram B)
+drawNetWithCapacity pl drawSettings@DrawSettings {..} = do
+  gr <- either (throwM . CouldNotFindNodeWithinGraph) return
+        $ netToGrWithCapacity pl
+  graph <- layoutGraph withGraphvizCommand gr
+  preparedFont <- lin
+  return $ drawGraphWithCapacity drawSettings preparedFont graph
+
 getNet
   :: (MonadThrow m, Net p n, Traversable t)
   => (AlloyInstance -> m (t Object))
   -> AlloyInstance
   -> m (p n String, t String)
 getNet parseSpecial inst = do
-  (net, rename) <-
-    getNetWith "flow" "tokens" inst
+  (net, nameMap) <- parseRenamedNet (singleSig "this" "Nodes" "") "flow" "tokens" inst
   special <- parseSpecial inst
-  renamedSpecial <- traverse rename special
+  renamedSpecial <- traverse (`BM.lookup` nameMap) special
   return (net, renamedSpecial)
 
 getDefaultNet
   :: (MonadThrow m, Net p n)
   => AlloyInstance
   -> m (p n String)
-getDefaultNet inst= fst <$>
-  getNetWith "defaultFlow" "defaultTokens" inst
-
-{-|
-Returns a Petri net like graph using 'parseNet'.
-It additionally parses another part of the instance.
-All nodes are renamed using the 'simpleRenameWith' function.
-The renaming is also applied to the additionally parsed instance.
--}
-getNetWith
-  :: (MonadThrow m, Net p n)
-  => String
-  -- ^ flow
-  -> String
-  -- ^ tokens
-  -> AlloyInstance
-  -- ^ the instance to parse
-  -> m (p n String, Object -> m String)
-getNetWith f t inst = do
-  pl <- parseNet f t inst
-  let rename = simpleRenameWith pl
-  pl' <- traverseNet rename pl
-  return (pl', rename)
+getDefaultNet =
+  fmap fst . parseRenamedNet (singleSig "this" "Nodes" "") "defaultFlow" "defaultTokens"
 
 {-|
 Obtain the Petri net like graph by drawing Nodes and connections between them
@@ -224,6 +257,38 @@ drawGraph drawSettings@DrawSettings {..} preparedFont graph =
       graphNodes'
       edges
     labelOnly = fst
+
+drawGraphWithCapacity
+  :: DrawSettings
+  -> PreparedFont Double
+  -> Gr (AttributeNode (String, Maybe Int, Maybe Integer)) (AttributeEdge Int)
+  -> Diagram B
+drawGraphWithCapacity drawSettings@DrawSettings {..} preparedFont graph =
+  graphEdges' # frame 1
+  where
+    (nodes', edges) = GV.getGraph graph
+    graphNodes' = M.foldlWithKey
+      (\g l p -> g
+        `atop`
+        drawNodeWithCapacity drawSettings preparedFont l p)
+      mempty
+      nodes'
+    graphEdges' = foldl
+      (\g (s, t, l, p) ->
+        let ls = labelOnly s
+            lt = labelOnly t
+        in g # drawEdge
+          (not with1Weights)
+          preparedFont
+          l
+          ls
+          lt
+          (nonEmptyPathBetween p ls lt g)
+      )
+      graphNodes'
+      edges
+
+    labelOnly (x, _, _) = x
 
 {-|
 Nodes are either Places (having 'Just' tokens), or Transitions (having
@@ -281,6 +346,68 @@ drawNode DrawSettings {..} preparedFont (l, Just i) p
     placeToken j = token
       # translate (r2 (8 * sqrt(fromIntegral (i - 1)), 0))
       # rotateBy (fromIntegral j / fromIntegral i)
+
+drawNodeWithCapacity
+  :: DrawSettings
+  -> PreparedFont Double
+  -> (String, Maybe Int, Maybe Integer)
+  -- ^ a capacity node (the first part is used for its label) with a capacity
+  -> Point V2 Double
+  -> Diagram B
+drawNodeWithCapacity DrawSettings {..} preparedFont (l, Nothing, cap) p =
+  place
+    (addTransitionName $ rect 20 20 # lwL 0.5 # named l # svgClass "rect" # additionalLabel <> capacityLabel)
+    p
+  where
+    additionalLabel
+      | withSvgHighlighting = id
+      | otherwise = svgClass $ ' ' : l
+    addTransitionName
+      | not withTransitionNames = id
+      | otherwise = (center (text' preparedFont 18 l) `atop`)
+    capacityLabel = maybe mempty (drawCapacity preparedFont) cap
+
+drawNodeWithCapacity DrawSettings {..} preparedFont (l, Just i, cap) p
+  | i == 0 && cap == Just 0 =
+      place (foldl' atop mempty tokens) p
+  | i < 5 =
+      place (foldl' atop label (tokens ++ [emptyPlace, capacityLabel])) p
+  | otherwise =
+      place (foldl' atop label
+        [ token # translate (r2 (spacer, 0))
+        , text' preparedFont 20 (show i) # translate (r2 (-spacer,-4))
+        , emptyPlace
+        , capacityLabel
+        ]) p
+  where
+    spacer = 9
+    additionalLabel
+      | withSvgHighlighting = id
+      | otherwise = svgClass $ ' ' : l
+    emptyPlace = circle 20 # lwL 0.5 # named l # svgClass "node" # additionalLabel
+    label
+      | not withPlaceNames = mempty
+      | otherwise = center (text' preparedFont 18 l)
+        # translate (r2 (0, - (3 * spacer)))
+        # svgClass "nlabel"
+    tokenGrey = sRGB24 136 136 136
+    token = circle 4.5 # lc tokenGrey # fc tokenGrey # lwL 0 # svgClass "token"
+    tokens = [placeToken j | j <- [1..i]]
+    placeToken j = token
+      # translate (r2 (8 * sqrt (fromIntegral (i - 1)), 0))
+      # rotateBy (fromIntegral j / fromIntegral i)
+    capacityLabel = maybe mempty (drawCapacity preparedFont) cap
+
+drawCapacity
+  :: PreparedFont Double
+  -> Integer
+  -> Diagram B
+drawCapacity fontC cap =
+  case cap of
+    0 -> mempty
+    _ -> text' fontC 18 (show cap)
+      # translate (r2 (0, 25))
+      # svgClass "capacity"
 
 {-|
 Edges are drawn as arcs between nodes (identified by labels).

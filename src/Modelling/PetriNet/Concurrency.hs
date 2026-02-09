@@ -62,8 +62,6 @@ import Modelling.PetriNet.Alloy (
   modulePetriConcepts,
   modulePetriConstraints,
   modulePetriSignature,
-  petriScopeBitWidth,
-  petriScopeMaxSeq,
   signatures,
   skolemVariable,
   taskInstance,
@@ -76,9 +74,10 @@ import Modelling.PetriNet.Diagram (
 import Modelling.PetriNet.Find (
   FindInstance (..),
   checkConfigForFind,
-  findInitial,
+  checkFindTwoActive,
+  findInitialTuple,
   findTaskInstance,
-  toFindEvaluation,
+  toFindEvaluationTuple,
   toFindSyntax,
   )
 import Modelling.PetriNet.Parser        (
@@ -110,6 +109,8 @@ import Modelling.PetriNet.Types         (
   SimpleNode (..),
   SimplePetriNet,
   allDrawSettings,
+  basicConfigBitWidthInput,
+  petriScopeBitWidth,
   transitionPairShow,
   )
 
@@ -210,7 +211,7 @@ findConcurrencyTask showInputHelp path task = do
     translate $ do
       english [i|Stating |]
       german [i|Die Angabe von |]
-    let ts = transitionPairShow findInitial
+    let ts = transitionPairShow findInitialTuple
     code $ show ts
     translate $ do
       let (t1, t2) = bimap show show ts
@@ -228,6 +229,7 @@ findConcurrencyTask showInputHelp path task = do
         Die Reihenfolge der Transitionen innerhalb
         des Paars spielt hierbei keine Rolle.
         |]
+
     pure ()
   hoveringInformation True
   extra $ Find.addText task
@@ -247,11 +249,11 @@ findConcurrencyEvaluation
   -> Rated m
 findConcurrencyEvaluation task x = do
   let what = translations $ do
-        english "are concurrently activated"
-        german "sind nebenläufig aktiviert"
+        english "The indicated transitions are concurrently activated?"
+        german "Die angegebenen Transitionen sind nebenläufig aktiviert?"
   uncurry (printSolutionAndAssert False)
     . first (fmap (DefiniteArticle,))
-    $=<< unLangM $ toFindEvaluation what withSol concur x
+    $=<< unLangM $ toFindEvaluationTuple what withSol concur x
   where
     concur = findConcurrencySolution task
     withSol = Find.showSolution task
@@ -447,10 +449,8 @@ petriNetConcurrencyAlloy basicC changeC specific
 #{modulePetriConcepts}
 #{modulePetriConstraints}
 
-pred #{concurrencyPredicateName}[#{defaultActiveTrans}#{activated} : set Transitions, #{t1}, #{t2} : Transitions] {
-  \#Places = #{places basicC}
-  \#Transitions = #{transitions basicC}
-  #{compBasicConstraints activated basicC}
+pred #{concurrencyPredicateName}[#{skolemSets}#{t1}, #{t2} : Transitions] {
+  #{compBasicConstraints True Nothing activated basicC}
   #{compChange changeC}
   #{sourceTransitionConstraints}
   no disj x,y : givenTransitions | concurrentDefault[x + y]
@@ -460,14 +460,14 @@ pred #{concurrencyPredicateName}[#{defaultActiveTrans}#{activated} : set Transit
   #{compConstraints}
 }
 
-run #{concurrencyPredicateName} for exactly #{petriScopeMaxSeq basicC} Nodes, #{petriScopeBitWidth basicC} Int
+run #{concurrencyPredicateName} for exactly #{places basicC} Places, exactly #{transitions basicC} Transitions, #{petriScopeBitWidth (basicConfigBitWidthInput basicC)} Int
 |]
   where
     activated        = "activatedTrans"
     activatedDefault = "defaultActiveTrans"
     compConstraints = either
       (const $ defaultConstraints activatedDefault basicC)
-      compAdvConstraints
+      (compAdvConstraints False)
       specific
     sourceTransitionConstraints
       | Left True <- specific = [i|
@@ -475,11 +475,14 @@ run #{concurrencyPredicateName} for exactly #{petriScopeMaxSeq basicC} Nodes, #{
   no t : Transitions | sourceTransitions[t]|]
       | otherwise = ""
     defaultActiveTrans
-      | isLeft specific    = [i|#{activatedDefault} : set givenTransitions,|]
+      | isLeft specific    = [i|#{activatedDefault} : set givenTransitions, |]
       | otherwise          = ""
     sigs = signatures "given" (places basicC) (transitions basicC)
     t1 = transition1
     t2 = transition2
+    skolemSets
+      | atLeastActive basicC > 0 = [i|#{defaultActiveTrans}#{activated} : set Transitions, |]
+      | otherwise                = ""
 
 concurrencyPredicateName :: String
 concurrencyPredicateName = "showConcurrency"
@@ -503,8 +506,8 @@ It throws an error instead if unexpected behaviour occurs.
 -}
 parseConcurrency :: MonadThrow m => AlloyInstance -> m (Concurrent Object)
 parseConcurrency inst = do
-  t1 <- unscopedSingleSig inst concurrencyTransition1 ""
-  t2 <- unscopedSingleSig inst concurrencyTransition2 ""
+  t1 <- unscopedSingleSig concurrencyTransition1 "" inst
+  t2 <- unscopedSingleSig concurrencyTransition2 "" inst
   Concurrent <$> ((,) <$> asSingleton t1 <*> asSingleton t2)
 
 checkFindConcurrencyConfig :: FindConcurrencyConfig -> Maybe String
@@ -514,7 +517,9 @@ checkFindConcurrencyConfig FindConcurrencyConfig {
   changeConfig,
   graphConfig
   }
-  = checkConfigForFind basicConfig changeConfig graphConfig
+  =
+  checkFindTwoActive basicConfig
+  <|> checkConfigForFind basicConfig changeConfig graphConfig
   <|> additionalCheck basicConfig advConfig
   where
     additionalCheck BasicConfig {..} AdvConfig {..}

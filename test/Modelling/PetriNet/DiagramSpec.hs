@@ -12,7 +12,7 @@ import Modelling.PetriNet.Types (
   defaultAdvConfig,
   defaultBasicConfig,
   )
-import Modelling.PetriNet.Parser         (parseNet)
+import Modelling.PetriNet.Parser         (parseNet, singleSig)
 
 import Data.GraphViz.Attributes.Complete (GraphvizCommand (TwoPi))
 import Diagrams.Backend.SVG             (renderSVG)
@@ -28,7 +28,7 @@ spec =
       do
         (inst:_) <- getInstances (Just 1)
            (petriNetRnd defaultBasicConfig defaultAdvConfig)
-        pl <- parseNet "flow" "tokens" inst
+        pl <- parseNet (singleSig "this" "Nodes" "") "flow" "tokens" inst
         dia <- drawNet (mapNet show (pl :: SimplePetriLike Object)) DrawSettings {
           withPlaceNames = True,
           withSvgHighlighting = True,

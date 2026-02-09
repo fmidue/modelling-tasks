@@ -70,11 +70,14 @@ library
       Modelling.PetriNet.MatchToMath
       Modelling.PetriNet.Parser
       Modelling.PetriNet.Types
+      Modelling.PetriNet.Capacity
       Modelling.PetriNet.Concurrency
       Modelling.PetriNet.Conflict
       Modelling.PetriNet.ConflictPlaces
       Modelling.PetriNet.Find
+      Modelling.PetriNet.FindActivatedTransitions
       Modelling.PetriNet.Pick
+      Modelling.PetriNet.PickMistake
       Modelling.PetriNet.Reach.Deadlock
       Modelling.PetriNet.Reach.Draw
       Modelling.PetriNet.Reach.Filter
@@ -84,6 +87,7 @@ library
       Modelling.PetriNet.Reach.Type
       Modelling.Types
   other-modules:
+      Configuration
       Modelling.ActivityDiagram.Auxiliary.ActionSequences
       Modelling.ActivityDiagram.Auxiliary.PetriValidation
       Modelling.Auxiliary.Diagrams
@@ -173,10 +177,13 @@ test-suite modelling-tasks-test
       Modelling.CdOd.SelectValidCdSpec
       Modelling.Common
       Modelling.PetriNet.AlloySpec
+      Modelling.PetriNet.CapacitySpec
       Modelling.PetriNet.ConcurrencySpec
       Modelling.PetriNet.ConflictSpec
       Modelling.PetriNet.DiagramSpec
+      Modelling.PetriNet.FindActivatedTransitionsSpec
       Modelling.PetriNet.MatchToMathSpec
+      Modelling.PetriNet.PickMistakeSpec
       Modelling.PetriNet.Reach.DeadlockSpec
       Modelling.PetriNet.Reach.FilterSpec
       Modelling.PetriNet.Reach.ReachSpec

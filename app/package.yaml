@@ -23,6 +23,20 @@ dependencies:
   - mtl
   - transformers
 executables:
+  capacity:
+    main: capacity.hs
+    source-dirs:
+      - .
+      - common
+    dependencies:
+      - autotool-capabilities-io-instances
+      - bytestring
+      - digest
+      - modelling-tasks
+      - output-blocks
+      - pretty-simple
+    other-modules:
+      - Common
   check-cds:
     main: check-cds.hs
     source-dirs: .
@@ -107,6 +121,20 @@ executables:
       - criterion-measurement
       - modelling-tasks
       - string-interpolate
+  findActivatedTransitions:
+    main: findActivatedTransitions.hs
+    source-dirs:
+      - .
+      - common
+    dependencies:
+      - autotool-capabilities-io-instances
+      - bytestring
+      - digest
+      - modelling-tasks
+      - output-blocks
+      - pretty-simple
+    other-modules:
+      - Common
   findAuxiliaryPetriNodesTaskDemo:
     main: findAuxiliaryPetriNodesTaskDemo.hs
     source-dirs:
@@ -156,6 +184,20 @@ executables:
       - EvaluateArgs
   matchToMath:
     main: matchToMath.hs
+    source-dirs:
+      - .
+      - common
+    dependencies:
+      - autotool-capabilities-io-instances
+      - bytestring
+      - digest
+      - modelling-tasks
+      - output-blocks
+      - pretty-simple
+    other-modules:
+      - Common
+  pickMistake:
+    main: pickMistake.hs
     source-dirs:
       - .
       - common

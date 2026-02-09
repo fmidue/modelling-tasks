@@ -8,6 +8,33 @@ name:           modelling-tasks-apps
 version:        0.0.0
 build-type:     Simple
 
+executable capacity
+  main-is: capacity.hs
+  other-modules:
+      Common
+  hs-source-dirs:
+      ./
+      common
+  ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Widentities -Wredundant-constraints -Werror -Wwarn=incomplete-uni-patterns -Wwarn=orphans -Wwarn=unrecognised-warning-flags -Wwarn=x-partial
+  build-tools:
+      alex
+    , happy
+  build-depends:
+      MonadRandom
+    , autotool-capabilities-io-instances
+    , base
+    , bytestring
+    , containers
+    , diagrams-lib
+    , diagrams-svg
+    , digest
+    , modelling-tasks
+    , mtl
+    , output-blocks
+    , pretty-simple
+    , transformers
+  default-language: Haskell2010
+
 executable check-cds
   main-is: check-cds.hs
   hs-source-dirs:
@@ -189,6 +216,33 @@ executable evalTimeToGenerate
     , transformers
   default-language: Haskell2010
 
+executable findActivatedTransitions
+  main-is: findActivatedTransitions.hs
+  other-modules:
+      Common
+  hs-source-dirs:
+      ./
+      common
+  ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Widentities -Wredundant-constraints -Werror -Wwarn=incomplete-uni-patterns -Wwarn=orphans -Wwarn=unrecognised-warning-flags -Wwarn=x-partial
+  build-tools:
+      alex
+    , happy
+  build-depends:
+      MonadRandom
+    , autotool-capabilities-io-instances
+    , base
+    , bytestring
+    , containers
+    , diagrams-lib
+    , diagrams-svg
+    , digest
+    , modelling-tasks
+    , mtl
+    , output-blocks
+    , pretty-simple
+    , transformers
+  default-language: Haskell2010
+
 executable findAuxiliaryPetriNodesTaskDemo
   main-is: findAuxiliaryPetriNodesTaskDemo.hs
   other-modules:
@@ -290,6 +344,33 @@ executable matchPetriTaskDemo
 
 executable matchToMath
   main-is: matchToMath.hs
+  other-modules:
+      Common
+  hs-source-dirs:
+      ./
+      common
+  ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Widentities -Wredundant-constraints -Werror -Wwarn=incomplete-uni-patterns -Wwarn=orphans -Wwarn=unrecognised-warning-flags -Wwarn=x-partial
+  build-tools:
+      alex
+    , happy
+  build-depends:
+      MonadRandom
+    , autotool-capabilities-io-instances
+    , base
+    , bytestring
+    , containers
+    , diagrams-lib
+    , diagrams-svg
+    , digest
+    , modelling-tasks
+    , mtl
+    , output-blocks
+    , pretty-simple
+    , transformers
+  default-language: Haskell2010
+
+executable pickMistake
+  main-is: pickMistake.hs
   other-modules:
       Common
   hs-source-dirs:
