@@ -186,10 +186,11 @@ import Data.Maybe (
   )
 import Data.Ratio                       ((%))
 import qualified Data.Set                         as S (
-  filter,
+  empty,
+  foldr,
   fromList,
+  insert,
   intersection,
-  map,
   toList,
   )
 import Data.String.Interpolate          (i, iii)
@@ -241,7 +242,7 @@ checkDifferentNamesInstance DifferentNamesInstance {..}
   | let mappingBimap = nameMapping mapping
         allNames = BM.keys mappingBimap ++ BM.keysR mappingBimap
         allNamesSet = S.fromList allNames
-        strippedNamesSet = S.map stripName $ S.filter (\name -> stripName name /= name) allNamesSet
+        strippedNamesSet = S.foldr (\name acc -> let stripped = stripName name in if stripped /= name then S.insert stripped acc else acc) S.empty allNamesSet
         collisions = S.toList $ S.intersection strippedNamesSet allNamesSet
     , (collision:_) <- collisions
   = Just [iii|
