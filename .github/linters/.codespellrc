@@ -1,0 +1,6 @@
+[codespell]
+# Skip checking files under .github directory
+skip = .github
+
+# Ignore specific words that should not be flagged as typos
+ignore-words-list = shouldBe
