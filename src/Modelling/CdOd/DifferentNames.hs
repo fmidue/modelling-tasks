@@ -187,7 +187,8 @@ import Data.Maybe (
 import Data.Ratio                       ((%))
 import qualified Data.Set                         as S (
   fromList,
-  member,
+  intersection,
+  toList,
   )
 import Data.String.Interpolate          (i, iii)
 import Data.Tuple.Extra                 (swap)
@@ -238,10 +239,8 @@ checkDifferentNamesInstance DifferentNamesInstance {..}
   | let mappingBimap = nameMapping mapping
         allNames = BM.keys mappingBimap ++ BM.keysR mappingBimap
         allNamesSet = S.fromList allNames
-        strippedNames = [(original, stripName original) | original <- allNames]
-        collisions = [stripped | (original, stripped) <- strippedNames
-                               , original /= stripped
-                               , S.member stripped allNamesSet]
+        strippedNamesSet = S.fromList [stripName name | name <- allNames, stripName name /= name]
+        collisions = S.toList $ S.intersection strippedNamesSet allNamesSet
     , (collision:_) <- collisions
   = Just [iii|
       Stripped names must not collide with original names in mapping,
