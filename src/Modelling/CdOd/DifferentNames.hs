@@ -180,14 +180,12 @@ import Data.List (
   )
 import Data.Maybe (
   catMaybes,
-  fromJust,
-  isJust,
   isNothing,
   listToMaybe,
   mapMaybe,
   )
 import Data.Ratio                       ((%))
-import qualified Data.Set                         as S (
+import qualified Data.Set          as S (
   foldr,
   fromList,
   member,
@@ -240,17 +238,16 @@ checkDifferentNamesInstance DifferentNamesInstance {..}
       but currently "#{x}" is among both.
       |]
   | let mappingBimap = nameMapping mapping
-        allNamesSet = S.union (S.fromList $ BM.keys mappingBimap) (S.fromList $ BM.keysR mappingBimap)
-        collision = S.foldr (\name acc -> case acc of
+        allNamesSet = S.union (S.fromList $ BM.keys mappingBimap) (S.fromList $ BM.keysR mappingBimap),
+    Just collision <- S.foldr (\name acc -> case acc of
                                Just c -> Just c
                                Nothing -> let stripped = stripName name
                                           in if stripped /= name && S.member stripped allNamesSet
                                              then Just stripped
                                              else Nothing) Nothing allNamesSet
-    , isJust collision
   = Just [iii|
       Stripped names must not collide with original names in mapping,
-      but "#{showName $ fromJust collision}" appears as both a stripped and original name.
+      but "#{showName collision}" appears as both a stripped and original name.
       |]
   | let strippedODMapping = BM.map
           (stripNumericPeriod . unName)
