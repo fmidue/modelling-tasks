@@ -227,8 +227,8 @@ checkDifferentNamesInstance DifferentNamesInstance {..}
       but currently "#{x}" is among both.
       |]
   | let strippedODMapping = BM.map
-      stripNumericPeriod
-      $ fromNameMapping mapping,
+          stripNumericPeriod
+          $ fromNameMapping mapping,
     any (`BM.member` strippedODMapping) strippedLinks
   = Just [iii|
       Pairs given in mapping must follow this order:
