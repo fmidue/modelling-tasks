@@ -35,8 +35,8 @@ import qualified Data.Bimap                       as BM (
   fromList,
   keys,
   lookup,
-  mapMonotonic,
-  mapMonotonicR,
+  map,
+  mapR,
   member,
   toAscList,
   )
@@ -226,7 +226,7 @@ checkDifferentNamesInstance DifferentNamesInstance {..}
       Link names and association names must be disjoint
       but currently "#{x}" is among both.
       |]
-  | strippedODMapping <- BM.mapMonotonic
+  | strippedODMapping <- BM.map
       stripNumericPeriod
       $ fromNameMapping mapping,
     any (`BM.member` strippedODMapping) strippedLinks
@@ -566,17 +566,18 @@ differentNamesEvaluation
   -> Rated m
 differentNamesEvaluation task cs = do
   let csStripped = map (bimap stripName stripName) cs
-      -- Strip periods from the mapping's link labels (second element of each pair)
-      mStripped = BM.mapMonotonicR stripName $ nameMapping $ mapping task
+      correctMapping = nameMapping $ mapping task
       -- Swap answer tuples around if necessary
       -- The preceding syntax check guarantees only valid pairs can be submitted here
       readMapping pair@(_, right)
-        | BM.member right mStripped = swap pair
+        | BM.member right correctMapping = swap pair
         | otherwise = pair
       what = translations $ do
         german "Zuordnungen"
         english "mappings"
-      ms = M.fromAscList $ map (,True) $ BM.toAscList mStripped
+      -- Strip periods from the mapping's link labels (second element of each pair)
+      ms = M.fromAscList $ map (,True) $ BM.toAscList
+        $ BM.mapR stripName correctMapping
       solution =
         if showSolution task
         then Just . (DefiniteArticle,) . show . mappingShow
