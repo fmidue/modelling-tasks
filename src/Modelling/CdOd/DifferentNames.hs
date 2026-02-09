@@ -570,9 +570,9 @@ differentNamesEvaluation task cs = do
       mStripped = BM.mapMonotonicR stripName $ nameMapping $ mapping task
       -- Swap answer tuples around if necessary
       -- The preceding syntax check guarantees only valid pairs can be submitted here
-      readMapping pair@(left,_)
-        | BM.member left mStripped = pair
-        | otherwise = swap pair
+      readMapping pair@(_, right)
+        | BM.member right mStripped = swap pair
+        | otherwise = pair
       what = translations $ do
         german "Zuordnungen"
         english "mappings"
