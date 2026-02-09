@@ -576,8 +576,7 @@ differentNamesEvaluation task cs = do
         german "Zuordnungen"
         english "mappings"
       -- Strip periods from the mapping's link labels (second element of each pair)
-      ms = M.fromDistinctAscList $ map (,True) $ BM.toAscList
-        $ BM.mapR stripName correctMapping
+      ms = M.fromDistinctAscList $ map (,True) $ BM.toAscList $ BM.mapR stripName correctMapping
       solution =
         if showSolution task
         then Just . (DefiniteArticle,) . show . mappingShow
