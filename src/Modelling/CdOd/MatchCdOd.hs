@@ -538,7 +538,7 @@ getMatchCdOdTask f config@MatchCdOdConfig {..} = do
         diagrams       = cds,
         instances      = ods',
         showSolution = printSolution,
-        taskText = defaultMatchCdOdTaskText (M.size cds) (M.size ods),
+        taskText = defaultMatchCdOdTaskText (M.size cds) (M.size ods'),
         addText = extraText
         }
   where
