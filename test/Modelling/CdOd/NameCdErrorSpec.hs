@@ -45,7 +45,7 @@ spec = do
         nameCdErrorGenerate defaultNameCdErrorConfig 0 0
         `shouldReturn` defaultNameCdErrorInstance
   describe "renameInstance" $
-    it "is reversable" $ do
+    it "is reversible" $ do
       let inst = defaultNameCdErrorInstance
           (names, nonInheritances) = classAndNonInheritanceNames inst
       names' <- shuffleM names

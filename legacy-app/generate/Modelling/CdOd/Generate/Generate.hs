@@ -111,7 +111,7 @@ generateEdges
   -> Int
   -> Int
   -> m (Maybe [DiagramEdge])
-generateEdges wnti classs inh com ass agg = fmap (fmap snd) $ foldl
+generateEdges wnti classes inh com ass agg = fmap (fmap snd) $ foldl
   (\es t -> es >>= maybe (return Nothing) (`generateEdge` t))
   (Just . (, []) <$> getConfig)
   $ replicate inh Nothing
@@ -122,10 +122,10 @@ generateEdges wnti classs inh com ass agg = fmap (fmap snd) $ foldl
     getConfig = do
       step <- oneOf $ nubOrd [inh, inh + com, inh + com + ass]
       return $ GenerationConfig {
-        available = [(x, y) | x <- classs, y <- classs, x > y],
+        available = [(x, y) | x <- classes, y <- classes, x > y],
         withNoFurtherConnection = maybe False not wnti,
         withConnection          = case wnti of
-          Just True -> Just (head classs, step)
+          Just True -> Just (head classes, step)
           _         -> Nothing
         }
 
