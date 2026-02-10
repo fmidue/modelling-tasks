@@ -81,7 +81,7 @@ import Modelling.CdOd.Auxiliary.Util (
   alloyInstanceToOd,
   )
 import Modelling.CdOd.Output            (cacheCd, cacheOd)
-import Modelling.CdOd.Phrasing          (numberToWord)
+import Modelling.CdOd.Phrasing          (numberWords)
 import Modelling.CdOd.Types (
   Cd,
   CdDrawSettings (..),
@@ -351,7 +351,7 @@ defaultMatchCdOdTaskText
 defaultMatchCdOdTaskText diagramCount instanceCount =  [
   Paragraph $ singleton $ Translated $ translations $ do
     let plural     = diagramCount > 1
-        numberWord = numberToWordNumeralFallback diagramCount
+        numberWord = fromMaybe (show diagramCount) . M.lookup diagramCount . numberWords
 
     english $ "Consider the following " ++
               if plural
@@ -365,7 +365,7 @@ defaultMatchCdOdTaskText diagramCount instanceCount =  [
   Paragraph $ singleton $ Translated $ translations $ do
     let plural      = instanceCount > 1
         multipleCds = diagramCount > 1
-        numberWord  = numberToWordNumeralFallback instanceCount
+        numberWord  = fromMaybe (show instanceCount) . M.lookup instanceCount . numberWords
 
     english $
       (if plural
@@ -399,8 +399,6 @@ defaultMatchCdOdTaskText diagramCount instanceCount =  [
       else "",
   Special GivenOds
   ]
-  where
-    numberToWordNumeralFallback n = fromMaybe (show n) . numberToWord n
 
 inputHelpText :: [Output]
 inputHelpText = [
