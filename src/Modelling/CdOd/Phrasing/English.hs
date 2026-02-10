@@ -35,7 +35,17 @@ import Data.Map                         (Map)
 import qualified Data.Map          as M (fromList)
 
 numberWords :: Map Int String
-numberWords = M.fromList [(2,"two"),(3,"three"),(4,"four"),(5,"five"),(6,"six"),(7,"seven"),(8,"eight"),(9,"nine"),(10,"ten")]
+numberWords = M.fromList [
+  (2, "two"),
+  (3, "three"),
+  (4, "four"),
+  (5, "five"),
+  (6, "six"),
+  (7, "seven"),
+  (8, "eight"),
+  (9, "nine"),
+  (10, "ten")
+  ]
 
 phraseChange
   :: OmittedDefaultMultiplicities
