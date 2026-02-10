@@ -3,7 +3,6 @@ module Main (main) where
 import Capabilities.Alloy.IO            ()
 import Capabilities.PlantUml.IO         ()
 import Capabilities.WriteFile.IO        ()
-import Capabilities.Exceptions.IO       ()
 import Modelling.ActivityDiagram.FindAuxiliaryPetriNodes (
   defaultFindAuxiliaryPetriNodesConfig,
   findAuxiliaryPetriNodes,

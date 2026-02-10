@@ -2,7 +2,6 @@
 module Modelling.CdOd.GenerateSpec where
 
 import Capabilities.Alloy.IO            ()
-import Capabilities.Exceptions.IO       ()
 import Modelling.CdOd.Edges (
   DiagramEdge,
   compositionCycles,

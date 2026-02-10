@@ -53,6 +53,7 @@ import Modelling.PetriNet.TestCommon (
   )
 import Settings                         (configDepth, needsTuning)
 
+import Control.Monad.Trans.Class        (lift)
 import Control.OutputCapable.Blocks     (ExtraText (..))
 import Data.Maybe                       (isNothing)
 import Test.Hspec
@@ -114,7 +115,7 @@ testFindConflictConfig = testTaskGeneration
 testPickConflictConfig :: [PickConflictConfig] -> Spec
 testPickConflictConfig = testTaskGeneration
   petriNetPickConflict
-  (pickTaskInstance parseConflict)
+  (lift . pickTaskInstance parseConflict)
   $ checkPickConflictInstance @(SimplePetriLike _)
 
 validFindConflictConfigs

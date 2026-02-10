@@ -75,3 +75,87 @@ CPU usage: 101%
 -}
 task2024_40 :: SelectASConfig
 task2024_40 = task2023_34
+
+{-|
+points: 0.15
+the amount of generated instances: 100
+maximum concurrent amount of tasks: 100
+average generation time per instance on the cluster (without considering concurrency): 25:43min
+total run time on the cluster (not including queuing time): 26:13min
+average CPU usage: 99.12%
+average memory usage: 1744.60 MB
+-}
+task2025_41 :: SelectASConfig
+task2025_41 = task2024_39
+
+{-|
+points: 0.15
+the amount of generated instances: 100
+maximum concurrent amount of tasks: 100
+average generation time per instance on the cluster (without considering concurrency): 30:55min
+total run time on the cluster (not including queuing time): 37:46min
+average CPU usage: 99%
+average memory usage: 11696.96 MB
+-}
+task2025_42 :: SelectASConfig
+task2025_42 = SelectASConfig {
+  adConfig = AdConfig {
+    actionLimits = (10, 10),
+    objectNodeLimits = (5, 5),
+    maxNamedNodes = 15,
+    decisionMergePairs = 2,
+    forkJoinPairs = 1,
+    activityFinalNodes = 0,
+    flowFinalNodes = 1,
+    cycles = 2
+  },
+  hideBranchConditions = True,
+  maxInstances = Just 500,
+  objectNodeOnEveryPath = Nothing,
+  numberOfWrongAnswers = 9,
+  answerLength = (11, 11),
+  printSolution = True,
+  withActionRepetition = True,
+  extraText = NoExtraText
+}
+
+{-|
+points: 0.15
+the amount of generated instances: 50
+maximum concurrent amount of tasks: 1 (Out-of-memory errors sometimes occur, which can cause parallel programs to terminate)
+average generation time per instance on the cluster (without considering concurrency): about 7:17min (if successful generation)
+-}
+task2025_43 :: SelectASConfig
+task2025_43 = SelectASConfig {
+  adConfig = AdConfig {
+    actionLimits = (8, 8),
+    objectNodeLimits = (0, 0),
+    maxNamedNodes = 8,
+    decisionMergePairs = 2,
+    forkJoinPairs = 2,
+    activityFinalNodes = 0,
+    flowFinalNodes = 2,
+    cycles = 2
+  },
+  hideBranchConditions = True,
+  maxInstances = Just 500,
+  objectNodeOnEveryPath = Just False,
+  numberOfWrongAnswers = 9,
+  answerLength = (11, 11),
+  printSolution = True,
+  withActionRepetition = True,
+  extraText = NoExtraText
+}
+
+{-|
+points: 0.1
+the amount of generated instances: 100
+maximum concurrent amount of tasks: 100
+average generation time per instance on the cluster (without considering concurrency): 32:17min
+total run time on the cluster (not including queuing time): 39:31min
+average CPU usage: 99.03%
+average memory usage: 11647.41 MB
+-}
+task2025_63 :: SelectASConfig
+task2025_63 = task2025_42
+

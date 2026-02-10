@@ -16,6 +16,9 @@ import Modelling.ActivityDiagram.EnterAs.Config (
   task2024_42,
   task2024_68,
   task2024_69,
+  task2025_44,
+  task2025_45,
+  task2025_64,
   )
 import Modelling.ActivityDiagram.FindAuxiliaryPetriNodes (
   checkFindAuxiliaryPetriNodesConfig,
@@ -27,6 +30,9 @@ import Modelling.ActivityDiagram.FindAuxiliaryPetriNodes.Config (
   task2024_48,
   task2024_72,
   task2024_73,
+  task2025_50,
+  task2025_51,
+  task2025_67,
   )
 import Modelling.ActivityDiagram.MatchAd (
   checkMatchAdConfig,
@@ -37,6 +43,8 @@ import Modelling.ActivityDiagram.MatchAd.Config (
   task2024_37,
   task2024_38,
   task2024_67,
+  task2025_39,
+  task2025_40,
   )
 import Modelling.ActivityDiagram.MatchPetri (
   checkMatchPetriConfig,
@@ -48,6 +56,9 @@ import Modelling.ActivityDiagram.MatchPetri.Config (
   task2024_46,
   task2024_70,
   task2024_71,
+  task2025_48,
+  task2025_49,
+  task2025_66,
   )
 import Modelling.ActivityDiagram.SelectAS (
   checkSelectASConfig,
@@ -57,6 +68,10 @@ import Modelling.ActivityDiagram.SelectAs.Config (
   task2023_34,
   task2024_39,
   task2024_40,
+  task2025_41,
+  task2025_42,
+  task2025_43,
+  task2025_63,
   )
 import Modelling.ActivityDiagram.SelectPetri (
   checkSelectPetriConfig,
@@ -66,6 +81,9 @@ import Modelling.ActivityDiagram.SelectPetri.Config (
   task2023_38,
   task2024_43,
   task2024_44,
+  task2025_46,
+  task2025_47,
+  task2025_65,
   )
 import Modelling.CdOd.DifferentNames (
   checkDifferentNamesConfig,
@@ -83,6 +101,8 @@ import Modelling.CdOd.DifferentNames.Config (
   task2025_16,
   task2025_21,
   task2025_22,
+  task2025_55,
+  task2025_57,
   )
 import Modelling.CdOd.MatchCdOd (
   checkMatchCdOdConfig,
@@ -101,6 +121,7 @@ import Modelling.CdOd.MatchCdOd.Config (
   task2025_18,
   task2025_19,
   task2025_20,
+  task2025_56,
   )
 import Modelling.CdOd.NameCdError (
   checkNameCdErrorConfig,
@@ -114,6 +135,7 @@ import Modelling.CdOd.NameCdError.Config (
   task2024_54,
   task2025_08,
   task2025_09,
+  task2025_54,
   )
 import Modelling.CdOd.NameCdError.Instance (
   task2024_14,
@@ -146,6 +168,7 @@ import Modelling.CdOd.SelectValidCd.Config (
   task2025_04,
   task2025_05,
   task2025_06,
+  task2025_53,
   )
 import Modelling.CdOd.SelectValidCd.Instance (
   task2024_05,
@@ -174,6 +197,8 @@ import Modelling.PetriNet.PetriFindConcurrency.Config (
   task2024_33,
   task2024_62,
   task2024_63,
+  task2025_34,
+  task2025_35,
   )
 import Modelling.PetriNet.PetriFindConflictPlaces.Config (
   task2023_24,
@@ -184,6 +209,10 @@ import Modelling.PetriNet.PetriFindConflictPlaces.Config (
   task2024_64,
   task2024_65,
   task2024_66,
+  task2025_36,
+  task2025_37,
+  task2025_38,
+  task2025_62,
   )
 import Modelling.PetriNet.PetriGraphToMath.Config (
   task2023_17,
@@ -204,12 +233,17 @@ import Modelling.PetriNet.PetriMathToGraph.Config (
 import Modelling.PetriNet.PetriPickConcurrency.Config (
   task2023_21,
   task2024_29,
+  task2025_31,
+  task2025_60,
   )
 import Modelling.PetriNet.PetriPickConflict.Config (
   task2023_22,
   task2023_16,
   task2024_30,
   task2024_31,
+  task2025_32,
+  task2025_33,
+  task2025_61,
   )
 import Modelling.PetriNet.Reach.Deadlock (
   checkDeadlockConfig,
@@ -222,6 +256,7 @@ import Modelling.PetriNet.PetriDeadlock.Config (
   task2024_61,
   task2025_29,
   task2025_30,
+  task2025_59,
   )
 import Modelling.PetriNet.Reach.Reach (
   checkReachConfig,
@@ -234,6 +269,7 @@ import Modelling.PetriNet.PetriReach.Config (
   task2024_60,
   task2025_27,
   task2025_28,
+  task2025_58,
   )
 
 import Test.Hspec
@@ -514,3 +550,75 @@ spec =
         checkDeadlockConfig task2025_29 `shouldBe` Nothing
       it "task30" $
         checkDeadlockConfig task2025_30 `shouldBe` Nothing
+      it "task31" $
+        checkPickConcurrencyConfig task2025_31 `shouldBe` Nothing
+      it "task32" $
+        checkPickConflictConfig task2025_32 `shouldBe` Nothing
+      it "task33" $
+        checkPickConflictConfig task2025_33 `shouldBe` Nothing
+      it "task34" $
+        checkFindConcurrencyConfig task2025_34 `shouldBe` Nothing
+      it "task35" $
+        checkFindConcurrencyConfig task2025_35 `shouldBe` Nothing
+      it "task36" $
+        checkFindConflictPlacesConfig task2025_36 `shouldBe` Nothing
+      it "task37" $
+        checkFindConflictPlacesConfig task2025_37 `shouldBe` Nothing
+      it "task38" $
+        checkFindConflictPlacesConfig task2025_38 `shouldBe` Nothing
+      it "task39" $
+        checkMatchAdConfig task2025_39 `shouldBe` Nothing
+      it "task40" $
+        checkMatchAdConfig task2025_40 `shouldBe` Nothing
+      it "task41" $
+        checkSelectASConfig task2025_41 `shouldBe` Nothing
+      it "task42" $
+        checkSelectASConfig task2025_42 `shouldBe` Nothing
+      it "task43" $
+        checkSelectASConfig task2025_43 `shouldBe` Nothing
+      it "task44" $
+        checkEnterASConfig task2025_44 `shouldBe` Nothing
+      it "task45" $
+        checkEnterASConfig task2025_45 `shouldBe` Nothing
+      it "task46" $
+        checkSelectPetriConfig task2025_46 `shouldBe` Nothing
+      it "task47" $
+        checkSelectPetriConfig task2025_47 `shouldBe` Nothing
+      it "task48" $
+        checkMatchPetriConfig task2025_48 `shouldBe` Nothing
+      it "task49" $
+        checkMatchPetriConfig task2025_49 `shouldBe` Nothing
+      it "task50" $
+        checkFindAuxiliaryPetriNodesConfig task2025_50 `shouldBe` Nothing
+      it "task51" $
+        checkFindAuxiliaryPetriNodesConfig task2025_51 `shouldBe` Nothing
+      it "task53" $
+        checkSelectValidCdConfig task2025_53 `shouldBe` Nothing
+      it "task54" $
+        checkNameCdErrorConfig task2025_54 `shouldBe` Nothing
+      it "task55" $
+        checkDifferentNamesConfig task2025_55 `shouldBe` Nothing
+      it "task56" $
+        checkMatchCdOdConfig task2025_56 `shouldBe` Nothing
+      it "task57" $
+        checkDifferentNamesConfig task2025_57 `shouldBe` Nothing
+      it "task58" $
+        checkReachConfig task2025_58 `shouldBe` Nothing
+      it "task59" $
+        checkDeadlockConfig task2025_59 `shouldBe` Nothing
+      it "task60" $
+        checkPickConcurrencyConfig task2025_60 `shouldBe` Nothing
+      it "task61" $
+        checkPickConflictConfig task2025_61 `shouldBe` Nothing
+      it "task62" $
+        checkFindConflictPlacesConfig task2025_62 `shouldBe` Nothing
+      it "task63" $
+        checkSelectASConfig task2025_63 `shouldBe` Nothing
+      it "task64" $
+        checkEnterASConfig task2025_64 `shouldBe` Nothing
+      it "task65" $
+        checkSelectPetriConfig task2025_65 `shouldBe` Nothing
+      it "task66" $
+        checkMatchPetriConfig task2025_66 `shouldBe` Nothing
+      it "task67" $
+        checkFindAuxiliaryPetriNodesConfig task2025_67 `shouldBe` Nothing

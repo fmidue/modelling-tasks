@@ -137,7 +137,7 @@ execute n t z0 = do
         english "contains more tokens than capacity permits!"
         german "enthält mehr Marken, als die Kapazität zulässt!"
       pure z2
-    _ -> undefined -- TODO Patern match not required?
+    _ -> undefined -- TODO: Pattern match not required?
   pure next
   where
     cs = [ c | c@(_, t', _) <- connections n, t' == t]

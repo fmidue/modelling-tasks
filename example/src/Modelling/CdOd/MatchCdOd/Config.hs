@@ -450,3 +450,15 @@ average memory usage: 3530.61 MB
 -}
 task2025_20 :: MatchCdOdConfig
 task2025_20 = task2024_20
+
+{-|
+points: 0.1
+the amount of generated instances: 100
+maximum concurrent amount of tasks: 100
+average generation time per instance on the cluster (without considering concurrency): 8:07min
+total run time on the cluster (not including queuing time): 9:00min
+average CPU usage: 105.19%
+average memory usage: 3747.66 MB
+-}
+task2025_56 :: MatchCdOdConfig
+task2025_56 = task2025_18
