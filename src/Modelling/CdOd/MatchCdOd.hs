@@ -351,23 +351,21 @@ defaultMatchCdOdTaskText
 defaultMatchCdOdTaskText diagramCount instanceCount =  [
   Paragraph $ singleton $ Translated $ translations $ do
     let plural     = diagramCount > 1
-    let numberWord = numberToWordNumeralFallback diagramCount
+        numberWord = numberToWordNumeralFallback diagramCount
 
     english $ "Consider the following " ++
               if plural
-              then [iii|#{numberWord English} (valid)
-                   class diagrams:|]
+              then [iii|#{numberWord English} (valid) class diagrams:|]
               else "(valid) class diagram:"
     german  $ "Betrachten Sie " ++
               if plural
-              then [iii|die folgenden #{numberWord German}
-                   (gültigen) Klassendiagramme:|]
+              then [iii|die folgenden #{numberWord German} (gültigen) Klassendiagramme:|]
               else "das folgende (gültige) Klassendiagramm:",
   Special GivenCds,
   Paragraph $ singleton $ Translated $ translations $ do
     let plural      = instanceCount > 1
-    let multipleCds = diagramCount > 1
-    let numberWord  = numberToWordNumeralFallback instanceCount
+        multipleCds = diagramCount > 1
+        numberWord  = numberToWordNumeralFallback instanceCount
 
     english $
       (if plural
@@ -402,7 +400,7 @@ defaultMatchCdOdTaskText diagramCount instanceCount =  [
   Special GivenOds
   ]
   where
-    numberToWordNumeralFallback n lang = fromMaybe (show n) (numberToWord n lang)
+    numberToWordNumeralFallback n = fromMaybe (show n) . numberToWord n
 
 inputHelpText :: [Output]
 inputHelpText = [
