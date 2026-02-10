@@ -4,7 +4,7 @@
   "IgnoreDefaults": false,
   "SpacesAftertabs": false,
   "NoColor": false,
-  "exclude": ["\\.cabal$", "example/.*/Instance\\.hs", "biome\\.json$"],
+  "exclude": ["\\.cabal$", "example/.*/Instance\\.hs"],
   "AllowedContentTypes": [],
   "PassedFiles": [],
   "Disable": {
