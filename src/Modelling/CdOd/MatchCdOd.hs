@@ -351,7 +351,7 @@ defaultMatchCdOdTaskText
 defaultMatchCdOdTaskText diagramCount instanceCount =  [
   Paragraph $ singleton $ Translated $ translations $ do
     let plural     = diagramCount > 1
-        numberWord lang = fromMaybe (show diagramCount) $ M.lookup diagramCount (numberWords lang)
+        numberWord = fromMaybe (show diagramCount) . M.lookup diagramCount . numberWords
 
     english $ "Consider the following " ++
               if plural
@@ -365,7 +365,7 @@ defaultMatchCdOdTaskText diagramCount instanceCount =  [
   Paragraph $ singleton $ Translated $ translations $ do
     let plural      = instanceCount > 1
         multipleCds = diagramCount > 1
-        numberWord lang = fromMaybe (show instanceCount) $ M.lookup instanceCount (numberWords lang)
+        numberWord  = fromMaybe (show instanceCount) . M.lookup instanceCount . numberWords
 
     english $
       (if plural
