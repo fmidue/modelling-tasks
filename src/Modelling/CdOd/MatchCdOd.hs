@@ -170,6 +170,7 @@ import Data.Bitraversable               (bimapM)
 import Data.Containers.ListUtils        (nubOrd)
 import Data.GraphViz                    (DirType (Forward))
 import Data.List                        (singleton)
+import Data.List.Extra                  (nubSort)
 import Data.Map                         (Map)
 import Data.Maybe                       (fromJust, isJust, listToMaybe, mapMaybe, fromMaybe)
 import Data.Ratio                       ((%))
@@ -243,8 +244,8 @@ toMatching :: Map Char [Int] -> Map (Int, Char) Bool
 toMatching m =
   M.fromList [((cd, od), any (cd `elem`) $ M.lookup od m) | cd <- cds, od <- ods]
   where
-    cds = take 2 [1 ..]
-    ods = take 5 ['a' ..]
+    cds = nubSort $ concat $ M.elems m
+    ods = M.keys m
 
 checkMatchCdOdConfig :: MatchCdOdConfig -> Maybe String
 checkMatchCdOdConfig MatchCdOdConfig {..}
@@ -498,12 +499,12 @@ matchCdOdEvaluation task sub' = do
       foldr (\(c, ys) xs -> foldr ((:) . (c,)) xs (lettersList ys)) []
 
 matchCdOdSolution :: MatchCdOdInstance -> [(Int, Letters)]
-matchCdOdSolution = M.toList . reverseMapping . fmap fst . instances
+matchCdOdSolution task = M.toList $ reverseMapping (fst <$> instances task)
   where
     reverseMapping :: Map Char [Int] -> Map Int Letters
     reverseMapping = fmap (fmap Letters) . M.foldrWithKey
       (\x ys xs -> foldr (M.adjust (x:)) xs ys)
-      $ M.fromList [(1, []), (2, [])]
+      $ M.fromList [(cdKey, []) | cdKey <- M.keys (diagrams task)]
 
 matchCdOd
   :: (MonadAlloy m, MonadCatch m, MonadFail m)
