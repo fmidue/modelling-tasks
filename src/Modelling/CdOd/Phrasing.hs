@@ -51,9 +51,9 @@ phraseRelationship = \case
   German -> German.phraseRelationship
 
 numberToWord :: Int -> Language -> Maybe String
-numberToWord n lang = M.lookup n numberWords
+numberToWord n = M.lookup n . numberWords
   where
-    numberWords = case lang of
+    numberWords = \case
       English -> English.numberWords
       German  -> German.numberWords
 
