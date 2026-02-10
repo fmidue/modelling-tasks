@@ -38,6 +38,7 @@ import qualified Data.Map                         as M (
   fromList,
   keys,
   lookup,
+  map,
   size,
   toList,
   traverseWithKey,
@@ -239,12 +240,9 @@ defaultMatchCdOdConfig
     extraText        = NoExtraText
   }
 
-toMatching :: Map Char [Int] -> Map (Int, Char) Bool
-toMatching m =
-  M.fromList [((cd, od), any (cd `elem`) $ M.lookup od m) | cd <- cds, od <- ods]
-  where
-    cds = take 2 [1 ..]
-    ods = take 5 ['a' ..]
+toMatching :: [Int] -> Map Char [Int] -> Map (Int, Char) Bool
+toMatching cds m =
+  M.fromList [((cd, od), cd `elem` cdList) | cd <- cds, (od, cdList) <- M.toList m]
 
 checkMatchCdOdConfig :: MatchCdOdConfig -> Maybe String
 checkMatchCdOdConfig MatchCdOdConfig {..}
@@ -482,7 +480,7 @@ matchCdOdEvaluation
 matchCdOdEvaluation task sub' = do
   let sub = toMatching' sub'
       sol = fst <$> instances task
-      matching = toMatching sol
+      matching = toMatching (M.keys $ diagrams task) sol
       what = translations $ do
         english "instances"
         german "Instanzen"
@@ -498,12 +496,12 @@ matchCdOdEvaluation task sub' = do
       foldr (\(c, ys) xs -> foldr ((:) . (c,)) xs (lettersList ys)) []
 
 matchCdOdSolution :: MatchCdOdInstance -> [(Int, Letters)]
-matchCdOdSolution = M.toList . reverseMapping . fmap fst . instances
+matchCdOdSolution task = M.toList $ reverseMapping (fst <$> instances task)
   where
     reverseMapping :: Map Char [Int] -> Map Int Letters
     reverseMapping = fmap (fmap Letters) . M.foldrWithKey
       (\x ys xs -> foldr (M.adjust (x:)) xs ys)
-      $ M.fromList [(1, []), (2, [])]
+      $ M.map (const []) (diagrams task)
 
 matchCdOd
   :: (MonadAlloy m, MonadCatch m, MonadFail m)
