@@ -240,12 +240,9 @@ defaultMatchCdOdConfig
     extraText        = NoExtraText
   }
 
-toMatching :: Int -> Map Char [Int] -> Map (Int, Char) Bool
-toMatching numberOfCds m =
-  M.fromList [((cd, od), any (cd `elem`) $ M.lookup od m) | cd <- cds, od <- ods]
-  where
-    cds = take numberOfCds [1 ..]
-    ods = M.keys m
+toMatching :: [Int] -> Map Char [Int] -> Map (Int, Char) Bool
+toMatching cds m =
+  M.fromList [((cd, od), cd `elem` cdList) | cd <- cds, (od, cdList) <- M.toList m]
 
 checkMatchCdOdConfig :: MatchCdOdConfig -> Maybe String
 checkMatchCdOdConfig MatchCdOdConfig {..}
@@ -483,7 +480,7 @@ matchCdOdEvaluation
 matchCdOdEvaluation task sub' = do
   let sub = toMatching' sub'
       sol = fst <$> instances task
-      matching = toMatching (M.size $ diagrams task) sol
+      matching = toMatching (M.keys $ diagrams task) sol
       what = translations $ do
         english "instances"
         german "Instanzen"
