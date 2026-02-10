@@ -38,6 +38,7 @@ import qualified Data.Map                         as M (
   fromList,
   keys,
   lookup,
+  map,
   size,
   toList,
   traverseWithKey,
@@ -170,7 +171,6 @@ import Data.Bitraversable               (bimapM)
 import Data.Containers.ListUtils        (nubOrd)
 import Data.GraphViz                    (DirType (Forward))
 import Data.List                        (singleton)
-import Data.List.Extra                  (nubSort)
 import Data.Map                         (Map)
 import Data.Maybe                       (fromJust, isJust, listToMaybe, mapMaybe, fromMaybe)
 import Data.Ratio                       ((%))
@@ -240,11 +240,11 @@ defaultMatchCdOdConfig
     extraText        = NoExtraText
   }
 
-toMatching :: Map Char [Int] -> Map (Int, Char) Bool
-toMatching m =
+toMatching :: Int -> Map Char [Int] -> Map (Int, Char) Bool
+toMatching numberOfCds m =
   M.fromList [((cd, od), any (cd `elem`) $ M.lookup od m) | cd <- cds, od <- ods]
   where
-    cds = nubSort $ concat $ M.elems m
+    cds = take numberOfCds [1 ..]
     ods = M.keys m
 
 checkMatchCdOdConfig :: MatchCdOdConfig -> Maybe String
@@ -483,7 +483,7 @@ matchCdOdEvaluation
 matchCdOdEvaluation task sub' = do
   let sub = toMatching' sub'
       sol = fst <$> instances task
-      matching = toMatching sol
+      matching = toMatching (M.size $ diagrams task) sol
       what = translations $ do
         english "instances"
         german "Instanzen"
@@ -504,7 +504,7 @@ matchCdOdSolution task = M.toList $ reverseMapping (fst <$> instances task)
     reverseMapping :: Map Char [Int] -> Map Int Letters
     reverseMapping = fmap (fmap Letters) . M.foldrWithKey
       (\x ys xs -> foldr (M.adjust (x:)) xs ys)
-      $ M.fromList [(cdKey, []) | cdKey <- M.keys (diagrams task)]
+      $ M.map (const []) (diagrams task)
 
 matchCdOd
   :: (MonadAlloy m, MonadCatch m, MonadFail m)
