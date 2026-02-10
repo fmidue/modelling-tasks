@@ -380,7 +380,7 @@ defaultMatchCdOdTaskText diagramCount instanceCount =  [
       if multipleCds
       then [iii|
         \nAn object diagram can conform to none, one,
-        or multiple class diagrams.|]
+        or multiple of the given class diagrams.|]
       else ""
     german $
       (if plural
@@ -395,7 +395,7 @@ defaultMatchCdOdTaskText diagramCount instanceCount =  [
       if multipleCds
       then [iii|
         \nEin Objektdiagramm kann zu keinem, einem
-        oder mehreren Klassendiagrammen passen.|]
+        oder mehreren der gegebenen Klassendiagramme passen.|]
       else "",
   Special GivenOds
   ]
