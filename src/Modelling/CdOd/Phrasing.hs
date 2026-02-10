@@ -4,7 +4,7 @@ module Modelling.CdOd.Phrasing (
   phraseChange,
   phraseRelationship,
   trailingCommaGerman,
-  num2word,
+  numberToWord,
   ) where
 
 import qualified Modelling.CdOd.Phrasing.German    as German
@@ -50,8 +50,8 @@ phraseRelationship = \case
   English -> English.phraseRelationship
   German -> German.phraseRelationship
 
-num2word :: Int -> Language -> Maybe String
-num2word n lang = M.lookup n numberWords
+numberToWord :: Int -> Language -> Maybe String
+numberToWord n lang = M.lookup n numberWords
   where
     numberWords = case lang of
       English -> English.numberWords
