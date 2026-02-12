@@ -323,14 +323,14 @@ provideSolutionsFeedback maxDisplayedSolutions solutionsList
         show (TransitionsList oneSolution) ++
           if 1 < maxDisplayedSolutions
             then "\n\n(This is the one shortest solution.)"
-            else "\n\n(This is a shortest solution, but more may exist.)"
+            else "\n\n(This is a shortest solution, but maybe not the only shortest one.)"
       Left (firstSolution :| restSolutions) ->
         let displayedSolutions = firstSolution : restSolutions
             solutionsText = unlines $ map (show . TransitionsList) displayedSolutions
         in "Any of:\n\n" ++ solutionsText ++
           if 1 + length restSolutions < maxDisplayedSolutions
             then "\n(These are all the shortest solutions.)"
-            else "\n(These are shortest solutions, but more may exist.)"
+            else "\n(These are shortest solutions, but maybe not the only shortest ones.)"
       Right (theOnlySolution :| []) ->
         show (TransitionsList theOnlySolution) ++
           "\n\n(This is the only solution.)"
@@ -339,8 +339,8 @@ provideSolutionsFeedback maxDisplayedSolutions solutionsList
             solutionsText = unlines $ map (show . TransitionsList) displayedSolutions
         in (if maxDisplayedSolutions < 2 then "" else "Any of:\n\n") ++ solutionsText ++
           if length restSolutions < maxDisplayedSolutions
-            then (if null restSolutions then "\n(This is the only solution.)" else "\n(These are all the solutions.)")
-            else if maxDisplayedSolutions == 1 then "\n(This is a solution, but more exist.)" else "\n(These are solutions, but more exist.)"
+            then "\n(These are all the solutions.)"
+            else if maxDisplayedSolutions == 1 then "\n(This is a solution, but not the only one.)" else "\n(These are solutions, but not the only ones.)"
 
 reachEvaluation
   :: (

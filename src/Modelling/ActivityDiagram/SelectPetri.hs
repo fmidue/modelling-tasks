@@ -79,7 +79,7 @@ import Modelling.Auxiliary.Output (
   addPretext,
   hoveringInformation,
   )
-import Modelling.PetriNet.Diagram (cacheNet)
+import Modelling.PetriNet.Diagram (cacheNet, isNetDrawable)
 import Modelling.PetriNet.Types (
   checkPetriNodeCount,
   DrawSettings (..),
@@ -91,8 +91,8 @@ import Modelling.PetriNet.Types (
 
 import Control.Applicative (Alternative ((<|>)))
 import Control.Monad (unless, when)
-import Control.Monad.Catch              (MonadThrow, throwM)
-import Control.Monad.Extra (loopM, firstJustM)
+import Control.Monad.Catch              (MonadCatch, MonadThrow, throwM)
+import Control.Monad.Extra (loopM, firstJustM, allM)
 import Control.Monad.Trans.Class (lift)
 import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
@@ -442,7 +442,7 @@ selectPetriEvaluation
   -> SelectPetriInstance
   -> Int
   -> LangM m
-selectPetriEvaluation path task n = addPretext $ do
+selectPetriEvaluation path task n = do
   let as = translations $ do
         english "Petri net"
         german "Petrinetz"
@@ -563,7 +563,7 @@ selectPetriSolution
 selectPetriSolution = head . M.keys . M.filter fst . petriNets
 
 selectPetri
-  :: (MonadAlloy m, MonadThrow m)
+  :: (MonadAlloy m, MonadCatch m, MonadDiagrams m, MonadGraphviz m)
   => SelectPetriConfig
   -> Int
   -> Int
@@ -573,7 +573,7 @@ selectPetri config segment seed = do
   evalRandT (getSelectPetriTask config) g
 
 getSelectPetriTask
-  :: (MonadAlloy m, MonadThrow m, RandomGen g)
+  :: (MonadAlloy m, MonadCatch m, MonadDiagrams m, MonadGraphviz m, RandomGen g)
   => SelectPetriConfig
   -> RandT g m SelectPetriInstance
 getSelectPetriTask config = do
@@ -594,8 +594,8 @@ getSelectPetriTask config = do
         with1Weights = False,
         withGraphvizCommand = layout
       }
-  ad <- mapM (fmap snd . shuffleAdNames) randomInstances
-    >>= firstJustM (\ad -> do
+  maybeInstance <- firstJustM (\inst -> do
+      ad <- snd <$> shuffleAdNames inst
       let petriNet = convertToPetriNet @PetriLike @SimpleNode ad
       if not (checkPetriNodeCount (countOfPetriNodesBounds config) petriNet)
         then return Nothing
@@ -621,9 +621,26 @@ getSelectPetriTask config = do
               }
           case checkPetriInstance petriInst config of
             Just _ -> return Nothing
-            Nothing -> return $ Just petriInst
-    )
-  case ad of
+            Nothing -> do
+              allDrawable <- lift $ allM
+                (\net -> isNetDrawable (mapNet (show . PK.label) net) petriDrawConf)
+                (p : ps)
+              if not allDrawable
+                then return Nothing
+                else do
+                  let feedbackDrawSettings = petriDrawConf {
+                        withPlaceNames = True,
+                        withTransitionNames = True
+                      }
+                  feedbackDrawable <- lift $
+                    if hidePetriNodeLabels config
+                      then isNetDrawable (mapNet (show . PK.label) p) feedbackDrawSettings
+                      else return True
+                  if not feedbackDrawable
+                    then return Nothing
+                    else return $ Just petriInst
+    ) randomInstances
+  case maybeInstance of
     Just x -> return x
     Nothing -> lift $ throwM NoInstanceAvailable
 

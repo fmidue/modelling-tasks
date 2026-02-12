@@ -226,3 +226,15 @@ task2025_28 = ReachConfig {
     transitionCoverageRequirement = 2 % 3
     }
   }
+
+{-|
+points: 0.1
+the amount of generated instances: 100
+maximum concurrent amount of tasks: 100
+average generation time per instance on the cluster (without considering concurrency): 9.06s
+total run time on the cluster (not including queuing time): 12s
+average CPU usage: 81.44%
+average memory usage: 367.35 MB
+-}
+task2025_58 :: ReachConfig
+task2025_58 = task2025_28

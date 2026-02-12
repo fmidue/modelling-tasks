@@ -5,7 +5,6 @@ import qualified Data.Set                         as S
 import Data.List.NonEmpty                 (toList)
 import Capabilities.Diagrams.IO         ()
 import Capabilities.Graphviz.IO         ()
-import Capabilities.Exceptions.IO       ()
 import Modelling.PetriNet.Reach.Reach (
   ReachConfig (..),
   NetGoalConfig (..),

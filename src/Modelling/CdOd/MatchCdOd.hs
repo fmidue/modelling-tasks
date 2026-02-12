@@ -38,6 +38,8 @@ import qualified Data.Map                         as M (
   fromList,
   keys,
   lookup,
+  map,
+  size,
   toList,
   traverseWithKey,
   )
@@ -79,6 +81,7 @@ import Modelling.CdOd.Auxiliary.Util (
   alloyInstanceToOd,
   )
 import Modelling.CdOd.Output            (cacheCd, cacheOd)
+import Modelling.CdOd.Phrasing          (numberWords)
 import Modelling.CdOd.Types (
   Cd,
   CdDrawSettings (..),
@@ -145,6 +148,7 @@ import Control.OutputCapable.Blocks (
   multipleChoice,
   translate,
   translations,
+  Language (English, German),
   )
 import Control.OutputCapable.Blocks.Generic.Type (
   GenericOutput (Code, Paragraph, Special, Translated),
@@ -168,7 +172,7 @@ import Data.Containers.ListUtils        (nubOrd)
 import Data.GraphViz                    (DirType (Forward))
 import Data.List                        (singleton)
 import Data.Map                         (Map)
-import Data.Maybe                       (fromJust, isJust, listToMaybe, mapMaybe)
+import Data.Maybe                       (fromJust, isJust, listToMaybe, mapMaybe, fromMaybe)
 import Data.Ratio                       ((%))
 import Data.String.Interpolate          (iii)
 import GHC.Generics                     (Generic)
@@ -236,12 +240,9 @@ defaultMatchCdOdConfig
     extraText        = NoExtraText
   }
 
-toMatching :: Map Char [Int] -> Map (Int, Char) Bool
-toMatching m =
-  M.fromList [((cd, od), any (cd `elem`) $ M.lookup od m) | cd <- cds, od <- ods]
-  where
-    cds = take 2 [1 ..]
-    ods = take 5 ['a' ..]
+toMatching :: [Int] -> Map Char [Int] -> Map (Int, Char) Bool
+toMatching cds m =
+  M.fromList [((cd, od), cd `elem` cdList) | cd <- cds, (od, cdList) <- M.toList m]
 
 checkMatchCdOdConfig :: MatchCdOdConfig -> Maybe String
 checkMatchCdOdConfig MatchCdOdConfig {..}
@@ -343,25 +344,59 @@ toTaskSpecificText path MatchCdOdInstance {..} = \case
     $=<< (\_ (is,o) -> (is,) <$> cacheOd o Forward True path)
     `M.traverseWithKey` instances
 
-defaultMatchCdOdTaskText :: MatchCdOdTaskText
-defaultMatchCdOdTaskText = [
+defaultMatchCdOdTaskText
+    :: Int
+    -> Int
+    -> MatchCdOdTaskText
+defaultMatchCdOdTaskText diagramCount instanceCount =  [
   Paragraph $ singleton $ Translated $ translations $ do
-    english "Consider the following two (valid) class diagrams:"
-    german "Betrachten Sie die folgenden zwei (gültigen) Klassendiagramme:",
+    let plural     = diagramCount > 1
+        numberWord = fromMaybe (show diagramCount) . M.lookup diagramCount . numberWords
+
+    english $ "Consider the following " ++
+              if plural
+              then [iii|#{numberWord English} (valid) class diagrams:|]
+              else "(valid) class diagram:"
+    german  $ "Betrachten Sie " ++
+              if plural
+              then [iii|die folgenden #{numberWord German} (gültigen) Klassendiagramme:|]
+              else "das folgende (gültige) Klassendiagramm:",
   Special GivenCds,
   Paragraph $ singleton $ Translated $ translations $ do
-    english [iii|
-      Which of the following five object diagrams conform to which class diagram?
-      \n
-      An object diagram can conform to neither, either, or both class diagrams.
-      |]
-    german [iii|
-      Welche der folgenden fünf Objektdiagramme
-      passen zu welchem Klassendiagramm?
-      \n
-      Ein Objektdiagramm kann zu keinem,
-      einem oder beiden Klassendiagrammen passen.
-      |],
+    let plural      = instanceCount > 1
+        multipleCds = diagramCount > 1
+        numberWord  = fromMaybe (show instanceCount) . M.lookup instanceCount . numberWords
+
+    english $
+      (if plural
+      then [iii|
+        Which of the following #{numberWord English} object diagrams
+        conform to #{if multipleCds then "which" else "the"}
+        class diagram?|]
+      else
+        if multipleCds
+        then "To which class diagram does the following object diagram conform?"
+        else "Does the following object diagram conform to the class diagram?") ++
+      if multipleCds
+      then [iii|
+        \nAn object diagram can conform to none, one,
+        or multiple of the given class diagrams.|]
+      else ""
+    german $
+      (if plural
+      then [iii|
+        Welche der folgenden #{numberWord German} Objektdiagramme
+        passen zu #{if multipleCds then "welchem" else "dem"}
+        Klassendiagramm?|]
+      else
+        if multipleCds
+        then "Zu welchem Klassendiagramm passt das folgende Objektdiagramm?"
+        else "Passt das folgende Objektdiagramm zu dem Klassendiagramm?") ++
+      if multipleCds
+      then [iii|
+        \nEin Objektdiagramm kann zu keinem, einem
+        oder mehreren der gegebenen Klassendiagramme passen.|]
+      else "",
   Special GivenOds
   ]
 
@@ -441,7 +476,7 @@ matchCdOdEvaluation
 matchCdOdEvaluation task sub' = do
   let sub = toMatching' sub'
       sol = fst <$> instances task
-      matching = toMatching sol
+      matching = toMatching (M.keys $ diagrams task) sol
       what = translations $ do
         english "instances"
         german "Instanzen"
@@ -457,12 +492,12 @@ matchCdOdEvaluation task sub' = do
       foldr (\(c, ys) xs -> foldr ((:) . (c,)) xs (lettersList ys)) []
 
 matchCdOdSolution :: MatchCdOdInstance -> [(Int, Letters)]
-matchCdOdSolution = M.toList . reverseMapping . fmap fst . instances
+matchCdOdSolution task = M.toList $ reverseMapping (fst <$> instances task)
   where
     reverseMapping :: Map Char [Int] -> Map Int Letters
     reverseMapping = fmap (fmap Letters) . M.foldrWithKey
       (\x ys xs -> foldr (M.adjust (x:)) xs ys)
-      $ M.fromList [(1, []), (2, [])]
+      $ M.map (const []) (diagrams task)
 
 matchCdOd
   :: (MonadAlloy m, MonadCatch m, MonadFail m)
@@ -497,7 +532,7 @@ getMatchCdOdTask f config@MatchCdOdConfig {..} = do
         diagrams       = cds,
         instances      = ods',
         showSolution = printSolution,
-        taskText = defaultMatchCdOdTaskText,
+        taskText = defaultMatchCdOdTaskText (M.size cds) (M.size ods'),
         addText = extraText
         }
   where
@@ -678,7 +713,7 @@ defaultMatchCdOdInstance = MatchCdOdInstance {
       }))
     ],
   showSolution = True,
-  taskText = defaultMatchCdOdTaskText,
+  taskText = defaultMatchCdOdTaskText 2 5,
   addText = NoExtraText
   }
 

@@ -4,10 +4,13 @@ module Modelling.CdOd.Phrasing (
   phraseChange,
   phraseRelationship,
   trailingCommaGerman,
+  numberWords,
   ) where
 
 import qualified Modelling.CdOd.Phrasing.German    as German
 import qualified Modelling.CdOd.Phrasing.English   as English
+
+import Data.Map (Map)
 
 import Control.OutputCapable.Blocks (
   ArticleToUse,
@@ -46,6 +49,11 @@ phraseRelationship
 phraseRelationship = \case
   English -> English.phraseRelationship
   German -> German.phraseRelationship
+
+numberWords :: Language -> Map Int String
+numberWords = \case
+  English -> English.numberWords
+  German  -> German.numberWords
 
 trailingCommaGerman :: String -> String
 trailingCommaGerman = German.trailingComma

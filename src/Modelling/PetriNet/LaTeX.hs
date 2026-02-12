@@ -115,7 +115,7 @@ transitionsLaTeX ts =
   [i|#{transitionsSetName} = #{brace $ intercalate "," ts}|]
 
 {-|
-Create a LaTeX-'Formula' representing the tuple of the inital marking.
+Create a LaTeX-'Formula' representing the tuple of the initial marking.
 -}
 initialMarkingLaTeX
   :: PetriNode n
