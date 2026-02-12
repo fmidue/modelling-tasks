@@ -709,7 +709,6 @@ defaultPickConflictInstance = PickInstance {
       DrawSettings {
         withPlaceNames = False,
         withSvgHighlighting = True,
-        withLabelAnnotations = False,
         withTransitionNames = False,
         with1Weights = False,
         withGraphvizCommand = Fdp
@@ -729,7 +728,6 @@ defaultPickConflictInstance = PickInstance {
       DrawSettings {
         withPlaceNames = False,
         withSvgHighlighting = True,
-        withLabelAnnotations = False,
         withTransitionNames = False,
         with1Weights = False,
         withGraphvizCommand = Fdp
@@ -745,7 +743,6 @@ defaultFindConflictInstance = FindInstance {
   drawFindWith = DrawSettings {
     withPlaceNames = False,
     withSvgHighlighting = True,
-    withLabelAnnotations = False,
     withTransitionNames = True,
     with1Weights = False,
     withGraphvizCommand = Circo

@@ -698,7 +698,6 @@ defaultGraphToMathInstance = MatchInstance {
     DrawSettings {
       withPlaceNames = True,
       withSvgHighlighting = True,
-      withLabelAnnotations = False,
       withTransitionNames = True,
       with1Weights = False,
       withGraphvizCommand = Sfdp
@@ -789,7 +788,6 @@ defaultMathToGraphInstance = MatchInstance {
       DrawSettings {
         withPlaceNames = True,
         withSvgHighlighting = True,
-        withLabelAnnotations = False,
         withTransitionNames = True,
         with1Weights = False,
         withGraphvizCommand = Dot
@@ -810,7 +808,6 @@ defaultMathToGraphInstance = MatchInstance {
       DrawSettings {
         withPlaceNames = True,
         withSvgHighlighting = True,
-        withLabelAnnotations = False,
         withTransitionNames = True,
         with1Weights = False,
         withGraphvizCommand = Sfdp
@@ -831,7 +828,6 @@ defaultMathToGraphInstance = MatchInstance {
       DrawSettings {
         withPlaceNames = True,
         withSvgHighlighting = True,
-        withLabelAnnotations = False,
         withTransitionNames = True,
         with1Weights = False,
         withGraphvizCommand = Circo}
@@ -851,7 +847,6 @@ defaultMathToGraphInstance = MatchInstance {
       DrawSettings {
         withPlaceNames = True,
         withSvgHighlighting = True,
-        withLabelAnnotations = False,
         withTransitionNames = True,
         with1Weights = False,
         withGraphvizCommand = Fdp
