@@ -128,7 +128,7 @@ drawNet
   -> DrawSettings
   -- ^ how to draw the graph
   -> Bool
-  -- ^ whether labels should be annotated
+  -- ^ whether to enable adding svg classes annotating elements for external tools
   -> m (Diagram B)
 drawNet pl drawSettings@DrawSettings {..} withLabelAnnotations = do
   gr <- either (throwM . CouldNotFindNodeWithinGraph) return
@@ -204,7 +204,7 @@ drawGraph
   -> PreparedFont Double
   -- ^ the font to be used for labels
   -> Bool
-  -- ^ whether labels should be annotated
+  -- ^ whether to enable adding svg classes annotating elements for external tools
   -> Gr (AttributeNode (String, Maybe Int)) (AttributeEdge Int)
   -- ^ the graph consisting of nodes and edges
   -> Diagram B
@@ -249,7 +249,7 @@ drawNode
   -> PreparedFont Double
   -- ^ the font to use
   -> Bool
-  -- ^ whether labels should be annotated
+  -- ^ whether to enable adding svg classes annotating elements for external tools
   -> (String, Maybe Int)
   -- ^ a node (the first part is used for its label)
   -> Point V2 Double
