@@ -386,7 +386,7 @@ drawOdFromInstance
   = do
   g <- lift $ alloyInstanceToOd possibleClassNames possibleLinkNames alloyInstance
   od <- anonymiseObjects (fromMaybe (1 % 3) anonymous) g
-  lift $ cache path ".svg" prefix od $ const $ drawOd od direction printNames
+  lift $ cache path ".svg" (prefix ++ "-") od $ const $ drawOd od direction printNames
 
 cacheOd
   :: (MonadCache m, MonadDiagrams m, MonadGraphviz m, MonadThrow m)
