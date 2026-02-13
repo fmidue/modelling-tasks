@@ -3,7 +3,7 @@ import qualified Data.ByteString.Char8            as BS (pack)
 
 import Capabilities.Diagrams.IO         ()
 import Capabilities.Graphviz.IO         ()
-import Capabilities.WriteFile.IO        ()
+import Capabilities.Cache.IO            ()
 import Modelling.CdOd.Output            (drawOdFromInstance)
 
 import Control.Monad (void)
@@ -29,8 +29,8 @@ main = do
          ++ "is not supported, only SVG is supported"
    _ -> error "zu viele Parameter"
 
-drawOd :: [String] -> FilePath -> String -> IO ()
-drawOd possibleLinks file contents = flip evalRandT (mkStdGen 0) $ do
+drawOd :: [String] -> String -> String -> IO ()
+drawOd possibleLinks filePrefix contents = flip evalRandT (mkStdGen 0) $ do
   i <- lift $ parseInstance $ BS.pack contents
   output <- drawOdFromInstance
     i
@@ -39,5 +39,6 @@ drawOd possibleLinks file contents = flip evalRandT (mkStdGen 0) $ do
     (Just $ 1 % 3)
     NoDir
     False
-    (file ++ ".svg")
+    "./"
+    filePrefix
   lift . putStrLn $ "Output written to " ++ output

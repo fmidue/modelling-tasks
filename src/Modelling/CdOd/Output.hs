@@ -20,7 +20,6 @@ import Capabilities.Diagrams            (MonadDiagrams (lin, renderDiagram))
 import Capabilities.Graphviz (
   MonadGraphviz (errorWithoutGraphviz, layoutGraph'),
   )
-import Capabilities.WriteFile           (MonadWriteFile (writeToFile))
 import Modelling.Auxiliary.Diagrams (
   arrowheadDiamond,
   arrowheadFilledDiamond,
@@ -355,7 +354,7 @@ Parses an Alloy object diagram instance, draws it and saves it to a file.
 (the path where it has been stored is returned)
 -}
 drawOdFromInstance
-  :: (MonadCatch m, MonadDiagrams m, MonadGraphviz m, MonadWriteFile m, RandomGen g)
+  :: (MonadCatch m, MonadDiagrams m, MonadGraphviz m, MonadCache m, RandomGen g)
   => AlloyInstance
   -- ^ the Alloy object diagram instance
   -> Maybe [String]
@@ -371,7 +370,9 @@ drawOdFromInstance
   -> Bool
   -- ^ whether to print link names
   -> FilePath
-  -- ^ where to store the object diagram
+  -- ^ where to store the object diagram file
+  -> String
+  -- ^ the file name prefix
   -> RandT g m FilePath
 drawOdFromInstance
   alloyInstance
@@ -381,13 +382,11 @@ drawOdFromInstance
   direction
   printNames
   path
+  prefix
   = do
   g <- lift $ alloyInstanceToOd possibleClassNames possibleLinkNames alloyInstance
   od <- anonymiseObjects (fromMaybe (1 % 3) anonymous) g
-  lift $ do
-    renderedOd <- drawOd od direction printNames
-    writeToFile path renderedOd
-    pure path
+  lift $ cache path ".svg" prefix od $ const $ drawOd od direction printNames
 
 cacheOd
   :: (MonadCache m, MonadDiagrams m, MonadGraphviz m, MonadThrow m)

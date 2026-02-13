@@ -6,7 +6,7 @@ import qualified Language.Alloy.Call              as Alloy (getInstances)
 
 import Capabilities.Diagrams.IO         ()
 import Capabilities.Graphviz.IO         ()
-import Capabilities.WriteFile.IO        ()
+import Capabilities.Cache.IO            ()
 import Modelling.CdOd.CD2Alloy.Transform (
   LinguisticReuse (None),
   Parts (..),
@@ -240,7 +240,8 @@ drawCdAndOdsFor is c cds cmd = do
       Nothing
       Back
       True
-      (c ++ '-' : shorten cmd ++ "-od" ++ show i ++ ".svg")
+      "./"
+      (c ++ '-' : shorten cmd ++ "-od" ++ show i)
     drawCd' :: AnyCd -> Int -> IO String
     drawCd' cd i = do
       renderedCd <- drawCd defaultCdDrawSettings mempty cd

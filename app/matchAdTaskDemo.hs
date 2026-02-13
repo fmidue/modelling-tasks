@@ -2,7 +2,7 @@ module Main (main) where
 
 import Capabilities.Alloy.IO            ()
 import Capabilities.PlantUml.IO         ()
-import Capabilities.WriteFile.IO        ()
+import Capabilities.Cache.IO            ()
 import Modelling.ActivityDiagram.MatchAd (
   defaultMatchAdConfig,
   matchAd,

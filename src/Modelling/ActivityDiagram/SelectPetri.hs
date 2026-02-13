@@ -35,7 +35,6 @@ import Capabilities.Cache               (MonadCache)
 import Capabilities.Diagrams            (MonadDiagrams)
 import Capabilities.Graphviz            (MonadGraphviz)
 import Capabilities.PlantUml            (MonadPlantUml)
-import Capabilities.WriteFile           (MonadWriteFile)
 import qualified Data.Map as M (empty, size, fromList, toList, keys, map, filter)
 import qualified Modelling.ActivityDiagram.Datatype as Ad (AdNode(label))
 import qualified Modelling.ActivityDiagram.PetriNet as PK (PetriKey (label))
@@ -365,7 +364,6 @@ selectPetriTask
     MonadGraphviz m,
     MonadPlantUml m,
     MonadThrow m,
-    MonadWriteFile m,
     OutputCapable m
     )
   => FilePath
@@ -430,7 +428,6 @@ selectPetriEvaluation
     MonadGraphviz m,
     MonadPlantUml m,
     MonadThrow m,
-    MonadWriteFile m,
     OutputCapable m
     )
   => FilePath

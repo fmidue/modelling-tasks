@@ -13,18 +13,17 @@ import qualified Data.ByteString.Char8            as BS (
   )
 import Capabilities.Diagrams.IO         ()
 import Capabilities.Graphviz.IO         ()
-import Capabilities.WriteFile.IO        ()
+import Capabilities.Cache.IO            ()
 import Modelling.CdOd.Output            (drawCd, drawOdFromInstance)
 import Modelling.CdOd.Types             (defaultCdDrawSettings)
 import Modelling.Common                 (withUnitTestsUsingPath)
 
-import Control.Monad                    (void)
 import Control.Monad.Except             (runExceptT)
 import Control.Monad.Random             (evalRandT)
 import Data.GraphViz                    (DirType (Forward))
 import Test.Hspec                       (Spec)
 import Test.Similarity                  (Deviation (..), shouldReturnSimilar)
-import System.IO.Extra                  (withTempFile)
+import System.IO.Extra                  (withTempDir, withTempFile)
 import System.Random                    (mkStdGen)
 import Language.Alloy.Debug             (parseInstance)
 
@@ -47,10 +46,10 @@ spec = do
       renderedCd <- drawCd defaultCdDrawSettings mempty cd
       BS.writeFile file renderedCd
       BS.readFile file
-    drawOdInstance alloy = withTempFile $ \file -> do
+    drawOdInstance alloy = withTempDir $ \tempDir -> do
       Right alloyInstance <- runExceptT $ parseInstance (BS.pack alloy)
       let possibleLinks = map (: []) ['w'..'y']
-      void $ flip evalRandT
+      file <- flip evalRandT
         (mkStdGen 0)
         $ drawOdFromInstance
           alloyInstance
@@ -59,5 +58,6 @@ spec = do
           (Just 1)
           Forward
           True
-          file
+          tempDir
+          "OutputTest"
       BS.readFile file
