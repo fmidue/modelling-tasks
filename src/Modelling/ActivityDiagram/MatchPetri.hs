@@ -204,13 +204,13 @@ checkMatchPetriConfig' MatchPetriConfig {
     withActivityFinalInForkBlocks
   } = (if petriSvgHighlighting then Nothing else Just "petriSvgHighlighting must be enabled for this task.")
     <|> validatePetriConfig
-          adConfig
-          countOfPetriNodesBounds
-          maxInstances
-          petriLayout
-          auxiliaryPetriNodeAbsent
-          presenceOfSinkTransitionsForFinals
-          withActivityFinalInForkBlocks
+        adConfig
+        countOfPetriNodesBounds
+        maxInstances
+        petriLayout
+        auxiliaryPetriNodeAbsent
+        presenceOfSinkTransitionsForFinals
+        withActivityFinalInForkBlocks
 
 matchPetriAlloy :: MatchPetriConfig -> String
 matchPetriAlloy MatchPetriConfig {
