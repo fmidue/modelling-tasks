@@ -331,12 +331,12 @@ hoveringInformationOnlyPetri isCollapsed = collapsed isCollapsed (translations $
   ) $ translate $ do
   english [iii|
     When hovering over or clicking on Petri net nodes or their
-    labels, these are highlighted together.
+    labels, these elements are highlighted together.
     |]
   german [iii|
     Beim Bewegen über oder Klicken auf
     Petrinetzknoten oder ihre Beschriftungen
-    werden diese zusammen hervorgehoben.
+    werden diese Elemente zusammen hervorgehoben.
     |]
 
 matchPetriTask
