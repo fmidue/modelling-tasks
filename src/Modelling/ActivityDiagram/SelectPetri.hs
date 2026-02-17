@@ -474,6 +474,7 @@ selectPetriEvaluation path task n = do
         let drawSetting = (petriDrawConf task)
               { withPlaceNames = True
               , withTransitionNames = True
+              , withSvgHighlighting = True
               }
         image $=<< cacheNet path (mapNet (show . PK.label) correctNet) drawSetting
         pure ()
