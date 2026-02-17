@@ -77,7 +77,6 @@ import Modelling.Auxiliary.Common (
   )
 import Modelling.Auxiliary.Output (
   addPretext,
-  hoveringInformation,
   )
 import Modelling.PetriNet.Diagram (cacheNet, isNetDrawable)
 import Modelling.PetriNet.Types (
@@ -129,6 +128,7 @@ import GHC.Generics (Generic)
 import System.Random.Shuffle (shuffleM)
 import Modelling.ActivityDiagram.MatchPetri (
   MatchPetriSolution (..),
+  hoveringInformation,
   mapTypesToLabels,
   )
 

@@ -83,7 +83,6 @@ import Modelling.Auxiliary.Common (
   )
 import Modelling.Auxiliary.Output (
   addPretext,
-  hoveringInformation,
   )
 import Modelling.PetriNet.Diagram (cacheNet, isNetDrawable)
 import Modelling.PetriNet.Types (
@@ -322,6 +321,22 @@ extractAuxiliaryPetriNodes :: Net p n => p n PetriKey -> [PetriKey]
 extractAuxiliaryPetriNodes petri = filter
   isAuxiliaryPetriNode
   $ M.keys $ Petri.nodes petri
+
+hoveringInformation :: OutputCapable m => Bool -> LangM m
+hoveringInformation isCollapsed = collapsed isCollapsed (translations $ do
+  english "Note on hovering"
+  german "Anmerkung zum Hovern"
+  ) $ translate $ do
+  english [iii|
+    When hovering over or clicking on nodes / edges or their
+    labels, the respective diagram elements that belong together
+    are highlighted within in the same diagram.
+    |]
+  german [iii|
+    Beim Bewegen über oder Klicken auf
+    Knoten / Kanten bzw. ihre Beschriftungen
+    werden die jeweils zusammengehörenden Diagrammelemente im gleichen Diagramm hervorgehoben.
+    |]
 
 matchPetriTask
   :: (
