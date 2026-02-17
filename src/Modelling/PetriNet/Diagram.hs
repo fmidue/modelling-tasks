@@ -90,7 +90,7 @@ cacheNet
 cacheNet path pl drawSettings@DrawSettings {..} =
   cache path ext prefix pl $ \pl' -> do
     dia <- drawNet pl' drawSettings False
-    disableHover <$> renderDiagram dia
+    conditionallyDisableHover <$> renderDiagram dia
   where
     prefix =
       "petri-"
@@ -107,7 +107,7 @@ cacheNet path pl drawSettings@DrawSettings {..} =
       ++ short withSvgHighlighting
       ++ short withGraphvizCommand
       ++ ".svg"
-    disableHover = if withSvgHighlighting
+    conditionallyDisableHover = if withSvgHighlighting
       then id
       else encodeUtf8 . replace (pack "<svg") (pack "<svg class=\"no-highlights\"") . decodeUtf8Lenient
 
