@@ -23,7 +23,8 @@ module Modelling.ActivityDiagram.MatchPetri (
   matchPetriSyntax,
   matchPetriEvaluation,
   matchPetri,
-  defaultMatchPetriInstance
+  defaultMatchPetriInstance,
+  hoveringInformationOnlyPetri,
 ) where
 
 import qualified Data.Map as M (empty, fromList, keys)
@@ -95,6 +96,7 @@ import Modelling.PetriNet.Types (
   )
 
 import Control.Applicative (Alternative ((<|>)))
+import Control.Monad (when)
 import Control.Monad.Catch              (MonadCatch, MonadThrow, throwM)
 import Control.Monad.Extra              (firstJustM)
 import Control.Monad.Trans.Class (lift)
@@ -106,6 +108,7 @@ import Control.OutputCapable.Blocks (
   Rated,
   OutputCapable,
   ($=<<),
+  collapsed,
   english,
   extra,
   german,
@@ -197,10 +200,12 @@ checkMatchPetriConfig' MatchPetriConfig {
     countOfPetriNodesBounds,
     maxInstances,
     petriLayout,
+    petriSvgHighlighting,
     auxiliaryPetriNodeAbsent,
     presenceOfSinkTransitionsForFinals,
     withActivityFinalInForkBlocks
-  } = validatePetriConfig
+  } = (if petriSvgHighlighting then Nothing else Just "petriSvgHighlighting must be enabled for this task.")
+    <|> validatePetriConfig
         adConfig
         countOfPetriNodesBounds
         maxInstances
@@ -319,6 +324,21 @@ extractAuxiliaryPetriNodes petri = filter
   isAuxiliaryPetriNode
   $ M.keys $ Petri.nodes petri
 
+hoveringInformationOnlyPetri :: OutputCapable m => Bool -> LangM m
+hoveringInformationOnlyPetri isCollapsed = collapsed isCollapsed (translations $ do
+  english "Note on hovering"
+  german "Anmerkung zum Hovern"
+  ) $ translate $ do
+  english [iii|
+    When hovering over or clicking on Petri net nodes or their
+    labels, these elements are highlighted together.
+    |]
+  german [iii|
+    Beim Bewegen über oder Klicken auf
+    Petrinetzknoten oder ihre Beschriftungen
+    werden diese Elemente zusammen hervorgehoben.
+    |]
+
 matchPetriTask
   :: (
     MonadCache m,
@@ -378,6 +398,8 @@ matchPetriTask path task = do
         und kein Petrinetzknoten entspricht einem Flussende.
         |]
     pure ()
+
+  when (withSvgHighlighting drawSetting) $ hoveringInformationOnlyPetri True
 
   extra $ addText task
 

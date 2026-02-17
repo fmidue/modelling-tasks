@@ -1,3 +1,5 @@
 ---
 - arguments: [--cpp-simple]
 - ignore: {name: Redundant pure}
+- warn: {lhs: Nothing <|> x, rhs: x}
+- warn: {lhs: Just x <|> y, rhs: Just x}

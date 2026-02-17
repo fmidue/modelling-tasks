@@ -128,6 +128,7 @@ import GHC.Generics (Generic)
 import System.Random.Shuffle (shuffleM)
 import Modelling.ActivityDiagram.MatchPetri (
   MatchPetriSolution (..),
+  hoveringInformationOnlyPetri,
   mapTypesToLabels,
   )
 
@@ -183,7 +184,7 @@ defaultSelectPetriConfig = SelectPetriConfig {
   hideBranchConditions = False,
   hidePetriNodeLabels = False,
   petriLayout = [Dot],
-  petriSvgHighlighting = True,
+  petriSvgHighlighting = False,
   numberOfWrongAnswers = 2,
   numberOfModifications = 3,
   modifyAtMid = True,
@@ -205,12 +206,14 @@ checkSelectPetriConfig' SelectPetriConfig {
     countOfPetriNodesBounds,
     maxInstances,
     petriLayout,
+    petriSvgHighlighting,
     numberOfWrongAnswers,
     numberOfModifications,
     auxiliaryPetriNodeAbsent,
     presenceOfSinkTransitionsForFinals,
     withActivityFinalInForkBlocks
   } = validateSelectPetriSpecific numberOfWrongAnswers numberOfModifications
+    <|> (if petriSvgHighlighting then Just "petriSvgHighlighting is not really helpful for this task, so currently discouraged" else Nothing)
     <|> validatePetriConfig
           adConfig
           countOfPetriNodesBounds
@@ -400,6 +403,8 @@ Bitte geben Sie Ihre Antwort als Zahl an, welche das passende Petrinetz repräse
       german  [i|bedeuten, dass Petrinetz 2 das passende Petrinetz ist.|]
     pure ()
 
+  when (withSvgHighlighting drawSetting) $ hoveringInformationOnlyPetri True
+
   extra $ addText task
 
   pure ()
@@ -469,6 +474,7 @@ selectPetriEvaluation path task n = do
         let drawSetting = (petriDrawConf task)
               { withPlaceNames = True
               , withTransitionNames = True
+              , withSvgHighlighting = True
               }
         image $=<< cacheNet path (mapNet (show . PK.label) correctNet) drawSetting
         pure ()

@@ -70,9 +70,6 @@ import Capabilities.Cache               (MonadCache)
 import Capabilities.Diagrams            (MonadDiagrams)
 import Capabilities.Graphviz            (MonadGraphviz)
 import Data.Data                        (Data)
-import Modelling.Auxiliary.Output (
-  hoveringInformation,
-  )
 import Modelling.PetriNet.Reach.Draw    (drawToFile, isPetriDrawable)
 import Modelling.PetriNet.Reach.Filter (
   FilterConfig (..),
@@ -196,7 +193,7 @@ reachTask showInputHelp path inst = do
     (Just g)
   where
     n = petriNet (netGoal inst)
-    drawFileWithSettings = drawToFile (not $ showPlaceNames inst) path (drawUsing (netGoal inst))
+    drawFileWithSettings = drawToFile (not $ showPlaceNames inst) False path (drawUsing (netGoal inst))
 
 reportReachFor
   :: OutputCapable m
@@ -289,7 +286,6 @@ reportReachFor showInputHelp img noLonger lengthHint minLength showMinLengthHint
           english "Hint on solution length"
           german "Hinweis zur Lösungslänge"
   unless (null hints) $ collapsed True titleText $ sequenceA_ hints
-  hoveringInformation True
   pure ()
 
 reachInitial :: ReachInstance s Transition -> TransitionsList
