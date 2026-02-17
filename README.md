@@ -36,7 +36,7 @@ stack ghci --stack-yaml=stack-examples.yaml  --package=autotool-capabilities-io-
 ```
 
 ```haskell
-:m + Capabilities.Alloy.IO Capabilities.Cache.IO Capabilities.Diagrams.IO Capabilities.Graphviz.IO Capabilities.LatexSvg.IO Capabilities.PlantUml.IO Capabilities.WriteFile.IO
+:m + Capabilities.Alloy.IO Capabilities.Cache.IO Capabilities.Diagrams.IO Capabilities.Graphviz.IO Capabilities.LatexSvg.IO Capabilities.PlantUml.IO
 :m + Control.OutputCapable.Blocks Control.OutputCapable.Blocks.Generic
 inst <- nameCdErrorGenerate defaultNameCdErrorConfig 0 0
 runLangMReport (return ()) (>>) (nameCdErrorTask True "/tmp/" inst) >>= \(Just (), x) -> (x English :: IO ())
