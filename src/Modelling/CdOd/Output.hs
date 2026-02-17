@@ -4,7 +4,6 @@ module Modelling.CdOd.Output (
   cacheCd,
   cacheOd,
   drawCd,
-  drawOdFromInstance,
   drawOd,
   ) where
 
@@ -32,7 +31,6 @@ import Modelling.Auxiliary.Diagrams (
   veeArrow,
   )
 import Modelling.CdOd.Auxiliary.Util (
-  alloyInstanceToOd,
   emptyArr,
   underlinedLabel,
   )
@@ -49,19 +47,13 @@ import Modelling.CdOd.Types (
   Od,
   OmittedDefaultMultiplicities (..),
   Relationship (..),
-  anonymiseObjects,
   calculateThickAnyRelationships,
   rangeWithDefault,
   )
 
 import Control.Lens                     ((.~))
 import Control.Monad                    (guard)
-import Control.Monad.Catch              (MonadCatch, MonadThrow)
-import Control.Monad.Random (
-  RandT,
-  RandomGen,
-  )
-import Control.Monad.Trans              (MonadTrans(lift))
+import Control.Monad.Catch              (MonadThrow)
 import Data.Bifunctor                   (Bifunctor (second))
 import Data.ByteString                  (ByteString)
 import Data.Digest.Pure.SHA             (sha1, showDigest)
@@ -87,7 +79,6 @@ import Data.GraphViz.Attributes.Complete (Attribute (..), DPoint (..), Label)
 import Data.Function                    ((&))
 import Data.List                        (elemIndex)
 import Data.Maybe                       (fromJust, fromMaybe, maybeToList)
-import Data.Ratio                       ((%))
 import Data.Tuple.Extra                 (both)
 import Diagrams.Align                   (center)
 import Diagrams.Angle                   ((@@), cosA, deg, halfTurn)
@@ -119,7 +110,6 @@ import Diagrams.TwoD.Arrowheads         (lineTail)
 import Diagrams.TwoD.Attributes         (fc, lc)
 import Diagrams.Util                    ((#), with)
 import Graphics.SVGFonts.ReadFont       (PreparedFont)
-import Language.Alloy.Call              (AlloyInstance)
 
 relationshipArrow
   :: CdDrawSettings
@@ -348,45 +338,6 @@ drawClass font l (P p) = translate p
   # snugCenterXY
   # lineWidth 0.6
   # svgClass "label"
-
-{-|
-Parses an Alloy object diagram instance, draws it and saves it to a file.
-(the path where it has been stored is returned)
--}
-drawOdFromInstance
-  :: (MonadCatch m, MonadDiagrams m, MonadGraphviz m, MonadCache m, RandomGen g)
-  => AlloyInstance
-  -- ^ the Alloy object diagram instance
-  -> Maybe [String]
-  -- ^ all possible object names, for @ExtendsAnd FieldPlacement@
-  --
-  -- see 'alloyInstanceToOd' for more details.
-  -> [String]
-  -- ^ possible link names
-  -> Maybe Rational
-  -- ^ ratio of anonymous objects
-  -> DirType
-  -- ^ direction of links
-  -> Bool
-  -- ^ whether to print link names
-  -> FilePath
-  -- ^ where to store the object diagram file
-  -> String
-  -- ^ the file name prefix
-  -> RandT g m FilePath
-drawOdFromInstance
-  alloyInstance
-  possibleClassNames
-  possibleLinkNames
-  anonymous
-  direction
-  printNames
-  path
-  prefix
-  = do
-  g <- lift $ alloyInstanceToOd possibleClassNames possibleLinkNames alloyInstance
-  od <- anonymiseObjects (fromMaybe (1 % 3) anonymous) g
-  lift $ cache path ".svg" (prefix ++ "-") od $ const $ drawOd od direction printNames
 
 cacheOd
   :: (MonadCache m, MonadDiagrams m, MonadGraphviz m, MonadThrow m)

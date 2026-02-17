@@ -6,7 +6,8 @@ import qualified Language.Alloy.Call              as Alloy (getInstances)
 
 import Capabilities.Diagrams.IO         ()
 import Capabilities.Graphviz.IO         ()
-import Capabilities.Cache.IO            ()
+import Capabilities.WriteFile.IO        ()
+import Modelling.CdOd.Auxiliary.Util    (alloyInstanceToOd)
 import Modelling.CdOd.CD2Alloy.Transform (
   LinguisticReuse (None),
   Parts (..),
@@ -15,7 +16,7 @@ import Modelling.CdOd.CD2Alloy.Transform (
   mergeParts,
   transform,
   )
-import Modelling.CdOd.Output            (drawCd, drawOdFromInstance)
+import Modelling.CdOd.Output            (drawCd, drawOd)
 import Modelling.CdOd.Types (
   AnyCd,
   Cd,
@@ -24,14 +25,14 @@ import Modelling.CdOd.Types (
   ObjectConfig (objectLimits),
   ObjectProperties (..),
   Relationship (..),
+  anonymiseObjects,
   defaultCdDrawSettings,
   fromClassDiagram,
   maxFiveObjects,
   relationshipName,
   )
 
-import Control.Monad.Random             (RandT, RandomGen, evalRandT, getStdGen)
-import Control.Monad.Trans.Class        (MonadTrans (lift))
+import Control.Monad.Random             (RandomGen, evalRandT, getStdGen)
 import Data.Foldable                    (toList)
 import Data.GraphViz                    (DirType (..))
 import Data.Maybe                       (mapMaybe)
@@ -228,20 +229,17 @@ drawCdAndOdsFor is c cds cmd = do
   ods <- Alloy.getInstances is parts'
   g <- getStdGen
   let possibleLinks = toList allRelationshipNames
-  flip evalRandT g $
-    mapM_ (\(od, i) -> drawOd possibleLinks od i >>= lift . putStrLn)
+  mapM_ (\(od, i) -> drawOdToFile possibleLinks od i g >>= putStrLn)
     $ zip (maybe id (take . fromInteger) is ods) [1..]
   where
-    drawOd :: RandomGen g => [String] -> AlloyInstance -> Int -> RandT g IO FilePath
-    drawOd allRelationshipNames od i = drawOdFromInstance
-      od
-      Nothing
-      allRelationshipNames
-      Nothing
-      Back
-      True
-      "./"
-      (c ++ '-' : shorten cmd ++ "-od" ++ show i)
+    drawOdToFile :: RandomGen g => [String] -> AlloyInstance -> Int -> g -> IO FilePath
+    drawOdToFile allRelationshipNames inst i g = do
+      od <- alloyInstanceToOd Nothing allRelationshipNames inst
+      od' <- flip evalRandT g $ anonymiseObjects (1 % 3) od
+      renderedOd <- drawOd od' Back True
+      let path = c ++ '-' : shorten cmd ++ "-od" ++ show i ++ ".svg"
+      BS.writeFile path renderedOd
+      pure path
     drawCd' :: AnyCd -> Int -> IO String
     drawCd' cd i = do
       renderedCd <- drawCd defaultCdDrawSettings mempty cd
