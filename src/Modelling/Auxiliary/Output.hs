@@ -46,7 +46,7 @@ hoveringInformation isCollapsed = collapsed isCollapsed (translations $ do
     |]
   german [iii|
     Beim Bewegen über oder Klicken auf
-    Knoten / Kanten bzw. ihre Beschriftungen
+    Knoten / Kanten oder ihre Beschriftungen
     werden die jeweils zusammengehörenden Diagrammelemente hervorgehoben.
     |]
 
