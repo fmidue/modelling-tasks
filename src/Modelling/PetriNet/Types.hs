@@ -915,7 +915,7 @@ data DrawSettings = DrawSettings {
   with1Weights         :: Bool,
   withGraphvizCommand  :: GraphvizCommand
   }
-  deriving (Eq, Generic, Hashable, Read, Reader, Show, ToDoc)
+  deriving (Data, Eq, Generic, Hashable, Read, Reader, Show, ToDoc)
 
 type Drawable n = (n, DrawSettings)
 
