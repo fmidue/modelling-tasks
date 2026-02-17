@@ -150,7 +150,7 @@ relationshipArrow CdDrawSettings {..} marking isThick =
             $ limits compositionPart
           ]
         ++ concat [maybeToList marking | isThick]
-        ++ [toLabel compositionName | printNames]
+        ++ [toLabel compositionName]
       Aggregation {..} -> [
           arrowFrom oDiamond,
           edgeEnds Back,
@@ -162,7 +162,7 @@ relationshipArrow CdDrawSettings {..} marking isThick =
             $ limits aggregationPart
           ]
         ++ concat [maybeToList marking | isThick]
-        ++ [toLabel aggregationName | printNames]
+        ++ [toLabel aggregationName]
       Association {..} -> associationArrow ++ [
           TailLabel $ multiplicity
             (associationOmittedDefaultMultiplicity omittedDefaults)
@@ -172,7 +172,7 @@ relationshipArrow CdDrawSettings {..} marking isThick =
             $ limits associationTo
           ]
         ++ concat [maybeToList marking | isThick]
-        ++ [toLabel associationName | printNames]
+        ++ [toLabel associationName]
     associationArrow
       | printNavigations = [arrowTo vee, ArrowSize 0.4]
       | otherwise        = [ArrowHead noArrow]
