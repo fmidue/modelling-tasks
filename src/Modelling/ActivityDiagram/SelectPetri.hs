@@ -403,7 +403,7 @@ Bitte geben Sie Ihre Antwort als Zahl an, welche das passende Petrinetz repräse
       german  [i|bedeuten, dass Petrinetz 2 das passende Petrinetz ist.|]
     pure ()
 
-  hoveringInformation True
+  when (withSvgHighlighting drawSetting) $ hoveringInformation True
 
   extra $ addText task
 

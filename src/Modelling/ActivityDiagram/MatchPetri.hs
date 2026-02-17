@@ -96,6 +96,7 @@ import Modelling.PetriNet.Types (
   )
 
 import Control.Applicative (Alternative ((<|>)))
+import Control.Monad (when)
 import Control.Monad.Catch              (MonadCatch, MonadThrow, throwM)
 import Control.Monad.Extra              (firstJustM)
 import Control.Monad.Trans.Class (lift)
@@ -382,7 +383,7 @@ matchPetriTask path task = do
         |]
     pure ()
 
-  hoveringInformation True
+  when (withSvgHighlighting drawSetting) $ hoveringInformation True
 
   extra $ addText task
 
