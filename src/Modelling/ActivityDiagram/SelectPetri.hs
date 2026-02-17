@@ -128,7 +128,7 @@ import GHC.Generics (Generic)
 import System.Random.Shuffle (shuffleM)
 import Modelling.ActivityDiagram.MatchPetri (
   MatchPetriSolution (..),
-  hoveringInformation,
+  hoveringInformationOnlyPetri,
   mapTypesToLabels,
   )
 
@@ -403,7 +403,7 @@ Bitte geben Sie Ihre Antwort als Zahl an, welche das passende Petrinetz repräse
       german  [i|bedeuten, dass Petrinetz 2 das passende Petrinetz ist.|]
     pure ()
 
-  when (withSvgHighlighting drawSetting) $ hoveringInformation True
+  when (withSvgHighlighting drawSetting) $ hoveringInformationOnlyPetri True
 
   extra $ addText task
 

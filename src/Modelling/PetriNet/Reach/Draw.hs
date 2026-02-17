@@ -74,7 +74,8 @@ isPetriDrawable
   -> GraphvizCommand
   -> m Bool
 isPetriDrawable petri cmd =
-  let canDraw withoutPlaceNames = isNetDrawable (toPetriLike show show petri)
+  let theNet = toPetriLike show show petri
+      canDraw withoutPlaceNames = isNetDrawable theNet
         $ reachDrawSettings withoutPlaceNames True cmd
   in canDraw True &&^ canDraw False
 

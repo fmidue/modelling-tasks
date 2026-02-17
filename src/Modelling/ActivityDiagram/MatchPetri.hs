@@ -24,7 +24,7 @@ module Modelling.ActivityDiagram.MatchPetri (
   matchPetriEvaluation,
   matchPetri,
   defaultMatchPetriInstance,
-  hoveringInformation,
+  hoveringInformationOnlyPetri,
 ) where
 
 import qualified Data.Map as M (empty, fromList, keys)
@@ -324,20 +324,19 @@ extractAuxiliaryPetriNodes petri = filter
   isAuxiliaryPetriNode
   $ M.keys $ Petri.nodes petri
 
-hoveringInformation :: OutputCapable m => Bool -> LangM m
-hoveringInformation isCollapsed = collapsed isCollapsed (translations $ do
+hoveringInformationOnlyPetri :: OutputCapable m => Bool -> LangM m
+hoveringInformationOnlyPetri isCollapsed = collapsed isCollapsed (translations $ do
   english "Note on hovering"
   german "Anmerkung zum Hovern"
   ) $ translate $ do
   english [iii|
-    When hovering over or clicking on nodes / edges or their
-    labels, the respective diagram elements that belong together
-    are highlighted within in the same diagram.
+    When hovering over or clicking on Petri net nodes or their
+    labels, these are highlighted together.
     |]
   german [iii|
     Beim Bewegen über oder Klicken auf
-    Knoten / Kanten bzw. ihre Beschriftungen
-    werden die jeweils zusammengehörenden Diagrammelemente im gleichen Diagramm hervorgehoben.
+    Petrinetzknoten oder ihre Beschriftungen
+    werden diese zusammen hervorgehoben.
     |]
 
 matchPetriTask
