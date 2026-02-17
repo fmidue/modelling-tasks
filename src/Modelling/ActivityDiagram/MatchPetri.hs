@@ -399,7 +399,7 @@ matchPetriTask path task = do
         |]
     pure ()
 
-  when (withSvgHighlighting drawSetting) $ hoveringInformation True
+  when (withSvgHighlighting drawSetting) $ hoveringInformationOnlyPetri True
 
   extra $ addText task
 
