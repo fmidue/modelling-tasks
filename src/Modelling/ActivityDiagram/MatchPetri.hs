@@ -23,7 +23,8 @@ module Modelling.ActivityDiagram.MatchPetri (
   matchPetriSyntax,
   matchPetriEvaluation,
   matchPetri,
-  defaultMatchPetriInstance
+  defaultMatchPetriInstance,
+  hoveringInformation,
 ) where
 
 import qualified Data.Map as M (empty, fromList, keys)
@@ -107,6 +108,7 @@ import Control.OutputCapable.Blocks (
   Rated,
   OutputCapable,
   ($=<<),
+  collapsed,
   english,
   extra,
   german,
