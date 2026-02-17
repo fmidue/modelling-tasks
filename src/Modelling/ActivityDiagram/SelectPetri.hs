@@ -213,7 +213,7 @@ checkSelectPetriConfig' SelectPetriConfig {
     presenceOfSinkTransitionsForFinals,
     withActivityFinalInForkBlocks
   } = validateSelectPetriSpecific numberOfWrongAnswers numberOfModifications
-    <|> (if petriSvgHighlighting then Nothing else Just "petriSvgHighlighting must be enabled for this task.")
+    <|> (if petriSvgHighlighting then Just "petriSvgHighlighting must be disabled for this task." else Nothing)
     <|> validatePetriConfig
           adConfig
           countOfPetriNodesBounds
