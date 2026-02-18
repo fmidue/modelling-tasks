@@ -10,6 +10,7 @@ import Capabilities.Alloy.IO            ()
 import Modelling.CdOd.DifferentNames (
   DifferentNamesConfig (objectConfig),
   ShufflingOption (..),
+  SolutionDisplay(..),
   differentNames,
   checkDifferentNamesConfig,
   checkDifferentNamesInstance,
@@ -343,7 +344,7 @@ evaluateDifferentNames coins cs cs' = flip withLang English $ do
           objects = [Object False linkA classA],
           links = map newLink linksToUse
           },
-        showSolution = True,
+        showSolution = TextualMapping,
         mapping = toNameMapping $ BM.fromList cs,
         linkShuffling = ConsecutiveNumbers,
         taskText = defaultDifferentNamesTaskText,

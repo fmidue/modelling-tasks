@@ -13,6 +13,7 @@ module Modelling.CdOd.DifferentNames (
   DifferentNamesInstance (..),
   DifferentNamesTaskTextElement (..),
   ShufflingOption (..),
+  SolutionDisplay(..),
   checkDifferentNamesConfig,
   checkDifferentNamesInstance,
   defaultDifferentNamesConfig,
@@ -207,11 +208,18 @@ data ShufflingOption a =
   | WithAdditionalNames [a]
   deriving (Eq, Generic, Foldable, Functor, Hashable, Read, Reader, Show, ToDoc, Traversable)
 
+data SolutionDisplay
+  = Hidden
+  | TextualMapping
+  | ReprintCD
+  | ReprintOD
+  deriving (Eq, Generic, Hashable, Read, Reader, Show, ToDoc)
+
 data DifferentNamesInstance = DifferentNamesInstance {
     cDiagram :: Cd,
     cdDrawSettings :: !CdDrawSettings,
     oDiagram :: Od,
-    showSolution :: Bool,
+    showSolution :: SolutionDisplay,
     mapping  :: NameMapping,
     linkShuffling :: ShufflingOption String,
     taskText :: !DifferentNamesTaskText,
@@ -269,7 +277,7 @@ data DifferentNamesConfig
     objectConfig     :: ObjectConfig,
     objectProperties :: ObjectProperties,
     omittedDefaultMultiplicities :: OmittedDefaultMultiplicities,
-    printSolution    :: Bool,
+    printSolution    :: SolutionDisplay,
     timeout          :: !(Maybe Int),
     -- | Obvious means here that each individual relationship to link mapping
     -- can be made without considering other relationships.
@@ -332,7 +340,7 @@ defaultDifferentNamesConfig = DifferentNamesConfig {
       usesEveryRelationshipName = Just True
       },
     omittedDefaultMultiplicities = defaultOmittedDefaultMultiplicities,
-    printSolution    = True,
+    printSolution    = TextualMapping,
     withNonTrivialInheritance = Just True,
     withObviousMapping = Nothing,
     maxInstances     = Just 200,
@@ -597,7 +605,7 @@ differentNamesEvaluation task cs = do
       -- Strip periods from the mapping's link labels (second element of each pair)
       ms = M.fromDistinctAscList $ map (,True) $ BM.toAscList $ BM.mapR stripName correctMapping
       solution =
-        if showSolution task
+        if showSolution task == TextualMapping
         then Just . (DefiniteArticle,) . show . mappingShow
           $ differentNamesSolution task
         else Nothing
@@ -700,7 +708,7 @@ defaultDifferentNamesInstance = DifferentNamesInstance {
       Link {linkLabel = "3.", linkFrom = "c1", linkTo = "d1"}
       ]
     },
-  showSolution = True,
+  showSolution = TextualMapping,
   mapping = toNameMapping $ BM.fromList [("x", "2."), ("y", "3."), ("z", "1.")],
   linkShuffling = ConsecutiveNumbers,
   taskText = defaultDifferentNamesTaskText,
