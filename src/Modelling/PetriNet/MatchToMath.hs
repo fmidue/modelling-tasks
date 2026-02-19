@@ -417,7 +417,7 @@ graphToMathTask showInputHelp path task = do
     $ map (second (mathToOutput latex . snd)) $ toList (to task)
   when showInputHelp $ do
    paragraph $ translate $ do
-    english [i|Please state your answer by giving the number of the matching representation only.|]
+    english [i|State your answer by giving the number of the matching representation.|]
     german [i|Geben Sie Ihre Antwort durch Angabe der Nummer der passenden Repräsentation an.|]
    paragraph $ do
     translate $ do
@@ -481,7 +481,7 @@ mathToGraphTask showInputHelp path task = do
   images show snd $=<< to <$> writeDias path task
   when showInputHelp $ do
    paragraph $ translate $ do
-    english [i|Please state your answer by giving the number of the matching diagram only.|]
+    english [i|State your answer by giving the number of the matching diagram.|]
     german [i|Geben Sie Ihre Antwort durch Angabe der Nummer des passenden Diagramms an.|]
    paragraph $ do
     translate $ do
