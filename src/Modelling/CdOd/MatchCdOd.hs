@@ -405,7 +405,7 @@ inputHelpText = [
   Paragraph [
     Translated $ translations $ do
       english [iii|
-        Please state your answer by giving a list of pairs,
+        State your answer by giving a list of pairs,
         each comprising of a class diagram number and object diagram letters.
         \n
         Each pair indicates that the mentioned object diagrams conform to the
@@ -413,9 +413,9 @@ inputHelpText = [
         \n
         For example,#{" "}|]
       german [iii|
-        Bitte geben Sie Ihre Antwort in Form einer Liste von Paaren an,
+        Geben Sie Ihre Antwort in Form einer Liste von Paaren an,
         die jeweils aus einer Klassendiagrammnummer und
-        aus Objektdiagrammbuchstaben bestehen.
+        Objektdiagrammbuchstaben bestehen.
         \n
         Jedes Paar gibt an, dass die genannten Objektdiagramme
         zu dem jeweiligen Klassendiagramm passen.
