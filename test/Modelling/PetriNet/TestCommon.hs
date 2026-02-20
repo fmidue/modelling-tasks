@@ -1,3 +1,4 @@
+{-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {- |
 This module provides common functions for testing Petri net modules.
@@ -33,6 +34,7 @@ import Language.Alloy.Call (
   AlloyInstance,
   )
 import System.Random                    (StdGen, mkStdGen, randomR)
+import qualified System.Random as SR
 
 import Test.Hspec (
   Spec, context, it, shouldBe, shouldReturn,
@@ -64,7 +66,7 @@ alloyTestConfig = defaultAlloyConfig {
 maxJavaInt :: Int
 maxJavaInt = 2 ^ (31 :: Int) - 1
 
-ioPropertyWith :: Int -> (Int -> StdGen -> IO Property) -> Spec
+ioPropertyWith :: Int -> (forall g. SR.RandomGen g => Int -> g -> IO Property) -> Spec
 ioPropertyWith range f = modifyMaxSuccess (`div` 20) $
   it "generates everything required to create the task" $ property $ \g g' ->
     let r = fst $ randomR (0, range - 1) $ getGen g'
@@ -72,7 +74,7 @@ ioPropertyWith range f = modifyMaxSuccess (`div` 20) $
 
 testTaskGeneration
   :: (config -> String)
-  -> (AlloyInstance -> RandT StdGen IO inst)
+  -> (forall g. SR.RandomGen g => AlloyInstance -> RandT g IO inst)
   -> (inst -> Bool)
   -> [config]
   -> Spec
@@ -97,7 +99,7 @@ testTaskGeneration alloyGen taskInst checkInst cs =
         taskInst (is !! r'')
 
 defaultConfigTaskGeneration
-  :: RandT StdGen IO a
+  :: (forall g. SR.RandomGen g => RandT g IO a)
   -> Int
   -> (a -> Bool)
   -> Spec
