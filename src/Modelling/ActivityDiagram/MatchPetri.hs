@@ -445,17 +445,17 @@ matchPetriSyntax task sub = addPretext $ do
     english "Referenced Petri net nodes were provided within task?"
     german "Referenzierte Petrinetzknoten sind Bestandteil der Aufgabenstellung?"
   assertion (petriSolutionContainsPetriNodes sub petriNodeKeys) $ translate $ do
-    english "All petri net nodes are associated to an element in the activity diagram?"
+    english "All Petri net nodes are associated to an element in the activity diagram?"
     german "Alle Petrinetzknoten sind einem Element in dem Aktivitätsdiagramm zugeordnet?"
   assertion (petriSolutionPairwiseDisjunct sub) $ translate $ do
-    english "All petri net nodes are associated uniquely?"
+    english "All Petri net nodes are associated uniquely?"
     german "Alle Petrinetzknoten sind eindeutig zugeordnet?"
   assertion (all (`elem` subNames) adNames) $ translate $ do
     english "All action and object nodes are referenced?"
-    german "Alle Aktions- und Objektknoten wurden referenziert?"
+    german "Alle Aktions- und Objektknoten werden referenziert?"
   assertion (length subNames == length (nubOrd subNames)) $ translate $ do
-    english "All action and object nodes were referenced exactly once?"
-    german "Alle Aktions- und Objektknoten wurden genau einmal referenziert?"
+    english "All action and object nodes are referenced exactly once?"
+    german "Alle Aktions- und Objektknoten werden genau einmal referenziert?"
   pure ()
 
 matchPetriEvaluation
