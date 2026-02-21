@@ -296,7 +296,7 @@ graphToMath
   -> m (MatchInstance (Drawable (p n String)) Math)
 graphToMath config@MathConfig {..} segment seed = evalWithStdGen seed getInstance
   where
-    getInstance :: forall g. RandomGen g => RandT g m (MatchInstance (Drawable (p n String)) Math)
+    getInstance :: RandomGen g => RandT g m (MatchInstance (Drawable (p n String)) Math)
     getInstance = do
       allShuffled <- shuffleM $ allDrawSettings graphConfig
       (petri, m, changes) <- matchToMath config segment
@@ -315,7 +315,7 @@ mathToGraph
   -> m (MatchInstance Math (Drawable (p n String)))
 mathToGraph config@MathConfig {..} segment seed = evalWithStdGen seed getInstance
   where
-    getInstance :: forall g. RandomGen g => RandT g m (MatchInstance Math (Drawable (p n String)))
+    getInstance :: RandomGen g => RandT g m (MatchInstance Math (Drawable (p n String)))
     getInstance = do
       (petri, math, changes) <- matchToMath config segment
       let petriNets = map fst changes
