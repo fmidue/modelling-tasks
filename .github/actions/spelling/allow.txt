@@ -29,6 +29,7 @@ Modellierung
 Multiplizitäten
 NOINLINE
 NTree
+NTypes
 Nachbereich
 Neato
 OVERLAPPABLE
@@ -39,7 +40,6 @@ Petrinetzes
 Petrinetzknoten
 Programmierparadigmen
 QDiagram
-RankNTypes
 Rightarrow
 Sfdp
 Standalone
