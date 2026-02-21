@@ -39,6 +39,7 @@ Petrinetzes
 Petrinetzknoten
 Programmierparadigmen
 QDiagram
+RankNTypes
 Rightarrow
 Sfdp
 Standalone
