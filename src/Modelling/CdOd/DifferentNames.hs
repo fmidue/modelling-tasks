@@ -42,6 +42,7 @@ import qualified Data.Bimap                       as BM (
   mapR,
   member,
   toAscList,
+  twist,
   )
 import qualified Data.Map                         as M (
   difference,
@@ -192,6 +193,7 @@ import Data.Maybe (
   isNothing,
   listToMaybe,
   mapMaybe,
+  fromJust,
   )
 import Data.Ratio                       ((%))
 import qualified Data.Set          as S (
@@ -647,13 +649,28 @@ differentNamesEvaluation path task cs = do
           english ("Please compare with the correctly labeled " ++ enTargetDiagramName ++ " diagram:")
           german ("Vergleichen Sie mit dem korrekt beschrifteten " ++ deTargetDiagramName ++"diagramm:")
 
-        -- TODO: display correctly relabelled diagrams
-        unless reprintOD $ image $=<< cacheCd (cdDrawSettings task) mempty (fromClassDiagram $ cDiagram task) path
-        when reprintOD $ image $=<< cacheOd (oDiagram task) Forward True path
+        unless reprintOD $ image $=<< cacheCd (cdDrawSettings task) mempty (fromClassDiagram $ relabelledCd task) path
+        when reprintOD $ image $=<< cacheOd (relabelledOd task) Forward True path
 
         pure ()
 
     pure ()
+
+relabelledCd :: DifferentNamesInstance -> Cd
+relabelledCd inst@DifferentNamesInstance{..} = fromJust $ renameCd cDiagram
+  where
+    (names, _, _) = classNonInheritanceAndLinkNames inst
+    bmNames  = BM.fromList $ zip names names
+    bmNonInheritances = fromNameMapping mapping
+    renameCd = renameClassesAndRelationships bmNames bmNonInheritances
+
+relabelledOd :: DifferentNamesInstance -> Od
+relabelledOd DifferentNamesInstance{..} = fromJust $ renameOd oDiagram
+  where
+    names = classNames cDiagram
+    keepClassNames = BM.fromList $ zip names names
+    bm = BM.twist $ fromNameMapping mapping
+    renameOd = renameObjectsWithClassesAndLinksInOd keepClassNames bm
 
 differentNamesSolution :: DifferentNamesInstance -> [(Name, Name)]
 differentNamesSolution = BM.toAscList . nameMapping . mapping
