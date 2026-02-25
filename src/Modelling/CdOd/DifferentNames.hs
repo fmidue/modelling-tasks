@@ -44,7 +44,14 @@ import qualified Data.Bimap                       as BM (
   toAscList,
   )
 import qualified Data.Map                         as M (
+  difference,
+  filter,
   fromDistinctAscList,
+  insert,
+  intersection,
+  intersectionWith,
+  null,
+  size,
   )
 
 import Autolib.Hash                     (Hashable)
@@ -127,10 +134,9 @@ import Modelling.Types (
 
 import Control.Applicative              (Alternative ((<|>)))
 import Control.Monad.Catch              (MonadCatch, MonadThrow, throwM)
-import Control.Monad.Extra              (when, whenJust)
+import Control.Monad.Extra              (when, whenJust, unless)
 import Control.Monad.Trans.Class (lift)
 import Control.OutputCapable.Blocks (
-  ArticleToUse (DefiniteArticle),
   ExtraText (..),
   GenericOutputCapable (..),
   LangM,
@@ -142,6 +148,7 @@ import Control.OutputCapable.Blocks (
   extra,
   german,
   multipleChoice,
+  reRefuse,
   translations,
   translate,
   yesNo,
@@ -587,11 +594,19 @@ differentNamesSyntax DifferentNamesInstance {..} cs = addPretext $ do
       $ group $ sort (map fst choicesStripped ++ map snd choicesStripped)
 
 differentNamesEvaluation
-  :: OutputCapable m
-  => DifferentNamesInstance
+  :: (
+    OutputCapable m,
+    Alternative m,
+    MonadCache m,
+    MonadDiagrams m,
+    MonadGraphviz m,
+    MonadThrow m
+    )
+  => FilePath
+  -> DifferentNamesInstance
   -> [(Name, Name)]
   -> Rated m
-differentNamesEvaluation task cs = do
+differentNamesEvaluation path task cs = do
   let csStripped = map (bimap stripName stripName) cs
       correctMapping = nameMapping $ mapping task
       -- Swap answer tuples around if necessary
@@ -603,13 +618,42 @@ differentNamesEvaluation task cs = do
         german "Zuordnungen"
         english "mappings"
       -- Strip periods from the mapping's link labels (second element of each pair)
-      ms = M.fromDistinctAscList $ map (,True) $ BM.toAscList $ BM.mapR stripName correctMapping
-      solution =
-        if showSolution task == TextualMapping
-        then Just . (DefiniteArticle,) . show . mappingShow
-          $ differentNamesSolution task
-        else Nothing
-  multipleChoice what solution ms (map readMapping csStripped)
+      solutionMap = M.fromDistinctAscList $ map (,True) $ BM.toAscList $ BM.mapR stripName correctMapping
+      choices = map readMapping csStripped
+      choicesMap = foldr (`M.insert` True) (M.filter not solutionMap) choices
+      madeUp = M.difference choicesMap solutionMap
+      chosenTrue = M.intersection solutionMap $ M.filter id choicesMap
+      isCorrect = M.null madeUp && and chosenTrue
+      answers = M.intersectionWith (==) solutionMap choicesMap
+      isComplete = and answers && length answers >= M.size solutionMap
+
+      reprintOD = showSolution task == ReprintOD
+      (enTargetDiagramName, deTargetDiagramName) = if reprintOD then ("object", "Objekt") else ("class", "Klassen")
+
+  reRefuse (multipleChoice what Nothing solutionMap choices) $ unless (isCorrect && isComplete || showSolution task == Hidden) $ do
+
+    paragraph $ do
+      translate $ do
+        english "The correct solution is:"
+        german "Die korrekte Lösung ist:"
+      code $ show $ mappingShow $ differentNamesSolution task
+      pure ()
+
+    case showSolution task of
+      Hidden -> pure ()
+      TextualMapping -> pure ()
+      _ -> do
+        paragraph $ translate $ do
+          english ("Please compare with the correctly labeled " ++ enTargetDiagramName ++ " diagram:")
+          german ("Vergleichen Sie mit dem korrekt beschrifteten " ++ deTargetDiagramName ++"diagramm:")
+
+        -- TODO: display correctly relabelled diagrams
+        unless reprintOD $ image $=<< cacheCd (cdDrawSettings task) mempty (fromClassDiagram $ cDiagram task) path
+        when reprintOD $ image $=<< cacheOd (oDiagram task) Forward True path
+
+        pure ()
+
+    pure ()
 
 differentNamesSolution :: DifferentNamesInstance -> [(Name, Name)]
 differentNamesSolution = BM.toAscList . nameMapping . mapping
