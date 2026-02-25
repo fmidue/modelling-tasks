@@ -219,16 +219,16 @@ data ShufflingOption a =
 
 data SolutionDisplay
   = Hidden
-  | TextualMapping
-  | ReprintCD
-  | ReprintOD
+  | ShowMapping
+  | ShowMappingAndReprintCD
+  | ShowMappingAndReprintOD
   deriving (Eq, Generic, Hashable, Read, Reader, Show, ToDoc)
 
 data DifferentNamesInstance = DifferentNamesInstance {
     cDiagram :: Cd,
     cdDrawSettings :: !CdDrawSettings,
     oDiagram :: Od,
-    showSolution :: SolutionDisplay,
+    solutionDisplay :: SolutionDisplay,
     mapping  :: NameMapping,
     linkShuffling :: ShufflingOption String,
     taskText :: !DifferentNamesTaskText,
@@ -349,7 +349,7 @@ defaultDifferentNamesConfig = DifferentNamesConfig {
       usesEveryRelationshipName = Just True
       },
     omittedDefaultMultiplicities = defaultOmittedDefaultMultiplicities,
-    printSolution    = TextualMapping,
+    printSolution    = ShowMapping,
     withNonTrivialInheritance = Just True,
     withObviousMapping = Nothing,
     maxInstances     = Just 200,
@@ -629,10 +629,10 @@ differentNamesEvaluation path task cs = do
       answers = M.intersectionWith (==) solutionMap choicesMap
       isComplete = and answers && length answers >= M.size solutionMap
 
-      reprintOD = showSolution task == ReprintOD
+      reprintOD = solutionDisplay task == ShowMappingAndReprintOD
       (enTargetDiagramName, deTargetDiagramName) = if reprintOD then ("object", "Objekt") else ("class", "Klassen")
 
-  reRefuse (multipleChoice what Nothing solutionMap choices) $ unless (isCorrect && isComplete || showSolution task == Hidden) $ do
+  reRefuse (multipleChoice what Nothing solutionMap choices) $ unless (isCorrect && isComplete || solutionDisplay task == Hidden) $ do
 
     paragraph $ do
       translate $ do
@@ -641,9 +641,9 @@ differentNamesEvaluation path task cs = do
       code $ show $ mappingShow $ differentNamesSolution task
       pure ()
 
-    case showSolution task of
+    case solutionDisplay task of
       Hidden -> pure ()
-      TextualMapping -> pure ()
+      ShowMapping -> pure ()
       _ -> do
         paragraph $ translate $ do
           english ("Please compare with the correctly labeled " ++ enTargetDiagramName ++ " diagram:")
@@ -769,7 +769,7 @@ defaultDifferentNamesInstance = DifferentNamesInstance {
       Link {linkLabel = "3.", linkFrom = "c1", linkTo = "d1"}
       ]
     },
-  showSolution = TextualMapping,
+  solutionDisplay = ShowMappingAndReprintCD,
   mapping = toNameMapping $ BM.fromList [("x", "2."), ("y", "3."), ("z", "1.")],
   linkShuffling = ConsecutiveNumbers,
   taskText = defaultDifferentNamesTaskText,
@@ -834,7 +834,7 @@ getDifferentNamesTask tryNext DifferentNamesConfig {..} cd = do
                 printNavigations = True
                 },
               oDiagram  = od1'',
-              showSolution = printSolution,
+              solutionDisplay = printSolution,
               mapping   = toNameMapping bm',
               linkShuffling = ConsecutiveNumbers,
               taskText = defaultDifferentNamesTaskText,
@@ -906,7 +906,7 @@ instance RandomiseLayout DifferentNamesInstance where
       cDiagram = cd,
       cdDrawSettings = cdDrawSettings,
       oDiagram = od,
-      showSolution = showSolution,
+      solutionDisplay = solutionDisplay,
       mapping = mapping,
       linkShuffling = linkShuffling,
       taskText = taskText,
@@ -941,7 +941,7 @@ renameInstance inst@DifferentNamesInstance {..} names' nonInheritances' linkNs' 
     cDiagram  = cd',
     cdDrawSettings = cdDrawSettings,
     oDiagram  = od',
-    showSolution = showSolution,
+    solutionDisplay = solutionDisplay,
     mapping   = toNameMapping bm',
     linkShuffling = shuffling,
     taskText = taskText,
