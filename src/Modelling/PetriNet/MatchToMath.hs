@@ -33,6 +33,7 @@ module Modelling.PetriNet.MatchToMath (
   mathToGraphEvaluation,
   mathToGraphSyntax,
   mathToGraphTask,
+  mathToOutput,
   petriNetRnd,
   )  where
 
