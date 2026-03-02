@@ -45,14 +45,7 @@ import qualified Data.Bimap                       as BM (
   twist,
   )
 import qualified Data.Map                         as M (
-  difference,
-  filter,
   fromDistinctAscList,
-  insert,
-  intersection,
-  intersectionWith,
-  null,
-  size,
   )
 
 import Autolib.Hash                     (Hashable)
@@ -135,9 +128,10 @@ import Modelling.Types (
 
 import Control.Applicative              (Alternative ((<|>)))
 import Control.Monad.Catch              (MonadCatch, MonadThrow, throwM)
-import Control.Monad.Extra              (when, whenJust, unless)
+import Control.Monad.Extra              (when, whenJust)
 import Control.Monad.Trans.Class (lift)
 import Control.OutputCapable.Blocks (
+  ArticleToUse (DefiniteArticle),
   ExtraText (..),
   GenericOutputCapable (..),
   LangM,
@@ -218,7 +212,7 @@ data ShufflingOption a =
   deriving (Eq, Generic, Foldable, Functor, Hashable, Read, Reader, Show, ToDoc, Traversable)
 
 data SolutionDisplay
-  = Hidden
+  = ShowNothing
   | ShowMapping
   | ShowMappingAndReprintCD
   | ShowMappingAndReprintOD
@@ -622,35 +616,30 @@ differentNamesEvaluation path task cs = do
       -- Strip periods from the mapping's link labels (second element of each pair)
       solutionMap = M.fromDistinctAscList $ map (,True) $ BM.toAscList $ BM.mapR stripName correctMapping
       choices = map readMapping csStripped
-      choicesMap = foldr (`M.insert` True) (M.filter not solutionMap) choices
-      madeUp = M.difference choicesMap solutionMap
-      chosenTrue = M.intersection solutionMap $ M.filter id choicesMap
-      isCorrect = M.null madeUp && and chosenTrue
-      answers = M.intersectionWith (==) solutionMap choicesMap
-      isComplete = and answers && length answers >= M.size solutionMap
+      solution =
+        if solutionDisplay task /= ShowNothing
+        then Just . (DefiniteArticle,) . show . mappingShow
+          $ differentNamesSolution task
+        else Nothing
 
-      reprintOD = solutionDisplay task == ShowMappingAndReprintOD
-      (enTargetDiagramName, deTargetDiagramName) = if reprintOD then ("object", "Objekt") else ("class", "Klassen")
-
-  reRefuse (multipleChoice what Nothing solutionMap choices) $ unless (isCorrect && isComplete || solutionDisplay task == Hidden) $ do
-
-    paragraph $ do
-      translate $ do
-        english "The correct solution is:"
-        german "Die korrekte Lösung ist:"
-      code $ show $ mappingShow $ differentNamesSolution task
-      pure ()
-
+  reRefuse (multipleChoice what solution solutionMap choices) $ do
     case solutionDisplay task of
-      Hidden -> pure ()
+      ShowNothing -> pure ()
       ShowMapping -> pure ()
-      _ -> do
+      ShowMappingAndReprintCD -> do
         paragraph $ translate $ do
-          english ("Please compare with the correctly labeled " ++ enTargetDiagramName ++ " diagram:")
-          german ("Vergleichen Sie mit dem korrekt beschrifteten " ++ deTargetDiagramName ++"diagramm:")
+          english "Please compare with the correctly labeled class diagram:"
+          german "Vergleichen Sie mit dem korrekt beschrifteten Klassendiagramm:"
 
-        unless reprintOD $ image $=<< cacheCd (cdDrawSettings task) mempty (fromClassDiagram $ relabelledCd task) path
-        when reprintOD $ image $=<< cacheOd (relabelledOd task) Forward True path
+        image $=<< cacheCd (cdDrawSettings task) mempty (fromClassDiagram $ relabelledCd task) path
+
+        pure ()
+      ShowMappingAndReprintOD -> do
+        paragraph $ translate $ do
+          english "Please compare with the correctly labeled object diagram:"
+          german "Vergleichen Sie mit dem korrekt beschrifteten Objektdiagramm:"
+
+        image $=<< cacheOd (relabelledOd task) Forward True path
 
         pure ()
 
