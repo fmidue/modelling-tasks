@@ -3,6 +3,7 @@
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE TupleSections #-}
 
 module Modelling.PetriNet.Pick (
@@ -75,7 +76,7 @@ import Control.OutputCapable.Blocks (
   )
 import Control.Monad.Random (
   RandT,
-  StdGen,
+  RandomGen,
   evalRandT,
   mkStdGen
   )
@@ -118,9 +119,9 @@ pickTaskInstance parseSpecial inst = do
 
 pickGenerate
   :: (MonadCatch m, MonadDiagrams m, MonadGraphviz m, Net p n)
-  => (c
+  => (forall g. RandomGen g => c
     -> Int
-    -> RandT StdGen m [(p n String, Maybe a)]
+    -> RandT g m [(p n String, Maybe a)]
     )
   -> (c -> GraphConfig)
   -> (c -> Bool)

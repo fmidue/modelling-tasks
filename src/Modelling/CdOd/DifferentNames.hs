@@ -163,7 +163,6 @@ import Control.Monad.Random (
   mkStdGen,
   )
 import Control.Monad.Trans.Random       (RandT)
-import System.Random.Internal           (StdGen)
 import Control.Monad.Trans.Except       (runExceptT)
 import Data.Bifunctor                   (Bifunctor (bimap, first))
 import Data.Bitraversable               (bitraverse)
@@ -681,7 +680,7 @@ differentNames config segment seed = do
       (timeout config)
     tryGettingValidInstanceFor is
   where
-    tryGettingValidInstanceFor :: [AlloyInstance] -> RandT StdGen m DifferentNamesInstance
+    tryGettingValidInstanceFor :: RandomGen g => [AlloyInstance] -> RandT g m DifferentNamesInstance
     tryGettingValidInstanceFor []               = lift $ throwM NoInstanceAvailable
     tryGettingValidInstanceFor (inst:instances) = do
       cd <- lift (instanceToCd inst) >>= shuffleClassAndConnectionOrder

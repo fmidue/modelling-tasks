@@ -390,9 +390,9 @@ selectPetriTask path task = do
       (\c -> cacheNet path (mapNet (show . PK.label) c) drawSetting)
   paragraph $ translate $ do
     english [i|Which of these Petri nets is the translation of the given activity diagram?
-Please state your answer by giving a number indicating the matching Petri net.|]
+State your answer by giving a number indicating the matching Petri net.|]
     german [i|Welches dieser Petrinetze ist die Übersetzung des gegebenen Aktivitätsdiagramms?
-Bitte geben Sie Ihre Antwort als Zahl an, welche das passende Petrinetz repräsentiert.|]
+Geben Sie Ihre Antwort als Zahl an, welche das passende Petrinetz repräsentiert.|]
   paragraph $ do
     translate $ do
       english [i|For example,|]
