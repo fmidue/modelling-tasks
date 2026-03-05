@@ -1,7 +1,9 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE TupleSections #-}
 module Modelling.CdOd.Output (
   cacheCd,
+  cacheCd',
   cacheOd,
   drawCd,
   drawOdFromInstance,
@@ -53,9 +55,10 @@ import Modelling.CdOd.Types (
   anonymiseObjects,
   calculateThickAnyRelationships,
   rangeWithDefault,
+  anyRelationshipName,
   )
 
-import Control.Lens                     ((.~))
+import Control.Lens                     ((.~), Bifunctor (bimap))
 import Control.Monad                    (guard)
 import Control.Monad.Catch              (MonadCatch, MonadThrow)
 import Control.Monad.Random (
@@ -87,7 +90,7 @@ import Data.GraphViz (
 import Data.GraphViz.Attributes.Complete (Attribute (..), DPoint (..), Label)
 import Data.Function                    ((&))
 import Data.List                        (elemIndex)
-import Data.Maybe                       (fromJust, fromMaybe, maybeToList)
+import Data.Maybe                       (fromJust, fromMaybe, maybeToList, mapMaybe, isJust)
 import Data.Ratio                       ((%))
 import Data.Tuple.Extra                 (both)
 import Diagrams.Align                   (center)
@@ -187,8 +190,18 @@ cacheCd
   -> AnyCd
   -> FilePath
   -> m FilePath
-cacheCd config@CdDrawSettings{..} marking syntax path =
-  cache path ext "cd" syntax $ drawCd config marking
+cacheCd config marking = cacheCd' config marking Nothing
+
+cacheCd'
+  :: (MonadCache m, MonadDiagrams m, MonadGraphviz m)
+  => CdDrawSettings
+  -> Style V2 Double
+  -> Maybe Int
+  -> AnyCd
+  -> FilePath
+  -> m FilePath
+cacheCd' config@CdDrawSettings{..} marking mLabelLength syntax path =
+  cache path ext "cd" syntax $ drawCd' config marking mLabelLength
   where
     ext = short printNavigations
       ++ short printNames
@@ -201,19 +214,33 @@ drawCd
   -> Style V2 Double
   -> AnyCd
   -> m ByteString
-drawCd config marking cd@AnyClassDiagram {..} = do
+drawCd config marking = drawCd' config marking Nothing
+
+drawCd'
+  :: (MonadDiagrams m, MonadGraphviz m)
+  => CdDrawSettings
+  -> Style V2 Double
+  -> Maybe Int
+  -> AnyCd
+  -> m ByteString
+drawCd' config marking mLabelLength cd@AnyClassDiagram {..} = do
   let theNodes = anyClassNames
   let toIndexed xs = [(
           fromJust (elemIndex from theNodes),
           fromJust (elemIndex to theNodes),
           x
           )
-        | x@(_, r) <- xs
+        | x@(_, (_, r)) <- xs
         , let (from, to) = either getFromToInvalid getFromTo r
         ]
-  let thickenedRelationships = toIndexed $ calculateThickAnyRelationships cd
-  let graph = mkGraph (zip [0..] theNodes) thickenedRelationships
-        :: Gr String (Bool, AnyRelationship String String)
+  let thickRelationsWithIds = zip [0 :: Int ..] $ calculateThickAnyRelationships cd
+      originalNames = mapMaybe (\(i,(_,r)) -> (i,) <$> anyRelationshipName r) thickRelationsWithIds
+      renamedThickRelationsWithIds = thickRelationsWithIds
+
+      renameAnyRelationship f  = if isJust mLabelLength then bimap (fmap f) (fmap f) else id
+      renamedIndexedThickRelations = toIndexed $ map (\(i,(b,r)) -> (i,(b,renameAnyRelationship (const $ replicate (fromJust mLabelLength) 'X') r))) renamedThickRelationsWithIds
+  let graph = mkGraph (zip [0..] theNodes) renamedIndexedThickRelations
+        :: Gr String (Int, (Bool, AnyRelationship String String))
   let params = nonClusteredParams {
         fmtNode = \(_,l) -> [
           toLabel l,
@@ -223,7 +250,7 @@ drawCd config marking cd@AnyClassDiagram {..} = do
           Height 0,
           FontSize 16
           ],
-        fmtEdge = \(_,_,(isThick, r)) -> FontSize 16
+        fmtEdge = \(_,_,(_,(isThick, r))) -> FontSize 16
           : relationshipArrow config Nothing isThick r
         }
   errorWithoutGraphviz
@@ -235,7 +262,7 @@ drawCd config marking cd@AnyClassDiagram {..} = do
         mempty
         nodes
       graphEdges = foldr
-        (\(s, t, (isThick, r), p) g -> g # drawEdge font s t isThick r p)
+        (\(s, t, (i, (isThick, r)), p) g -> g # drawEdge font s t isThick (renameAnyRelationship (const $ fromJust $ lookup i originalNames) r) p)
         graphNodes
         edges
   renderDiagram $ frame 10 graphEdges

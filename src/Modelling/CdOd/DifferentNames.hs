@@ -34,6 +34,7 @@ module Modelling.CdOd.DifferentNames (
 
 import qualified Data.Bimap                       as BM (
   filter,
+  fold,
   fromList,
   keys,
   keysR,
@@ -81,7 +82,7 @@ import Modelling.CdOd.CD2Alloy.Transform (
   transform,
   )
 import Modelling.CdOd.Generate          (generateCds, instanceToCd)
-import Modelling.CdOd.Output            (cacheCd, cacheOd)
+import Modelling.CdOd.Output            (cacheCd', cacheOd)
 import Modelling.CdOd.Types (
   Cd,
   CdDrawSettings (..),
@@ -440,9 +441,9 @@ toTaskSpecificText
   -> DifferentNamesInstance
   -> DifferentNamesTaskTextElement
   -> LangM m
-toTaskSpecificText path DifferentNamesInstance {..} = \case
+toTaskSpecificText path inst@DifferentNamesInstance {..} = \case
   GivenCd ->
-    paragraph $ image $=<< cacheCd cdDrawSettings mempty cd path
+    paragraph $ image $=<< cacheCd' cdDrawSettings mempty (Just $ maxLabelLength inst) cd path
   GivenOd -> paragraph $ image $=<<
     cacheOd oDiagram Forward True path
   MappingAdvice -> mappingAdvice hasGivenCd
@@ -519,6 +520,8 @@ inputHelpText hasGivenCd =
     Code . uniform . show $ mappingShow differentNamesInitial
     ]
 
+maxLabelLength :: DifferentNamesInstance -> Int
+maxLabelLength inst = BM.fold (\k v acc -> maximum [length k, length v, acc]) 0 $ fromNameMapping $ mapping inst
 
 differentNamesInitial :: [(Name, Name)]
 differentNamesInitial = map (bimap Name Name) [("x", "1"), ("y", "2")]
@@ -630,7 +633,7 @@ differentNamesEvaluation path task cs = do
           english "Please compare with the correctly labeled class diagram:"
           german "Vergleichen Sie mit dem korrekt beschrifteten Klassendiagramm:"
 
-        image $=<< cacheCd (cdDrawSettings task) mempty (fromClassDiagram $ relabelledCd task) path
+        image $=<< cacheCd' (cdDrawSettings task) mempty (Just $ maxLabelLength task) (fromClassDiagram $ relabelledCd task) path
 
         pure ()
       ShowMappingAndReprintOD -> do
