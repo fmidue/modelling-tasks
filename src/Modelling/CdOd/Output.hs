@@ -240,7 +240,8 @@ drawCd' config marking mLabelLength cd@AnyClassDiagram {..} = do
       renamedThickRelationsWithIds = thickRelationsWithIds
 
       renameAnyRelationship f  = if isJust mLabelLength then bimap (fmap f) (fmap f) else id
-      renamedIndexedThickRelations = toIndexed $ map (\(i,(b,r)) -> (i,(b,renameAnyRelationship (const $ replicate (fromJust mLabelLength) 'X') r))) renamedThickRelationsWithIds
+      renameThickRelationships = map (\(i,(b,r)) -> (i,(b,renameAnyRelationship (const $ replicate (fromJust mLabelLength) 'X') r)))
+      renamedIndexedThickRelations = toIndexed $ renameThickRelationships renamedThickRelationsWithIds
   let graph = mkGraph (zip [0..] theNodes) renamedIndexedThickRelations
         :: Gr String (Int, (Bool, AnyRelationship String String))
   let params = nonClusteredParams {
