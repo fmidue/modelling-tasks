@@ -366,8 +366,8 @@ evaluateAndCheckDifferentNames check coins cs cs' = do
       cs'' = map (bimap Name Name) cs'
   passedSyntaxCheck <- checkResult (Just () ==) $ differentNamesSyntax i cs''
   if passedSyntaxCheck
-    then pure False
-    else checkResult check (differentNamesEvaluation "/tmp/" i cs'')
+    then checkResult check (differentNamesEvaluation "/tmp/" i cs'')
+    else pure False
   where
     linkA = "a"
     classA = "A"
