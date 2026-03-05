@@ -82,7 +82,7 @@ import Modelling.CdOd.CD2Alloy.Transform (
   transform,
   )
 import Modelling.CdOd.Generate          (generateCds, instanceToCd)
-import Modelling.CdOd.Output            (cacheCd', cacheOd)
+import Modelling.CdOd.Output            (cacheCd', cacheOd')
 import Modelling.CdOd.Types (
   Cd,
   CdDrawSettings (..),
@@ -443,15 +443,16 @@ toTaskSpecificText
   -> LangM m
 toTaskSpecificText path inst@DifferentNamesInstance {..} = \case
   GivenCd ->
-    paragraph $ image $=<< cacheCd' cdDrawSettings mempty (Just $ maxLabelLength inst) cd path
+    paragraph $ image $=<< cacheCd' cdDrawSettings mempty mLabelLength cd path
   GivenOd -> paragraph $ image $=<<
-    cacheOd oDiagram Forward True path
+    cacheOd' oDiagram mLabelLength Forward True path
   MappingAdvice -> mappingAdvice hasGivenCd
   DirectionsAdvice -> directionsAdvice False
   SimplifiedInformation -> simplifiedInformation True
   where
     cd = fromClassDiagram cDiagram
     hasGivenCd = Special GivenCd `elem` taskText
+    mLabelLength = Just $ maxLabelLength inst
 
 defaultDifferentNamesTaskText :: DifferentNamesTaskText
 defaultDifferentNamesTaskText = [
@@ -625,6 +626,7 @@ differentNamesEvaluation path task cs = do
         else Nothing
 
   reRefuse (multipleChoice what solution solutionMap choices) $ do
+    let mLabelLength = Just $ maxLabelLength task
     case solutionDisplay task of
       ShowNothing -> pure ()
       ShowMapping -> pure ()
@@ -633,7 +635,7 @@ differentNamesEvaluation path task cs = do
           english "Please compare with the correctly labeled class diagram:"
           german "Vergleichen Sie mit dem korrekt beschrifteten Klassendiagramm:"
 
-        image $=<< cacheCd' (cdDrawSettings task) mempty (Just $ maxLabelLength task) (fromClassDiagram $ relabelledCd task) path
+        image $=<< cacheCd' (cdDrawSettings task) mempty mLabelLength (fromClassDiagram $ relabelledCd task) path
 
         pure ()
       ShowMappingAndReprintOD -> do
@@ -641,7 +643,7 @@ differentNamesEvaluation path task cs = do
           english "Please compare with the correctly labeled object diagram:"
           german "Vergleichen Sie mit dem korrekt beschrifteten Objektdiagramm:"
 
-        image $=<< cacheOd (relabelledOd task) Forward True path
+        image $=<< cacheOd' (relabelledOd task) mLabelLength Forward True path
 
         pure ()
 

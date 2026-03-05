@@ -5,6 +5,7 @@ module Modelling.CdOd.Output (
   cacheCd,
   cacheCd',
   cacheOd,
+  cacheOd',
   drawCd,
   drawOdFromInstance,
   drawOd,
@@ -423,9 +424,19 @@ cacheOd
   -> Bool
   -> FilePath
   -> m FilePath
-cacheOd od direction printNames path =
+cacheOd od = cacheOd' od Nothing
+
+cacheOd'
+  :: (MonadCache m, MonadDiagrams m, MonadGraphviz m, MonadThrow m)
+  => Od
+  -> Maybe Int
+  -> DirType
+  -> Bool
+  -> FilePath
+  -> m FilePath
+cacheOd' od mLabelLength direction printNames path =
   cache path ext "od" od $ \od' ->
-    drawOd od' direction printNames
+    drawOd' od' mLabelLength direction printNames
   where
     ext = short printNames
       ++ short direction
@@ -437,7 +448,16 @@ drawOd
   -> DirType
   -> Bool
   -> m ByteString
-drawOd ObjectDiagram {..} direction printNames = do
+drawOd od = drawOd' od Nothing
+
+drawOd'
+  :: (MonadDiagrams m, MonadGraphviz m, MonadThrow m)
+  => Od
+  -> Maybe Int
+  -> DirType
+  -> Bool
+  -> m ByteString
+drawOd' ObjectDiagram {..} mLabelLength direction printNames = do
   let numberedObjects = zip [0..] objects
       bmObjects = BM.fromList $ map (second objectName) numberedObjects
       toEdge l@Link {..} = (,,)
@@ -445,7 +465,11 @@ drawOd ObjectDiagram {..} direction printNames = do
         <*> BM.lookupR linkTo bmObjects
         <*> pure l
   linkEdges <- mapM toEdge links
-  let graph = mkGraph numberedObjects linkEdges
+  let linkEdges' = zipWith (\i (f,t,l) -> (f,t,(i,l))) [0 :: Int ..] linkEdges
+      originalNames = map (\(_,_,(i,l)) -> (i, linkLabel l)) linkEdges'
+      renameLink f = if isJust mLabelLength then second f else id
+      renamedLinkEdges = map (\(f,t,(i,l)) -> (f,t,(i,renameLink (const $ replicate (fromJust mLabelLength) 'X') l))) linkEdges'
+  let graph = mkGraph numberedObjects renamedLinkEdges
   let objectNames = map (\x -> (objectName x, objectName x ++ " "))
         $ filter (not . isAnonymous) objects
   let params = nonClusteredParams {
@@ -458,7 +482,7 @@ drawOd ObjectDiagram {..} direction printNames = do
           Height 0,
           FontSize 16
           ],
-        fmtEdge = \(_,_,Link {..}) -> arrowHeads
+        fmtEdge = \(_,_,(_,Link {..})) -> arrowHeads
           ++ [ArrowSize 0.4, FontSize 16]
           ++ [toLabel linkLabel | printNames] }
   errorWithoutGraphviz
@@ -470,8 +494,8 @@ drawOd ObjectDiagram {..} direction printNames = do
         mempty
         nodes
       graphEdges = foldr
-        (\(Object {objectName = s}, Object {objectName = t}, l, p) g ->
-           g # drawLink font direction printNames s t l p)
+        (\(Object {objectName = s}, Object {objectName = t}, (i,l), p) g ->
+           g # drawLink font direction printNames s t (renameLink (const $ fromJust $ lookup i originalNames) l) p)
         graphNodes
         edges
   renderDiagram $ frame 10 graphEdges
