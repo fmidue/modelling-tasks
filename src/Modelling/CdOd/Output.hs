@@ -207,6 +207,7 @@ cacheCd' config@CdDrawSettings{..} marking mLabelLength syntax path =
     ext = short printNavigations
       ++ short printNames
       ++ showDigest (sha1 . LBS.fromString $ show marking)
+      ++ showDigest (sha1 . LBS.fromString $ show mLabelLength)
       ++ ".svg"
 
 drawCd
@@ -440,6 +441,7 @@ cacheOd' od mLabelLength direction printNames path =
   where
     ext = short printNames
       ++ short direction
+      ++ showDigest (sha1 . LBS.fromString $ show mLabelLength)
       ++ ".svg"
 
 drawOd
