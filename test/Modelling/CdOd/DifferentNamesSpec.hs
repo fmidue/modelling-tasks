@@ -67,7 +67,7 @@ import Control.Monad.Random (
 import Data.Bifunctor                   (Bifunctor (bimap))
 import Data.Char                        (toUpper)
 import Data.Containers.ListUtils        (nubOrd)
-import Data.Maybe                       (fromJust, isNothing)
+import Data.Maybe                       (fromJust, isNothing, isJust)
 import Data.Ratio                       ((%))
 import Data.Tuple                       (swap)
 import Test.Hspec
@@ -87,14 +87,13 @@ import System.Random.Shuffle            (shuffleM)
 import Control.OutputCapable.Blocks.Generic (runLangMReport)
 import System.IO.Extra (withTempDir)
 
-checkResult
+getResult
   :: (m ~ GenericReportT Language (IO ()) IO)
-  => (Maybe a -> Bool)
-  -> LangM' m a
-  -> IO Bool
-checkResult check thing = do
+  => LangM' m a
+  -> IO (Maybe a)
+getResult thing = do
   (r, _) <- runLangMReport (pure ()) (>>) thing
-  pure (check r)
+  pure r
 
 spec :: Spec
 spec = do
@@ -163,7 +162,9 @@ spec = do
 
       in ioProperty $ case maybe (Left "instance could not be renamed") return renamedInstance of
         Left _ -> pure False
-        Right renamed -> withTempDir $ \tmpDir -> checkResult (Just 1 ==) (differentNamesEvaluation tmpDir renamed origMap)
+        Right renamed -> do
+          r <- withTempDir $ \tmpDir -> getResult (differentNamesEvaluation tmpDir renamed origMap)
+          pure $ Just 1 == r
   describe "getDifferentNamesTask" $ do
     it "generates matching OD for association circle" $
       odFor (cdSimpleCircle association association association)
@@ -365,10 +366,12 @@ evaluateAndCheckDifferentNames check coins cs cs' = do
         addText = NoExtraText
         }
       cs'' = map (bimap Name Name) cs'
-  passedSyntaxCheck <- checkResult (Just () ==) $ differentNamesSyntax i cs''
-  if passedSyntaxCheck
-    then withTempDir $ \tmpDir -> checkResult check (differentNamesEvaluation tmpDir i cs'')
-    else pure False
+  synResult <- getResult $ differentNamesSyntax i cs''
+  semResult <- if isJust synResult
+    then withTempDir $ \tmpDir -> getResult $ differentNamesEvaluation tmpDir i cs''
+    else pure Nothing
+
+  pure $ check semResult
   where
     linkA = "a"
     classA = "A"
