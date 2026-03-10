@@ -85,6 +85,7 @@ import Test.QuickCheck (
 import System.Random                    (getStdGen, setStdGen)
 import System.Random.Shuffle            (shuffleM)
 import Control.OutputCapable.Blocks.Generic (runLangMReport)
+import System.IO.Extra (withTempDir)
 
 checkResult
   :: (m ~ GenericReportT Language (IO ()) IO)
@@ -162,7 +163,7 @@ spec = do
 
       in ioProperty $ case maybe (Left "instance could not be renamed") return renamedInstance of
         Left _ -> pure False
-        Right renamed -> checkResult (Just 1 ==) (differentNamesEvaluation "/tmp/" renamed origMap)
+        Right renamed -> withTempDir $ \tmpDir -> checkResult (Just 1 ==) (differentNamesEvaluation tmpDir renamed origMap)
   describe "getDifferentNamesTask" $ do
     it "generates matching OD for association circle" $
       odFor (cdSimpleCircle association association association)
@@ -366,7 +367,7 @@ evaluateAndCheckDifferentNames check coins cs cs' = do
       cs'' = map (bimap Name Name) cs'
   passedSyntaxCheck <- checkResult (Just () ==) $ differentNamesSyntax i cs''
   if passedSyntaxCheck
-    then checkResult check (differentNamesEvaluation "/tmp/" i cs'')
+    then withTempDir $ \tmpDir -> checkResult check (differentNamesEvaluation tmpDir i cs'')
     else pure False
   where
     linkA = "a"
