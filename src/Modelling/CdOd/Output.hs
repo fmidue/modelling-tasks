@@ -59,7 +59,7 @@ import Modelling.CdOd.Types (
   anyRelationshipName,
   )
 
-import Control.Lens                     ((.~), Bifunctor (bimap))
+import Control.Lens                     ((.~))
 import Control.Monad                    (guard)
 import Control.Monad.Catch              (MonadCatch, MonadThrow)
 import Control.Monad.Random (
@@ -67,7 +67,7 @@ import Control.Monad.Random (
   RandomGen,
   )
 import Control.Monad.Trans              (MonadTrans(lift))
-import Data.Bifunctor                   (Bifunctor (second))
+import Data.Bifunctor                   (Bifunctor (bimap, second))
 import Data.ByteString                  (ByteString)
 import Data.Digest.Pure.SHA             (sha1, showDigest)
 import Data.Graph.Inductive             (Gr, mkGraph)
