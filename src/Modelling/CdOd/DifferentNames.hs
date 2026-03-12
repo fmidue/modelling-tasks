@@ -187,7 +187,6 @@ import Data.Maybe (
   isNothing,
   listToMaybe,
   mapMaybe,
-  fromJust,
   )
 import Data.Ratio                       ((%))
 import qualified Data.Set          as S (
@@ -635,7 +634,8 @@ differentNamesEvaluation path task cs = do
           english "Compare with the correctly labeled class diagram:"
           german "Vergleichen Sie mit dem korrekt beschrifteten Klassendiagramm:"
 
-        image $=<< cacheCd' (cdDrawSettings task) mempty mLabelLength (fromClassDiagram $ relabelledCd task) path
+        image $=<< (relabelledCd task >>= \labelledCd ->
+          cacheCd' (cdDrawSettings task) mempty mLabelLength (fromClassDiagram labelledCd) path)
 
         pure ()
       ShowMappingAndReprintOD -> do
@@ -643,22 +643,23 @@ differentNamesEvaluation path task cs = do
           english "Compare with the correctly labeled object diagram:"
           german "Vergleichen Sie mit dem korrekt beschrifteten Objektdiagramm:"
 
-        image $=<< cacheOd' (relabelledOd task) mLabelLength Forward True path
+        image $=<< (relabelledOd task >>= \labelledOd ->
+          cacheOd' labelledOd mLabelLength Forward True path)
 
         pure ()
 
     pure ()
 
-relabelledCd :: DifferentNamesInstance -> Cd
-relabelledCd inst@DifferentNamesInstance{..} = fromJust $ renameCd cDiagram
+relabelledCd :: MonadThrow m => DifferentNamesInstance -> m Cd
+relabelledCd inst@DifferentNamesInstance{..} = renameCd cDiagram
   where
     (names, _, _) = classNonInheritanceAndLinkNames inst
     bmNames  = BM.fromList $ zip names names
     bmNonInheritances = fromNameMapping mapping
     renameCd = renameClassesAndRelationships bmNames bmNonInheritances
 
-relabelledOd :: DifferentNamesInstance -> Od
-relabelledOd DifferentNamesInstance{..} = fromJust $ renameOd oDiagram
+relabelledOd :: MonadThrow m => DifferentNamesInstance -> m Od
+relabelledOd DifferentNamesInstance{..} = renameOd oDiagram
   where
     names = classNames cDiagram
     keepClassNames = BM.fromList $ zip names names
