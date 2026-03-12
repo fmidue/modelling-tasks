@@ -634,7 +634,7 @@ differentNamesEvaluation path task cs = do
           english "Compare with the correctly labeled class diagram:"
           german "Vergleichen Sie mit dem korrekt beschrifteten Klassendiagramm:"
 
-        image $=<< (relabelledCd task >>= \labelledCd ->
+        image $=<< (relabelCd task >>= \labelledCd ->
           cacheCd' (cdDrawSettings task) mempty mLabelLength (fromClassDiagram labelledCd) path)
 
         pure ()
@@ -643,23 +643,23 @@ differentNamesEvaluation path task cs = do
           english "Compare with the correctly labeled object diagram:"
           german "Vergleichen Sie mit dem korrekt beschrifteten Objektdiagramm:"
 
-        image $=<< (relabelledOd task >>= \labelledOd ->
+        image $=<< (relabelOd task >>= \labelledOd ->
           cacheOd' labelledOd mLabelLength Forward True path)
 
         pure ()
 
     pure ()
 
-relabelledCd :: MonadThrow m => DifferentNamesInstance -> m Cd
-relabelledCd inst@DifferentNamesInstance{..} = renameCd cDiagram
+relabelCd :: MonadThrow m => DifferentNamesInstance -> m Cd
+relabelCd inst@DifferentNamesInstance{..} = renameCd cDiagram
   where
     (names, _, _) = classNonInheritanceAndLinkNames inst
     bmNames  = BM.fromList $ zip names names
     bmNonInheritances = fromNameMapping mapping
     renameCd = renameClassesAndRelationships bmNames bmNonInheritances
 
-relabelledOd :: MonadThrow m => DifferentNamesInstance -> m Od
-relabelledOd DifferentNamesInstance{..} = renameOd oDiagram
+relabelOd :: MonadThrow m => DifferentNamesInstance -> m Od
+relabelOd DifferentNamesInstance{..} = renameOd oDiagram
   where
     names = classNames cDiagram
     keepClassNames = BM.fromList $ zip names names
