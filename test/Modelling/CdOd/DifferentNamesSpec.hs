@@ -9,8 +9,8 @@ import qualified Data.Bimap                       as BM
 
 import Capabilities.Alloy.IO            ()
 import Capabilities.Cache.IO            ()
-import Capabilities.Diagrams.IO            ()
-import Capabilities.Graphviz.IO            ()
+import Capabilities.Diagrams.IO         ()
+import Capabilities.Graphviz.IO         ()
 import Modelling.CdOd.DifferentNames (
   DifferentNamesConfig (objectConfig),
   ShufflingOption (..),
