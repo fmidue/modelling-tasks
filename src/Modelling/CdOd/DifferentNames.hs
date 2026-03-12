@@ -632,7 +632,7 @@ differentNamesEvaluation path task cs = do
       ShowMapping -> pure ()
       ShowMappingAndReprintCD -> do
         paragraph $ translate $ do
-          english "Please compare with the correctly labeled class diagram:"
+          english "Compare with the correctly labeled class diagram:"
           german "Vergleichen Sie mit dem korrekt beschrifteten Klassendiagramm:"
 
         image $=<< cacheCd' (cdDrawSettings task) mempty mLabelLength (fromClassDiagram $ relabelledCd task) path
@@ -640,7 +640,7 @@ differentNamesEvaluation path task cs = do
         pure ()
       ShowMappingAndReprintOD -> do
         paragraph $ translate $ do
-          english "Please compare with the correctly labeled object diagram:"
+          english "Compare with the correctly labeled object diagram:"
           german "Vergleichen Sie mit dem korrekt beschrifteten Objektdiagramm:"
 
         image $=<< cacheOd' (relabelledOd task) mLabelLength Forward True path
