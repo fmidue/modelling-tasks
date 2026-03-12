@@ -359,7 +359,7 @@ evaluateAndCheckDifferentNames check coins cs cs' = do
           objects = [Object False linkA classA],
           links = map newLink linksToUse
           },
-        solutionDisplay = ShowMapping,
+        showSolution = ShowMapping,
         mapping = toNameMapping $ BM.fromList cs,
         linkShuffling = ConsecutiveNumbers,
         taskText = defaultDifferentNamesTaskText,

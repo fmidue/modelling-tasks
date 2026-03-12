@@ -221,7 +221,7 @@ data DifferentNamesInstance = DifferentNamesInstance {
     cDiagram :: Cd,
     cdDrawSettings :: !CdDrawSettings,
     oDiagram :: Od,
-    solutionDisplay :: SolutionDisplay,
+    showSolution :: SolutionDisplay,
     mapping  :: NameMapping,
     linkShuffling :: ShufflingOption String,
     taskText :: !DifferentNamesTaskText,
@@ -619,14 +619,14 @@ differentNamesEvaluation path task cs = do
       solutionMap = M.fromDistinctAscList $ map (,True) $ BM.toAscList $ BM.mapR stripName correctMapping
       choices = map readMapping csStripped
       solution =
-        if solutionDisplay task /= ShowNothing
+        if showSolution task /= ShowNothing
         then Just . (DefiniteArticle,) . show . mappingShow
           $ differentNamesSolution task
         else Nothing
 
   reRefuse (multipleChoice what solution solutionMap choices) $ do
     let mLabelLength = Just $ maxLabelLength task
-    case solutionDisplay task of
+    case showSolution task of
       ShowNothing -> pure ()
       ShowMapping -> pure ()
       ShowMappingAndReprintCD -> do
@@ -763,7 +763,7 @@ defaultDifferentNamesInstance = DifferentNamesInstance {
       Link {linkLabel = "3.", linkFrom = "c1", linkTo = "d1"}
       ]
     },
-  solutionDisplay = ShowMapping,
+  showSolution = ShowMapping,
   mapping = toNameMapping $ BM.fromList [("x", "2."), ("y", "3."), ("z", "1.")],
   linkShuffling = ConsecutiveNumbers,
   taskText = defaultDifferentNamesTaskText,
@@ -828,7 +828,7 @@ getDifferentNamesTask tryNext DifferentNamesConfig {..} cd = do
                 printNavigations = True
                 },
               oDiagram  = od1'',
-              solutionDisplay = printSolution,
+              showSolution = printSolution,
               mapping   = toNameMapping bm',
               linkShuffling = ConsecutiveNumbers,
               taskText = defaultDifferentNamesTaskText,
@@ -900,7 +900,7 @@ instance RandomiseLayout DifferentNamesInstance where
       cDiagram = cd,
       cdDrawSettings = cdDrawSettings,
       oDiagram = od,
-      solutionDisplay = solutionDisplay,
+      showSolution = showSolution,
       mapping = mapping,
       linkShuffling = linkShuffling,
       taskText = taskText,
@@ -935,7 +935,7 @@ renameInstance inst@DifferentNamesInstance {..} names' nonInheritances' linkNs' 
     cDiagram  = cd',
     cdDrawSettings = cdDrawSettings,
     oDiagram  = od',
-    solutionDisplay = solutionDisplay,
+    showSolution = showSolution,
     mapping   = toNameMapping bm',
     linkShuffling = shuffling,
     taskText = taskText,
