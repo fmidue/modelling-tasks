@@ -44,7 +44,7 @@ spec = do
     drawCdInstance alloy = withTempFile $ \file -> do
       Right alloyInstance <- runExceptT $ parseInstance (BS.pack alloy)
       Right cd <- return $ instanceClassDiagram <$> fromInstance alloyInstance
-      renderedCd <- drawCd defaultCdDrawSettings mempty cd
+      renderedCd <- drawCd defaultCdDrawSettings mempty Nothing cd
       BS.writeFile file renderedCd
       BS.readFile file
     drawOdInstance alloy = withTempFile $ \file -> do
