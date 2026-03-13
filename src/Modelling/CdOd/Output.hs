@@ -220,8 +220,8 @@ drawCd config marking mLabelLength cd@AnyClassDiagram {..} = do
       originalNames = mapMaybe (\(i,(_,r)) -> (i,) <$> anyRelationshipName r) thickRelationsWithIds
       renamedThickRelationsWithIds = thickRelationsWithIds
 
-      renameAnyRelationship f  = if isJust mLabelLength then bimap (fmap f) (fmap f) else id
-      renameThickRelationships = map (\(i,(b,r)) -> (i,(b,renameAnyRelationship (const $ replicate (fromJust mLabelLength) 'X') r)))
+      renameAnyRelationship c  = if isJust mLabelLength then bimap (fmap (const c)) (fmap (const c)) else id
+      renameThickRelationships = map (\(i,(b,r)) -> (i,(b,renameAnyRelationship (replicate (fromJust mLabelLength) 'X') r)))
       renamedIndexedThickRelations = toIndexed $ renameThickRelationships renamedThickRelationsWithIds
   let graph = mkGraph (zip [0..] theNodes) renamedIndexedThickRelations
         :: Gr String (Int, (Bool, AnyRelationship String String))
@@ -246,7 +246,7 @@ drawCd config marking mLabelLength cd@AnyClassDiagram {..} = do
         mempty
         nodes
       graphEdges = foldr
-        (\(s, t, (i, (isThick, r)), p) g -> g # drawEdge font s t isThick (renameAnyRelationship (const $ fromJust $ lookup i originalNames) r) p)
+        (\(s, t, (i, (isThick, r)), p) g -> g # drawEdge font s t isThick (renameAnyRelationship (fromJust $ lookup i originalNames) r) p)
         graphNodes
         edges
   renderDiagram $ frame 10 graphEdges
@@ -434,8 +434,8 @@ drawOd ObjectDiagram {..} mLabelLength direction printNames = do
   linkEdges <- mapM toEdge links
   let linkEdges' = zipWith (\i (f,t,l) -> (f,t,(i,l))) [0 :: Int ..] linkEdges
       originalNames = map (\(_,_,(i,l)) -> (i, linkLabel l)) linkEdges'
-      renameLink f = if isJust mLabelLength then second f else id
-      renamedLinkEdges = map (\(f,t,(i,l)) -> (f,t,(i,renameLink (const $ replicate (fromJust mLabelLength) 'X') l))) linkEdges'
+      renameLink c = if isJust mLabelLength then second (const c) else id
+      renamedLinkEdges = map (\(f,t,(i,l)) -> (f,t,(i,renameLink (replicate (fromJust mLabelLength) 'X') l))) linkEdges'
   let graph = mkGraph numberedObjects renamedLinkEdges
   let objectNames = map (\x -> (objectName x, objectName x ++ " "))
         $ filter (not . isAnonymous) objects
@@ -462,7 +462,7 @@ drawOd ObjectDiagram {..} mLabelLength direction printNames = do
         nodes
       graphEdges = foldr
         (\(Object {objectName = s}, Object {objectName = t}, (i,l), p) g ->
-           g # drawLink font direction printNames s t (renameLink (const $ fromJust $ lookup i originalNames) l) p)
+           g # drawLink font direction printNames s t (renameLink (fromJust $ lookup i originalNames) l) p)
         graphNodes
         edges
   renderDiagram $ frame 10 graphEdges
