@@ -414,6 +414,7 @@ toTaskSpecificText path task@NameCdErrorInstance {..} = \case
     IncorrectCd -> image $=<< cacheCd
       cdDrawSettings
       mempty
+      Nothing
       (unannotateCd classDiagram)
       path
     ReasonsList -> enumerateM (text . singleton)
@@ -692,7 +693,7 @@ nameCdErrorEvaluation path inst@NameCdErrorInstance {..} x = addPretext $ do
     )
     $>>= \points -> do
       paragraph $ translate $ classDiagramDescription points
-      paragraph $ image $=<< cacheCd cdDrawSettings mempty changedCd path
+      paragraph $ image $=<< cacheCd cdDrawSettings mempty Nothing changedCd path
       pure ()
     $>> printSolutionAndAssert True correctAnswer $ fromEither points
   where

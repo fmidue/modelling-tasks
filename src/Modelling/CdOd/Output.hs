@@ -3,9 +3,7 @@
 {-# LANGUAGE TupleSections #-}
 module Modelling.CdOd.Output (
   cacheCd,
-  cacheCd',
   cacheOd,
-  cacheOd',
   drawCd,
   drawOdFromInstance,
   drawOd,
@@ -188,21 +186,12 @@ cacheCd
   :: (MonadCache m, MonadDiagrams m, MonadGraphviz m)
   => CdDrawSettings
   -> Style V2 Double
-  -> AnyCd
-  -> FilePath
-  -> m FilePath
-cacheCd config marking = cacheCd' config marking Nothing
-
-cacheCd'
-  :: (MonadCache m, MonadDiagrams m, MonadGraphviz m)
-  => CdDrawSettings
-  -> Style V2 Double
   -> Maybe Int
   -> AnyCd
   -> FilePath
   -> m FilePath
-cacheCd' config@CdDrawSettings{..} marking mLabelLength syntax path =
-  cache path ext "cd" syntax $ drawCd' config marking mLabelLength
+cacheCd config@CdDrawSettings{..} marking mLabelLength syntax path =
+  cache path ext "cd" syntax $ drawCd config marking mLabelLength
   where
     ext = short printNavigations
       ++ short printNames
@@ -214,18 +203,10 @@ drawCd
   :: (MonadDiagrams m, MonadGraphviz m)
   => CdDrawSettings
   -> Style V2 Double
-  -> AnyCd
-  -> m ByteString
-drawCd config marking = drawCd' config marking Nothing
-
-drawCd'
-  :: (MonadDiagrams m, MonadGraphviz m)
-  => CdDrawSettings
-  -> Style V2 Double
   -> Maybe Int
   -> AnyCd
   -> m ByteString
-drawCd' config marking mLabelLength cd@AnyClassDiagram {..} = do
+drawCd config marking mLabelLength cd@AnyClassDiagram {..} = do
   let theNodes = anyClassNames
   let toIndexed xs = [(
           fromJust (elemIndex from theNodes),
@@ -415,20 +396,11 @@ drawOdFromInstance
   g <- lift $ alloyInstanceToOd possibleClassNames possibleLinkNames alloyInstance
   od <- anonymiseObjects (fromMaybe (1 % 3) anonymous) g
   lift $ do
-    renderedOd <- drawOd od direction printNames
+    renderedOd <- drawOd od Nothing direction printNames
     writeToFile path renderedOd
     pure path
 
 cacheOd
-  :: (MonadCache m, MonadDiagrams m, MonadGraphviz m, MonadThrow m)
-  => Od
-  -> DirType
-  -> Bool
-  -> FilePath
-  -> m FilePath
-cacheOd od = cacheOd' od Nothing
-
-cacheOd'
   :: (MonadCache m, MonadDiagrams m, MonadGraphviz m, MonadThrow m)
   => Od
   -> Maybe Int
@@ -436,9 +408,9 @@ cacheOd'
   -> Bool
   -> FilePath
   -> m FilePath
-cacheOd' od mLabelLength direction printNames path =
+cacheOd od mLabelLength direction printNames path =
   cache path ext "od" od $ \od' ->
-    drawOd' od' mLabelLength direction printNames
+    drawOd od' mLabelLength direction printNames
   where
     ext = short printNames
       ++ short direction
@@ -448,19 +420,11 @@ cacheOd' od mLabelLength direction printNames path =
 drawOd
   :: (MonadDiagrams m, MonadGraphviz m, MonadThrow m)
   => Od
-  -> DirType
-  -> Bool
-  -> m ByteString
-drawOd od = drawOd' od Nothing
-
-drawOd'
-  :: (MonadDiagrams m, MonadGraphviz m, MonadThrow m)
-  => Od
   -> Maybe Int
   -> DirType
   -> Bool
   -> m ByteString
-drawOd' ObjectDiagram {..} mLabelLength direction printNames = do
+drawOd ObjectDiagram {..} mLabelLength direction printNames = do
   let numberedObjects = zip [0..] objects
       bmObjects = BM.fromList $ map (second objectName) numberedObjects
       toEdge l@Link {..} = (,,)

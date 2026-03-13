@@ -82,7 +82,7 @@ import Modelling.CdOd.CD2Alloy.Transform (
   transform,
   )
 import Modelling.CdOd.Generate          (generateCds, instanceToCd)
-import Modelling.CdOd.Output            (cacheCd', cacheOd')
+import Modelling.CdOd.Output            (cacheCd, cacheOd)
 import Modelling.CdOd.Types (
   Cd,
   CdDrawSettings (..),
@@ -442,9 +442,9 @@ toTaskSpecificText
   -> LangM m
 toTaskSpecificText path inst@DifferentNamesInstance {..} = \case
   GivenCd ->
-    paragraph $ image $=<< cacheCd' cdDrawSettings mempty mLabelLength cd path
+    paragraph $ image $=<< cacheCd cdDrawSettings mempty mLabelLength cd path
   GivenOd -> paragraph $ image $=<<
-    cacheOd' oDiagram mLabelLength Forward True path
+    cacheOd oDiagram mLabelLength Forward True path
   MappingAdvice -> mappingAdvice hasGivenCd
   DirectionsAdvice -> directionsAdvice False
   SimplifiedInformation -> simplifiedInformation True
@@ -635,7 +635,7 @@ differentNamesEvaluation path task cs = do
           german "Vergleichen Sie mit dem korrekt beschrifteten Klassendiagramm:"
 
         image $=<< (relabelCd task >>= \labelledCd ->
-          cacheCd' (cdDrawSettings task) mempty mLabelLength (fromClassDiagram labelledCd) path)
+          cacheCd (cdDrawSettings task) mempty mLabelLength (fromClassDiagram labelledCd) path)
 
         pure ()
       ShowMappingAndReprintOD -> do
@@ -644,7 +644,7 @@ differentNamesEvaluation path task cs = do
           german "Vergleichen Sie mit dem korrekt beschrifteten Objektdiagramm:"
 
         image $=<< (relabelOd task >>= \labelledOd ->
-          cacheOd' labelledOd mLabelLength Forward True path)
+          cacheOd labelledOd mLabelLength Forward True path)
 
         pure ()
 
