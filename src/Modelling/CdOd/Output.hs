@@ -220,7 +220,7 @@ drawCd config marking mLabelLength cd@AnyClassDiagram {..} = do
       originalNames = mapMaybe (\(i,(_,r)) -> (i,) <$> anyRelationshipName r) thickRelationsWithIds
       renamedThickRelationsWithIds = thickRelationsWithIds
 
-      renameAnyRelationship c  = if isJust mLabelLength then bimap (fmap (const c)) (fmap (const c)) else id
+      renameAnyRelationship = if isJust mLabelLength then \c -> bimap (c <$) (c <$) else const id
       renameThickRelationships = map (\(i,(b,r)) -> (i,(b,renameAnyRelationship (replicate (fromJust mLabelLength) 'X') r)))
       renamedIndexedThickRelations = toIndexed $ renameThickRelationships renamedThickRelationsWithIds
   let graph = mkGraph (zip [0..] theNodes) renamedIndexedThickRelations
@@ -434,7 +434,7 @@ drawOd ObjectDiagram {..} mLabelLength direction printNames = do
   linkEdges <- mapM toEdge links
   let linkEdges' = zipWith (\i (f,t,l) -> (f,t,(i,l))) [0 :: Int ..] linkEdges
       originalNames = map (\(_,_,(i,l)) -> (i, linkLabel l)) linkEdges'
-      renameLink c = if isJust mLabelLength then second (const c) else id
+      renameLink = if isJust mLabelLength then second . const else const id
       renamedLinkEdges = map (\(f,t,(i,l)) -> (f,t,(i,renameLink (replicate (fromJust mLabelLength) 'X') l))) linkEdges'
   let graph = mkGraph numberedObjects renamedLinkEdges
   let objectNames = map (\x -> (objectName x, objectName x ++ " "))
