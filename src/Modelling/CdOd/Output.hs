@@ -216,14 +216,14 @@ drawCd config marking mLabelLength cd@AnyClassDiagram {..} = do
         | x@(_, (_, r)) <- xs
         , let (from, to) = either getFromToInvalid getFromTo r
         ]
-  let thickRelationsWithIds = zip [0 :: Int ..] $ calculateThickAnyRelationships cd
-      originalNames = mapMaybe (\(i,(_,r)) -> (i,) <$> anyRelationshipName r) thickRelationsWithIds
-      renamedThickRelationsWithIds = thickRelationsWithIds
+  let thickenedRelationshipsWithIds = zip [0 :: Int ..] $ calculateThickAnyRelationships cd
+      originalNames = mapMaybe (\(i,(_,r)) -> (i,) <$> anyRelationshipName r) thickenedRelationshipsWithIds
+      renamedThickenedRelationshipsWithIds = thickenedRelationshipsWithIds
 
       renameAnyRelationship = if isJust mLabelLength then \c -> bimap (c <$) (c <$) else const id
-      renameThickRelationships = map (\(i,(b,r)) -> (i,(b,renameAnyRelationship (replicate (fromJust mLabelLength) 'X') r)))
-      renamedIndexedThickRelations = toIndexed $ renameThickRelationships renamedThickRelationsWithIds
-  let graph = mkGraph (zip [0..] theNodes) renamedIndexedThickRelations
+      renameThickenedRelationships = map (\(i,(b,r)) -> (i,(b,renameAnyRelationship (replicate (fromJust mLabelLength) 'X') r)))
+      renamedIndexedThickenedRelationships = toIndexed $ renameThickenedRelationships renamedThickenedRelationshipsWithIds
+  let graph = mkGraph (zip [0..] theNodes) renamedIndexedThickenedRelationships
         :: Gr String (Int, (Bool, AnyRelationship String String))
   let params = nonClusteredParams {
         fmtNode = \(_,l) -> [
