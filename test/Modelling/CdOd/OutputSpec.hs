@@ -53,6 +53,6 @@ spec = do
       fileCreationWith $ do
         od <- alloyInstanceToOd Nothing possibleLinks alloyInstance
         od' <- evalRandT (anonymiseObjects 1 od) $ mkStdGen 0
-        drawOd od' Forward True
+        drawOd od' Nothing Forward True
     fileCreationWith action = withTempFile $ \file ->
       action >>= BS.writeFile file >> BS.readFile file
