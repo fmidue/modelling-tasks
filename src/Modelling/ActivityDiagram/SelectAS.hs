@@ -344,7 +344,7 @@ selectASEvaluation
   => SelectASInstance
   -> Int
   -> LangM m
-selectASEvaluation task n = addPretext $ do
+selectASEvaluation task n = do
   let as = translations $ do
         english "action sequence"
         german "Aktionsfolge"

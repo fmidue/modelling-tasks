@@ -209,3 +209,15 @@ task2025_30 = DeadlockConfig {
     transitionCoverageRequirement = 3 % 4
     }
   }
+
+{-|
+points: 0.1
+the amount of generated instances: 100
+maximum concurrent amount of tasks: 100
+average generation time per instance on the cluster (without considering concurrency): 1:50:11h
+total run time on the cluster (not including queuing time): 11:23:03h
+average CPU usage: 98.60%
+average memory usage: 371.97 MB
+-}
+task2025_59 :: DeadlockConfig
+task2025_59 = task2025_30

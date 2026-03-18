@@ -443,7 +443,7 @@ repairCdFeedback path drawSettings xs x cdChange =
         Die Änderung repariert das Klassendiagramm nicht, da es dann so aussieht und immer noch ungültig ist:
         |]
     showCd cd = paragraph $
-      image $=<< cacheCd drawSettings mempty cd path
+      image $=<< cacheCd drawSettings mempty Nothing cd path
 
 repairCdSolution :: RepairCdInstance -> [Int]
 repairCdSolution = M.keys . M.filter id . fmap (isRight . hint) . changes
@@ -477,6 +477,7 @@ toTaskSpecificText path RepairCdInstance {..} = \case
   IncorrectCd -> image $=<< cacheCd
     cdDrawSettings
     mempty
+    Nothing
     classDiagram
     path
   PotentialFixes ->

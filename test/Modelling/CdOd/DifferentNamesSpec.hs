@@ -1,6 +1,6 @@
 {-# LANGUAGE ApplicativeDo #-}
 {-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE TypeOperators #-}
 -- |
 
 module Modelling.CdOd.DifferentNamesSpec where
@@ -8,10 +8,13 @@ module Modelling.CdOd.DifferentNamesSpec where
 import qualified Data.Bimap                       as BM
 
 import Capabilities.Alloy.IO            ()
-import Capabilities.Exceptions.IO       ()
+import Capabilities.Cache.IO            ()
+import Capabilities.Diagrams.IO         ()
+import Capabilities.Graphviz.IO         ()
 import Modelling.CdOd.DifferentNames (
   DifferentNamesConfig (objectConfig),
   ShufflingOption (..),
+  SolutionDisplay(..),
   differentNames,
   checkDifferentNamesConfig,
   checkDifferentNamesInstance,
@@ -43,7 +46,6 @@ import Modelling.CdOd.Types (
   normaliseObjectDiagram,
   renameObjectsWithClassesAndLinksInOd,
   )
-import Modelling.Common                 (withLang)
 import Modelling.Types (
   Name (Name, unName),
   fromNameMapping,
@@ -52,9 +54,10 @@ import Modelling.Types (
 
 import Control.OutputCapable.Blocks (
   ExtraText (..),
-  Language (English),
+  Language,
+  GenericReportT,
+  LangM',
   )
-import Control.Monad.Trans.Except       (runExceptT)
 import Control.Monad.Random (
   evalRandT,
   mkStdGen,
@@ -64,8 +67,7 @@ import Control.Monad.Random (
 import Data.Bifunctor                   (Bifunctor (bimap))
 import Data.Char                        (toUpper)
 import Data.Containers.ListUtils        (nubOrd)
-import Data.Either                      (isLeft, isRight)
-import Data.Maybe                       (fromJust)
+import Data.Maybe                       (fromJust, isNothing, isJust)
 import Data.Ratio                       ((%))
 import Data.Tuple                       (swap)
 import Test.Hspec
@@ -82,6 +84,16 @@ import Test.QuickCheck (
   )
 import System.Random                    (getStdGen, setStdGen)
 import System.Random.Shuffle            (shuffleM)
+import Control.OutputCapable.Blocks.Generic (runLangMReport)
+import System.IO.Extra (withTempDir)
+
+getResult
+  :: (m ~ GenericReportT Language (IO ()) IO)
+  => LangM' m a
+  -> IO (Maybe a)
+getResult thing = do
+  (r, _) <- runLangMReport (pure ()) (>>) thing
+  pure r
 
 spec :: Spec
 spec = do
@@ -100,25 +112,23 @@ spec = do
         `shouldBe` Nothing
   describe "differentNames" $ do
     context "using defaultDifferentNamesConfig" $ do
-      it "generates an instance" $ do
-        inst <- runExceptT @String $ do
-          segment <- oneOf [0 .. 3]
-          seed <- randomIO
-          differentNames defaultDifferentNamesConfig segment seed
-        inst `shouldSatisfy` isRight
+      it "generates an okay instance" $ do
+        segment <- oneOf [0 .. 3]
+        seed <- randomIO
+        inst <- differentNames defaultDifferentNamesConfig segment seed
+        checkDifferentNamesInstance inst `shouldBe` Nothing
       it "reproducibly generates defaultDifferentNamesInstance" $
         differentNames defaultDifferentNamesConfig 0 0
         `shouldReturn` defaultDifferentNamesInstance
   describe "differentNamesEvaluation" $ do
     it "accepts the initial example" $
       let cs = map (bimap unName unName) differentNamesInitial
-      in property $ \(NonEmpty bs) ->
-        Right 1 == evaluateDifferentNames bs cs cs
+      in property $ \(NonEmpty bs) -> ioProperty $
+        evaluateAndCheckDifferentNames (Just 1 ==) bs cs cs
     it "accepts correct solutions" $
       property $ \(NonEmpty cs) g (NonEmpty bs) -> ioProperty $ do
-          let checkResult = if isValidMapping cs then (Right 1 ==) else isLeft
           cs' <- flipCoin g `mapM` cs >>= shuffleM
-          return $ checkResult $ evaluateDifferentNames bs cs cs'
+          evaluateAndCheckDifferentNames (if isValidMapping cs then (Just 1 ==) else isNothing) bs cs cs'
     it "accepts with percentage or rejects too short solutions" $
       property $ \(NonEmpty cs') n (NonEmpty bs) ->
         let cs = map (\(NonEmpty x, NonEmpty y) -> (x, y)) cs'
@@ -127,15 +137,14 @@ spec = do
               l = fromIntegral $ length cs
               r = (l - fromIntegral n') % l
           cs'' <- drop n' <$> shuffleM cs
-          return $ (if r >= 0.5 then (Right r ==) else isLeft)
-            $ evaluateDifferentNames bs cs cs''
+          evaluateAndCheckDifferentNames (if r >= 0.5 then (Just r ==) else isNothing) bs cs cs''
     it "rejects too long solutions" $
       property $ \cs (NonEmpty w) (NonEmpty bs) ->
         let cs' = cs ++ w
         in isValidMapping cs
-           ==> isLeft $ evaluateDifferentNames bs cs cs'
+           ==> ioProperty $ evaluateAndCheckDifferentNames isNothing bs cs cs'
   describe "renameInstance" $ do
-    it "is reversable" $ renameProperty $ \inst renamedInstance _ _ ->
+    it "is reversible" $ renameProperty $ \inst renamedInstance _ _ ->
         let cd = cDiagram inst
             od = oDiagram inst
             names = classNames cd
@@ -150,11 +159,12 @@ spec = do
             (rename (associationNames $ cDiagram inst) as)
             (rename (linkLabels $ oDiagram inst) ls))
             $ BM.toList (fromNameMapping $ mapping inst)
-      in (Right 1 ==)
-         $ maybe (Left "instance could not be renamed") return renamedInstance
-         >>= \renamed ->
-           differentNamesEvaluation renamed origMap `withLang` English
-           :: Either String Rational
+
+      in ioProperty $ case maybe (Left "instance could not be renamed") return renamedInstance of
+        Left _ -> pure False
+        Right renamed -> do
+          r <- withTempDir $ \tmpDir -> getResult (differentNamesEvaluation tmpDir renamed origMap)
+          pure $ Just 1 == r
   describe "getDifferentNamesTask" $ do
     it "generates matching OD for association circle" $
       odFor (cdSimpleCircle association association association)
@@ -308,7 +318,7 @@ renameProperty p = property $ \n1 n2 n3 n4 a1 a2 a3 l1 l2 l3 ->
       ls = map unName [l1, l2, l3]
       distinct xs = length (nubOrd xs) == length xs
       renamedInstance = renameInstance inst ns as ls
-  in distinct (map lowerFirst ns) && distinct as && distinct ls
+  in distinct (map lowerFirst ns) && distinct (ns ++ as ++ ls)
      ==> p inst renamedInstance as ls
 
 instance Arbitrary Name where
@@ -328,15 +338,17 @@ flipCoin g p = do
   b <- randomRIO (False, True)
   return $ (if b then swap else id) p
 
-evaluateDifferentNames
-  :: [Bool]
+evaluateAndCheckDifferentNames
+  :: (Maybe Rational -> Bool)
+  -- ^ result predicate
+  -> [Bool]
   -- ^ random distribution (must not be empty)
   -> [(String, String)]
   -- ^ task instance mapping
   -> [(String, String)]
   -- ^ submitted mapping
-  -> Either String Rational
-evaluateDifferentNames coins cs cs' = flip withLang English $ do
+  -> IO Bool
+evaluateAndCheckDifferentNames check coins cs cs' = do
   let i = DifferentNamesInstance {
         cdDrawSettings = defaultCdDrawSettings,
         cDiagram = ClassDiagram {
@@ -347,16 +359,19 @@ evaluateDifferentNames coins cs cs' = flip withLang English $ do
           objects = [Object False linkA classA],
           links = map newLink linksToUse
           },
-        showSolution = True,
+        showSolution = ShowMapping,
         mapping = toNameMapping $ BM.fromList cs,
         linkShuffling = ConsecutiveNumbers,
         taskText = defaultDifferentNamesTaskText,
         addText = NoExtraText
         }
       cs'' = map (bimap Name Name) cs'
-  differentNamesSyntax i cs''
-  points <- differentNamesEvaluation i cs''
-  pure points
+  synResult <- getResult $ differentNamesSyntax i cs''
+  semResult <- if isJust synResult
+    then withTempDir $ \tmpDir -> getResult $ differentNamesEvaluation tmpDir i cs''
+    else pure Nothing
+
+  pure $ check semResult
   where
     linkA = "a"
     classA = "A"

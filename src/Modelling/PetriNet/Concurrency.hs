@@ -200,11 +200,11 @@ findConcurrencyTask showInputHelp path task = do
   when showInputHelp $ paragraph $ do
     translate $ do
       english [iii|
-        State your answer by giving a pair
+        State your answer by giving the pair
         of concurrently activated transitions.
         #{" "}|]
       german [iii|
-        Geben Sie Ihre Antwort durch Angabe eines Paars
+        Geben Sie Ihre Antwort durch Angabe des Paars
         von nebenläufig aktivierten Transitionen an.
         #{" "}|]
     translate $ do
@@ -299,7 +299,7 @@ pickConcurrencyTask showInputHelp path task = do
       under the initial marking?
       |]
     german [iii|
-      Welches dieser Petrinetze hat genau ein Paar von Transitionen,
+      Welches der folgenden Petrinetze hat genau ein Paar von Transitionen,
       die unter der Startmarkierung nebenläufig aktiviert sind?
       |]
   images show snd

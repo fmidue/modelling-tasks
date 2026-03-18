@@ -470,7 +470,7 @@ classSigs linguisticReuse relationships = map classSig
       Inheritance {..} | subClass == name -> True
       _ -> False
 
-{-| Puts curly braces arround the given lines which are indented,
+{-| Puts curly braces around the given lines which are indented,
 puts a pair of empty curly braces if no lines are given, and
 puts surrounding braces on that single line if just one line is given.
 -}
@@ -478,7 +478,7 @@ linesWrappedInOrBraces :: [String] -> String
 linesWrappedInOrBraces [] = "{}"
 linesWrappedInOrBraces xs = linesWrappedInBraces xs
 
-{-| Puts curly braces arround the given lines which are indented,
+{-| Puts curly braces around the given lines which are indented,
 returns an empty string if no lines are given, and
 puts surrounding braces on that single line if just one line is given.
 -}

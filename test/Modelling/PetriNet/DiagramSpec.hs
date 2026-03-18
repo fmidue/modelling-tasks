@@ -2,7 +2,6 @@ module Modelling.PetriNet.DiagramSpec where
 
 import Capabilities.Diagrams.IO          ()
 import Capabilities.Graphviz.IO          ()
-import Capabilities.Exceptions.IO        ()
 import Modelling.Auxiliary.Common        (Object)
 import Modelling.PetriNet.Diagram
 import Modelling.PetriNet.MatchToMath    (petriNetRnd)
@@ -36,5 +35,5 @@ spec =
           withTransitionNames = False,
           with1Weights = False,
           withGraphvizCommand = TwoPi
-          }
+          } False
         withTempFile $ \f -> renderSVG f (mkWidth 200) dia `shouldReturn` ()

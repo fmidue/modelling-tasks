@@ -217,14 +217,14 @@ enterASTask path task = do
   paragraph $ do
     translate $ do
       english [iii|
-        State an action sequence (i.e., a sequence of action nodes)
-        which lets all flows terminate in an execution of this diagram,
+        State the action sequence (i.e., a sequence of action nodes)
+        of an execution of this diagram which lets all flows terminate,
         by entering a list of action names.
         \n
         For example, |]
       german [iii|
-        Geben Sie eine Aktionsfolge (d.h., eine Folge von Aktionsknoten) an,
-        welche in einem Ablauf dieses Diagramms alle Flüsse terminieren lässt,
+        Geben Sie die Aktionsfolge (d.h., eine Folge von Aktionsknoten)
+        eines Ablaufs dieses Diagramms an, welcher alle Flüsse terminieren lässt,
         indem Sie eine Liste von Aktionsnamen angeben.
         \n
         Zum Beispiel drückt |]
@@ -273,8 +273,8 @@ enterASEvaluation task sub = do
         else Nothing
 
   yesNo correct $ translate $ do
-    english "The submitted action sequence is correct?"
-    german "Die eingereichte Aktionsfolge ist korrekt?"
+    english "The submitted node sequence is correct?"
+    german "Die eingereichte Knotenfolge ist korrekt?"
 
   -- Provide specific feedback for sequences that terminate some but not all flows
   when (null objectNamesInSubmission && not reachesZeroState) $ do
@@ -282,16 +282,16 @@ enterASEvaluation task sub = do
     when finalNodeReached $ do
       paragraph $ translate $ do
         german [iii|
-          Die eingereichte Sequenz erreicht ein Flussende, aber terminiert nicht alle Flüsse.
+          Mit der eingereichten Sequenz wird ein Flussende erreicht, aber sie terminiert nicht alle Flüsse.
           Beachten Sie, dass das Erreichen eines Flussendes nur den hineinlaufenden Kontrollfluss beendet,
-          während andere Flüsse (z.B. von einem Fork-Knoten) weiterhin aktiv bleiben können.
-          Eine vollständige Lösung muss alle im Diagramm vorhandenen Flüsse terminieren.
+          während andere Flüsse (z.B. nach Aufspaltung an einem Fork-Knoten) weiterhin aktiv bleiben können.
+          Eine korrekte Lösung muss alle im Ablauf befindlichen Flüsse terminieren.
           |]
         english [iii|
-          The submitted sequence reaches a flow final node but does not terminate all flows.
+          With the submitted sequence a flow final node is reached, but it does not terminate all flows.
           Note that reaching a flow final node only terminates the incoming control flow,
-          while other flows (e.g., from a fork node) may remain active.
-          A complete solution must terminate all flows present in the diagram.
+          while other flows (e.g., after splitting at a fork node) may remain active.
+          A correct solution must terminate all flows under execution.
           |]
       pure ()
 

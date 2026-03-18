@@ -240,7 +240,7 @@ matchAdEvaluation
   => MatchAdInstance
   -> MatchAdSolution
   -> Rated m
-matchAdEvaluation task sub = addPretext $ do
+matchAdEvaluation task sub = do
   let as = translations $ do
         english "answer parts"
         german "Teilantworten"
