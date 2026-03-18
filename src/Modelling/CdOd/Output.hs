@@ -1,6 +1,5 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE RecordWildCards #-}
-{-# LANGUAGE TupleSections #-}
 module Modelling.CdOd.Output (
   cacheCd,
   cacheOd,
@@ -54,7 +53,6 @@ import Modelling.CdOd.Types (
   anonymiseObjects,
   calculateThickAnyRelationships,
   rangeWithDefault,
-  anyRelationshipName,
   )
 
 import Control.Lens                     ((.~))
@@ -89,7 +87,7 @@ import Data.GraphViz (
 import Data.GraphViz.Attributes.Complete (Attribute (..), DPoint (..), Label)
 import Data.Function                    ((&))
 import Data.List                        (elemIndex)
-import Data.Maybe                       (fromJust, fromMaybe, maybeToList, mapMaybe, isJust)
+import Data.Maybe                       (fromJust, fromMaybe, maybeToList)
 import Data.Ratio                       ((%))
 import Data.Tuple.Extra                 (both)
 import Diagrams.Align                   (center)
@@ -213,17 +211,13 @@ drawCd config marking mLabelLength cd@AnyClassDiagram {..} = do
           fromJust (elemIndex to theNodes),
           x
           )
-        | x@(_, (_, r)) <- xs
+        | x@(_, r) <- xs
         , let (from, to) = either getFromToInvalid getFromTo r
         ]
-  let thickenedRelationshipsWithIds = zip [0 :: Int ..] $ calculateThickAnyRelationships cd
-      originalNames = mapMaybe (\(i,(_,r)) -> (i,) <$> anyRelationshipName r) thickenedRelationshipsWithIds
-
-      renameAnyRelationship = if isJust mLabelLength then \c -> bimap (c <$) (c <$) else const id
-      renameThickenedRelationships = map (\(i,(b,r)) -> (i,(b,renameAnyRelationship (replicate (fromJust mLabelLength) 'X') r)))
-      renamedIndexedThickenedRelationships = toIndexed $ renameThickenedRelationships thickenedRelationshipsWithIds
-  let graph = mkGraph (zip [0..] theNodes) renamedIndexedThickenedRelationships
-        :: Gr String (Int, (Bool, AnyRelationship String String))
+  let renameAnyRelationship c = bimap (c <$) (c <$)
+  let thickenedRelationships = toIndexed $ calculateThickAnyRelationships cd
+  let graph = mkGraph (zip [0..] theNodes) thickenedRelationships
+        :: Gr String (Bool, AnyRelationship String String)
   let params = nonClusteredParams {
         fmtNode = \(_,l) -> [
           toLabel l,
@@ -233,8 +227,12 @@ drawCd config marking mLabelLength cd@AnyClassDiagram {..} = do
           Height 0,
           FontSize 16
           ],
-        fmtEdge = \(_,_,(_,(isThick, r))) -> FontSize 16
-          : relationshipArrow config Nothing isThick r
+        fmtEdge = \(_,_,(isThick, r)) -> FontSize 16
+          : relationshipArrow
+              config
+              Nothing
+              isThick
+              (maybe id (renameAnyRelationship . (`replicate` 'X')) mLabelLength r)
         }
   errorWithoutGraphviz
   graph' <- layoutGraph' params dirCommand graph
@@ -245,7 +243,7 @@ drawCd config marking mLabelLength cd@AnyClassDiagram {..} = do
         mempty
         nodes
       graphEdges = foldr
-        (\(s, t, (i, (isThick, r)), p) g -> g # drawEdge font s t isThick (renameAnyRelationship (fromJust $ lookup i originalNames) r) p)
+        (\(s, t, (isThick, r), p) g -> g # drawEdge font s t isThick r p)
         graphNodes
         edges
   renderDiagram $ frame 10 graphEdges
@@ -431,11 +429,7 @@ drawOd ObjectDiagram {..} mLabelLength direction printNames = do
         <*> BM.lookupR linkTo bmObjects
         <*> pure l
   linkEdges <- mapM toEdge links
-  let linkEdges' = zipWith (\i (f,t,l) -> (f,t,(i,l))) [0 :: Int ..] linkEdges
-      originalNames = map (\(_,_,(i,l)) -> (i, linkLabel l)) linkEdges'
-      renameLink = if isJust mLabelLength then second . const else const id
-      renamedLinkEdges = map (\(f,t,(i,l)) -> (f,t,(i,renameLink (replicate (fromJust mLabelLength) 'X') l))) linkEdges'
-  let graph = mkGraph numberedObjects renamedLinkEdges
+  let graph = mkGraph numberedObjects linkEdges
   let objectNames = map (\x -> (objectName x, objectName x ++ " "))
         $ filter (not . isAnonymous) objects
   let params = nonClusteredParams {
@@ -448,9 +442,9 @@ drawOd ObjectDiagram {..} mLabelLength direction printNames = do
           Height 0,
           FontSize 16
           ],
-        fmtEdge = \(_,_,(_,Link {..})) -> arrowHeads
+        fmtEdge = \(_,_,Link {..}) -> arrowHeads
           ++ [ArrowSize 0.4, FontSize 16]
-          ++ [toLabel linkLabel | printNames] }
+          ++ [toLabel $ maybe linkLabel (`replicate` 'X') mLabelLength | printNames] }
   errorWithoutGraphviz
   graph' <- layoutGraph' params dirCommand graph
   font <- lin
@@ -460,8 +454,8 @@ drawOd ObjectDiagram {..} mLabelLength direction printNames = do
         mempty
         nodes
       graphEdges = foldr
-        (\(Object {objectName = s}, Object {objectName = t}, (i,l), p) g ->
-           g # drawLink font direction printNames s t (renameLink (fromJust $ lookup i originalNames) l) p)
+        (\(Object {objectName = s}, Object {objectName = t}, l, p) g ->
+           g # drawLink font direction printNames s t l p)
         graphNodes
         edges
   renderDiagram $ frame 10 graphEdges
