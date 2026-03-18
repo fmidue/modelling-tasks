@@ -46,7 +46,7 @@ spec = do
     drawCdInstance alloy = do
       Right alloyInstance <- runExceptT $ parseInstance (BS.pack alloy)
       Right cd <- return $ instanceClassDiagram <$> fromInstance alloyInstance
-      fileCreationWith $ drawCd defaultCdDrawSettings mempty cd
+      fileCreationWith $ drawCd defaultCdDrawSettings mempty Nothing cd
     drawOdInstance alloy = do
       Right alloyInstance <- runExceptT $ parseInstance (BS.pack alloy)
       let possibleLinks = map (: []) ['w'..'y']

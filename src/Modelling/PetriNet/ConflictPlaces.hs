@@ -131,7 +131,7 @@ findConflictPlacesTask showInputHelp path task = do
   image $=<< cacheNet path (net task) (drawFindWith task)
   paragraph $ translate $ do
     english "Which pair of transitions is in conflict, and because of which conflict-causing place(s), under the initial marking?"
-    german "Welches Paar von Transitionen steht in Konflikt, und wegen welcher konfliktverursachenden Stelle(n), unter der Startmarkierung?"
+    german "Welches Paar von Transitionen steht unter der Startmarkierung in Konflikt, und wegen welcher konfliktverursachenden Stelle(n)?"
   if not showInputHelp then
     paragraph $ translate $ do
      english [i|You have to indicate all the places that induce the conflict, i.e., all those common places within the

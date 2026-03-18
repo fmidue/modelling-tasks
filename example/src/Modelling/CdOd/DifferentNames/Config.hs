@@ -4,6 +4,7 @@ module Modelling.CdOd.DifferentNames.Config where
 
 import Modelling.CdOd.DifferentNames (
   DifferentNamesConfig (..),
+  SolutionDisplay (..),
   )
 import Modelling.CdOd.Types (
   ClassConfig (..),
@@ -49,7 +50,7 @@ task2023_12 = DifferentNamesConfig {
     associationOmittedDefaultMultiplicity = Just (0, Nothing),
     compositionWholeOmittedDefaultMultiplicity = Nothing
     },
-  printSolution = True,
+  printSolution = ShowMapping,
   timeout = Nothing,
   withObviousMapping = Nothing,
   extraText = NoExtraText
@@ -89,7 +90,7 @@ task2023_13 = DifferentNamesConfig {
     associationOmittedDefaultMultiplicity = Just (0, Nothing),
     compositionWholeOmittedDefaultMultiplicity = Nothing
     },
-  printSolution = True,
+  printSolution = ShowMapping,
   timeout = Nothing,
   withObviousMapping = Nothing,
   extraText = NoExtraText
@@ -129,7 +130,7 @@ task2023_25 = DifferentNamesConfig {
     associationOmittedDefaultMultiplicity = Just (0, Nothing),
     compositionWholeOmittedDefaultMultiplicity = Nothing
     },
-  printSolution = True,
+  printSolution = ShowMapping,
   timeout = Nothing,
   withObviousMapping = Nothing,
   extraText = NoExtraText
@@ -169,7 +170,7 @@ task2024_15 = DifferentNamesConfig {
     associationOmittedDefaultMultiplicity = Just (0, Nothing),
     compositionWholeOmittedDefaultMultiplicity = Nothing
     },
-  printSolution = True,
+  printSolution = ShowMapping,
   timeout = Nothing,
   withObviousMapping = Nothing,
   extraText = NoExtraText
@@ -209,7 +210,7 @@ task2024_16 = DifferentNamesConfig {
     associationOmittedDefaultMultiplicity = Just (0, Nothing),
     compositionWholeOmittedDefaultMultiplicity = Nothing
     },
-  printSolution = True,
+  printSolution = ShowMapping,
   timeout = Nothing,
   withObviousMapping = Nothing,
   extraText = NoExtraText
@@ -249,7 +250,7 @@ task2024_56 = DifferentNamesConfig {
     associationOmittedDefaultMultiplicity = Just (0, Nothing),
     compositionWholeOmittedDefaultMultiplicity = Nothing
     },
-  printSolution = True,
+  printSolution = ShowMapping,
   timeout = Nothing,
   withObviousMapping = Nothing,
   extraText = NoExtraText
@@ -287,7 +288,7 @@ task2025_13 = DifferentNamesConfig {
     associationOmittedDefaultMultiplicity = Just (0, Nothing),
     compositionWholeOmittedDefaultMultiplicity = Nothing
     },
-  printSolution = True,
+  printSolution = ShowMapping,
   timeout = Nothing,
   withObviousMapping = Just True,
   extraText = NoExtraText
@@ -329,7 +330,7 @@ task2025_14 = DifferentNamesConfig {
     associationOmittedDefaultMultiplicity = Just (0, Nothing),
     compositionWholeOmittedDefaultMultiplicity = Nothing
     },
-  printSolution = True,
+  printSolution = ShowMapping,
   timeout = Nothing,
   withObviousMapping = Just False,
   extraText = NoExtraText

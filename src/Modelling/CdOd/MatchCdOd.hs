@@ -338,10 +338,10 @@ toTaskSpecificText
   -> LangM m
 toTaskSpecificText path MatchCdOdInstance {..} = \case
   GivenCds -> images show id
-    $=<< (\_ cd -> cacheCd cdDrawSettings mempty (fromClassDiagram cd) path)
+    $=<< (\_ cd -> cacheCd cdDrawSettings mempty Nothing (fromClassDiagram cd) path)
     `M.traverseWithKey` diagrams
   GivenOds -> images (:[]) snd
-    $=<< (\_ (is,o) -> (is,) <$> cacheOd o Forward True path)
+    $=<< (\_ (is,o) -> (is,) <$> cacheOd o Nothing Forward True path)
     `M.traverseWithKey` instances
 
 defaultMatchCdOdTaskText
@@ -405,17 +405,17 @@ inputHelpText = [
   Paragraph [
     Translated $ translations $ do
       english [iii|
-        Please state your answer by giving a list of pairs,
-        each comprising of a class diagram number and object diagram letters.
+        State your answer by giving a list of pairs,
+        each comprising of a class diagram number and any amount of object diagram letters.
         \n
         Each pair indicates that the mentioned object diagrams conform to the
         respective class diagram.
         \n
         For example,#{" "}|]
       german [iii|
-        Bitte geben Sie Ihre Antwort in Form einer Liste von Paaren an,
-        die jeweils aus einer Klassendiagrammnummer und
-        aus Objektdiagrammbuchstaben bestehen.
+        Geben Sie Ihre Antwort in Form einer Liste von Paaren an,
+        die jeweils aus einer Klassendiagrammnummer und beliebig vielen
+        Objektdiagrammbuchstaben bestehen.
         \n
         Jedes Paar gibt an, dass die genannten Objektdiagramme
         zu dem jeweiligen Klassendiagramm passen.

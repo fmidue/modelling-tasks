@@ -352,7 +352,7 @@ pickConflictTask showInputHelp path task = do
       under the initial marking?
       |]
     german [iii|
-      Welches dieser Petrinetze hat genau ein Paar von Transitionen,
+      Welches der folgenden Petrinetze hat genau ein Paar von Transitionen,
       die unter der Startmarkierung in Konflikt stehen?
       |]
   images show snd $=<< renderPick path task

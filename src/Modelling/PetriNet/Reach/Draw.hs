@@ -34,21 +34,22 @@ drawToFile
     MonadThrow m
     )
   => Bool
+  -> Bool
   -> FilePath
   -> GraphvizCommand
   -> Net s t
   -> m FilePath
-drawToFile hidePlaceNames path cmd net = cacheNet
+drawToFile hidePlaceNames highlightSvg path cmd net = cacheNet
     path
     (toPetriLike show show net)
-    $ reachDrawSettings hidePlaceNames cmd
+    $ reachDrawSettings hidePlaceNames highlightSvg cmd
 
-reachDrawSettings :: Bool -> GraphvizCommand -> DrawSettings
-reachDrawSettings hidePlaceNames cmd =
+reachDrawSettings :: Bool -> Bool -> GraphvizCommand -> DrawSettings
+reachDrawSettings hidePlaceNames highlightSvg cmd =
     DrawSettings {
       with1Weights = False,
       withPlaceNames = not hidePlaceNames,
-      withSvgHighlighting = True,
+      withSvgHighlighting = highlightSvg,
       withTransitionNames = True,
       withGraphvizCommand = cmd
       }
@@ -73,8 +74,9 @@ isPetriDrawable
   -> GraphvizCommand
   -> m Bool
 isPetriDrawable petri cmd =
-  let canDraw withoutPlaceNames = isNetDrawable (toPetriLike show show petri)
-        $ reachDrawSettings withoutPlaceNames cmd
+  let theNet = toPetriLike show show petri
+      canDraw withoutPlaceNames = isNetDrawable theNet
+        $ reachDrawSettings withoutPlaceNames True cmd
   in canDraw True &&^ canDraw False
 
 {-|

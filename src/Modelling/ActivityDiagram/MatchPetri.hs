@@ -23,7 +23,8 @@ module Modelling.ActivityDiagram.MatchPetri (
   matchPetriSyntax,
   matchPetriEvaluation,
   matchPetri,
-  defaultMatchPetriInstance
+  defaultMatchPetriInstance,
+  hoveringInformationOnlyPetri,
 ) where
 
 import qualified Data.Map as M (empty, fromList, keys)
@@ -94,6 +95,7 @@ import Modelling.PetriNet.Types (
   )
 
 import Control.Applicative (Alternative ((<|>)))
+import Control.Monad (when)
 import Control.Monad.Catch              (MonadCatch, MonadThrow, throwM)
 import Control.Monad.Extra              (firstJustM)
 import Control.Monad.Trans.Class (lift)
@@ -105,6 +107,7 @@ import Control.OutputCapable.Blocks (
   Rated,
   OutputCapable,
   ($=<<),
+  collapsed,
   english,
   extra,
   german,
@@ -196,10 +199,12 @@ checkMatchPetriConfig' MatchPetriConfig {
     countOfPetriNodesBounds,
     maxInstances,
     petriLayout,
+    petriSvgHighlighting,
     auxiliaryPetriNodeAbsent,
     presenceOfSinkTransitionsForFinals,
     withActivityFinalInForkBlocks
-  } = validatePetriConfig
+  } = (if petriSvgHighlighting then Nothing else Just "petriSvgHighlighting must be enabled for this task.")
+    <|> validatePetriConfig
         adConfig
         countOfPetriNodesBounds
         maxInstances
@@ -318,6 +323,21 @@ extractAuxiliaryPetriNodes petri = filter
   isAuxiliaryPetriNode
   $ M.keys $ Petri.nodes petri
 
+hoveringInformationOnlyPetri :: OutputCapable m => Bool -> LangM m
+hoveringInformationOnlyPetri isCollapsed = collapsed isCollapsed (translations $ do
+  english "Note on hovering"
+  german "Anmerkung zum Hovern"
+  ) $ translate $ do
+  english [iii|
+    When hovering over or clicking on Petri net nodes or their
+    labels, these elements are highlighted together.
+    |]
+  german [iii|
+    Beim Bewegen über oder Klicken auf
+    Petrinetzknoten oder ihre Beschriftungen
+    werden diese Elemente zusammen hervorgehoben.
+    |]
+
 matchPetriTask
   :: (
     MonadCache m,
@@ -377,6 +397,8 @@ matchPetriTask path task = do
         |]
     pure ()
 
+  when (withSvgHighlighting drawSetting) $ hoveringInformationOnlyPetri True
+
   extra $ addText task
 
   pure ()
@@ -421,17 +443,17 @@ matchPetriSyntax task sub = addPretext $ do
     english "Referenced Petri net nodes were provided within task?"
     german "Referenzierte Petrinetzknoten sind Bestandteil der Aufgabenstellung?"
   assertion (petriSolutionContainsPetriNodes sub petriNodeKeys) $ translate $ do
-    english "All petri net nodes are associated to an element in the activity diagram?"
+    english "All Petri net nodes are associated to an element in the activity diagram?"
     german "Alle Petrinetzknoten sind einem Element in dem Aktivitätsdiagramm zugeordnet?"
   assertion (petriSolutionPairwiseDisjunct sub) $ translate $ do
-    english "All petri net nodes are associated uniquely?"
+    english "All Petri net nodes are associated uniquely?"
     german "Alle Petrinetzknoten sind eindeutig zugeordnet?"
   assertion (all (`elem` subNames) adNames) $ translate $ do
     english "All action and object nodes are referenced?"
-    german "Alle Aktions- und Objektknoten wurden referenziert?"
+    german "Alle Aktions- und Objektknoten werden referenziert?"
   assertion (length subNames == length (nubOrd subNames)) $ translate $ do
-    english "All action and object nodes were referenced exactly once?"
-    german "Alle Aktions- und Objektknoten wurden genau einmal referenziert?"
+    english "All action and object nodes are referenced exactly once?"
+    german "Alle Aktions- und Objektknoten werden genau einmal referenziert?"
   pure ()
 
 matchPetriEvaluation

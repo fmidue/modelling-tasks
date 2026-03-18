@@ -56,6 +56,8 @@ import Data.Data (
   dataTypeName,
   dataTypeOf,
   )
+import Data.Text (replace, pack)
+import Data.Text.Encoding (decodeUtf8Lenient, encodeUtf8)
 import Diagrams.Backend.SVG             (B, svgClass)
 import Diagrams.Prelude
 import Graphics.SVGFonts.ReadFont       (PreparedFont)
@@ -87,8 +89,8 @@ cacheNet
   -> m FilePath
 cacheNet path pl drawSettings@DrawSettings {..} =
   cache path ext prefix pl $ \pl' -> do
-    dia <- drawNet pl' drawSettings
-    renderDiagram dia
+    dia <- drawNet pl' drawSettings False
+    conditionallyDisableHover <$> renderDiagram dia
   where
     prefix =
       "petri-"
@@ -105,6 +107,9 @@ cacheNet path pl drawSettings@DrawSettings {..} =
       ++ short withSvgHighlighting
       ++ short withGraphvizCommand
       ++ ".svg"
+    conditionallyDisableHover = if withSvgHighlighting
+      then id
+      else encodeUtf8 . replace (pack "<svg") (pack "<svg class=\"no-highlights\"") . decodeUtf8Lenient
 
 newtype UnknownPetriNetNodeException
   = CouldNotFindNodeWithinGraph String
@@ -122,13 +127,15 @@ drawNet
   -- ^ the graph definition
   -> DrawSettings
   -- ^ how to draw the graph
+  -> Bool
+  -- ^ whether to enable adding svg classes annotating elements for external tools
   -> m (Diagram B)
-drawNet pl drawSettings@DrawSettings {..} = do
+drawNet pl drawSettings@DrawSettings {..} withLabelAnnotations = do
   gr <- either (throwM . CouldNotFindNodeWithinGraph) return
     $ netToGr pl
   graph <- layoutGraph withGraphvizCommand gr
   preparedFont <- lin
-  return $ drawGraph drawSettings preparedFont graph
+  return $ drawGraph drawSettings preparedFont withLabelAnnotations graph
 
 {-|
 Attempts to draw the net.
@@ -143,9 +150,9 @@ isNetDrawable
   -> DrawSettings
   -- ^ settings to use
   -> m Bool
-isNetDrawable pl =
+isNetDrawable pl drawSettings =
   handle (const (pure False) . id @GraphvizException)
-  . (>> pure True) . drawNet pl
+  . (>> pure True) $ drawNet pl drawSettings False
 
 getNet
   :: (MonadThrow m, Net p n, Traversable t)
@@ -196,17 +203,19 @@ drawGraph
   -- ^ how to draw the graph
   -> PreparedFont Double
   -- ^ the font to be used for labels
+  -> Bool
+  -- ^ whether to enable adding svg classes annotating elements for external tools
   -> Gr (AttributeNode (String, Maybe Int)) (AttributeEdge Int)
   -- ^ the graph consisting of nodes and edges
   -> Diagram B
-drawGraph drawSettings@DrawSettings {..} preparedFont graph =
+drawGraph drawSettings@DrawSettings {..} preparedFont withLabelAnnotations graph =
   graphEdges' # frame 1
   where
     (nodes', edges) = GV.getGraph graph
     graphNodes' = M.foldlWithKey
       (\g l p -> g
         `atop`
-        drawNode drawSettings preparedFont l p)
+        drawNode drawSettings preparedFont withLabelAnnotations l p)
       mempty
       nodes'
     graphEdges' = foldl'
@@ -239,22 +248,24 @@ drawNode
   -- ^ how to draw
   -> PreparedFont Double
   -- ^ the font to use
+  -> Bool
+  -- ^ whether to enable adding svg classes annotating elements for external tools
   -> (String, Maybe Int)
   -- ^ a node (the first part is used for its label)
   -> Point V2 Double
   -- ^ where to place the node
   -> Diagram B
-drawNode DrawSettings {..} preparedFont (l, Nothing) p  = place
+drawNode DrawSettings {..} preparedFont withLabelAnnotations (l, Nothing) p  = place
   (addTransitionName $ rect 20 20 # lwL 0.5 # named l # svgClass "rect" # additionalLabel)
   p
   where
     additionalLabel
-      | withSvgHighlighting = id
-      | otherwise = svgClass $ ' ' : l
+      | withLabelAnnotations = svgClass $ ' ' : l
+      | otherwise = id
     addTransitionName
       | not withTransitionNames = id
       | otherwise = (center (text' preparedFont 18 l) `atop`)
-drawNode DrawSettings {..} preparedFont (l, Just i) p
+drawNode DrawSettings {..} preparedFont withLabelAnnotations (l, Just i) p
   | i < 5
   = place (foldl' atop label $ [placeToken j | j <- [1..i]] ++ [emptyPlace]) p
   | otherwise
@@ -267,8 +278,8 @@ drawNode DrawSettings {..} preparedFont (l, Just i) p
     p
   where
     additionalLabel
-      | withSvgHighlighting = id
-      | otherwise = svgClass $ ' ' : l
+      | withLabelAnnotations = svgClass $ ' ' : l
+      | otherwise = id
     spacer = 9
     emptyPlace = circle 20 # lwL 0.5 # named l # svgClass "node" # additionalLabel
     label

@@ -127,6 +127,7 @@ import GHC.Generics (Generic)
 import System.Random.Shuffle (shuffleM)
 import Modelling.ActivityDiagram.MatchPetri (
   MatchPetriSolution (..),
+  hoveringInformationOnlyPetri,
   mapTypesToLabels,
   )
 
@@ -182,7 +183,7 @@ defaultSelectPetriConfig = SelectPetriConfig {
   hideBranchConditions = False,
   hidePetriNodeLabels = False,
   petriLayout = [Dot],
-  petriSvgHighlighting = True,
+  petriSvgHighlighting = False,
   numberOfWrongAnswers = 2,
   numberOfModifications = 3,
   modifyAtMid = True,
@@ -204,12 +205,14 @@ checkSelectPetriConfig' SelectPetriConfig {
     countOfPetriNodesBounds,
     maxInstances,
     petriLayout,
+    petriSvgHighlighting,
     numberOfWrongAnswers,
     numberOfModifications,
     auxiliaryPetriNodeAbsent,
     presenceOfSinkTransitionsForFinals,
     withActivityFinalInForkBlocks
   } = validateSelectPetriSpecific numberOfWrongAnswers numberOfModifications
+    <|> (if petriSvgHighlighting then Just "petriSvgHighlighting is not really helpful for this task, so currently discouraged" else Nothing)
     <|> validatePetriConfig
           adConfig
           countOfPetriNodesBounds
@@ -385,9 +388,9 @@ selectPetriTask path task = do
       (\c -> cacheNet path (mapNet (show . PK.label) c) drawSetting)
   paragraph $ translate $ do
     english [i|Which of these Petri nets is the translation of the given activity diagram?
-Please state your answer by giving a number indicating the matching Petri net.|]
+State your answer by giving a number indicating the matching Petri net.|]
     german [i|Welches dieser Petrinetze ist die Übersetzung des gegebenen Aktivitätsdiagramms?
-Bitte geben Sie Ihre Antwort als Zahl an, welche das passende Petrinetz repräsentiert.|]
+Geben Sie Ihre Antwort als Zahl an, welche das passende Petrinetz repräsentiert.|]
   paragraph $ do
     translate $ do
       english [i|For example,|]
@@ -397,6 +400,8 @@ Bitte geben Sie Ihre Antwort als Zahl an, welche das passende Petrinetz repräse
       english [i|would indicate that Petri net 2 is the matching Petri net.|]
       german  [i|bedeuten, dass Petrinetz 2 das passende Petrinetz ist.|]
     pure ()
+
+  when (withSvgHighlighting drawSetting) $ hoveringInformationOnlyPetri True
 
   extra $ addText task
 
@@ -449,8 +454,8 @@ selectPetriEvaluation path task n = do
 
       when (suppressNodeNames $ plantUMLConf task) $ paragraph $ do
         translate $ do
-          english "The original activity diagram with node names looks like this:"
-          german "Das originale Aktivitätsdiagramm sieht mit Knotennamen wie folgt aus:"
+          english "Equipped with node names, the given activity diagram looks as follows:"
+          german "Mit Knotennamen versehen, sieht das gegebene Aktivitätsdiagramm wie folgt aus:"
 
         let alteredConfig = (plantUMLConf task) { suppressNodeNames = False }
         image $=<< drawAdToFile (path ++ "feedback") alteredConfig
@@ -460,19 +465,20 @@ selectPetriEvaluation path task n = do
       let (_, correctNet) = fromJust $ find fst $ petriNets task
       unless (withPlaceNames $ petriDrawConf task) $ paragraph $ do
         translate $ do
-          english "The translated Petri net (including node names) looks like this:"
-          german "Das aus dem Aktivitätsdiagramm übersetzte Petrinetz sieht mit Knotennamen wie folgt aus:"
+          english "The Petri net (including node labels) obtained by translation looks as follows:"
+          german "Das durch Übersetzung erhaltene Petrinetz (inklusive Knotenbeschriftungen) sieht wie folgt aus:"
 
         let drawSetting = (petriDrawConf task)
               { withPlaceNames = True
               , withTransitionNames = True
+              , withSvgHighlighting = True
               }
         image $=<< cacheNet path (mapNet (show . PK.label) correctNet) drawSetting
         pure ()
 
       paragraph $ translate $ do
-        english "The mapping of the nodes from the activity diagram to nodes from the Petri net is as follows:"
-        german "Die Zuordnung der Knoten aus dem Aktivitätsdiagramm zu Knoten aus dem Petrinetz sieht wie folgt aus:"
+        english "The mapping of elements from the activity diagram to nodes from the Petri net is as follows."
+        german "Die Zuordnung von Elementen aus dem Aktivitätsdiagramm zu Knoten aus dem Petrinetz ist wie folgt."
 
 
       let MatchPetriSolution{..} = mapTypesToLabels correctNet

@@ -35,7 +35,7 @@ run
 run withNames howToMark input file = do
   let tokens = lexer input
   let parsed = parser tokens
-  output <- drawCd drawSettings howToMark (uncurry toCd parsed)
+  output <- drawCd drawSettings howToMark Nothing (uncurry toCd parsed)
   BS.writeFile file output
   putStrLn $ "Output written to " ++ file
   where

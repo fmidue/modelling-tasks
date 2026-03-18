@@ -54,7 +54,7 @@ import Modelling.CdOd.Types (
 import Control.Lens                     ((.~))
 import Control.Monad                    (guard)
 import Control.Monad.Catch              (MonadThrow)
-import Data.Bifunctor                   (Bifunctor (second))
+import Data.Bifunctor                   (Bifunctor (bimap, second))
 import Data.ByteString                  (ByteString)
 import Data.Digest.Pure.SHA             (sha1, showDigest)
 import Data.Graph.Inductive             (Gr, mkGraph)
@@ -139,7 +139,7 @@ relationshipArrow CdDrawSettings {..} marking isThick =
             $ limits compositionPart
           ]
         ++ concat [maybeToList marking | isThick]
-        ++ [toLabel compositionName | printNames]
+        ++ [toLabel compositionName]
       Aggregation {..} -> [
           arrowFrom oDiamond,
           edgeEnds Back,
@@ -151,7 +151,7 @@ relationshipArrow CdDrawSettings {..} marking isThick =
             $ limits aggregationPart
           ]
         ++ concat [maybeToList marking | isThick]
-        ++ [toLabel aggregationName | printNames]
+        ++ [toLabel aggregationName]
       Association {..} -> associationArrow ++ [
           TailLabel $ multiplicity
             (associationOmittedDefaultMultiplicity omittedDefaults)
@@ -161,7 +161,7 @@ relationshipArrow CdDrawSettings {..} marking isThick =
             $ limits associationTo
           ]
         ++ concat [maybeToList marking | isThick]
-        ++ [toLabel associationName | printNames]
+        ++ [toLabel associationName]
     associationArrow
       | printNavigations = [arrowTo vee, ArrowSize 0.4]
       | otherwise        = [ArrowHead noArrow]
@@ -173,24 +173,27 @@ cacheCd
   :: (MonadCache m, MonadDiagrams m, MonadGraphviz m)
   => CdDrawSettings
   -> Style V2 Double
+  -> Maybe Int
   -> AnyCd
   -> FilePath
   -> m FilePath
-cacheCd config@CdDrawSettings{..} marking syntax path =
-  cache path ext "cd" syntax $ drawCd config marking
+cacheCd config@CdDrawSettings{..} marking mLabelLength syntax path =
+  cache path ext "cd" syntax $ drawCd config marking mLabelLength
   where
     ext = short printNavigations
       ++ short printNames
       ++ showDigest (sha1 . LBS.fromString $ show marking)
+      ++ maybe "" short mLabelLength
       ++ ".svg"
 
 drawCd
   :: (MonadDiagrams m, MonadGraphviz m)
   => CdDrawSettings
   -> Style V2 Double
+  -> Maybe Int
   -> AnyCd
   -> m ByteString
-drawCd config marking cd@AnyClassDiagram {..} = do
+drawCd config marking mLabelLength cd@AnyClassDiagram {..} = do
   let theNodes = anyClassNames
   let toIndexed xs = [(
           fromJust (elemIndex from theNodes),
@@ -200,6 +203,7 @@ drawCd config marking cd@AnyClassDiagram {..} = do
         | x@(_, r) <- xs
         , let (from, to) = either getFromToInvalid getFromTo r
         ]
+  let renameAnyRelationship c = bimap (c <$) (c <$)
   let thickenedRelationships = toIndexed $ calculateThickAnyRelationships cd
   let graph = mkGraph (zip [0..] theNodes) thickenedRelationships
         :: Gr String (Bool, AnyRelationship String String)
@@ -213,7 +217,11 @@ drawCd config marking cd@AnyClassDiagram {..} = do
           FontSize 16
           ],
         fmtEdge = \(_,_,(isThick, r)) -> FontSize 16
-          : relationshipArrow config Nothing isThick r
+          : relationshipArrow
+              config
+              Nothing
+              isThick
+              (maybe id (renameAnyRelationship . (`replicate` 'X')) mLabelLength r)
         }
   errorWithoutGraphviz
   graph' <- layoutGraph' params dirCommand graph
@@ -342,25 +350,28 @@ drawClass font l (P p) = translate p
 cacheOd
   :: (MonadCache m, MonadDiagrams m, MonadGraphviz m, MonadThrow m)
   => Od
+  -> Maybe Int
   -> DirType
   -> Bool
   -> FilePath
   -> m FilePath
-cacheOd od direction printNames path =
+cacheOd od mLabelLength direction printNames path =
   cache path ext "od" od $ \od' ->
-    drawOd od' direction printNames
+    drawOd od' mLabelLength direction printNames
   where
     ext = short printNames
       ++ short direction
+      ++ maybe "" short mLabelLength
       ++ ".svg"
 
 drawOd
   :: (MonadDiagrams m, MonadGraphviz m, MonadThrow m)
   => Od
+  -> Maybe Int
   -> DirType
   -> Bool
   -> m ByteString
-drawOd ObjectDiagram {..} direction printNames = do
+drawOd ObjectDiagram {..} mLabelLength direction printNames = do
   let numberedObjects = zip [0..] objects
       bmObjects = BM.fromList $ map (second objectName) numberedObjects
       toEdge l@Link {..} = (,,)
@@ -383,7 +394,7 @@ drawOd ObjectDiagram {..} direction printNames = do
           ],
         fmtEdge = \(_,_,Link {..}) -> arrowHeads
           ++ [ArrowSize 0.4, FontSize 16]
-          ++ [toLabel linkLabel | printNames] }
+          ++ [toLabel $ maybe linkLabel (`replicate` 'X') mLabelLength | printNames] }
   errorWithoutGraphviz
   graph' <- layoutGraph' params dirCommand graph
   font <- lin

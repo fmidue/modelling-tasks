@@ -6,7 +6,9 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE NamedFieldPuns #-}
 {-# Language QuasiQuotes #-}
+{-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TupleSections #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 
@@ -31,6 +33,7 @@ module Modelling.PetriNet.MatchToMath (
   mathToGraphEvaluation,
   mathToGraphSyntax,
   mathToGraphTask,
+  mathToOutput,
   petriNetRnd,
   )  where
 
@@ -124,7 +127,6 @@ import Control.Monad.Random             (
   MonadRandom,
   RandT,
   RandomGen,
-  StdGen,
   evalRandT,
   mkStdGen,
   )
@@ -222,9 +224,9 @@ instance Bitraversable MatchInstance where
 evalWithStdGen
   :: Monad m
   => Int
-  -> RandT StdGen m a
+  -> (forall g. RandomGen g => RandT g m a)
   -> m a
-evalWithStdGen = flip evalRandT . mkStdGen
+evalWithStdGen seed action = evalRandT action (mkStdGen seed)
 
 writeDia
   :: (
@@ -288,13 +290,14 @@ writeGraph drawSettings path pl =
     drawSettings
 
 graphToMath
-  :: (MonadAlloy m, MonadCatch m, MonadDiagrams m, MonadGraphviz m, Net p n)
+  :: forall m p n. (MonadAlloy m, MonadCatch m, MonadDiagrams m, MonadGraphviz m, Net p n)
   => MathConfig
   -> Int
   -> Int
   -> m (MatchInstance (Drawable (p n String)) Math)
 graphToMath config@MathConfig {..} segment seed = evalWithStdGen seed getInstance
   where
+    getInstance :: RandomGen g => RandT g m (MatchInstance (Drawable (p n String)) Math)
     getInstance = do
       allShuffled <- shuffleM $ allDrawSettings graphConfig
       (petri, m, changes) <- matchToMath config segment
@@ -306,13 +309,14 @@ graphToMath config@MathConfig {..} segment seed = evalWithStdGen seed getInstanc
         maybeDrawSettings
 
 mathToGraph
-  :: (MonadAlloy m, MonadCatch m, MonadDiagrams m, MonadGraphviz m, Net p n)
+  :: forall m p n. (MonadAlloy m, MonadCatch m, MonadDiagrams m, MonadGraphviz m, Net p n)
   => MathConfig
   -> Int
   -> Int
   -> m (MatchInstance Math (Drawable (p n String)))
 mathToGraph config@MathConfig {..} segment seed = evalWithStdGen seed getInstance
   where
+    getInstance :: RandomGen g => RandT g m (MatchInstance Math (Drawable (p n String)))
     getInstance = do
       (petri, math, changes) <- matchToMath config segment
       let petriNets = map fst changes
@@ -417,7 +421,7 @@ graphToMathTask showInputHelp path task = do
     $ map (second (mathToOutput latex . snd)) $ toList (to task)
   when showInputHelp $ do
    paragraph $ translate $ do
-    english [i|Please state your answer by giving the number of the matching representation only.|]
+    english [i|State your answer by giving the number of the matching representation.|]
     german [i|Geben Sie Ihre Antwort durch Angabe der Nummer der passenden Repräsentation an.|]
    paragraph $ do
     translate $ do
@@ -481,7 +485,7 @@ mathToGraphTask showInputHelp path task = do
   images show snd $=<< to <$> writeDias path task
   when showInputHelp $ do
    paragraph $ translate $ do
-    english [i|Please state your answer by giving the number of the matching diagram only.|]
+    english [i|State your answer by giving the number of the matching diagram.|]
     german [i|Geben Sie Ihre Antwort durch Angabe der Nummer des passenden Diagramms an.|]
    paragraph $ do
     translate $ do

@@ -35,5 +35,5 @@ spec =
           withTransitionNames = False,
           with1Weights = False,
           withGraphvizCommand = TwoPi
-          }
+          } False
         withTempFile $ \f -> renderSVG f (mkWidth 200) dia `shouldReturn` ()
