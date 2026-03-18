@@ -338,10 +338,10 @@ toTaskSpecificText
   -> LangM m
 toTaskSpecificText path MatchCdOdInstance {..} = \case
   GivenCds -> images show id
-    $=<< (\_ cd -> cacheCd cdDrawSettings mempty (fromClassDiagram cd) path)
+    $=<< (\_ cd -> cacheCd cdDrawSettings mempty Nothing (fromClassDiagram cd) path)
     `M.traverseWithKey` diagrams
   GivenOds -> images (:[]) snd
-    $=<< (\_ (is,o) -> (is,) <$> cacheOd o Forward True path)
+    $=<< (\_ (is,o) -> (is,) <$> cacheOd o Nothing Forward True path)
     `M.traverseWithKey` instances
 
 defaultMatchCdOdTaskText
