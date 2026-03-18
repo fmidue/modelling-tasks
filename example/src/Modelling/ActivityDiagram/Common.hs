@@ -34,7 +34,7 @@ finalNodesAdvice = Collapsible True finalNodesAdviceTitle finalNodesAdviceText
 -- This text explains how final nodes are realized in Petri nets and clarifies
 -- that transitions required for realizing final node behavior do not count as auxiliary nodes.
 finalNodesAndTransitionsAdvice :: ExtraText
-finalNodesAndTransitionsAdvice = Collapsible True finalNodesAdviceTitle
+finalNodesAndTransitionsAdvice = Collapsible False finalNodesAdviceTitle
   (M.fromList [
     (English, englishText),
     (German, germanText)

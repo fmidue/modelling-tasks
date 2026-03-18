@@ -23,7 +23,8 @@ module Modelling.ActivityDiagram.MatchPetri (
   matchPetriSyntax,
   matchPetriEvaluation,
   matchPetri,
-  defaultMatchPetriInstance
+  defaultMatchPetriInstance,
+  hoveringInformationOnlyPetri,
 ) where
 
 import qualified Data.Map as M (empty, fromList, keys)
@@ -77,11 +78,14 @@ import Modelling.ActivityDiagram.PlantUMLConverter (
   defaultPlantUmlConfig,
   drawAdToFile,
   )
-import Modelling.Auxiliary.Common (getFirstInstance, oneOf)
+import Modelling.Auxiliary.Common (
+  TaskGenerationException (NoInstanceAvailable),
+  oneOf
+  )
 import Modelling.Auxiliary.Output (
   addPretext,
   )
-import Modelling.PetriNet.Diagram (cacheNet)
+import Modelling.PetriNet.Diagram (cacheNet, isNetDrawable)
 import Modelling.PetriNet.Types (
   checkPetriNodeCount,
   DrawSettings (..),
@@ -92,7 +96,9 @@ import Modelling.PetriNet.Types (
   )
 
 import Control.Applicative (Alternative ((<|>)))
-import Control.Monad.Catch              (MonadThrow)
+import Control.Monad (when)
+import Control.Monad.Catch              (MonadCatch, MonadThrow, throwM)
+import Control.Monad.Extra              (firstJustM)
 import Control.Monad.Trans.Class (lift)
 import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
@@ -102,6 +108,7 @@ import Control.OutputCapable.Blocks (
   Rated,
   OutputCapable,
   ($=<<),
+  collapsed,
   english,
   extra,
   german,
@@ -120,6 +127,7 @@ import Data.Bifunctor                   (second)
 import Data.Containers.ListUtils (nubOrd)
 import Data.GraphViz.Commands (GraphvizCommand(..))
 import Data.List (intersect, sort)
+import Data.List.Extra (notNull)
 import Data.Map (Map)
 import Data.String.Interpolate (i, iii)
 import Data.Tuple.Extra                 (dupe)
@@ -192,10 +200,12 @@ checkMatchPetriConfig' MatchPetriConfig {
     countOfPetriNodesBounds,
     maxInstances,
     petriLayout,
+    petriSvgHighlighting,
     auxiliaryPetriNodeAbsent,
     presenceOfSinkTransitionsForFinals,
     withActivityFinalInForkBlocks
-  } = validatePetriConfig
+  } = (if petriSvgHighlighting then Nothing else Just "petriSvgHighlighting must be enabled for this task.")
+    <|> validatePetriConfig
         adConfig
         countOfPetriNodesBounds
         maxInstances
@@ -279,7 +289,7 @@ matchPetriSolution task = mapTypesToLabels $ petriNet task
 petriSolutionPairwiseDisjunct :: MatchPetriSolution -> Bool
 petriSolutionPairwiseDisjunct MatchPetriSolution{..} =
   and [ null (xs `intersect` ys) | xs <- allLists, ys <- allLists, xs /= ys ] && length allLists == length (nubOrd allLists)
-    where allLists =
+    where allLists = filter notNull
             [ map snd actionNodes
             , map snd objectNodes
             , decisionNodes
@@ -313,6 +323,21 @@ extractAuxiliaryPetriNodes :: Net p n => p n PetriKey -> [PetriKey]
 extractAuxiliaryPetriNodes petri = filter
   isAuxiliaryPetriNode
   $ M.keys $ Petri.nodes petri
+
+hoveringInformationOnlyPetri :: OutputCapable m => Bool -> LangM m
+hoveringInformationOnlyPetri isCollapsed = collapsed isCollapsed (translations $ do
+  english "Note on hovering"
+  german "Anmerkung zum Hovern"
+  ) $ translate $ do
+  english [iii|
+    When hovering over or clicking on Petri net nodes or their
+    labels, these elements are highlighted together.
+    |]
+  german [iii|
+    Beim Bewegen über oder Klicken auf
+    Petrinetzknoten oder ihre Beschriftungen
+    werden diese Elemente zusammen hervorgehoben.
+    |]
 
 matchPetriTask
   :: (
@@ -374,6 +399,8 @@ matchPetriTask path task = do
         |]
     pure ()
 
+  when (withSvgHighlighting drawSetting) $ hoveringInformationOnlyPetri True
+
   extra $ addText task
 
   pure ()
@@ -418,17 +445,17 @@ matchPetriSyntax task sub = addPretext $ do
     english "Referenced Petri net nodes were provided within task?"
     german "Referenzierte Petrinetzknoten sind Bestandteil der Aufgabenstellung?"
   assertion (petriSolutionContainsPetriNodes sub petriNodeKeys) $ translate $ do
-    english "All petri net nodes are associated to an element in the activity diagram?"
+    english "All Petri net nodes are associated to an element in the activity diagram?"
     german "Alle Petrinetzknoten sind einem Element in dem Aktivitätsdiagramm zugeordnet?"
   assertion (petriSolutionPairwiseDisjunct sub) $ translate $ do
-    english "All petri net nodes are associated uniquely?"
+    english "All Petri net nodes are associated uniquely?"
     german "Alle Petrinetzknoten sind eindeutig zugeordnet?"
   assertion (all (`elem` subNames) adNames) $ translate $ do
     english "All action and object nodes are referenced?"
-    german "Alle Aktions- und Objektknoten wurden referenziert?"
+    german "Alle Aktions- und Objektknoten werden referenziert?"
   assertion (length subNames == length (nubOrd subNames)) $ translate $ do
-    english "All action and object nodes were referenced exactly once?"
-    german "Alle Aktions- und Objektknoten wurden genau einmal referenziert?"
+    english "All action and object nodes are referenced exactly once?"
+    german "Alle Aktions- und Objektknoten werden genau einmal referenziert?"
   pure ()
 
 matchPetriEvaluation
@@ -436,7 +463,7 @@ matchPetriEvaluation
   => MatchPetriInstance
   -> MatchPetriSolution
   -> Rated m
-matchPetriEvaluation task sub = addPretext $ do
+matchPetriEvaluation task sub = do
   let as = translations $ do
         english "answer parts"
         german "Teilantworten"
@@ -468,7 +495,7 @@ matchPetriSolutionMap MatchPetriSolution {..} =
   in M.fromList $ zipWith (curry (,True)) [1..] xs
 
 matchPetri
-  :: (MonadAlloy m, MonadThrow m)
+  :: (MonadAlloy m, MonadCatch m, MonadDiagrams m, MonadGraphviz m)
   => MatchPetriConfig
   -> Int
   -> Int
@@ -478,7 +505,7 @@ matchPetri config segment seed = do
   evalRandT (getMatchPetriTask config) g
 
 getMatchPetriTask
-  :: (MonadAlloy m, MonadThrow m, RandomGen g)
+  :: (MonadAlloy m, MonadCatch m, MonadDiagrams m, MonadGraphviz m, RandomGen g)
   => MatchPetriConfig
   -> RandT g m MatchPetriInstance
 getMatchPetriTask config = do
@@ -488,31 +515,38 @@ getMatchPetriTask config = do
     $ matchPetriAlloy config
   randomInstances <- shuffleM alloyInstances >>= mapM (lift . parseInstance)
   activityDiagrams <- mapM (fmap snd . shuffleAdNames) randomInstances
-  (ad, petri) <- lift $ getFirstInstance
-        $ filter (not . petriHasMultipleAutomorphisms . snd)
+  let candidates = filter (not . petriHasMultipleAutomorphisms . snd)
         $ filter (checkPetriNodeCount (countOfPetriNodesBounds config) . snd)
         $ map (second convertToPetriNet . dupe) activityDiagrams
-  shuffledPetri <- snd <$> shufflePetri petri
   layout <- pickRandomLayout config
-  return $ MatchPetriInstance {
-    activityDiagram=ad,
-    petriNet = shuffledPetri,
-    plantUMLConf =
-      PlantUmlConfig {
-        suppressNodeNames = False,
-        suppressBranchConditions = hideBranchConditions config
-      },
-    petriDrawConf =
-      DrawSettings {
+  let drawSettings = DrawSettings {
         withPlaceNames = True,
         withSvgHighlighting = petriSvgHighlighting config,
         withTransitionNames = True,
         with1Weights = False,
         withGraphvizCommand = layout
-      },
-    showSolution = printSolution config,
-    addText = extraText config
-  }
+      }
+  maybeInstance <- firstJustM (\(ad, petri) -> do
+      shuffledPetri <- snd <$> shufflePetri petri
+      isDrawable <- lift $ isNetDrawable (mapNet (show . PK.label) shuffledPetri) drawSettings
+      if not isDrawable
+        then return Nothing
+        else return $ Just $ MatchPetriInstance {
+          activityDiagram = ad,
+          petriNet = shuffledPetri,
+          plantUMLConf =
+            PlantUmlConfig {
+              suppressNodeNames = False,
+              suppressBranchConditions = hideBranchConditions config
+            },
+          petriDrawConf = drawSettings,
+          showSolution = printSolution config,
+          addText = extraText config
+        }
+    ) candidates
+  case maybeInstance of
+    Just inst -> return inst
+    Nothing -> lift $ throwM NoInstanceAvailable
 
 defaultMatchPetriInstance :: MatchPetriInstance
 defaultMatchPetriInstance = MatchPetriInstance

@@ -316,6 +316,7 @@ toTaskSpecificText path SelectValidCdInstance {..} = \case
       let f = cacheCd
             cdDrawSettings
             mempty
+            Nothing
             (option theChange)
             path
       in M.insert x ((isRight $ hint theChange,) <$> f) cds
@@ -440,7 +441,7 @@ selectValidCdFeedback path drawSettings xs x cdChange =
           Das folgende Objektdiagramm
           passt #{if sufficient then "" else "dann "}zu diesem Klassendiagramm:
           |]
-      paragraph $ image $=<< cacheOd od dir True path
+      paragraph $ image $=<< cacheOd od Nothing dir True path
       pure ()
     _ -> pure ()
   where
@@ -467,7 +468,7 @@ selectValidCdFeedback path drawSettings xs x cdChange =
             mit Namen versehen werden:
             |]
         let withNames = drawSettings {printNames = True}
-        paragraph $ image $=<< cacheCd withNames mempty (option cdChange) path
+        paragraph $ image $=<< cacheCd withNames mempty Nothing (option cdChange) path
         pure ()
 
 selectValidCdSolution :: SelectValidCdInstance -> [Int]

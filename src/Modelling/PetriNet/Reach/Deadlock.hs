@@ -122,11 +122,10 @@ import Control.Functor.Trans            (FunctorTrans (lift))
 import Control.Monad                    (guard)
 import Control.Monad.Catch              (MonadCatch, MonadThrow)
 import Control.Monad.Extra              (whenJust)
-import Control.Monad.Random             (evalRandT, mkStdGen)
+import Control.Monad.Random             (RandomGen, evalRandT, mkStdGen)
 import Control.Monad.Trans.Maybe        (MaybeT (MaybeT), runMaybeT)
 import Control.Monad.Trans.Random       (RandT)
 import Data.Maybe                       (fromMaybe)
-import System.Random.Internal           (StdGen)
 import Data.GraphViz                    (GraphvizCommand (..))
 #if !MIN_VERSION_base(4,18,0)
 import Data.Typeable                    (Typeable)
@@ -156,7 +155,7 @@ deadlockTask
   -> DeadlockInstance s t
   -> LangM m
 deadlockTask showInputHelp path inst = do
-  lift (drawToFile (not $ showPlaceNames inst) path (drawUsing inst) (petriNet inst))
+  lift (drawToFile (not $ showPlaceNames inst) False path (drawUsing inst) (petriNet inst))
   $>>= \img ->
     reportReachFor
     showInputHelp
@@ -427,14 +426,14 @@ tries conf seed = eval out
   where
     eval f = evalRandT f $ mkStdGen seed
     out
-      :: RandT StdGen m (Net Place Transition, GraphvizCommand, Either (NonEmpty [Transition]) (NonEmpty [Transition]))
+      :: RandomGen g => RandT g m (Net Place Transition, GraphvizCommand, Either (NonEmpty [Transition]) (NonEmpty [Transition]))
     out =
       maybe out pure =<< runMaybeT (try conf)
 
 try
-  :: (MonadCatch m, MonadDiagrams m, MonadGraphviz m)
+  :: (MonadCatch m, MonadDiagrams m, MonadGraphviz m, RandomGen g)
   => DeadlockConfig
-  -> MaybeT (RandT StdGen m) (Net Place Transition, GraphvizCommand, Either (NonEmpty [Transition]) (NonEmpty [Transition]))
+  -> MaybeT (RandT g m) (Net Place Transition, GraphvizCommand, Either (NonEmpty [Transition]) (NonEmpty [Transition]))
 try conf = do
     let ps = [Place 1 .. Place (numPlaces conf)]
         ts = [Transition 1 .. Transition (numTransitions conf)]
