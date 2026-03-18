@@ -235,7 +235,7 @@ drawCdAndOdsFor is c cds cmd = do
     drawOdToFile allRelationshipNames inst i g = do
       od <- alloyInstanceToOd Nothing allRelationshipNames inst
       od' <- flip evalRandT g $ anonymiseObjects (1 % 3) od
-      renderedOd <- drawOd od' Back True
+      renderedOd <- drawOd od' Nothing Back True
       let path = c ++ '-' : shorten cmd ++ "-od" ++ show i ++ ".svg"
       BS.writeFile path renderedOd
       pure path

@@ -34,7 +34,7 @@ drawOdToFile possibleLinks file contents = do
   i <- parseInstance (BS.pack contents)
   od <- alloyInstanceToOd Nothing possibleLinks i
   od' <- flip evalRandT (mkStdGen 0) $ anonymiseObjects (1 % 3) od
-  renderedOd <- drawOd od' NoDir False
+  renderedOd <- drawOd od' Nothing NoDir False
   let filename = file ++ ".svg"
   BS.writeFile filename renderedOd
   putStrLn $ "Output written to " ++ filename
