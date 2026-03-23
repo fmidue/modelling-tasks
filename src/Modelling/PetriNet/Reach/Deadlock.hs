@@ -327,7 +327,7 @@ defaultDeadlockInstance = DeadlockInstance {
   shortestSolutions = Left ([
     Transition 3, Transition 3, Transition 3,
     Transition 2, Transition 2, Transition 2
-    ] :| []), -- TO DO: add a solution
+    ] :| []),
   withLengthHint    = Just 9,
   withMinLengthHint = True,
   rejectSpaceballsLength = Nothing
