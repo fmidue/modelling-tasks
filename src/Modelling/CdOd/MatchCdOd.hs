@@ -407,40 +407,40 @@ defaultMatchCdOdTaskText diagramCount instanceCount =  [
   ]
 
 inputHelpText :: Bool -> [Output]
-inputHelpText hasGivenCds =
-  [ Paragraph [
-      Translated $ translations $ do
-        english [iii|
-          State your answer by giving a list of pairs,
-          each comprising of a #{entityNameEn} number and any amount of object diagram letters.
-          \n
-          Each pair indicates that the mentioned object diagrams conform to the
-          respective #{entityNameEn}.
-          \n
-          For example,#{" "}|]
-        german [iii|
-          Geben Sie Ihre Antwort in Form einer Liste von Paaren an,
-          die jeweils aus einer #{entityNameDe}-Nummer und beliebig vielen
-          Objektdiagrammbuchstaben bestehen.
-          \n
-          Jedes Paar gibt an, dass die genannten Objektdiagramme
-          zu #{entityNameDeDative} passen.
-          \n
-          Zum Beispiel drückt#{" "}|],
-      Code . uniform . show $ matchingShow matchCdOdInitial,
-      Translated $ translations $ do
-        english [iii|
-          expresses that among the offered choices exactly
-          the object diagrams a and b conform to #{entityNameEn} 1 and
-          that none of the offered object diagrams
-          conform to #{entityNameEn} 2.
-          |]
-        german [iii|
-          aus, dass unter den angebotenen Auswahlmöglichkeiten
-          genau die Objektdiagramme a und b Instanzen #{entityNameDeGenitive} 1 sind
-          und dass keines der angebotenen Objektdiagramme
-          Instanz #{entityNameDeGenitive} 2 ist.
-          |]
+inputHelpText hasGivenCds = [
+  Paragraph [
+    Translated $ translations $ do
+      english [iii|
+        State your answer by giving a list of pairs,
+        each comprising of a #{entityNameEn} number and any amount of object diagram letters.
+        \n
+        Each pair indicates that the mentioned object diagrams conform to the
+        respective #{entityNameEn}.
+        \n
+        For example,#{" "}|]
+      german [iii|
+        Geben Sie Ihre Antwort in Form einer Liste von Paaren an,
+        die jeweils aus einer #{entityNameDe}-Nummer und beliebig vielen
+        Objektdiagrammbuchstaben bestehen.
+        \n
+        Jedes Paar gibt an, dass die genannten Objektdiagramme
+        zu #{entityNameDeDative} passen.
+        \n
+        Zum Beispiel drückt#{" "}|],
+    Code . uniform . show $ matchingShow matchCdOdInitial,
+    Translated $ translations $ do
+      english [iii|
+        expresses that among the offered choices exactly
+        the object diagrams a and b conform to #{entityNameEn} 1 and
+        that none of the offered object diagrams
+        conform to #{entityNameEn} 2.
+        |]
+      german [iii|
+        aus, dass unter den angebotenen Auswahlmöglichkeiten
+        genau die Objektdiagramme a und b Instanzen #{entityNameDeGenitive} 1 sind
+        und dass keines der angebotenen Objektdiagramme
+        Instanz #{entityNameDeGenitive} 2 ist.
+        |]
     ]
   ]
   where
@@ -469,12 +469,8 @@ matchCdOdSyntax
   -> LangM m
 matchCdOdSyntax task sub = addPretext $ do
   assertion (all (availableCd . fst) sub) $ translate $ do
-    english [iii|
-      Referenced class diagrams were provided within task?
-      |]
-    german [iii|
-      Referenzierte Klassendiagramme sind Bestandteil der Aufgabenstellung?
-      |]
+    english "Referenced class diagrams were provided within task?"
+    german "Referenzierte Klassendiagramme sind Bestandteil der Aufgabenstellung?"
   assertion (all (all availableOd . lettersList . snd) sub) $ translate $ do
     english "Referenced object diagrams were provided within task?"
     german "Referenzierte Objektdiagramme sind Bestandteil der Aufgabenstellung?"
