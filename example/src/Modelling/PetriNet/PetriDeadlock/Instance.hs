@@ -40,7 +40,10 @@ examWs2024 = DeadlockInstance {
     },
   showPlaceNames = False,
   maxDisplayedSolutions = 1,
-  shortestSolutions = Left ([] :| []), -- TO DO: add a solution here
+  shortestSolutions = Left ([
+    "t4", "t3", "t3", "t6", "t6", "t8", "t8",
+    "t8", "t1", "t1", "t1", "t1", "t1", "t1"
+    ] :| []),
   withLengthHint = Just 14,
   withMinLengthHint = True,
   rejectSpaceballsLength = Nothing

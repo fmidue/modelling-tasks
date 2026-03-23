@@ -323,8 +323,11 @@ defaultDeadlockInstance = DeadlockInstance {
   noLongerThan      = Nothing,
   petriNet          = fst example,
   showPlaceNames    = False,
-  maxDisplayedSolutions = 0,
-  shortestSolutions = Left ([] :| []), -- TO DO: add a solution
+  maxDisplayedSolutions = 1,
+  shortestSolutions = Left ([
+    Transition 3, Transition 3, Transition 3,
+    Transition 2, Transition 2, Transition 2
+    ] :| []), -- TO DO: add a solution
   withLengthHint    = Just 9,
   withMinLengthHint = True,
   rejectSpaceballsLength = Nothing

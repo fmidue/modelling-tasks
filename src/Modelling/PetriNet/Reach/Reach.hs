@@ -616,8 +616,12 @@ defaultReachInstance = ReachInstance {
   noLongerThan      = Nothing,
   showGoalNet       = True,
   showPlaceNames    = False,
-  maxDisplayedSolutions = 0,
-  shortestSolutions = Left ([] :| []), -- TO DO: add a solution
+  maxDisplayedSolutions = 1,
+  shortestSolutions = Left ([
+    Transition 3, Transition 3, Transition 2, Transition 1, Transition 4,
+    Transition 3, Transition 3, Transition 2, Transition 1, Transition 4,
+    Transition 3, Transition 2
+    ] :| []),
   withLengthHint    = Just 12,
   withMinLengthHint = False,
   rejectSpaceballsLength = Nothing
