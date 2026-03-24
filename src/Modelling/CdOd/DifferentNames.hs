@@ -363,10 +363,10 @@ type DifferentNamesTaskText = [SpecialOutput DifferentNamesTaskTextElement]
 data DifferentNamesTaskTextElement
   = GivenCd
   | GivenOd
-  | DirectionsAdvice
   | MappingAdvice
-  | SimplifiedInformation
-  deriving (Bounded, Enum, Eq, Generic, Hashable, Ord, Read, Reader, Show, ToDoc)
+  | DirectionsAdvice Bool
+  | SimplifiedInformation Bool
+  deriving (Eq, Generic, Hashable, Ord, Read, Reader, Show, ToDoc)
 
 differentNamesTask
   :: (MonadCache m, MonadDiagrams m, MonadGraphviz m, MonadThrow m, OutputCapable m)
@@ -446,8 +446,8 @@ toTaskSpecificText path inst@DifferentNamesInstance {..} = \case
   GivenOd -> paragraph $ image $=<<
     cacheOd oDiagram mLabelLength Forward True path
   MappingAdvice -> mappingAdvice hasGivenCd
-  DirectionsAdvice -> directionsAdvice False
-  SimplifiedInformation -> simplifiedInformation True
+  DirectionsAdvice b -> directionsAdvice b
+  SimplifiedInformation b -> simplifiedInformation b
   where
     cd = fromClassDiagram cDiagram
     hasGivenCd = Special GivenCd `elem` taskText
@@ -473,8 +473,8 @@ defaultDifferentNamesTaskText = [
       entspricht welchen Links im Objektdiagramm (OD)?
       |],
   Special MappingAdvice,
-  Special DirectionsAdvice,
-  Special SimplifiedInformation
+  Special $ DirectionsAdvice False,
+  Special $ SimplifiedInformation True
   ]
 
 inputHelpText :: Bool -> Output

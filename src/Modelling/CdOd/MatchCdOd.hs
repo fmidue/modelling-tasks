@@ -284,9 +284,9 @@ type MatchCdOdTaskText = [SpecialOutput MatchCdOdTaskTextElement]
 data MatchCdOdTaskTextElement
   = GivenCds
   | GivenOds
-  | DirectionsAdvice
-  | SimplifiedInformation
-  deriving (Bounded, Enum, Eq, Generic, Hashable, Ord, Read, Reader, Show, ToDoc)
+  | DirectionsAdvice Bool
+  | SimplifiedInformation Bool
+  deriving (Eq, Generic, Hashable, Ord, Read, Reader, Show, ToDoc)
 
 matchCdOdTask
   :: (
@@ -345,8 +345,8 @@ toTaskSpecificText path MatchCdOdInstance {..} = \case
   GivenOds -> images (:[]) snd
     $=<< (\_ (is,o) -> (is,) <$> cacheOd o Nothing Forward True path)
     `M.traverseWithKey` instances
-  DirectionsAdvice -> directionsAdvice True
-  SimplifiedInformation -> simplifiedInformation True
+  DirectionsAdvice b -> directionsAdvice b
+  SimplifiedInformation b -> simplifiedInformation b
 
 defaultMatchCdOdTaskText
     :: Int
@@ -402,8 +402,8 @@ defaultMatchCdOdTaskText diagramCount instanceCount =  [
         oder mehreren der gegebenen Klassendiagramme passen.|]
       else "",
   Special GivenOds,
-  Special DirectionsAdvice,
-  Special SimplifiedInformation
+  Special $ DirectionsAdvice True,
+  Special $ SimplifiedInformation True
   ]
 
 inputHelpText :: Bool -> [Output]
