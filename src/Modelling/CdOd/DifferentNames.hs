@@ -631,8 +631,8 @@ differentNamesEvaluation path task cs = do
       ShowMapping -> pure ()
       ShowMappingAndReprintCD -> do
         paragraph $ translate $ do
-          english "Check the correctly labeled class diagram:"
-          german "Überprüfen Sie das korrekt beschriftete Klassendiagramm:"
+          english "Consider the correctly labelled class diagram:"
+          german "Betrachten Sie das korrekt beschriftete Klassendiagramm:"
 
         image $=<< (relabelCd task >>= \relabelledCd ->
           cacheCd (cdDrawSettings task) mempty mLabelLength (fromClassDiagram relabelledCd) path)
@@ -640,8 +640,8 @@ differentNamesEvaluation path task cs = do
         pure ()
       ShowMappingAndReprintOD -> do
         paragraph $ translate $ do
-          english "Check the correctly labeled object diagram:"
-          german "Überprüfen Sie das korrekt beschriftete Objektdiagramm:"
+          english "Consider the correctly labelled object diagram:"
+          german "Betrachten Sie das korrekt beschriftete Objektdiagramm:"
 
         image $=<< (relabelOd task >>= \relabelledOd ->
           cacheOd relabelledOd mLabelLength Forward True path)
