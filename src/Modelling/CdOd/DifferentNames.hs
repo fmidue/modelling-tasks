@@ -364,7 +364,7 @@ type DifferentNamesTaskText = [SpecialOutput DifferentNamesTaskTextElement]
 data DifferentNamesTaskTextElement
   = GivenCd
   | GivenOd
-  | GivenRelationshipNames
+  | RelationshipNamesFromCd
   | MappingAdvice
   | DirectionsAdvice Bool
   | SimplifiedInformation Bool
@@ -447,8 +447,8 @@ toTaskSpecificText path inst@DifferentNamesInstance {..} = \case
     paragraph $ image $=<< cacheCd cdDrawSettings mempty mLabelLength cd path
   GivenOd -> paragraph $ image $=<<
     cacheOd oDiagram mLabelLength Forward True path
-  GivenRelationshipNames -> paragraph $
-    code $ show $ sort $ associationNames cDiagram
+  RelationshipNamesFromCd -> paragraph $
+    itemizeM $ map code $ sort $ associationNames cDiagram
   MappingAdvice -> mappingAdvice hasGivenCd
   DirectionsAdvice b -> directionsAdvice b
   SimplifiedInformation b -> simplifiedInformation b
