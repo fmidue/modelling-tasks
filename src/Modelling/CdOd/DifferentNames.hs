@@ -139,6 +139,7 @@ import Control.OutputCapable.Blocks (
   OutputCapable,
   Rated,
   ($=<<),
+  code,
   collapsed,
   english,
   extra,
@@ -363,6 +364,7 @@ type DifferentNamesTaskText = [SpecialOutput DifferentNamesTaskTextElement]
 data DifferentNamesTaskTextElement
   = GivenCd
   | GivenOd
+  | GivenRelationshipNames
   | MappingAdvice
   | DirectionsAdvice Bool
   | SimplifiedInformation Bool
@@ -445,6 +447,8 @@ toTaskSpecificText path inst@DifferentNamesInstance {..} = \case
     paragraph $ image $=<< cacheCd cdDrawSettings mempty mLabelLength cd path
   GivenOd -> paragraph $ image $=<<
     cacheOd oDiagram mLabelLength Forward True path
+  GivenRelationshipNames -> paragraph $
+    code $ show $ sort $ associationNames cDiagram
   MappingAdvice -> mappingAdvice hasGivenCd
   DirectionsAdvice b -> directionsAdvice b
   SimplifiedInformation b -> simplifiedInformation b
