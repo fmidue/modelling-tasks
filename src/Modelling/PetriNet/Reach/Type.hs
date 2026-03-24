@@ -87,7 +87,7 @@ mapCapacity _ Unbounded      = Unbounded
 mapCapacity _ (AllBounded x) = AllBounded x
 mapCapacity f (Bounded m)    = Bounded $ M.mapKeys f m
 
--- | Constraints on transition token behavior in the net
+-- | Constraints on transition token behaviour in the net
 data TransitionBehaviorConstraints = TransitionBehaviorConstraints {
   -- | Specify which token-changing transitions to allow.
   -- @Just LT@: allow only token-decreasing transitions (forbid increasing)
@@ -102,7 +102,7 @@ data TransitionBehaviorConstraints = TransitionBehaviorConstraints {
   }
   deriving (Data, Eq, Generic, Hashable, Ord, Read, Reader, Show, ToDoc)
 
--- | No transition behavior constraints
+-- | No transition behaviour constraints
 noTransitionBehaviorConstraints :: TransitionBehaviorConstraints
 noTransitionBehaviorConstraints = TransitionBehaviorConstraints {
   allowedTokenChanges = Nothing,
@@ -276,13 +276,13 @@ hasIsolatedNodes (Net ps ts cs _ _) =
       connectedTransitions = S.fromList $ map (\(_, t, _) -> t) cs
   in not (S.isSubsetOf ps connectedPlaces && S.isSubsetOf ts connectedTransitions)
 
--- | Determine the token behavior of a connection
+-- | Determine the token behaviour of a connection
 -- Returns: (consumed, produced)
 connectionTokenBehavior :: Connection s t -> (Int, Int)
 connectionTokenBehavior (prePlaces, _, postPlaces) =
   (length prePlaces, length postPlaces)
 
--- | Check if a net satisfies the given transition behavior constraints
+-- | Check if a net satisfies the given transition behaviour constraints
 satisfiesTransitionBehaviorConstraints
   :: Net s t
   -> TransitionBehaviorConstraints
