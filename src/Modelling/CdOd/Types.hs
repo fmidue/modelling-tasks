@@ -172,7 +172,7 @@ A link connects two objects and has a label.
 -}
 data Link objectName linkLabel
   = Link {
-    -- | how the link is labeled, indicating which relationship it belongs to
+    -- | how the link is labelled, indicating which relationship it belongs to
     linkLabel                 :: linkLabel,
     -- | the starting point of the link
     linkFrom                  :: objectName,
