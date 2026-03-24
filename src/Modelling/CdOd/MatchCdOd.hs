@@ -284,7 +284,9 @@ type MatchCdOdTaskText = [SpecialOutput MatchCdOdTaskTextElement]
 data MatchCdOdTaskTextElement
   = GivenCds
   | GivenOds
-  deriving (Bounded, Enum, Eq, Generic, Hashable, Ord, Read, Reader, Show, ToDoc)
+  | DirectionsAdvice Bool
+  | SimplifiedInformation Bool
+  deriving (Eq, Generic, Hashable, Ord, Read, Reader, Show, ToDoc)
 
 matchCdOdTask
   :: (
@@ -300,8 +302,6 @@ matchCdOdTask
   -> LangM m
 matchCdOdTask showInputHelp path task = do
   toTaskText showInputHelp path task
-  directionsAdvice True
-  simplifiedInformation True
   hoveringInformation True
   pure ()
 
@@ -320,9 +320,11 @@ toTaskText
 toTaskText showInputHelp path task = do
   specialToOutputCapable (toTaskSpecificText path task) (taskText task)
   when showInputHelp $
-    toOutputCapable inputHelpText
+    toOutputCapable (inputHelpText hasGivenCds)
   extra $ addText task
   pure ()
+  where
+    hasGivenCds = Special GivenCds `elem` taskText task
 
 toTaskSpecificText
   :: (
@@ -343,6 +345,8 @@ toTaskSpecificText path MatchCdOdInstance {..} = \case
   GivenOds -> images (:[]) snd
     $=<< (\_ (is,o) -> (is,) <$> cacheOd o Nothing Forward True path)
     `M.traverseWithKey` instances
+  DirectionsAdvice b -> directionsAdvice b
+  SimplifiedInformation b -> simplifiedInformation b
 
 defaultMatchCdOdTaskText
     :: Int
@@ -397,46 +401,55 @@ defaultMatchCdOdTaskText diagramCount instanceCount =  [
         \nEin Objektdiagramm kann zu keinem, einem
         oder mehreren der gegebenen Klassendiagramme passen.|]
       else "",
-  Special GivenOds
+  Special GivenOds,
+  Special $ DirectionsAdvice True,
+  Special $ SimplifiedInformation True
   ]
 
-inputHelpText :: [Output]
-inputHelpText = [
+inputHelpText :: Bool -> [Output]
+inputHelpText hasGivenCds = [
   Paragraph [
     Translated $ translations $ do
       english [iii|
         State your answer by giving a list of pairs,
-        each comprising of a class diagram number and any amount of object diagram letters.
+        each comprising of a #{entityNameEn} number and any amount of object diagram letters.
         \n
         Each pair indicates that the mentioned object diagrams conform to the
-        respective class diagram.
+        respective #{entityNameEn}.
         \n
         For example,#{" "}|]
       german [iii|
         Geben Sie Ihre Antwort in Form einer Liste von Paaren an,
-        die jeweils aus einer Klassendiagrammnummer und beliebig vielen
+        die jeweils aus einer #{entityNameDe}-Nummer und beliebig vielen
         Objektdiagrammbuchstaben bestehen.
         \n
         Jedes Paar gibt an, dass die genannten Objektdiagramme
-        zu dem jeweiligen Klassendiagramm passen.
+        zu #{entityNameDeDative} passen.
         \n
         Zum Beispiel drückt#{" "}|],
     Code . uniform . show $ matchingShow matchCdOdInitial,
     Translated $ translations $ do
       english [iii|
         expresses that among the offered choices exactly
-        the object diagrams a and b are instances of class diagram 1 and
+        the object diagrams a and b are instances of class diagram #{entityNameEn} 1 and
         that none of the offered object diagrams
-        are instances of class diagram 2.
+        are instances of class diagram #{entityNameEn} 2.
         |]
       german [iii|
         aus, dass unter den angebotenen Auswahlmöglichkeiten
-        genau die Objektdiagramme a und b Instanzen des Klassendiagramms 1 sind
+        genau die Objektdiagramme a und b Instanzen #{entityNameDeGenitive} 1 sind
         und dass keines der angebotenen Objektdiagramme
-        Instanz des Klassendiagramms 2 ist.
+        Instanz #{entityNameDeGenitive} 2 ist.
         |]
     ]
   ]
+  where
+    (entityNameEn, entityNameDe, entityNameDeDative, entityNameDeGenitive) =
+      if hasGivenCds
+      then ( "class diagram", "Klassendiagramm"
+           , "dem jeweiligen Klassendiagramm", "des Klassendiagramms")
+      else ( "scenario description", "Szenariobeschreibung"
+           , "der jeweiligen Szenariobeschreibung", "der Szenariobeschreibung")
 
 newtype ShowLetters = ShowLetters { showLetters' :: Letters }
 
