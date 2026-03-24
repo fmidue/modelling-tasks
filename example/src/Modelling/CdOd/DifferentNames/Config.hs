@@ -350,7 +350,8 @@ task2025_15 :: DifferentNamesConfig
 task2025_15 = task2025_14 {
   objectProperties = (objectProperties task2025_14) {
     anonymousObjectProportion = 1 % 1
-    }
+    },
+  printSolution = ShowMappingAndReprintOD
   }
 
 {-|
@@ -360,7 +361,9 @@ share same instances as task2025_14
 share same concept injection as task2025_15
 -}
 task2025_16 :: DifferentNamesConfig
-task2025_16 = task2025_15
+task2025_16 = task2025_15 {
+  printSolution = ShowMappingAndReprintCD
+  }
 
 {-|
 points: 0.15
@@ -370,7 +373,9 @@ share same concept injection as task2025_15
 used LLM for story generation: gpt-4o-mini
 -}
 task2025_21 :: DifferentNamesConfig
-task2025_21 = task2025_15
+task2025_21 = task2025_15 {
+  printSolution = ShowMappingAndReprintOD
+  }
 
 {-|
 points: 0.15
@@ -379,7 +384,9 @@ share same instances as task2025_14
 share same concept injection as task2025_15
 -}
 task2025_22 :: DifferentNamesConfig
-task2025_22 = task2025_15
+task2025_22 = task2025_15 {
+  printSolution = ShowMappingAndReprintOD
+  }
 
 {-|
 points: 0.1
