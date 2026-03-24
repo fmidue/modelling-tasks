@@ -139,7 +139,6 @@ import Control.OutputCapable.Blocks (
   OutputCapable,
   Rated,
   ($=<<),
-  code,
   collapsed,
   english,
   extra,
