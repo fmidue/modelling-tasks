@@ -431,9 +431,9 @@ inputHelpText hasGivenCds = [
     Translated $ translations $ do
       english [iii|
         expresses that among the offered choices exactly
-        the object diagrams a and b conform to #{entityNameEn} 1 and
+        the object diagrams a and b are instances of class diagram #{entityNameEn} 1 and
         that none of the offered object diagrams
-        conform to #{entityNameEn} 2.
+        are instances of class diagram #{entityNameEn} 2.
         |]
       german [iii|
         aus, dass unter den angebotenen Auswahlmöglichkeiten
