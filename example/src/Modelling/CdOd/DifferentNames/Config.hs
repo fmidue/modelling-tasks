@@ -288,7 +288,7 @@ task2025_13 = DifferentNamesConfig {
     associationOmittedDefaultMultiplicity = Just (0, Nothing),
     compositionWholeOmittedDefaultMultiplicity = Nothing
     },
-  printSolution = ShowMapping,
+  printSolution = ShowMappingAndReprintOD,
   timeout = Nothing,
   withObviousMapping = Just True,
   extraText = NoExtraText
@@ -330,7 +330,7 @@ task2025_14 = DifferentNamesConfig {
     associationOmittedDefaultMultiplicity = Just (0, Nothing),
     compositionWholeOmittedDefaultMultiplicity = Nothing
     },
-  printSolution = ShowMapping,
+  printSolution = ShowMappingAndReprintOD,
   timeout = Nothing,
   withObviousMapping = Just False,
   extraText = NoExtraText
@@ -360,7 +360,9 @@ share same instances as task2025_14
 share same concept injection as task2025_15
 -}
 task2025_16 :: DifferentNamesConfig
-task2025_16 = task2025_15
+task2025_16 = task2025_15 {
+  printSolution = ShowMappingAndReprintCD
+  }
 
 {-|
 points: 0.15
