@@ -966,10 +966,10 @@ takeRandomInstances OdDistributionConfig {..} alloyInstances =
   where
     takes =
       [ [takeL [1] x, takeL [2] y, takeL [1,2] z, takeL [] u]
-      | x <- [0 .. min maxPerJustOneCd (length $ fromJust $ M.lookup [1]   alloyInstances)]
-      , y <- [0 .. min maxPerJustOneCd (length $ fromJust $ M.lookup [2]   alloyInstances)]
+      | x <- [0 .. min maxPerJustOneCd (length $ fromJust $ M.lookup [1] alloyInstances)]
+      , y <- [0 .. min maxPerJustOneCd (length $ fromJust $ M.lookup [2] alloyInstances)]
       , z <- [0 .. min maxSharedBetweenBothCds (length $ fromJust $ M.lookup [1,2] alloyInstances)]
-      , u <- [0 .. min maxNoCd (length $ fromJust $ M.lookup []    alloyInstances)]
+      , u <- [0 .. min maxNoCd (length $ fromJust $ M.lookup [] alloyInstances)]
       , oDiagramCount == x + y + z + u
       , x + z >= 1
       , y + z >= 1
