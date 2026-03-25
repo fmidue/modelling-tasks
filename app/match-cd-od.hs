@@ -52,8 +52,8 @@ main = do
             usesEveryRelationshipName = Nothing
             },
           odDistribution = OdDistributionConfig {
-            oDiagramCount = 5,
-            maxPerJustOneCd = 2,
+            objectDiagramCount = 5,
+            maxPerJustEachCd = 2,
             maxSharedBetweenBothCds = 2,
             maxNoCd = 2
             },
