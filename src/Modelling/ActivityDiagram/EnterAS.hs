@@ -1,4 +1,3 @@
-
 {-# LANGUAGE ApplicativeDo #-}
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
@@ -227,11 +226,11 @@ enterASTask showInputHelp path task = do
     when showInputHelp $ do
      translate $ do
       english [i|
-        Give your answer by entering a list of action names.
+        State your answer by entering a list of action names.
         \n
         For example, |]
       german [i|
-        Geben Sie Ihre Antwort ein, indem Sie eine Liste von Aktionsnamen angeben.
+        Geben Sie Ihre Antwort an, indem Sie eine Liste von Aktionsnamen eingeben.
         \n
         Zum Beispiel drückt |]
      code $ show enterASInitial
