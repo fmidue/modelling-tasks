@@ -266,15 +266,15 @@ checkOdDistributionConfig maxInstances OdDistributionConfig {..}
   = Just [iii|
     The number of given object diagrams must be at least 2.
     |]
-  | maxPerJustEachCd <= 0 || maxPerJustEachCd >= objectDiagramCount
+  | maxPerJustEachCd < 0 || maxPerJustEachCd >= objectDiagramCount
   = Just [iii|
     'maxPerJustEachCd' must be greater than 0 and less than 'objectDiagramCount'.
     |]
-  | maxSharedBetweenBothCds <= 0 || maxSharedBetweenBothCds >= objectDiagramCount
+  | maxSharedBetweenBothCds < 0 || maxSharedBetweenBothCds >= objectDiagramCount
   = Just [iii|
     'maxSharedBetweenBothCds' must be greater than 0 and less than 'objectDiagramCount'.
     |]
-  | maxNoCd <= 0 || maxNoCd >= objectDiagramCount
+  | maxNoCd < 0 || maxNoCd >= objectDiagramCount
   = Just [iii|
     'maxNoCd' must be greater than 0 and less than 'objectDiagramCount'.
     |]
@@ -285,6 +285,11 @@ checkOdDistributionConfig maxInstances OdDistributionConfig {..}
   | maxPerJustEachCd > maxInstances' || maxSharedBetweenBothCds > maxInstances' || maxNoCd > maxInstances'
   = Just [iii|
     'maxPerJustEachCd', 'maxSharedBetweenBothCds' and 'maxNoCd' must be less than or equal to 'maxInstances'.
+    |]
+  | maxPerJustEachCd == 0 && maxSharedBetweenBothCds == 0
+  = Just [iii|
+    Obviously no object diagrams conforming to the class diagrams does not make sense.
+    'maxPerJustEachCd + maxSharedBetweenBothCds' must be at least 1.
     |]
   | otherwise
   = Nothing
