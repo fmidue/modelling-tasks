@@ -63,7 +63,7 @@ getRandomTask
 getRandomTask searchSpace config = do
   (cd1, cd2, cd3, numClasses) <- getRandomCDs searchSpace config
   alloyInstances <- lift $ getODInstances config cd1 cd2 cd3 numClasses
-  maybeRandomInstances <- takeRandomInstances alloyInstances
+  maybeRandomInstances <- takeRandomInstances (odDistribution config) alloyInstances
   case maybeRandomInstances of
     Nothing      -> getRandomTask searchSpace config
     Just randomInstances -> pure
