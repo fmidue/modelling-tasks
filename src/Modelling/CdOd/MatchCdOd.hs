@@ -260,8 +260,8 @@ toMatching :: [Int] -> Map Char [Int] -> Map (Int, Char) Bool
 toMatching cds m =
   M.fromList [((cd, od), cd `elem` cdList) | cd <- cds, (od, cdList) <- M.toList m]
 
-checkOdDistributionConfig :: OdDistributionConfig -> Maybe String
-checkOdDistributionConfig OdDistributionConfig {..}
+checkOdDistributionConfig :: Maybe Int -> OdDistributionConfig -> Maybe String
+checkOdDistributionConfig maxInstances OdDistributionConfig {..}
   | objectDiagramCount < 2
   = Just [iii|
     The number of given object diagrams must be at least 2.
@@ -282,8 +282,14 @@ checkOdDistributionConfig OdDistributionConfig {..}
   = Just [iii|
     'objectDiagramCount' must be less than or equal to 2 * 'maxPerJustEachCd' + 'maxSharedBetweenBothCds' + 'maxNoCd'.
     |]
+  | maxPerJustEachCd > maxInstances' || maxSharedBetweenBothCds > maxInstances' || maxNoCd > maxInstances'
+  = Just [iii|
+    'maxPerJustEachCd', 'maxSharedBetweenBothCds' and 'maxNoCd' must be less than or equal to 'maxInstances'.
+    |]
   | otherwise
   = Nothing
+  where
+    maxInstances' = fromMaybe 0 maxInstances
 
 checkMatchCdOdConfig :: MatchCdOdConfig -> Maybe String
 checkMatchCdOdConfig MatchCdOdConfig {..}
@@ -306,7 +312,7 @@ checkMatchCdOdConfig MatchCdOdConfig {..}
   | otherwise
   = checkClassConfigWithProperties classConfig defaultProperties
   <|> checkCdMutations allowedCdMutations
-  <|> checkOdDistributionConfig odDistribution
+  <|> checkOdDistributionConfig (fromIntegral <$> maxInstances) odDistribution
   <|> checkObjectProperties objectProperties
   <|> checkClassConfigAndObjectProperties classConfig objectProperties
   <|> checkOmittedDefaultMultiplicities omittedDefaultMultiplicities
