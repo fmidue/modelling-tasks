@@ -377,7 +377,7 @@ matchPetriTask showInputHelp path task = do
       |]
   when showInputHelp $ paragraph $ do
     translate $ do
-      english [i|To do this, enter your answer as in the following example:|]
+      english [i|To do so, state your answer as in the following example:|]
       german [i|Geben Sie dazu Ihre Antwort wie im folgenden Beispiel an:|]
     code $ show matchPetriInitial
     translate $ do
