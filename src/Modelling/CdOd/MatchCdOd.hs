@@ -188,6 +188,7 @@ data MatchCdOdInstance
   = MatchCdOdInstance {
     cdDrawSettings :: !CdDrawSettings,
     diagrams       :: Map Int Cd,
+    auxiliaryCd    :: Cd,
     instances      :: Map Char ([Int], Od),
     showSolution   :: !Bool,
     taskText       :: !MatchCdOdTaskText,
@@ -527,11 +528,11 @@ matchCdOd config segment seed = flip evalRandT g $ do
 getMatchCdOdTask
   :: (MonadCatch m, RandomGen g)
   => (MatchCdOdConfig
-    -> RandT g m (Map Int Cd, Map Char ([Int], AlloyInstance)))
+    -> RandT g m (Map Int Cd, Cd, Map Char ([Int], AlloyInstance)))
   -> MatchCdOdConfig
   -> RandT g m MatchCdOdInstance
 getMatchCdOdTask f config@MatchCdOdConfig {..} = do
-  (cds, ods) <- f config
+  (cds, auxiliaryCd, ods) <- f config
   let possibleLinkNames = concatMap
         (mapMaybe relationshipName . relationships)
         cds
@@ -543,6 +544,7 @@ getMatchCdOdTask f config@MatchCdOdConfig {..} = do
           printNavigations = True
           },
         diagrams       = cds,
+        auxiliaryCd    = auxiliaryCd,
         instances      = ods',
         showSolution = printSolution,
         taskText = defaultMatchCdOdTaskText (M.size cds) (M.size ods'),
@@ -653,6 +655,48 @@ defaultMatchCdOdInstance = MatchCdOdInstance {
         ]
       })
     ],
+  auxiliaryCd = ClassDiagram {
+    classNames = ["B", "D", "A", "C"],
+    relationships = [
+      Association {
+        associationName = "w",
+        associationFrom = LimitedLinking {
+          linking = "C",
+          limits = (1, Nothing)
+          },
+        associationTo = LimitedLinking {
+          linking = "D",
+          limits = (1, Nothing)
+          }
+        },
+      Aggregation {
+        aggregationName = "z",
+        aggregationPart = LimitedLinking {
+          linking = "B",
+          limits = (0, Just 2)
+          },
+        aggregationWhole = LimitedLinking {
+          linking = "A",
+          limits = (1, Nothing)
+          }
+        },
+      Composition {
+        compositionName = "x",
+        compositionPart = LimitedLinking {
+          linking = "A",
+          limits = (1, Nothing)
+          },
+        compositionWhole = LimitedLinking {
+          linking = "D",
+          limits = (0, Just 1)
+          }
+        },
+      Inheritance {
+        subClass = "C",
+        superClass = "A"
+        }
+      ]
+    },
   instances = M.fromList [
     ('a', ([1], ObjectDiagram {
       objects = [
@@ -759,10 +803,12 @@ shuffleNodesAndEdges
   -> m MatchCdOdInstance
 shuffleNodesAndEdges MatchCdOdInstance {..} = do
   cds <- mapM shuffleClassAndConnectionOrder diagrams
+  auxiliaryCd' <- shuffleClassAndConnectionOrder auxiliaryCd
   ods <- mapM (mapM shuffleObjectAndLinkOrder) instances
   return MatchCdOdInstance {
     cdDrawSettings = cdDrawSettings,
     diagrams = cds,
+    auxiliaryCd = auxiliaryCd',
     instances = ods,
     showSolution = showSolution,
     taskText = taskText,
@@ -786,6 +832,7 @@ shuffleInstance MatchCdOdInstance {..} = do
   return $ MatchCdOdInstance {
     cdDrawSettings = cdDrawSettings,
     diagrams = M.fromAscList cds',
+    auxiliaryCd = auxiliaryCd,
     instances = M.fromAscList ods',
     showSolution = showSolution,
     taskText = taskText,
@@ -805,10 +852,12 @@ renameInstance inst@MatchCdOdInstance {..} names' nonInheritances' = do
       renameCd = renameClassesAndRelationships bmNames bmNonInheritances
       renameOd = renameObjectsWithClassesAndLinksInOd bmNames bmNonInheritances
   cds <- renameCd `mapM` diagrams
+  auxiliaryCd' <- renameCd auxiliaryCd
   ods <- mapM renameOd `mapM` instances
   return $ MatchCdOdInstance {
     cdDrawSettings = cdDrawSettings,
     diagrams = cds,
+    auxiliaryCd = auxiliaryCd',
     instances = ods,
     showSolution = showSolution,
     taskText = taskText,
@@ -818,7 +867,7 @@ renameInstance inst@MatchCdOdInstance {..} names' nonInheritances' = do
 getRandomTask
   :: (MonadAlloy m, MonadFail m, RandomGen g, MonadThrow m)
   => MatchCdOdConfig
-  -> RandT g m (Map Int Cd, Map Char ([Int], AlloyInstance))
+  -> RandT g m (Map Int Cd, Cd, Map Char ([Int], AlloyInstance))
 getRandomTask config = do
   let alloyCode = Changes.transform
         (classConfig config)
@@ -834,7 +883,7 @@ getODsFor
   :: (MonadAlloy m, MonadFail m, RandomGen g, MonadThrow m)
   => MatchCdOdConfig
   -> [AlloyInstance]
-  -> RandT g m (Maybe (Map Int Cd, Map Char ([Int], AlloyInstance)))
+  -> RandT g m (Maybe (Map Int Cd, Cd, Map Char ([Int], AlloyInstance)))
 getODsFor _      []       = return Nothing
 getODsFor config (cd:cds) = do
   cds' <- lift (instanceChangesAndCds
@@ -850,6 +899,7 @@ getODsFor config (cd:cds) = do
     Nothing      -> getODsFor config cds
     Just randomInstances -> return $ Just (
       M.fromList [(1, cd1), (2, cd2)],
+      cd3,
       M.fromList $ zip ['a' ..] randomInstances
       )
 
