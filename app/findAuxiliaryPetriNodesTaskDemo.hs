@@ -26,7 +26,7 @@ main = do
         (read s)
         (read seed)
       print task
-      findAuxiliaryPetriNodesTask path task `withLang` English
+      findAuxiliaryPetriNodesTask True path task `withLang` English
       sub <- read <$> getLine
       points <- findAuxiliaryPetriNodesEvaluation task sub `withLang` English
       putStrLn $ "Points: " ++ show points

@@ -27,7 +27,7 @@ main = do
       putStrLn $ "Seed: " ++ seed
       task <- selectPetri defaultSelectPetriConfig (read s) (read seed)
       print task
-      selectPetriTask path task `withLang` English
+      selectPetriTask True path task `withLang` English
       sub <- read <$> getLine
       selectPetriSyntax task sub `withLang` English
       _ <- selectPetriEvaluation path task sub `withLang` English

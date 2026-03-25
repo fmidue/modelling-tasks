@@ -27,7 +27,7 @@ main = do
       putStrLn $ "Seed: " ++ seed
       task <- matchPetri defaultMatchPetriConfig (read s) (read seed)
       print task
-      matchPetriTask path task `withLang` English
+      matchPetriTask True path task `withLang` English
       sub <- read <$> getLine
       matchPetriSyntax task sub `withLang` English
       points <- matchPetriEvaluation task sub `withLang` English
