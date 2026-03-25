@@ -52,7 +52,7 @@ main = do
             usesEveryRelationshipName = Nothing
             },
           odDistribution = OdDistributionConfig {
-            odCount = 5,
+            oDiagramCount = 5,
             maxPerJustOneCd = 2,
             maxSharedBetweenBothCds = 2,
             maxNoCd = 2

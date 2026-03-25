@@ -54,7 +54,7 @@ task2023_14 = MatchCdOdConfig {
     usesEveryRelationshipName = Nothing
     },
   odDistribution = OdDistributionConfig {
-    odCount = 5,
+    oDiagramCount = 5,
     maxPerJustOneCd = 2,
     maxSharedBetweenBothCds = 2,
     maxNoCd = 2
@@ -106,7 +106,7 @@ task2023_15 = MatchCdOdConfig {
     usesEveryRelationshipName = Nothing
     },
   odDistribution = OdDistributionConfig {
-    odCount = 5,
+    oDiagramCount = 5,
     maxPerJustOneCd = 2,
     maxSharedBetweenBothCds = 2,
     maxNoCd = 2
@@ -154,7 +154,7 @@ task2024_17 = MatchCdOdConfig {
     usesEveryRelationshipName = Just True
     },
   odDistribution = OdDistributionConfig {
-    odCount = 5,
+    oDiagramCount = 5,
     maxPerJustOneCd = 2,
     maxSharedBetweenBothCds = 2,
     maxNoCd = 2
@@ -202,7 +202,7 @@ task2024_18 = MatchCdOdConfig {
     usesEveryRelationshipName = Just False
     },
   odDistribution = OdDistributionConfig {
-    odCount = 5,
+    oDiagramCount = 5,
     maxPerJustOneCd = 2,
     maxSharedBetweenBothCds = 2,
     maxNoCd = 2
@@ -250,7 +250,7 @@ task2024_19 = MatchCdOdConfig {
     usesEveryRelationshipName = Nothing
     },
   odDistribution = OdDistributionConfig {
-    odCount = 5,
+    oDiagramCount = 5,
     maxPerJustOneCd = 2,
     maxSharedBetweenBothCds = 2,
     maxNoCd = 2
@@ -298,7 +298,7 @@ task2024_20 = MatchCdOdConfig {
     usesEveryRelationshipName = Nothing
     },
   odDistribution = OdDistributionConfig {
-    odCount = 5,
+    oDiagramCount = 5,
     maxPerJustOneCd = 2,
     maxSharedBetweenBothCds = 2,
     maxNoCd = 2
@@ -351,7 +351,7 @@ task2024_57 = MatchCdOdConfig {
     compositionWholeOmittedDefaultMultiplicity = Nothing
     },
   odDistribution = OdDistributionConfig {
-    odCount = 5,
+    oDiagramCount = 5,
     maxPerJustOneCd = 2,
     maxSharedBetweenBothCds = 2,
     maxNoCd = 2
@@ -394,7 +394,7 @@ task2024_58 = MatchCdOdConfig {
     usesEveryRelationshipName = Nothing
     },
   odDistribution = OdDistributionConfig {
-    odCount = 5,
+    oDiagramCount = 5,
     maxPerJustOneCd = 2,
     maxSharedBetweenBothCds = 2,
     maxNoCd = 2
@@ -442,7 +442,7 @@ task2024_59 = MatchCdOdConfig {
     usesEveryRelationshipName = Nothing
     },
   odDistribution = OdDistributionConfig {
-    odCount = 5,
+    oDiagramCount = 5,
     maxPerJustOneCd = 2,
     maxSharedBetweenBothCds = 2,
     maxNoCd = 2

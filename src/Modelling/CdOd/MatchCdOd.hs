@@ -197,7 +197,7 @@ data MatchCdOdInstance
 
 data OdDistributionConfig =
   OdDistributionConfig {
-    odCount :: Int,
+    oDiagramCount :: Int,
     maxPerJustOneCd :: Int,
     maxSharedBetweenBothCds :: Int,
     maxNoCd :: Int
@@ -244,7 +244,7 @@ defaultMatchCdOdConfig
       usesEveryRelationshipName = Nothing
       },
     odDistribution = OdDistributionConfig {
-      odCount = 5,
+      oDiagramCount = 5,
       maxPerJustOneCd = 2,
       maxSharedBetweenBothCds = 2,
       maxNoCd = 2
@@ -262,25 +262,25 @@ toMatching cds m =
 
 checkOdDistributionConfig :: OdDistributionConfig -> Maybe String
 checkOdDistributionConfig OdDistributionConfig {..}
-  | odCount <= 0
+  | oDiagramCount <= 0
   = Just [iii|
-    'odCount' must be greater than 0.
+    The number of given object diagrams must be greater than 0.
     |]
-  | maxPerJustOneCd <= 0 || maxPerJustOneCd >= odCount
+  | maxPerJustOneCd <= 0 || maxPerJustOneCd >= oDiagramCount
   = Just [iii|
-    'maxPerJustOneCd' must be greater than 0 and less than 'odCount'.
+    'maxPerJustOneCd' must be greater than 0 and less than 'oDiagramCount'.
     |]
-  | maxSharedBetweenBothCds <= 0 || maxSharedBetweenBothCds >= odCount
+  | maxSharedBetweenBothCds <= 0 || maxSharedBetweenBothCds >= oDiagramCount
   = Just [iii|
-    'maxSharedBetweenBothCds' must be greater than 0 and less than 'odCount'.
+    'maxSharedBetweenBothCds' must be greater than 0 and less than 'oDiagramCount'.
     |]
-  | maxNoCd <= 0 || maxNoCd >= odCount
+  | maxNoCd <= 0 || maxNoCd >= oDiagramCount
   = Just [iii|
-    'maxNoCd' must be greater than 0 and less than 'odCount'.
+    'maxNoCd' must be greater than 0 and less than 'oDiagramCount'.
     |]
-  | odCount > 2 * maxPerJustOneCd + maxSharedBetweenBothCds + maxNoCd
+  | oDiagramCount > 2 * maxPerJustOneCd + maxSharedBetweenBothCds + maxNoCd
   = Just [iii|
-    'odCount' must be less than or equal to 2 * 'maxPerJustOneCd' + 'maxSharedBetweenBothCds' + 'maxNoCd'.
+    'oDiagramCount' must be less than or equal to 2 * 'maxPerJustOneCd' + 'maxSharedBetweenBothCds' + 'maxNoCd'.
     |]
   | maxPerJustOneCd + maxSharedBetweenBothCds < 1
   = Just [iii|
@@ -970,10 +970,10 @@ takeRandomInstances OdDistributionConfig {..} alloyInstances =
       , y <- [0 .. min maxPerJustOneCd (length $ fromJust $ M.lookup [2]   alloyInstances)]
       , z <- [0 .. min maxSharedBetweenBothCds (length $ fromJust $ M.lookup [1,2] alloyInstances)]
       , u <- [0 .. min maxNoCd (length $ fromJust $ M.lookup []    alloyInstances)]
-      , odCount == x + y + z + u
+      , oDiagramCount == x + y + z + u
       , x + z >= 1
       , y + z >= 1
-      , x + z < odCount
-      , y + z < odCount
+      , x + z < oDiagramCount
+      , y + z < oDiagramCount
       ]
     takeL k n = take n . fmap (k,) . fromJust . M.lookup k
