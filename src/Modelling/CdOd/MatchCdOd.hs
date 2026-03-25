@@ -262,9 +262,9 @@ toMatching cds m =
 
 checkOdDistributionConfig :: OdDistributionConfig -> Maybe String
 checkOdDistributionConfig OdDistributionConfig {..}
-  | oDiagramCount <= 0
+  | oDiagramCount < 2
   = Just [iii|
-    The number of given object diagrams must be greater than 0.
+    The number of given object diagrams must be at least 2.
     |]
   | maxPerJustOneCd <= 0 || maxPerJustOneCd >= oDiagramCount
   = Just [iii|
