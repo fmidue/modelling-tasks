@@ -656,47 +656,44 @@ defaultMatchCdOdInstance = MatchCdOdInstance {
       })
     ],
   auxiliaryCd = ClassDiagram {
-    classNames = ["B", "D", "A", "C"],
+    classNames = ["A","C","D","B"],
     relationships = [
-      Association {
-        associationName = "w",
-        associationFrom = LimitedLinking {
-          linking = "C",
-          limits = (1, Nothing)
+      Composition {
+        compositionName = "x",
+        compositionPart = LimitedLinking {
+          linking = "A",
+          limits = (1,Just 2)},
+          compositionWhole = LimitedLinking {
+            linking = "D",
+            limits = (0,Just 1)
+            }
           },
-        associationTo = LimitedLinking {
-          linking = "D",
-          limits = (1, Nothing)
-          }
+      Aggregation {
+        aggregationName = "w",
+        aggregationPart = LimitedLinking {
+          linking = "C",
+          limits = (1,Nothing)},
+          aggregationWhole = LimitedLinking {
+            linking = "D",
+            limits = (1,Nothing)
+            }
+          },
+      Inheritance {
+        subClass = "C",
+        superClass = "A"
         },
       Aggregation {
         aggregationName = "z",
         aggregationPart = LimitedLinking {
           linking = "B",
-          limits = (0, Just 2)
-          },
-        aggregationWhole = LimitedLinking {
-          linking = "A",
-          limits = (1, Nothing)
+          limits = (0,Just 2)},
+          aggregationWhole = LimitedLinking {
+            linking = "A",
+            limits = (1,Nothing)
+            }
           }
-        },
-      Composition {
-        compositionName = "x",
-        compositionPart = LimitedLinking {
-          linking = "A",
-          limits = (1, Nothing)
-          },
-        compositionWhole = LimitedLinking {
-          linking = "D",
-          limits = (0, Just 1)
-          }
-        },
-      Inheritance {
-        subClass = "C",
-        superClass = "A"
-        }
-      ]
-    },
+        ]
+      },
   instances = M.fromList [
     ('a', ([1], ObjectDiagram {
       objects = [
