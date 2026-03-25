@@ -697,24 +697,24 @@ defaultMatchCdOdInstance = MatchCdOdInstance {
   instances = M.fromList [
     ('a', ([1], ObjectDiagram {
       objects = [
-        Object {isAnonymous = False, objectName = "b", objectClass = "B"},
-        Object {isAnonymous = False, objectName = "d", objectClass = "D"},
+        Object {isAnonymous = True, objectName = "b1", objectClass = "B"},
         Object {isAnonymous = False, objectName = "c", objectClass = "C"},
-        Object {isAnonymous = True, objectName = "b1", objectClass = "B"}
+        Object {isAnonymous = False, objectName = "b", objectClass = "B"},
+        Object {isAnonymous = False, objectName = "d", objectClass = "D"}
         ],
       links = [
+        Link {linkLabel = "w", linkFrom = "c", linkTo = "d"},
         Link {linkLabel = "z", linkFrom = "b1", linkTo = "c"},
         Link {linkLabel = "z", linkFrom = "b", linkTo = "c"},
-        Link {linkLabel = "x", linkFrom = "d", linkTo = "c"},
-        Link {linkLabel = "w", linkFrom = "c", linkTo = "d"}
+        Link {linkLabel = "x", linkFrom = "d", linkTo = "c"}
         ]
       })),
     ('b', ([], ObjectDiagram {
       objects = [
-        Object {isAnonymous = False, objectName = "d", objectClass = "D"},
         Object {isAnonymous = True, objectName = "c", objectClass = "C"},
-        Object {isAnonymous = False, objectName = "b", objectClass = "B"},
-        Object {isAnonymous = False, objectName = "a", objectClass = "A"}
+        Object {isAnonymous = False, objectName = "a", objectClass = "A"},
+        Object {isAnonymous = False, objectName = "d", objectClass = "D"},
+        Object {isAnonymous = False, objectName = "b", objectClass = "B"}
         ],
       links = [
         Link {linkLabel = "w", linkFrom = "c", linkTo = "d"},
@@ -725,24 +725,24 @@ defaultMatchCdOdInstance = MatchCdOdInstance {
       })),
     ('c', ([2], ObjectDiagram {
       objects = [
-        Object {isAnonymous = False, objectName = "c", objectClass = "C"},
+        Object {isAnonymous = False, objectName = "d", objectClass = "D"},
         Object {isAnonymous = True, objectName = "a1", objectClass = "A"},
-        Object {isAnonymous = False, objectName = "a", objectClass = "A"},
-        Object {isAnonymous = False, objectName = "d", objectClass = "D"}
+        Object {isAnonymous = False, objectName = "c", objectClass = "C"},
+        Object {isAnonymous = False, objectName = "a", objectClass = "A"}
         ],
       links = [
-        Link {linkLabel = "w", linkFrom = "c", linkTo = "d"},
         Link {linkLabel = "x", linkFrom = "c", linkTo = "d"},
-        Link {linkLabel = "x", linkFrom = "a1", linkTo = "d"},
-        Link {linkLabel = "x", linkFrom = "a", linkTo = "d"}
+        Link {linkLabel = "w", linkFrom = "c", linkTo = "d"},
+        Link {linkLabel = "x", linkFrom = "a", linkTo = "d"},
+        Link {linkLabel = "x", linkFrom = "a1", linkTo = "d"}
         ]
       })),
     ('d', ([2], ObjectDiagram {
       objects = [
         Object {isAnonymous = False, objectName = "d", objectClass = "D"},
+        Object {isAnonymous = False, objectName = "a", objectClass = "A"},
         Object {isAnonymous = True, objectName = "c", objectClass = "C"},
-        Object {isAnonymous = False, objectName = "c1", objectClass = "C"},
-        Object {isAnonymous = False, objectName = "a", objectClass = "A"}
+        Object {isAnonymous = False, objectName = "c1", objectClass = "C"}
         ],
       links = [
         Link {linkLabel = "w", linkFrom = "c", linkTo = "d"},
@@ -753,14 +753,14 @@ defaultMatchCdOdInstance = MatchCdOdInstance {
       })),
     ('e', ([1], ObjectDiagram {
       objects = [
-        Object {isAnonymous = False, objectName = "d", objectClass = "D"},
-        Object {isAnonymous = True, objectName = "d1", objectClass = "D"},
+        Object {isAnonymous = False, objectName = "c", objectClass = "C"},
         Object {isAnonymous = False, objectName = "a", objectClass = "A"},
-        Object {isAnonymous = False, objectName = "c", objectClass = "C"}
+        Object {isAnonymous = True, objectName = "d1", objectClass = "D"},
+        Object {isAnonymous = False, objectName = "d", objectClass = "D"}
         ],
       links = [
-        Link {linkLabel = "w", linkFrom = "c", linkTo = "d"},
         Link {linkLabel = "w", linkFrom = "c", linkTo = "d1"},
+        Link {linkLabel = "w", linkFrom = "c", linkTo = "d"},
         Link {linkLabel = "x", linkFrom = "d", linkTo = "a"},
         Link {linkLabel = "x", linkFrom = "d1", linkTo = "c"}
         ]
