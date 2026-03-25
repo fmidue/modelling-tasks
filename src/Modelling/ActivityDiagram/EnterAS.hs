@@ -251,7 +251,7 @@ enterASTask showInputHelp path task = do
     pure ()
   whenJust (noLongerThan task) $ \maxL -> paragraph $ translate $ do
     english $ "Your answer must not exceed " ++ show maxL ++ " steps."
-    german $ "Ihre Lösung darf maximal " ++ show maxL ++ " Schritte enthalten."
+    german $ "Ihre Antwort darf maximal " ++ show maxL ++ " Schritte enthalten."
   extra $ addText task
   pure ()
 
