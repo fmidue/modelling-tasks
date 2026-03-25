@@ -223,7 +223,7 @@ reportReachFor showInputHelp img noLonger lengthHint minLength showMinLengthHint
   when showInputHelp $ do
    paragraph $ translate $ do
       english "State your answer as a sequence of the following kind:"
-      german "Geben Sie Ihre Lösung als Auflistung der folgenden Art an:"
+      german "Geben Sie Ihre Antwort als Auflistung der folgenden Art an:"
    let
       (t1, t2, t3) = (Transition 1, Transition 2, Transition 3)
       showT = show . ShowTransition
@@ -246,7 +246,7 @@ reportReachFor showInputHelp img noLonger lengthHint minLength showMinLengthHint
     Nothing ->
       translate $ do
         english "Your answer can be arbitrarily short or long."
-        german "Ihre Lösung kann beliebig kurz oder lang sein."
+        german "Ihre Antwort kann beliebig kurz oder lang sein."
 
     Just maxL ->
       let
@@ -260,7 +260,7 @@ reportReachFor showInputHelp img noLonger lengthHint minLength showMinLengthHint
           "Your answer must ",
           englishConstraint, " ", show maxL, " steps."]
         german $ concat [
-          "Ihre Lösung ", germanConstraint, " ", show maxL,
+          "Ihre Antwort ", germanConstraint, " ", show maxL,
           " Schritte enthalten."]
 
   let maxStepsHint = case lengthHint of
