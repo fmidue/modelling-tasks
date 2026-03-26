@@ -288,13 +288,13 @@ checkOdDistributionConfig maxInstances OdDistributionConfig {..}
     |]
   | maxPerJustEachCd == 0 && maxSharedBetweenBothCds == 0
   = Just [iii|
-    Obviously no object diagrams conforming to the class diagrams does not make sense.
+    Having no object diagrams that conform to the class diagrams makes no sense.
     'maxPerJustEachCd + maxSharedBetweenBothCds' must be at least 1.
     |]
   | maxPerJustEachCd == 0 && maxNoCd == 0
   = Just [iii|
-    Don't expect all object diagrams to conform both class diagrams.
-    `maxPerJustEachCd + maxNoCd` must be at least 1.
+    Do not expect all object diagrams to conform to both class diagrams.
+    'maxPerJustEachCd + maxNoCd' must be at least 1.
     |]
   | otherwise
   = Nothing
