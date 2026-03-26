@@ -777,7 +777,9 @@ defaultMatchCdOdInstance = MatchCdOdInstance {
 classAndNonInheritanceNames :: MatchCdOdInstance -> ([String], [String])
 classAndNonInheritanceNames inst =
   let names = nubOrd $ concatMap classNames (diagrams inst)
+        ++ classNames (auxiliaryCd inst)
       nonInheritances = nubOrd $ concatMap associationNames (diagrams inst)
+        ++ associationNames (auxiliaryCd inst)
         ++ concatMap (linkLabels . snd) (instances inst)
   in (names, nonInheritances)
 
