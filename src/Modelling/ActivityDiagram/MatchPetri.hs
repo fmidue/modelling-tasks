@@ -424,7 +424,7 @@ matchPetriSyntax
   :: OutputCapable m
   => Bool
   -- ^ whether to do a full check. If False, only checks that action and object nodes
-  -- are references exactly once.
+  -- are referenced exactly once.
   -> MatchPetriInstance
   -> MatchPetriSolution
   -> LangM m
