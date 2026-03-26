@@ -268,21 +268,21 @@ checkOdDistributionConfig maxInstances OdDistributionConfig {..}
     |]
   | maxPerJustEachCd < 0 || maxPerJustEachCd >= objectDiagramCount
   = Just [iii|
-    'maxPerJustEachCd' must be greater than 0 and less than 'objectDiagramCount'.
+    'maxPerJustEachCd' must be greater than or equal to 0 and less than 'objectDiagramCount'.
     |]
   | maxSharedBetweenBothCds < 0 || maxSharedBetweenBothCds >= objectDiagramCount
   = Just [iii|
-    'maxSharedBetweenBothCds' must be greater than 0 and less than 'objectDiagramCount'.
+    'maxSharedBetweenBothCds' must be greater than or equal to 0 and less than 'objectDiagramCount'.
     |]
   | maxNoCd < 0 || maxNoCd >= objectDiagramCount
   = Just [iii|
-    'maxNoCd' must be greater than 0 and less than 'objectDiagramCount'.
+    'maxNoCd' must be greater than or equal to 0 and less than 'objectDiagramCount'.
     |]
   | objectDiagramCount > 2 * maxPerJustEachCd + maxSharedBetweenBothCds + maxNoCd
   = Just [iii|
     'objectDiagramCount' must be less than or equal to 2 * 'maxPerJustEachCd' + 'maxSharedBetweenBothCds' + 'maxNoCd'.
     |]
-  | maxPerJustEachCd > maxInstances' || maxSharedBetweenBothCds > maxInstances' || maxNoCd > maxInstances'
+  | maybe False (\mi -> maximum [maxPerJustEachCd, maxSharedBetweenBothCds, maxNoCd] > mi) maxInstances
   = Just [iii|
     'maxPerJustEachCd', 'maxSharedBetweenBothCds' and 'maxNoCd' must be less than or equal to 'maxInstances'.
     |]
@@ -291,10 +291,13 @@ checkOdDistributionConfig maxInstances OdDistributionConfig {..}
     Obviously no object diagrams conforming to the class diagrams does not make sense.
     'maxPerJustEachCd + maxSharedBetweenBothCds' must be at least 1.
     |]
+  | maxPerJustEachCd == 0 && maxNoCd == 0
+  = Just [iii|
+    Don't expect all object diagrams to conform both class diagrams.
+    `maxPerJustEachCd + maxNoCd` must be at least 1.
+    |]
   | otherwise
   = Nothing
-  where
-    maxInstances' = fromMaybe 0 maxInstances
 
 checkMatchCdOdConfig :: MatchCdOdConfig -> Maybe String
 checkMatchCdOdConfig MatchCdOdConfig {..}
