@@ -656,28 +656,30 @@ defaultMatchCdOdInstance = MatchCdOdInstance {
       })
     ],
   auxiliaryCd = ClassDiagram {
-    classNames = ["A","C","D","B"],
+    classNames = ["A", "C", "D", "B"],
     relationships = [
       Composition {
         compositionName = "x",
         compositionPart = LimitedLinking {
           linking = "A",
-          limits = (1,Just 2)},
-          compositionWhole = LimitedLinking {
-            linking = "D",
-            limits = (0,Just 1)
-            }
+          limits = (1, Just 2)
           },
+        compositionWhole = LimitedLinking {
+          linking = "D",
+          limits = (0, Just 1)
+          }
+        },
       Aggregation {
         aggregationName = "w",
         aggregationPart = LimitedLinking {
           linking = "C",
-          limits = (1,Nothing)},
-          aggregationWhole = LimitedLinking {
-            linking = "D",
-            limits = (1,Nothing)
-            }
+          limits = (1, Nothing)
           },
+        aggregationWhole = LimitedLinking {
+          linking = "D",
+          limits = (1, Nothing)
+          }
+        },
       Inheritance {
         subClass = "C",
         superClass = "A"
@@ -686,12 +688,13 @@ defaultMatchCdOdInstance = MatchCdOdInstance {
         aggregationName = "z",
         aggregationPart = LimitedLinking {
           linking = "B",
-          limits = (0,Just 2)},
-          aggregationWhole = LimitedLinking {
-            linking = "A",
-            limits = (1,Nothing)
-            }
+          limits = (0, Just 2)
+          },
+        aggregationWhole = LimitedLinking {
+          linking = "A",
+          limits = (1, Nothing)
           }
+        }
         ]
       },
   instances = M.fromList [
