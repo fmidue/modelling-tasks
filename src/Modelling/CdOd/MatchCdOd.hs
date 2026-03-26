@@ -283,7 +283,7 @@ checkOdDistributionConfig maxInstances OdDistributionConfig {..}
     'objectDiagramCount' must be less than or equal to 2 * 'maxPerJustEachCd' + 'maxSharedBetweenBothCds' + 'maxNoCd'.
     |]
   | maybe False
-      (\mi -> maximum [maxPerJustEachCd, maxSharedBetweenBothCds, maxNoCd] > fromIntegral mi)
+      (\mi -> maximum (map fromIntegral [maxPerJustEachCd, maxSharedBetweenBothCds, maxNoCd]) >  mi)
       maxInstances
   = Just [iii|
     'maxPerJustEachCd', 'maxSharedBetweenBothCds' and 'maxNoCd' must be less than or equal to 'maxInstances'.
