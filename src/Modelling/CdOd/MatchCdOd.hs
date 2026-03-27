@@ -188,7 +188,7 @@ data MatchCdOdInstance
   = MatchCdOdInstance {
     cdDrawSettings :: !CdDrawSettings,
     diagrams       :: Map Int Cd,
-    hiddenReferenceCd     :: Maybe Cd,
+    hiddenReferenceCd :: Maybe Cd,
     instances      :: Map Char ([Int], Od),
     showSolution   :: !Bool,
     taskText       :: !MatchCdOdTaskText,
@@ -532,7 +532,7 @@ getMatchCdOdTask
   -> MatchCdOdConfig
   -> RandT g m MatchCdOdInstance
 getMatchCdOdTask f config@MatchCdOdConfig {..} = do
-  (cds, hiddenReferenceCd , ods) <- f config
+  (cds, hiddenReferenceCd, ods) <- f config
   let possibleLinkNames = concatMap
         (mapMaybe relationshipName . relationships)
         cds
@@ -544,7 +544,7 @@ getMatchCdOdTask f config@MatchCdOdConfig {..} = do
           printNavigations = True
           },
         diagrams       = cds,
-        hiddenReferenceCd     = Just hiddenReferenceCd ,
+        hiddenReferenceCd = Just hiddenReferenceCd,
         instances      = ods',
         showSolution = printSolution,
         taskText = defaultMatchCdOdTaskText (M.size cds) (M.size ods'),
@@ -803,12 +803,12 @@ shuffleNodesAndEdges
   -> m MatchCdOdInstance
 shuffleNodesAndEdges MatchCdOdInstance {..} = do
   cds <- mapM shuffleClassAndConnectionOrder diagrams
-  hiddenReferenceCd' <- traverse shuffleClassAndConnectionOrder hiddenReferenceCd
+  hiddenReferenceCd' <- mapM shuffleClassAndConnectionOrder hiddenReferenceCd
   ods <- mapM (mapM shuffleObjectAndLinkOrder) instances
   return MatchCdOdInstance {
     cdDrawSettings = cdDrawSettings,
     diagrams = cds,
-    hiddenReferenceCd  = hiddenReferenceCd',
+    hiddenReferenceCd = hiddenReferenceCd',
     instances = ods,
     showSolution = showSolution,
     taskText = taskText,
@@ -832,7 +832,7 @@ shuffleInstance MatchCdOdInstance {..} = do
   return $ MatchCdOdInstance {
     cdDrawSettings = cdDrawSettings,
     diagrams = M.fromAscList cds',
-    hiddenReferenceCd  = hiddenReferenceCd ,
+    hiddenReferenceCd = hiddenReferenceCd ,
     instances = M.fromAscList ods',
     showSolution = showSolution,
     taskText = taskText,
@@ -847,10 +847,10 @@ renameInstance
   -> m MatchCdOdInstance
 renameInstance inst@MatchCdOdInstance {..} names' nonInheritances' = do
   let (names, nonInheritances) = classAndNonInheritanceNames inst
-      bmNames = BM.fromList $ zip names names'
+      bmNames  = BM.fromList $ zip names names'
       bmNonInheritances = BM.fromList $ zip nonInheritances nonInheritances'
       bmWithIdForUnmappedKeys bm ks =
-        foldr (\k acc -> BM.insert k k acc) bm
+        foldr (\k -> BM.insert k k) bm
           [k | k <- nubOrd ks, not (k `BM.member` bm)]
       bmNamesForReferenceCd =
         bmWithIdForUnmappedKeys bmNames (maybe [] classNames hiddenReferenceCd)
@@ -861,7 +861,7 @@ renameInstance inst@MatchCdOdInstance {..} names' nonInheritances' = do
       renameReferenceCd =
         renameClassesAndRelationships bmNamesForReferenceCd bmNonInheritancesForReferenceCd
   cds <- renameCd `mapM` diagrams
-  hiddenReferenceCd' <- traverse renameReferenceCd hiddenReferenceCd
+  hiddenReferenceCd' <- renameReferenceCd `mapM` hiddenReferenceCd
   ods <- mapM renameOd `mapM` instances
   return $ MatchCdOdInstance {
     cdDrawSettings = cdDrawSettings,
