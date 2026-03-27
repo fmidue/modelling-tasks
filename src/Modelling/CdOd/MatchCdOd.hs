@@ -29,7 +29,7 @@ module Modelling.CdOd.MatchCdOd (
 
 import qualified Modelling.CdOd.CdAndChanges.Transform as Changes (transform)
 
-import qualified Data.Bimap                       as BM (fromList)
+import qualified Data.Bimap                       as BM (fromList, insert, member)
 import qualified Data.Map                         as M (
   adjust,
   elems,
@@ -188,7 +188,7 @@ data MatchCdOdInstance
   = MatchCdOdInstance {
     cdDrawSettings :: !CdDrawSettings,
     diagrams       :: Map Int Cd,
-    auxiliaryCd    :: Cd,
+    hiddenReferenceCd     :: Maybe Cd,
     instances      :: Map Char ([Int], Od),
     showSolution   :: !Bool,
     taskText       :: !MatchCdOdTaskText,
@@ -532,7 +532,7 @@ getMatchCdOdTask
   -> MatchCdOdConfig
   -> RandT g m MatchCdOdInstance
 getMatchCdOdTask f config@MatchCdOdConfig {..} = do
-  (cds, auxiliaryCd, ods) <- f config
+  (cds, hiddenReferenceCd , ods) <- f config
   let possibleLinkNames = concatMap
         (mapMaybe relationshipName . relationships)
         cds
@@ -544,7 +544,7 @@ getMatchCdOdTask f config@MatchCdOdConfig {..} = do
           printNavigations = True
           },
         diagrams       = cds,
-        auxiliaryCd    = auxiliaryCd,
+        hiddenReferenceCd     = Just hiddenReferenceCd ,
         instances      = ods',
         showSolution = printSolution,
         taskText = defaultMatchCdOdTaskText (M.size cds) (M.size ods'),
@@ -655,7 +655,7 @@ defaultMatchCdOdInstance = MatchCdOdInstance {
         ]
       })
     ],
-  auxiliaryCd = ClassDiagram {
+  hiddenReferenceCd  = Just $ ClassDiagram {
     classNames = ["A", "C", "D", "B"],
     relationships = [
       Composition {
@@ -777,9 +777,7 @@ defaultMatchCdOdInstance = MatchCdOdInstance {
 classAndNonInheritanceNames :: MatchCdOdInstance -> ([String], [String])
 classAndNonInheritanceNames inst =
   let names = nubOrd $ concatMap classNames (diagrams inst)
-        ++ classNames (auxiliaryCd inst)
       nonInheritances = nubOrd $ concatMap associationNames (diagrams inst)
-        ++ associationNames (auxiliaryCd inst)
         ++ concatMap (linkLabels . snd) (instances inst)
   in (names, nonInheritances)
 
@@ -805,12 +803,12 @@ shuffleNodesAndEdges
   -> m MatchCdOdInstance
 shuffleNodesAndEdges MatchCdOdInstance {..} = do
   cds <- mapM shuffleClassAndConnectionOrder diagrams
-  auxiliaryCd' <- shuffleClassAndConnectionOrder auxiliaryCd
+  hiddenReferenceCd' <- traverse shuffleClassAndConnectionOrder hiddenReferenceCd
   ods <- mapM (mapM shuffleObjectAndLinkOrder) instances
   return MatchCdOdInstance {
     cdDrawSettings = cdDrawSettings,
     diagrams = cds,
-    auxiliaryCd = auxiliaryCd',
+    hiddenReferenceCd  = hiddenReferenceCd',
     instances = ods,
     showSolution = showSolution,
     taskText = taskText,
@@ -834,7 +832,7 @@ shuffleInstance MatchCdOdInstance {..} = do
   return $ MatchCdOdInstance {
     cdDrawSettings = cdDrawSettings,
     diagrams = M.fromAscList cds',
-    auxiliaryCd = auxiliaryCd,
+    hiddenReferenceCd  = hiddenReferenceCd ,
     instances = M.fromAscList ods',
     showSolution = showSolution,
     taskText = taskText,
@@ -849,17 +847,26 @@ renameInstance
   -> m MatchCdOdInstance
 renameInstance inst@MatchCdOdInstance {..} names' nonInheritances' = do
   let (names, nonInheritances) = classAndNonInheritanceNames inst
-      bmNames  = BM.fromList $ zip names names'
+      bmNames = BM.fromList $ zip names names'
       bmNonInheritances = BM.fromList $ zip nonInheritances nonInheritances'
+      bmWithIdForUnmappedKeys bm ks =
+        foldr (\k acc -> BM.insert k k acc) bm
+          [k | k <- nubOrd ks, not (k `BM.member` bm)]
+      bmNamesForReferenceCd =
+        bmWithIdForUnmappedKeys bmNames (maybe [] classNames hiddenReferenceCd)
+      bmNonInheritancesForReferenceCd =
+        bmWithIdForUnmappedKeys bmNonInheritances (maybe [] associationNames hiddenReferenceCd)
       renameCd = renameClassesAndRelationships bmNames bmNonInheritances
       renameOd = renameObjectsWithClassesAndLinksInOd bmNames bmNonInheritances
+      renameReferenceCd =
+        renameClassesAndRelationships bmNamesForReferenceCd bmNonInheritancesForReferenceCd
   cds <- renameCd `mapM` diagrams
-  auxiliaryCd' <- renameCd auxiliaryCd
+  hiddenReferenceCd' <- traverse renameReferenceCd hiddenReferenceCd
   ods <- mapM renameOd `mapM` instances
   return $ MatchCdOdInstance {
     cdDrawSettings = cdDrawSettings,
     diagrams = cds,
-    auxiliaryCd = auxiliaryCd',
+    hiddenReferenceCd = hiddenReferenceCd',
     instances = ods,
     showSolution = showSolution,
     taskText = taskText,
