@@ -283,7 +283,7 @@ checkOdDistributionConfig maxInstances OdDistributionConfig {..}
     'objectDiagramCount' must be less than or equal to 2 * 'maxPerJustEachCd' + 'maxSharedBetweenBothCds' + 'maxNoCd'.
     |]
   | maybe False
-      (\mi -> maximum (map fromIntegral [maxPerJustEachCd, maxSharedBetweenBothCds, maxNoCd]) >  mi)
+      (\mi -> fromIntegral (maximum [maxPerJustEachCd, maxSharedBetweenBothCds, maxNoCd]) >  mi)
       maxInstances
   = Just [iii|
     'maxPerJustEachCd', 'maxSharedBetweenBothCds' and 'maxNoCd' must be less than or equal to 'maxInstances'.
@@ -976,6 +976,7 @@ takeRandomInstances OdDistributionConfig {..} alloyInstances =
       ts:_    <- shuffleM takes
       shuffleM $ concatMap ($ randomInstances) ts
   where
+    -- guarantees 0 < x + z < objectDiagramCount and 0 < y + z < objectDiagramCount
     takes =
       [ [takeL [1] x, takeL [2] y, takeL [1,2] z, takeL [] u]
       | x <- [0 .. min maxPerJustEachCd (length $ fromJust $ M.lookup [1] alloyInstances)]
