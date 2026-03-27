@@ -33,6 +33,7 @@ import qualified Data.Bimap                       as BM (fromList, insert, membe
 import qualified Data.Map                         as M (
   adjust,
   elems,
+  filter,
   foldrWithKey,
   fromAscList,
   fromList,
@@ -126,7 +127,7 @@ import Modelling.Types (
   showLetters,
   )
 
-import Control.Applicative              (Alternative ((<|>)))
+import Control.Applicative              (Alternative, (<|>))
 import Control.Exception                (Exception)
 import Control.Monad                    ((<=<), when)
 import Control.Monad.Catch              (MonadCatch, MonadThrow, throwM)
@@ -145,7 +146,10 @@ import Control.OutputCapable.Blocks (
   english,
   extra,
   german,
+  image,
   multipleChoice,
+  paragraph,
+  reRefuse,
   translate,
   translations,
   Language (English, German),
@@ -483,23 +487,49 @@ matchCdOdSyntax task sub = addPretext $ do
     availableOd = (`elem` M.keys (instances task))
 
 matchCdOdEvaluation
-  :: (Foldable t, OutputCapable m)
-  => MatchCdOdInstance
+  :: (
+    Alternative m,
+    Foldable t,
+    MonadCache m,
+    MonadDiagrams m,
+    MonadGraphviz m,
+    OutputCapable m
+    )
+  => FilePath
+  -> MatchCdOdInstance
   -> t (Int, Letters)
   -> Rated m
-matchCdOdEvaluation task sub' = do
+matchCdOdEvaluation path task@MatchCdOdInstance {..} sub' = addPretext $ do
   let sub = toMatching' sub'
-      sol = fst <$> instances task
-      matching = toMatching (M.keys $ diagrams task) sol
+      sol = fst <$> instances
+      matching = toMatching (M.keys diagrams) sol
+      refOnlyLetters = M.keys $ M.filter null sol
       what = translations $ do
         english "instances"
         german "Instanzen"
       solution =
-        if showSolution task
+        if showSolution
         then Just . (DefiniteArticle,) . show . matchingShow
           $ matchCdOdSolution task
         else Nothing
-  multipleChoice what solution matching sub
+  reRefuse (multipleChoice what solution matching sub) $ do
+    case hiddenReferenceCd of
+      Nothing -> pure ()
+      Just cd
+        | null refOnlyLetters -> pure ()
+        | otherwise -> do
+            paragraph $ translate $ do
+              english [iii|
+                None of the class diagrams shown above applies to the object diagram(s) #{refOnlyLetters}.
+                Consider the following reference class diagram conforming to them:
+                |]
+              german [iii|
+                Zu den Objektdiagrammen #{refOnlyLetters} passt keines der oben gezeigten Klassendiagramme.
+                Betrachten Sie das folgende Referenz-Klassendiagramm, das zu ihnen passt:
+                |]
+            image $=<< cacheCd cdDrawSettings mempty Nothing (fromClassDiagram cd) path
+            pure ()
+    pure ()
   where
     toMatching' :: Foldable f => f (Int, Letters) -> [(Int, Char)]
     toMatching' =
