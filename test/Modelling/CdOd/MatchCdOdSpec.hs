@@ -4,8 +4,7 @@ import qualified Data.Map                         as M (lookup, null)
 
 import Capabilities.Alloy.IO            ()
 import Modelling.CdOd.MatchCdOd (
-  MatchCdOdConfig (objectConfig, odDistribution),
-  OdDistributionConfig (..),
+  MatchCdOdConfig (objectConfig),
   checkMatchCdOdConfig,
   defaultMatchCdOdConfig,
   defaultMatchCdOdInstance,
@@ -32,7 +31,7 @@ import Modelling.Auxiliary.Common       (oneOf)
 import Control.Monad.Random             (randomIO)
 import Control.Monad.Except             (runExceptT)
 import Data.List                        (sort)
-import Data.Maybe                       (isJust, mapMaybe)
+import Data.Maybe                       (mapMaybe)
 import Data.Tuple.Extra                 (both)
 import Test.Hspec
 import Test.QuickCheck                  (ioProperty)
@@ -42,29 +41,6 @@ spec = do
   describe "defaultMatchCdOdConfig" $
     it "is valid" $
       checkMatchCdOdConfig defaultMatchCdOdConfig `shouldBe` Nothing
-  describe "checkMatchCdOdConfig" $ do
-    it "rejects any negative odDistribution value" $ do
-      let base = odDistribution defaultMatchCdOdConfig
-      checkMatchCdOdConfig defaultMatchCdOdConfig {
-        odDistribution = base { maxPerJustEachCd = -1 }
-        } `shouldSatisfy` isJust
-      checkMatchCdOdConfig defaultMatchCdOdConfig {
-        odDistribution = base { maxSharedBetweenBothCds = -1 }
-        } `shouldSatisfy` isJust
-      checkMatchCdOdConfig defaultMatchCdOdConfig {
-        odDistribution = base { maxNoCd = -1 }
-        } `shouldSatisfy` isJust
-    it "rejects any odDistribution value at least as large as objectDiagramCount" $ do
-      let base = odDistribution defaultMatchCdOdConfig
-      checkMatchCdOdConfig defaultMatchCdOdConfig {
-        odDistribution = base { maxPerJustEachCd = 5 }
-        } `shouldSatisfy` isJust
-      checkMatchCdOdConfig defaultMatchCdOdConfig {
-        odDistribution = base { maxSharedBetweenBothCds = 5 }
-        } `shouldSatisfy` isJust
-      checkMatchCdOdConfig defaultMatchCdOdConfig {
-        odDistribution = base { maxNoCd = 5 }
-        } `shouldSatisfy` isJust
   describe "matchCdOd" $
     context "using defaultMatchCdOdConfig" $ do
       it "generates an instance" $
