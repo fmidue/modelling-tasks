@@ -499,7 +499,7 @@ matchCdOdEvaluation
   -> MatchCdOdInstance
   -> t (Int, Letters)
   -> Rated m
-matchCdOdEvaluation path task@MatchCdOdInstance {..} sub' = addPretext $ do
+matchCdOdEvaluation path task@MatchCdOdInstance {..} sub' = do
   let sub = toMatching' sub'
       sol = fst <$> instances
       matching = toMatching (M.keys diagrams) sol
