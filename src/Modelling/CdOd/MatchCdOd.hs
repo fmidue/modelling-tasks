@@ -832,7 +832,7 @@ shuffleInstance MatchCdOdInstance {..} = do
   return $ MatchCdOdInstance {
     cdDrawSettings = cdDrawSettings,
     diagrams = M.fromAscList cds',
-    hiddenReferenceCd = hiddenReferenceCd ,
+    hiddenReferenceCd = hiddenReferenceCd,
     instances = M.fromAscList ods',
     showSolution = showSolution,
     taskText = taskText,
