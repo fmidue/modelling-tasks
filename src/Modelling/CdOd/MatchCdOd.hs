@@ -262,16 +262,16 @@ toMatching cds m =
 
 checkOdDistributionConfig :: Maybe Integer -> OdDistributionConfig -> Maybe String
 checkOdDistributionConfig maxInstances OdDistributionConfig {..}
-  | objectDiagramCount < 2
-  = Just [iii|
-    The number of given object diagrams must be at least 2.
-    |]
   | any (< 0) [maxPerJustEachCd, maxSharedBetweenBothCds, maxNoCd]
   = Just [iii|
     'maxPerJustEachCd', 'maxSharedBetweenBothCds' and 'maxNoCd' must each be
     greater than or equal to 0.
     |]
-  | maximumOfDistributions >= objectDiagramCount
+  | objectDiagramCount < 2
+  = Just [iii|
+    The number of given object diagrams must be at least 2.
+    |]
+  | objectDiagramCount <= maximumOfDistributions 
   = Just [iii|
     'maxPerJustEachCd', 'maxSharedBetweenBothCds' and 'maxNoCd' must each be
     less than 'objectDiagramCount'.
