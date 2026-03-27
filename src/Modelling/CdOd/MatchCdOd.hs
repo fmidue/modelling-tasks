@@ -12,6 +12,7 @@ module Modelling.CdOd.MatchCdOd (
   MatchCdOdConfig (..),
   MatchCdOdInstance (..),
   MatchCdOdTaskTextElement (..),
+  OdDistributionConfig (..),
   checkMatchCdOdConfig,
   checkMatchCdOdInstance,
   defaultMatchCdOdConfig,
@@ -194,11 +195,20 @@ data MatchCdOdInstance
     addText        :: ExtraText
   } deriving (Eq, Generic, Hashable, Read, Reader, Show, ToDoc)
 
+data OdDistributionConfig =
+  OdDistributionConfig {
+    objectDiagramCount :: Int,
+    maxPerJustEachCd :: Int,
+    maxSharedBetweenBothCds :: Int,
+    maxNoCd :: Int
+  } deriving (Eq, Generic, Hashable, Read, Reader, Show, ToDoc)
+
 data MatchCdOdConfig
   = MatchCdOdConfig {
     allowedCdMutations :: ![CdMutation],
     classConfig      :: ClassConfig,
     maxInstances     :: Maybe Integer,
+    odDistribution   :: OdDistributionConfig,
     objectConfig     :: ObjectConfig,
     objectProperties :: ObjectProperties,
     omittedDefaultMultiplicities :: OmittedDefaultMultiplicities,
@@ -233,6 +243,12 @@ defaultMatchCdOdConfig
       hasSelfLoops = Nothing,
       usesEveryRelationshipName = Nothing
       },
+    odDistribution = OdDistributionConfig {
+      objectDiagramCount = 5,
+      maxPerJustEachCd = 2,
+      maxSharedBetweenBothCds = 2,
+      maxNoCd = 2
+      },
     omittedDefaultMultiplicities = defaultOmittedDefaultMultiplicities,
     printSolution    = True,
     timeout          = Nothing,
@@ -243,6 +259,47 @@ defaultMatchCdOdConfig
 toMatching :: [Int] -> Map Char [Int] -> Map (Int, Char) Bool
 toMatching cds m =
   M.fromList [((cd, od), cd `elem` cdList) | cd <- cds, (od, cdList) <- M.toList m]
+
+checkOdDistributionConfig :: Maybe Integer -> OdDistributionConfig -> Maybe String
+checkOdDistributionConfig maxInstances OdDistributionConfig {..}
+  | objectDiagramCount < 2
+  = Just [iii|
+    The number of given object diagrams must be at least 2.
+    |]
+  | maxPerJustEachCd < 0 || maxPerJustEachCd >= objectDiagramCount
+  = Just [iii|
+    'maxPerJustEachCd' must be greater than or equal to 0 and less than 'objectDiagramCount'.
+    |]
+  | maxSharedBetweenBothCds < 0 || maxSharedBetweenBothCds >= objectDiagramCount
+  = Just [iii|
+    'maxSharedBetweenBothCds' must be greater than or equal to 0 and less than 'objectDiagramCount'.
+    |]
+  | maxNoCd < 0 || maxNoCd >= objectDiagramCount
+  = Just [iii|
+    'maxNoCd' must be greater than or equal to 0 and less than 'objectDiagramCount'.
+    |]
+  | objectDiagramCount > 2 * maxPerJustEachCd + maxSharedBetweenBothCds + maxNoCd
+  = Just [iii|
+    'objectDiagramCount' must be less than or equal to 2 * 'maxPerJustEachCd' + 'maxSharedBetweenBothCds' + 'maxNoCd'.
+    |]
+  | maybe False
+      (fromIntegral (maximum [maxPerJustEachCd, maxSharedBetweenBothCds, maxNoCd]) >)
+      maxInstances
+  = Just [iii|
+    'maxPerJustEachCd', 'maxSharedBetweenBothCds' and 'maxNoCd' must be less than or equal to 'maxInstances'.
+    |]
+  | maxPerJustEachCd == 0 && maxSharedBetweenBothCds == 0
+  = Just [iii|
+    Having no object diagrams that conform to the class diagrams makes no sense.
+    'maxPerJustEachCd + maxSharedBetweenBothCds' must be at least 1.
+    |]
+  | maxPerJustEachCd == 0 && maxNoCd == 0
+  = Just [iii|
+    Do not expect all object diagrams to conform to both class diagrams.
+    'maxPerJustEachCd + maxNoCd' must be at least 1.
+    |]
+  | otherwise
+  = Nothing
 
 checkMatchCdOdConfig :: MatchCdOdConfig -> Maybe String
 checkMatchCdOdConfig MatchCdOdConfig {..}
@@ -265,6 +322,7 @@ checkMatchCdOdConfig MatchCdOdConfig {..}
   | otherwise
   = checkClassConfigWithProperties classConfig defaultProperties
   <|> checkCdMutations allowedCdMutations
+  <|> checkOdDistributionConfig maxInstances odDistribution
   <|> checkObjectProperties objectProperties
   <|> checkClassConfigAndObjectProperties classConfig objectProperties
   <|> checkOmittedDefaultMultiplicities omittedDefaultMultiplicities
@@ -845,7 +903,7 @@ getODsFor config (cd:cds) = do
     >>= shuffleCdNames
   [cd1, cd2] <- shuffleM [cd1', cd2']
   alloyInstances <- lift $ getODInstances config cd1 cd2 cd3 $ length $ classNames cd1
-  maybeRandomInstances <- takeRandomInstances alloyInstances
+  maybeRandomInstances <- takeRandomInstances (odDistribution config) alloyInstances
   case maybeRandomInstances of
     Nothing      -> getODsFor config cds
     Just randomInstances -> return $ Just (
@@ -906,8 +964,11 @@ getODInstances config cd1 cd2 cd3 numClasses = do
       (objectConfig config)
 
 takeRandomInstances
-  :: (MonadRandom m, MonadFail m) => Map [Int] [a] -> m (Maybe [([Int], a)])
-takeRandomInstances alloyInstances =
+  :: (MonadRandom m, MonadFail m)
+  => OdDistributionConfig
+  -> Map [Int] [a]
+  -> m (Maybe [([Int], a)])
+takeRandomInstances OdDistributionConfig {..} alloyInstances =
   case takes of
     []  -> return Nothing
     _:_ -> Just <$> do
@@ -915,12 +976,18 @@ takeRandomInstances alloyInstances =
       ts:_    <- shuffleM takes
       shuffleM $ concatMap ($ randomInstances) ts
   where
+    -- guarantees 0 < x + z < objectDiagramCount and 0 < y + z < objectDiagramCount
     takes =
       [ [takeL [1] x, takeL [2] y, takeL [1,2] z, takeL [] u]
-      | x <- [0 .. min 2 (length $ fromJust $ M.lookup [1]   alloyInstances)]
-      , y <- [0 .. min 2 (length $ fromJust $ M.lookup [2]   alloyInstances)]
-      , z <- [0 .. min 2 (length $ fromJust $ M.lookup [1,2] alloyInstances)]
-      , u <- [0 .. min 2 (length $ fromJust $ M.lookup []    alloyInstances)]
-      , 5 == x + y + z + u
+      | x <- [0 .. min maxPerJustEachCd (length $ fromJust $ M.lookup [1] alloyInstances)]
+      , y <- [0 .. min maxPerJustEachCd (length $ fromJust $ M.lookup [2] alloyInstances)]
+      , let oneIfEitherIsZero = max 0 (1 - min x y)
+      , let objectDiagramCountMinusBoth = objectDiagramCount - x - y
+      , z <- [
+              max oneIfEitherIsZero (objectDiagramCountMinusBoth - min maxNoCd (length $ fromJust $ M.lookup [] alloyInstances))
+              ..
+              minimum [maxSharedBetweenBothCds, objectDiagramCountMinusBoth - oneIfEitherIsZero, length $ fromJust $ M.lookup [1,2] alloyInstances]
+             ]
+      , let u = objectDiagramCountMinusBoth - z
       ]
     takeL k n = take n . fmap (k,) . fromJust . M.lookup k

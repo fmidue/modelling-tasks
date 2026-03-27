@@ -19,6 +19,7 @@ import Modelling.CdOd.Generate.MatchCdOd (
   )
 import Modelling.CdOd.MatchCdOd (
   MatchCdOdConfig (..),
+  OdDistributionConfig (..),
   matchCdOdTask,
   )
 import EvaluateArgs                     (evaluateArgs)
@@ -52,6 +53,12 @@ main = do
             hasLimitedIsolatedObjects = True,
             hasSelfLoops = Nothing,
             usesEveryRelationshipName = Nothing
+            },
+          odDistribution = OdDistributionConfig {
+            objectDiagramCount = 5,
+            maxPerJustEachCd = 2,
+            maxSharedBetweenBothCds = 2,
+            maxNoCd = 2
             },
           omittedDefaultMultiplicities = defaultOmittedDefaultMultiplicities,
           printSolution    = False,
