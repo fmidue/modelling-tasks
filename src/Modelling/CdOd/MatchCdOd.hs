@@ -174,7 +174,7 @@ import Data.Bifunctor                   (Bifunctor (second))
 import Data.Bitraversable               (bimapM)
 import Data.Containers.ListUtils        (nubOrd)
 import Data.GraphViz                    (DirType (Forward))
-import Data.List                        (singleton)
+import Data.List                        (intercalate, singleton, sort)
 import Data.Map                         (Map)
 import Data.Maybe                       (fromJust, isJust, listToMaybe, mapMaybe, fromMaybe)
 import Data.Ratio                       ((%))
@@ -520,11 +520,17 @@ matchCdOdEvaluation path task@MatchCdOdInstance {..} sub' = do
         | otherwise -> do
             paragraph $ translate $ do
               english [iii|
-                None of the class diagrams shown above applies to the object diagram(s) #{refOnlyLetters}.
+                None of the class diagrams shown above applies to the following object diagram(s):
+                |]
+              german [iii|
+                Zu den folgenden Objektdiagrammen passt keines der oben gezeigten Klassendiagramme:
+                |]
+            code $ "[" ++ intercalate ", " (map (:[]) $ sort refOnlyLetters) ++ "]"
+            paragraph $ translate $ do
+              english [iii|
                 Consider the following reference class diagram conforming to them:
                 |]
               german [iii|
-                Zu den Objektdiagrammen #{refOnlyLetters} passt keines der oben gezeigten Klassendiagramme.
                 Betrachten Sie das folgende Referenz-Klassendiagramm, das zu ihnen passt:
                 |]
             image $=<< cacheCd cdDrawSettings mempty Nothing (fromClassDiagram cd) path
