@@ -266,24 +266,22 @@ checkOdDistributionConfig maxInstances OdDistributionConfig {..}
   = Just [iii|
     The number of given object diagrams must be at least 2.
     |]
-  | maxPerJustEachCd < 0 || maxPerJustEachCd >= objectDiagramCount
+  | objectDiagramCount <= maximumOfDistributions
   = Just [iii|
-    'maxPerJustEachCd' must be greater than or equal to 0 and less than 'objectDiagramCount'.
-    |]
-  | maxSharedBetweenBothCds < 0 || maxSharedBetweenBothCds >= objectDiagramCount
-  = Just [iii|
-    'maxSharedBetweenBothCds' must be greater than or equal to 0 and less than 'objectDiagramCount'.
-    |]
-  | maxNoCd < 0 || maxNoCd >= objectDiagramCount
-  = Just [iii|
-    'maxNoCd' must be greater than or equal to 0 and less than 'objectDiagramCount'.
+    'maxPerJustEachCd', 'maxSharedBetweenBothCds' and 'maxNoCd' must each be
+    less than 'objectDiagramCount'.
     |]
   | objectDiagramCount > 2 * maxPerJustEachCd + maxSharedBetweenBothCds + maxNoCd
   = Just [iii|
     'objectDiagramCount' must be less than or equal to 2 * 'maxPerJustEachCd' + 'maxSharedBetweenBothCds' + 'maxNoCd'.
     |]
+  | any (< 0) [maxPerJustEachCd, maxSharedBetweenBothCds, maxNoCd]
+  = Just [iii|
+    'maxPerJustEachCd', 'maxSharedBetweenBothCds' and 'maxNoCd' must each be
+    greater than or equal to 0.
+    |]
   | maybe False
-      (fromIntegral (maximum [maxPerJustEachCd, maxSharedBetweenBothCds, maxNoCd]) >)
+      (fromIntegral maximumOfDistributions >)
       maxInstances
   = Just [iii|
     'maxPerJustEachCd', 'maxSharedBetweenBothCds' and 'maxNoCd' must be less than or equal to 'maxInstances'.
@@ -300,6 +298,8 @@ checkOdDistributionConfig maxInstances OdDistributionConfig {..}
     |]
   | otherwise
   = Nothing
+  where
+    maximumOfDistributions = maximum [maxPerJustEachCd, maxSharedBetweenBothCds, maxNoCd]
 
 checkMatchCdOdConfig :: MatchCdOdConfig -> Maybe String
 checkMatchCdOdConfig MatchCdOdConfig {..}
