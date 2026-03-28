@@ -176,7 +176,7 @@ import Data.Containers.ListUtils        (nubOrd)
 import Data.GraphViz                    (DirType (Forward))
 import Data.List                        ((\\), intercalate, singleton, sort)
 import Data.Map                         (Map)
-import Data.Maybe                       (fromJust, fromMaybe, isJust, listToMaybe, mapMaybe)
+import Data.Maybe                       (fromJust, isJust, listToMaybe, mapMaybe, fromMaybe)
 import Data.Ratio                       ((%))
 import Data.String.Interpolate          (iii)
 import GHC.Generics                     (Generic)
@@ -513,7 +513,7 @@ matchCdOdEvaluation path task@MatchCdOdInstance {..} sub' = do
           $ matchCdOdSolution task
         else Nothing
   reRefuse (multipleChoice what solution matching sub) $
-    when showSolution $
+    when showSolution $ do
       unless (Special GivenCds `elem` taskText) $ do
         paragraph $ translate $ do
           english [iii|
@@ -527,7 +527,6 @@ matchCdOdEvaluation path task@MatchCdOdInstance {..} sub' = do
           (\cd -> image $=<< cacheCd cdDrawSettings mempty Nothing (fromClassDiagram cd) path)
           (M.lookup 1 diagrams)
         pure ()
-      *>
       case hiddenReferenceCd of
         Nothing -> pure ()
         Just cd
