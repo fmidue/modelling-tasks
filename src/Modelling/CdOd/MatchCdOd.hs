@@ -888,9 +888,9 @@ renameInstance inst@MatchCdOdInstance {..} names' nonInheritances' = do
       bmWithIdForUnmappedKeys bm domain ks =
         foldr (\k -> BM.insert k k) bm (ks \\ domain)
       bmNamesForReferenceCd =
-        bmWithIdForUnmappedKeys bmNames names (maybe [] classNames hiddenReferenceCd)
+        bmWithIdForUnmappedKeys bmNames names (classNames $ fromJust hiddenReferenceCd)
       bmNonInheritancesForReferenceCd =
-        bmWithIdForUnmappedKeys bmNonInheritances nonInheritances (maybe [] associationNames hiddenReferenceCd)
+        bmWithIdForUnmappedKeys bmNonInheritances nonInheritances (associationNames $ fromJust hiddenReferenceCd)
       renameCd = renameClassesAndRelationships bmNames bmNonInheritances
       renameOd = renameObjectsWithClassesAndLinksInOd bmNames bmNonInheritances
       renameReferenceCd =
