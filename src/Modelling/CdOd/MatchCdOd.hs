@@ -504,16 +504,21 @@ matchCdOdEvaluation path task@MatchCdOdInstance {..} sub' = do
       sol = fst <$> instances
       matching = toMatching (M.keys diagrams) sol
       refOnlyLetters = M.keys $ M.filter null sol
-      (refOnlyMidEn, refOnlyMidDe) =
-        if Special GivenCds `elem` taskText
-        then
-          ( "conform to none of the given class diagrams"
-          , "passen zu keinem der gegebenen Klassendiagramme"
-          )
-        else
-          ( "do not correspond to the given scenario description"
-          , "entsprechen der gegebenen Szenariobeschreibung nicht"
-          )
+      hasGivenCds = Special GivenCds `elem` taskText
+      multipleCds = M.size diagrams > 1
+      (refOnlyMidEn, refOnlyMidDe)
+        | not hasGivenCds =
+            ( "do(es) not correspond to the given scenario description"
+            , "entsprechen der gegebenen Szenariobeschreibung nicht"
+            )
+        | multipleCds =
+            ( "do(es) not conform to any of the given class diagrams"
+            , "passen zu keinem der gegebenen Klassendiagramme"
+            )
+        | otherwise =
+            ( "do(es) not conform to the given class diagram"
+            , "passen nicht zu dem gegebenen Klassendiagramm"
+            )
       what = translations $ do
         english "instances"
         german "Instanzen"
