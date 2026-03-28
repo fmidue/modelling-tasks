@@ -504,6 +504,16 @@ matchCdOdEvaluation path task@MatchCdOdInstance {..} sub' = do
       sol = fst <$> instances
       matching = toMatching (M.keys diagrams) sol
       refOnlyLetters = M.keys $ M.filter null sol
+      (refOnlyMidEn, refOnlyMidDe) =
+        if Special GivenCds `elem` taskText
+        then
+          ( "conform to none of the given class diagrams"
+          , "passen zu keinem der gegebenen Klassendiagramme"
+          )
+        else
+          ( "do not correspond to the given scenario description"
+          , "entsprechen der gegebenen Szenariobeschreibung nicht"
+          )
       what = translations $ do
         english "instances"
         german "Instanzen"
@@ -521,18 +531,18 @@ matchCdOdEvaluation path task@MatchCdOdInstance {..} sub' = do
           | otherwise -> do
               paragraph $ translate $ do
                 english [iii|
-                  None of the class diagrams shown above applies to the following object diagram(s):
+                  The following object diagram(s) #{refOnlyMidEn} in the reference solution:
                   |]
                 german [iii|
-                  Zu den folgenden Objektdiagrammen passt keines der oben gezeigten Klassendiagramme:
+                  Die folgenden Objektdiagramme #{refOnlyMidDe} (Referenzlösung):
                   |]
               code $ "[" ++ intercalate ", " (map (:[]) $ sort refOnlyLetters) ++ "]"
               paragraph $ translate $ do
                 english [iii|
-                  Consider the following reference class diagram conforming to them:
+                  Below is a reference class diagram that these object diagram(s) could conform to:
                   |]
                 german [iii|
-                  Betrachten Sie das folgende Referenz-Klassendiagramm, das zu ihnen passt:
+                  Nachfolgend ein Referenz-Klassendiagramm, zu dem diese Objektdiagramme passen können:
                   |]
               image $=<< cacheCd cdDrawSettings mempty Nothing (fromClassDiagram cd) path
               pure ()
