@@ -524,7 +524,7 @@ matchCdOdEvaluation path task@MatchCdOdInstance {..} sub' = do
             |]
         case M.toList diagrams of
           [(1, cd)] -> image $=<< cacheCd cdDrawSettings mempty Nothing (fromClassDiagram cd) path
-          _ -> error "There should be only one class diagram corresponding to the scenario description."
+          _ -> error "There should be exactly one class diagram, corresponding to the scenario description."
         pure ()
       case hiddenReferenceCd of
         Nothing -> pure ()
