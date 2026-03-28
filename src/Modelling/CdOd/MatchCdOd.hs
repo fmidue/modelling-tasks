@@ -29,7 +29,7 @@ module Modelling.CdOd.MatchCdOd (
 
 import qualified Modelling.CdOd.CdAndChanges.Transform as Changes (transform)
 
-import qualified Data.Bimap                       as BM (fromList, insert, member)
+import qualified Data.Bimap                       as BM (fromList, insert, keys)
 import qualified Data.Map                         as M (
   adjust,
   elems,
@@ -174,7 +174,7 @@ import Data.Bifunctor                   (Bifunctor (second))
 import Data.Bitraversable               (bimapM)
 import Data.Containers.ListUtils        (nubOrd)
 import Data.GraphViz                    (DirType (Forward))
-import Data.List                        (intercalate, singleton, sort)
+import Data.List                        ((\\), intercalate, singleton, sort)
 import Data.Map                         (Map)
 import Data.Maybe                       (fromJust, isJust, listToMaybe, mapMaybe, fromMaybe)
 import Data.Ratio                       ((%))
@@ -886,8 +886,7 @@ renameInstance inst@MatchCdOdInstance {..} names' nonInheritances' = do
       bmNames  = BM.fromList $ zip names names'
       bmNonInheritances = BM.fromList $ zip nonInheritances nonInheritances'
       bmWithIdForUnmappedKeys bm ks =
-        foldr (\k -> BM.insert k k) bm
-          [k | k <- nubOrd ks, not (k `BM.member` bm)]
+        foldr (\k -> BM.insert k k) bm (ks \\ BM.keys bm)
       bmNamesForReferenceCd =
         bmWithIdForUnmappedKeys bmNames (maybe [] classNames hiddenReferenceCd)
       bmNonInheritancesForReferenceCd =
