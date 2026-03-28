@@ -30,10 +30,11 @@ module Modelling.CdOd.MatchCdOd (
 
 import qualified Modelling.CdOd.CdAndChanges.Transform as Changes (transform)
 
-import qualified Data.Bimap                       as BM (fromList)
+import qualified Data.Bimap                       as BM (fromList, insert)
 import qualified Data.Map                         as M (
   adjust,
   elems,
+  filter,
   foldrWithKey,
   fromAscList,
   fromList,
@@ -129,7 +130,7 @@ import Modelling.Types (
 
 import Control.Applicative              (Alternative ((<|>)))
 import Control.Exception                (Exception)
-import Control.Monad                    ((<=<), when)
+import Control.Monad                    ((<=<), unless, when)
 import Control.Monad.Catch              (MonadCatch, MonadThrow, throwM)
 import Control.Monad.Trans.Class (lift)
 #if __GLASGOW_HASKELL__ < 808
@@ -146,7 +147,10 @@ import Control.OutputCapable.Blocks (
   english,
   extra,
   german,
+  image,
   multipleChoice,
+  paragraph,
+  reRefuse,
   translate,
   translations,
   Language (English, German),
@@ -171,7 +175,7 @@ import Data.Bifunctor                   (Bifunctor (second))
 import Data.Bitraversable               (bimapM)
 import Data.Containers.ListUtils        (nubOrd)
 import Data.GraphViz                    (DirType (Forward))
-import Data.List                        (singleton)
+import Data.List                        ((\\), intercalate, singleton, sort)
 import Data.Map                         (Map)
 import Data.Maybe                       (fromJust, isJust, listToMaybe, mapMaybe, fromMaybe)
 import Data.Ratio                       ((%))
@@ -189,6 +193,7 @@ data MatchCdOdInstance
   = MatchCdOdInstance {
     cdDrawSettings :: !CdDrawSettings,
     diagrams       :: Map Int Cd,
+    hiddenReferenceCd :: Maybe Cd,
     instances      :: Map Char ([Int], Od),
     showSolution   :: !Bool,
     taskText       :: !MatchCdOdTaskText,
@@ -400,7 +405,7 @@ toTaskSpecificText path MatchCdOdInstance {..} = \case
   GivenCds -> images show id
     $=<< (\_ cd -> cacheCd cdDrawSettings mempty Nothing (fromClassDiagram cd) path)
     `M.traverseWithKey` diagrams
-  GivenOds -> images (:[]) snd
+  GivenOds -> images singleton snd
     $=<< (\_ (is,o) -> (is,) <$> cacheOd o Nothing Forward True path)
     `M.traverseWithKey` instances
   DirectionsAdvice b -> directionsAdvice b
@@ -540,23 +545,63 @@ matchCdOdSyntax task sub = addPretext $ do
     availableOd = (`elem` M.keys (instances task))
 
 matchCdOdEvaluation
-  :: (Foldable t, OutputCapable m)
-  => MatchCdOdInstance
+  :: (
+    Alternative m,
+    Foldable t,
+    MonadCache m,
+    MonadDiagrams m,
+    MonadGraphviz m,
+    OutputCapable m
+    )
+  => FilePath
+  -> MatchCdOdInstance
   -> t (Int, Letters)
   -> Rated m
-matchCdOdEvaluation task sub' = do
+matchCdOdEvaluation path task@MatchCdOdInstance {..} sub' = do
   let sub = toMatching' sub'
-      sol = fst <$> instances task
-      matching = toMatching (M.keys $ diagrams task) sol
+      sol = fst <$> instances
+      matching = toMatching (M.keys diagrams) sol
+      refOnlyLetters = M.keys $ M.filter null sol
       what = translations $ do
         english "instances"
         german "Instanzen"
       solution =
-        if showSolution task
+        if showSolution
         then Just . (DefiniteArticle,) . show . matchingShow
           $ matchCdOdSolution task
         else Nothing
-  multipleChoice what solution matching sub
+  reRefuse (multipleChoice what solution matching sub) $
+    when showSolution $ do
+      unless (Special GivenCds `elem` taskText) $ do
+        paragraph $ translate $ do
+          english [iii|
+            Regarding the scenario description, the following class diagram would have been appropriate:
+            |]
+          german [iii|
+            Bezüglich der Szenariobeschreibung wäre das folgende Klassendiagramm geeignet gewesen:
+            |]
+        case M.toList diagrams of
+          [(1, cd)] -> image $=<< cacheCd cdDrawSettings mempty Nothing (fromClassDiagram cd) path
+          _ -> error "There should be exactly one class diagram, corresponding to the scenario description."
+        pure ()
+      case hiddenReferenceCd of
+        Nothing -> pure ()
+        Just cd
+          | null refOnlyLetters -> pure ()
+          | otherwise -> do
+              let noMatch = intercalate ", " (map singleton $ sort refOnlyLetters)
+              paragraph $ translate $ do
+                english [iii|
+                  Where there was no conformance here (i.e., for #{noMatch}),
+                  the following class diagram would have been appropriate:
+                  |]
+                german [iii|
+                  Wo hier keine Passung vorlag (also für #{noMatch}),
+                  wäre das folgende Klassendiagramm geeignet gewesen:
+                  |]
+              image $=<< cacheCd cdDrawSettings mempty Nothing (fromClassDiagram cd) path
+              pure ()
+      pure ()
   where
     toMatching' :: Foldable f => f (Int, Letters) -> [(Int, Char)]
     toMatching' =
@@ -585,11 +630,11 @@ matchCdOd config segment seed = flip evalRandT g $ do
 getMatchCdOdTask
   :: (MonadCatch m, RandomGen g)
   => (MatchCdOdConfig
-    -> RandT g m (Map Int Cd, Map Char ([Int], AlloyInstance)))
+    -> RandT g m (Map Int Cd, Cd, Map Char ([Int], AlloyInstance)))
   -> MatchCdOdConfig
   -> RandT g m MatchCdOdInstance
 getMatchCdOdTask f config@MatchCdOdConfig {..} = do
-  (cds, ods) <- f config
+  (cds, hiddenReferenceCd, ods) <- f config
   let possibleLinkNames = concatMap
         (mapMaybe relationshipName . relationships)
         cds
@@ -601,6 +646,7 @@ getMatchCdOdTask f config@MatchCdOdConfig {..} = do
           printNavigations = True
           },
         diagrams       = cds,
+        hiddenReferenceCd = Just hiddenReferenceCd,
         instances      = ods',
         showSolution = printSolution,
         taskText = defaultMatchCdOdTaskText (M.size cds) (M.size ods'),
@@ -711,27 +757,69 @@ defaultMatchCdOdInstance = MatchCdOdInstance {
         ]
       })
     ],
+  hiddenReferenceCd  = Just $ ClassDiagram {
+    classNames = ["A", "C", "D", "B"],
+    relationships = [
+      Composition {
+        compositionName = "x",
+        compositionPart = LimitedLinking {
+          linking = "A",
+          limits = (1, Just 2)
+          },
+        compositionWhole = LimitedLinking {
+          linking = "D",
+          limits = (0, Just 1)
+          }
+        },
+      Aggregation {
+        aggregationName = "w",
+        aggregationPart = LimitedLinking {
+          linking = "C",
+          limits = (1, Nothing)
+          },
+        aggregationWhole = LimitedLinking {
+          linking = "D",
+          limits = (1, Nothing)
+          }
+        },
+      Inheritance {
+        subClass = "C",
+        superClass = "A"
+        },
+      Aggregation {
+        aggregationName = "z",
+        aggregationPart = LimitedLinking {
+          linking = "B",
+          limits = (0, Just 2)
+          },
+        aggregationWhole = LimitedLinking {
+          linking = "A",
+          limits = (1, Nothing)
+          }
+        }
+        ]
+      },
   instances = M.fromList [
     ('a', ([1], ObjectDiagram {
       objects = [
-        Object {isAnonymous = False, objectName = "b", objectClass = "B"},
-        Object {isAnonymous = False, objectName = "d", objectClass = "D"},
+        Object {isAnonymous = True, objectName = "b1", objectClass = "B"},
         Object {isAnonymous = False, objectName = "c", objectClass = "C"},
-        Object {isAnonymous = True, objectName = "b1", objectClass = "B"}
+        Object {isAnonymous = False, objectName = "b", objectClass = "B"},
+        Object {isAnonymous = False, objectName = "d", objectClass = "D"}
         ],
       links = [
+        Link {linkLabel = "w", linkFrom = "c", linkTo = "d"},
         Link {linkLabel = "z", linkFrom = "b1", linkTo = "c"},
         Link {linkLabel = "z", linkFrom = "b", linkTo = "c"},
-        Link {linkLabel = "x", linkFrom = "d", linkTo = "c"},
-        Link {linkLabel = "w", linkFrom = "c", linkTo = "d"}
+        Link {linkLabel = "x", linkFrom = "d", linkTo = "c"}
         ]
       })),
     ('b', ([], ObjectDiagram {
       objects = [
-        Object {isAnonymous = False, objectName = "d", objectClass = "D"},
         Object {isAnonymous = True, objectName = "c", objectClass = "C"},
-        Object {isAnonymous = False, objectName = "b", objectClass = "B"},
-        Object {isAnonymous = False, objectName = "a", objectClass = "A"}
+        Object {isAnonymous = False, objectName = "a", objectClass = "A"},
+        Object {isAnonymous = False, objectName = "d", objectClass = "D"},
+        Object {isAnonymous = False, objectName = "b", objectClass = "B"}
         ],
       links = [
         Link {linkLabel = "w", linkFrom = "c", linkTo = "d"},
@@ -742,24 +830,24 @@ defaultMatchCdOdInstance = MatchCdOdInstance {
       })),
     ('c', ([2], ObjectDiagram {
       objects = [
-        Object {isAnonymous = False, objectName = "c", objectClass = "C"},
+        Object {isAnonymous = False, objectName = "d", objectClass = "D"},
         Object {isAnonymous = True, objectName = "a1", objectClass = "A"},
-        Object {isAnonymous = False, objectName = "a", objectClass = "A"},
-        Object {isAnonymous = False, objectName = "d", objectClass = "D"}
+        Object {isAnonymous = False, objectName = "c", objectClass = "C"},
+        Object {isAnonymous = False, objectName = "a", objectClass = "A"}
         ],
       links = [
-        Link {linkLabel = "w", linkFrom = "c", linkTo = "d"},
         Link {linkLabel = "x", linkFrom = "c", linkTo = "d"},
-        Link {linkLabel = "x", linkFrom = "a1", linkTo = "d"},
-        Link {linkLabel = "x", linkFrom = "a", linkTo = "d"}
+        Link {linkLabel = "w", linkFrom = "c", linkTo = "d"},
+        Link {linkLabel = "x", linkFrom = "a", linkTo = "d"},
+        Link {linkLabel = "x", linkFrom = "a1", linkTo = "d"}
         ]
       })),
     ('d', ([2], ObjectDiagram {
       objects = [
         Object {isAnonymous = False, objectName = "d", objectClass = "D"},
+        Object {isAnonymous = False, objectName = "a", objectClass = "A"},
         Object {isAnonymous = True, objectName = "c", objectClass = "C"},
-        Object {isAnonymous = False, objectName = "c1", objectClass = "C"},
-        Object {isAnonymous = False, objectName = "a", objectClass = "A"}
+        Object {isAnonymous = False, objectName = "c1", objectClass = "C"}
         ],
       links = [
         Link {linkLabel = "w", linkFrom = "c", linkTo = "d"},
@@ -770,14 +858,14 @@ defaultMatchCdOdInstance = MatchCdOdInstance {
       })),
     ('e', ([1], ObjectDiagram {
       objects = [
-        Object {isAnonymous = False, objectName = "d", objectClass = "D"},
-        Object {isAnonymous = True, objectName = "d1", objectClass = "D"},
+        Object {isAnonymous = False, objectName = "c", objectClass = "C"},
         Object {isAnonymous = False, objectName = "a", objectClass = "A"},
-        Object {isAnonymous = False, objectName = "c", objectClass = "C"}
+        Object {isAnonymous = True, objectName = "d1", objectClass = "D"},
+        Object {isAnonymous = False, objectName = "d", objectClass = "D"}
         ],
       links = [
-        Link {linkLabel = "w", linkFrom = "c", linkTo = "d"},
         Link {linkLabel = "w", linkFrom = "c", linkTo = "d1"},
+        Link {linkLabel = "w", linkFrom = "c", linkTo = "d"},
         Link {linkLabel = "x", linkFrom = "d", linkTo = "a"},
         Link {linkLabel = "x", linkFrom = "d1", linkTo = "c"}
         ]
@@ -817,10 +905,12 @@ shuffleNodesAndEdges
   -> m MatchCdOdInstance
 shuffleNodesAndEdges MatchCdOdInstance {..} = do
   cds <- mapM shuffleClassAndConnectionOrder diagrams
+  hiddenReferenceCd' <- mapM shuffleClassAndConnectionOrder hiddenReferenceCd
   ods <- mapM (mapM shuffleObjectAndLinkOrder) instances
   return MatchCdOdInstance {
     cdDrawSettings = cdDrawSettings,
     diagrams = cds,
+    hiddenReferenceCd = hiddenReferenceCd',
     instances = ods,
     showSolution = showSolution,
     taskText = taskText,
@@ -844,6 +934,7 @@ shuffleInstance MatchCdOdInstance {..} = do
   return $ MatchCdOdInstance {
     cdDrawSettings = cdDrawSettings,
     diagrams = M.fromAscList cds',
+    hiddenReferenceCd = hiddenReferenceCd,
     instances = M.fromAscList ods',
     showSolution = showSolution,
     taskText = taskText,
@@ -862,11 +953,19 @@ renameInstance inst@MatchCdOdInstance {..} names' nonInheritances' = do
       bmNonInheritances = BM.fromList $ zip nonInheritances nonInheritances'
       renameCd = renameClassesAndRelationships bmNames bmNonInheritances
       renameOd = renameObjectsWithClassesAndLinksInOd bmNames bmNonInheritances
+      bmNamesForReferenceCd =
+        foldr (\k -> BM.insert k k) bmNames (classNames (fromJust hiddenReferenceCd) \\ names)
+      bmNonInheritancesForReferenceCd =
+        foldr (\k -> BM.insert k k) bmNonInheritances (associationNames (fromJust hiddenReferenceCd) \\ nonInheritances)
+      renameReferenceCd =
+        renameClassesAndRelationships bmNamesForReferenceCd bmNonInheritancesForReferenceCd
   cds <- renameCd `mapM` diagrams
+  hiddenReferenceCd' <- renameReferenceCd `mapM` hiddenReferenceCd
   ods <- mapM renameOd `mapM` instances
   return $ MatchCdOdInstance {
     cdDrawSettings = cdDrawSettings,
     diagrams = cds,
+    hiddenReferenceCd = hiddenReferenceCd',
     instances = ods,
     showSolution = showSolution,
     taskText = taskText,
@@ -876,7 +975,7 @@ renameInstance inst@MatchCdOdInstance {..} names' nonInheritances' = do
 getRandomTask
   :: (MonadAlloy m, MonadFail m, RandomGen g, MonadThrow m)
   => MatchCdOdConfig
-  -> RandT g m (Map Int Cd, Map Char ([Int], AlloyInstance))
+  -> RandT g m (Map Int Cd, Cd, Map Char ([Int], AlloyInstance))
 getRandomTask config = do
   let alloyCode = Changes.transform
         (classConfig config)
@@ -892,7 +991,7 @@ getODsFor
   :: (MonadAlloy m, MonadFail m, RandomGen g, MonadThrow m)
   => MatchCdOdConfig
   -> [AlloyInstance]
-  -> RandT g m (Maybe (Map Int Cd, Map Char ([Int], AlloyInstance)))
+  -> RandT g m (Maybe (Map Int Cd, Cd, Map Char ([Int], AlloyInstance)))
 getODsFor _      []       = return Nothing
 getODsFor config (cd:cds) = do
   cds' <- lift (instanceChangesAndCds
@@ -908,6 +1007,7 @@ getODsFor config (cd:cds) = do
     Nothing      -> getODsFor config cds
     Just randomInstances -> return $ Just (
       M.fromList [(1, cd1), (2, cd2)],
+      cd3,
       M.fromList $ zip ['a' ..] randomInstances
       )
 
