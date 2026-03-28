@@ -29,7 +29,7 @@ module Modelling.CdOd.MatchCdOd (
 
 import qualified Modelling.CdOd.CdAndChanges.Transform as Changes (transform)
 
-import qualified Data.Bimap                       as BM (fromList, insert, keys)
+import qualified Data.Bimap                       as BM (fromList, insert)
 import qualified Data.Map                         as M (
   adjust,
   elems,
@@ -885,12 +885,12 @@ renameInstance inst@MatchCdOdInstance {..} names' nonInheritances' = do
   let (names, nonInheritances) = classAndNonInheritanceNames inst
       bmNames  = BM.fromList $ zip names names'
       bmNonInheritances = BM.fromList $ zip nonInheritances nonInheritances'
-      bmWithIdForUnmappedKeys bm ks =
-        foldr (\k -> BM.insert k k) bm (ks \\ BM.keys bm)
+      bmWithIdForUnmappedKeys bm domain ks =
+        foldr (\k -> BM.insert k k) bm (ks \\ domain)
       bmNamesForReferenceCd =
-        bmWithIdForUnmappedKeys bmNames (maybe [] classNames hiddenReferenceCd)
+        bmWithIdForUnmappedKeys bmNames names (maybe [] classNames hiddenReferenceCd)
       bmNonInheritancesForReferenceCd =
-        bmWithIdForUnmappedKeys bmNonInheritances (maybe [] associationNames hiddenReferenceCd)
+        bmWithIdForUnmappedKeys bmNonInheritances nonInheritances (maybe [] associationNames hiddenReferenceCd)
       renameCd = renameClassesAndRelationships bmNames bmNonInheritances
       renameOd = renameObjectsWithClassesAndLinksInOd bmNames bmNonInheritances
       renameReferenceCd =
