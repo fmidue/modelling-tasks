@@ -127,7 +127,7 @@ import Modelling.Types (
   showLetters,
   )
 
-import Control.Applicative              (Alternative, (<|>))
+import Control.Applicative              (Alternative ((<|>)))
 import Control.Exception                (Exception)
 import Control.Monad                    ((<=<), when)
 import Control.Monad.Catch              (MonadCatch, MonadThrow, throwM)
@@ -513,29 +513,29 @@ matchCdOdEvaluation path task@MatchCdOdInstance {..} sub' = do
           $ matchCdOdSolution task
         else Nothing
   reRefuse (multipleChoice what solution matching sub) $ do
-    case hiddenReferenceCd of
-      Nothing -> pure ()
-      Just cd
-        | null refOnlyLetters -> pure ()
-        | otherwise -> do
-            paragraph $ translate $ do
-              english [iii|
-                None of the class diagrams shown above applies to the following object diagram(s):
-                |]
-              german [iii|
-                Zu den folgenden Objektdiagrammen passt keines der oben gezeigten Klassendiagramme:
-                |]
-            code $ "[" ++ intercalate ", " (map (:[]) $ sort refOnlyLetters) ++ "]"
-            paragraph $ translate $ do
-              english [iii|
-                Consider the following reference class diagram conforming to them:
-                |]
-              german [iii|
-                Betrachten Sie das folgende Referenz-Klassendiagramm, das zu ihnen passt:
-                |]
-            image $=<< cacheCd cdDrawSettings mempty Nothing (fromClassDiagram cd) path
-            pure ()
-    pure ()
+    when showSolution $
+      case hiddenReferenceCd of
+        Nothing -> pure ()
+        Just cd
+          | null refOnlyLetters -> pure ()
+          | otherwise -> do
+              paragraph $ translate $ do
+                english [iii|
+                  None of the class diagrams shown above applies to the following object diagram(s):
+                  |]
+                german [iii|
+                  Zu den folgenden Objektdiagrammen passt keines der oben gezeigten Klassendiagramme:
+                  |]
+              code $ "[" ++ intercalate ", " (map (:[]) $ sort refOnlyLetters) ++ "]"
+              paragraph $ translate $ do
+                english [iii|
+                  Consider the following reference class diagram conforming to them:
+                  |]
+                german [iii|
+                  Betrachten Sie das folgende Referenz-Klassendiagramm, das zu ihnen passt:
+                  |]
+              image $=<< cacheCd cdDrawSettings mempty Nothing (fromClassDiagram cd) path
+              pure ()
   where
     toMatching' :: Foldable f => f (Int, Letters) -> [(Int, Char)]
     toMatching' =
