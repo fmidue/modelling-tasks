@@ -544,6 +544,7 @@ matchCdOdEvaluation path task@MatchCdOdInstance {..} sub' = do
                   |]
               image $=<< cacheCd cdDrawSettings mempty Nothing (fromClassDiagram cd) path
               pure ()
+      pure ()
   where
     toMatching' :: Foldable f => f (Int, Letters) -> [(Int, Char)]
     toMatching' =
