@@ -522,11 +522,11 @@ matchCdOdEvaluation path task@MatchCdOdInstance {..} sub' = do
               let noMatch = intercalate ", " (map singleton $ sort refOnlyLetters)
               paragraph $ translate $ do
                 english [iii|
-                  Where there was no conformance at all here (#{noMatch}),
+                  Where there was no conformance at all here (i.e., for #{noMatch}),
                   the following class diagram would have been appropriate:
                   |]
                 german [iii|
-                  Wo hier überhaupt gar keine Passung vorlag (#{noMatch}),
+                  Wo hier überhaupt gar keine Passung vorlag (also für #{noMatch}),
                   wäre das folgende Klassendiagramm geeignet gewesen:
                   |]
               image $=<< cacheCd cdDrawSettings mempty Nothing (fromClassDiagram cd) path
