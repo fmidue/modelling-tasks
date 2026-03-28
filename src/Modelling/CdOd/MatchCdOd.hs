@@ -174,7 +174,7 @@ import Data.Bifunctor                   (Bifunctor (second))
 import Data.Bitraversable               (bimapM)
 import Data.Containers.ListUtils        (nubOrd)
 import Data.GraphViz                    (DirType (Forward))
-import Data.List                        ((\\), singleton)
+import Data.List                        ((\\), intercalate, singleton, sort)
 import Data.Map                         (Map)
 import Data.Maybe                       (fromJust, isJust, listToMaybe, mapMaybe, fromMaybe)
 import Data.Ratio                       ((%))
@@ -347,7 +347,7 @@ toTaskSpecificText path MatchCdOdInstance {..} = \case
   GivenCds -> images show id
     $=<< (\_ cd -> cacheCd cdDrawSettings mempty Nothing (fromClassDiagram cd) path)
     `M.traverseWithKey` diagrams
-  GivenOds -> images (:[]) snd
+  GivenOds -> images singleton snd
     $=<< (\_ (is,o) -> (is,) <$> cacheOd o Nothing Forward True path)
     `M.traverseWithKey` instances
   DirectionsAdvice b -> directionsAdvice b
@@ -504,21 +504,6 @@ matchCdOdEvaluation path task@MatchCdOdInstance {..} sub' = do
       sol = fst <$> instances
       matching = toMatching (M.keys diagrams) sol
       refOnlyLetters = M.keys $ M.filter null sol
-      hasGivenCds = Special GivenCds `elem` taskText
-      multipleCds = M.size diagrams > 1
-      (refOnlyMidEn, refOnlyMidDe)
-        | not hasGivenCds =
-            ( "do not correspond to the given scenario description"
-            , "entsprechen der gegebenen Szenariobeschreibung nicht"
-            )
-        | multipleCds =
-            ( "do not conform to any of the given class diagrams"
-            , "passen zu keinem der gegebenen Klassendiagramme"
-            )
-        | otherwise =
-            ( "do not conform to the given class diagram"
-            , "passen nicht zu dem gegebenen Klassendiagramm"
-            )
       what = translations $ do
         english "instances"
         german "Instanzen"
@@ -534,19 +519,15 @@ matchCdOdEvaluation path task@MatchCdOdInstance {..} sub' = do
         Just cd
           | null refOnlyLetters -> pure ()
           | otherwise -> do
+              let noMatch = intercalate ", " (map singleton $ sort refOnlyLetters)
               paragraph $ translate $ do
                 english [iii|
-                  In the reference solution, some object diagrams #{refOnlyMidEn}.
+                  Where there was no conformance at all here (#{noMatch}),
+                  the following class diagram would have been appropriate:
                   |]
                 german [iii|
-                  Einige Objektdiagramme #{refOnlyMidDe} (Referenzlösung).
-                  |]
-              paragraph $ translate $ do
-                english [iii|
-                  Below is a reference class diagram to which such object diagrams could conform:
-                  |]
-                german [iii|
-                  Nachfolgend ein Referenz-Klassendiagramm, zu dem solche Objektdiagramme passen können:
+                  Wo hier überhaupt gar keine Passung vorlag (#{noMatch}),
+                  wäre das folgende Klassendiagramm geeignet gewesen:
                   |]
               image $=<< cacheCd cdDrawSettings mempty Nothing (fromClassDiagram cd) path
               pure ()
@@ -899,14 +880,12 @@ renameInstance inst@MatchCdOdInstance {..} names' nonInheritances' = do
   let (names, nonInheritances) = classAndNonInheritanceNames inst
       bmNames  = BM.fromList $ zip names names'
       bmNonInheritances = BM.fromList $ zip nonInheritances nonInheritances'
-      bmWithIdForUnmappedKeys bm domain ks =
-        foldr (\k -> BM.insert k k) bm (ks \\ domain)
-      bmNamesForReferenceCd =
-        bmWithIdForUnmappedKeys bmNames names (classNames $ fromJust hiddenReferenceCd)
-      bmNonInheritancesForReferenceCd =
-        bmWithIdForUnmappedKeys bmNonInheritances nonInheritances (associationNames $ fromJust hiddenReferenceCd)
       renameCd = renameClassesAndRelationships bmNames bmNonInheritances
       renameOd = renameObjectsWithClassesAndLinksInOd bmNames bmNonInheritances
+      bmNamesForReferenceCd =
+        foldr (\k -> BM.insert k k) bmNames (classNames (fromJust hiddenReferenceCd) \\ names)
+      bmNonInheritancesForReferenceCd =
+        foldr (\k -> BM.insert k k) bmNonInheritances (associationNames (fromJust hiddenReferenceCd) \\ nonInheritances)
       renameReferenceCd =
         renameClassesAndRelationships bmNamesForReferenceCd bmNonInheritancesForReferenceCd
   cds <- renameCd `mapM` diagrams
