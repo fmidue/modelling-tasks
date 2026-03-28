@@ -129,7 +129,7 @@ import Modelling.Types (
 
 import Control.Applicative              (Alternative ((<|>)))
 import Control.Exception                (Exception)
-import Control.Monad                    ((<=<), when)
+import Control.Monad                    ((<=<), unless, when)
 import Control.Monad.Catch              (MonadCatch, MonadThrow, throwM)
 import Control.Monad.Trans.Class (lift)
 #if __GLASGOW_HASKELL__ < 808
@@ -176,7 +176,7 @@ import Data.Containers.ListUtils        (nubOrd)
 import Data.GraphViz                    (DirType (Forward))
 import Data.List                        ((\\), intercalate, singleton, sort)
 import Data.Map                         (Map)
-import Data.Maybe                       (fromJust, isJust, listToMaybe, mapMaybe, fromMaybe)
+import Data.Maybe                       (fromJust, fromMaybe, isJust, listToMaybe, mapMaybe)
 import Data.Ratio                       ((%))
 import Data.String.Interpolate          (iii)
 import GHC.Generics                     (Generic)
@@ -514,6 +514,20 @@ matchCdOdEvaluation path task@MatchCdOdInstance {..} sub' = do
         else Nothing
   reRefuse (multipleChoice what solution matching sub) $
     when showSolution $
+      unless (Special GivenCds `elem` taskText) $ do
+        paragraph $ translate $ do
+          english [iii|
+            Regarding the scenario description, the following class diagram would have been appropriate:
+            |]
+          german [iii|
+            Bezüglich der Szenariobeschreibung wäre das folgende Klassendiagramm geeignet gewesen:
+            |]
+        maybe
+          (error "There should not be no class diagram corresponding to the scenario description.")
+          (\cd -> image $=<< cacheCd cdDrawSettings mempty Nothing (fromClassDiagram cd) path)
+          (M.lookup 1 diagrams)
+        pure ()
+      *>
       case hiddenReferenceCd of
         Nothing -> pure ()
         Just cd
