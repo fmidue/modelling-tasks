@@ -522,10 +522,9 @@ matchCdOdEvaluation path task@MatchCdOdInstance {..} sub' = do
           german [iii|
             Bezüglich der Szenariobeschreibung wäre das folgende Klassendiagramm geeignet gewesen:
             |]
-        maybe
-          (error "There should not be no class diagram corresponding to the scenario description.")
-          (\cd -> image $=<< cacheCd cdDrawSettings mempty Nothing (fromClassDiagram cd) path)
-          (M.lookup 1 diagrams)
+        case M.toList diagrams of
+          [(1, cd)] -> image $=<< cacheCd cdDrawSettings mempty Nothing (fromClassDiagram cd) path
+          _ -> error "There should be only one class diagram corresponding to the scenario description."
         pure ()
       case hiddenReferenceCd of
         Nothing -> pure ()
