@@ -512,7 +512,7 @@ matchCdOdEvaluation path task@MatchCdOdInstance {..} sub' = do
         then Just . (DefiniteArticle,) . show . matchingShow
           $ matchCdOdSolution task
         else Nothing
-  reRefuse (multipleChoice what solution matching sub) $ do
+  reRefuse (multipleChoice what solution matching sub) $
     when showSolution $
       case hiddenReferenceCd of
         Nothing -> pure ()
