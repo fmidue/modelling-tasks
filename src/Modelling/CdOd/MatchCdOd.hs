@@ -174,7 +174,7 @@ import Data.Bifunctor                   (Bifunctor (second))
 import Data.Bitraversable               (bimapM)
 import Data.Containers.ListUtils        (nubOrd)
 import Data.GraphViz                    (DirType (Forward))
-import Data.List                        ((\\), intercalate, singleton, sort)
+import Data.List                        ((\\), singleton)
 import Data.Map                         (Map)
 import Data.Maybe                       (fromJust, isJust, listToMaybe, mapMaybe, fromMaybe)
 import Data.Ratio                       ((%))
@@ -508,15 +508,15 @@ matchCdOdEvaluation path task@MatchCdOdInstance {..} sub' = do
       multipleCds = M.size diagrams > 1
       (refOnlyMidEn, refOnlyMidDe)
         | not hasGivenCds =
-            ( "do(es) not correspond to the given scenario description"
+            ( "do not correspond to the given scenario description"
             , "entsprechen der gegebenen Szenariobeschreibung nicht"
             )
         | multipleCds =
-            ( "do(es) not conform to any of the given class diagrams"
+            ( "do not conform to any of the given class diagrams"
             , "passen zu keinem der gegebenen Klassendiagramme"
             )
         | otherwise =
-            ( "do(es) not conform to the given class diagram"
+            ( "do not conform to the given class diagram"
             , "passen nicht zu dem gegebenen Klassendiagramm"
             )
       what = translations $ do
@@ -536,18 +536,17 @@ matchCdOdEvaluation path task@MatchCdOdInstance {..} sub' = do
           | otherwise -> do
               paragraph $ translate $ do
                 english [iii|
-                  The following object diagram(s) #{refOnlyMidEn} in the reference solution:
+                  In the reference solution, some object diagrams #{refOnlyMidEn}.
                   |]
                 german [iii|
-                  Die folgenden Objektdiagramme #{refOnlyMidDe} (Referenzlösung):
+                  Einige Objektdiagramme #{refOnlyMidDe} (Referenzlösung).
                   |]
-              code $ "[" ++ intercalate ", " (map (:[]) $ sort refOnlyLetters) ++ "]"
               paragraph $ translate $ do
                 english [iii|
-                  Below is a reference class diagram that these object diagram(s) could conform to:
+                  Below is a reference class diagram to which such object diagrams could conform:
                   |]
                 german [iii|
-                  Nachfolgend ein Referenz-Klassendiagramm, zu dem diese Objektdiagramme passen können:
+                  Nachfolgend ein Referenz-Klassendiagramm, zu dem solche Objektdiagramme passen können:
                   |]
               image $=<< cacheCd cdDrawSettings mempty Nothing (fromClassDiagram cd) path
               pure ()
