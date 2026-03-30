@@ -383,7 +383,7 @@ toTaskText
 toTaskText showInputHelp path task = do
   specialToOutputCapable (toTaskSpecificText path task) (taskText task)
   when showInputHelp $
-    toOutputCapable (inputHelpText hasGivenCds $ M.size (diagrams task))
+    toOutputCapable (inputHelpText hasGivenCds $ M.size $ diagrams task)
   extra $ addText task
   pure ()
   where
