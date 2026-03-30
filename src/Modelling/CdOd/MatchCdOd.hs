@@ -476,7 +476,7 @@ inputHelpText hasGivenCds diagramCount = [
       english $ if diagramCount == 1
         then [iii|
         State your answer by giving a list containing a single pair,
-        comprising the number 1 and the letters of all object diagrams
+        comprising of the number 1 and the letters of all object diagrams
         that conform to the #{entityNameEn}.
         \n
         For example,#{" "}|]
@@ -497,7 +497,7 @@ inputHelpText hasGivenCds diagramCount = [
         Zum Beispiel drückt#{" "}|]
         else [iii|
         Geben Sie Ihre Antwort in Form einer Liste von Paaren an,
-        die jeweils aus einer Klassendiagramm-Nummer und beliebig vielen
+        die jeweils aus einer Klassendiagrammnummer und beliebig vielen
         Objektdiagrammbuchstaben bestehen.
         \n
         Jedes Paar gibt an, dass die genannten Objektdiagramme
@@ -509,7 +509,7 @@ inputHelpText hasGivenCds diagramCount = [
       english $ if diagramCount == 1
         then [iii|
         expresses that among the offered choices exactly
-        the object diagrams a and b conform to the #{entityNameEn}.
+        the object diagrams a and b are instances of the #{entityNameEn}.
         |]
         else [iii|
         expresses that among the offered choices exactly
@@ -532,7 +532,7 @@ inputHelpText hasGivenCds diagramCount = [
   ]
   where
     exampleMatching =
-      matchingShow $ if diagramCount == 1 then take 1 matchCdOdInitial else matchCdOdInitial
+      matchingShow $ take diagramCount matchCdOdInitial
     (entityNameEn, entityNameDeZu) =
       if hasGivenCds
       then ("class diagram", "dem Klassendiagramm")
