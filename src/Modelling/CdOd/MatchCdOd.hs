@@ -492,7 +492,7 @@ inputHelpText hasGivenCds diagramCount = [
         then [iii|
         Geben Sie Ihre Antwort in Form einer Liste mit genau einem Paar an,
         das aus der Nummer 1 und den Buchstaben aller Objektdiagramme besteht,
-        die Instanzen #{entityNameDeGenitive} sind.
+        die zu #{entityNameDeZu} passen.
         \n
         Zum Beispiel drückt#{" "}|]
         else [iii|
@@ -533,10 +533,10 @@ inputHelpText hasGivenCds diagramCount = [
   where
     exampleMatching =
       matchingShow $ take diagramCount matchCdOdInitial
-    (entityNameEn, entityNameDeGenitive) =
+    (entityNameEn, entityNameDeZu, entityNameDeGenitive) =
       if hasGivenCds
-      then ("class diagram", "des Klassendiagramms")
-      else ("scenario description", "der Szenariobeschreibung")
+      then ("class diagram", "dem Klassendiagramm", "des Klassendiagramms")
+      else ("scenario description", "der Szenariobeschreibung", "der Szenariobeschreibung")
 
 newtype ShowLetters = ShowLetters { showLetters' :: Letters }
 
