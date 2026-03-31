@@ -477,7 +477,7 @@ inputHelpText hasGivenCds diagramCount = [
         then [iii|
         State your answer by giving a list containing a single pair,
         comprising of the number 1 and the letters of all object diagrams
-        that conform to the #{entityNameEn}.
+        that conform #{entityNameEnConforming}.
         \n
         For example,#{" "}|]
         else [iii|
@@ -492,7 +492,7 @@ inputHelpText hasGivenCds diagramCount = [
         then [iii|
         Geben Sie Ihre Antwort in Form einer Liste mit genau einem Paar an,
         das aus der Nummer 1 und den Buchstaben aller Objektdiagramme besteht,
-        die zu #{entityNameDeZu} passen.
+        die #{entityNameDeConforming} passen.
         \n
         Zum Beispiel drückt#{" "}|]
         else [iii|
@@ -509,7 +509,7 @@ inputHelpText hasGivenCds diagramCount = [
       english $ if diagramCount == 1
         then [iii|
         expresses that among the offered choices exactly
-        the object diagrams a and b are instances of the #{entityNameEn}.
+        the object diagrams a and b are instances #{entityNameEnInstances}.
         |]
         else [iii|
         expresses that among the offered choices exactly
@@ -520,7 +520,7 @@ inputHelpText hasGivenCds diagramCount = [
       german $ if diagramCount == 1
         then [iii|
         aus, dass unter den angebotenen Auswahlmöglichkeiten
-        genau die Objektdiagramme a und b Instanzen #{entityNameDeGenitive} sind.
+        genau die Objektdiagramme a und b Instanzen #{entityNameDeInstances} sind.
         |]
         else [iii|
         aus, dass unter den angebotenen Auswahlmöglichkeiten
@@ -533,10 +533,10 @@ inputHelpText hasGivenCds diagramCount = [
   where
     exampleMatching =
       matchingShow $ take diagramCount matchCdOdInitial
-    (entityNameEn, entityNameDeZu, entityNameDeGenitive) =
+    (entityNameEnConforming, entityNameEnInstances, entityNameDeConforming, entityNameDeInstances) =
       if hasGivenCds
-      then ("class diagram", "dem Klassendiagramm", "des Klassendiagramms")
-      else ("scenario description", "der Szenariobeschreibung", "der Szenariobeschreibung")
+      then ("to the class diagram", "of the class diagram", "zu dem Klassendiagramm", "des Klassendiagramms")
+      else ("to the scenario description", "of the general scenario description", "zu der Szenariobeschreibung", "der allgemeinen Szenariobeschreibung")
 
 newtype ShowLetters = ShowLetters { showLetters' :: Letters }
 
