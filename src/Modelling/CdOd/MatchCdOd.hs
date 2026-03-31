@@ -383,7 +383,7 @@ toTaskText
 toTaskText showInputHelp path task = do
   specialToOutputCapable (toTaskSpecificText path task) (taskText task)
   when showInputHelp $
-    toOutputCapable (inputHelpText hasGivenCds)
+    toOutputCapable (inputHelpText hasGivenCds $ M.size $ diagrams task)
   extra $ addText task
   pure ()
   where
@@ -469,50 +469,74 @@ defaultMatchCdOdTaskText diagramCount instanceCount =  [
   Special $ SimplifiedInformation True
   ]
 
-inputHelpText :: Bool -> [Output]
-inputHelpText hasGivenCds = [
+inputHelpText :: Bool -> Int -> [Output]
+inputHelpText hasGivenCds diagramCount = [
   Paragraph [
     Translated $ translations $ do
-      english [iii|
-        State your answer by giving a list of pairs,
-        each comprising of a #{entityNameEn} number and any amount of object diagram letters.
-        \n
-        Each pair indicates that the mentioned object diagrams conform to the
-        respective #{entityNameEn}.
+      english $ if diagramCount == 1
+        then [iii|
+        State your answer by giving a list containing a single pair,
+        consisting of the number 1 and the letters of all object diagrams
+        that conform to the #{entityNameEnConformingToThe}.
         \n
         For example,#{" "}|]
-      german [iii|
+        else [iii|
+        State your answer by giving a list of pairs,
+        each consisting of a class diagram number and any amount of object diagram letters.
+        \n
+        Each pair indicates that the mentioned object diagrams conform to the
+        respective class diagram.
+        \n
+        For example,#{" "}|]
+      german $ if diagramCount == 1
+        then [iii|
+        Geben Sie Ihre Antwort in Form einer Liste mit genau einem Paar an,
+        das aus der Nummer 1 und den Buchstaben aller Objektdiagramme besteht,
+        die zu #{entityNameDeConformingTo} passen.
+        \n
+        Zum Beispiel drückt#{" "}|]
+        else [iii|
         Geben Sie Ihre Antwort in Form einer Liste von Paaren an,
-        die jeweils aus einer #{entityNameDe}-Nummer und beliebig vielen
+        die jeweils aus einer Klassendiagrammnummer und beliebig vielen
         Objektdiagrammbuchstaben bestehen.
         \n
         Jedes Paar gibt an, dass die genannten Objektdiagramme
-        zu #{entityNameDeDative} passen.
+        zu dem jeweiligen Klassendiagramm passen.
         \n
         Zum Beispiel drückt#{" "}|],
-    Code . uniform . show $ matchingShow matchCdOdInitial,
+    Code . uniform . show $ exampleMatching,
     Translated $ translations $ do
-      english [iii|
+      english $ if diagramCount == 1
+        then [iii|
         expresses that among the offered choices exactly
-        the object diagrams a and b are instances of class diagram #{entityNameEn} 1 and
-        that none of the offered object diagrams
-        are instances of class diagram #{entityNameEn} 2.
+        the object diagrams a and b are instances of the #{entityNameEnInstancesOfThe}.
         |]
-      german [iii|
+        else [iii|
+        expresses that among the offered choices exactly
+        the object diagrams a and b are instances of class diagram 1 and
+        that none of the offered object diagrams
+        are instances of class diagram 2.
+        |]
+      german $ if diagramCount == 1
+        then [iii|
         aus, dass unter den angebotenen Auswahlmöglichkeiten
-        genau die Objektdiagramme a und b Instanzen #{entityNameDeGenitive} 1 sind
+        genau die Objektdiagramme a und b Instanzen #{entityNameDeInstances} sind.
+        |]
+        else [iii|
+        aus, dass unter den angebotenen Auswahlmöglichkeiten
+        genau die Objektdiagramme a und b Instanzen des Klassendiagramms 1 sind
         und dass keines der angebotenen Objektdiagramme
-        Instanz #{entityNameDeGenitive} 2 ist.
+        Instanz des Klassendiagramms 2 ist.
         |]
     ]
   ]
   where
-    (entityNameEn, entityNameDe, entityNameDeDative, entityNameDeGenitive) =
+    exampleMatching =
+      matchingShow $ take diagramCount matchCdOdInitial
+    (entityNameEnConformingToThe, entityNameEnInstancesOfThe, entityNameDeConformingTo, entityNameDeInstances) =
       if hasGivenCds
-      then ( "class diagram", "Klassendiagramm"
-           , "dem jeweiligen Klassendiagramm", "des Klassendiagramms")
-      else ( "scenario description", "Szenariobeschreibung"
-           , "der jeweiligen Szenariobeschreibung", "der Szenariobeschreibung")
+      then ("class diagram", "class diagram", "dem Klassendiagramm", "des Klassendiagramms")
+      else ("scenario description", "general scenario description", "der Szenariobeschreibung", "der allgemeinen Szenariobeschreibung")
 
 newtype ShowLetters = ShowLetters { showLetters' :: Letters }
 
