@@ -17,6 +17,7 @@ module Modelling.CdOd.MatchCdOd (
   checkMatchCdOdInstance,
   defaultMatchCdOdConfig,
   defaultMatchCdOdInstance,
+  defaultMatchCdOdTaskText,
   getMatchCdOdTask,
   getODInstances,
   matchCdOd,
