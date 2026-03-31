@@ -64,6 +64,7 @@ task2023_14 = MatchCdOdConfig {
     associationOmittedDefaultMultiplicity = Just (0, Nothing),
     compositionWholeOmittedDefaultMultiplicity = Nothing
     },
+  allowCommonSenseSolution = Nothing,
   printSolution = True,
   timeout = Nothing,
   withNonTrivialInheritance = Just True,
@@ -116,6 +117,7 @@ task2023_15 = MatchCdOdConfig {
     associationOmittedDefaultMultiplicity = Just (0, Nothing),
     compositionWholeOmittedDefaultMultiplicity = Nothing
     },
+  allowCommonSenseSolution = Nothing,
   printSolution = True,
   timeout = Nothing,
   withNonTrivialInheritance = Just True,
@@ -164,6 +166,7 @@ task2024_17 = MatchCdOdConfig {
     associationOmittedDefaultMultiplicity = Just (0, Nothing),
     compositionWholeOmittedDefaultMultiplicity = Nothing
     },
+  allowCommonSenseSolution = Nothing,
   printSolution = True,
   timeout = Nothing,
   withNonTrivialInheritance = Just True,
@@ -212,6 +215,7 @@ task2024_18 = MatchCdOdConfig {
     associationOmittedDefaultMultiplicity = Just (0, Nothing),
     compositionWholeOmittedDefaultMultiplicity = Nothing
     },
+  allowCommonSenseSolution = Nothing,
   printSolution = True,
   timeout = Nothing,
   withNonTrivialInheritance = Just True,
@@ -260,6 +264,7 @@ task2024_19 = MatchCdOdConfig {
     associationOmittedDefaultMultiplicity = Just (0, Nothing),
     compositionWholeOmittedDefaultMultiplicity = Nothing
     },
+  allowCommonSenseSolution = Nothing,
   printSolution = True,
   timeout = Nothing,
   withNonTrivialInheritance = Just True,
@@ -308,6 +313,7 @@ task2024_20 = MatchCdOdConfig {
     associationOmittedDefaultMultiplicity = Just (0, Nothing),
     compositionWholeOmittedDefaultMultiplicity = Nothing
     },
+  allowCommonSenseSolution = Nothing,
   printSolution = True,
   timeout = Nothing,
   withNonTrivialInheritance = Just True,
@@ -356,6 +362,7 @@ task2024_57 = MatchCdOdConfig {
     maxSharedBetweenBothCds = 2,
     maxNoCd = 2
     },
+  allowCommonSenseSolution = Nothing,
   printSolution = True,
   timeout = Nothing,
   withNonTrivialInheritance = Just False,
@@ -404,6 +411,7 @@ task2024_58 = MatchCdOdConfig {
     associationOmittedDefaultMultiplicity = Just (0, Nothing),
     compositionWholeOmittedDefaultMultiplicity = Nothing
     },
+  allowCommonSenseSolution = Nothing,
   printSolution = True,
   timeout = Nothing,
   withNonTrivialInheritance = Just True,
@@ -452,6 +460,7 @@ task2024_59 = MatchCdOdConfig {
     associationOmittedDefaultMultiplicity = Just (0, Nothing),
     compositionWholeOmittedDefaultMultiplicity = Nothing
     },
+  allowCommonSenseSolution = Nothing,
   printSolution = True,
   timeout = Nothing,
   withNonTrivialInheritance = Just False,

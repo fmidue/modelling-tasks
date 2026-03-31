@@ -61,6 +61,7 @@ main = do
             maxNoCd = 2
             },
           omittedDefaultMultiplicities = defaultOmittedDefaultMultiplicities,
+          allowCommonSenseSolution = Nothing,
           printSolution    = False,
           timeout          = Nothing,
           withNonTrivialInheritance = Nothing,

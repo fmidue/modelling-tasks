@@ -217,6 +217,7 @@ data MatchCdOdConfig
     objectConfig     :: ObjectConfig,
     objectProperties :: ObjectProperties,
     omittedDefaultMultiplicities :: OmittedDefaultMultiplicities,
+    allowCommonSenseSolution :: Maybe Bool,
     printSolution    :: Bool,
     timeout          :: Maybe Int,
     withNonTrivialInheritance :: Maybe Bool,
@@ -255,6 +256,7 @@ defaultMatchCdOdConfig
       maxNoCd = 2
       },
     omittedDefaultMultiplicities = defaultOmittedDefaultMultiplicities,
+    allowCommonSenseSolution = Nothing,
     printSolution    = True,
     timeout          = Nothing,
     withNonTrivialInheritance = Just True,
