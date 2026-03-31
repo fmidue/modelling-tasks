@@ -476,13 +476,13 @@ inputHelpText hasGivenCds diagramCount = [
       english $ if diagramCount == 1
         then [iii|
         State your answer by giving a list containing a single pair,
-        comprising of the number 1 and the letters of all object diagrams
+        consisting of the number 1 and the letters of all object diagrams
         that conform to the #{entityNameEnConformingToThe}.
         \n
         For example,#{" "}|]
         else [iii|
         State your answer by giving a list of pairs,
-        each comprising of a class diagram number and any amount of object diagram letters.
+        each consisting of a class diagram number and any amount of object diagram letters.
         \n
         Each pair indicates that the mentioned object diagrams conform to the
         respective class diagram.
