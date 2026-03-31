@@ -477,7 +477,7 @@ inputHelpText hasGivenCds diagramCount = [
         then [iii|
         State your answer by giving a list containing a single pair,
         comprising of the number 1 and the letters of all object diagrams
-        that conform #{entityNameEnConforming}.
+        that conform to the #{entityNameEnConformingToThe}.
         \n
         For example,#{" "}|]
         else [iii|
@@ -492,7 +492,7 @@ inputHelpText hasGivenCds diagramCount = [
         then [iii|
         Geben Sie Ihre Antwort in Form einer Liste mit genau einem Paar an,
         das aus der Nummer 1 und den Buchstaben aller Objektdiagramme besteht,
-        die #{entityNameDeConforming} passen.
+        die zu #{entityNameDeConformingTo} passen.
         \n
         Zum Beispiel drückt#{" "}|]
         else [iii|
@@ -509,7 +509,7 @@ inputHelpText hasGivenCds diagramCount = [
       english $ if diagramCount == 1
         then [iii|
         expresses that among the offered choices exactly
-        the object diagrams a and b are instances #{entityNameEnInstances}.
+        the object diagrams a and b are instances of the #{entityNameEnInstancesOfThe}.
         |]
         else [iii|
         expresses that among the offered choices exactly
@@ -533,10 +533,10 @@ inputHelpText hasGivenCds diagramCount = [
   where
     exampleMatching =
       matchingShow $ take diagramCount matchCdOdInitial
-    (entityNameEnConforming, entityNameEnInstances, entityNameDeConforming, entityNameDeInstances) =
+    (entityNameEnConformingToThe, entityNameEnInstancesOfThe, entityNameDeConformingTo, entityNameDeInstances) =
       if hasGivenCds
-      then ("to the class diagram", "of the class diagram", "zu dem Klassendiagramm", "des Klassendiagramms")
-      else ("to the scenario description", "of the general scenario description", "zu der Szenariobeschreibung", "der allgemeinen Szenariobeschreibung")
+      then ("class diagram", "class diagram", "dem Klassendiagramm", "des Klassendiagramms")
+      else ("scenario description", "general scenario description", "der Szenariobeschreibung", "der allgemeinen Szenariobeschreibung")
 
 newtype ShowLetters = ShowLetters { showLetters' :: Letters }
 
