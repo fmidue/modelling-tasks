@@ -75,7 +75,7 @@ import Modelling.Auxiliary.Common (
   )
 import Modelling.Auxiliary.Output (
   addPretext,
-  checkTaskText,
+  checkTaskTextExcluding,
   hoveringInformation,
   simplifiedInformation,
   uniform,
@@ -482,8 +482,8 @@ isRelevant =
   (\case NotRelevant -> False; Relevant {} -> True)
   . annotation
 
-checkNameCdErrorInstance :: NameCdErrorInstance -> Maybe String
-checkNameCdErrorInstance NameCdErrorInstance {..}
+checkNameCdErrorInstance :: Bool -> NameCdErrorInstance -> Maybe String
+checkNameCdErrorInstance withRelationshipChoices NameCdErrorInstance {..}
   | not (printNames cdDrawSettings) && byName
   = Just "by name is only possible when printing names"
   | 1 /= length (filter fst $ M.elems errorReasons)
@@ -508,9 +508,11 @@ checkNameCdErrorInstance NameCdErrorInstance {..}
   | x:_ <- concatMap (checkTranslation . translateReason True) reasons
   = Just $ [i|Problem within 'errorReasons': |] ++ x
   | otherwise
-  = checkTaskText taskText
+  = checkTaskTextExcluding taskTextExcludes taskText
   <|> checkCdDrawSettings cdDrawSettings
   where
+    taskTextExcludes =
+      if withRelationshipChoices then [] else [RelationshipsList]
     letters = ['a' .. 'z'] ++ ['A' .. 'Z']
     reasons = map snd $ M.elems errorReasons
     listingPriorities = map (listingPriority . annotation)
