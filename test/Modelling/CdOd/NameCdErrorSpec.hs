@@ -30,7 +30,7 @@ spec = do
       checkNameCdErrorConfig defaultNameCdErrorConfig `shouldBe` Nothing
   describe "defaultNameCdErrorInstance" $
     it "is valid" $
-      checkNameCdErrorInstance defaultNameCdErrorInstance `shouldBe` Nothing
+      checkNameCdErrorInstance True defaultNameCdErrorInstance `shouldBe` Nothing
   describe "nameCdErrorGenerate" $
     context "using defaultNameCdErrorConfig" $ do
       it "generates an instance" $

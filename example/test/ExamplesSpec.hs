@@ -376,7 +376,7 @@ spec =
       it "task13" $
         checkRepairCdConfig task2024_13 `shouldBe` Nothing
       it "task14" $
-        checkNameCdErrorInstance (All.taskInstance task2024_14)
+        checkNameCdErrorInstance True (All.taskInstance task2024_14)
         `shouldBe` Nothing
       it "task15" $
         checkDifferentNamesConfig task2024_15 `shouldBe` Nothing
@@ -512,7 +512,7 @@ spec =
       it "task11" $
         checkRepairCdConfig task2025_11 `shouldBe` Nothing
       it "task12" $
-        checkNameCdErrorInstance (All.taskInstance task2025_12)
+        checkNameCdErrorInstance True (All.taskInstance task2025_12)
         `shouldBe` Nothing
       it "task13" $
         checkDifferentNamesConfig task2025_13 `shouldBe` Nothing
