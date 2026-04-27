@@ -511,8 +511,7 @@ checkNameCdErrorInstance withRelationshipChoices NameCdErrorInstance {..}
   = checkTaskTextExcluding taskTextExcludes taskText
   <|> checkCdDrawSettings cdDrawSettings
   where
-    taskTextExcludes =
-      if withRelationshipChoices then [] else [RelationshipsList]
+    taskTextExcludes = [RelationshipsList | not withRelationshipChoices]
     letters = ['a' .. 'z'] ++ ['A' .. 'Z']
     reasons = map snd $ M.elems errorReasons
     listingPriorities = map (listingPriority . annotation)
