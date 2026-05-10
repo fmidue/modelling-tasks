@@ -45,7 +45,7 @@ module Modelling.PetriNet.Reach.Deadlock (
   exampleInstance,
 ) where
 
-import qualified Data.Bimap                       as BM (lookup)
+import qualified Data.Bimap                       as BM (fromList, lookup, memberR)
 import qualified Data.Map                         as M (fromList)
 import qualified Data.Set                         as S (fromList, toList)
 
@@ -79,7 +79,7 @@ import Modelling.PetriNet.Reach.Reach   (
   provideSolutionsFeedback,
   validateDrawabilityAndSolutionFiltering,
   )
-import Modelling.PetriNet.Reach.Roll    (netLimitsFiltered, simpleConnectionGenerator, generateValidConnection, generateFusableConnections)
+import Modelling.PetriNet.Reach.Roll    (netLimitsFiltered, simpleConnectionGenerator)
 import Modelling.PetriNet.Reach.Step    (executes, successors)
 import Modelling.PetriNet.Reach.Type (
   ArrowDensityConstraints(..),
@@ -116,17 +116,18 @@ import Control.OutputCapable.Blocks.Generic (
   ($>>),
   ($>>=),
   )
+import Data.Functor                     ((<&>))
 import Data.Bifunctor                   (bimap)
 import Data.Either.Combinators          (whenRight)
 import Control.Functor.Trans            (FunctorTrans (lift))
 import Control.Monad                    (guard)
 import Control.Monad.Catch              (MonadCatch, MonadThrow)
 import Control.Monad.Extra              (whenJust)
-import Control.Monad.Random             (evalRandT, mkStdGen)
+import Control.Monad.Random             (RandomGen, evalRandT, mkStdGen)
+import System.Random.Shuffle            (shuffleM)
 import Control.Monad.Trans.Maybe        (MaybeT (MaybeT), runMaybeT)
 import Control.Monad.Trans.Random       (RandT)
 import Data.Maybe                       (fromMaybe)
-import System.Random.Internal           (StdGen)
 import Data.GraphViz                    (GraphvizCommand (..))
 #if !MIN_VERSION_base(4,18,0)
 import Data.Typeable                    (Typeable)
@@ -156,7 +157,7 @@ deadlockTask
   -> DeadlockInstance s t
   -> LangM m
 deadlockTask showInputHelp path inst = do
-  lift (drawToFile (not $ showPlaceNames inst) path (drawUsing inst) (petriNet inst))
+  lift (drawToFile (not $ showPlaceNames inst) False path (drawUsing inst) (petriNet inst))
   $>>= \img ->
     reportReachFor
     showInputHelp
@@ -427,14 +428,14 @@ tries conf seed = eval out
   where
     eval f = evalRandT f $ mkStdGen seed
     out
-      :: RandT StdGen m (Net Place Transition, GraphvizCommand, Either (NonEmpty [Transition]) (NonEmpty [Transition]))
+      :: RandomGen g => RandT g m (Net Place Transition, GraphvizCommand, Either (NonEmpty [Transition]) (NonEmpty [Transition]))
     out =
       maybe out pure =<< runMaybeT (try conf)
 
 try
-  :: (MonadCatch m, MonadDiagrams m, MonadGraphviz m)
+  :: (MonadCatch m, MonadDiagrams m, MonadGraphviz m, RandomGen g)
   => DeadlockConfig
-  -> MaybeT (RandT StdGen m) (Net Place Transition, GraphvizCommand, Either (NonEmpty [Transition]) (NonEmpty [Transition]))
+  -> MaybeT (RandT g m) (Net Place Transition, GraphvizCommand, Either (NonEmpty [Transition]) (NonEmpty [Transition]))
 try conf = do
     let ps = [Place 1 .. Place (numPlaces conf)]
         ts = [Transition 1 .. Transition (numTransitions conf)]
@@ -445,21 +446,47 @@ try conf = do
       if requiredFusableTransitionsConsuming == 0 && requiredFusableTransitionsProducing == 0
       then return $ netLimitsFiltered simpleConnectionGenerator
       else do
-        (transitionConsumingBimap, transitionProducingBimap) <-
-          generateFusableConnections ps ts requiredFusableTransitionsConsuming requiredFusableTransitionsProducing
+        -- Generate pre-determined fusable node connections:
+        -- First, randomly select transitions and places for fusable nodes
+        shuffledTransitions <- shuffleM ts
+        shuffledPlaces <- shuffleM ps
+        let (inputFusableTransitions, remainingTransitions) = splitAt requiredFusableTransitionsConsuming shuffledTransitions
+            outputFusableTransitions = take requiredFusableTransitionsProducing remainingTransitions
+            (placesForInputFusableTransitions, remainingPlaces) = splitAt requiredFusableTransitionsConsuming shuffledPlaces
+            placesForOutputFusableTransitions = take requiredFusableTransitionsProducing remainingPlaces
+        -- Next, create bimaps from fusable transitions to their fusion-relevant places
+        let transitionConsumingBimap = BM.fromList $ zip inputFusableTransitions placesForInputFusableTransitions
+            transitionProducingBimap = BM.fromList $ zip outputFusableTransitions placesForOutputFusableTransitions
+        -- Helpers for generating valid connections:
+        let isValidInputPlaceUsage =
+              if requiredFusableTransitionsConsuming == 0
+              then \_ _ -> True
+              else \vor nach ->
+                 -- For each place in vor: if it's a forbidden input place, only allow if vor == nach == [that place]
+                 all (\place -> not (BM.memberR place transitionConsumingBimap) || (vor == [place] && nach == [place])) vor
+            isValidOutputPlaceUsage =
+              if requiredFusableTransitionsProducing == 0
+              then \_ _ -> True
+              else \nach vor ->
+                 -- For each place in nach: if it's a forbidden output place, only allow if vor == nach == [that place]
+                 all (\place -> not (BM.memberR place transitionProducingBimap) || (vor == [place] && nach == [place])) nach
         return $ netLimitsFiltered
-          $ \inputPlacesAction outputPlacesAction t -> do
-              (vor, nach) <- generateValidConnection transitionConsumingBimap transitionProducingBimap inputPlacesAction outputPlacesAction t
-              case BM.lookup t transitionConsumingBimap of
-                Just preVor
-                  -> return (preVor : vor, t, nach)
-                _
-                  -> case BM.lookup t transitionProducingBimap of
-                       Just preNach
-                         -> return (vor, t, preNach : nach)
-                       _
-                         -> return (vor, t, nach)
-                -- impossible for both lookups to return Just
+          $ \inputPlacesAction outputPlacesAction t ->
+          -- Generate a valid connection for a transition, with retry logic
+          let
+            vorAction = case BM.lookup t transitionConsumingBimap of
+                          Just preVor -> return ([preVor], [], notElem preVor)  -- If t has a pregenerated input place, prevent that place from appearing in nach
+                          _ -> inputPlacesAction <&> \vor -> (vor, vor, isValidInputPlaceUsage vor)
+            nachAction = case BM.lookup t transitionProducingBimap of
+                           Just preNach -> return ([preNach], [], notElem preNach)  -- If t has a pregenerated output place, prevent that place from appearing in vor
+                           _ -> outputPlacesAction <&> \nach -> (nach, nach, isValidOutputPlaceUsage nach)
+            go = do
+              (vor, vorForCheck, checkInputPlaceUsage) <- vorAction
+              (nach, nachForCheck, checkOutputPlaceUsage) <- nachAction
+              if checkInputPlaceUsage nachForCheck && checkOutputPlaceUsage vorForCheck
+                then return (vor, t, nach)
+                else go  -- Retry if invalid
+          in go
     n <- MaybeT $ netGenerator
       (arrowDensityConstraints conf)
       (numPlaces conf)

@@ -14,7 +14,6 @@ import qualified Data.ByteString.Char8            as BS (
 import Capabilities.Diagrams.IO         ()
 import Capabilities.Graphviz.IO         ()
 import Capabilities.WriteFile.IO        ()
-import Capabilities.Exceptions.IO       ()
 import Modelling.CdOd.Output            (drawCd, drawOdFromInstance)
 import Modelling.CdOd.Types             (defaultCdDrawSettings)
 import Modelling.Common                 (withUnitTestsUsingPath)
@@ -45,7 +44,7 @@ spec = do
     drawCdInstance alloy = withTempFile $ \file -> do
       Right alloyInstance <- runExceptT $ parseInstance (BS.pack alloy)
       Right cd <- return $ instanceClassDiagram <$> fromInstance alloyInstance
-      renderedCd <- drawCd defaultCdDrawSettings mempty cd
+      renderedCd <- drawCd defaultCdDrawSettings mempty Nothing cd
       BS.writeFile file renderedCd
       BS.readFile file
     drawOdInstance alloy = withTempFile $ \file -> do

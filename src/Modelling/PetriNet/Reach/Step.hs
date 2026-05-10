@@ -101,7 +101,7 @@ executeIO
   -> State k
   -> LangM' m (State k)
 executeIO path cmd n t z0 = execute n t z0
-  $>>= \z2 -> lift (drawToFile False path cmd (n {start = z2}))
+  $>>= \z2 -> lift (drawToFile False True path cmd (n {start = z2}))
   $>>= \g -> image g
   $>>= pure (pure z2)
 
@@ -137,7 +137,7 @@ execute n t z0 = do
         english "contains more tokens than capacity permits!"
         german "enthält mehr Marken, als die Kapazität zulässt!"
       pure z2
-    _ -> undefined -- TODO Patern match not required?
+    _ -> undefined -- TODO: Pattern match not required?
   pure next
   where
     cs = [ c | c@(_, t', _) <- connections n, t' == t]

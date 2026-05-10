@@ -3,7 +3,6 @@ module Main (main) where
 import Capabilities.Alloy.IO            ()
 import Capabilities.PlantUml.IO         ()
 import Capabilities.WriteFile.IO        ()
-import Capabilities.Exceptions.IO       ()
 import Modelling.ActivityDiagram.FindAuxiliaryPetriNodes (
   defaultFindAuxiliaryPetriNodesConfig,
   findAuxiliaryPetriNodes,
@@ -27,7 +26,7 @@ main = do
         (read s)
         (read seed)
       print task
-      findAuxiliaryPetriNodesTask path task `withLang` English
+      findAuxiliaryPetriNodesTask True path task `withLang` English
       sub <- read <$> getLine
       points <- findAuxiliaryPetriNodesEvaluation task sub `withLang` English
       putStrLn $ "Points: " ++ show points

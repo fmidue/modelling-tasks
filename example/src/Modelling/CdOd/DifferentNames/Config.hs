@@ -4,6 +4,7 @@ module Modelling.CdOd.DifferentNames.Config where
 
 import Modelling.CdOd.DifferentNames (
   DifferentNamesConfig (..),
+  SolutionDisplay (..),
   )
 import Modelling.CdOd.Types (
   ClassConfig (..),
@@ -49,7 +50,7 @@ task2023_12 = DifferentNamesConfig {
     associationOmittedDefaultMultiplicity = Just (0, Nothing),
     compositionWholeOmittedDefaultMultiplicity = Nothing
     },
-  printSolution = True,
+  printSolution = ShowMapping,
   timeout = Nothing,
   withObviousMapping = Nothing,
   extraText = NoExtraText
@@ -89,7 +90,7 @@ task2023_13 = DifferentNamesConfig {
     associationOmittedDefaultMultiplicity = Just (0, Nothing),
     compositionWholeOmittedDefaultMultiplicity = Nothing
     },
-  printSolution = True,
+  printSolution = ShowMapping,
   timeout = Nothing,
   withObviousMapping = Nothing,
   extraText = NoExtraText
@@ -129,7 +130,7 @@ task2023_25 = DifferentNamesConfig {
     associationOmittedDefaultMultiplicity = Just (0, Nothing),
     compositionWholeOmittedDefaultMultiplicity = Nothing
     },
-  printSolution = True,
+  printSolution = ShowMapping,
   timeout = Nothing,
   withObviousMapping = Nothing,
   extraText = NoExtraText
@@ -169,7 +170,7 @@ task2024_15 = DifferentNamesConfig {
     associationOmittedDefaultMultiplicity = Just (0, Nothing),
     compositionWholeOmittedDefaultMultiplicity = Nothing
     },
-  printSolution = True,
+  printSolution = ShowMapping,
   timeout = Nothing,
   withObviousMapping = Nothing,
   extraText = NoExtraText
@@ -209,7 +210,7 @@ task2024_16 = DifferentNamesConfig {
     associationOmittedDefaultMultiplicity = Just (0, Nothing),
     compositionWholeOmittedDefaultMultiplicity = Nothing
     },
-  printSolution = True,
+  printSolution = ShowMapping,
   timeout = Nothing,
   withObviousMapping = Nothing,
   extraText = NoExtraText
@@ -249,7 +250,7 @@ task2024_56 = DifferentNamesConfig {
     associationOmittedDefaultMultiplicity = Just (0, Nothing),
     compositionWholeOmittedDefaultMultiplicity = Nothing
     },
-  printSolution = True,
+  printSolution = ShowMapping,
   timeout = Nothing,
   withObviousMapping = Nothing,
   extraText = NoExtraText
@@ -287,7 +288,7 @@ task2025_13 = DifferentNamesConfig {
     associationOmittedDefaultMultiplicity = Just (0, Nothing),
     compositionWholeOmittedDefaultMultiplicity = Nothing
     },
-  printSolution = True,
+  printSolution = ShowMappingAndReprintOD,
   timeout = Nothing,
   withObviousMapping = Just True,
   extraText = NoExtraText
@@ -329,7 +330,7 @@ task2025_14 = DifferentNamesConfig {
     associationOmittedDefaultMultiplicity = Just (0, Nothing),
     compositionWholeOmittedDefaultMultiplicity = Nothing
     },
-  printSolution = True,
+  printSolution = ShowMappingAndReprintOD,
   timeout = Nothing,
   withObviousMapping = Just False,
   extraText = NoExtraText
@@ -359,7 +360,9 @@ share same instances as task2025_14
 share same concept injection as task2025_15
 -}
 task2025_16 :: DifferentNamesConfig
-task2025_16 = task2025_15
+task2025_16 = task2025_15 {
+  printSolution = ShowMappingAndReprintCD
+  }
 
 {-|
 points: 0.15
@@ -379,3 +382,22 @@ share same concept injection as task2025_15
 -}
 task2025_22 :: DifferentNamesConfig
 task2025_22 = task2025_15
+
+{-|
+points: 0.1
+the amount of generated instances: 100
+maximum concurrent amount of tasks: 100
+average generation time per instance on the cluster (without considering concurrency): 2:23min
+total run time on the cluster (not including queuing time): 7:34min
+average CPU usage: 168.75%
+average memory usage: 2785.06 MB
+-}
+task2025_55 :: DifferentNamesConfig
+task2025_55 = task2025_14
+
+{-
+points: 0.1
+share same instances as task2025_21
+-}
+task2025_57 :: DifferentNamesConfig
+task2025_57 = task2025_21

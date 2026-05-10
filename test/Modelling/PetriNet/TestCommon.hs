@@ -16,7 +16,6 @@ module Modelling.PetriNet.TestCommon (
 
 import Capabilities.Alloy               (getInstances)
 import Capabilities.Alloy.IO            ()
-import Capabilities.Exceptions.IO       ()
 import Modelling.PetriNet.Alloy         (TaskGenerationException (..))
 import Modelling.PetriNet.Types (
   AlloyConfig (..),
@@ -27,6 +26,7 @@ import Modelling.PetriNet.Types (
 
 import Control.Monad.Catch              (MonadThrow (throwM), MonadCatch (catch))
 import Control.Monad.Random             (RandT, evalRandT, getRandomR)
+import Control.Monad.Trans.Class        (lift)
 import Data.GraphViz                    (GraphvizCommand (Neato))
 import GHC.Base                         (maxInt, minInt)
 import Language.Alloy.Call (
@@ -83,12 +83,12 @@ testTaskGeneration alloyGen taskInst checkInst cs =
     $ flip evalRandT g $ do
       let conf = cs !! r
       r' <- getRandomR (1, maxJavaInt)
-      is <- getInstances
+      is <- lift $ getInstances
         (Just $ toInteger r')
         (Just 5000000)
         $ alloyGen conf
       if null is
-        then throwM NoInstanceAvailable
+        then lift $ throwM NoInstanceAvailable
         else do
         let instances = length is
         r'' <- if r' >= instances

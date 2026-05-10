@@ -75,7 +75,7 @@ import Modelling.Auxiliary.Common (
   )
 import Modelling.Auxiliary.Output (
   addPretext,
-  checkTaskText,
+  checkTaskTextExcluding,
   hoveringInformation,
   simplifiedInformation,
   uniform,
@@ -414,6 +414,7 @@ toTaskSpecificText path task@NameCdErrorInstance {..} = \case
     IncorrectCd -> image $=<< cacheCd
       cdDrawSettings
       mempty
+      Nothing
       (unannotateCd classDiagram)
       path
     ReasonsList -> enumerateM (text . singleton)
@@ -481,8 +482,8 @@ isRelevant =
   (\case NotRelevant -> False; Relevant {} -> True)
   . annotation
 
-checkNameCdErrorInstance :: NameCdErrorInstance -> Maybe String
-checkNameCdErrorInstance NameCdErrorInstance {..}
+checkNameCdErrorInstance :: Bool -> NameCdErrorInstance -> Maybe String
+checkNameCdErrorInstance withRelationshipChoices NameCdErrorInstance {..}
   | not (printNames cdDrawSettings) && byName
   = Just "by name is only possible when printing names"
   | 1 /= length (filter fst $ M.elems errorReasons)
@@ -507,9 +508,10 @@ checkNameCdErrorInstance NameCdErrorInstance {..}
   | x:_ <- concatMap (checkTranslation . translateReason True) reasons
   = Just $ [i|Problem within 'errorReasons': |] ++ x
   | otherwise
-  = checkTaskText taskText
+  = checkTaskTextExcluding taskTextExcludes taskText
   <|> checkCdDrawSettings cdDrawSettings
   where
+    taskTextExcludes = [RelationshipsList | not withRelationshipChoices]
     letters = ['a' .. 'z'] ++ ['A' .. 'Z']
     reasons = map snd $ M.elems errorReasons
     listingPriorities = map (listingPriority . annotation)
@@ -692,7 +694,7 @@ nameCdErrorEvaluation path inst@NameCdErrorInstance {..} x = addPretext $ do
     )
     $>>= \points -> do
       paragraph $ translate $ classDiagramDescription points
-      paragraph $ image $=<< cacheCd cdDrawSettings mempty changedCd path
+      paragraph $ image $=<< cacheCd cdDrawSettings mempty Nothing changedCd path
       pure ()
     $>> printSolutionAndAssert True correctAnswer $ fromEither points
   where

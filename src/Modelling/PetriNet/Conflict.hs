@@ -285,8 +285,8 @@ findConflictPlacesEvaluation task (conflict, ps) =
       english $ x' ++ " is a place causing the conflict?"
       german $ x' ++ " ist eine den Konflikt verursachende Stelle?"
     assert (ps' == inducing) $ translate $ do
-      english "The submitted solution is correct and complete?"
-      german "Die eingereichte Lösung ist korrekt und vollständig?"
+      english "The submitted solution is correct and exhaustive?"
+      german "Die eingereichte Lösung ist korrekt und vollzählig?"
     pure ()
   let result = min
         res
@@ -352,7 +352,7 @@ pickConflictTask showInputHelp path task = do
       under the initial marking?
       |]
     german [iii|
-      Welches dieser Petrinetze hat genau ein Paar von Transitionen,
+      Welches der folgenden Petrinetze hat genau ein Paar von Transitionen,
       die unter der Startmarkierung in Konflikt stehen?
       |]
   images show snd $=<< renderPick path task

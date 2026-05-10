@@ -147,3 +147,15 @@ average max memory usage: 1375.05 MB
 -}
 task2025_33 :: PickConflictConfig
 task2025_33 = task2024_31
+
+{-|
+points: 0.1
+the amount of generated instances: 100
+maximum concurrent amount of tasks: 100
+average generation time per instance on the cluster (without considering concurrency): 58:40min
+total run time on the cluster (not including queuing time): 01:00:51h
+average CPU usage: 99%
+average max memory usage: 1179.45 MB
+-}
+task2025_61 :: PickConflictConfig
+task2025_61 = task2025_32

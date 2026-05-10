@@ -4,6 +4,7 @@ module Modelling.CdOd.MatchCdOd.Config where
 
 import Modelling.CdOd.MatchCdOd (
   MatchCdOdConfig (..),
+  OdDistributionConfig (..),
   )
 import Modelling.CdOd.Types (
   CdMutation (..),
@@ -52,6 +53,12 @@ task2023_14 = MatchCdOdConfig {
     hasSelfLoops = Just False,
     usesEveryRelationshipName = Nothing
     },
+  odDistribution = OdDistributionConfig {
+    objectDiagramCount = 5,
+    maxPerJustEachCd = 2,
+    maxSharedBetweenBothCds = 2,
+    maxNoCd = 2
+    },
   omittedDefaultMultiplicities = OmittedDefaultMultiplicities {
     aggregationWholeOmittedDefaultMultiplicity = Just (0, Nothing),
     associationOmittedDefaultMultiplicity = Just (0, Nothing),
@@ -98,6 +105,12 @@ task2023_15 = MatchCdOdConfig {
     hasSelfLoops = Just False,
     usesEveryRelationshipName = Nothing
     },
+  odDistribution = OdDistributionConfig {
+    objectDiagramCount = 5,
+    maxPerJustEachCd = 2,
+    maxSharedBetweenBothCds = 2,
+    maxNoCd = 2
+    },
   omittedDefaultMultiplicities = OmittedDefaultMultiplicities {
     aggregationWholeOmittedDefaultMultiplicity = Just (0, Nothing),
     associationOmittedDefaultMultiplicity = Just (0, Nothing),
@@ -139,6 +152,12 @@ task2024_17 = MatchCdOdConfig {
     hasLimitedIsolatedObjects = True,
     hasSelfLoops = Just False,
     usesEveryRelationshipName = Just True
+    },
+  odDistribution = OdDistributionConfig {
+    objectDiagramCount = 5,
+    maxPerJustEachCd = 2,
+    maxSharedBetweenBothCds = 2,
+    maxNoCd = 2
     },
   omittedDefaultMultiplicities = OmittedDefaultMultiplicities {
     aggregationWholeOmittedDefaultMultiplicity = Just (0, Nothing),
@@ -182,6 +201,12 @@ task2024_18 = MatchCdOdConfig {
     hasSelfLoops = Nothing,
     usesEveryRelationshipName = Just False
     },
+  odDistribution = OdDistributionConfig {
+    objectDiagramCount = 5,
+    maxPerJustEachCd = 2,
+    maxSharedBetweenBothCds = 2,
+    maxNoCd = 2
+    },
   omittedDefaultMultiplicities = OmittedDefaultMultiplicities {
     aggregationWholeOmittedDefaultMultiplicity = Just (0, Nothing),
     associationOmittedDefaultMultiplicity = Just (0, Nothing),
@@ -224,6 +249,12 @@ task2024_19 = MatchCdOdConfig {
     hasSelfLoops = Nothing,
     usesEveryRelationshipName = Nothing
     },
+  odDistribution = OdDistributionConfig {
+    objectDiagramCount = 5,
+    maxPerJustEachCd = 2,
+    maxSharedBetweenBothCds = 2,
+    maxNoCd = 2
+    },
   omittedDefaultMultiplicities = OmittedDefaultMultiplicities {
     aggregationWholeOmittedDefaultMultiplicity = Just (0, Nothing),
     associationOmittedDefaultMultiplicity = Just (0, Nothing),
@@ -265,6 +296,12 @@ task2024_20 = MatchCdOdConfig {
     hasLimitedIsolatedObjects = True,
     hasSelfLoops = Nothing,
     usesEveryRelationshipName = Nothing
+    },
+  odDistribution = OdDistributionConfig {
+    objectDiagramCount = 5,
+    maxPerJustEachCd = 2,
+    maxSharedBetweenBothCds = 2,
+    maxNoCd = 2
     },
   omittedDefaultMultiplicities = OmittedDefaultMultiplicities {
     aggregationWholeOmittedDefaultMultiplicity = Just (0, Nothing),
@@ -313,6 +350,12 @@ task2024_57 = MatchCdOdConfig {
     associationOmittedDefaultMultiplicity = Just (0, Nothing),
     compositionWholeOmittedDefaultMultiplicity = Nothing
     },
+  odDistribution = OdDistributionConfig {
+    objectDiagramCount = 5,
+    maxPerJustEachCd = 2,
+    maxSharedBetweenBothCds = 2,
+    maxNoCd = 2
+    },
   printSolution = True,
   timeout = Nothing,
   withNonTrivialInheritance = Just False,
@@ -349,6 +392,12 @@ task2024_58 = MatchCdOdConfig {
     hasLimitedIsolatedObjects = True,
     hasSelfLoops = Just False,
     usesEveryRelationshipName = Nothing
+    },
+  odDistribution = OdDistributionConfig {
+    objectDiagramCount = 5,
+    maxPerJustEachCd = 2,
+    maxSharedBetweenBothCds = 2,
+    maxNoCd = 2
     },
   omittedDefaultMultiplicities = OmittedDefaultMultiplicities {
     aggregationWholeOmittedDefaultMultiplicity = Just (0, Nothing),
@@ -391,6 +440,12 @@ task2024_59 = MatchCdOdConfig {
     hasLimitedIsolatedObjects = True,
     hasSelfLoops = Just False,
     usesEveryRelationshipName = Nothing
+    },
+  odDistribution = OdDistributionConfig {
+    objectDiagramCount = 5,
+    maxPerJustEachCd = 2,
+    maxSharedBetweenBothCds = 2,
+    maxNoCd = 2
     },
   omittedDefaultMultiplicities = OmittedDefaultMultiplicities {
     aggregationWholeOmittedDefaultMultiplicity = Just (0, Nothing),
@@ -450,3 +505,15 @@ average memory usage: 3530.61 MB
 -}
 task2025_20 :: MatchCdOdConfig
 task2025_20 = task2024_20
+
+{-|
+points: 0.1
+the amount of generated instances: 100
+maximum concurrent amount of tasks: 100
+average generation time per instance on the cluster (without considering concurrency): 8:07min
+total run time on the cluster (not including queuing time): 9:00min
+average CPU usage: 105.19%
+average memory usage: 3747.66 MB
+-}
+task2025_56 :: MatchCdOdConfig
+task2025_56 = task2025_18

@@ -28,6 +28,7 @@ task2023_35 = EnterASConfig {
   maxInstances = Just 2000,
   objectNodeOnEveryPath = Just True,
   answerLength = (10, 10),
+  rejectLongerThan = Nothing,
   printSolution = True,
   extraText = NoExtraText
   }
@@ -53,6 +54,7 @@ task2023_36 = EnterASConfig {
   maxInstances = Just 2000,
   objectNodeOnEveryPath = Just False,
   answerLength = (14, 14),
+  rejectLongerThan = Nothing,
   printSolution = True,
   extraText = NoExtraText
   }
@@ -78,6 +80,7 @@ task2024_41 = EnterASConfig {
   maxInstances = Just 2000,
   objectNodeOnEveryPath = Just True,
   answerLength = (11, 11),
+  rejectLongerThan = Nothing,
   printSolution = True,
   extraText = NoExtraText
   }
@@ -129,3 +132,15 @@ average memory usage: 2273.13 MB
 -}
 task2025_45 :: EnterASConfig
 task2025_45 = task2024_42
+
+{-|
+points: 0.1
+the amount of generated instances: 100
+maximum concurrent amount of tasks: 100
+average generation time per instance on the cluster (without considering concurrency): 18:06min
+total run time on the cluster (not including queuing time): 18:29min
+average CPU usage: 100%
+average memory usage: 2278.10 MB
+-}
+task2025_64 :: EnterASConfig
+task2025_64 = task2025_45

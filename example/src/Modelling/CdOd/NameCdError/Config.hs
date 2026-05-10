@@ -392,3 +392,15 @@ points: 0.15
 -}
 task2025_09 :: NameCdErrorConfig
 task2025_09 = task2024_11
+
+{-|
+points: 0.1
+the amount of generated instances: 100
+maximum concurrent amount of tasks: 100
+average generation time per instance on the cluster (without considering concurrency): 2:21min
+total run time on the cluster (not including queuing time): 2:28min
+average CPU usage: 104.72%
+average memory usage: 1300.33 MB
+-}
+task2025_54 :: NameCdErrorConfig
+task2025_54 = task2025_08

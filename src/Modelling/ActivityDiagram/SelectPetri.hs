@@ -78,7 +78,7 @@ import Modelling.Auxiliary.Common (
 import Modelling.Auxiliary.Output (
   addPretext,
   )
-import Modelling.PetriNet.Diagram (cacheNet)
+import Modelling.PetriNet.Diagram (cacheNet, isNetDrawable)
 import Modelling.PetriNet.Types (
   checkPetriNodeCount,
   DrawSettings (..),
@@ -90,8 +90,8 @@ import Modelling.PetriNet.Types (
 
 import Control.Applicative (Alternative ((<|>)))
 import Control.Monad (unless, when)
-import Control.Monad.Catch              (MonadThrow, throwM)
-import Control.Monad.Extra (loopM, firstJustM)
+import Control.Monad.Catch              (MonadCatch, MonadThrow, throwM)
+import Control.Monad.Extra (loopM, firstJustM, allM)
 import Control.Monad.Trans.Class (lift)
 import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
@@ -128,6 +128,7 @@ import GHC.Generics (Generic)
 import System.Random.Shuffle (shuffleM)
 import Modelling.ActivityDiagram.MatchPetri (
   MatchPetriSolution (..),
+  hoveringInformationOnlyPetri,
   mapTypesToLabels,
   )
 
@@ -183,7 +184,7 @@ defaultSelectPetriConfig = SelectPetriConfig {
   hideBranchConditions = False,
   hidePetriNodeLabels = False,
   petriLayout = [Dot],
-  petriSvgHighlighting = True,
+  petriSvgHighlighting = False,
   numberOfWrongAnswers = 2,
   numberOfModifications = 3,
   modifyAtMid = True,
@@ -205,12 +206,14 @@ checkSelectPetriConfig' SelectPetriConfig {
     countOfPetriNodesBounds,
     maxInstances,
     petriLayout,
+    petriSvgHighlighting,
     numberOfWrongAnswers,
     numberOfModifications,
     auxiliaryPetriNodeAbsent,
     presenceOfSinkTransitionsForFinals,
     withActivityFinalInForkBlocks
   } = validateSelectPetriSpecific numberOfWrongAnswers numberOfModifications
+    <|> (if petriSvgHighlighting then Just "petriSvgHighlighting is not really helpful for this task, so currently discouraged" else Nothing)
     <|> validatePetriConfig
           adConfig
           countOfPetriNodesBounds
@@ -368,10 +371,11 @@ selectPetriTask
     MonadWriteFile m,
     OutputCapable m
     )
-  => FilePath
+  => Bool
+  -> FilePath
   -> SelectPetriInstance
   -> LangM m
-selectPetriTask path task = do
+selectPetriTask showInputHelp path task = do
   let mapping = M.map snd $ petriNets task
   paragraph $ translate $ do
     english "Consider the following activity diagram:"
@@ -385,12 +389,20 @@ selectPetriTask path task = do
     $=<< for
       mapping
       (\c -> cacheNet path (mapNet (show . PK.label) c) drawSetting)
-  paragraph $ translate $ do
-    english [i|Which of these Petri nets is the translation of the given activity diagram?
-Please state your answer by giving a number indicating the matching Petri net.|]
-    german [i|Welches dieser Petrinetze ist die Übersetzung des gegebenen Aktivitätsdiagramms?
-Bitte geben Sie Ihre Antwort als Zahl an, welche das passende Petrinetz repräsentiert.|]
   paragraph $ do
+   translate $ do
+    english [i|Which of these Petri nets is the translation of the given activity diagram?
+    |]
+    german [i|Welches dieser Petrinetze ist die Übersetzung des gegebenen Aktivitätsdiagramms?
+    |]
+   when showInputHelp $ translate $ do
+    english [i|
+State your answer by giving a number indicating the matching Petri net.|]
+    german [i|
+Geben Sie Ihre Antwort als Zahl an, welche das passende Petrinetz repräsentiert.|]
+   pure ()
+
+  when showInputHelp $ paragraph $ do
     translate $ do
       english [i|For example,|]
       german [i|Zum Beispiel würde|]
@@ -399,6 +411,8 @@ Bitte geben Sie Ihre Antwort als Zahl an, welche das passende Petrinetz repräse
       english [i|would indicate that Petri net 2 is the matching Petri net.|]
       german  [i|bedeuten, dass Petrinetz 2 das passende Petrinetz ist.|]
     pure ()
+
+  when (withSvgHighlighting drawSetting) $ hoveringInformationOnlyPetri True
 
   extra $ addText task
 
@@ -437,7 +451,7 @@ selectPetriEvaluation
   -> SelectPetriInstance
   -> Int
   -> LangM m
-selectPetriEvaluation path task n = addPretext $ do
+selectPetriEvaluation path task n = do
   let as = translations $ do
         english "Petri net"
         german "Petrinetz"
@@ -452,8 +466,8 @@ selectPetriEvaluation path task n = addPretext $ do
 
       when (suppressNodeNames $ plantUMLConf task) $ paragraph $ do
         translate $ do
-          english "The original activity diagram with node names looks like this:"
-          german "Das originale Aktivitätsdiagramm sieht mit Knotennamen wie folgt aus:"
+          english "Equipped with node names, the given activity diagram looks as follows:"
+          german "Mit Knotennamen versehen, sieht das gegebene Aktivitätsdiagramm wie folgt aus:"
 
         let alteredConfig = (plantUMLConf task) { suppressNodeNames = False }
         image $=<< drawAdToFile (path ++ "feedback") alteredConfig
@@ -463,19 +477,20 @@ selectPetriEvaluation path task n = addPretext $ do
       let (_, correctNet) = fromJust $ find fst $ petriNets task
       unless (withPlaceNames $ petriDrawConf task) $ paragraph $ do
         translate $ do
-          english "The translated Petri net (including node names) looks like this:"
-          german "Das aus dem Aktivitätsdiagramm übersetzte Petrinetz sieht mit Knotennamen wie folgt aus:"
+          english "The Petri net (including node labels) obtained by translation looks as follows:"
+          german "Das durch Übersetzung erhaltene Petrinetz (inklusive Knotenbeschriftungen) sieht wie folgt aus:"
 
         let drawSetting = (petriDrawConf task)
               { withPlaceNames = True
               , withTransitionNames = True
+              , withSvgHighlighting = True
               }
         image $=<< cacheNet path (mapNet (show . PK.label) correctNet) drawSetting
         pure ()
 
       paragraph $ translate $ do
-        english "The mapping of the nodes from the activity diagram to nodes from the Petri net is as follows:"
-        german "Die Zuordnung der Knoten aus dem Aktivitätsdiagramm zu Knoten aus dem Petrinetz sieht wie folgt aus:"
+        english "The mapping of elements from the activity diagram to nodes from the Petri net is as follows."
+        german "Die Zuordnung von Elementen aus dem Aktivitätsdiagramm zu Knoten aus dem Petrinetz ist wie folgt."
 
 
       let MatchPetriSolution{..} = mapTypesToLabels correctNet
@@ -558,7 +573,7 @@ selectPetriSolution
 selectPetriSolution = head . M.keys . M.filter fst . petriNets
 
 selectPetri
-  :: (MonadAlloy m, MonadThrow m)
+  :: (MonadAlloy m, MonadCatch m, MonadDiagrams m, MonadGraphviz m)
   => SelectPetriConfig
   -> Int
   -> Int
@@ -568,7 +583,7 @@ selectPetri config segment seed = do
   evalRandT (getSelectPetriTask config) g
 
 getSelectPetriTask
-  :: (MonadAlloy m, MonadThrow m, RandomGen g)
+  :: (MonadAlloy m, MonadCatch m, MonadDiagrams m, MonadGraphviz m, RandomGen g)
   => SelectPetriConfig
   -> RandT g m SelectPetriInstance
 getSelectPetriTask config = do
@@ -589,8 +604,8 @@ getSelectPetriTask config = do
         with1Weights = False,
         withGraphvizCommand = layout
       }
-  ad <- mapM (fmap snd . shuffleAdNames) randomInstances
-    >>= firstJustM (\ad -> do
+  maybeInstance <- firstJustM (\inst -> do
+      ad <- snd <$> shuffleAdNames inst
       let petriNet = convertToPetriNet @PetriLike @SimpleNode ad
       if not (checkPetriNodeCount (countOfPetriNodesBounds config) petriNet)
         then return Nothing
@@ -616,9 +631,26 @@ getSelectPetriTask config = do
               }
           case checkPetriInstance petriInst config of
             Just _ -> return Nothing
-            Nothing -> return $ Just petriInst
-    )
-  case ad of
+            Nothing -> do
+              allDrawable <- lift $ allM
+                (\net -> isNetDrawable (mapNet (show . PK.label) net) petriDrawConf)
+                (p : ps)
+              if not allDrawable
+                then return Nothing
+                else do
+                  let feedbackDrawSettings = petriDrawConf {
+                        withPlaceNames = True,
+                        withTransitionNames = True
+                      }
+                  feedbackDrawable <- lift $
+                    if hidePetriNodeLabels config
+                      then isNetDrawable (mapNet (show . PK.label) p) feedbackDrawSettings
+                      else return True
+                  if not feedbackDrawable
+                    then return Nothing
+                    else return $ Just petriInst
+    ) randomInstances
+  case maybeInstance of
     Just x -> return x
     Nothing -> lift $ throwM NoInstanceAvailable
 

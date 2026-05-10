@@ -3,7 +3,6 @@ module Main (main) where
 import Capabilities.Alloy.IO            ()
 import Capabilities.PlantUml.IO         ()
 import Capabilities.WriteFile.IO        ()
-import Capabilities.Exceptions.IO       ()
 import Modelling.ActivityDiagram.MatchAd (
   defaultMatchAdConfig,
   matchAd,
@@ -25,7 +24,7 @@ main = do
       putStrLn $ "Seed: " ++ seed
       task <- matchAd defaultMatchAdConfig (read s) (read seed)
       print task
-      matchAdTask path task `withLang` English
+      matchAdTask True path task `withLang` English
       sub <- read <$> getLine
       matchAdSyntax task sub `withLang` English
       points <- matchAdEvaluation task sub `withLang` English

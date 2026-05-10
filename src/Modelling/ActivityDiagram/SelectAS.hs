@@ -62,6 +62,7 @@ import Modelling.Auxiliary.Common (
   )
 
 import Control.Applicative (Alternative ((<|>)))
+import Control.Monad                    (when)
 import Control.Monad.Catch              (MonadThrow, throwM)
 import Control.Monad.Trans.Class (lift)
 import Control.Monad.Extra (firstJustM)
@@ -287,10 +288,11 @@ asEditDistParams xs = Params
 
 selectASTask
   :: (MonadPlantUml m, MonadWriteFile m, OutputCapable m)
-  => FilePath
+  => Bool
+  -> FilePath
   -> SelectASInstance
   -> LangM m
-selectASTask path task = do
+selectASTask showInputHelp path task = do
   let mapping = M.toList $ M.map snd $ actionSequences task
   paragraph $ translate $ do
     english "Consider the following activity diagram:"
@@ -300,12 +302,19 @@ selectASTask path task = do
     english "Consider the sequences given here:"
     german "Betrachten Sie die hier gegebenen Folgen:"
   enumerateM (code . show) $ map (\(n,xs) -> (n, code $ show xs)) mapping
-  paragraph $ translate $ do
-    english [i|Which of these sequences is a valid action sequence?
-State your answer by giving a number indicating the one valid action sequence among the above sequences.|]
-    german [i|Welche dieser Folgen ist eine gültige Aktionsfolge?
-Geben Sie Ihre Antwort als Zahl an, welche die eine gültige Aktionsfolge unter den obigen Folgen repräsentiert.|]
   paragraph $ do
+   translate $ do
+    english [i|Which of these sequences is a valid action sequence?
+|]
+    german [i|Welche dieser Folgen ist eine gültige Aktionsfolge?
+|]
+   when showInputHelp $ translate $ do
+    english [i|State your answer by giving a number indicating the one valid action sequence among the above sequences.|]
+    german [i|Geben Sie Ihre Antwort als Zahl an, welche die eine gültige Aktionsfolge unter den obigen Folgen repräsentiert.|]
+   pure ()
+
+  when showInputHelp $ do
+   paragraph $ do
     translate $ do
       english [i|For example,|]
       german [i|Zum Beispiel würde|]
@@ -318,6 +327,7 @@ Geben Sie Ihre Antwort als Zahl an, welche die eine gültige Aktionsfolge unter 
         bedeuten, dass Folge 2 eine ausführbare Folge von Aktionsknoten ist.
         |]
     pure ()
+   pure ()
   extra $ addText task
   pure ()
 
@@ -344,7 +354,7 @@ selectASEvaluation
   => SelectASInstance
   -> Int
   -> LangM m
-selectASEvaluation task n = addPretext $ do
+selectASEvaluation task n = do
   let as = translations $ do
         english "action sequence"
         german "Aktionsfolge"

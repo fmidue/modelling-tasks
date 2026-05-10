@@ -3,7 +3,6 @@ module Main (main) where
 import Capabilities.Alloy.IO            ()
 import Capabilities.PlantUml.IO         ()
 import Capabilities.WriteFile.IO        ()
-import Capabilities.Exceptions.IO       ()
 import Modelling.ActivityDiagram.SelectAS (
   defaultSelectASConfig,
   selectAS,
@@ -25,7 +24,7 @@ main = do
       putStrLn $ "Seed: " ++ seed
       task <- selectAS defaultSelectASConfig (read s) (read seed)
       print task
-      selectASTask path task `withLang` English
+      selectASTask True path task `withLang` English
       sub <- read <$> getLine
       selectASSyntax task sub `withLang` English
       _ <- selectASEvaluation task sub `withLang` English

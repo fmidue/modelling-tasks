@@ -3,7 +3,6 @@ module Modelling.CdOd.NameCdErrorSpec where
 import qualified Data.Map                         as M (null)
 
 import Capabilities.Alloy.IO            ()
-import Capabilities.Exceptions.IO       ()
 import Modelling.CdOd.NameCdError (
   NameCdErrorInstance (classDiagram, errorReasons),
   checkNameCdErrorConfig,
@@ -31,7 +30,7 @@ spec = do
       checkNameCdErrorConfig defaultNameCdErrorConfig `shouldBe` Nothing
   describe "defaultNameCdErrorInstance" $
     it "is valid" $
-      checkNameCdErrorInstance defaultNameCdErrorInstance `shouldBe` Nothing
+      checkNameCdErrorInstance True defaultNameCdErrorInstance `shouldBe` Nothing
   describe "nameCdErrorGenerate" $
     context "using defaultNameCdErrorConfig" $ do
       it "generates an instance" $
@@ -46,7 +45,7 @@ spec = do
         nameCdErrorGenerate defaultNameCdErrorConfig 0 0
         `shouldReturn` defaultNameCdErrorInstance
   describe "renameInstance" $
-    it "is reversable" $ do
+    it "is reversible" $ do
       let inst = defaultNameCdErrorInstance
           (names, nonInheritances) = classAndNonInheritanceNames inst
       names' <- shuffleM names

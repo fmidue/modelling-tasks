@@ -7,7 +7,6 @@ import qualified Language.Alloy.Call              as Alloy (getInstances)
 import Capabilities.Diagrams.IO         ()
 import Capabilities.Graphviz.IO         ()
 import Capabilities.WriteFile.IO        ()
-import Capabilities.Exceptions.IO       ()
 import Modelling.CdOd.CD2Alloy.Transform (
   LinguisticReuse (None),
   Parts (..),
@@ -244,7 +243,7 @@ drawCdAndOdsFor is c cds cmd = do
       (c ++ '-' : shorten cmd ++ "-od" ++ show i ++ ".svg")
     drawCd' :: AnyCd -> Int -> IO String
     drawCd' cd i = do
-      renderedCd <- drawCd defaultCdDrawSettings mempty cd
+      renderedCd <- drawCd defaultCdDrawSettings mempty Nothing cd
       BS.writeFile (c ++ "-cd" ++ show i ++ ".svg") renderedCd
       pure $ c ++ "-cd" ++ show i ++ ".svg"
     maxThreeObjects = maxFiveObjects { objectLimits = (1, 3) }

@@ -223,12 +223,12 @@ checkFilterConfigWith rejectLongerThan theTransitionLength@minTransitionLength n
     hasConflictBetweenForbiddenAndRequired forbidden =
       any (\r -> any (\f -> f `mod` r == 0) forbidden)
 
--- | Check transition behavior constraints for validity
+-- | Check transition behaviour constraints for validity
 checkTransitionBehaviorConstraints
   :: Int                               -- ^ numPlaces
   -> Int                               -- ^ numTransitions
   -> ArrowDensityConstraints           -- ^ arrow density constraints
-  -> TransitionBehaviorConstraints     -- ^ transition behavior constraints
+  -> TransitionBehaviorConstraints     -- ^ transition behaviour constraints
   -> Maybe String
 checkTransitionBehaviorConstraints
   numPlaces

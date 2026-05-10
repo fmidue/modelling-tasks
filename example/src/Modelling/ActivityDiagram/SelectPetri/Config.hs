@@ -29,9 +29,9 @@ task2023_37 = SelectPetriConfig {
   maxInstances = Just 2000,
   hideNodeNames = False,
   hideBranchConditions = True,
-  hidePetriNodeLabels = False,
+  hidePetriNodeLabels = True,
   petriLayout = [Fdp],
-  petriSvgHighlighting = True,
+  petriSvgHighlighting = False,
   numberOfWrongAnswers = 5,
   numberOfModifications = 3,
   modifyAtMid = True,
@@ -63,7 +63,7 @@ task2023_38 = SelectPetriConfig {
   hideBranchConditions = True,
   hidePetriNodeLabels = True,
   petriLayout = [Dot],
-  petriSvgHighlighting = True,
+  petriSvgHighlighting = False,
   numberOfWrongAnswers = 5,
   numberOfModifications = 3,
   modifyAtMid = True,
@@ -105,7 +105,7 @@ task2024_44 = SelectPetriConfig {
   hideBranchConditions = True,
   hidePetriNodeLabels = True,
   petriLayout = [Dot],
-  petriSvgHighlighting = True,
+  petriSvgHighlighting = False,
   numberOfWrongAnswers = 5,
   numberOfModifications = 3,
   modifyAtMid = True,
@@ -141,9 +141,9 @@ task2025_46 = SelectPetriConfig {
     maxInstances = Just 2000,
     hideNodeNames = False,
     hideBranchConditions = True,
-    hidePetriNodeLabels = False,
+    hidePetriNodeLabels = True,
     petriLayout = [Fdp],
-    petriSvgHighlighting = True,
+    petriSvgHighlighting = False,
     numberOfWrongAnswers = 5,
     numberOfModifications = 3,
     modifyAtMid = True,
@@ -181,7 +181,7 @@ task2025_47 = SelectPetriConfig {
     hideBranchConditions = True,
     hidePetriNodeLabels = True,
     petriLayout = [Dot],
-    petriSvgHighlighting = True,
+    petriSvgHighlighting = False,
     numberOfWrongAnswers = 5,
     numberOfModifications = 3,
     modifyAtMid = True,
@@ -191,3 +191,15 @@ task2025_47 = SelectPetriConfig {
     printSolution = True,
     extraText = finalNodesAdvice
   }
+
+{-|
+points: 0.1
+the amount of generated instances: 100
+maximum concurrent amount of tasks: 100
+average generation time per instance on the cluster (without considering concurrency): 8:39min
+total run time on the cluster (not including queuing time): 8:51min
+average CPU usage: 100%
+average max memory usage: 1644.37 MB
+-}
+task2025_65 :: SelectPetriConfig
+task2025_65 = task2025_46

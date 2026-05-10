@@ -13,6 +13,7 @@ module Modelling.CdOd.DifferentNames (
   DifferentNamesInstance (..),
   DifferentNamesTaskTextElement (..),
   ShufflingOption (..),
+  SolutionDisplay(..),
   checkDifferentNamesConfig,
   checkDifferentNamesInstance,
   defaultDifferentNamesConfig,
@@ -33,15 +34,19 @@ module Modelling.CdOd.DifferentNames (
 
 import qualified Data.Bimap                       as BM (
   filter,
+  fold,
   fromList,
   keys,
+  keysR,
   lookup,
-  lookupR,
-  mapMonotonicR,
+  map,
+  mapR,
+  member,
   toAscList,
+  twist,
   )
 import qualified Data.Map                         as M (
-  fromAscList,
+  fromDistinctAscList,
   )
 
 import Autolib.Hash                     (Hashable)
@@ -139,6 +144,7 @@ import Control.OutputCapable.Blocks (
   extra,
   german,
   multipleChoice,
+  reRefuse,
   translations,
   translate,
   yesNo,
@@ -158,14 +164,13 @@ import Control.Monad.Random (
   mkStdGen,
   )
 import Control.Monad.Trans.Random       (RandT)
-import System.Random.Internal           (StdGen)
 import Control.Monad.Trans.Except       (runExceptT)
 import Data.Bifunctor                   (Bifunctor (bimap, first))
-import Data.Bimap                       (Bimap)
 import Data.Bitraversable               (bitraverse)
 import Data.Bool                        (bool)
 import Data.Char                        (isDigit)
 import Data.Containers.ListUtils        (nubOrd, nubOrdOn)
+import Data.Foldable                    (find)
 import Data.Functor.Identity            (Identity (Identity, runIdentity))
 import Data.GraphViz                    (DirType (Forward))
 import Data.List (
@@ -179,12 +184,16 @@ import Data.List (
   )
 import Data.Maybe (
   catMaybes,
-  isJust,
   isNothing,
   listToMaybe,
   mapMaybe,
   )
 import Data.Ratio                       ((%))
+import qualified Data.Set          as S (
+  fromList,
+  member,
+  union,
+  )
 import Data.String.Interpolate          (i, iii)
 import Data.Tuple.Extra                 (swap)
 import GHC.Generics                     (Generic)
@@ -201,11 +210,18 @@ data ShufflingOption a =
   | WithAdditionalNames [a]
   deriving (Eq, Generic, Foldable, Functor, Hashable, Read, Reader, Show, ToDoc, Traversable)
 
+data SolutionDisplay
+  = ShowNothing
+  | ShowMapping
+  | ShowMappingAndReprintCD
+  | ShowMappingAndReprintOD
+  deriving (Eq, Generic, Hashable, Read, Reader, Show, ToDoc)
+
 data DifferentNamesInstance = DifferentNamesInstance {
     cDiagram :: Cd,
     cdDrawSettings :: !CdDrawSettings,
     oDiagram :: Od,
-    showSolution :: Bool,
+    showSolution :: SolutionDisplay,
     mapping  :: NameMapping,
     linkShuffling :: ShufflingOption String,
     taskText :: !DifferentNamesTaskText,
@@ -226,10 +242,26 @@ checkDifferentNamesInstance DifferentNamesInstance {..}
       i.e., for which an association in the Class diagram exists
       but not a link in the Object diagram.
       |]
-  | (x:_) <- nubOrd links `intersect` nubOrd associations
+  | (x:_) <- nubOrd strippedLinks `intersect` nubOrd associations
   = Just [iii|
       Link names and association names must be disjoint
       but currently "#{x}" is among both.
+      |]
+  | let mappingBimap = nameMapping mapping
+        allNamesSet = S.union (S.fromList $ BM.keys mappingBimap) (S.fromList $ BM.keysR mappingBimap),
+    Just collision <- find (\name -> let stripped = stripName name
+                                     in stripped /= name && S.member stripped allNamesSet) allNamesSet
+  = Just [iii|
+      Stripped names must not collide with original names in mapping,
+      but "#{showName collision}" violates that.
+      |]
+  | let strippedODMapping = BM.map
+          (stripNumericPeriod . unName)
+          $ nameMapping mapping,
+    any (`BM.member` strippedODMapping) strippedLinks
+  = Just [iii|
+      Pairs given in mapping must follow this order:
+      (CD association, OD link)
       |]
   | otherwise
   = checkObjectDiagram oDiagram
@@ -237,6 +269,7 @@ checkDifferentNamesInstance DifferentNamesInstance {..}
   where
     associations = associationNames cDiagram
     links = linkLabels oDiagram
+    strippedLinks = map stripNumericPeriod links
 
 data DifferentNamesConfig
   = DifferentNamesConfig {
@@ -246,7 +279,7 @@ data DifferentNamesConfig
     objectConfig     :: ObjectConfig,
     objectProperties :: ObjectProperties,
     omittedDefaultMultiplicities :: OmittedDefaultMultiplicities,
-    printSolution    :: Bool,
+    printSolution    :: SolutionDisplay,
     timeout          :: !(Maybe Int),
     -- | Obvious means here that each individual relationship to link mapping
     -- can be made without considering other relationships.
@@ -309,7 +342,7 @@ defaultDifferentNamesConfig = DifferentNamesConfig {
       usesEveryRelationshipName = Just True
       },
     omittedDefaultMultiplicities = defaultOmittedDefaultMultiplicities,
-    printSolution    = True,
+    printSolution    = ShowMapping,
     withNonTrivialInheritance = Just True,
     withObviousMapping = Nothing,
     maxInstances     = Just 200,
@@ -330,10 +363,11 @@ type DifferentNamesTaskText = [SpecialOutput DifferentNamesTaskTextElement]
 data DifferentNamesTaskTextElement
   = GivenCd
   | GivenOd
-  | DirectionsAdvice
+  | RelationshipNamesFromCd
   | MappingAdvice
-  | SimplifiedInformation
-  deriving (Bounded, Enum, Eq, Generic, Hashable, Ord, Read, Reader, Show, ToDoc)
+  | DirectionsAdvice Bool
+  | SimplifiedInformation Bool
+  deriving (Eq, Generic, Hashable, Ord, Read, Reader, Show, ToDoc)
 
 differentNamesTask
   :: (MonadCache m, MonadDiagrams m, MonadGraphviz m, MonadThrow m, OutputCapable m)
@@ -407,17 +441,20 @@ toTaskSpecificText
   -> DifferentNamesInstance
   -> DifferentNamesTaskTextElement
   -> LangM m
-toTaskSpecificText path DifferentNamesInstance {..} = \case
+toTaskSpecificText path inst@DifferentNamesInstance {..} = \case
   GivenCd ->
-    paragraph $ image $=<< cacheCd cdDrawSettings mempty cd path
+    paragraph $ image $=<< cacheCd cdDrawSettings mempty mLabelLength cd path
   GivenOd -> paragraph $ image $=<<
-    cacheOd oDiagram Forward True path
+    cacheOd oDiagram mLabelLength Forward True path
+  RelationshipNamesFromCd -> paragraph $
+    itemizeM $ map code $ sort $ associationNames cDiagram
   MappingAdvice -> mappingAdvice hasGivenCd
-  DirectionsAdvice -> directionsAdvice False
-  SimplifiedInformation -> simplifiedInformation True
+  DirectionsAdvice b -> directionsAdvice b
+  SimplifiedInformation b -> simplifiedInformation b
   where
     cd = fromClassDiagram cDiagram
     hasGivenCd = Special GivenCd `elem` taskText
+    mLabelLength = Just $ maxLabelLength inst
 
 defaultDifferentNamesTaskText :: DifferentNamesTaskText
 defaultDifferentNamesTaskText = [
@@ -439,8 +476,8 @@ defaultDifferentNamesTaskText = [
       entspricht welchen Links im Objektdiagramm (OD)?
       |],
   Special MappingAdvice,
-  Special DirectionsAdvice,
-  Special SimplifiedInformation
+  Special $ DirectionsAdvice False,
+  Special $ SimplifiedInformation True
   ]
 
 inputHelpText :: Bool -> Output
@@ -486,6 +523,8 @@ inputHelpText hasGivenCd =
     Code . uniform . show $ mappingShow differentNamesInitial
     ]
 
+maxLabelLength :: DifferentNamesInstance -> Int
+maxLabelLength inst = BM.fold (\k v acc -> maximum [length k, length v, acc]) 0 $ fromNameMapping $ mapping inst
 
 differentNamesInitial :: [(Name, Name)]
 differentNamesInitial = map (bimap Name Name) [("x", "1"), ("y", "2")]
@@ -555,34 +594,80 @@ differentNamesSyntax DifferentNamesInstance {..} cs = addPretext $ do
       (not . null . tail)
       $ group $ sort (map fst choicesStripped ++ map snd choicesStripped)
 
-readMapping :: Ord a => Bimap a a -> (a, a) -> Maybe (a, a)
-readMapping m (x, y)
-  | isJust $ BM.lookup x m, isJust $ BM.lookupR y m
-  = Just (x, y)
-  | isJust $ BM.lookup y m, isJust $ BM.lookupR x m
-  = Just (y, x)
-  | otherwise
-  = Nothing
-
 differentNamesEvaluation
-  :: OutputCapable m
-  => DifferentNamesInstance
+  :: (
+    OutputCapable m,
+    Alternative m,
+    MonadCache m,
+    MonadDiagrams m,
+    MonadGraphviz m,
+    MonadThrow m
+    )
+  => FilePath
+  -> DifferentNamesInstance
   -> [(Name, Name)]
   -> Rated m
-differentNamesEvaluation task cs = do
+differentNamesEvaluation path task cs = do
   let csStripped = map (bimap stripName stripName) cs
-      -- Strip periods from the mapping's link labels (second element of each pair)
-      mStripped = BM.mapMonotonicR stripName $ nameMapping $ mapping task
+      correctMapping = nameMapping $ mapping task
+      -- Swap answer tuples around if necessary
+      -- The preceding syntax check guarantees only valid pairs can be submitted here
+      readMapping pair@(_, right)
+        | BM.member right correctMapping = swap pair
+        | otherwise = pair
       what = translations $ do
         german "Zuordnungen"
         english "mappings"
-      ms = M.fromAscList $ map (,True) $ BM.toAscList mStripped
+      -- Strip periods from the mapping's link labels (second element of each pair)
+      solutionMap = M.fromDistinctAscList $ map (,True) $ BM.toAscList $ BM.mapR stripName correctMapping
+      choices = map readMapping csStripped
       solution =
-        if showSolution task
+        if showSolution task /= ShowNothing
         then Just . (DefiniteArticle,) . show . mappingShow
           $ differentNamesSolution task
         else Nothing
-  multipleChoice what solution ms (mapMaybe (readMapping mStripped) csStripped)
+
+  reRefuse (multipleChoice what solution solutionMap choices) $ do
+    let mLabelLength = Just $ maxLabelLength task
+    case showSolution task of
+      ShowNothing -> pure ()
+      ShowMapping -> pure ()
+      ShowMappingAndReprintCD -> do
+        paragraph $ translate $ do
+          english "Consider the correctly labelled class diagram:"
+          german "Betrachten Sie das korrekt beschriftete Klassendiagramm:"
+
+        image $=<< (relabelCd task >>= \relabelledCd ->
+          cacheCd (cdDrawSettings task) mempty mLabelLength (fromClassDiagram relabelledCd) path)
+
+        pure ()
+      ShowMappingAndReprintOD -> do
+        paragraph $ translate $ do
+          english "Consider the correctly labelled object diagram:"
+          german "Betrachten Sie das korrekt beschriftete Objektdiagramm:"
+
+        image $=<< (relabelOd task >>= \relabelledOd ->
+          cacheOd relabelledOd mLabelLength Forward True path)
+
+        pure ()
+
+    pure ()
+
+relabelCd :: MonadThrow m => DifferentNamesInstance -> m Cd
+relabelCd inst@DifferentNamesInstance{..} = renameCd cDiagram
+  where
+    (names, _, _) = classNonInheritanceAndLinkNames inst
+    bmNames  = BM.fromList $ zip names names
+    bmNonInheritances = fromNameMapping mapping
+    renameCd = renameClassesAndRelationships bmNames bmNonInheritances
+
+relabelOd :: MonadThrow m => DifferentNamesInstance -> m Od
+relabelOd DifferentNamesInstance{..} = renameOd oDiagram
+  where
+    names = classNames cDiagram
+    keepClassNames = BM.fromList $ zip names names
+    bm = BM.twist $ fromNameMapping mapping
+    renameOd = renameObjectsWithClassesAndLinksInOd keepClassNames bm
 
 differentNamesSolution :: DifferentNamesInstance -> [(Name, Name)]
 differentNamesSolution = BM.toAscList . nameMapping . mapping
@@ -604,7 +689,7 @@ differentNames config segment seed = do
       (timeout config)
     tryGettingValidInstanceFor is
   where
-    tryGettingValidInstanceFor :: [AlloyInstance] -> RandT StdGen m DifferentNamesInstance
+    tryGettingValidInstanceFor :: RandomGen g => [AlloyInstance] -> RandT g m DifferentNamesInstance
     tryGettingValidInstanceFor []               = lift $ throwM NoInstanceAvailable
     tryGettingValidInstanceFor (inst:instances) = do
       cd <- lift (instanceToCd inst) >>= shuffleClassAndConnectionOrder
@@ -681,7 +766,7 @@ defaultDifferentNamesInstance = DifferentNamesInstance {
       Link {linkLabel = "3.", linkFrom = "c1", linkTo = "d1"}
       ]
     },
-  showSolution = True,
+  showSolution = ShowMapping,
   mapping = toNameMapping $ BM.fromList [("x", "2."), ("y", "3."), ("z", "1.")],
   linkShuffling = ConsecutiveNumbers,
   taskText = defaultDifferentNamesTaskText,

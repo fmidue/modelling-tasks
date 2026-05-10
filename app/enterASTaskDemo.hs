@@ -3,7 +3,6 @@ module Main (main) where
 import Capabilities.Alloy.IO            ()
 import Capabilities.PlantUml.IO         ()
 import Capabilities.WriteFile.IO        ()
-import Capabilities.Exceptions.IO       ()
 import Modelling.ActivityDiagram.EnterAS (
   defaultEnterASConfig,
   enterAS,
@@ -25,7 +24,7 @@ main = do
       putStrLn $ "Seed: " ++ seed
       task <- enterAS defaultEnterASConfig (read s) (read seed)
       print task
-      enterASTask path task `withLang` English
+      enterASTask True path task `withLang` English
       sub <- read <$> getLine
       enterASSyntax task sub `withLang` English
       points <- enterASEvaluation task sub `withLang` English
