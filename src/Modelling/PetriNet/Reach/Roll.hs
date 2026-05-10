@@ -60,7 +60,7 @@ inBounds :: (Int, Maybe Int) -> Int -> Bool
 inBounds (low, maybeHigh) value =
   value >= low && maybe True (value <=) maybeHigh
 
--- | Generate a net with limits and filtering for isolated nodes and transition behavior constraints,
+-- | Generate a net with limits and filtering for isolated nodes and transition behaviour constraints,
 -- potentially with pregenerated fusable connections (of which the makeUpdateConnection argument takes care)
 netLimitsFiltered
   :: (MonadRandom m, Ord s, Ord t)
@@ -70,7 +70,7 @@ netLimitsFiltered
   -> [s]                               -- ^ places
   -> [t]                               -- ^ transitions
   -> Capacity s                        -- ^ capacityConstraint
-  -> TransitionBehaviorConstraints     -- ^ transition behavior constraints
+  -> TransitionBehaviorConstraints     -- ^ transition behaviour constraints
   -> m (Maybe (Net s t))
 netLimitsFiltered
   makeUpdateConnection
@@ -93,7 +93,7 @@ netLimitsFiltered
   return $ do
     -- Filter out nets with isolated nodes
     guard $ not $ hasIsolatedNodes n
-    -- Filter out nets that don't satisfy transition behavior constraints
+    -- Filter out nets that don't satisfy transition behaviour constraints
     guard $ satisfiesTransitionBehaviorConstraints n transitionBehaviorConstraints
     -- Filter out nets that don't satisfy arrow density constraints beyond incomingArrowsPerTransition and outgoingArrowsPerTransition
     let allTransToPlaces = concatMap (\(_, _, post) -> post) (connections n)

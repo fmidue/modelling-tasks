@@ -363,10 +363,11 @@ type DifferentNamesTaskText = [SpecialOutput DifferentNamesTaskTextElement]
 data DifferentNamesTaskTextElement
   = GivenCd
   | GivenOd
-  | DirectionsAdvice
+  | RelationshipNamesFromCd
   | MappingAdvice
-  | SimplifiedInformation
-  deriving (Bounded, Enum, Eq, Generic, Hashable, Ord, Read, Reader, Show, ToDoc)
+  | DirectionsAdvice Bool
+  | SimplifiedInformation Bool
+  deriving (Eq, Generic, Hashable, Ord, Read, Reader, Show, ToDoc)
 
 differentNamesTask
   :: (MonadCache m, MonadDiagrams m, MonadGraphviz m, MonadThrow m, OutputCapable m)
@@ -445,9 +446,11 @@ toTaskSpecificText path inst@DifferentNamesInstance {..} = \case
     paragraph $ image $=<< cacheCd cdDrawSettings mempty mLabelLength cd path
   GivenOd -> paragraph $ image $=<<
     cacheOd oDiagram mLabelLength Forward True path
+  RelationshipNamesFromCd -> paragraph $
+    itemizeM $ map code $ sort $ associationNames cDiagram
   MappingAdvice -> mappingAdvice hasGivenCd
-  DirectionsAdvice -> directionsAdvice False
-  SimplifiedInformation -> simplifiedInformation True
+  DirectionsAdvice b -> directionsAdvice b
+  SimplifiedInformation b -> simplifiedInformation b
   where
     cd = fromClassDiagram cDiagram
     hasGivenCd = Special GivenCd `elem` taskText
@@ -473,8 +476,8 @@ defaultDifferentNamesTaskText = [
       entspricht welchen Links im Objektdiagramm (OD)?
       |],
   Special MappingAdvice,
-  Special DirectionsAdvice,
-  Special SimplifiedInformation
+  Special $ DirectionsAdvice False,
+  Special $ SimplifiedInformation True
   ]
 
 inputHelpText :: Bool -> Output
@@ -631,8 +634,8 @@ differentNamesEvaluation path task cs = do
       ShowMapping -> pure ()
       ShowMappingAndReprintCD -> do
         paragraph $ translate $ do
-          english "Compare with the correctly labeled class diagram:"
-          german "Vergleichen Sie mit dem korrekt beschrifteten Klassendiagramm:"
+          english "Consider the correctly labelled class diagram:"
+          german "Betrachten Sie das korrekt beschriftete Klassendiagramm:"
 
         image $=<< (relabelCd task >>= \relabelledCd ->
           cacheCd (cdDrawSettings task) mempty mLabelLength (fromClassDiagram relabelledCd) path)
@@ -640,8 +643,8 @@ differentNamesEvaluation path task cs = do
         pure ()
       ShowMappingAndReprintOD -> do
         paragraph $ translate $ do
-          english "Compare with the correctly labeled object diagram:"
-          german "Vergleichen Sie mit dem korrekt beschrifteten Objektdiagramm:"
+          english "Consider the correctly labelled object diagram:"
+          german "Betrachten Sie das korrekt beschriftete Objektdiagramm:"
 
         image $=<< (relabelOd task >>= \relabelledOd ->
           cacheOd relabelledOd mLabelLength Forward True path)

@@ -24,7 +24,7 @@ main = do
       putStrLn $ "Seed: " ++ seed
       task <- enterAS defaultEnterASConfig (read s) (read seed)
       print task
-      enterASTask path task `withLang` English
+      enterASTask True path task `withLang` English
       sub <- read <$> getLine
       enterASSyntax task sub `withLang` English
       points <- enterASEvaluation task sub `withLang` English

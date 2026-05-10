@@ -27,9 +27,9 @@ main = do
       putStrLn $ "Seed: " ++ seed
       task <- matchPetri defaultMatchPetriConfig (read s) (read seed)
       print task
-      matchPetriTask path task `withLang` English
+      matchPetriTask True path task `withLang` English
       sub <- read <$> getLine
-      matchPetriSyntax task sub `withLang` English
+      matchPetriSyntax True task sub `withLang` English
       points <- matchPetriEvaluation task sub `withLang` English
       putStrLn $ "Points: " ++ show points
     _ -> error "usage: three parameters required: FilePath (Output Folder) Segment (Int) Seed (Int)"

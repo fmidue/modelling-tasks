@@ -59,15 +59,15 @@ getRandomTask
   :: (MonadAlloy m, MonadFail m, RandomGen g)
   => Int
   -> MatchCdOdConfig
-  -> RandT g m (Map Int Cd, Map Char ([Int], AlloyInstance))
+  -> RandT g m (Map Int Cd, Cd, Map Char ([Int], AlloyInstance))
 getRandomTask searchSpace config = do
   (cd1, cd2, cd3, numClasses) <- getRandomCDs searchSpace config
   alloyInstances <- lift $ getODInstances config cd1 cd2 cd3 numClasses
-  maybeRandomInstances <- takeRandomInstances alloyInstances
+  maybeRandomInstances <- takeRandomInstances (odDistribution config) alloyInstances
   case maybeRandomInstances of
     Nothing      -> getRandomTask searchSpace config
     Just randomInstances -> pure
-      (M.fromList [(1, cd1), (2, cd2)], M.fromList $ zip ['a' ..] randomInstances)
+      (M.fromList [(1, cd1), (2, cd2)], cd3, M.fromList $ zip ['a' ..] randomInstances)
 
 getRandomCDs
   :: (MonadFail m, RandomGen g)

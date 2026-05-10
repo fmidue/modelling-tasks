@@ -51,6 +51,7 @@ import Autolib.Hash                     (Hashable)
 import Autolib.Reader                   (Reader)
 import Autolib.ToDoc                    (ToDoc)
 import Control.Applicative (Alternative ((<|>)))
+import Control.Monad                    (when)
 import Control.Monad.Catch              (MonadThrow)
 import Control.Monad.Trans.Class (lift)
 import Control.OutputCapable.Blocks (
@@ -181,10 +182,11 @@ matchAdSolution task =
 
 matchAdTask
   :: (MonadPlantUml m, MonadWriteFile m, OutputCapable m)
-  => FilePath
+  => Bool
+  -> FilePath
   -> MatchAdInstance
   -> LangM m
-matchAdTask path task = do
+matchAdTask showInputHelp path task = do
   paragraph $ translate $ do
     english "Consider the following activity diagram:"
     german "Betrachten Sie folgendes Aktivitätsdiagramm:"
@@ -199,9 +201,9 @@ matchAdTask path task = do
       sowie die Anzahl jeder anderen Art von Element für
       das gegebene Aktivitätsdiagramm an.
       |]
-  paragraph $ do
+  when showInputHelp $ paragraph $ do
     translate $ do
-      english [i|To do this, enter your answer as in the following example:|]
+      english [i|To do so, state your answer as in the following example:|]
       german [i|Geben Sie dazu Ihre Antwort wie im folgenden Beispiel an:|]
     code $ show matchAdInitial
     pure ()
