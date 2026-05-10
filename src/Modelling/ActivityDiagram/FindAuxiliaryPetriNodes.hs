@@ -86,6 +86,7 @@ import Modelling.PetriNet.Types (
   )
 
 import Control.Applicative (Alternative ((<|>)))
+import Control.Monad                    (when)
 import Control.Monad.Catch              (MonadThrow)
 import Control.Monad.Trans.Class (lift)
 import Control.OutputCapable.Blocks (
@@ -217,10 +218,11 @@ findAuxiliaryPetriNodesSolution' petri = FindAuxiliaryPetriNodesSolution {
 
 findAuxiliaryPetriNodesTask
   :: (MonadPlantUml m, MonadWriteFile m, OutputCapable m)
-  => FilePath
+  => Bool
+  -> FilePath
   -> FindAuxiliaryPetriNodesInstance
   -> LangM m
-findAuxiliaryPetriNodesTask path task = do
+findAuxiliaryPetriNodesTask showInputHelp path task = do
   paragraph $ translate $ do
     english "Consider the following activity diagram:"
     german "Betrachten Sie folgendes Aktivitätsdiagramm:"
@@ -230,9 +232,9 @@ findAuxiliaryPetriNodesTask path task = do
 (places and transitions minus auxiliary places and auxiliary transitions), the count of auxiliary places and the count of auxiliary transitions in the net.|]
     german [iii|Übersetzen Sie das gegebene Aktivitätsdiagramm in ein Petrinetz (auf dem Papier oder in Ihrem Kopf) und geben Sie dann die Gesamtanzahl
 an Nicht-Hilfsknoten (Stellen und Transitionen minus Hilfsstellen und Hilfstransitionen), die Anzahl der Hilfsstellen und die Anzahl der Hilfstransitionen des Netzes an.|]
-  paragraph $ do
+  when showInputHelp $ paragraph $ do
     translate $ do
-      english [i|To do this, enter your answer as in the following example:|]
+      english [i|To do so, state your answer as in the following example:|]
       german [i|Geben Sie dazu Ihre Antwort wie im folgenden Beispiel an:|]
     code $ show findAuxiliaryPetriNodesInitial
     translate $ do

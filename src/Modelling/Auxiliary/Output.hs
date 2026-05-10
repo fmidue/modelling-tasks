@@ -7,6 +7,7 @@
 module Modelling.Auxiliary.Output (
   addPretext,
   checkTaskText,
+  checkTaskTextExcluding,
   directionsAdvice,
   hoveringInformation,
   simplifiedInformation,
@@ -31,7 +32,7 @@ import Control.OutputCapable.Blocks.Type (
   SpecialOutput,
   checkTranslations,
   )
-import Data.List                        ((\\), singleton)
+import Data.List                        ((\\), singleton, intersect)
 import Data.Map                         (Map)
 import Data.String.Interpolate          (iii)
 
@@ -107,9 +108,18 @@ checkTaskText
   :: (Bounded element, Enum element, Eq element, Show element)
   => [SpecialOutput element]
   -> Maybe String
-checkTaskText taskText
-  | x:_ <- allElements \\ usedElements
+checkTaskText = checkTaskTextExcluding []
+
+checkTaskTextExcluding
+  :: (Bounded element, Enum element, Eq element, Show element)
+  => [element]
+  -> [SpecialOutput element]
+  -> Maybe String
+checkTaskTextExcluding excludes taskText
+  | x:_ <- (allElements \\ usedElements) \\ excludes
   = Just [iii|Your task text is incomplete as it is missing '#{show x}'.|]
+  | x:_ <- excludes `intersect` usedElements
+  = Just [iii|Your task text uses '#{show x}', but it is not allowed.|]
   | x:_ <- usedElements \\ allElements
   = Just [iii|
       Your task text is using '#{show x}' at least twice,

@@ -63,11 +63,13 @@ import Modelling.ActivityDiagram.PlantUMLConverter (
 import Modelling.ActivityDiagram.Shuffle (shuffleAdNames)
 import Modelling.Auxiliary.Common       (getFirstInstance)
 import Modelling.PetriNet.Types         (Node, PetriLike)
+import Modelling.PetriNet.Reach.Reach (isNoLonger)
 import Modelling.PetriNet.Reach.Type (State(..), Net(start))
 
 import Control.Applicative (Alternative ((<|>)))
 import Control.Monad (unless, when)
 import Control.Monad.Catch              (MonadThrow)
+import Control.Monad.Extra              (whenJust)
 import Control.Monad.Trans.Class (lift)
 import Control.OutputCapable.Blocks (
   ArticleToUse (IndefiniteArticle),
@@ -106,6 +108,7 @@ data EnterASInstance = EnterASInstance {
   petriNet :: PetriLike Node PetriKey,
   drawSettings :: PlantUmlConfig,
   sampleSequence :: [String],
+  noLongerThan :: Maybe Int,
   showSolution :: Bool,
   addText :: ExtraText
 }
@@ -117,6 +120,7 @@ data EnterASConfig = EnterASConfig {
   maxInstances :: Maybe Integer,
   objectNodeOnEveryPath :: Maybe Bool,
   answerLength :: !(Int, Int),
+  rejectLongerThan :: Maybe Int,
   printSolution :: Bool,
   extraText :: ExtraText
 }
@@ -136,6 +140,7 @@ defaultEnterASConfig = EnterASConfig {
   maxInstances = Just 50,
   objectNodeOnEveryPath = Just True,
   answerLength = (5, 8),
+  rejectLongerThan = Nothing,
   printSolution = True,
   extraText = NoExtraText
 }
@@ -150,7 +155,8 @@ checkEnterASConfig' EnterASConfig {
     adConfig,
     maxInstances,
     objectNodeOnEveryPath,
-    answerLength
+    answerLength,
+    rejectLongerThan
   }
   | Just instances <- maxInstances, instances < 1
     = Just "The parameter 'maxInstances' must either be set to a positive value or to Nothing"
@@ -162,6 +168,10 @@ checkEnterASConfig' EnterASConfig {
   = Just [iii|
     The second value of parameter 'answerLength'
     should be greater than or equal to its first value.
+    |]
+  | maybe False (snd answerLength >) rejectLongerThan
+  = Just [iii|
+    'rejectLongerThan' should be greater than or equal to the second value of 'answerLength'
     |]
   | otherwise
     = Nothing
@@ -207,10 +217,11 @@ enterActionSequence ad petri =
 
 enterASTask
   :: (MonadPlantUml m, MonadWriteFile m, OutputCapable m)
-  => FilePath
+  => Bool
+  -> FilePath
   -> EnterASInstance
   -> LangM m
-enterASTask path task = do
+enterASTask showInputHelp path task = do
   paragraph $ translate $ do
     english "Consider the following activity diagram:"
     german "Betrachten Sie folgendes Aktivitätsdiagramm:"
@@ -219,21 +230,29 @@ enterASTask path task = do
     translate $ do
       english [iii|
         State the action sequence (i.e., a sequence of action nodes)
-        of an execution of this diagram which lets all flows terminate,
-        by entering a list of action names.
-        \n
-        For example, |]
+        of an execution of this diagram which lets all flows terminate.|]
       german [iii|
         Geben Sie die Aktionsfolge (d.h., eine Folge von Aktionsknoten)
-        eines Ablaufs dieses Diagramms an, welcher alle Flüsse terminieren lässt,
-        indem Sie eine Liste von Aktionsnamen angeben.
+        eines Ablaufs dieses Diagramms an, welcher alle Flüsse terminieren lässt.|]
+    when showInputHelp $ do
+     translate $ do
+      english [i|
+        State your answer by entering a list of action names.
+        \n
+        For example, |]
+      german [i|
+        Geben Sie Ihre Antwort an, indem Sie eine Liste von Aktionsnamen eingeben.
         \n
         Zum Beispiel drückt |]
-    code $ show enterASInitial
-    translate $ do
+     code $ show enterASInitial
+     translate $ do
       english [i|expresses the execution of A followed by B (under the assumption that both are action nodes of the diagram).|]
       german [i|die Ausführung von A gefolgt von B aus (unter der Annahme, dass beides Aktionsknoten des Diagramms sind).|]
+     pure ()
     pure ()
+  whenJust (noLongerThan task) $ \maxL -> paragraph $ translate $ do
+    english $ "Your answer must not exceed " ++ show maxL ++ " steps."
+    german $ "Ihre Antwort darf maximal " ++ show maxL ++ " Schritte enthalten."
   extra $ addText task
   pure ()
 
@@ -253,6 +272,8 @@ enterASSyntax task sub = addPretext $ do
   assertion (all (`elem` adNames) sub) $ translate $ do
     english "Referenced node names are part of the given activity diagram?"
     german "Referenzierte Knotennamen sind Bestandteil des gegebenen Aktivitätsdiagramms?"
+  isNoLonger (noLongerThan task) sub
+  pure ()
 
 enterASEvaluation
   :: OutputCapable m
@@ -344,6 +365,7 @@ getEnterASTask config = do
             suppressBranchConditions = hideBranchConditions config
             },
           sampleSequence = sampleSolution $ enterActionSequence x petri,
+          noLongerThan = rejectLongerThan config,
           showSolution = printSolution config,
           addText = extraText config
         }) ad
@@ -397,6 +419,7 @@ defaultEnterASInstance =
   petriNet = convertToPetriNet ad,
   drawSettings = defaultPlantUmlConfig,
   sampleSequence = ["D","E","G","B","F"],
+  noLongerThan = Nothing,
   showSolution = True,
   addText = NoExtraText
 }

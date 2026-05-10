@@ -349,10 +349,11 @@ matchPetriTask
     MonadWriteFile m,
     OutputCapable m
     )
-  => FilePath
+  => Bool
+  -> FilePath
   -> MatchPetriInstance
   -> LangM m
-matchPetriTask path task = do
+matchPetriTask showInputHelp path task = do
   paragraph $ translate $ do
     english "Consider the following activity diagram:"
     german "Betrachten Sie folgendes Aktivitätsdiagramm:"
@@ -374,9 +375,9 @@ matchPetriTask path task = do
       alle Objektknoten/Petrinetzknoten-Paare, die Petrinetzknoten je anderer Elementart
       und alle Hilfsstellen und -transitionen im Petrinetz an.
       |]
-  paragraph $ do
+  when showInputHelp $ paragraph $ do
     translate $ do
-      english [i|To do this, enter your answer as in the following example:|]
+      english [i|To do so, state your answer as in the following example:|]
       german [i|Geben Sie dazu Ihre Antwort wie im folgenden Beispiel an:|]
     code $ show matchPetriInitial
     translate $ do
@@ -421,10 +422,13 @@ matchPetriInitial = MatchPetriSolution {
 
 matchPetriSyntax
   :: OutputCapable m
-  => MatchPetriInstance
+  => Bool
+  -- ^ whether to do a full check. If False, only checks that action and object nodes
+  -- are referenced exactly once.
+  -> MatchPetriInstance
   -> MatchPetriSolution
   -> LangM m
-matchPetriSyntax task sub = addPretext $ do
+matchPetriSyntax fullCheck task sub = addPretext $ do
   let adNames = map name $ filter (\n -> isActionNode n || isObjectNode n) $ nodes $ activityDiagram task
       subNames = map fst (actionNodes sub) ++ map fst (objectNodes sub)
       petriNodeKeys = M.keys $ allNodes $ petriNet task
@@ -438,18 +442,20 @@ matchPetriSyntax task sub = addPretext $ do
         ++ joins sub
         ++ initialNodes sub
         ++ auxiliaryPetriNodes sub
-  assertion (all (`elem` adNames) subNames) $ translate $ do
+  when fullCheck $ do
+   assertion (all (`elem` adNames) subNames) $ translate $ do
     english "Referenced node names were provided within task?"
     german "Referenzierte Knotennamen sind Bestandteil der Aufgabenstellung?"
-  assertion (all (`elem` petriLabels) subLabels) $ translate $ do
+   assertion (all (`elem` petriLabels) subLabels) $ translate $ do
     english "Referenced Petri net nodes were provided within task?"
     german "Referenzierte Petrinetzknoten sind Bestandteil der Aufgabenstellung?"
-  assertion (petriSolutionContainsPetriNodes sub petriNodeKeys) $ translate $ do
+   assertion (petriSolutionContainsPetriNodes sub petriNodeKeys) $ translate $ do
     english "All Petri net nodes are associated to an element in the activity diagram?"
     german "Alle Petrinetzknoten sind einem Element in dem Aktivitätsdiagramm zugeordnet?"
-  assertion (petriSolutionPairwiseDisjunct sub) $ translate $ do
+   assertion (petriSolutionPairwiseDisjunct sub) $ translate $ do
     english "All Petri net nodes are associated uniquely?"
     german "Alle Petrinetzknoten sind eindeutig zugeordnet?"
+   pure ()
   assertion (all (`elem` subNames) adNames) $ translate $ do
     english "All action and object nodes are referenced?"
     german "Alle Aktions- und Objektknoten werden referenziert?"
