@@ -359,10 +359,10 @@ selectASEvaluation task n = do
         english "action sequence"
         german "Aktionsfolge"
       solMap = actionSequences task
-      (solution, validAS) = head $ M.toList $ M.map snd $ M.filter fst solMap
+      solution = head $ M.keys $ M.filter fst solMap
       solutionString =
         if showSolution task
-        then Just . (DefiniteArticle,) $ show validAS
+        then Just . (DefiniteArticle,) $ show solution
         else Nothing
   singleChoice as solutionString solution n
 
