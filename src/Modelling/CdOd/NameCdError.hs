@@ -644,10 +644,14 @@ nameCdErrorSyntax inst x = do
     english "Feedback on chosen reason:"
     german "Hinweis zum gewählten Grund:"
   singleChoiceSyntax False (M.keys $ errorReasons inst) $ reason x
-  paragraph $ translate $ do
-    english "Feedback on chosen relationships:"
-    german "Hinweis zu gewählten Beziehungen:"
-  multipleChoiceSyntax False (map fst $ relevantRelationships inst) (dueTo x)
+  if null (dueTo x)
+    then pure ()
+    else
+      paragraph (translate $ do
+        english "Feedback on chosen relationships:"
+        german "Hinweis zu gewählten Beziehungen:"
+        )
+      *> multipleChoiceSyntax False (map fst $ relevantRelationships inst) (dueTo x)
   pure ()
 
 {-| Grading is done the following way:
@@ -693,8 +697,11 @@ nameCdErrorEvaluation path inst@NameCdErrorInstance {..} x = addPretext $ do
         (dueTo x)
     )
     $>>= \points -> do
-      paragraph $ translate $ classDiagramDescription points
-      paragraph $ image $=<< cacheCd cdDrawSettings mempty Nothing changedCd path
+      if null (dueTo x)
+        then pure ()
+        else
+          paragraph (translate $ classDiagramDescription points)
+          *> paragraph (image $=<< cacheCd cdDrawSettings mempty Nothing changedCd path)
       pure ()
     $>> printSolutionAndAssert True correctAnswer $ fromEither points
   where
