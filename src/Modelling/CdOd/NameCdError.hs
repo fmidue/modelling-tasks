@@ -153,7 +153,7 @@ import Modelling.CdOd.Types (
 import Modelling.Types                  (Change (..))
 
 import Control.Applicative              (Alternative ((<|>)))
-import Control.Monad                    ((>=>), forM, join, when)
+import Control.Monad                    ((>=>), forM, join, when, unless)
 import Control.Monad.Catch              (MonadCatch, MonadThrow)
 import Control.Monad.Except             (runExceptT)
 import Control.OutputCapable.Blocks (
@@ -693,11 +693,10 @@ nameCdErrorEvaluation path inst@NameCdErrorInstance {..} x = addPretext $ do
         (dueTo x)
     )
     $>>= \points -> do
-      if null (dueTo x)
-        then pure ()
-        else
-          paragraph (translate $ classDiagramDescription points)
-          *> paragraph (image $=<< cacheCd cdDrawSettings mempty Nothing changedCd path)
+      unless (null (dueTo x)) $ do
+        paragraph (translate $ classDiagramDescription points)
+        paragraph (image $=<< cacheCd cdDrawSettings mempty Nothing changedCd path)
+        pure ()
       pure ()
     $>> printSolutionAndAssert True correctAnswer $ fromEither points
   where
