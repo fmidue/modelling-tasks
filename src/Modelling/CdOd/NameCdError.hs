@@ -694,8 +694,8 @@ nameCdErrorEvaluation path inst@NameCdErrorInstance {..} x = addPretext $ do
     )
     $>>= \points -> do
      unless (null (dueTo x)) $ do
-      paragraph (translate $ classDiagramDescription points)
-      paragraph (image $=<< cacheCd cdDrawSettings mempty Nothing changedCd path)
+      paragraph $ translate $ classDiagramDescription points
+      paragraph $ image $=<< cacheCd cdDrawSettings mempty Nothing changedCd path
       pure ()
      pure ()
     $>> printSolutionAndAssert True correctAnswer $ fromEither points
