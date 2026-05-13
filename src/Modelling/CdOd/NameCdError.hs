@@ -5,6 +5,7 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE TemplateHaskell #-}
@@ -193,7 +194,7 @@ import Control.Monad.Random
   (MonadRandom, RandT, RandomGen, evalRandT, mkStdGen)
 import Control.Monad.Trans.Class        (MonadTrans (lift))
 import Control.Monad.Trans.State        (put)
-import Data.Aeson.TH                    (Options (..), defaultOptions, deriveJSON)
+import Data.Aeson.TH                    (Options (..), defaultOptions, deriveToJSON)
 import Data.Bifunctor                   (second)
 import Data.ByteString.UTF8             (fromString, toString)
 import Data.Containers.ListUtils        (nubOrd)
@@ -210,7 +211,15 @@ import Data.Maybe                       (catMaybes, listToMaybe, mapMaybe)
 import Data.Ratio                       ((%))
 import Data.Set                         (Set)
 import Data.String.Interpolate          (i, iii)
-import Data.Yaml                        (decodeEither', encode)
+import Data.Yaml                        (
+  FromJSON (..),
+  (.:),
+  (.:?),
+  (.!=),
+  decodeEither',
+  encode,
+  withObject,
+  )
 import GHC.Generics                     (Generic)
 import System.Random.Shuffle            (shuffleM)
 import Text.Parsec                      (parserFail, parserReturn)
@@ -221,7 +230,12 @@ data NameCdErrorAnswer = NameCdErrorAnswer {
   dueTo                       :: [Int]
   } deriving (Generic, Read, Show)
 
-$(deriveJSON defaultOptions {fieldLabelModifier = upperToDash} ''NameCdErrorAnswer)
+$(deriveToJSON defaultOptions {fieldLabelModifier = upperToDash} ''NameCdErrorAnswer)
+
+instance FromJSON NameCdErrorAnswer where
+  parseJSON = withObject "NameCdErrorAnswer" $ \v -> NameCdErrorAnswer
+    <$> v .: "reason"
+    <*> v .:? "due-to" .!= []
 
 instance Reader NameCdErrorAnswer where
   atomic_readerPrec = const parseNameCdErrorAnswer
