@@ -695,7 +695,7 @@ nameCdErrorEvaluation path inst@NameCdErrorInstance {..} x = addPretext $ do
         (dueTo x)
     )
     $>>= \points -> do
-     unless (null (dueTo x)) $ do
+     unless (null (dueTo x) || not solutionHasDueTo) $ do
       paragraph $ translate $ classDiagramDescription points
       paragraph $ image $=<< cacheCd cdDrawSettings mempty Nothing changedCd path
       pure ()
@@ -707,6 +707,7 @@ nameCdErrorEvaluation path inst@NameCdErrorInstance {..} x = addPretext $ do
       annotatedRelationships = annotatedRelationships classDiagram
         \\ map snd chosenRelevant
       }
+    solutionHasDueTo = any (contributingToProblem . annotation . snd) relevant
     chosenRelevant = filter ((`elem` nubOrd (dueTo x)) . fst) relevant
     classDiagramDescription points
       | points == Right 1 = do
