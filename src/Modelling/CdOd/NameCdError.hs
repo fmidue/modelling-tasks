@@ -45,6 +45,8 @@ import qualified Modelling.CdOd.CdAndChanges.Transform as Changes (
 
 import qualified Autolib.ToDoc                    as ToDoc (text)
 import qualified Data.Bimap                       as BM (fromList)
+import qualified Data.Aeson.Key                  as Key (fromString)
+import qualified Data.Aeson.KeyMap               as KM
 import qualified Data.Map                         as M (
   elems,
   filter,
@@ -194,7 +196,9 @@ import Control.Monad.Random
   (MonadRandom, RandT, RandomGen, evalRandT, mkStdGen)
 import Control.Monad.Trans.Class        (MonadTrans (lift))
 import Control.Monad.Trans.State        (put)
-import Data.Aeson.TH                    (Options (..), defaultOptions, deriveToJSON)
+import Data.Aeson                       (Value (Null, Object), toJSON)
+import Data.Aeson.TH                    (Options (fieldLabelModifier), defaultOptions, deriveFromJSON, deriveToJSON)
+import Data.Aeson.Types                 (parseEither)
 import Data.Bifunctor                   (second)
 import Data.ByteString.UTF8             (fromString, toString)
 import Data.Containers.ListUtils        (nubOrd)
@@ -213,12 +217,9 @@ import Data.Set                         (Set)
 import Data.String.Interpolate          (i, iii)
 import Data.Yaml                        (
   FromJSON (..),
-  (.:),
-  (.:?),
-  (.!=),
+  ParseException,
   decodeEither',
   encode,
-  withObject,
   )
 import GHC.Generics                     (Generic)
 import System.Random.Shuffle            (shuffleM)
@@ -231,11 +232,17 @@ data NameCdErrorAnswer = NameCdErrorAnswer {
   } deriving (Generic, Read, Show)
 
 $(deriveToJSON defaultOptions {fieldLabelModifier = upperToDash} ''NameCdErrorAnswer)
+$(deriveFromJSON defaultOptions {fieldLabelModifier = upperToDash} ''NameCdErrorAnswer)
 
-instance FromJSON NameCdErrorAnswer where
-  parseJSON = withObject "NameCdErrorAnswer" $ \v -> NameCdErrorAnswer
-    <$> v .: "reason"
-    <*> v .:? "due-to" .!= []
+ensureDueToForNameCdErrorAnswer :: Value -> Value
+ensureDueToForNameCdErrorAnswer = \case
+  Object objectValue ->
+    let dueToKey = Key.fromString $ upperToDash "dueTo"
+    in case KM.lookup dueToKey objectValue of
+      Nothing -> Object $ KM.insert dueToKey (toJSON ([] :: [Int])) objectValue
+      Just Null -> Object $ KM.insert dueToKey (toJSON ([] :: [Int])) objectValue
+      _ -> Object objectValue
+  value -> value
 
 instance Reader NameCdErrorAnswer where
   atomic_readerPrec = const parseNameCdErrorAnswer
@@ -644,9 +651,12 @@ showNameCdErrorAnswer = toString . encode
 parseNameCdErrorAnswer :: Parser NameCdErrorAnswer
 parseNameCdErrorAnswer = do
   xs <- many anyToken
-  case decodeEither' $ fromString xs of
+  case (decodeEither' (fromString xs) :: Either ParseException Value) of
     Left e -> parserFail $ show e
-    Right r -> parserReturn r
+    Right value ->
+      case parseEither parseJSON $ ensureDueToForNameCdErrorAnswer value of
+        Left e -> parserFail e
+        Right r -> parserReturn r
 
 nameCdErrorSyntax
   :: OutputCapable m
