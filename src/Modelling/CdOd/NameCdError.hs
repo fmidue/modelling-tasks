@@ -196,7 +196,7 @@ import Control.Monad.Random
 import Control.Monad.Trans.Class        (MonadTrans (lift))
 import Control.Monad.Trans.State        (put)
 import Data.Aeson                       (Value (Null, Object), toJSON)
-import Data.Aeson.TH                    (Options (fieldLabelModifier), defaultOptions, deriveJSON)
+import Data.Aeson.TH                    (Options (..), defaultOptions, deriveJSON)
 import Data.Aeson.Types                 (parseEither)
 import Data.Bifunctor                   (second)
 import Data.ByteString.UTF8             (fromString, toString)
