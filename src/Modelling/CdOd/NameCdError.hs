@@ -45,8 +45,8 @@ import qualified Modelling.CdOd.CdAndChanges.Transform as Changes (
 
 import qualified Autolib.ToDoc                    as ToDoc (text)
 import qualified Data.Bimap                       as BM (fromList)
-import qualified Data.Aeson.Key                  as Key (fromString)
-import qualified Data.Aeson.KeyMap               as KM
+import qualified Data.Aeson.Key                   as Key (fromString)
+import qualified Data.Aeson.KeyMap                as KM
 import qualified Data.Map                         as M (
   elems,
   filter,
@@ -197,7 +197,7 @@ import Control.Monad.Random
 import Control.Monad.Trans.Class        (MonadTrans (lift))
 import Control.Monad.Trans.State        (put)
 import Data.Aeson                       (Value (Null, Object), toJSON)
-import Data.Aeson.TH                    (Options (fieldLabelModifier), defaultOptions, deriveFromJSON, deriveToJSON)
+import Data.Aeson.TH                    (Options (fieldLabelModifier), defaultOptions, deriveJSON)
 import Data.Aeson.Types                 (parseEither)
 import Data.Bifunctor                   (second)
 import Data.ByteString.UTF8             (fromString, toString)
@@ -231,8 +231,7 @@ data NameCdErrorAnswer = NameCdErrorAnswer {
   dueTo                       :: [Int]
   } deriving (Generic, Read, Show)
 
-$(deriveToJSON defaultOptions {fieldLabelModifier = upperToDash} ''NameCdErrorAnswer)
-$(deriveFromJSON defaultOptions {fieldLabelModifier = upperToDash} ''NameCdErrorAnswer)
+$(deriveJSON defaultOptions {fieldLabelModifier = upperToDash} ''NameCdErrorAnswer)
 
 ensureDueToForNameCdErrorAnswer :: Value -> Value
 ensureDueToForNameCdErrorAnswer = \case
