@@ -238,10 +238,10 @@ ensureDueToForNameCdErrorAnswer :: Value -> Value
 ensureDueToForNameCdErrorAnswer = \case
   Object objectValue ->
     let dueToKey = Key.fromString $ upperToDash "dueTo"
-    in case KM.lookup dueToKey objectValue of
-      Nothing -> Object $ KM.insert dueToKey (toJSON ([] :: [Int])) objectValue
-      Just Null -> Object $ KM.insert dueToKey (toJSON ([] :: [Int])) objectValue
-      _ -> Object objectValue
+        defaultDueToValue = toJSON ([] :: [Int])
+    in if maybe True (== Null) $ KM.lookup dueToKey objectValue
+      then Object $ KM.insert dueToKey defaultDueToValue objectValue
+      else Object objectValue
   value -> value
 
 instance Reader NameCdErrorAnswer where
