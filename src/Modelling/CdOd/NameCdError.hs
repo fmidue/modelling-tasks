@@ -649,7 +649,7 @@ showNameCdErrorAnswer = toString . encode
 parseNameCdErrorAnswer :: Parser NameCdErrorAnswer
 parseNameCdErrorAnswer = do
   xs <- many anyToken
-  case (decodeEither' (fromString xs) :: Either ParseException Value) of
+  case decodeEither' (fromString xs) :: Either ParseException Value of
     Left e -> parserFail $ show e
     Right value ->
       case parseEither parseJSON $ ensureDueToForNameCdErrorAnswer value of
