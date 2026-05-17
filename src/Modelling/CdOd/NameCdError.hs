@@ -722,8 +722,8 @@ nameCdErrorEvaluation path inst@NameCdErrorInstance {..} x = addPretext $ do
         (dueTo x)
     )
     $>>= \points ->
-     unless (null (dueTo x) || all not solutionDueTo) (do
-      paragraph $ translate $ classDiagramDescription points
+     unless (points == Right 1 || null (dueTo x) || all not solutionDueTo) (do
+      paragraph $ translate classDiagramDescription
       paragraph $ image $=<< cacheCd cdDrawSettings mempty Nothing changedCd path
       pure ()
      )
@@ -735,17 +735,7 @@ nameCdErrorEvaluation path inst@NameCdErrorInstance {..} x = addPretext $ do
         \\ map snd chosenRelevant
       }
     chosenRelevant = filter ((`elem` nubOrd (dueTo x)) . fst) relevant
-    classDiagramDescription points
-      | points == Right 1 = do
-        english [iii|
-          If all relationships you correctly gave as constituting the problem
-          would be removed, the following valid class diagram would result:
-          |]
-        german [iii|
-          Wenn alle von Ihnen korrekterweise als das Problem ausmachend angegebenen
-          Beziehungen entfernt würden,
-          würde das folgende gültige Klassendiagramm entstehen:
-          |]
+    classDiagramDescription
       | any (contributingToProblem . annotation . snd) chosenRelevant = do
         english [iii|
           Nevertheless, the removal of all relationships you gave as
