@@ -44,6 +44,8 @@ import qualified Modelling.CdOd.CdAndChanges.Transform as Changes (
 
 import qualified Autolib.ToDoc                    as ToDoc (text)
 import qualified Data.Bimap                       as BM (fromList)
+import qualified Data.Aeson.Key                   as Key (fromString)
+import qualified Data.Aeson.KeyMap                as KM
 import qualified Data.Map                         as M (
   elems,
   filter,
@@ -153,7 +155,7 @@ import Modelling.CdOd.Types (
 import Modelling.Types                  (Change (..))
 
 import Control.Applicative              (Alternative ((<|>)))
-import Control.Monad                    ((>=>), forM, join, when)
+import Control.Monad                    ((>=>), forM, join, when, unless)
 import Control.Monad.Catch              (MonadCatch, MonadThrow)
 import Control.Monad.Except             (runExceptT)
 import Control.OutputCapable.Blocks (
@@ -193,7 +195,9 @@ import Control.Monad.Random
   (MonadRandom, RandT, RandomGen, evalRandT, mkStdGen)
 import Control.Monad.Trans.Class        (MonadTrans (lift))
 import Control.Monad.Trans.State        (put)
+import Data.Aeson                       (Value (Null, Object), toJSON)
 import Data.Aeson.TH                    (Options (..), defaultOptions, deriveJSON)
+import Data.Aeson.Types                 (parseEither)
 import Data.Bifunctor                   (second)
 import Data.ByteString.UTF8             (fromString, toString)
 import Data.Containers.ListUtils        (nubOrd)
@@ -210,7 +214,12 @@ import Data.Maybe                       (catMaybes, listToMaybe, mapMaybe)
 import Data.Ratio                       ((%))
 import Data.Set                         (Set)
 import Data.String.Interpolate          (i, iii)
-import Data.Yaml                        (decodeEither', encode)
+import Data.Yaml                        (
+  FromJSON (..),
+  ParseException,
+  decodeEither',
+  encode,
+  )
 import GHC.Generics                     (Generic)
 import System.Random.Shuffle            (shuffleM)
 import Text.Parsec                      (parserFail, parserReturn)
@@ -222,6 +231,16 @@ data NameCdErrorAnswer = NameCdErrorAnswer {
   } deriving (Generic, Read, Show)
 
 $(deriveJSON defaultOptions {fieldLabelModifier = upperToDash} ''NameCdErrorAnswer)
+
+ensureDueToForNameCdErrorAnswer :: Value -> Value
+ensureDueToForNameCdErrorAnswer = \case
+  Object objectValue ->
+    let dueToKey = Key.fromString $ upperToDash "dueTo"
+        defaultDueToValue = toJSON ([] :: [Int])
+    in if maybe True (== Null) $ KM.lookup dueToKey objectValue
+      then Object $ KM.insert dueToKey defaultDueToValue objectValue
+      else Object objectValue
+  value -> value
 
 instance Reader NameCdErrorAnswer where
   atomic_readerPrec = const parseNameCdErrorAnswer
@@ -630,9 +649,12 @@ showNameCdErrorAnswer = toString . encode
 parseNameCdErrorAnswer :: Parser NameCdErrorAnswer
 parseNameCdErrorAnswer = do
   xs <- many anyToken
-  case decodeEither' $ fromString xs of
+  case decodeEither' (fromString xs) :: Either ParseException Value of
     Left e -> parserFail $ show e
-    Right r -> parserReturn r
+    Right value ->
+      case parseEither parseJSON $ ensureDueToForNameCdErrorAnswer value of
+        Left e -> parserFail e
+        Right r -> parserReturn r
 
 nameCdErrorSyntax
   :: OutputCapable m
@@ -641,13 +663,20 @@ nameCdErrorSyntax
   -> LangM m
 nameCdErrorSyntax inst x = do
   paragraph $ translate $ do
-    english "Feedback on chosen reason:"
-    german "Hinweis zum gewählten Grund:"
+    english "Regarding the chosen reason:"
+    german "Hinsichtlich des gewählten Grundes:"
   singleChoiceSyntax False (M.keys $ errorReasons inst) $ reason x
-  paragraph $ translate $ do
-    english "Feedback on chosen relationships:"
-    german "Hinweis zu gewählten Beziehungen:"
-  multipleChoiceSyntax False (map fst $ relevantRelationships inst) (dueTo x)
+  if null (dueTo x)
+    then
+      paragraph $ translate $ do
+        english "No relationships chosen."
+        german "Keine Beziehungen gewählt."
+    else do
+      paragraph $ translate $ do
+        english "Regarding the chosen relationships:"
+        german "Hinsichtlich der gewählten Beziehungen:"
+      multipleChoiceSyntax False (map fst $ relevantRelationships inst) (dueTo x)
+      pure ()
   pure ()
 
 {-| Grading is done the following way:
@@ -692,10 +721,12 @@ nameCdErrorEvaluation path inst@NameCdErrorInstance {..} x = addPretext $ do
         solutionDueTo
         (dueTo x)
     )
-    $>>= \points -> do
+    $>>= \points ->
+     unless (null (dueTo x) || all not solutionDueTo) (do
       paragraph $ translate $ classDiagramDescription points
       paragraph $ image $=<< cacheCd cdDrawSettings mempty Nothing changedCd path
       pure ()
+     )
     $>> printSolutionAndAssert True correctAnswer $ fromEither points
   where
     relevant = relevantRelationships inst
