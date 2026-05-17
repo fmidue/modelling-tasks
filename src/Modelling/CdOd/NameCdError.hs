@@ -666,7 +666,13 @@ nameCdErrorSyntax inst x = do
     english "Regarding the chosen reason:"
     german "Hinsichtlich des gewählten Grundes:"
   singleChoiceSyntax False (M.keys $ errorReasons inst) $ reason x
-  unless (null (dueTo x)) $ do
+  if null (dueTo x)
+   then
+    paragraph (translate $ do
+      english "No relationships chosen."
+      german "Keine Beziehungen gewählt."
+    )
+   else do
     paragraph $ translate $ do
       english "Regarding the chosen relationships:"
       german "Hinsichtlich der gewählten Beziehungen:"
