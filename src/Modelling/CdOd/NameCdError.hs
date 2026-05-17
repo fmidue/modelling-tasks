@@ -663,15 +663,15 @@ nameCdErrorSyntax
   -> LangM m
 nameCdErrorSyntax inst x = do
   paragraph $ translate $ do
-    english "Feedback on chosen reason:"
-    german "Hinweis zum gewählten Grund:"
+    english "Regarding the chosen reason:"
+    german "Hinsichtlich des gewählten Grundes:"
   singleChoiceSyntax False (M.keys $ errorReasons inst) $ reason x
   unless (null (dueTo x)) $ do
-   paragraph $ translate $ do
-    english "Feedback on chosen relationships:"
-    german "Hinweis zu gewählten Beziehungen:"
-   multipleChoiceSyntax False (map fst $ relevantRelationships inst) (dueTo x)
-   pure ()
+    paragraph $ translate $ do
+      english "Regarding the chosen relationships:"
+      german "Hinsichtlich der gewählten Beziehungen:"
+    multipleChoiceSyntax False (map fst $ relevantRelationships inst) (dueTo x)
+    pure ()
   pure ()
 
 {-| Grading is done the following way:
