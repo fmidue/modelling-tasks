@@ -174,17 +174,17 @@ deadlockInitial = TransitionsList . reverse . S.toList . transitions . petriNet
 deadlockSyntax
   :: OutputCapable m
   => Bool
-  -- ^ Whether to do a full check. If false, only check for spaceballs pattern
+  -- ^ Whether to do a full check. If False, only check for Spaceballs pattern.
   -> DeadlockInstance Place Transition
   -> [Transition]
   -> LangM m
 deadlockSyntax fullCheck inst ts = do
- when fullCheck $
+ when fullCheck (
   do transitionsValid (petriNet inst) ts
      isNoLonger (noLongerThan inst) ts
      pure ()
- *>
-     rejectSpaceballsPattern (rejectSpaceballsLength inst) ts
+ )
+ *> rejectSpaceballsPattern (rejectSpaceballsLength inst) ts
 
 deadlockEvaluation
   :: (
