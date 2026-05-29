@@ -293,17 +293,17 @@ reachInitial = TransitionsList . reverse . S.toList . transitions . petriNet . n
 reachSyntax
   :: OutputCapable m
   => Bool
-  -- ^ Whether to do a full check. If false, only check for spaceballs pattern
+  -- ^ Whether to do a full check. If False, only check for Spaceballs pattern.
   -> ReachInstance s Transition
   -> [Transition]
   -> LangM m
 reachSyntax fullCheck inst ts =
- when fullCheck $
+ when fullCheck (
   do transitionsValid (petriNet (netGoal inst)) ts
      isNoLonger (noLongerThan inst) ts
      pure ()
-  *>
-     rejectSpaceballsPattern (rejectSpaceballsLength inst) ts
+ ) 
+ *> rejectSpaceballsPattern (rejectSpaceballsLength inst) ts
 
 transitionsValid :: OutputCapable m => Net s Transition -> [Transition] -> LangM m
 transitionsValid n =
