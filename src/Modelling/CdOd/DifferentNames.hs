@@ -544,8 +544,8 @@ stripName = Name . stripNumericPeriod . unName
 differentNamesSyntax
   :: OutputCapable m
   => Bool
-  -- ^ Whether to do a full check. If false, only checks for duplicate use
-  -- of class diagram or object diagram nodes.
+  -- ^ Whether to do a full check. If False, only checks for duplicate use
+  -- of class or object identifiers.
   -> DifferentNamesInstance
   -> [(Name, Name)]
   -> LangM m
