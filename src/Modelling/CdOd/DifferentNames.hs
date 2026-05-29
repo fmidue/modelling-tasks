@@ -543,11 +543,15 @@ stripName = Name . stripNumericPeriod . unName
 
 differentNamesSyntax
   :: OutputCapable m
-  => DifferentNamesInstance
+  => Bool
+  -- ^ Whether to do a full check. If False, only checks for duplicate use
+  -- of class or object identifiers.
+  -> DifferentNamesInstance
   -> [(Name, Name)]
   -> LangM m
-differentNamesSyntax DifferentNamesInstance {..} cs = addPretext $ do
-  yesNo (null invalidMappings) $ translate $ do
+differentNamesSyntax fullCheck DifferentNamesInstance {..} cs = addPretext $ do
+  when fullCheck $ do
+   yesNo (null invalidMappings) $ translate $ do
     english [iii|
       All provided pairs are matching an existing relationship
       and an existing link?
@@ -556,13 +560,14 @@ differentNamesSyntax DifferentNamesInstance {..} cs = addPretext $ do
       Alle angegebenen Paare ordnen einen vorhandenen Link
       einer vorhandenen Beziehung zu?
       |]
-  whenJust (listToMaybe invalidMappings) $ \x ->
+   whenJust (listToMaybe invalidMappings) $ \x ->
     refuse $ paragraph $ translate $ do
       let y = bimap ShowName ShowName x
       english [i|The mapping '#{y}' uses a non-existing identifier.|]
       german [iii|
         Die Zuordnung '#{y}' benutzt einen nicht vorhandenen Bezeichner.
         |]
+   pure ()
   yesNo (null allMappingValues) $ translate $ do
     english "All provided pairs are non-overlapping?"
     german "Alle angegebenen Paare sind nicht überlappend?"
