@@ -302,7 +302,7 @@ reachSyntax fullCheck inst ts =
   do transitionsValid (petriNet (netGoal inst)) ts
      isNoLonger (noLongerThan inst) ts
      pure ()
- ) 
+ )
  *> rejectSpaceballsPattern (rejectSpaceballsLength inst) ts
 
 transitionsValid :: OutputCapable m => Net s Transition -> [Transition] -> LangM m
