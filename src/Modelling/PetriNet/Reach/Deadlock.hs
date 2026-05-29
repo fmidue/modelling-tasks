@@ -178,7 +178,7 @@ deadlockSyntax
   -> DeadlockInstance Place Transition
   -> [Transition]
   -> LangM m
-deadlockSyntax fullCheck inst ts = do
+deadlockSyntax fullCheck inst ts =
  when fullCheck (
   do transitionsValid (petriNet inst) ts
      isNoLonger (noLongerThan inst) ts
