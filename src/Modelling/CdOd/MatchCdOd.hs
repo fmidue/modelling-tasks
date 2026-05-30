@@ -273,7 +273,7 @@ matchingToSolution =
   . fmap (Letters . sort)
   . M.foldrWithKey
       (\(cd, od) doesMatch ->
-        M.insertWith (++) cd (if doesMatch then [od] else []))
+        M.insertWith (++) cd [od | doesMatch])
       M.empty
 
 checkOdDistributionConfig :: Maybe Integer -> OdDistributionConfig -> Maybe String
@@ -594,9 +594,8 @@ matchCdOdEvaluation
   -> Rated m
 matchCdOdEvaluation path MatchCdOdInstance {..} sub' = do
   let sub = toMatching' sub'
-      cds = M.keys diagrams
       sol = fst <$> instances
-      matching = toMatching cds sol
+      matching = toMatching (M.keys diagrams) sol
       refOnlyLetters = M.keys $ M.filter null sol
       what = translations $ do
         english "instances"
