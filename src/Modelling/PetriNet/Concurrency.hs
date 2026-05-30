@@ -141,7 +141,7 @@ import Control.Monad.Random (
   mkStdGen,
   )
 import Control.Monad.Trans              (MonadTrans (lift))
-import Data.Bifunctor                   (Bifunctor (bimap), first)
+import Data.Bifunctor                   (Bifunctor (bimap))
 import Data.Data                        (Data, Typeable)
 import Data.Either                      (isLeft)
 import Data.GraphViz.Commands           (GraphvizCommand (Circo, Fdp))
