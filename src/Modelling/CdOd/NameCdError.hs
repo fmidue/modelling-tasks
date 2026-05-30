@@ -727,7 +727,7 @@ nameCdErrorEvaluation path inst@NameCdErrorInstance {..} x = addPretext $ do
       paragraph $ image $=<< cacheCd cdDrawSettings mempty Nothing changedCd path
       pure ()
      )
-    $>> printSolutionAndAssert True correctAnswer $ fromEither points
+    $>> printSolutionAndAssert (fmap (\(a, s) -> (True, a, s)) correctAnswer) $ fromEither points
   where
     relevant = relevantRelationships inst
     changedCd = unannotateCd $ classDiagram {

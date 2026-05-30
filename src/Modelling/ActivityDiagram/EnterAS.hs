@@ -323,7 +323,7 @@ enterASEvaluation task sub = do
     code $ intercalate ", " objectNamesInSubmission
     pure ()
 
-  printSolutionAndAssert False maybeSolutionString points
+  printSolutionAndAssert (fmap (\(a, s) -> (False, a, s)) maybeSolutionString) points
 
   pure points
 

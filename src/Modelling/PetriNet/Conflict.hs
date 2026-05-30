@@ -291,7 +291,7 @@ findConflictPlacesEvaluation task (conflict, ps) =
   let result = min
         res
         $ (base - size inducing + size correct - size wrong') % base
-  points <- printSolutionAndAssert True ((DefiniteArticle,) . fixSolution <$> ms) result
+  points <- printSolutionAndAssert ((\s -> (True, DefiniteArticle, fixSolution s)) <$> ms) result
   pure points
   where
     assert = continueOrAbort withSol
