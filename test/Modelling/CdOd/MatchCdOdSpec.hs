@@ -1,6 +1,8 @@
+{-# LANGUAGE RecordWildCards #-}
+
 module Modelling.CdOd.MatchCdOdSpec where
 
-import qualified Data.Map                         as M (foldrWithKey, fromList, insertWith, keys, lookup, null, toList)
+import qualified Data.Map                         as M (keys, lookup, null)
 
 import Capabilities.Alloy.IO            ()
 import Modelling.CdOd.MatchCdOd (
@@ -12,6 +14,8 @@ import Modelling.CdOd.MatchCdOd (
   diagrams,
   getODInstances,
   matchCdOd,
+  matchingToSolution,
+  toMatching,
   )
 import Modelling.CdOd.Auxiliary.Util    (alloyInstanceToOd)
 import Modelling.CdOd.Types (
@@ -156,17 +160,8 @@ getOdsFor cd1 cd2 = do
       }
 
 matchCdOdSolution :: MatchCdOdInstance -> [(Int, Letters)]
-matchCdOdSolution MatchCdOdInstance {diagrams = classDiagrams, instances = objectDiagrams} =
-  M.toList
-  . fmap Letters
-  . M.foldrWithKey
-      (\objectLetter (classIndices, _) acc ->
-        foldr
-          (\classIndex -> M.insertWith (++) classIndex [objectLetter])
-          acc
-          classIndices)
-      (M.fromList $ map (\classIndex -> (classIndex, "")) $ M.keys classDiagrams)
-  $ objectDiagrams
+matchCdOdSolution MatchCdOdInstance {..} =
+  matchingToSolution $ toMatching (M.keys diagrams) (fst <$> instances)
 
 cdAInheritsBandAtoB :: Cd
 cdAInheritsBandAtoB = ClassDiagram {

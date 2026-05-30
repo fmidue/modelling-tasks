@@ -24,7 +24,9 @@ module Modelling.CdOd.MatchCdOd (
   matchCdOdEvaluation,
   matchCdOdSyntax,
   matchCdOdTask,
+  matchingToSolution,
   matchingShow,
+  toMatching,
   takeRandomInstances,
   ) where
 
