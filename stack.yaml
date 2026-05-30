@@ -9,7 +9,7 @@ flags:
     alloy-use-sat4j: false
 extra-deps:
   - git: https://github.com/fmidue/output-blocks.git
-    commit: 817cde2700024fe615c3193c12bc4f3b24ad12c7
+    commit: be840655231dd5118ee66e28de3343628882dce3
     subdirs:
       - output-blocks
   - git: https://github.com/fmidue/autotool-capabilities.git

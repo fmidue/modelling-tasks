@@ -716,7 +716,7 @@ nameCdErrorEvaluation path inst@NameCdErrorInstance {..} x = addPretext $ do
   recoverWith 0 (
     singleChoice reasonTranslation Nothing solutionReason (reason x)
       $>> multipleChoice
-        dueToTranslation
+        (Just dueToTranslation)
         Nothing
         solutionDueTo
         (dueTo x)

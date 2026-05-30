@@ -632,7 +632,7 @@ differentNamesEvaluation path task cs = do
           $ differentNamesSolution task
         else Nothing
 
-  reRefuse (multipleChoice what solution solutionMap choices) $ do
+  reRefuse (multipleChoice (Just what) solution solutionMap choices) $ do
     let mLabelLength = Just $ maxLabelLength task
     case showSolution task of
       ShowNothing -> pure ()

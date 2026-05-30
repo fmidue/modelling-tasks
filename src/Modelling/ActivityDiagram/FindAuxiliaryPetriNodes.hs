@@ -273,7 +273,7 @@ findAuxiliaryPetriNodesEvaluation task sub = addPretext $ do
         if showSolution task
         then Just . (DefiniteArticle,) $ show sol
         else Nothing
-  multipleChoice as maybeSolutionString solution sub'
+  multipleChoice (Just as) maybeSolutionString solution sub'
 
 findAuxiliaryPetriNodesSolutionMap
   :: FindAuxiliaryPetriNodesSolution
