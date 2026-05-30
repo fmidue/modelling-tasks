@@ -273,7 +273,7 @@ matchingToSolution =
   . fmap (Letters . sort)
   . M.foldrWithKey
       (\(cd, od) doesMatch ->
-        M.insertWith (<>) cd (if doesMatch then [od] else []))
+        M.insertWith (++) cd (if doesMatch then [od] else []))
       M.empty
 
 checkOdDistributionConfig :: Maybe Integer -> OdDistributionConfig -> Maybe String
