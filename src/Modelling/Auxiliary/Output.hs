@@ -43,12 +43,12 @@ hoveringInformation isCollapsed = collapsed isCollapsed (translations $ do
   ) $ translate $ do
   english [iii|
     When hovering over or clicking on nodes / edges or their
-    labels, the respective diagram elements that belong together are highlighted.
+    labels, these elements are highlighted together.
     |]
   german [iii|
     Beim Bewegen über oder Klicken auf
     Knoten / Kanten oder ihre Beschriftungen
-    werden die jeweils zusammengehörenden Diagrammelemente hervorgehoben.
+    werden diese Elemente zusammen hervorgehoben.
     |]
 
 directionsAdvice :: OutputCapable m => Bool -> LangM m
