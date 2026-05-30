@@ -22,7 +22,6 @@ module Modelling.CdOd.MatchCdOd (
   getODInstances,
   matchCdOd,
   matchCdOdEvaluation,
-  matchCdOdSolution,
   matchCdOdSyntax,
   matchCdOdTask,
   matchingShow,
@@ -270,7 +269,7 @@ toMatching cds m =
 matchingToSolution :: Map (Int, Char) Bool -> [(Int, Letters)]
 matchingToSolution =
   M.toList
-  . fmap (Letters . sort)
+  . fmap Letters
   . M.foldrWithKey
       (\(cd, od) doesMatch ->
         M.insertWith (++) cd [od | doesMatch])
@@ -641,10 +640,6 @@ matchCdOdEvaluation path MatchCdOdInstance {..} sub' = do
     toMatching' :: Foldable f => f (Int, Letters) -> [(Int, Char)]
     toMatching' =
       foldr (\(c, ys) xs -> foldr ((:) . (c,)) xs (lettersList ys)) []
-
-matchCdOdSolution :: MatchCdOdInstance -> [(Int, Letters)]
-matchCdOdSolution MatchCdOdInstance {..} =
-  matchingToSolution $ toMatching (M.keys diagrams) (fst <$> instances)
 
 matchCdOd
   :: (MonadAlloy m, MonadCatch m, MonadFail m)

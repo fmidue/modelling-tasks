@@ -1,17 +1,17 @@
 module Modelling.CdOd.MatchCdOdSpec where
 
-import qualified Data.Map                         as M (lookup, null)
+import qualified Data.Map                         as M (foldrWithKey, fromList, insertWith, keys, lookup, null, toList)
 
 import Capabilities.Alloy.IO            ()
 import Modelling.CdOd.MatchCdOd (
   MatchCdOdConfig (objectConfig),
+  MatchCdOdInstance (..),
   checkMatchCdOdConfig,
   defaultMatchCdOdConfig,
   defaultMatchCdOdInstance,
   diagrams,
   getODInstances,
   matchCdOd,
-  matchCdOdSolution,
   )
 import Modelling.CdOd.Auxiliary.Util    (alloyInstanceToOd)
 import Modelling.CdOd.Types (
@@ -154,6 +154,19 @@ getOdsFor cd1 cd2 = do
       linksPerObjectLimits = (0, Just 2),
       objectLimits = (2, 2)
       }
+
+matchCdOdSolution :: MatchCdOdInstance -> [(Int, Letters)]
+matchCdOdSolution MatchCdOdInstance {diagrams = classDiagrams, instances = objectDiagrams} =
+  M.toList
+  . fmap Letters
+  . M.foldrWithKey
+      (\objectLetter (classIndices, _) acc ->
+        foldr
+          (\classIndex -> M.insertWith (++) classIndex [objectLetter])
+          acc
+          classIndices)
+      (M.fromList $ map (\classIndex -> (classIndex, "")) $ M.keys classDiagrams)
+  $ objectDiagrams
 
 cdAInheritsBandAtoB :: Cd
 cdAInheritsBandAtoB = ClassDiagram {
