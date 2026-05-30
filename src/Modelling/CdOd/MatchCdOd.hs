@@ -33,12 +33,13 @@ import qualified Modelling.CdOd.CdAndChanges.Transform as Changes (transform)
 
 import qualified Data.Bimap                       as BM (fromList, insert)
 import qualified Data.Map                         as M (
-  adjust,
+  empty,
   elems,
   filter,
   foldrWithKey,
   fromAscList,
   fromList,
+  insertWith,
   keys,
   lookup,
   size,
@@ -267,16 +268,13 @@ toMatching cds m =
 
 -- | Reconstruct grouped letter solutions from a pairwise matching map.
 matchingToSolution :: Map (Int, Char) Bool -> [(Int, Letters)]
-matchingToSolution matching =
+matchingToSolution =
   M.toList
   . fmap (Letters . sort)
-  $ M.foldrWithKey
+  . M.foldrWithKey
       (\(cd, od) doesMatch ->
-        if doesMatch
-        then M.adjust (od:) cd
-        else id)
-      (M.fromList $ map ((, []) . fst) $ M.keys matching)
-      matching
+        M.insertWith (<>) cd (if doesMatch then [od] else ""))
+      M.empty
 
 checkOdDistributionConfig :: Maybe Integer -> OdDistributionConfig -> Maybe String
 checkOdDistributionConfig maxInstances OdDistributionConfig {..}
