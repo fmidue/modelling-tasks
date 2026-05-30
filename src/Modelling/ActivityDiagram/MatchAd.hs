@@ -243,17 +243,14 @@ matchAdEvaluation
   -> MatchAdSolution
   -> Rated m
 matchAdEvaluation task sub = do
-  let as = translations $ do
-        english "answer parts"
-        german "Teilantworten"
-      sol = matchAdSolution task
+  let sol = matchAdSolution task
       solutionString =
         if showSolution task
         then Just . (DefiniteArticle,) $ show sol
         else Nothing
       solution = matchAdSolutionMap sol
       sub' = M.keys $ matchAdSolutionMap sub
-  multipleChoice (Just as) solutionString solution sub'
+  multipleChoice Nothing solutionString solution sub'
 
 matchAdSolutionMap
   :: MatchAdSolution
