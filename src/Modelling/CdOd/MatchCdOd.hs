@@ -595,7 +595,7 @@ matchCdOdEvaluation path task@MatchCdOdInstance {..} sub' = do
         then Just . (DefiniteArticle,) . show . matchingShow
           $ matchCdOdSolution task
         else Nothing
-  reRefuse (multipleChoice what solution matching sub) $
+  reRefuse (multipleChoice (Just what) solution matching sub) $
     when showSolution $ do
       unless (Special GivenCds `elem` taskText) $ do
         paragraph $ translate $ do

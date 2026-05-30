@@ -253,7 +253,7 @@ matchAdEvaluation task sub = do
         else Nothing
       solution = matchAdSolutionMap sol
       sub' = M.keys $ matchAdSolutionMap sub
-  multipleChoice as solutionString solution sub'
+  multipleChoice (Just as) solutionString solution sub'
 
 matchAdSolutionMap
   :: MatchAdSolution

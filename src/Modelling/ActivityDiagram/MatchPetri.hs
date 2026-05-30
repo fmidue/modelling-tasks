@@ -480,7 +480,7 @@ matchPetriEvaluation task sub = do
         else Nothing
       solution = matchPetriSolutionMap sol
       sub' = M.keys $ matchPetriSolutionMap sub
-  multipleChoice as maybeSolutionString solution sub'
+  multipleChoice (Just as) maybeSolutionString solution sub'
 
 matchPetriSolutionMap
   :: MatchPetriSolution
