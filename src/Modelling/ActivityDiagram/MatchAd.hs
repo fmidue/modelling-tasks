@@ -66,7 +66,6 @@ import Control.OutputCapable.Blocks (
   extra,
   german,
   translate,
-  translations,
   multipleChoice,
   )
 import Control.Monad.Random (
