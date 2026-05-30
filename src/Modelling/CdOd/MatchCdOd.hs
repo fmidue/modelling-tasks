@@ -266,16 +266,17 @@ toMatching cds m =
   M.fromList [((cd, od), cd `elem` cdList) | cd <- cds, (od, cdList) <- M.toList m]
 
 -- | Reconstruct grouped letter solutions from a pairwise matching map.
-matchingToSolution :: [Int] -> Map (Int, Char) Bool -> [(Int, Letters)]
-matchingToSolution cds =
+matchingToSolution :: Map (Int, Char) Bool -> [(Int, Letters)]
+matchingToSolution matching =
   M.toList
   . fmap (Letters . sort)
-  . M.foldrWithKey
+  $ M.foldrWithKey
       (\(cd, od) doesMatch ->
         if doesMatch
         then M.adjust (od:) cd
         else id)
-      (M.fromList $ map (, []) cds)
+      (M.fromList $ map ((, []) . fst) $ M.keys matching)
+      matching
 
 checkOdDistributionConfig :: Maybe Integer -> OdDistributionConfig -> Maybe String
 checkOdDistributionConfig maxInstances OdDistributionConfig {..}
@@ -605,7 +606,7 @@ matchCdOdEvaluation path MatchCdOdInstance {..} sub' = do
       solution =
         if showSolution
         then Just . (DefiniteArticle,) . show . matchingShow
-          $ matchingToSolution cds matching
+          $ matchingToSolution matching
         else Nothing
   reRefuse (multipleChoice (Just what) solution matching sub) $
     when showSolution $ do
@@ -646,9 +647,7 @@ matchCdOdEvaluation path MatchCdOdInstance {..} sub' = do
 
 matchCdOdSolution :: MatchCdOdInstance -> [(Int, Letters)]
 matchCdOdSolution MatchCdOdInstance {..} =
-  matchingToSolution cds $ toMatching cds (fst <$> instances)
-  where
-    cds = M.keys diagrams
+  matchingToSolution $ toMatching (M.keys diagrams) (fst <$> instances)
 
 matchCdOd
   :: (MonadAlloy m, MonadCatch m, MonadFail m)
