@@ -11,6 +11,7 @@ import Modelling.CdOd.MatchCdOd (
   diagrams,
   getODInstances,
   matchCdOd,
+  matchCdOdSolution,
   )
 import Modelling.CdOd.Auxiliary.Util    (alloyInstanceToOd)
 import Modelling.CdOd.Types (
@@ -27,6 +28,7 @@ import Modelling.CdOd.Types (
   relationshipName,
   )
 import Modelling.Auxiliary.Common       (oneOf)
+import Modelling.Types                  (Letters (..))
 
 import Control.Monad.Random             (randomIO)
 import Control.Monad.Except             (runExceptT)
@@ -53,6 +55,10 @@ spec = do
       it "reproducibly generates defaultMatchCdOdInstance" $
         matchCdOd defaultMatchCdOdConfig 0 0
         `shouldReturn` defaultMatchCdOdInstance
+  describe "matchCdOdSolution" $
+    it "returns expected default mapping" $
+      matchCdOdSolution defaultMatchCdOdInstance
+      `shouldBe` [(1, Letters "ae"), (2, Letters "cd")]
   describe "getODsFor" $ do
     it "does not generate specific false instance" $ ioProperty $ do
       getOdsFor cdAggregateBofAs cdAtoB
