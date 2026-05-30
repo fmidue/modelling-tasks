@@ -470,17 +470,14 @@ matchPetriEvaluation
   -> MatchPetriSolution
   -> Rated m
 matchPetriEvaluation task sub = do
-  let as = translations $ do
-        english "answer parts"
-        german "Teilantworten"
-      sol = matchPetriSolution task
+  let sol = matchPetriSolution task
       maybeSolutionString =
         if showSolution task
         then Just . (DefiniteArticle,) $ show sol
         else Nothing
       solution = matchPetriSolutionMap sol
       sub' = M.keys $ matchPetriSolutionMap sub
-  multipleChoice as maybeSolutionString solution sub'
+  multipleChoice Nothing maybeSolutionString solution sub'
 
 matchPetriSolutionMap
   :: MatchPetriSolution

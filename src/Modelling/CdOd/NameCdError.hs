@@ -710,13 +710,13 @@ nameCdErrorEvaluation path inst@NameCdErrorInstance {..} x = addPretext $ do
         $ map (second (contributingToProblem . annotation))
         relevant
       correctAnswer
-        | showSolution = Just . (DefiniteArticle,)
+        | showSolution = Just . (True,DefiniteArticle,)
           $ toString $ encode $ nameCdErrorSolution inst
         | otherwise = Nothing
   recoverWith 0 (
     singleChoice reasonTranslation Nothing solutionReason (reason x)
       $>> multipleChoice
-        dueToTranslation
+        (Just dueToTranslation)
         Nothing
         solutionDueTo
         (dueTo x)
@@ -727,7 +727,7 @@ nameCdErrorEvaluation path inst@NameCdErrorInstance {..} x = addPretext $ do
       paragraph $ image $=<< cacheCd cdDrawSettings mempty Nothing changedCd path
       pure ()
      )
-    $>> printSolutionAndAssert True correctAnswer $ fromEither points
+    $>> printSolutionAndAssert correctAnswer $ fromEither points
   where
     relevant = relevantRelationships inst
     changedCd = unannotateCd $ classDiagram {

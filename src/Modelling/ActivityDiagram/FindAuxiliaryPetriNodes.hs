@@ -263,17 +263,14 @@ findAuxiliaryPetriNodesEvaluation
   -> FindAuxiliaryPetriNodesSolution
   -> Rated m
 findAuxiliaryPetriNodesEvaluation task sub = addPretext $ do
-  let as = translations $ do
-        english "answer parts"
-        german "Teilantworten"
-      sol = findAuxiliaryPetriNodesSolution task
+  let sol = findAuxiliaryPetriNodesSolution task
       solution = findAuxiliaryPetriNodesSolutionMap sol
       sub' = M.keys $ findAuxiliaryPetriNodesSolutionMap sub
       maybeSolutionString =
         if showSolution task
         then Just . (DefiniteArticle,) $ show sol
         else Nothing
-  multipleChoice as maybeSolutionString solution sub'
+  multipleChoice Nothing maybeSolutionString solution sub'
 
 findAuxiliaryPetriNodesSolutionMap
   :: FindAuxiliaryPetriNodesSolution
