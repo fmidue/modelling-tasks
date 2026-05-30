@@ -79,9 +79,6 @@ import Data.Map (Map)
 import Data.Maybe (isJust, isNothing, fromJust)
 import Data.String.Interpolate (i, iii)
 import GHC.Generics (Generic)
-import Modelling.Auxiliary.Output (
-  addPretext,
-  )
 import System.Random.Shuffle (shuffleM)
 
 data MatchAdInstance = MatchAdInstance {
@@ -229,7 +226,7 @@ matchAdSyntax
   => MatchAdInstance
   -> MatchAdSolution
   -> LangM m
-matchAdSyntax task sub = addPretext $ do
+matchAdSyntax task sub = do
   let adNames = map name $ filter (\n -> isActionNode n || isObjectNode n) $ nodes $ activityDiagram task
       subNames = actionNodeNames sub ++ objectNodeNames sub
   assertion (all (`elem` adNames) subNames) $ translate $ do

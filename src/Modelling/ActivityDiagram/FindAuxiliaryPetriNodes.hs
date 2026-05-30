@@ -71,9 +71,6 @@ import Modelling.ActivityDiagram.PlantUMLConverter (
   drawAdToFile,
   )
 import Modelling.Auxiliary.Common       (getFirstInstance)
-import Modelling.Auxiliary.Output (
-  addPretext,
-  )
 import Modelling.PetriNet.Types (
   checkPetriNodeCount,
   Net (..),
@@ -261,7 +258,7 @@ findAuxiliaryPetriNodesEvaluation
   => FindAuxiliaryPetriNodesInstance
   -> FindAuxiliaryPetriNodesSolution
   -> Rated m
-findAuxiliaryPetriNodesEvaluation task sub = addPretext $ do
+findAuxiliaryPetriNodesEvaluation task sub = do
   let sol = findAuxiliaryPetriNodesSolution task
       solution = findAuxiliaryPetriNodesSolutionMap sol
       sub' = M.keys $ findAuxiliaryPetriNodesSolutionMap sub
