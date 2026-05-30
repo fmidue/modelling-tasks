@@ -417,7 +417,7 @@ assertReachPoints aCorrectSolution p size inst ts eitherOutcome = do
         eitherOutcome
   printSolutionAndAssertWithMinimum
     (MinimumThreshold $ 1 % 3)
-    ((\s -> (False, IndefiniteArticle, s)) <$> aCorrectSolution)
+    ((False,IndefiniteArticle,) <$> aCorrectSolution)
     points
   where
     partly x = partiallyCorrect x $ size inst

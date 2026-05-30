@@ -290,7 +290,7 @@ enterASEvaluation task sub = do
       points = if correct then 1 else 0
       maybeSolutionString =
         if showSolution task
-        then Just . (IndefiniteArticle,) $ show $ sampleSequence task
+        then Just . (False,IndefiniteArticle,) $ show $ sampleSequence task
         else Nothing
 
   yesNo correct $ translate $ do
@@ -323,7 +323,7 @@ enterASEvaluation task sub = do
     code $ intercalate ", " objectNamesInSubmission
     pure ()
 
-  printSolutionAndAssert (fmap (\(a, s) -> (False, a, s)) maybeSolutionString) points
+  printSolutionAndAssert maybeSolutionString points
 
   pure points
 
