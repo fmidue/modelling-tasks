@@ -162,13 +162,13 @@ deadlockTask showInputHelp path inst = do
   lift (drawToFile (not $ showPlaceNames inst) False path (drawUsing inst) (petriNet inst))
   $>>= \img ->
     reportReachFor
-      showInputHelp
-      img
-      (noLongerThan inst)
-      (withLengthHint inst)
-      (minLength inst)
-      (withMinLengthHint inst)
-      Nothing
+    showInputHelp
+    img
+    (noLongerThan inst)
+    (withLengthHint inst)
+    (minLength inst)
+    (withMinLengthHint inst)
+    Nothing
     *> extra (addText inst)
 
 deadlockInitial :: DeadlockInstance s Transition -> TransitionsList

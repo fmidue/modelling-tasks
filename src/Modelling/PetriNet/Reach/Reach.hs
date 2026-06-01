@@ -184,15 +184,14 @@ reachTask showInputHelp path inst = do
     else pure (Right $ show $ goal (netGoal inst))
   $>>= \g ->
     lift (drawFileWithSettings n)
-  $>>= \img ->
-    reportReachFor
-      showInputHelp
-      img
-      (noLongerThan inst)
-      (withLengthHint inst)
-      (minLength inst)
-      (withMinLengthHint inst)
-      (Just g)
+  $>>= \img -> reportReachFor
+    showInputHelp
+    img
+    (noLongerThan inst)
+    (withLengthHint inst)
+    (minLength inst)
+    (withMinLengthHint inst)
+    (Just g)
     *> extra (addText inst)
   where
     n = petriNet (netGoal inst)
