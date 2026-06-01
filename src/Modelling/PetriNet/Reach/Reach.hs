@@ -208,8 +208,7 @@ reportReachFor
   -> Maybe (Either FilePath String)
   -> ExtraText
   -> LangM m
-reportReachFor showInputHelp img noLonger lengthHint minLength showMinLengthHint maybeGoal addText = (
-  do
+reportReachFor showInputHelp img noLonger lengthHint minLength showMinLengthHint maybeGoal addText = do
   paragraph $ translate $ do
     english "For the Petri net"
     german "Gesucht ist für das Petrinetz"
@@ -290,8 +289,8 @@ reportReachFor showInputHelp img noLonger lengthHint minLength showMinLengthHint
           english "Hint on solution length"
           german "Hinweis zur Lösungslänge"
   unless (null hints) $ collapsed True titleText $ sequenceA_ hints
+  extra addText
   pure ()
-  ) *> extra addText
 
 reachInitial :: ReachInstance s Transition -> TransitionsList
 reachInitial = TransitionsList . reverse . S.toList . transitions . petriNet . netGoal
