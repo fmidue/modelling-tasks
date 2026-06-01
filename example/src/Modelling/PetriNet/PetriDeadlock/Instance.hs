@@ -3,6 +3,7 @@ module Modelling.PetriNet.PetriDeadlock.Instance where
 import qualified Data.Map                         as M (fromList)
 import qualified Data.Set                         as S (fromList)
 
+import Control.OutputCapable.Blocks       (ExtraText(..))
 import Data.List.NonEmpty                 (NonEmpty((:|)))
 import Modelling.PetriNet.Reach.Deadlock (DeadlockInstance (..))
 import Modelling.PetriNet.Reach.Type    (Capacity (..), Net (..), State (..))
@@ -43,5 +44,6 @@ examWs2024 = DeadlockInstance {
   shortestSolutions = Left ([] :| []), -- TO DO: add a solution here
   withLengthHint = Just 14,
   withMinLengthHint = True,
+  addText = NoExtraText,
   rejectSpaceballsLength = Nothing
   }

@@ -5,6 +5,7 @@ module Modelling.PetriNet.PetriReach.Config where
 import Modelling.PetriNet.Reach.Reach   (ReachConfig(..), NetGoalConfig(..))
 import Modelling.PetriNet.Reach.Filter  (defaultFilterConfig, FilterConfig(..))
 import Modelling.PetriNet.Reach.Type    (Capacity(..), TransitionBehaviorConstraints(..), ArrowDensityConstraints(..))
+import Control.OutputCapable.Blocks     (ExtraText(..))
 import Data.GraphViz.Commands           (GraphvizCommand(..))
 import Data.Ratio                       ((%))
 
@@ -40,6 +41,7 @@ task2023_27 = ReachConfig {
   showMinLengthHint = True,
   showTargetNet = True,
   showPlaceNamesInNet = False,
+  extraText = NoExtraText,
   filterConfig = defaultFilterConfig { absentTransitionsRequirement = 0, forbiddenCycleLengths = [], requireCycleLengthsAny = [] }
   }
 
@@ -75,6 +77,7 @@ task2023_28 = ReachConfig {
   showMinLengthHint = True,
   showTargetNet = True,
   showPlaceNamesInNet = False,
+  extraText = NoExtraText,
   filterConfig = defaultFilterConfig { forbiddenCycleLengths = [], requireCycleLengthsAny = [] }
   }
 
@@ -122,6 +125,7 @@ task2024_60 = ReachConfig {
   showMinLengthHint = True,
   showTargetNet = True,
   showPlaceNamesInNet = False,
+  extraText = NoExtraText,
   filterConfig = defaultFilterConfig { absentTransitionsRequirement = 0, forbiddenCycleLengths = [], requireCycleLengthsAny = [] }
   }
 
@@ -163,6 +167,7 @@ task2025_27 = ReachConfig {
   showMinLengthHint = True,
   showTargetNet = True,
   showPlaceNamesInNet = False,
+  extraText = NoExtraText,
   filterConfig = FilterConfig {
     rejectGroupedRepeats = True,
     repetitiveSubsequenceThreshold = Just 4,
@@ -214,6 +219,7 @@ task2025_28 = ReachConfig {
   showMinLengthHint = True,
   showTargetNet = True,
   showPlaceNamesInNet = False,
+  extraText = NoExtraText,
   filterConfig = FilterConfig {
     rejectGroupedRepeats = True,
     repetitiveSubsequenceThreshold = Just 3,
