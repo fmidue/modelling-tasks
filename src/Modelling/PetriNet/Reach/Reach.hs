@@ -114,11 +114,13 @@ import Modelling.PetriNet.Reach.ConfigValidation (
   )
 import Control.OutputCapable.Blocks (
   ArticleToUse (IndefiniteArticle),
+  ExtraText (..),
   GenericOutputCapable (assertion, code, image, indent, refuse, paragraph, text),
   LangM,
   MinimumThreshold (MinimumThreshold),
   OutputCapable,
   Rated,
+  extra,
   collapsed,
   english,
   german,
@@ -182,14 +184,16 @@ reachTask showInputHelp path inst = do
     else pure (Right $ show $ goal (netGoal inst))
   $>>= \g ->
     lift (drawFileWithSettings n)
-  $>>= \img -> reportReachFor
-    showInputHelp
-    img
-    (noLongerThan inst)
-    (withLengthHint inst)
-    (minLength inst)
-    (withMinLengthHint inst)
-    (Just g)
+  $>>= \img ->
+    reportReachFor
+      showInputHelp
+      img
+      (noLongerThan inst)
+      (withLengthHint inst)
+      (minLength inst)
+      (withMinLengthHint inst)
+      (Just g)
+    *> extra (addText inst)
   where
     n = petriNet (netGoal inst)
     drawFileWithSettings = drawToFile (not $ showPlaceNames inst) False path (drawUsing (netGoal inst))
@@ -483,6 +487,7 @@ data ReachInstance s t = ReachInstance {
   shortestSolutions :: Either (NonEmpty [t]) (NonEmpty [t]),
   withLengthHint    :: Maybe Int,
   withMinLengthHint :: Bool,
+  addText           :: ExtraText,
   -- | Minimum length of Spaceballs PIN pattern to reject during syntax checking.
   -- If set to @Just n@, sequences starting with @n@ or more consecutive transitions
   -- (e.g., @[t1, t2, t3, t4]@) will be rejected.
@@ -519,6 +524,7 @@ bimapReachInstance f g ReachInstance {..} = ReachInstance {
     shortestSolutions = bimap (fmap (map g)) (fmap (map g)) shortestSolutions,
     withLengthHint    = withLengthHint,
     withMinLengthHint = withMinLengthHint,
+    addText           = addText,
     rejectSpaceballsLength = rejectSpaceballsLength
     }
 
@@ -552,6 +558,7 @@ data ReachConfig = ReachConfig {
   showMinLengthHint   :: Bool,
   showTargetNet       :: Bool,
   showPlaceNamesInNet :: Bool,
+  extraText           :: ExtraText,
   filterConfig        :: FilterConfig
   }
   deriving (Generic, Read, Show)
@@ -605,6 +612,7 @@ defaultReachConfig = ReachConfig {
   showMinLengthHint   = True,
   showTargetNet       = True,
   showPlaceNamesInNet = False,
+  extraText           = NoExtraText,
   filterConfig        = defaultFilterConfig { forbiddenCycleLengths = [], requireCycleLengthsAny = [3], transitionCoverageRequirement = 1 % 2 }
   }
 
@@ -623,6 +631,7 @@ defaultReachInstance = ReachInstance {
   shortestSolutions = Left ([] :| []), -- TO DO: add a solution
   withLengthHint    = Just 12,
   withMinLengthHint = False,
+  addText           = NoExtraText,
   rejectSpaceballsLength = Nothing
 }
 
@@ -778,5 +787,6 @@ generateReach ReachConfig {..} seed = do
     withLengthHint    =
       if showLengthHint then Just $ maxTransitionLength netGoalConfig else Nothing,
     withMinLengthHint = showMinLengthHint,
+    addText           = extraText,
     rejectSpaceballsLength = spaceballsPrefixThreshold filterConfig
     }
