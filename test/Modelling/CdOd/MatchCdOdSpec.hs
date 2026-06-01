@@ -59,8 +59,8 @@ spec = do
       it "reproducibly generates defaultMatchCdOdInstance" $
         matchCdOd defaultMatchCdOdConfig 0 0
         `shouldReturn` defaultMatchCdOdInstance
-  describe "matchCdOdSolution" $
-    it "returns expected default mapping" $
+  describe "matchingToSolution . toMatching" $
+    it "returns expected mapping for default instance" $
       matchCdOdSolution defaultMatchCdOdInstance
       `shouldBe` [(1, Letters "ae"), (2, Letters "cd")]
   describe "getODsFor" $ do
