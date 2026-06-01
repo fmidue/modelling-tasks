@@ -22,10 +22,11 @@ module Modelling.CdOd.MatchCdOd (
   getODInstances,
   matchCdOd,
   matchCdOdEvaluation,
-  matchCdOdSolution,
   matchCdOdSyntax,
   matchCdOdTask,
+  matchingToSolution,
   matchingShow,
+  toMatching,
   takeRandomInstances,
   ) where
 
@@ -33,15 +34,15 @@ import qualified Modelling.CdOd.CdAndChanges.Transform as Changes (transform)
 
 import qualified Data.Bimap                       as BM (fromList, insert)
 import qualified Data.Map                         as M (
-  adjust,
+  empty,
   elems,
   filter,
   foldrWithKey,
   fromAscList,
   fromList,
+  insertWith,
   keys,
   lookup,
-  map,
   size,
   toList,
   traverseWithKey,
@@ -265,6 +266,16 @@ defaultMatchCdOdConfig
 toMatching :: [Int] -> Map Char [Int] -> Map (Int, Char) Bool
 toMatching cds m =
   M.fromList [((cd, od), cd `elem` cdList) | cd <- cds, (od, cdList) <- M.toList m]
+
+-- | Reconstruct grouped letter solutions from a pairwise matching map.
+matchingToSolution :: Map (Int, Char) Bool -> [(Int, Letters)]
+matchingToSolution =
+  M.toList
+  . fmap Letters
+  . M.foldrWithKey
+      (\(cd, od) doesMatch ->
+        M.insertWith (++) cd [od | doesMatch])
+      M.empty
 
 checkOdDistributionConfig :: Maybe Integer -> OdDistributionConfig -> Maybe String
 checkOdDistributionConfig maxInstances OdDistributionConfig {..}
@@ -582,7 +593,7 @@ matchCdOdEvaluation
   -> MatchCdOdInstance
   -> t (Int, Letters)
   -> Rated m
-matchCdOdEvaluation path task@MatchCdOdInstance {..} sub' = do
+matchCdOdEvaluation path MatchCdOdInstance {..} sub' = do
   let sub = toMatching' sub'
       sol = fst <$> instances
       matching = toMatching (M.keys diagrams) sol
@@ -593,7 +604,7 @@ matchCdOdEvaluation path task@MatchCdOdInstance {..} sub' = do
       solution =
         if showSolution
         then Just . (DefiniteArticle,) . show . matchingShow
-          $ matchCdOdSolution task
+          $ matchingToSolution matching
         else Nothing
   reRefuse (multipleChoice (Just what) solution matching sub) $
     when showSolution $ do
@@ -631,14 +642,6 @@ matchCdOdEvaluation path task@MatchCdOdInstance {..} sub' = do
     toMatching' :: Foldable f => f (Int, Letters) -> [(Int, Char)]
     toMatching' =
       foldr (\(c, ys) xs -> foldr ((:) . (c,)) xs (lettersList ys)) []
-
-matchCdOdSolution :: MatchCdOdInstance -> [(Int, Letters)]
-matchCdOdSolution task = M.toList $ reverseMapping (fst <$> instances task)
-  where
-    reverseMapping :: Map Char [Int] -> Map Int Letters
-    reverseMapping = fmap (fmap Letters) . M.foldrWithKey
-      (\x ys xs -> foldr (M.adjust (x:)) xs ys)
-      $ M.map (const []) (diagrams task)
 
 matchCdOd
   :: (MonadAlloy m, MonadCatch m, MonadFail m)
