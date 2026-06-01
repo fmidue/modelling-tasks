@@ -192,7 +192,7 @@ reachTask showInputHelp path inst = do
     (minLength inst)
     (withMinLengthHint inst)
     (Just g)
-    *> extra (addText inst)
+    (addText inst)
   where
     n = petriNet (netGoal inst)
     drawFileWithSettings = drawToFile (not $ showPlaceNames inst) False path (drawUsing (netGoal inst))
@@ -206,8 +206,10 @@ reportReachFor
   -> Int
   -> Bool
   -> Maybe (Either FilePath String)
+  -> ExtraText
   -> LangM m
-reportReachFor showInputHelp img noLonger lengthHint minLength showMinLengthHint maybeGoal = do
+reportReachFor showInputHelp img noLonger lengthHint minLength showMinLengthHint maybeGoal addText = (
+  do
   paragraph $ translate $ do
     english "For the Petri net"
     german "Gesucht ist für das Petrinetz"
@@ -289,6 +291,7 @@ reportReachFor showInputHelp img noLonger lengthHint minLength showMinLengthHint
           german "Hinweis zur Lösungslänge"
   unless (null hints) $ collapsed True titleText $ sequenceA_ hints
   pure ()
+  ) *> extra addText
 
 reachInitial :: ReachInstance s Transition -> TransitionsList
 reachInitial = TransitionsList . reverse . S.toList . transitions . petriNet . netGoal

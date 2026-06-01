@@ -106,7 +106,6 @@ import Control.OutputCapable.Blocks (
   LangM,
   OutputCapable,
   Rated,
-  extra,
   english,
   german,
   translate,
@@ -169,7 +168,7 @@ deadlockTask showInputHelp path inst = do
     (minLength inst)
     (withMinLengthHint inst)
     Nothing
-    *> extra (addText inst)
+    (addText inst)
 
 deadlockInitial :: DeadlockInstance s Transition -> TransitionsList
 deadlockInitial = TransitionsList . reverse . S.toList . transitions . petriNet
