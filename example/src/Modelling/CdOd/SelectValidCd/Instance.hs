@@ -4,6 +4,7 @@ module Modelling.CdOd.SelectValidCd.Instance where
 
 import qualified Data.Map                         as M (fromList)
 
+import Modelling.CdOd.Common (validClassDiagramAdvice)
 import Modelling.CdOd.SelectValidCd (
   SelectValidCdInstance (..),
   SelectValidCdTaskTextElement (..),
@@ -30,7 +31,7 @@ import Control.OutputCapable.Blocks (
   Language (English, German),
   )
 import Control.OutputCapable.Blocks.Generic.Type (
-  GenericOutput (Code, Paragraph, Special, Translated),
+  GenericOutput (Paragraph, Special, Translated),
   )
 import Data.Map                         (Map)
 
@@ -174,22 +175,8 @@ task2024_05 = SelectValidCdInstance {
     Special CdCandidates,
     Paragraph [
       Translated (listToFM [
-        (English, "Which of these class diagram candidates are valid class diagrams?\nPlease state your answer by giving a list of numbers, indicating all valid class diagrams."),
-        (German, "Welche dieser Klassendiagrammkandidaten sind valide Klassendiagramme?\nBitte geben Sie Ihre Antwort in Form einer Liste von Zahlen an, die alle gültigen Klassendiagramme enthält.")
-        ])
-      ],
-    Paragraph [
-      Translated (listToFM [
-        (English, "For example,"),
-        (German, "Zum Beispiel würde")
-        ]),
-      Code (listToFM [
-        (English, "[1, 2]"),
-        (German, "[1, 2]")
-        ]),
-      Translated (listToFM [
-        (English, "would indicate that only class diagram candidates 1 and 2 of the given ones are valid class diagrams."),
-        (German, "bedeuten, dass nur die Klassendiagrammkandidaten 1 und 2 der angegebenen Klassendiagrammkandidaten gültige Klassendiagramme sind.")
+        (English, "Which of these class diagram candidates are valid class diagrams?"),
+        (German, "Welche dieser Klassendiagrammkandidaten sind gültige Klassendiagramme?")
         ])
       ]
     ],
@@ -417,22 +404,8 @@ task2024_06picked = ShuffleInstance {
       Special CdCandidates,
       Paragraph [
         Translated (listToFM [
-          (English, "Which of these class diagram candidates are valid class diagrams?\nPlease state your answer by giving a list of numbers, indicating all valid class diagrams."),
-          (German, "Welche dieser Klassendiagrammkandidaten sind valide Klassendiagramme?\nBitte geben Sie Ihre Antwort in Form einer Liste von Zahlen an, die alle gültigen Klassendiagramme enthält.")
-          ])
-        ],
-      Paragraph [
-        Translated (listToFM [
-          (English, "For example,"),
-          (German, "Zum Beispiel würde")
-          ]),
-        Code (listToFM [
-          (English, "[1, 2]"),
-          (German, "[1, 2]")
-          ]),
-        Translated (listToFM [
-          (English, "would indicate that only class diagram candidates 1 and 2 of the given ones are valid class diagrams."),
-          (German, "bedeuten, dass nur die Klassendiagrammkandidaten 1 und 2 der angegebenen Klassendiagrammkandidaten gültige Klassendiagramme sind.")
+          (English, "Which of these class diagram candidates are valid class diagrams?"),
+          (German, "Welche dieser Klassendiagrammkandidaten sind gültige Klassendiagramme?")
           ])
         ]
       ],
@@ -850,24 +823,12 @@ task2024_09 = ShuffleInstance {
       Special CdCandidates,
       Paragraph [
         Translated (listToFM [
-          (English, "Which of these class diagram candidates are valid class diagrams?\nPlease state your answer by giving a list of numbers, indicating all valid class diagrams."),
-          (German, "Welche dieser Klassendiagrammkandidaten sind valide Klassendiagramme?\nBitte geben Sie Ihre Antwort in Form einer Liste von Zahlen an, die alle gültigen Klassendiagramme enthält.")
-          ])
-        ],
-      Paragraph [
-        Translated (listToFM [
-          (English, "For example,"), (German, "Zum Beispiel würde")
-          ]),
-        Code (listToFM [
-          (English, "[1, 2]"), (German, "[1, 2]")
-          ]),
-        Translated (listToFM [
-          (English, "would indicate that only class diagram candidates 1 and 2 of the given ones are valid class diagrams."),
-          (German, "bedeuten, dass nur die Klassendiagrammkandidaten 1 und 2 der angegebenen Klassendiagrammkandidaten gültige Klassendiagramme sind.")
+          (English, "Which of these class diagram candidates are valid class diagrams?"),
+          (German, "Welche dieser Klassendiagrammkandidaten sind gültige Klassendiagramme?")
           ])
         ]
       ],
-    addText = NoExtraText
+    addText = validClassDiagramAdvice
     },
   allowLayoutMangling = True,
   shuffleNames = True,
@@ -1142,22 +1103,8 @@ task2024_53 = ShuffleInstance {
       Special CdCandidates,
       Paragraph [
         Translated (listToFM [
-          (English, "Which of these class diagram candidates are valid class diagrams?\nPlease state your answer by giving a list of numbers, indicating all valid class diagrams."),
-          (German, "Welche dieser Klassendiagrammkandidaten sind valide Klassendiagramme?\nBitte geben Sie Ihre Antwort in Form einer Liste von Zahlen an, die alle gültigen Klassendiagramme enthält.")
-          ])
-        ],
-      Paragraph [
-        Translated (listToFM [
-          (English, "For example,"),
-          (German, "Zum Beispiel würde")
-          ]),
-        Code (listToFM [
-          (English, "[1, 2]"),
-          (German, "[1, 2]")
-          ]),
-        Translated (listToFM [
-          (English, "would indicate that only class diagram candidates 1 and 2 of the given ones are valid class diagrams."),
-          (German, "bedeuten, dass nur die Klassendiagrammkandidaten 1 und 2 der angegebenen Klassendiagrammkandidaten gültige Klassendiagramme sind.")
+          (English, "Which of these class diagram candidates are valid class diagrams?"),
+          (German, "Welche dieser Klassendiagrammkandidaten sind gültige Klassendiagramme?")
           ])
         ]
       ],
