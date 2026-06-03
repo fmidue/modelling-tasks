@@ -17,6 +17,7 @@ library
       Modelling.ActivityDiagram.MatchPetri.Config
       Modelling.ActivityDiagram.SelectAs.Config
       Modelling.ActivityDiagram.SelectPetri.Config
+      Modelling.CdOd.Common
       Modelling.CdOd.DifferentNames.Config
       Modelling.CdOd.MatchCdOd.Config
       Modelling.CdOd.NameCdError.Config
