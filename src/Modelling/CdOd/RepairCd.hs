@@ -403,7 +403,7 @@ repairCdEvaluation path inst xs = addPretext $ do
         = Just . (DefiniteArticle,) . show $ repairCdSolution inst
         | otherwise = Nothing
   reRefuse
-    (multipleChoice chs correctAnswer solution xs)
+    (multipleChoice (Just chs) correctAnswer solution xs)
     $ when (showExtendedFeedback inst)
     $ void $ M.traverseWithKey
       (repairCdFeedback path (cdDrawSettings inst) xs)

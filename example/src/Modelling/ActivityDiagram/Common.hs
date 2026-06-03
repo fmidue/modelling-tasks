@@ -18,7 +18,7 @@ finalNodesAdviceTitle = M.fromList [
   (German, "Hinweis zur Übersetzung in ein Petrinetz")
   ]
 
--- | The main text explaining how final nodes are realized in Petri nets.
+-- | The main text explaining how final nodes are realised in Petri nets.
 finalNodesAdviceText :: M.Map Language String
 finalNodesAdviceText = M.fromList [
   (English, "For final nodes no additional places are introduced. They are realised in a way that a token is consumed, i.e. disappears from the net at that position."),
@@ -26,13 +26,13 @@ finalNodesAdviceText = M.fromList [
   ]
 
 -- | Advice text for final nodes in Petri net translation.
--- This text explains how final nodes are realized in Petri nets.
+-- This text explains how final nodes are realised in Petri nets.
 finalNodesAdvice :: ExtraText
 finalNodesAdvice = Collapsible True finalNodesAdviceTitle finalNodesAdviceText
 
 -- | Combined advice text for final nodes and auxiliary transitions.
--- This text explains how final nodes are realized in Petri nets and clarifies
--- that transitions required for realizing final node behavior do not count as auxiliary nodes.
+-- This text explains how final nodes are realised in Petri nets and clarifies
+-- that transitions required for realising final node behaviour do not count as auxiliary nodes.
 finalNodesAndTransitionsAdvice :: ExtraText
 finalNodesAndTransitionsAdvice = Collapsible False finalNodesAdviceTitle
   (M.fromList [
@@ -40,5 +40,5 @@ finalNodesAndTransitionsAdvice = Collapsible False finalNodesAdviceTitle
     (German, germanText)
   ])
   where
-    englishText = (finalNodesAdviceText M.! English) ++ " If an additional transition is required to realise this behavior, this transition does not count as auxiliary node."
+    englishText = (finalNodesAdviceText M.! English) ++ " If an additional transition is required to realise this behaviour, this transition does not count as auxiliary node."
     germanText = (finalNodesAdviceText M.! German) ++ " Falls eine zusätzliche Transition erforderlich ist, um dieses Verhalten zu realisieren, zählt diese Transition nicht als Hilfsknoten."

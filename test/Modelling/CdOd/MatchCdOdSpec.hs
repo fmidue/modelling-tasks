@@ -1,16 +1,21 @@
+{-# LANGUAGE RecordWildCards #-}
+
 module Modelling.CdOd.MatchCdOdSpec where
 
-import qualified Data.Map                         as M (lookup, null)
+import qualified Data.Map                         as M (keys, lookup, null)
 
 import Capabilities.Alloy.IO            ()
 import Modelling.CdOd.MatchCdOd (
   MatchCdOdConfig (objectConfig),
+  MatchCdOdInstance (..),
   checkMatchCdOdConfig,
   defaultMatchCdOdConfig,
   defaultMatchCdOdInstance,
   diagrams,
   getODInstances,
   matchCdOd,
+  matchingToSolution,
+  toMatching,
   )
 import Modelling.CdOd.Auxiliary.Util    (alloyInstanceToOd)
 import Modelling.CdOd.Types (
@@ -27,6 +32,7 @@ import Modelling.CdOd.Types (
   relationshipName,
   )
 import Modelling.Auxiliary.Common       (oneOf)
+import Modelling.Types                  (Letters (..))
 
 import Control.Monad.Random             (randomIO)
 import Control.Monad.Except             (runExceptT)
@@ -53,6 +59,10 @@ spec = do
       it "reproducibly generates defaultMatchCdOdInstance" $
         matchCdOd defaultMatchCdOdConfig 0 0
         `shouldReturn` defaultMatchCdOdInstance
+  describe "matchingToSolution . toMatching" $
+    it "returns expected mapping for default instance" $
+      matchCdOdSolution defaultMatchCdOdInstance
+      `shouldBe` [(1, Letters "ae"), (2, Letters "cd")]
   describe "getODsFor" $ do
     it "does not generate specific false instance" $ ioProperty $ do
       getOdsFor cdAggregateBofAs cdAtoB
@@ -148,6 +158,10 @@ getOdsFor cd1 cd2 = do
       linksPerObjectLimits = (0, Just 2),
       objectLimits = (2, 2)
       }
+
+matchCdOdSolution :: MatchCdOdInstance -> [(Int, Letters)]
+matchCdOdSolution MatchCdOdInstance {..} =
+  matchingToSolution $ toMatching (M.keys diagrams) (fst <$> instances)
 
 cdAInheritsBandAtoB :: Cd
 cdAInheritsBandAtoB = ClassDiagram {

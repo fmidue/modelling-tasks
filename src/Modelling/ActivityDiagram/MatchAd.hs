@@ -51,6 +51,7 @@ import Autolib.Hash                     (Hashable)
 import Autolib.Reader                   (Reader)
 import Autolib.ToDoc                    (ToDoc)
 import Control.Applicative (Alternative ((<|>)))
+import Control.Monad                    (when)
 import Control.Monad.Catch              (MonadThrow)
 import Control.Monad.Trans.Class (lift)
 import Control.OutputCapable.Blocks (
@@ -65,7 +66,6 @@ import Control.OutputCapable.Blocks (
   extra,
   german,
   translate,
-  translations,
   multipleChoice,
   )
 import Control.Monad.Random (
@@ -79,9 +79,6 @@ import Data.Map (Map)
 import Data.Maybe (isJust, isNothing, fromJust)
 import Data.String.Interpolate (i, iii)
 import GHC.Generics (Generic)
-import Modelling.Auxiliary.Output (
-  addPretext,
-  )
 import System.Random.Shuffle (shuffleM)
 
 data MatchAdInstance = MatchAdInstance {
@@ -181,10 +178,11 @@ matchAdSolution task =
 
 matchAdTask
   :: (MonadPlantUml m, MonadCache m, OutputCapable m)
-  => FilePath
+  => Bool
+  -> FilePath
   -> MatchAdInstance
   -> LangM m
-matchAdTask path task = do
+matchAdTask showInputHelp path task = do
   paragraph $ translate $ do
     english "Consider the following activity diagram:"
     german "Betrachten Sie folgendes Aktivitätsdiagramm:"
@@ -199,9 +197,9 @@ matchAdTask path task = do
       sowie die Anzahl jeder anderen Art von Element für
       das gegebene Aktivitätsdiagramm an.
       |]
-  paragraph $ do
+  when showInputHelp $ paragraph $ do
     translate $ do
-      english [i|To do this, enter your answer as in the following example:|]
+      english [i|To do so, state your answer as in the following example:|]
       german [i|Geben Sie dazu Ihre Antwort wie im folgenden Beispiel an:|]
     code $ show matchAdInitial
     pure ()
@@ -228,7 +226,7 @@ matchAdSyntax
   => MatchAdInstance
   -> MatchAdSolution
   -> LangM m
-matchAdSyntax task sub = addPretext $ do
+matchAdSyntax task sub = do
   let adNames = map name $ filter (\n -> isActionNode n || isObjectNode n) $ nodes $ activityDiagram task
       subNames = actionNodeNames sub ++ objectNodeNames sub
   assertion (all (`elem` adNames) subNames) $ translate $ do
@@ -241,17 +239,14 @@ matchAdEvaluation
   -> MatchAdSolution
   -> Rated m
 matchAdEvaluation task sub = do
-  let as = translations $ do
-        english "answer parts"
-        german "Teilantworten"
-      sol = matchAdSolution task
+  let sol = matchAdSolution task
       solutionString =
         if showSolution task
         then Just . (DefiniteArticle,) $ show sol
         else Nothing
       solution = matchAdSolutionMap sol
       sub' = M.keys $ matchAdSolutionMap sub
-  multipleChoice as solutionString solution sub'
+  multipleChoice Nothing solutionString solution sub'
 
 matchAdSolutionMap
   :: MatchAdSolution

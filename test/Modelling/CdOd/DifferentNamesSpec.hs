@@ -366,7 +366,7 @@ evaluateAndCheckDifferentNames check coins cs cs' = do
         addText = NoExtraText
         }
       cs'' = map (bimap Name Name) cs'
-  synResult <- getResult $ differentNamesSyntax i cs''
+  synResult <- getResult $ differentNamesSyntax True i cs''
   semResult <- if isJust synResult
     then withTempDir $ \tmpDir -> getResult $ differentNamesEvaluation tmpDir i cs''
     else pure Nothing
