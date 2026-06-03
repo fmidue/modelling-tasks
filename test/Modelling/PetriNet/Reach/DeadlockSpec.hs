@@ -1,4 +1,3 @@
-{-# LANGUAGE TypeOperators #-}
 module Modelling.PetriNet.Reach.DeadlockSpec where
 
 import Data.List.NonEmpty                 (toList)
