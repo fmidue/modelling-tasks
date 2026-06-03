@@ -1,8 +1,10 @@
+{-# LANGUAGE TypeOperators #-}
 module Modelling.PetriNet.Reach.ReachSpec where
 
 import qualified Data.Set                         as S
 
 import Data.List.NonEmpty                 (toList)
+import Capabilities.Cache.IO            ()
 import Capabilities.Diagrams.IO         ()
 import Capabilities.Graphviz.IO         ()
 import Modelling.PetriNet.Reach.Reach (
@@ -11,8 +13,10 @@ import Modelling.PetriNet.Reach.Reach (
   ReachInstance (..),
   NetGoal (..),
   defaultReachConfig,
+  defaultReachInstance,
   generateReach,
   checkReachConfig,
+  reachEvaluation,
   )
 import Modelling.PetriNet.Reach.Filter (
   shouldDiscardSolutions,
@@ -35,9 +39,20 @@ import Modelling.PetriNet.Reach.Type (
   noTransitionBehaviorConstraints,
   )
 
+import Control.OutputCapable.Blocks (
+  Language,
+  GenericReportT,
+  LangM',
+  )
+import Control.OutputCapable.Blocks.Generic (
+  runLangMReport,
+  )
+import Data.Either.Extra                (fromEither)
 import Data.Maybe                        (isJust)
 import qualified Data.Map                 as M
 import Data.Set                         (Set)
+import Data.Traversable                 (forM)
+import System.IO.Extra                  (withTempDir)
 
 import Settings (nightly)
 
@@ -426,6 +441,14 @@ spec = do
             }
       checkReachConfig config `shouldBe` Nothing
 
+  describe "defaultReachInstance" $ do
+    it "passes reachEvaluation" $ do
+      let sols = fromEither $ shortestSolutions defaultReachInstance
+      results <- withTempDir $ \tempDir ->
+        forM sols $ \sol ->
+          getResult $ reachEvaluation tempDir defaultReachInstance sol
+      results `shouldBe` (Just 1 <$ results)
+
 hasMinTransitionLength
   :: (Ord s, Show s)
   => (State s -> Bool)
@@ -443,3 +466,12 @@ hasMinTransitionLength p ts minL n =
           a <- S.toList ts,
           as <- transitionVariants (x-1)
           ]
+
+getResult
+  :: (m ~ GenericReportT Language (IO ()) IO)
+  => LangM' m a
+  -> IO (Maybe a)
+getResult thing = do
+  (r, _) <- runLangMReport (pure ()) (>>) thing
+  pure r
+
