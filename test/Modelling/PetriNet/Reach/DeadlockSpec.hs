@@ -416,4 +416,4 @@ spec = do
       results <- withTempDir $ \tempDir ->
         forM sols $
           runWithoutOutput . deadlockEvaluation tempDir defaultDeadlockInstance
-      results `shouldBe` (Just 1 <$ results)
+      results `shouldSatisfy` (all (== Just 1))

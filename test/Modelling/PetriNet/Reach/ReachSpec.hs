@@ -439,7 +439,7 @@ spec = do
       results <- withTempDir $ \tempDir ->
         forM sols $
           runWithoutOutput . reachEvaluation tempDir defaultReachInstance
-      results `shouldBe` (Just 1 <$ results)
+      results `shouldSatisfy` (all (== Just 1))
 
 hasMinTransitionLength
   :: (Ord s, Show s)
