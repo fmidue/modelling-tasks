@@ -2,7 +2,6 @@
 
 module Modelling.CdOd.SelectValidCd.Config where
 
-import Modelling.CdOd.Common (validClassDiagramAdvice)
 import Modelling.CdOd.RepairCd (
   WeakeningKind (..),
   )
@@ -458,9 +457,7 @@ task2024_52 = SelectValidCdConfig {
 points: 0.15
 -}
 task2025_04 :: SelectValidCdConfig
-task2025_04 = task2024_06{
-  extraText = validClassDiagramAdvice
-}
+task2025_04 = task2024_06
 
 {-|
 points: 0.15
@@ -472,9 +469,7 @@ task2025_05 = task2024_07
 points: 0.15
 -}
 task2025_06 :: SelectValidCdConfig
-task2025_06 = task2024_08{
-  extraText = validClassDiagramAdvice
-}
+task2025_06 = task2024_08
 
 {-|
 points: 0.1
