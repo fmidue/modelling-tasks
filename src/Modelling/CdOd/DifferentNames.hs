@@ -363,10 +363,11 @@ type DifferentNamesTaskText = [SpecialOutput DifferentNamesTaskTextElement]
 data DifferentNamesTaskTextElement
   = GivenCd
   | GivenOd
-  | DirectionsAdvice
+  | RelationshipNamesFromCd
   | MappingAdvice
-  | SimplifiedInformation
-  deriving (Bounded, Enum, Eq, Generic, Hashable, Ord, Read, Reader, Show, ToDoc)
+  | DirectionsAdvice Bool
+  | SimplifiedInformation Bool
+  deriving (Eq, Generic, Hashable, Ord, Read, Reader, Show, ToDoc)
 
 differentNamesTask
   :: (MonadCache m, MonadDiagrams m, MonadGraphviz m, MonadThrow m, OutputCapable m)
@@ -445,9 +446,11 @@ toTaskSpecificText path inst@DifferentNamesInstance {..} = \case
     paragraph $ image $=<< cacheCd cdDrawSettings mempty mLabelLength cd path
   GivenOd -> paragraph $ image $=<<
     cacheOd oDiagram mLabelLength Forward True path
+  RelationshipNamesFromCd -> paragraph $
+    itemizeM $ map code $ sort $ associationNames cDiagram
   MappingAdvice -> mappingAdvice hasGivenCd
-  DirectionsAdvice -> directionsAdvice False
-  SimplifiedInformation -> simplifiedInformation True
+  DirectionsAdvice b -> directionsAdvice b
+  SimplifiedInformation b -> simplifiedInformation b
   where
     cd = fromClassDiagram cDiagram
     hasGivenCd = Special GivenCd `elem` taskText
@@ -473,8 +476,8 @@ defaultDifferentNamesTaskText = [
       entspricht welchen Links im Objektdiagramm (OD)?
       |],
   Special MappingAdvice,
-  Special DirectionsAdvice,
-  Special SimplifiedInformation
+  Special $ DirectionsAdvice False,
+  Special $ SimplifiedInformation True
   ]
 
 inputHelpText :: Bool -> Output
@@ -540,11 +543,15 @@ stripName = Name . stripNumericPeriod . unName
 
 differentNamesSyntax
   :: OutputCapable m
-  => DifferentNamesInstance
+  => Bool
+  -- ^ Whether to do a full check. If False, only checks for duplicate use
+  -- of class or object identifiers.
+  -> DifferentNamesInstance
   -> [(Name, Name)]
   -> LangM m
-differentNamesSyntax DifferentNamesInstance {..} cs = addPretext $ do
-  yesNo (null invalidMappings) $ translate $ do
+differentNamesSyntax fullCheck DifferentNamesInstance {..} cs = addPretext $ do
+  when fullCheck $ do
+   yesNo (null invalidMappings) $ translate $ do
     english [iii|
       All provided pairs are matching an existing relationship
       and an existing link?
@@ -553,13 +560,14 @@ differentNamesSyntax DifferentNamesInstance {..} cs = addPretext $ do
       Alle angegebenen Paare ordnen einen vorhandenen Link
       einer vorhandenen Beziehung zu?
       |]
-  whenJust (listToMaybe invalidMappings) $ \x ->
+   whenJust (listToMaybe invalidMappings) $ \x ->
     refuse $ paragraph $ translate $ do
       let y = bimap ShowName ShowName x
       english [i|The mapping '#{y}' uses a non-existing identifier.|]
       german [iii|
         Die Zuordnung '#{y}' benutzt einen nicht vorhandenen Bezeichner.
         |]
+   pure ()
   yesNo (null allMappingValues) $ translate $ do
     english "All provided pairs are non-overlapping?"
     german "Alle angegebenen Paare sind nicht überlappend?"
@@ -624,15 +632,15 @@ differentNamesEvaluation path task cs = do
           $ differentNamesSolution task
         else Nothing
 
-  reRefuse (multipleChoice what solution solutionMap choices) $ do
+  reRefuse (multipleChoice (Just what) solution solutionMap choices) $ do
     let mLabelLength = Just $ maxLabelLength task
     case showSolution task of
       ShowNothing -> pure ()
       ShowMapping -> pure ()
       ShowMappingAndReprintCD -> do
         paragraph $ translate $ do
-          english "Compare with the correctly labeled class diagram:"
-          german "Vergleichen Sie mit dem korrekt beschrifteten Klassendiagramm:"
+          english "Consider the correctly labelled class diagram:"
+          german "Betrachten Sie das korrekt beschriftete Klassendiagramm:"
 
         image $=<< (relabelCd task >>= \relabelledCd ->
           cacheCd (cdDrawSettings task) mempty mLabelLength (fromClassDiagram relabelledCd) path)
@@ -640,8 +648,8 @@ differentNamesEvaluation path task cs = do
         pure ()
       ShowMappingAndReprintOD -> do
         paragraph $ translate $ do
-          english "Compare with the correctly labeled object diagram:"
-          german "Vergleichen Sie mit dem korrekt beschrifteten Objektdiagramm:"
+          english "Consider the correctly labelled object diagram:"
+          german "Betrachten Sie das korrekt beschriftete Objektdiagramm:"
 
         image $=<< (relabelOd task >>= \relabelledOd ->
           cacheOd relabelledOd mLabelLength Forward True path)

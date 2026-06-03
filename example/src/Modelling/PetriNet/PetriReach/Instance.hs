@@ -5,6 +5,7 @@ module Modelling.PetriNet.PetriReach.Instance where
 import qualified Data.Map                         as M (fromList)
 import qualified Data.Set                         as S (fromList)
 
+import Control.OutputCapable.Blocks       (ExtraText(..))
 import Data.List.NonEmpty                 (NonEmpty((:|)))
 import Modelling.PetriNet.Reach.Reach   (ReachInstance (..), NetGoal(..))
 import Modelling.PetriNet.Reach.Type    (Capacity (..), Net (..), State (..))
@@ -54,5 +55,6 @@ task5 = ReachInstance {
    ] :| []),
   withLengthHint = Just 12,
   withMinLengthHint = True,
+  addText = NoExtraText,
   rejectSpaceballsLength = Nothing
   }

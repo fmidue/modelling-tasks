@@ -370,7 +370,7 @@ selectValidCdEvaluation path inst@SelectValidCdInstance{..} xs = addPretext $ do
         | showSolution
         = Just . (DefiniteArticle,) $ show $ selectValidCdSolution inst
         | otherwise = Nothing
-  reRefuse (multipleChoice cds correctAnswer solution xs)
+  reRefuse (multipleChoice (Just cds) correctAnswer solution xs)
     $ when showExtendedFeedback
     $ void $ M.traverseWithKey
       (selectValidCdFeedback path cdDrawSettings xs)

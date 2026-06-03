@@ -24,7 +24,7 @@ main = do
       putStrLn $ "Seed: " ++ seed
       task <- matchAd defaultMatchAdConfig (read s) (read seed)
       print task
-      matchAdTask path task `withLang` English
+      matchAdTask True path task `withLang` English
       sub <- read <$> getLine
       matchAdSyntax task sub `withLang` English
       points <- matchAdEvaluation task sub `withLang` English

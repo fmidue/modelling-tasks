@@ -12,33 +12,37 @@ module Modelling.CdOd.MatchCdOd (
   MatchCdOdConfig (..),
   MatchCdOdInstance (..),
   MatchCdOdTaskTextElement (..),
+  OdDistributionConfig (..),
   checkMatchCdOdConfig,
   checkMatchCdOdInstance,
   defaultMatchCdOdConfig,
   defaultMatchCdOdInstance,
+  defaultMatchCdOdTaskText,
   getMatchCdOdTask,
   getODInstances,
   matchCdOd,
   matchCdOdEvaluation,
-  matchCdOdSolution,
   matchCdOdSyntax,
   matchCdOdTask,
+  matchingToSolution,
   matchingShow,
+  toMatching,
   takeRandomInstances,
   ) where
 
 import qualified Modelling.CdOd.CdAndChanges.Transform as Changes (transform)
 
-import qualified Data.Bimap                       as BM (fromList)
+import qualified Data.Bimap                       as BM (fromList, insert)
 import qualified Data.Map                         as M (
-  adjust,
+  empty,
   elems,
+  filter,
   foldrWithKey,
   fromAscList,
   fromList,
+  insertWith,
   keys,
   lookup,
-  map,
   size,
   toList,
   traverseWithKey,
@@ -128,7 +132,7 @@ import Modelling.Types (
 
 import Control.Applicative              (Alternative ((<|>)))
 import Control.Exception                (Exception)
-import Control.Monad                    ((<=<), when)
+import Control.Monad                    ((<=<), unless, when)
 import Control.Monad.Catch              (MonadCatch, MonadThrow, throwM)
 import Control.Monad.Trans.Class (lift)
 #if __GLASGOW_HASKELL__ < 808
@@ -145,7 +149,10 @@ import Control.OutputCapable.Blocks (
   english,
   extra,
   german,
+  image,
   multipleChoice,
+  paragraph,
+  reRefuse,
   translate,
   translations,
   Language (English, German),
@@ -170,7 +177,7 @@ import Data.Bifunctor                   (Bifunctor (second))
 import Data.Bitraversable               (bimapM)
 import Data.Containers.ListUtils        (nubOrd)
 import Data.GraphViz                    (DirType (Forward))
-import Data.List                        (singleton)
+import Data.List                        ((\\), intercalate, singleton, sort)
 import Data.Map                         (Map)
 import Data.Maybe                       (fromJust, isJust, listToMaybe, mapMaybe, fromMaybe)
 import Data.Ratio                       ((%))
@@ -188,10 +195,19 @@ data MatchCdOdInstance
   = MatchCdOdInstance {
     cdDrawSettings :: !CdDrawSettings,
     diagrams       :: Map Int Cd,
+    hiddenReferenceCd :: Maybe Cd,
     instances      :: Map Char ([Int], Od),
     showSolution   :: !Bool,
     taskText       :: !MatchCdOdTaskText,
     addText        :: ExtraText
+  } deriving (Eq, Generic, Hashable, Read, Reader, Show, ToDoc)
+
+data OdDistributionConfig =
+  OdDistributionConfig {
+    objectDiagramCount :: Int,
+    maxPerJustEachCd :: Int,
+    maxSharedBetweenBothCds :: Int,
+    maxNoCd :: Int
   } deriving (Eq, Generic, Hashable, Read, Reader, Show, ToDoc)
 
 data MatchCdOdConfig
@@ -199,6 +215,7 @@ data MatchCdOdConfig
     allowedCdMutations :: ![CdMutation],
     classConfig      :: ClassConfig,
     maxInstances     :: Maybe Integer,
+    odDistribution   :: OdDistributionConfig,
     objectConfig     :: ObjectConfig,
     objectProperties :: ObjectProperties,
     omittedDefaultMultiplicities :: OmittedDefaultMultiplicities,
@@ -233,6 +250,12 @@ defaultMatchCdOdConfig
       hasSelfLoops = Nothing,
       usesEveryRelationshipName = Nothing
       },
+    odDistribution = OdDistributionConfig {
+      objectDiagramCount = 5,
+      maxPerJustEachCd = 2,
+      maxSharedBetweenBothCds = 2,
+      maxNoCd = 2
+      },
     omittedDefaultMultiplicities = defaultOmittedDefaultMultiplicities,
     printSolution    = True,
     timeout          = Nothing,
@@ -243,6 +266,57 @@ defaultMatchCdOdConfig
 toMatching :: [Int] -> Map Char [Int] -> Map (Int, Char) Bool
 toMatching cds m =
   M.fromList [((cd, od), cd `elem` cdList) | cd <- cds, (od, cdList) <- M.toList m]
+
+-- | Reconstruct grouped letter solutions from a pairwise matching map.
+matchingToSolution :: Map (Int, Char) Bool -> [(Int, Letters)]
+matchingToSolution =
+  M.toList
+  . fmap Letters
+  . M.foldrWithKey
+      (\(cd, od) doesMatch ->
+        M.insertWith (++) cd [od | doesMatch])
+      M.empty
+
+checkOdDistributionConfig :: Maybe Integer -> OdDistributionConfig -> Maybe String
+checkOdDistributionConfig maxInstances OdDistributionConfig {..}
+  | objectDiagramCount < 2
+  = Just [iii|
+    The number of given object diagrams must be at least 2.
+    |]
+  | objectDiagramCount <= maximumOfDistributions
+  = Just [iii|
+    'maxPerJustEachCd', 'maxSharedBetweenBothCds' and 'maxNoCd' must each be
+    less than 'objectDiagramCount'.
+    |]
+  | objectDiagramCount > 2 * maxPerJustEachCd + maxSharedBetweenBothCds + maxNoCd
+  = Just [iii|
+    'objectDiagramCount' must be less than or equal to 2 * 'maxPerJustEachCd' + 'maxSharedBetweenBothCds' + 'maxNoCd'.
+    |]
+  | any (< 0) [maxPerJustEachCd, maxSharedBetweenBothCds, maxNoCd]
+  = Just [iii|
+    'maxPerJustEachCd', 'maxSharedBetweenBothCds' and 'maxNoCd' must each be
+    greater than or equal to 0.
+    |]
+  | maybe False
+      (fromIntegral maximumOfDistributions >)
+      maxInstances
+  = Just [iii|
+    'maxPerJustEachCd', 'maxSharedBetweenBothCds' and 'maxNoCd' must be less than or equal to 'maxInstances'.
+    |]
+  | maxPerJustEachCd == 0 && maxSharedBetweenBothCds == 0
+  = Just [iii|
+    Having no object diagrams that conform to the class diagrams makes no sense.
+    'maxPerJustEachCd + maxSharedBetweenBothCds' must be at least 1.
+    |]
+  | maxPerJustEachCd == 0 && maxNoCd == 0
+  = Just [iii|
+    Do not expect all object diagrams to conform to both class diagrams.
+    'maxPerJustEachCd + maxNoCd' must be at least 1.
+    |]
+  | otherwise
+  = Nothing
+  where
+    maximumOfDistributions = maximum [maxPerJustEachCd, maxSharedBetweenBothCds, maxNoCd]
 
 checkMatchCdOdConfig :: MatchCdOdConfig -> Maybe String
 checkMatchCdOdConfig MatchCdOdConfig {..}
@@ -265,6 +339,7 @@ checkMatchCdOdConfig MatchCdOdConfig {..}
   | otherwise
   = checkClassConfigWithProperties classConfig defaultProperties
   <|> checkCdMutations allowedCdMutations
+  <|> checkOdDistributionConfig maxInstances odDistribution
   <|> checkObjectProperties objectProperties
   <|> checkClassConfigAndObjectProperties classConfig objectProperties
   <|> checkOmittedDefaultMultiplicities omittedDefaultMultiplicities
@@ -284,7 +359,9 @@ type MatchCdOdTaskText = [SpecialOutput MatchCdOdTaskTextElement]
 data MatchCdOdTaskTextElement
   = GivenCds
   | GivenOds
-  deriving (Bounded, Enum, Eq, Generic, Hashable, Ord, Read, Reader, Show, ToDoc)
+  | DirectionsAdvice Bool
+  | SimplifiedInformation Bool
+  deriving (Eq, Generic, Hashable, Ord, Read, Reader, Show, ToDoc)
 
 matchCdOdTask
   :: (
@@ -300,8 +377,6 @@ matchCdOdTask
   -> LangM m
 matchCdOdTask showInputHelp path task = do
   toTaskText showInputHelp path task
-  directionsAdvice True
-  simplifiedInformation True
   hoveringInformation True
   pure ()
 
@@ -320,9 +395,11 @@ toTaskText
 toTaskText showInputHelp path task = do
   specialToOutputCapable (toTaskSpecificText path task) (taskText task)
   when showInputHelp $
-    toOutputCapable inputHelpText
+    toOutputCapable (inputHelpText hasGivenCds $ M.size $ diagrams task)
   extra $ addText task
   pure ()
+  where
+    hasGivenCds = Special GivenCds `elem` taskText task
 
 toTaskSpecificText
   :: (
@@ -340,9 +417,11 @@ toTaskSpecificText path MatchCdOdInstance {..} = \case
   GivenCds -> images show id
     $=<< (\_ cd -> cacheCd cdDrawSettings mempty Nothing (fromClassDiagram cd) path)
     `M.traverseWithKey` diagrams
-  GivenOds -> images (:[]) snd
+  GivenOds -> images singleton snd
     $=<< (\_ (is,o) -> (is,) <$> cacheOd o Nothing Forward True path)
     `M.traverseWithKey` instances
+  DirectionsAdvice b -> directionsAdvice b
+  SimplifiedInformation b -> simplifiedInformation b
 
 defaultMatchCdOdTaskText
     :: Int
@@ -397,22 +476,38 @@ defaultMatchCdOdTaskText diagramCount instanceCount =  [
         \nEin Objektdiagramm kann zu keinem, einem
         oder mehreren der gegebenen Klassendiagramme passen.|]
       else "",
-  Special GivenOds
+  Special GivenOds,
+  Special $ DirectionsAdvice True,
+  Special $ SimplifiedInformation True
   ]
 
-inputHelpText :: [Output]
-inputHelpText = [
+inputHelpText :: Bool -> Int -> [Output]
+inputHelpText hasGivenCds diagramCount = [
   Paragraph [
     Translated $ translations $ do
-      english [iii|
+      english $ if diagramCount == 1
+        then [iii|
+        State your answer by giving a list containing a single pair,
+        consisting of the number 1 and the letters of all object diagrams
+        that conform to the #{entityNameEnConformingToThe}.
+        \n
+        For example,#{" "}|]
+        else [iii|
         State your answer by giving a list of pairs,
-        each comprising of a class diagram number and any amount of object diagram letters.
+        each consisting of a class diagram number and any amount of object diagram letters.
         \n
         Each pair indicates that the mentioned object diagrams conform to the
         respective class diagram.
         \n
         For example,#{" "}|]
-      german [iii|
+      german $ if diagramCount == 1
+        then [iii|
+        Geben Sie Ihre Antwort in Form einer Liste mit genau einem Paar an,
+        das aus der Nummer 1 und den Buchstaben aller Objektdiagramme besteht,
+        die zu #{entityNameDeConformingTo} passen.
+        \n
+        Zum Beispiel drückt#{" "}|]
+        else [iii|
         Geben Sie Ihre Antwort in Form einer Liste von Paaren an,
         die jeweils aus einer Klassendiagrammnummer und beliebig vielen
         Objektdiagrammbuchstaben bestehen.
@@ -421,15 +516,25 @@ inputHelpText = [
         zu dem jeweiligen Klassendiagramm passen.
         \n
         Zum Beispiel drückt#{" "}|],
-    Code . uniform . show $ matchingShow matchCdOdInitial,
+    Code . uniform . show $ exampleMatching,
     Translated $ translations $ do
-      english [iii|
+      english $ if diagramCount == 1
+        then [iii|
+        expresses that among the offered choices exactly
+        the object diagrams a and b are instances of the #{entityNameEnInstancesOfThe}.
+        |]
+        else [iii|
         expresses that among the offered choices exactly
         the object diagrams a and b are instances of class diagram 1 and
         that none of the offered object diagrams
         are instances of class diagram 2.
         |]
-      german [iii|
+      german $ if diagramCount == 1
+        then [iii|
+        aus, dass unter den angebotenen Auswahlmöglichkeiten
+        genau die Objektdiagramme a und b Instanzen #{entityNameDeInstances} sind.
+        |]
+        else [iii|
         aus, dass unter den angebotenen Auswahlmöglichkeiten
         genau die Objektdiagramme a und b Instanzen des Klassendiagramms 1 sind
         und dass keines der angebotenen Objektdiagramme
@@ -437,6 +542,13 @@ inputHelpText = [
         |]
     ]
   ]
+  where
+    exampleMatching =
+      matchingShow $ take diagramCount matchCdOdInitial
+    (entityNameEnConformingToThe, entityNameEnInstancesOfThe, entityNameDeConformingTo, entityNameDeInstances) =
+      if hasGivenCds
+      then ("class diagram", "class diagram", "dem Klassendiagramm", "des Klassendiagramms")
+      else ("scenario description", "general scenario description", "der Szenariobeschreibung", "der allgemeinen Szenariobeschreibung")
 
 newtype ShowLetters = ShowLetters { showLetters' :: Letters }
 
@@ -469,35 +581,67 @@ matchCdOdSyntax task sub = addPretext $ do
     availableOd = (`elem` M.keys (instances task))
 
 matchCdOdEvaluation
-  :: (Foldable t, OutputCapable m)
-  => MatchCdOdInstance
+  :: (
+    Alternative m,
+    Foldable t,
+    MonadCache m,
+    MonadDiagrams m,
+    MonadGraphviz m,
+    OutputCapable m
+    )
+  => FilePath
+  -> MatchCdOdInstance
   -> t (Int, Letters)
   -> Rated m
-matchCdOdEvaluation task sub' = do
+matchCdOdEvaluation path MatchCdOdInstance {..} sub' = do
   let sub = toMatching' sub'
-      sol = fst <$> instances task
-      matching = toMatching (M.keys $ diagrams task) sol
+      sol = fst <$> instances
+      matching = toMatching (M.keys diagrams) sol
+      refOnlyLetters = M.keys $ M.filter null sol
       what = translations $ do
         english "instances"
         german "Instanzen"
       solution =
-        if showSolution task
+        if showSolution
         then Just . (DefiniteArticle,) . show . matchingShow
-          $ matchCdOdSolution task
+          $ matchingToSolution matching
         else Nothing
-  multipleChoice what solution matching sub
+  reRefuse (multipleChoice (Just what) solution matching sub) $
+    when showSolution $ do
+      unless (Special GivenCds `elem` taskText) $ do
+        paragraph $ translate $ do
+          english [iii|
+            Regarding the scenario description, the following class diagram would have been appropriate:
+            |]
+          german [iii|
+            Bezüglich der Szenariobeschreibung wäre das folgende Klassendiagramm geeignet gewesen:
+            |]
+        case M.toList diagrams of
+          [(1, cd)] -> image $=<< cacheCd cdDrawSettings mempty Nothing (fromClassDiagram cd) path
+          _ -> error "There should be exactly one class diagram, corresponding to the scenario description."
+        pure ()
+      case hiddenReferenceCd of
+        Nothing -> pure ()
+        Just cd
+          | null refOnlyLetters -> pure ()
+          | otherwise -> do
+              let noMatch = intercalate ", " (map singleton $ sort refOnlyLetters)
+              paragraph $ translate $ do
+                english [iii|
+                  Where there was no conformance here (i.e., for #{noMatch}),
+                  the following class diagram would have been appropriate:
+                  |]
+                german [iii|
+                  Wo hier keine Passung vorlag (also für #{noMatch}),
+                  wäre das folgende Klassendiagramm geeignet gewesen:
+                  |]
+              image $=<< cacheCd cdDrawSettings mempty Nothing (fromClassDiagram cd) path
+              pure ()
+      pure ()
   where
     toMatching' :: Foldable f => f (Int, Letters) -> [(Int, Char)]
     toMatching' =
       foldr (\(c, ys) xs -> foldr ((:) . (c,)) xs (lettersList ys)) []
-
-matchCdOdSolution :: MatchCdOdInstance -> [(Int, Letters)]
-matchCdOdSolution task = M.toList $ reverseMapping (fst <$> instances task)
-  where
-    reverseMapping :: Map Char [Int] -> Map Int Letters
-    reverseMapping = fmap (fmap Letters) . M.foldrWithKey
-      (\x ys xs -> foldr (M.adjust (x:)) xs ys)
-      $ M.map (const []) (diagrams task)
 
 matchCdOd
   :: (MonadAlloy m, MonadCatch m, MonadFail m)
@@ -514,11 +658,11 @@ matchCdOd config segment seed = flip evalRandT g $ do
 getMatchCdOdTask
   :: (MonadCatch m, RandomGen g)
   => (MatchCdOdConfig
-    -> RandT g m (Map Int Cd, Map Char ([Int], AlloyInstance)))
+    -> RandT g m (Map Int Cd, Cd, Map Char ([Int], AlloyInstance)))
   -> MatchCdOdConfig
   -> RandT g m MatchCdOdInstance
 getMatchCdOdTask f config@MatchCdOdConfig {..} = do
-  (cds, ods) <- f config
+  (cds, hiddenReferenceCd, ods) <- f config
   let possibleLinkNames = concatMap
         (mapMaybe relationshipName . relationships)
         cds
@@ -530,6 +674,7 @@ getMatchCdOdTask f config@MatchCdOdConfig {..} = do
           printNavigations = True
           },
         diagrams       = cds,
+        hiddenReferenceCd = Just hiddenReferenceCd,
         instances      = ods',
         showSolution = printSolution,
         taskText = defaultMatchCdOdTaskText (M.size cds) (M.size ods'),
@@ -640,27 +785,69 @@ defaultMatchCdOdInstance = MatchCdOdInstance {
         ]
       })
     ],
+  hiddenReferenceCd  = Just $ ClassDiagram {
+    classNames = ["A", "C", "D", "B"],
+    relationships = [
+      Composition {
+        compositionName = "x",
+        compositionPart = LimitedLinking {
+          linking = "A",
+          limits = (1, Just 2)
+          },
+        compositionWhole = LimitedLinking {
+          linking = "D",
+          limits = (0, Just 1)
+          }
+        },
+      Aggregation {
+        aggregationName = "w",
+        aggregationPart = LimitedLinking {
+          linking = "C",
+          limits = (1, Nothing)
+          },
+        aggregationWhole = LimitedLinking {
+          linking = "D",
+          limits = (1, Nothing)
+          }
+        },
+      Inheritance {
+        subClass = "C",
+        superClass = "A"
+        },
+      Aggregation {
+        aggregationName = "z",
+        aggregationPart = LimitedLinking {
+          linking = "B",
+          limits = (0, Just 2)
+          },
+        aggregationWhole = LimitedLinking {
+          linking = "A",
+          limits = (1, Nothing)
+          }
+        }
+        ]
+      },
   instances = M.fromList [
     ('a', ([1], ObjectDiagram {
       objects = [
-        Object {isAnonymous = False, objectName = "b", objectClass = "B"},
-        Object {isAnonymous = False, objectName = "d", objectClass = "D"},
+        Object {isAnonymous = True, objectName = "b1", objectClass = "B"},
         Object {isAnonymous = False, objectName = "c", objectClass = "C"},
-        Object {isAnonymous = True, objectName = "b1", objectClass = "B"}
+        Object {isAnonymous = False, objectName = "b", objectClass = "B"},
+        Object {isAnonymous = False, objectName = "d", objectClass = "D"}
         ],
       links = [
+        Link {linkLabel = "w", linkFrom = "c", linkTo = "d"},
         Link {linkLabel = "z", linkFrom = "b1", linkTo = "c"},
         Link {linkLabel = "z", linkFrom = "b", linkTo = "c"},
-        Link {linkLabel = "x", linkFrom = "d", linkTo = "c"},
-        Link {linkLabel = "w", linkFrom = "c", linkTo = "d"}
+        Link {linkLabel = "x", linkFrom = "d", linkTo = "c"}
         ]
       })),
     ('b', ([], ObjectDiagram {
       objects = [
-        Object {isAnonymous = False, objectName = "d", objectClass = "D"},
         Object {isAnonymous = True, objectName = "c", objectClass = "C"},
-        Object {isAnonymous = False, objectName = "b", objectClass = "B"},
-        Object {isAnonymous = False, objectName = "a", objectClass = "A"}
+        Object {isAnonymous = False, objectName = "a", objectClass = "A"},
+        Object {isAnonymous = False, objectName = "d", objectClass = "D"},
+        Object {isAnonymous = False, objectName = "b", objectClass = "B"}
         ],
       links = [
         Link {linkLabel = "w", linkFrom = "c", linkTo = "d"},
@@ -671,24 +858,24 @@ defaultMatchCdOdInstance = MatchCdOdInstance {
       })),
     ('c', ([2], ObjectDiagram {
       objects = [
-        Object {isAnonymous = False, objectName = "c", objectClass = "C"},
+        Object {isAnonymous = False, objectName = "d", objectClass = "D"},
         Object {isAnonymous = True, objectName = "a1", objectClass = "A"},
-        Object {isAnonymous = False, objectName = "a", objectClass = "A"},
-        Object {isAnonymous = False, objectName = "d", objectClass = "D"}
+        Object {isAnonymous = False, objectName = "c", objectClass = "C"},
+        Object {isAnonymous = False, objectName = "a", objectClass = "A"}
         ],
       links = [
-        Link {linkLabel = "w", linkFrom = "c", linkTo = "d"},
         Link {linkLabel = "x", linkFrom = "c", linkTo = "d"},
-        Link {linkLabel = "x", linkFrom = "a1", linkTo = "d"},
-        Link {linkLabel = "x", linkFrom = "a", linkTo = "d"}
+        Link {linkLabel = "w", linkFrom = "c", linkTo = "d"},
+        Link {linkLabel = "x", linkFrom = "a", linkTo = "d"},
+        Link {linkLabel = "x", linkFrom = "a1", linkTo = "d"}
         ]
       })),
     ('d', ([2], ObjectDiagram {
       objects = [
         Object {isAnonymous = False, objectName = "d", objectClass = "D"},
+        Object {isAnonymous = False, objectName = "a", objectClass = "A"},
         Object {isAnonymous = True, objectName = "c", objectClass = "C"},
-        Object {isAnonymous = False, objectName = "c1", objectClass = "C"},
-        Object {isAnonymous = False, objectName = "a", objectClass = "A"}
+        Object {isAnonymous = False, objectName = "c1", objectClass = "C"}
         ],
       links = [
         Link {linkLabel = "w", linkFrom = "c", linkTo = "d"},
@@ -699,14 +886,14 @@ defaultMatchCdOdInstance = MatchCdOdInstance {
       })),
     ('e', ([1], ObjectDiagram {
       objects = [
-        Object {isAnonymous = False, objectName = "d", objectClass = "D"},
-        Object {isAnonymous = True, objectName = "d1", objectClass = "D"},
+        Object {isAnonymous = False, objectName = "c", objectClass = "C"},
         Object {isAnonymous = False, objectName = "a", objectClass = "A"},
-        Object {isAnonymous = False, objectName = "c", objectClass = "C"}
+        Object {isAnonymous = True, objectName = "d1", objectClass = "D"},
+        Object {isAnonymous = False, objectName = "d", objectClass = "D"}
         ],
       links = [
-        Link {linkLabel = "w", linkFrom = "c", linkTo = "d"},
         Link {linkLabel = "w", linkFrom = "c", linkTo = "d1"},
+        Link {linkLabel = "w", linkFrom = "c", linkTo = "d"},
         Link {linkLabel = "x", linkFrom = "d", linkTo = "a"},
         Link {linkLabel = "x", linkFrom = "d1", linkTo = "c"}
         ]
@@ -746,10 +933,12 @@ shuffleNodesAndEdges
   -> m MatchCdOdInstance
 shuffleNodesAndEdges MatchCdOdInstance {..} = do
   cds <- mapM shuffleClassAndConnectionOrder diagrams
+  hiddenReferenceCd' <- mapM shuffleClassAndConnectionOrder hiddenReferenceCd
   ods <- mapM (mapM shuffleObjectAndLinkOrder) instances
   return MatchCdOdInstance {
     cdDrawSettings = cdDrawSettings,
     diagrams = cds,
+    hiddenReferenceCd = hiddenReferenceCd',
     instances = ods,
     showSolution = showSolution,
     taskText = taskText,
@@ -773,6 +962,7 @@ shuffleInstance MatchCdOdInstance {..} = do
   return $ MatchCdOdInstance {
     cdDrawSettings = cdDrawSettings,
     diagrams = M.fromAscList cds',
+    hiddenReferenceCd = hiddenReferenceCd,
     instances = M.fromAscList ods',
     showSolution = showSolution,
     taskText = taskText,
@@ -791,11 +981,19 @@ renameInstance inst@MatchCdOdInstance {..} names' nonInheritances' = do
       bmNonInheritances = BM.fromList $ zip nonInheritances nonInheritances'
       renameCd = renameClassesAndRelationships bmNames bmNonInheritances
       renameOd = renameObjectsWithClassesAndLinksInOd bmNames bmNonInheritances
+      bmNamesForReferenceCd =
+        foldr (\k -> BM.insert k k) bmNames (classNames (fromJust hiddenReferenceCd) \\ names)
+      bmNonInheritancesForReferenceCd =
+        foldr (\k -> BM.insert k k) bmNonInheritances (associationNames (fromJust hiddenReferenceCd) \\ nonInheritances)
+      renameReferenceCd =
+        renameClassesAndRelationships bmNamesForReferenceCd bmNonInheritancesForReferenceCd
   cds <- renameCd `mapM` diagrams
+  hiddenReferenceCd' <- renameReferenceCd `mapM` hiddenReferenceCd
   ods <- mapM renameOd `mapM` instances
   return $ MatchCdOdInstance {
     cdDrawSettings = cdDrawSettings,
     diagrams = cds,
+    hiddenReferenceCd = hiddenReferenceCd',
     instances = ods,
     showSolution = showSolution,
     taskText = taskText,
@@ -805,7 +1003,7 @@ renameInstance inst@MatchCdOdInstance {..} names' nonInheritances' = do
 getRandomTask
   :: (MonadAlloy m, MonadFail m, RandomGen g, MonadThrow m)
   => MatchCdOdConfig
-  -> RandT g m (Map Int Cd, Map Char ([Int], AlloyInstance))
+  -> RandT g m (Map Int Cd, Cd, Map Char ([Int], AlloyInstance))
 getRandomTask config = do
   let alloyCode = Changes.transform
         (classConfig config)
@@ -821,7 +1019,7 @@ getODsFor
   :: (MonadAlloy m, MonadFail m, RandomGen g, MonadThrow m)
   => MatchCdOdConfig
   -> [AlloyInstance]
-  -> RandT g m (Maybe (Map Int Cd, Map Char ([Int], AlloyInstance)))
+  -> RandT g m (Maybe (Map Int Cd, Cd, Map Char ([Int], AlloyInstance)))
 getODsFor _      []       = return Nothing
 getODsFor config (cd:cds) = do
   cds' <- lift (instanceChangesAndCds
@@ -832,11 +1030,12 @@ getODsFor config (cd:cds) = do
     >>= shuffleCdNames
   [cd1, cd2] <- shuffleM [cd1', cd2']
   alloyInstances <- lift $ getODInstances config cd1 cd2 cd3 $ length $ classNames cd1
-  maybeRandomInstances <- takeRandomInstances alloyInstances
+  maybeRandomInstances <- takeRandomInstances (odDistribution config) alloyInstances
   case maybeRandomInstances of
     Nothing      -> getODsFor config cds
     Just randomInstances -> return $ Just (
       M.fromList [(1, cd1), (2, cd2)],
+      cd3,
       M.fromList $ zip ['a' ..] randomInstances
       )
 
@@ -893,8 +1092,11 @@ getODInstances config cd1 cd2 cd3 numClasses = do
       (objectConfig config)
 
 takeRandomInstances
-  :: (MonadRandom m, MonadFail m) => Map [Int] [a] -> m (Maybe [([Int], a)])
-takeRandomInstances alloyInstances =
+  :: (MonadRandom m, MonadFail m)
+  => OdDistributionConfig
+  -> Map [Int] [a]
+  -> m (Maybe [([Int], a)])
+takeRandomInstances OdDistributionConfig {..} alloyInstances =
   case takes of
     []  -> return Nothing
     _:_ -> Just <$> do
@@ -902,12 +1104,18 @@ takeRandomInstances alloyInstances =
       ts:_    <- shuffleM takes
       shuffleM $ concatMap ($ randomInstances) ts
   where
+    -- guarantees 0 < x + z < objectDiagramCount and 0 < y + z < objectDiagramCount
     takes =
       [ [takeL [1] x, takeL [2] y, takeL [1,2] z, takeL [] u]
-      | x <- [0 .. min 2 (length $ fromJust $ M.lookup [1]   alloyInstances)]
-      , y <- [0 .. min 2 (length $ fromJust $ M.lookup [2]   alloyInstances)]
-      , z <- [0 .. min 2 (length $ fromJust $ M.lookup [1,2] alloyInstances)]
-      , u <- [0 .. min 2 (length $ fromJust $ M.lookup []    alloyInstances)]
-      , 5 == x + y + z + u
+      | x <- [0 .. min maxPerJustEachCd (length $ fromJust $ M.lookup [1] alloyInstances)]
+      , y <- [0 .. min maxPerJustEachCd (length $ fromJust $ M.lookup [2] alloyInstances)]
+      , let oneIfEitherIsZero = max 0 (1 - min x y)
+      , let objectDiagramCountMinusBoth = objectDiagramCount - x - y
+      , z <- [
+              max oneIfEitherIsZero (objectDiagramCountMinusBoth - min maxNoCd (length $ fromJust $ M.lookup [] alloyInstances))
+              ..
+              minimum [maxSharedBetweenBothCds, objectDiagramCountMinusBoth - oneIfEitherIsZero, length $ fromJust $ M.lookup [1,2] alloyInstances]
+             ]
+      , let u = objectDiagramCountMinusBoth - z
       ]
     takeL k n = take n . fmap (k,) . fromJust . M.lookup k

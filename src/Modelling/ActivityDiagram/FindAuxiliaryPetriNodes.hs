@@ -71,9 +71,6 @@ import Modelling.ActivityDiagram.PlantUMLConverter (
   drawAdToFile,
   )
 import Modelling.Auxiliary.Common       (getFirstInstance)
-import Modelling.Auxiliary.Output (
-  addPretext,
-  )
 import Modelling.PetriNet.Types (
   checkPetriNodeCount,
   Net (..),
@@ -86,6 +83,7 @@ import Modelling.PetriNet.Types (
   )
 
 import Control.Applicative (Alternative ((<|>)))
+import Control.Monad                    (when)
 import Control.Monad.Catch              (MonadThrow)
 import Control.Monad.Trans.Class (lift)
 import Control.OutputCapable.Blocks (
@@ -100,7 +98,6 @@ import Control.OutputCapable.Blocks (
   extra,
   german,
   translate,
-  translations,
   multipleChoice,
   )
 import Control.Monad.Random (
@@ -217,10 +214,11 @@ findAuxiliaryPetriNodesSolution' petri = FindAuxiliaryPetriNodesSolution {
 
 findAuxiliaryPetriNodesTask
   :: (MonadPlantUml m, MonadWriteFile m, OutputCapable m)
-  => FilePath
+  => Bool
+  -> FilePath
   -> FindAuxiliaryPetriNodesInstance
   -> LangM m
-findAuxiliaryPetriNodesTask path task = do
+findAuxiliaryPetriNodesTask showInputHelp path task = do
   paragraph $ translate $ do
     english "Consider the following activity diagram:"
     german "Betrachten Sie folgendes Aktivitätsdiagramm:"
@@ -230,9 +228,9 @@ findAuxiliaryPetriNodesTask path task = do
 (places and transitions minus auxiliary places and auxiliary transitions), the count of auxiliary places and the count of auxiliary transitions in the net.|]
     german [iii|Übersetzen Sie das gegebene Aktivitätsdiagramm in ein Petrinetz (auf dem Papier oder in Ihrem Kopf) und geben Sie dann die Gesamtanzahl
 an Nicht-Hilfsknoten (Stellen und Transitionen minus Hilfsstellen und Hilfstransitionen), die Anzahl der Hilfsstellen und die Anzahl der Hilfstransitionen des Netzes an.|]
-  paragraph $ do
+  when showInputHelp $ paragraph $ do
     translate $ do
-      english [i|To do this, enter your answer as in the following example:|]
+      english [i|To do so, state your answer as in the following example:|]
       german [i|Geben Sie dazu Ihre Antwort wie im folgenden Beispiel an:|]
     code $ show findAuxiliaryPetriNodesInitial
     translate $ do
@@ -260,18 +258,15 @@ findAuxiliaryPetriNodesEvaluation
   => FindAuxiliaryPetriNodesInstance
   -> FindAuxiliaryPetriNodesSolution
   -> Rated m
-findAuxiliaryPetriNodesEvaluation task sub = addPretext $ do
-  let as = translations $ do
-        english "answer parts"
-        german "Teilantworten"
-      sol = findAuxiliaryPetriNodesSolution task
+findAuxiliaryPetriNodesEvaluation task sub = do
+  let sol = findAuxiliaryPetriNodesSolution task
       solution = findAuxiliaryPetriNodesSolutionMap sol
       sub' = M.keys $ findAuxiliaryPetriNodesSolutionMap sub
       maybeSolutionString =
         if showSolution task
         then Just . (DefiniteArticle,) $ show sol
         else Nothing
-  multipleChoice as maybeSolutionString solution sub'
+  multipleChoice Nothing maybeSolutionString solution sub'
 
 findAuxiliaryPetriNodesSolutionMap
   :: FindAuxiliaryPetriNodesSolution
