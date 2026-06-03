@@ -2,6 +2,7 @@
 
 module Modelling.CdOd.RepairCd.Config where
 
+import Modelling.CdOd.Common (validClassDiagramAdvice)
 import Modelling.CdOd.RepairCd (
   RepairCdConfig (..),
   )
@@ -384,4 +385,6 @@ task2025_10 = RepairCdConfig {
 points: 0.15
 -}
 task2025_11 :: RepairCdConfig
-task2025_11 = task2024_13
+task2025_11 = task2024_13{
+  extraText = validClassDiagramAdvice
+}

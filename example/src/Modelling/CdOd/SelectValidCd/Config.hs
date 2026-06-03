@@ -458,15 +458,15 @@ task2024_52 = SelectValidCdConfig {
 points: 0.15
 -}
 task2025_04 :: SelectValidCdConfig
-task2025_04 = task2024_06
+task2025_04 = task2024_06{
+  extraText = validClassDiagramAdvice
+}
 
 {-|
 points: 0.15
 -}
 task2025_05 :: SelectValidCdConfig
-task2025_05 = task2024_07{
-  extraText = validClassDiagramAdvice
-}
+task2025_05 = task2024_07
 
 {-|
 points: 0.15

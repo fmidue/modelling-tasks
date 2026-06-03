@@ -2,6 +2,7 @@
 
 module Modelling.CdOd.NameCdError.Config where
 
+import Modelling.CdOd.Common (validClassDiagramAdvice)
 import Modelling.CdOd.NameCdError (
   NameCdErrorConfig (..),
   NumberOfReasons (..),
@@ -385,7 +386,9 @@ task2024_54 = NameCdErrorConfig {
 points: 0.15
 -}
 task2025_08 :: NameCdErrorConfig
-task2025_08 = task2024_10
+task2025_08 = task2024_10{
+  extraText = validClassDiagramAdvice
+}
 
 {-|
 points: 0.15
