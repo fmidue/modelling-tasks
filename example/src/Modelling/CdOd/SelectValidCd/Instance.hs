@@ -4,6 +4,7 @@ module Modelling.CdOd.SelectValidCd.Instance where
 
 import qualified Data.Map                         as M (fromList)
 
+import Modelling.CdOd.Common (validClassDiagramAdvice)
 import Modelling.CdOd.SelectValidCd (
   SelectValidCdInstance (..),
   SelectValidCdTaskTextElement (..),
@@ -827,15 +828,7 @@ task2024_09 = ShuffleInstance {
           ])
         ]
       ],
-    addText = Collapsible True
-      (listToFM [
-        (English, "Hint on the validity of class diagrams"),
-        (German, "Hinweis zur Gültigkeit von Klassendiagrammen")
-        ])
-      (listToFM [
-        (English, "One reason for not considering a class diagram valid is if it cannot actually be instantiated, i.e., if there exists no object diagram conforming to it."),
-        (German, "Ein Grund dafür, ein Klassendiagramm nicht als gültig anzusehen ist, wenn es gar nicht instanziiert werden kann, d.h., wenn kein dazu passendes Objektdiagramm existiert.")
-        ])
+    addText = validClassDiagramAdvice
     },
   allowLayoutMangling = True,
   shuffleNames = True,
