@@ -1,3 +1,4 @@
+{-# LANGUAGE TypeOperators #-}
 module Modelling.PetriNet.Reach.DeadlockSpec where
 
 import Data.List.NonEmpty                 (toList)
@@ -6,7 +7,9 @@ import Capabilities.Graphviz.IO         ()
 import Modelling.PetriNet.Reach.Deadlock (
   DeadlockConfig (..),
   DeadlockInstance (..),
+  deadlockEvaluation,
   defaultDeadlockConfig,
+  defaultDeadlockInstance,
   generateDeadlock,
   checkDeadlockConfig,
   )
@@ -27,8 +30,20 @@ import Modelling.PetriNet.Reach.Type (
   noArrowDensityConstraints,
   )
 
+
+import Control.OutputCapable.Blocks (
+  Language,
+  GenericReportT,
+  LangM',
+  )
+import Control.OutputCapable.Blocks.Generic (
+  runLangMReport,
+  )
+import Data.Either.Extra                (fromEither)
 import Data.Maybe                       (isJust)
 import qualified Data.Map                 as M
+import Data.Traversable                 (forM)
+import System.IO.Extra                  (withTempDir)
 import Modelling.PetriNet.Reach.ReachSpec (
   hasMinTransitionLength,
   )
@@ -403,3 +418,20 @@ spec = do
               }
             }
       checkDeadlockConfig config `shouldBe` Nothing
+
+  describe "defaultDeadlockInstance" $ do
+    it "passes deadlockEvaluation" $ do
+      let sols = fromEither $ shortestSolutions defaultDeadlockInstance
+      results <- withTempDir $ \tempDir ->
+        forM sols $ \sol ->
+          getResult $ deadlockEvaluation tempDir defaultDeadlockInstance sol
+      results `shouldBe` (Just 1 <$ results)
+
+getResult
+  :: (m ~ GenericReportT Language (IO ()) IO)
+  => LangM' m a
+  -> IO (Maybe a)
+getResult thing = do
+  (r, _) <- runLangMReport (pure ()) (>>) thing
+  pure r
+
