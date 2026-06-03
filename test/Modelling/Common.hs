@@ -4,6 +4,7 @@
 {-# LANGUAGE TupleSections #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE TypeOperators #-}
 {- |
 Provides the ability to test code using the 'OutputCapable' by accepting success
 and printing error messages.
@@ -12,6 +13,7 @@ module Modelling.Common (
   withLang,
   withUnitTests,
   withUnitTestsUsingPath,
+  runWithoutOutput,
   ) where
 
 import qualified Control.OutputCapable.Blocks.Generic as Output (withLang)
@@ -21,11 +23,13 @@ import Control.Monad                    (forM_, unless)
 import Control.OutputCapable.Blocks     (
   GenericLangM (unLangM),
   GenericOutputCapable (..),
+  GenericReportT,
   LangM',
   Language,
   )
 import Control.OutputCapable.Blocks.Generic (
   RunnableOutputCapable (..),
+  runLangMReport,
   )
 import Data.List                        (isPrefixOf, sort)
 import Data.List.Extra                  (replace)
@@ -91,3 +95,12 @@ withUnitTests
   -> Spec
 withUnitTests name does dir extension =
   withUnitTestsUsingPath name does dir extension . const
+
+runWithoutOutput
+  :: (m ~ GenericReportT Language (IO ()) IO)
+  => LangM' m a
+  -> IO (Maybe a)
+runWithoutOutput thing = do
+  (r, _) <- runLangMReport (pure ()) (>>) thing
+  pure r
+

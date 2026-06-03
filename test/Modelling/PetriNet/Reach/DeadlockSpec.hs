@@ -4,6 +4,7 @@ module Modelling.PetriNet.Reach.DeadlockSpec where
 import Data.List.NonEmpty                 (toList)
 import Capabilities.Diagrams.IO         ()
 import Capabilities.Graphviz.IO         ()
+import Modelling.Common                 (runWithoutOutput)
 import Modelling.PetriNet.Reach.Deadlock (
   DeadlockConfig (..),
   DeadlockInstance (..),
@@ -31,14 +32,6 @@ import Modelling.PetriNet.Reach.Type (
   )
 
 
-import Control.OutputCapable.Blocks (
-  Language,
-  GenericReportT,
-  LangM',
-  )
-import Control.OutputCapable.Blocks.Generic (
-  runLangMReport,
-  )
 import Data.Either.Extra                (fromEither)
 import Data.Maybe                       (isJust)
 import qualified Data.Map                 as M
@@ -424,14 +417,6 @@ spec = do
       let sols = fromEither $ shortestSolutions defaultDeadlockInstance
       results <- withTempDir $ \tempDir ->
         forM sols $ \sol ->
-          getResult $ deadlockEvaluation tempDir defaultDeadlockInstance sol
+          runWithoutOutput $ deadlockEvaluation tempDir defaultDeadlockInstance sol
       results `shouldBe` (Just 1 <$ results)
-
-getResult
-  :: (m ~ GenericReportT Language (IO ()) IO)
-  => LangM' m a
-  -> IO (Maybe a)
-getResult thing = do
-  (r, _) <- runLangMReport (pure ()) (>>) thing
-  pure r
 

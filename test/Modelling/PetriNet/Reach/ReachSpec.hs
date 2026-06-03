@@ -7,6 +7,7 @@ import Data.List.NonEmpty                 (toList)
 import Capabilities.Cache.IO            ()
 import Capabilities.Diagrams.IO         ()
 import Capabilities.Graphviz.IO         ()
+import Modelling.Common                 (runWithoutOutput)
 import Modelling.PetriNet.Reach.Reach (
   ReachConfig (..),
   NetGoalConfig (..),
@@ -39,14 +40,6 @@ import Modelling.PetriNet.Reach.Type (
   noTransitionBehaviorConstraints,
   )
 
-import Control.OutputCapable.Blocks (
-  Language,
-  GenericReportT,
-  LangM',
-  )
-import Control.OutputCapable.Blocks.Generic (
-  runLangMReport,
-  )
 import Data.Either.Extra                (fromEither)
 import Data.Maybe                        (isJust)
 import qualified Data.Map                 as M
@@ -446,7 +439,7 @@ spec = do
       let sols = fromEither $ shortestSolutions defaultReachInstance
       results <- withTempDir $ \tempDir ->
         forM sols $ \sol ->
-          getResult $ reachEvaluation tempDir defaultReachInstance sol
+          runWithoutOutput $ reachEvaluation tempDir defaultReachInstance sol
       results `shouldBe` (Just 1 <$ results)
 
 hasMinTransitionLength
@@ -466,12 +459,4 @@ hasMinTransitionLength p ts minL n =
           a <- S.toList ts,
           as <- transitionVariants (x-1)
           ]
-
-getResult
-  :: (m ~ GenericReportT Language (IO ()) IO)
-  => LangM' m a
-  -> IO (Maybe a)
-getResult thing = do
-  (r, _) <- runLangMReport (pure ()) (>>) thing
-  pure r
 
