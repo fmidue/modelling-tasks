@@ -3,10 +3,13 @@ module Modelling.PetriNet.Reach.DeadlockSpec where
 import Data.List.NonEmpty                 (toList)
 import Capabilities.Diagrams.IO         ()
 import Capabilities.Graphviz.IO         ()
+import Modelling.Common                 (runWithoutOutput)
 import Modelling.PetriNet.Reach.Deadlock (
   DeadlockConfig (..),
   DeadlockInstance (..),
+  deadlockEvaluation,
   defaultDeadlockConfig,
+  defaultDeadlockInstance,
   generateDeadlock,
   checkDeadlockConfig,
   )
@@ -27,8 +30,11 @@ import Modelling.PetriNet.Reach.Type (
   noArrowDensityConstraints,
   )
 
+import Data.Either.Extra                (fromEither)
 import Data.Maybe                       (isJust)
 import qualified Data.Map                 as M
+import Data.Traversable                 (forM)
+import System.IO.Extra                  (withTempDir)
 import Modelling.PetriNet.Reach.ReachSpec (
   hasMinTransitionLength,
   )
@@ -403,3 +409,11 @@ spec = do
               }
             }
       checkDeadlockConfig config `shouldBe` Nothing
+
+  describe "defaultDeadlockInstance" $ do
+    it "passes deadlockEvaluation" $ do
+      let sols = fromEither $ shortestSolutions defaultDeadlockInstance
+      results <- withTempDir $ \tempDir ->
+        forM sols $
+          runWithoutOutput . deadlockEvaluation tempDir defaultDeadlockInstance
+      results `shouldSatisfy` all (== Just 1)

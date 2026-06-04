@@ -48,7 +48,11 @@ task5 = ReachInstance {
   showGoalNet = True,
   showPlaceNames = False,
   maxDisplayedSolutions = 1,
-  shortestSolutions = Left ([] :| []), -- TO DO: add a solution here
+  shortestSolutions = Left ([
+    "t5", "t2", "t4", "t3",
+    "t5", "t2", "t4", "t3",
+    "t5", "t2", "t4", "t3"
+   ] :| []),
   withLengthHint = Just 12,
   withMinLengthHint = True,
   addText = NoExtraText,

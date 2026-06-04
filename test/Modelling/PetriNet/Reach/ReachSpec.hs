@@ -3,16 +3,20 @@ module Modelling.PetriNet.Reach.ReachSpec where
 import qualified Data.Set                         as S
 
 import Data.List.NonEmpty                 (toList)
+import Capabilities.Cache.IO            ()
 import Capabilities.Diagrams.IO         ()
 import Capabilities.Graphviz.IO         ()
+import Modelling.Common                 (runWithoutOutput)
 import Modelling.PetriNet.Reach.Reach (
   ReachConfig (..),
   NetGoalConfig (..),
   ReachInstance (..),
   NetGoal (..),
   defaultReachConfig,
+  defaultReachInstance,
   generateReach,
   checkReachConfig,
+  reachEvaluation,
   )
 import Modelling.PetriNet.Reach.Filter (
   shouldDiscardSolutions,
@@ -35,9 +39,12 @@ import Modelling.PetriNet.Reach.Type (
   noTransitionBehaviorConstraints,
   )
 
+import Data.Either.Extra                (fromEither)
 import Data.Maybe                        (isJust)
 import qualified Data.Map                 as M
 import Data.Set                         (Set)
+import Data.Traversable                 (forM)
+import System.IO.Extra                  (withTempDir)
 
 import Settings (nightly)
 
@@ -425,6 +432,14 @@ spec = do
               }
             }
       checkReachConfig config `shouldBe` Nothing
+
+  describe "defaultReachInstance" $ do
+    it "passes reachEvaluation" $ do
+      let sols = fromEither $ shortestSolutions defaultReachInstance
+      results <- withTempDir $ \tempDir ->
+        forM sols $
+          runWithoutOutput . reachEvaluation tempDir defaultReachInstance
+      results `shouldSatisfy` all (== Just 1)
 
 hasMinTransitionLength
   :: (Ord s, Show s)

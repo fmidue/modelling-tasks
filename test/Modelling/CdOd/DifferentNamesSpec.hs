@@ -1,6 +1,5 @@
 {-# LANGUAGE ApplicativeDo #-}
 {-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE TypeOperators #-}
 -- |
 
 module Modelling.CdOd.DifferentNamesSpec where
@@ -46,6 +45,7 @@ import Modelling.CdOd.Types (
   normaliseObjectDiagram,
   renameObjectsWithClassesAndLinksInOd,
   )
+import Modelling.Common                 (runWithoutOutput)
 import Modelling.Types (
   Name (Name, unName),
   fromNameMapping,
@@ -54,9 +54,6 @@ import Modelling.Types (
 
 import Control.OutputCapable.Blocks (
   ExtraText (..),
-  Language,
-  GenericReportT,
-  LangM',
   )
 import Control.Monad.Random (
   evalRandT,
@@ -84,16 +81,7 @@ import Test.QuickCheck (
   )
 import System.Random                    (getStdGen, setStdGen)
 import System.Random.Shuffle            (shuffleM)
-import Control.OutputCapable.Blocks.Generic (runLangMReport)
 import System.IO.Extra (withTempDir)
-
-getResult
-  :: (m ~ GenericReportT Language (IO ()) IO)
-  => LangM' m a
-  -> IO (Maybe a)
-getResult thing = do
-  (r, _) <- runLangMReport (pure ()) (>>) thing
-  pure r
 
 spec :: Spec
 spec = do
@@ -163,7 +151,7 @@ spec = do
       in ioProperty $ case maybe (Left "instance could not be renamed") return renamedInstance of
         Left _ -> pure False
         Right renamed -> do
-          r <- withTempDir $ \tmpDir -> getResult (differentNamesEvaluation tmpDir renamed origMap)
+          r <- withTempDir $ \tmpDir -> runWithoutOutput (differentNamesEvaluation tmpDir renamed origMap)
           pure $ Just 1 == r
   describe "getDifferentNamesTask" $ do
     it "generates matching OD for association circle" $
@@ -366,9 +354,9 @@ evaluateAndCheckDifferentNames check coins cs cs' = do
         addText = NoExtraText
         }
       cs'' = map (bimap Name Name) cs'
-  synResult <- getResult $ differentNamesSyntax True i cs''
+  synResult <- runWithoutOutput $ differentNamesSyntax True i cs''
   semResult <- if isJust synResult
-    then withTempDir $ \tmpDir -> getResult $ differentNamesEvaluation tmpDir i cs''
+    then withTempDir $ \tmpDir -> runWithoutOutput $ differentNamesEvaluation tmpDir i cs''
     else pure Nothing
 
   pure $ check semResult
