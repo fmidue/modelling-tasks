@@ -437,8 +437,8 @@ spec = do
     it "passes reachEvaluation" $ do
       let sols = fromEither $ shortestSolutions defaultReachInstance
       results <- withTempDir $ \tempDir ->
-        forM sols $ \sol ->
-          runWithoutOutput $ reachEvaluation tempDir defaultReachInstance sol
+        forM sols $
+          runWithoutOutput . reachEvaluation tempDir defaultReachInstance
       results `shouldBe` (Just 1 <$ results)
 
 hasMinTransitionLength
@@ -458,4 +458,3 @@ hasMinTransitionLength p ts minL n =
           a <- S.toList ts,
           as <- transitionVariants (x-1)
           ]
-
