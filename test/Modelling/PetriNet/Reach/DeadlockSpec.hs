@@ -30,7 +30,6 @@ import Modelling.PetriNet.Reach.Type (
   noArrowDensityConstraints,
   )
 
-
 import Data.Either.Extra                (fromEither)
 import Data.Maybe                       (isJust)
 import qualified Data.Map                 as M
@@ -415,7 +414,6 @@ spec = do
     it "passes deadlockEvaluation" $ do
       let sols = fromEither $ shortestSolutions defaultDeadlockInstance
       results <- withTempDir $ \tempDir ->
-        forM sols $ \sol ->
-          runWithoutOutput $ deadlockEvaluation tempDir defaultDeadlockInstance sol
+        forM sols $
+          runWithoutOutput . deadlockEvaluation tempDir defaultDeadlockInstance
       results `shouldBe` (Just 1 <$ results)
-
