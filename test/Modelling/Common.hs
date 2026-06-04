@@ -103,4 +103,3 @@ runWithoutOutput
 runWithoutOutput thing = do
   (r, _) <- runLangMReport (pure ()) (>>) thing
   pure r
-
