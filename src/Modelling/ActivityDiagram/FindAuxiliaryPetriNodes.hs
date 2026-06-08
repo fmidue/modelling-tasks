@@ -35,9 +35,8 @@ import qualified Data.Map as M (
   )
 
 import Autolib.Hash                     (Hashable)
-import Autolib.Multilingual.Doc         (render)
 import Autolib.Reader                   (Reader)
-import Autolib.ToDoc                    (ToDoc, toDoc)
+import Autolib.ToDoc                    (ToDoc, toDoc, render)
 import Capabilities.Alloy               (MonadAlloy, getInstances)
 import Capabilities.PlantUml            (MonadPlantUml)
 import Capabilities.WriteFile           (MonadWriteFile)
