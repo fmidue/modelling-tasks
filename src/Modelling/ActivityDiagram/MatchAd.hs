@@ -48,8 +48,9 @@ import Modelling.ActivityDiagram.Shuffle (shuffleAdNames)
 import Modelling.Auxiliary.Common       (getFirstInstance)
 
 import Autolib.Hash                     (Hashable)
+import Autolib.Multilingual.Doc         (render)
 import Autolib.Reader                   (Reader)
-import Autolib.ToDoc                    (ToDoc)
+import Autolib.ToDoc                    (ToDoc, toDoc)
 import Control.Applicative (Alternative ((<|>)))
 import Control.Monad                    (when)
 import Control.Monad.Catch              (MonadThrow)
@@ -201,7 +202,7 @@ matchAdTask showInputHelp path task = do
     translate $ do
       english [i|To do so, state your answer as in the following example:|]
       german [i|Geben Sie dazu Ihre Antwort wie im folgenden Beispiel an:|]
-    code $ show matchAdInitial
+    code $ render $ toDoc matchAdInitial
     pure ()
 
   extra $ addText task
@@ -242,7 +243,7 @@ matchAdEvaluation task sub = do
   let sol = matchAdSolution task
       solutionString =
         if showSolution task
-        then Just . (DefiniteArticle,) $ show sol
+        then Just . (DefiniteArticle,) $ render $ toDoc sol
         else Nothing
       solution = matchAdSolutionMap sol
       sub' = M.keys $ matchAdSolutionMap sub
