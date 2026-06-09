@@ -36,7 +36,7 @@ import qualified Data.Map as M (
 
 import Autolib.Hash                     (Hashable)
 import Autolib.Reader                   (Reader)
-import Autolib.ToDoc                    (ToDoc)
+import Autolib.ToDoc                    (ToDoc, toDoc, render)
 import Capabilities.Alloy               (MonadAlloy, getInstances)
 import Capabilities.PlantUml            (MonadPlantUml)
 import Capabilities.WriteFile           (MonadWriteFile)
@@ -232,7 +232,7 @@ an Nicht-Hilfsknoten (Stellen und Transitionen minus Hilfsstellen und Hilfstrans
     translate $ do
       english [i|To do so, state your answer as in the following example:|]
       german [i|Geben Sie dazu Ihre Antwort wie im folgenden Beispiel an:|]
-    code $ show findAuxiliaryPetriNodesInitial
+    code $ render $ toDoc findAuxiliaryPetriNodesInitial
     translate $ do
       english [iii|In this example, the resulting net contains 5 non-auxiliary nodes
 (namely, 10 total nodes minus 2 auxiliary places minus 3 auxiliary transitions), plus
@@ -264,7 +264,7 @@ findAuxiliaryPetriNodesEvaluation task sub = do
       sub' = M.keys $ findAuxiliaryPetriNodesSolutionMap sub
       maybeSolutionString =
         if showSolution task
-        then Just . (DefiniteArticle,) $ show sol
+        then Just . (DefiniteArticle,) $ render $ toDoc sol
         else Nothing
   multipleChoice Nothing maybeSolutionString solution sub'
 

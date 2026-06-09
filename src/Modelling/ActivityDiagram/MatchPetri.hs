@@ -38,7 +38,7 @@ import qualified Modelling.PetriNet.Types as Petri (Net (nodes))
 
 import Autolib.Hash                     (Hashable)
 import Autolib.Reader                   (Reader)
-import Autolib.ToDoc                    (ToDoc)
+import Autolib.ToDoc                    (ToDoc, toDoc, render)
 import Capabilities.Alloy               (MonadAlloy, getInstances)
 import Capabilities.Cache               (MonadCache)
 import Capabilities.Diagrams            (MonadDiagrams)
@@ -379,7 +379,7 @@ matchPetriTask showInputHelp path task = do
     translate $ do
       english [i|To do so, state your answer as in the following example:|]
       german [i|Geben Sie dazu Ihre Antwort wie im folgenden Beispiel an:|]
-    code $ show matchPetriInitial
+    code $ render $ toDoc matchPetriInitial
     translate $ do
       english [iii|
         In this example, the action nodes "A" and "B"
@@ -473,7 +473,7 @@ matchPetriEvaluation task sub = do
   let sol = matchPetriSolution task
       maybeSolutionString =
         if showSolution task
-        then Just . (DefiniteArticle,) $ show sol
+        then Just . (DefiniteArticle,) $ render $ toDoc sol
         else Nothing
       solution = matchPetriSolutionMap sol
       sub' = M.keys $ matchPetriSolutionMap sub
