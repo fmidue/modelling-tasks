@@ -99,8 +99,8 @@ toFindSyntax withSol n (fi, si) = addPretext $ do
   assertTransition fi
   assertTransition si
   assert (fi /= si) $ translate $ do
-    english $ "Transitions are distinct?"
-    german $ "Transitionen sind unterschiedlich?"
+    english "Transitions are distinct?"
+    german "Transitionen sind unterschiedlich?"
   pure ()
   where
     assert = continueOrAbort withSol
