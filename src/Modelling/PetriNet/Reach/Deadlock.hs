@@ -98,6 +98,8 @@ import Modelling.PetriNet.Reach.Type (
   example,
   noArrowDensityConstraints,
   noTransitionBehaviorConstraints,
+  placeRange,
+  transitionRange,
   )
 
 import Control.Applicative              (Alternative, (<|>))
@@ -337,8 +339,8 @@ defaultDeadlockInstance = DeadlockInstance {
   showPlaceNames    = False,
   maxDisplayedSolutions = 1,
   shortestSolutions = Left ([
-    Transition 3, Transition 3, Transition 3,
-    Transition 2, Transition 2, Transition 2
+    Transition "t3", Transition "t3", Transition "t3",
+    Transition "t2", Transition "t2", Transition "t2"
     ] :| []),
   withLengthHint    = Just 9,
   withMinLengthHint = True,
@@ -452,8 +454,8 @@ try
   => DeadlockConfig
   -> MaybeT (RandT g m) (Net Place Transition, GraphvizCommand, Either (NonEmpty [Transition]) (NonEmpty [Transition]))
 try conf = do
-    let ps = [Place 1 .. Place (numPlaces conf)]
-        ts = [Transition 1 .. Transition (numTransitions conf)]
+    let ps = placeRange (numPlaces conf)
+        ts = transitionRange (numTransitions conf)
         requiredFusableTransitionsConsuming = fromMaybe 0 $ fusableTransitionsConsumingAreExactly conf
         requiredFusableTransitionsProducing = fromMaybe 0 $ fusableTransitionsProducingAreExactly conf
     -- Pre-generate fusable node connections and bind appropriate version of netLimitsFiltered

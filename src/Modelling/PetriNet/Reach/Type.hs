@@ -173,16 +173,15 @@ conforms cap (State z) = case cap of
     )
     (M.toList z)
 
-newtype Place = Place Int
+newtype Place = Place String
   deriving anyclass Hashable
-  deriving newtype Enum
   deriving stock (Data, Eq, Generic, Ord, Read, Show)
 
 newtype ShowPlace = ShowPlace Place
   deriving (Eq, Ord)
 
 instance Show ShowPlace where
-  show (ShowPlace (Place p)) = "s" ++ show p
+  show (ShowPlace (Place p)) = p
 
 instance Reader Place where
   atomic_readerPrec = parsePlacePrec
@@ -197,18 +196,20 @@ parsePlacePrec :: Int -> Parser Place
 parsePlacePrec _ = do
   skipMany space
   void $ char 's'
-  Place <$> parseInt <* skipMany space
+  Place . ("s" ++) . show <$> parseInt <* skipMany space
 
-newtype Transition = Transition Int
+placeRange :: Int -> [Place]
+placeRange numberOfPlaces = map (\i -> Place ("s" ++ show i)) [1..numberOfPlaces]
+
+newtype Transition = Transition String
   deriving anyclass Hashable
-  deriving newtype Enum
   deriving stock (Data, Eq, Generic, Ord, Read, Show)
 
 newtype ShowTransition = ShowTransition Transition
   deriving (Eq, Ord)
 
 instance Show ShowTransition where
-  show (ShowTransition (Transition t)) = "t" ++ show t
+  show (ShowTransition (Transition t)) = t
 
 instance Reader Transition where
   atomic_readerPrec = parseTransitionPrec
@@ -223,7 +224,17 @@ parseTransitionPrec :: Int -> Parser Transition
 parseTransitionPrec _ = do
   skipMany space
   void $ char 't'
-  Transition <$> parseInt <* skipMany space
+  Transition . ("t" ++) . show <$> parseInt <* skipMany space
+
+transitionRange :: Int -> [Transition]
+transitionRange numberOfTransitions =
+  map (\i -> Transition ("t" ++ show i)) [1..numberOfTransitions]
+
+instance Enum Transition where
+  fromEnum (Transition t) = case reads (drop 1 t) of
+    [(n, "")] -> n
+    _ -> error ("Enum Transition: cannot enumerate non-numeric transition: " ++ show t)
+  toEnum n = Transition ("t" ++ show n)
 
 newtype TransitionsList = TransitionsList {
   transitionsList :: [Transition]
@@ -254,19 +265,19 @@ parseTransitionsListPrec _ = do
 example :: (Net Place Transition, State Place)
 example =
   (Net {
-    places = S.fromList [Place 1, Place 2, Place 3, Place 4],
-    transitions = S.fromList [Transition 1, Transition 2, Transition 3, Transition 4],
+    places = S.fromList [Place "s1", Place "s2", Place "s3", Place "s4"],
+    transitions = S.fromList [Transition "t1", Transition "t2", Transition "t3", Transition "t4"],
     connections = [
-        ([Place 3, Place 4], Transition 1, [Place 2]),
-        ([Place 4], Transition 2, [Place 3]),
-        ([Place 1], Transition 3, [Place 4]),
-        ([Place 2], Transition 4, [Place 1])
+        ([Place "s3", Place "s4"], Transition "t1", [Place "s2"]),
+        ([Place "s4"], Transition "t2", [Place "s3"]),
+        ([Place "s1"], Transition "t3", [Place "s4"]),
+        ([Place "s2"], Transition "t4", [Place "s1"])
     ],
     capacity = Unbounded,
     start = State $ M.fromList
-      [(Place 1, 3), (Place 2, 0), (Place 3, 0), (Place 4, 0)]
+      [(Place "s1", 3), (Place "s2", 0), (Place "s3", 0), (Place "s4", 0)]
     },
-   State $ M.fromList [(Place 1, 0), (Place 2, 0), (Place 3, 1), (Place 4, 0)]
+   State $ M.fromList [(Place "s1", 0), (Place "s2", 0), (Place "s3", 1), (Place "s4", 0)]
   )
 
 -- | Check if a net has any isolated nodes (nodes with no connections)
