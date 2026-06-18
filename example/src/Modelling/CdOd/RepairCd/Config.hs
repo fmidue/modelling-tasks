@@ -324,10 +324,16 @@ task2024_55 = RepairCdConfig {
 
 {-|
 points: 0.15
-used in 2025 as: RepairCdCheckboxesUnAvailable-Quiz
+the amount of generated instances:
+maximum concurrent amount of tasks:
+average generation time per instance on the cluster (without considering concurrency):
+total run time on the cluster (not including queuing time):
+average CPU usage:
+average memory usage:
+used as: RepairCdFormInputCheckboxesUnAvailable-Quiz
 -}
-task2025_10 :: RepairCdConfig
-task2025_10 = RepairCdConfig {
+task2025_repeat_12 :: RepairCdConfig
+task2025_repeat_12 = RepairCdConfig {
   allowedCdMutations = [
     AddRelationship,
     MutateRelationship ChangeKind,
@@ -383,7 +389,13 @@ task2025_10 = RepairCdConfig {
 
 {-|
 points: 0.15
-used in 2025 as: RepairCdCheckboxesUnAvailable-Quiz
+the amount of generated instances:
+maximum concurrent amount of tasks:
+average generation time per instance on the cluster (without considering concurrency):
+total run time on the cluster (not including queuing time):
+average CPU usage:
+average memory usage:
+used as: RepairCdFormInputCheckboxesUnAvailable-Quiz
 -}
-task2025_11 :: RepairCdConfig
-task2025_11 = task2024_13
+task2025_repeat_13 :: RepairCdConfig
+task2025_repeat_13 = task2024_13

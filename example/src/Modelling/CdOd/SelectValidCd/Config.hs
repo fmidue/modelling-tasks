@@ -455,24 +455,42 @@ task2024_52 = SelectValidCdConfig {
 
 {-|
 points: 0.15
-used in 2025 as: SelectValidCdUnAvailable-Quiz, next time in form-based version
+the amount of generated instances:
+maximum concurrent amount of tasks:
+average generation time per instance on the cluster (without considering concurrency):
+total run time on the cluster (not including queuing time):
+average CPU usage:
+average memory usage:
+used as: SelectValidCdFormInputCheckboxesUnAvailable-Quiz
 -}
-task2025_04 :: SelectValidCdConfig
-task2025_04 = task2024_06
+task2025_repeat_07 :: SelectValidCdConfig
+task2025_repeat_07 = task2024_07
 
 {-|
 points: 0.15
-used in 2025 as: SelectValidCdUnAvailable-Quiz, next time in form-based version
+the amount of generated instances:
+maximum concurrent amount of tasks:
+average generation time per instance on the cluster (without considering concurrency):
+total run time on the cluster (not including queuing time):
+average CPU usage:
+average memory usage:
+used as: SelectValidCdFormInputCheckboxesUnAvailable-Quiz
 -}
-task2025_05 :: SelectValidCdConfig
-task2025_05 = task2024_07
+task2025_repeat_08 :: SelectValidCdConfig
+task2025_repeat_08 = task2024_08
 
 {-|
 points: 0.15
-used in 2025 as: SelectValidCdUnAvailable-Quiz, next time in form-based version
+the amount of generated instances:
+maximum concurrent amount of tasks:
+average generation time per instance on the cluster (without considering concurrency):
+total run time on the cluster (not including queuing time):
+average CPU usage:
+average memory usage:
+used as: SelectValidCdFormInputCheckboxesUnAvailable-Quiz
 -}
-task2025_06 :: SelectValidCdConfig
-task2025_06 = task2024_08
+task2025_repeat_10 :: SelectValidCdConfig
+task2025_repeat_10 = task2024_06
 
 {-|
 points: 0.1
@@ -482,7 +500,20 @@ average generation time per instance on the cluster (without considering concurr
 total run time on the cluster (not including queuing time): 03:36:52h
 average CPU usage: 234.29%
 average memory usage: 2127.95 MB
-used in 2025 as: SelectValidCdUnAvailable-Quiz, next time in form-based version
+used as: SelectValidCdUnAvailable-Quiz
 -}
 task2025_53 :: SelectValidCdConfig
-task2025_53 = task2025_05
+task2025_53 = task2024_07
+
+{-|
+points: 0.1
+the amount of generated instances:
+maximum concurrent amount of tasks:
+average generation time per instance on the cluster (without considering concurrency):
+total run time on the cluster (not including queuing time):
+average CPU usage:
+average memory usage:
+used as: SelectValidCdFormInputCheckboxesUnAvailable-Quiz
+-}
+task2025_repeat_11 :: SelectValidCdConfig
+task2025_repeat_11 = task2025_repeat_07
