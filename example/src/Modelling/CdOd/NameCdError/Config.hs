@@ -383,12 +383,14 @@ task2024_54 = NameCdErrorConfig {
 
 {-|
 points: 0.15
+used in 2025 as: NameCdErrorCheckboxesUnAvailable-Quiz
 -}
 task2025_08 :: NameCdErrorConfig
 task2025_08 = task2024_10
 
 {-|
 points: 0.15
+used in 2025 as: NameCdErrorCheckboxesUnAvailable-Quiz
 -}
 task2025_09 :: NameCdErrorConfig
 task2025_09 = task2024_11
@@ -401,6 +403,7 @@ average generation time per instance on the cluster (without considering concurr
 total run time on the cluster (not including queuing time): 2:28min
 average CPU usage: 104.72%
 average memory usage: 1300.33 MB
+used in 2025 as: NameCdErrorUnAvailable-Quiz, next time in form-based version
 -}
 task2025_54 :: NameCdErrorConfig
 task2025_54 = task2025_08

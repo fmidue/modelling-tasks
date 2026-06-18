@@ -83,6 +83,7 @@ average generation time per instance on the cluster (without considering concurr
 total run time on the cluster (not including queuing time): 2:20min
 average CPU usage: 101.93%
 average memory usage: 408.60 MB
+used in 2025 as: MatchAdUnAvailable-Quiz, next time in form-based version
 -}
 task2025_39 :: MatchAdConfig
 task2025_39 = task2024_37
@@ -96,6 +97,7 @@ average generation time per instance on the cluster (without considering concurr
 total run time on the cluster (not including queuing time): 3:27min
 average CPU usage: 100.80%
 average memory usage: 455.67 MB
+used in 2025 as: MatchAdUnAvailable-Quiz, next time in form-based version
 -}
 task2025_40 :: MatchAdConfig
 task2025_40 = task2024_38

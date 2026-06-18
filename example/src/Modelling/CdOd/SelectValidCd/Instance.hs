@@ -1117,6 +1117,7 @@ task2024_53 = ShuffleInstance {
 
 {-|
 points: 0.15
+used in 2025 as: SelectValidCdCheckboxesShuffled-Quiz
 -}
 task2025_07 :: ShuffleInstance SelectValidCdInstance
 task2025_07 = task2024_09

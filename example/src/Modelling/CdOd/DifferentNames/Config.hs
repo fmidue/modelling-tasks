@@ -258,6 +258,7 @@ task2024_56 = DifferentNamesConfig {
 
 {-|
 points: 0.15
+used in 2025 as: DifferentNamesCheckboxesUnAvailable-Quiz
 -}
 task2025_13 :: DifferentNamesConfig
 task2025_13 = DifferentNamesConfig {
@@ -300,6 +301,7 @@ the amount of generated instances: 100
 maximum concurrent amount of tasks: 20
 average generation time per instance on the cluster (without considering concurrency): 2:28min
 total run time on the cluster (not including queuing time): 16:14min
+used in 2025 as: DifferentNamesCheckboxesUnAvailable-Quiz
 -}
 task2025_14 :: DifferentNamesConfig
 task2025_14 = DifferentNamesConfig {
@@ -345,6 +347,7 @@ used LLM model for generation: gpt-5
 approximate input tokens: 3.575 M (1.25 $ / 1M tokens)
 approximate output tokens: 4.437 M (10 $ / 1M tokens)
 approximate cost: 48.84 $
+used in 2025 as: DifferentNamesCheckboxesUnAvailable-Quiz
 -}
 task2025_15 :: DifferentNamesConfig
 task2025_15 = task2025_14 {
@@ -358,6 +361,7 @@ points: 0.15
 variant 2: concepts are printed in object diagrams
 share same instances as task2025_14
 share same concept injection as task2025_15
+used in 2025 as: DifferentNamesRadiobuttonsUnAvailable-Quiz
 -}
 task2025_16 :: DifferentNamesConfig
 task2025_16 = task2025_15 {
@@ -370,6 +374,7 @@ variant 3: Give scenario descriptions instead of class diagrams with object diag
 share same instances as task2025_14
 share same concept injection as task2025_15
 used LLM for story generation: gpt-4o-mini
+used in 2025 as: DifferentNamesCheckboxesUnAvailable-Quiz
 -}
 task2025_21 :: DifferentNamesConfig
 task2025_21 = task2025_15
@@ -379,6 +384,7 @@ points: 0.15
 variant 4: Only give object diagrams
 share same instances as task2025_14
 share same concept injection as task2025_15
+used in 2025 as: DifferentNamesCheckboxesUnAvailable-Quiz
 -}
 task2025_22 :: DifferentNamesConfig
 task2025_22 = task2025_15
@@ -391,6 +397,7 @@ average generation time per instance on the cluster (without considering concurr
 total run time on the cluster (not including queuing time): 7:34min
 average CPU usage: 168.75%
 average memory usage: 2785.06 MB
+used in 2025 as: DifferentNamesCheckboxesUnAvailable-Quiz
 -}
 task2025_55 :: DifferentNamesConfig
 task2025_55 = task2025_14
@@ -398,6 +405,7 @@ task2025_55 = task2025_14
 {-
 points: 0.1
 share same instances as task2025_21
+used in 2025 as: DifferentNamesCheckboxesUnAvailable-Quiz
 -}
 task2025_57 :: DifferentNamesConfig
 task2025_57 = task2025_21

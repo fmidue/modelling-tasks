@@ -218,6 +218,7 @@ task2024_14 = ShuffleInstance {
 
 {-|
 points: 0.15
+used in 2025 as: Flex-Flex
 -}
 task2025_12 :: ShuffleInstance NameCdErrorInstance
 task2025_12 = task2024_14

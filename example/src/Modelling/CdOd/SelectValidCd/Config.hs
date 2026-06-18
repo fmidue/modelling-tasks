@@ -455,18 +455,21 @@ task2024_52 = SelectValidCdConfig {
 
 {-|
 points: 0.15
+used in 2025 as: SelectValidCdUnAvailable-Quiz, next time in form-based version
 -}
 task2025_04 :: SelectValidCdConfig
 task2025_04 = task2024_06
 
 {-|
 points: 0.15
+used in 2025 as: SelectValidCdUnAvailable-Quiz, next time in form-based version
 -}
 task2025_05 :: SelectValidCdConfig
 task2025_05 = task2024_07
 
 {-|
 points: 0.15
+used in 2025 as: SelectValidCdUnAvailable-Quiz, next time in form-based version
 -}
 task2025_06 :: SelectValidCdConfig
 task2025_06 = task2024_08
@@ -479,6 +482,7 @@ average generation time per instance on the cluster (without considering concurr
 total run time on the cluster (not including queuing time): 03:36:52h
 average CPU usage: 234.29%
 average memory usage: 2127.95 MB
+used in 2025 as: SelectValidCdUnAvailable-Quiz, next time in form-based version
 -}
 task2025_53 :: SelectValidCdConfig
 task2025_53 = task2025_05

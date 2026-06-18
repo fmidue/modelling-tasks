@@ -324,6 +324,7 @@ task2024_55 = RepairCdConfig {
 
 {-|
 points: 0.15
+used in 2025 as: RepairCdCheckboxesUnAvailable-Quiz
 -}
 task2025_10 :: RepairCdConfig
 task2025_10 = RepairCdConfig {
@@ -382,6 +383,7 @@ task2025_10 = RepairCdConfig {
 
 {-|
 points: 0.15
+used in 2025 as: RepairCdCheckboxesUnAvailable-Quiz
 -}
 task2025_11 :: RepairCdConfig
 task2025_11 = task2024_13

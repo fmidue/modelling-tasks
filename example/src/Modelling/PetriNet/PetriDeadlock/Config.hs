@@ -124,6 +124,7 @@ average generation time per instance on the cluster (without considering concurr
 total run time on the cluster (not including queuing time): 1:55min
 average CPU usage: 97.54%
 average memory usage: 378.04 MB
+used in 2025 as: PetriDeadlockDropdownsUnAvailable-Quiz
 -}
 task2025_29 :: DeadlockConfig
 task2025_29 = DeadlockConfig {
@@ -174,6 +175,7 @@ average generation time per instance on the cluster (without considering concurr
 total run time on the cluster (not including queuing time): 11:08:20h
 average CPU usage: 98.99%
 average memory usage: 372.13 MB
+used in 2025 as: PetriDeadlockDropdownsUnAvailable-Quiz
 -}
 task2025_30 :: DeadlockConfig
 task2025_30 = DeadlockConfig {
@@ -224,6 +226,7 @@ average generation time per instance on the cluster (without considering concurr
 total run time on the cluster (not including queuing time): 11:23:03h
 average CPU usage: 98.60%
 average memory usage: 371.97 MB
+used in 2025 as: PetriDeadlockDropdownsUnAvailable-Quiz
 -}
 task2025_59 :: DeadlockConfig
 task2025_59 = task2025_30
