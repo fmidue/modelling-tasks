@@ -1,0 +1,23 @@
+---
+name: Test Flex Tasks
+
+
+on:
+  repository_dispatch:
+    types: [CI-Completed]
+
+permissions:
+  contents: write
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: fmidue/flex-tasks/test-flex-action@main
+        with:
+          tasks: flex
+          config: flex/setup
+          settings-gens: flex/settings-gens
+          latex-setup: true

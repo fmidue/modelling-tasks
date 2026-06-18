@@ -35,7 +35,8 @@ on:
       - '.hlint.yaml'
       - '.github/workflows/haskell.yml'
 
-permissions: read-all
+permissions:
+  contents: write
 
 jobs:
   build_and_test:
@@ -164,3 +165,18 @@ jobs:
           key: ${{ steps.cache-stack-work-restore.outputs.cache-primary-key }}
         if: >-
           steps.cache-stack-work-restore.outputs.cache-hit != 'true'
+
+      - name: Escape commit message
+        id: escape
+        if: ${{ github.ref_name == github.event.repository.default_branch }}
+        env:
+          COMMIT_MSG: ${{ github.event.head_commit.message }}
+        run: |
+          echo "commit_msg=$(echo "$COMMIT_MSG" | jq -Rs '.|rtrimstr("\n")')" >> "$GITHUB_OUTPUT"
+
+      - name: Trigger Test-Flex
+        if: ${{ github.ref_name == github.event.repository.default_branch }}
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          event-type: CI-Completed
+          client-payload: '{"sha": "${{ github.sha }}", "message": ${{ steps.escape.outputs.commit_msg }}}'

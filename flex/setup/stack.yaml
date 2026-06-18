@@ -1,0 +1,12 @@
+---
+resolver: nightly-2025-10-07
+packages:
+  - .
+extra-deps:
+  - git: https://github.com/fmidue/flex-tasks.git
+    commit: dca9f3a8c797709f767e15895dd63537e99e7160
+    subdirs:
+      - flex-tasks
+      - flex-tasks-processing
+
+allow-newer: true
