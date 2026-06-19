@@ -7,6 +7,7 @@ import Modelling.ActivityDiagram.FindAuxiliaryPetriNodes (
   defaultFindAuxiliaryPetriNodesConfig,
   findAuxiliaryPetriNodes,
   findAuxiliaryPetriNodesTask,
+  findAuxiliaryPetriNodesSyntax,
   findAuxiliaryPetriNodesEvaluation
   )
 import Control.OutputCapable.Blocks     (Language (English))
@@ -28,6 +29,7 @@ main = do
       print task
       findAuxiliaryPetriNodesTask True path task `withLang` English
       sub <- read <$> getLine
+      findAuxiliaryPetriNodesSyntax task sub `withLang` English
       points <- findAuxiliaryPetriNodesEvaluation task sub `withLang` English
       putStrLn $ "Points: " ++ show points
     _ -> error "usage: three parameters required: FilePath (Output Folder) Segment (Int) Seed (Int)"

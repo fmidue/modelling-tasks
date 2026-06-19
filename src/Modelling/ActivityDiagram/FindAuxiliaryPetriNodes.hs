@@ -21,6 +21,7 @@ module Modelling.ActivityDiagram.FindAuxiliaryPetriNodes (
   findAuxiliaryPetriNodesEvaluation,
   findAuxiliaryPetriNodesInitial,
   findAuxiliaryPetriNodesSolution,
+  findAuxiliaryPetriNodesSyntax,
   findAuxiliaryPetriNodesTask,
 ) where
 
@@ -252,6 +253,21 @@ findAuxiliaryPetriNodesInitial = FindAuxiliaryPetriNodesSolution {
   countOfAuxiliaryPlaces = 2,
   countOfAuxiliaryTransitions = 3
 }
+
+findAuxiliaryPetriNodesSyntax
+  :: OutputCapable m
+  => FindAuxiliaryPetriNodesInstance
+  -> FindAuxiliaryPetriNodesSolution
+  -> LangM m
+findAuxiliaryPetriNodesSyntax _ sub = do
+  isNonNegative "non-auxiliary nodes" "Nicht-Hilfsknoten" countOfNonAuxiliaryNodes
+  isNonNegative "auxiliary places" "Hilfsstellen" countOfAuxiliaryPlaces
+  isNonNegative "auxiliary transitions" "Hilfstransitionen" countOfAuxiliaryTransitions
+  pure ()
+  where
+    isNonNegative en de field = assertion (field sub >= 0) $ translate $ do
+      english [iii|Count of #{en} is at least zero?|]
+      german [iii|Anzahl der #{de} ist mindestens Null?|]
 
 findAuxiliaryPetriNodesEvaluation
   :: OutputCapable m
