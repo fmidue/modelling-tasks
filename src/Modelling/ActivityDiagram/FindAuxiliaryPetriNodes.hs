@@ -270,8 +270,8 @@ findAuxiliaryPetriNodesSyntax fullCheck task sub = do
     pure ()
 
   assertion (countOfNonAuxiliaryNodes sub <= adNodeCount) $ translate $ do
-    english [iii|Count of non-auxiliary nodes not greater than count of elements in the activity diagram?|]
-    german [iii|Anzahl der Nicht-Hilfsknoten nicht größer als Anzahl von Elementen im Aktivitätsdiagramm?|]
+    english [iii|Stated count of non-auxiliary nodes is not greater than count of elements in the activity diagram?|]
+    german [iii|Angegebene Anzahl von Nicht-Hilfsknoten ist nicht größer als Anzahl von Elementen im Aktivitätsdiagramm?|]
 
   pure ()
   where
