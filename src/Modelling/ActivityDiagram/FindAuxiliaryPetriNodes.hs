@@ -258,7 +258,7 @@ findAuxiliaryPetriNodesInitial = FindAuxiliaryPetriNodesSolution {
 findAuxiliaryPetriNodesSyntax
   :: OutputCapable m
   => Bool
-  -- ^ Whether to do a full check. If False, skips positivity checks.
+  -- ^ Whether to do a full check. If False, skips non-negativity checks.
   -> FindAuxiliaryPetriNodesInstance
   -> FindAuxiliaryPetriNodesSolution
   -> LangM m
