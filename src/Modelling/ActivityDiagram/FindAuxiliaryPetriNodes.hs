@@ -276,8 +276,8 @@ findAuxiliaryPetriNodesSyntax fullCheck task sub = do
   pure ()
   where
     isNonNegative en de field = assertion (field sub >= 0) $ translate $ do
-      english [iii|Count of #{en} is at least zero?|]
-      german [iii|Anzahl der #{de} ist mindestens Null?|]
+      english [iii|Stated count of #{en} is not negative?|]
+      german [iii|Angegebene Anzahl von #{de} ist nicht negativ?|]
     adNodeCount = length $ Ad.nodes $ activityDiagram task
 
 findAuxiliaryPetriNodesEvaluation
