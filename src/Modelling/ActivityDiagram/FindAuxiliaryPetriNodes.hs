@@ -25,6 +25,7 @@ module Modelling.ActivityDiagram.FindAuxiliaryPetriNodes (
   findAuxiliaryPetriNodesTask,
 ) where
 
+import qualified Modelling.ActivityDiagram.Datatype as Ad (UMLActivityDiagram (nodes))
 import qualified Modelling.PetriNet.Types as Petri (Net (nodes))
 
 import qualified Data.Map as M (
@@ -256,18 +257,28 @@ findAuxiliaryPetriNodesInitial = FindAuxiliaryPetriNodesSolution {
 
 findAuxiliaryPetriNodesSyntax
   :: OutputCapable m
-  => FindAuxiliaryPetriNodesInstance
+  => Bool
+  -- ^ Whether to do a full check. If False, skips negative checks.
+  -> FindAuxiliaryPetriNodesInstance
   -> FindAuxiliaryPetriNodesSolution
   -> LangM m
-findAuxiliaryPetriNodesSyntax _ sub = do
-  isNonNegative "non-auxiliary nodes" "Nicht-Hilfsknoten" countOfNonAuxiliaryNodes
-  isNonNegative "auxiliary places" "Hilfsstellen" countOfAuxiliaryPlaces
-  isNonNegative "auxiliary transitions" "Hilfstransitionen" countOfAuxiliaryTransitions
+findAuxiliaryPetriNodesSyntax fullCheck task sub = do
+  when fullCheck $ do
+    isNonNegative "non-auxiliary nodes" "Nicht-Hilfsknoten" countOfNonAuxiliaryNodes
+    isNonNegative "auxiliary places" "Hilfsstellen" countOfAuxiliaryPlaces
+    isNonNegative "auxiliary transitions" "Hilfstransitionen" countOfAuxiliaryTransitions
+    pure ()
+
+  assertion (countOfNonAuxiliaryNodes sub <= adNodeCount) $ translate $ do
+    english [iii|Count of non-auxiliary nodes is not more than count of activity diagram nodes?|]
+    german [iii|Die anzahl der Nicht-Hilfsknoten nicht größer als die Anzahl der Knoten im Aktivitätsdiagramm|]
+
   pure ()
   where
     isNonNegative en de field = assertion (field sub >= 0) $ translate $ do
       english [iii|Count of #{en} is at least zero?|]
       german [iii|Anzahl der #{de} ist mindestens Null?|]
+    adNodeCount = length $ Ad.nodes $ activityDiagram task
 
 findAuxiliaryPetriNodesEvaluation
   :: OutputCapable m
