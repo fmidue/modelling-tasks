@@ -258,7 +258,7 @@ findAuxiliaryPetriNodesInitial = FindAuxiliaryPetriNodesSolution {
 findAuxiliaryPetriNodesSyntax
   :: OutputCapable m
   => Bool
-  -- ^ Whether to do a full check. If False, skips negative checks.
+  -- ^ Whether to do a full check. If False, skips positivity checks.
   -> FindAuxiliaryPetriNodesInstance
   -> FindAuxiliaryPetriNodesSolution
   -> LangM m
@@ -270,8 +270,8 @@ findAuxiliaryPetriNodesSyntax fullCheck task sub = do
     pure ()
 
   assertion (countOfNonAuxiliaryNodes sub <= adNodeCount) $ translate $ do
-    english [iii|Count of non-auxiliary nodes is not more than count of activity diagram nodes?|]
-    german [iii|Die anzahl der Nicht-Hilfsknoten nicht größer als die Anzahl der Knoten im Aktivitätsdiagramm|]
+    english [iii|Count of non-auxiliary nodes not greater than count of elements in the activity diagram?|]
+    german [iii|Anzahl der Nicht-Hilfsknoten nicht größer als Anzahl von Elementen im Aktivitätsdiagramm?|]
 
   pure ()
   where
