@@ -230,7 +230,7 @@ module TaskData (getTask) where
 import qualified Data.Map               as M
 import qualified Data.Text              as T
 import Control.Monad.Catch
-import Control.Monad.Random             (RandomGen, lift, RandT)
+import Control.Monad.Random             (MonadRandom, evalRandT, getRandom)
 import Control.OutputCapable.Blocks     (Language(..))
 import Data.List                        (sortOn)
 import Data.Maybe                       (fromMaybe)
@@ -241,6 +241,7 @@ import Modelling.Auxiliary.Shuffle.All (shuffleInstance)
 import Modelling.CdOd.NameCdError
 import Modelling.CdOd.Types
 import Data.String.Interpolate (i)
+import System.Random                   (mkStdGen)
 import Yesod (
   Lang,
   RenderMessage(..),
@@ -288,9 +289,10 @@ lookupLang lang = T.pack . fromMaybe (error "translation not found") . M.lookup 
       ("en":_) -> English
       _        -> error "unsupported language"
 
-getTask :: (MonadThrow m, RandomGen g) => RandT g m (TaskData, String, Rendered Widget)
+getTask :: (MonadRandom m, MonadThrow m) => m (TaskData, String, Rendered Widget)
 getTask = do
-  inst <- shuffleInstance task
+  seed <- getRandom
+  inst <- evalRandT (shuffleInstance task) (mkStdGen seed)
   pure (inst, checkers, form inst)
 
 form :: TaskData -> Rendered Widget
@@ -405,12 +407,12 @@ checkSemantics _ inst@NameCdErrorInstance{..} (scReason, mcCauses) = addPretext 
         $ map (second (contributingToProblem . annotation))
         relevant
       correctAnswer
-        | showSolution = Just (DefiniteArticle, replace "reason" "statement" $ toString $ encode $ nameCdErrorSolution inst)
+        | showSolution = Just (True, DefiniteArticle, replace "reason" "statement" $ toString $ encode $ nameCdErrorSolution inst)
         | otherwise = Nothing
   recoverWith 0 (
     singleChoice reasonTranslation Nothing solutionReason (reason x)
       $>> multipleChoice
-        dueToTranslation
+        (Just dueToTranslation)
         Nothing
         solutionDueTo
         (dueTo x)
@@ -418,7 +420,7 @@ checkSemantics _ inst@NameCdErrorInstance{..} (scReason, mcCauses) = addPretext 
     $>>= \\points -> do
       paragraph $ translate $ classDiagramDescription points
       pure ()
-    $>> printSolutionAndAssert True correctAnswer $ fromEither points
+    $>> printSolutionAndAssert correctAnswer $ fromEither points
   where
     relevant = relevantRelationships inst
     chosenRelevant = filter ((`elem` nubOrd (dueTo x)) . fst) relevant
