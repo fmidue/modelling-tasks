@@ -339,6 +339,7 @@ average generation time per instance on the cluster (without considering concurr
 total run time on the cluster (not including queuing time): 02:00:56h
 average CPU usage: 99%
 average max memory usage: 2465.03 MB
+used in 2025 as: PetriFindConflictPlacesCheckboxesUnAvailable-Quiz, next time maybe PetriFindConflictRadioButtonsUnAvailable-Quiz
 -}
 task2025_36 :: FindConflictConfig
 task2025_36 = task2024_34
@@ -351,6 +352,7 @@ average generation time per instance on the cluster (without considering concurr
 total run time on the cluster (not including queuing time): 01:00:20h
 average CPU usage: 99%
 average max memory usage: 2341.11 MB
+used in 2025 as: PetriFindConflictPlacesCheckboxesUnAvailable-Quiz
 -}
 task2025_37 :: FindConflictConfig
 task2025_37 = task2024_35
@@ -363,6 +365,7 @@ average generation time per instance on the cluster (without considering concurr
 total run time on the cluster (not including queuing time): 01:15:18h
 average CPU usage: 99%
 average max memory usage: 2819.17 MB
+used in 2025 as: PetriFindConflictPlacesCheckboxesUnAvailable-Quiz
 -}
 task2025_38 :: FindConflictConfig
 task2025_38 = task2024_36
@@ -375,6 +378,7 @@ average generation time per instance on the cluster (without considering concurr
 total run time on the cluster (not including queuing time): 02:20:18h
 average CPU usage: 99%
 average max memory usage: 2719.65 MB
+used in 2025 as: PetriFindConflictPlacesCheckboxesUnAvailable-Quiz
 -}
 task2025_62 :: FindConflictConfig
 task2025_62 = task2025_38

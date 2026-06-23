@@ -68,6 +68,7 @@ average generation time per instance on the cluster (without considering concurr
 total run time on the cluster (not including queuing time): 04:28:23h
 average CPU usage: 99%
 average max memory usage: 1234.35 MB
+used in 2025 as: PetriPickConcurrencyRadioButtonsUnAvailable-Quiz
 -}
 task2025_31 :: PickConcurrencyConfig
 task2025_31 = task2024_29
@@ -80,6 +81,7 @@ average generation time per instance on the cluster (without considering concurr
 total run time on the cluster (not including queuing time): 02:26:58h
 average CPU usage: 99%
 average max memory usage: 1223.58 MB
+used in 2025 as: PetriPickConcurrencyRadioButtonsUnAvailable-Quiz
 -}
 task2025_60 :: PickConcurrencyConfig
 task2025_60 = task2025_31

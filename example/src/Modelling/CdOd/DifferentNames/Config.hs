@@ -258,9 +258,16 @@ task2024_56 = DifferentNamesConfig {
 
 {-|
 points: 0.15
+the amount of generated instances:
+maximum concurrent amount of tasks:
+average generation time per instance on the cluster (without considering concurrency):
+total run time on the cluster (not including queuing time):
+average CPU usage:
+average memory usage:
+used as: DifferentNamesFormInputDropdownsUnAvailable-Quiz
 -}
-task2025_13 :: DifferentNamesConfig
-task2025_13 = DifferentNamesConfig {
+task2025_repeat_19 :: DifferentNamesConfig
+task2025_repeat_19 = DifferentNamesConfig {
   classConfig = ClassConfig {
     classLimits = (5, 5),
     aggregationLimits = (2, Just 2),
@@ -300,6 +307,7 @@ the amount of generated instances: 100
 maximum concurrent amount of tasks: 20
 average generation time per instance on the cluster (without considering concurrency): 2:28min
 total run time on the cluster (not including queuing time): 16:14min
+used as: DifferentNamesCheckboxesUnAvailable-Quiz (at the time)
 -}
 task2025_14 :: DifferentNamesConfig
 task2025_14 = DifferentNamesConfig {
@@ -338,6 +346,19 @@ task2025_14 = DifferentNamesConfig {
 
 {-|
 points: 0.15
+the amount of generated instances:
+maximum concurrent amount of tasks:
+average generation time per instance on the cluster (without considering concurrency):
+total run time on the cluster (not including queuing time):
+average CPU usage:
+average memory usage:
+used as: DifferentNamesFormInputDropdownsUnAvailable-Quiz
+-}
+task2025_repeat_20 :: DifferentNamesConfig
+task2025_repeat_20 = task2025_14
+
+{-|
+points: 0.15
 variant 1: concepts are printed in class diagrams
 share same instances as task2025_14
 average concept generation time per instance (no concurrency): 10~15 mins
@@ -345,6 +366,7 @@ used LLM model for generation: gpt-5
 approximate input tokens: 3.575 M (1.25 $ / 1M tokens)
 approximate output tokens: 4.437 M (10 $ / 1M tokens)
 approximate cost: 48.84 $
+used as: DifferentNamesCheckboxesUnAvailable-Quiz (at the time)
 -}
 task2025_15 :: DifferentNamesConfig
 task2025_15 = task2025_14 {
@@ -355,12 +377,42 @@ task2025_15 = task2025_14 {
 
 {-|
 points: 0.15
+variant 1: concepts are printed in class diagrams
+share same instances as task2025_repeat_20
+average concept generation time per instance (no concurrency):
+used LLM model for generation:
+approximate input tokens:
+approximate output tokens:
+used as: DifferentNamesFormInputDropdownsUnAvailable-Quiz
+-}
+task2025_repeat_15 :: DifferentNamesConfig
+task2025_repeat_15 = task2025_repeat_20 {
+  objectProperties = (objectProperties task2025_repeat_20) {
+    anonymousObjectProportion = 1 % 1
+    }
+  }
+
+{-|
+points: 0.15
 variant 2: concepts are printed in object diagrams
 share same instances as task2025_14
 share same concept injection as task2025_15
+used as: DifferentNamesRadiobuttonsUnAvailable-Quiz (at the time)
 -}
 task2025_16 :: DifferentNamesConfig
 task2025_16 = task2025_15 {
+  printSolution = ShowMappingAndReprintCD
+  }
+
+{-|
+points: 0.15
+variant 2: concepts are printed in object diagrams
+share same instances as task2025_repeat_20
+share same concept injection as task2025_repeat_15
+used as: DifferentNamesFormInputRadioButtonsUnAvailable-Quiz
+-}
+task2025_repeat_16 :: DifferentNamesConfig
+task2025_repeat_16 = task2025_repeat_15 {
   printSolution = ShowMappingAndReprintCD
   }
 
@@ -370,18 +422,41 @@ variant 3: Give scenario descriptions instead of class diagrams with object diag
 share same instances as task2025_14
 share same concept injection as task2025_15
 used LLM for story generation: gpt-4o-mini
+used as: DifferentNamesCheckboxesUnAvailable-Quiz (at the time)
 -}
 task2025_21 :: DifferentNamesConfig
 task2025_21 = task2025_15
 
 {-|
 points: 0.15
+variant 3: Give scenario descriptions instead of class diagrams with object diagrams
+share same instances as task2025_repeat_20
+share same concept injection as task2025_repeat_15
+used LLM for story generation:
+used as: DifferentNamesFormInputDropdownsUnAvailable-Quiz
+-}
+task2025_repeat_17 :: DifferentNamesConfig
+task2025_repeat_17 = task2025_repeat_15
+
+{-|
+points: 0.15
 variant 4: Only give object diagrams
 share same instances as task2025_14
 share same concept injection as task2025_15
+used as: DifferentNamesCheckboxesUnAvailable-Quiz (at the time)
 -}
 task2025_22 :: DifferentNamesConfig
 task2025_22 = task2025_15
+
+{-|
+points: 0.15
+variant 4: Only give object diagrams
+share same instances as task2025_repeat_20
+share same concept injection as task2025_repeat_15
+used as: DifferentNamesFormInputDropdownsUnAvailable-Quiz
+-}
+task2025_repeat_18 :: DifferentNamesConfig
+task2025_repeat_18 = task2025_repeat_15
 
 {-|
 points: 0.1
@@ -391,13 +466,42 @@ average generation time per instance on the cluster (without considering concurr
 total run time on the cluster (not including queuing time): 7:34min
 average CPU usage: 168.75%
 average memory usage: 2785.06 MB
+used as: DifferentNamesCheckboxesUnAvailable-Quiz (at the time)
 -}
 task2025_55 :: DifferentNamesConfig
 task2025_55 = task2025_14
 
+{-|
+points: 0.1
+the amount of generated instances:
+maximum concurrent amount of tasks:
+average generation time per instance on the cluster (without considering concurrency):
+total run time on the cluster (not including queuing time):
+average CPU usage:
+average memory usage:
+used as: DifferentNamesFormInputDropdownsUnAvailable-Quiz
+-}
+task2025_repeat_21 :: DifferentNamesConfig
+task2025_repeat_21 = task2025_14
+
 {-
 points: 0.1
 share same instances as task2025_21
+used as: DifferentNamesCheckboxesUnAvailable-Quiz (at the time)
 -}
 task2025_57 :: DifferentNamesConfig
 task2025_57 = task2025_21
+
+{-
+points: 0.1
+variant 3: Give scenario descriptions instead of class diagrams with object diagrams
+share same instances as task2025_repeat_20, but new concept injection
+average concept generation time per instance (no concurrency):
+used LLM model for generation:
+approximate input tokens:
+approximate output tokens:
+used LLM for story generation:
+used as: DifferentNamesFormInputDropdownsUnAvailable-Quiz
+-}
+task2025_repeat_22 :: DifferentNamesConfig
+task2025_repeat_22 = task2025_21

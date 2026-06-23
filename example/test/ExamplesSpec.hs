@@ -95,14 +95,21 @@ import Modelling.CdOd.DifferentNames.Config (
   task2024_15,
   task2024_16,
   task2024_56,
-  task2025_13,
+  task2025_repeat_19,
+  task2025_repeat_20,
   task2025_14,
   task2025_15,
+  task2025_repeat_15,
   task2025_16,
+  task2025_repeat_16,
   task2025_21,
+  task2025_repeat_17,
   task2025_22,
+  task2025_repeat_18,
   task2025_55,
+  task2025_repeat_21,
   task2025_57,
+  task2025_repeat_22,
   )
 import Modelling.CdOd.MatchCdOd (
   checkMatchCdOdConfig,
@@ -133,13 +140,14 @@ import Modelling.CdOd.NameCdError.Config (
   task2024_10,
   task2024_11,
   task2024_54,
-  task2025_08,
-  task2025_09,
+  task2025_repeat_04,
+  task2025_repeat_05,
   task2025_54,
+  task2025_repeat_06,
   )
 import Modelling.CdOd.NameCdError.Instance (
   task2024_14,
-  task2025_12,
+  task2025_repeat_14,
   )
 import Modelling.CdOd.RepairCd (
   checkRepairCdConfig,
@@ -150,8 +158,8 @@ import Modelling.CdOd.RepairCd.Config (
   task2024_12,
   task2024_13,
   task2024_55,
-  task2025_10,
-  task2025_11,
+  task2025_repeat_12,
+  task2025_repeat_13,
   )
 import Modelling.CdOd.SelectValidCd (
   checkSelectValidCdConfig,
@@ -165,17 +173,18 @@ import Modelling.CdOd.SelectValidCd.Config (
   task2024_08,
   task2024_51,
   task2024_52,
-  task2025_04,
-  task2025_05,
-  task2025_06,
+  task2025_repeat_07,
+  task2025_repeat_08,
+  task2025_repeat_10,
   task2025_53,
+  task2025_repeat_11,
   )
 import Modelling.CdOd.SelectValidCd.Instance (
   task2024_05,
   task2024_06picked,
   task2024_09,
   task2024_53,
-  task2025_07,
+  task2025_repeat_09,
   )
 import Modelling.PetriNet.Concurrency (
   checkFindConcurrencyConfig,
@@ -494,28 +503,6 @@ spec =
       it "task73" $
         checkFindAuxiliaryPetriNodesConfig task2024_73 `shouldBe` Nothing
     describe "2025" $ do
-      it "task04" $
-        checkSelectValidCdConfig task2025_04 `shouldBe` Nothing
-      it "task05" $
-        checkSelectValidCdConfig task2025_05 `shouldBe` Nothing
-      it "task06" $
-        checkSelectValidCdConfig task2025_06 `shouldBe` Nothing
-      it "task07" $
-        checkSelectValidCdInstance (All.taskInstance task2025_07)
-        `shouldBe` Nothing
-      it "task08" $
-        checkNameCdErrorConfig task2025_08 `shouldBe` Nothing
-      it "task09" $
-        checkNameCdErrorConfig task2025_09 `shouldBe` Nothing
-      it "task10" $
-        checkRepairCdConfig task2025_10 `shouldBe` Nothing
-      it "task11" $
-        checkRepairCdConfig task2025_11 `shouldBe` Nothing
-      it "task12" $
-        checkNameCdErrorInstance True (All.taskInstance task2025_12)
-        `shouldBe` Nothing
-      it "task13" $
-        checkDifferentNamesConfig task2025_13 `shouldBe` Nothing
       it "task14" $
         checkDifferentNamesConfig task2025_14 `shouldBe` Nothing
       it "task15" $
@@ -622,3 +609,44 @@ spec =
         checkMatchPetriConfig task2025_66 `shouldBe` Nothing
       it "task67" $
         checkFindAuxiliaryPetriNodesConfig task2025_67 `shouldBe` Nothing
+    describe "2025_repeat" $ do
+      it "task04" $
+        checkNameCdErrorConfig task2025_repeat_04 `shouldBe` Nothing
+      it "task05" $
+        checkNameCdErrorConfig task2025_repeat_05 `shouldBe` Nothing
+      it "task06" $
+        checkNameCdErrorConfig task2025_repeat_06 `shouldBe` Nothing
+      it "task07" $
+        checkSelectValidCdConfig task2025_repeat_07 `shouldBe` Nothing
+      it "task08" $
+        checkSelectValidCdConfig task2025_repeat_08 `shouldBe` Nothing
+      it "task09" $
+        checkSelectValidCdInstance (All.taskInstance task2025_repeat_09)
+        `shouldBe` Nothing
+      it "task10" $
+        checkSelectValidCdConfig task2025_repeat_10 `shouldBe` Nothing
+      it "task11" $
+        checkSelectValidCdConfig task2025_repeat_11 `shouldBe` Nothing
+      it "task12" $
+        checkRepairCdConfig task2025_repeat_12 `shouldBe` Nothing
+      it "task13" $
+        checkRepairCdConfig task2025_repeat_13 `shouldBe` Nothing
+      it "task14" $
+        checkNameCdErrorInstance True (All.taskInstance task2025_repeat_14)
+        `shouldBe` Nothing
+      it "task15" $
+        checkDifferentNamesConfig task2025_repeat_15 `shouldBe` Nothing
+      it "task16" $
+        checkDifferentNamesConfig task2025_repeat_16 `shouldBe` Nothing
+      it "task17" $
+        checkDifferentNamesConfig task2025_repeat_17 `shouldBe` Nothing
+      it "task18" $
+        checkDifferentNamesConfig task2025_repeat_18 `shouldBe` Nothing
+      it "task19" $
+        checkDifferentNamesConfig task2025_repeat_19 `shouldBe` Nothing
+      it "task20" $
+        checkDifferentNamesConfig task2025_repeat_20 `shouldBe` Nothing
+      it "task21" $
+        checkDifferentNamesConfig task2025_repeat_21 `shouldBe` Nothing
+      it "task22" $
+        checkDifferentNamesConfig task2025_repeat_22 `shouldBe` Nothing

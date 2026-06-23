@@ -383,15 +383,29 @@ task2024_54 = NameCdErrorConfig {
 
 {-|
 points: 0.15
+the amount of generated instances:
+maximum concurrent amount of tasks:
+average generation time per instance on the cluster (without considering concurrency):
+total run time on the cluster (not including queuing time):
+average CPU usage:
+average memory usage:
+used as: NameCdErrorFormInputSelectionUnAvailable-Quiz
 -}
-task2025_08 :: NameCdErrorConfig
-task2025_08 = task2024_10
+task2025_repeat_04 :: NameCdErrorConfig
+task2025_repeat_04 = task2024_10
 
 {-|
 points: 0.15
+the amount of generated instances:
+maximum concurrent amount of tasks:
+average generation time per instance on the cluster (without considering concurrency):
+total run time on the cluster (not including queuing time):
+average CPU usage:
+average memory usage:
+used as: NameCdErrorFormInputSelectionUnAvailable-Quiz
 -}
-task2025_09 :: NameCdErrorConfig
-task2025_09 = task2024_11
+task2025_repeat_05 :: NameCdErrorConfig
+task2025_repeat_05 = task2024_11
 
 {-|
 points: 0.1
@@ -401,6 +415,20 @@ average generation time per instance on the cluster (without considering concurr
 total run time on the cluster (not including queuing time): 2:28min
 average CPU usage: 104.72%
 average memory usage: 1300.33 MB
+used as: NameCdErrorUnAvailable-Quiz
 -}
 task2025_54 :: NameCdErrorConfig
-task2025_54 = task2025_08
+task2025_54 = task2024_10
+
+{-|
+points: 0.1
+the amount of generated instances:
+maximum concurrent amount of tasks:
+average generation time per instance on the cluster (without considering concurrency):
+total run time on the cluster (not including queuing time):
+average CPU usage:
+average memory usage:
+used as: NameCdErrorFormInputSelectionUnAvailable-Quiz
+-}
+task2025_repeat_06 :: NameCdErrorConfig
+task2025_repeat_06 = task2025_repeat_04

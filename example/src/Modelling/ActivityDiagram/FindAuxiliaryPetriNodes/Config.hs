@@ -172,6 +172,7 @@ average generation time per instance on the cluster (without considering concurr
 total run time on the cluster (not including queuing time): 6:34min
 average CPU usage: 100.80%
 average memory usage: 1356.30 MB
+used in 2025 as: FindAuxiliaryPetriNodesUnAvailable-Quiz, next time in form-based version
 -}
 task2025_50 :: FindAuxiliaryPetriNodesConfig
 task2025_50 = FindAuxiliaryPetriNodesConfig {
@@ -202,6 +203,7 @@ average generation time per instance on the cluster (without considering concurr
 total run time on the cluster (not including queuing time): 12:32min
 average CPU usage: 100.00%
 average memory usage: 1775.43 MB
+used in 2025 as: FindAuxiliaryPetriNodesUnAvailable-Quiz, next time in form-based version
 -}
 task2025_51 :: FindAuxiliaryPetriNodesConfig
 task2025_51 = FindAuxiliaryPetriNodesConfig {
@@ -232,6 +234,7 @@ average generation time per instance on the cluster (without considering concurr
 total run time on the cluster (not including queuing time): 6:37min
 average CPU usage: 100.96%
 average memory usage: 1290.99 MB
+used in 2025 as: FindAuxiliaryPetriNodesUnAvailable-Quiz, next time in form-based version
 -}
 task2025_67 :: FindAuxiliaryPetriNodesConfig
 task2025_67 = task2025_50

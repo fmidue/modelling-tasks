@@ -21,7 +21,7 @@ finalNodesAdviceTitle = M.fromList [
 -- | The main text explaining how final nodes are realised in Petri nets.
 finalNodesAdviceText :: M.Map Language String
 finalNodesAdviceText = M.fromList [
-  (English, "For final nodes no additional places are introduced. They are realised in a way that a token is consumed, i.e. disappears from the net at that position."),
+  (English, "For final nodes no additional places are introduced. They are realised in a way that a token is consumed, i.e., disappears from the net at that position."),
   (German, "Für Endknoten werden keine zusätzlichen Stellen eingeführt. Sie werden so realisiert, dass ein Token verbraucht wird, also an dieser Position aus dem Netz verschwindet.")
   ]
 

@@ -132,6 +132,7 @@ total run time on the cluster (not including queuing time): 26:50min
 average CPU usage: 101%
 average max memory usage: 986.73 MB
 Note: 1 student task is rendered faulty on Autotool due to the different graphviz version (manually fixed).
+used in 2025 as: PetriGraphToMathRadioButtonsUnAvailable-Quiz
 -}
 task2025_23 :: MathConfig
 task2025_23 = task2024_21
@@ -145,6 +146,7 @@ total run time on the cluster (not including queuing time): 01:51:17h
 average CPU usage: 100%
 average max memory usage: 1255.89 MB
 Note: about 15 student tasks are rendered faulty on Autotool due to the different graphviz version (manually fixed).
+used in 2025 as: PetriGraphToMathRadioButtonsUnAvailable-Quiz
 -}
 task2025_24 :: MathConfig
 task2025_24 = task2024_22

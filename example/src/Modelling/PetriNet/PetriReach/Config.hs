@@ -137,6 +137,7 @@ average generation time per instance on the cluster (without considering concurr
 total run time on the cluster (not including queuing time): 1:41min
 average CPU usage: 95.72%
 average memory usage: 342.53 MB
+used in 2025 as: PetriReachDropdownsUnAvailable-Quiz, next time maybe PetriReachDropdowns-Quiz
 -}
 task2025_27 :: ReachConfig
 task2025_27 = ReachConfig {
@@ -189,6 +190,7 @@ average generation time per instance on the cluster (without considering concurr
 total run time on the cluster (not including queuing time): 1:47min
 average CPU usage: 98.74%
 average memory usage: 374.26 MB
+used in 2025 as: PetriReachDropdownsUnAvailable-Quiz, next time maybe PetriReachDropdowns-Quiz
 -}
 task2025_28 :: ReachConfig
 task2025_28 = ReachConfig {
@@ -241,6 +243,7 @@ average generation time per instance on the cluster (without considering concurr
 total run time on the cluster (not including queuing time): 12s
 average CPU usage: 81.44%
 average memory usage: 367.35 MB
+used in 2025 as: PetriReachDropdownsUnAvailable-Quiz, next time maybe PetriReachDropdowns-Quiz
 -}
 task2025_58 :: ReachConfig
 task2025_58 = task2025_28
