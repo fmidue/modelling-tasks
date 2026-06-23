@@ -420,13 +420,13 @@ checkSemantics _ inst@NameCdErrorInstance{..} (scReason, mcCauses) = addPretext 
     classDiagramDescription points
       | points == Right 1 = do
         english "You correctly gave all relationships constituting the problem."
-        german "Sie haben alle das Problem ausmachenden Beziehungen korrekt angegebenen."
+        german "Sie haben alle das Problem ausmachenden Beziehungen korrekt angegeben."
       | correctRelationships == chosenRelevant = do
         english $
           "You correctly gave all relationships constituting the actual problem, " ++
           "but the selected statement is incorrect."
         german $
-          "Sie haben alle das tatsächliche Problem ausmachenden Beziehungen korrekt angegebenen, " ++
+          "Sie haben alle das tatsächliche Problem ausmachenden Beziehungen korrekt angegeben, " ++
           "aber die ausgewählte Aussage ist nicht korrekt."
       -- this guard is never used for this concrete instance with exactly one cause
       | all (contributingToProblem . annotation . snd) chosenRelevant &&
