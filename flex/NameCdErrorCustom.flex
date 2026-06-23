@@ -232,7 +232,6 @@ import qualified Data.Text              as T
 import Control.Monad.Catch
 import Control.Monad.Random             (MonadRandom, evalRandT, getRandom)
 import Control.OutputCapable.Blocks     (Language(..))
-import Data.List                        (sortOn)
 import Data.Maybe                       (fromMaybe)
 import FlexTask.FormUtil                (addCss)
 import FlexTask.Generic.Form
@@ -296,7 +295,7 @@ getTask = do
   pure (inst, checkers, form inst)
 
 form :: TaskData -> Rendered Widget
-form NameCdErrorInstance{..} =
+form inst@NameCdErrorInstance{..} =
   let
     reasonToLangs (Custom m) = m
     reasonToLangs _ = error "this task has no predefined reasons"
@@ -313,13 +312,9 @@ form NameCdErrorInstance{..} =
             (printNavigations cdDrawSettings)
             annotated
 
-    relevantRelationships =
-      zip [1..] . sortOn (listingPriority . annotation) .
-      filter isRelevant $ annotatedRelationships classDiagram
-
     relToLangMap rel = M.fromList $ map (\l -> (l, phraseRelationship' l rel)) [German, English]
 
-    relText = map (fmap relToLangMap) relevantRelationships
+    relText = map (fmap relToLangMap) $ relevantRelationships inst
   in
     addCss css $ formify (Nothing :: Maybe (SingleChoiceSelection, MultipleChoiceSelection))
       [
@@ -344,7 +339,6 @@ checkers :: String
 checkers = [i|
 
 {-\# language ApplicativeDo \#-}
-{-\# language MultilineStrings \#-}
 {-\# language RecordWildCards \#-}
 module Check (checkSyntax, checkSemantics) where
 
@@ -360,9 +354,7 @@ import Data.List.Extra (
   notNull,
   nubOrd,
   replace,
-  sortOn,
   )
-import Data.Maybe
 import Data.Tuple.Extra                 (second)
 import Data.Yaml                        (encode)
 import FlexTask.Generic.Form (
@@ -382,7 +374,7 @@ import Modelling.CdOd.Types
 import Global
 
 getReason :: TaskData -> SingleChoiceSelection -> Char
-getReason inst answer = M.keys (errorReasons inst) !! (getAnswerAsIndex answer)
+getReason inst answer = M.keys (errorReasons inst) !! getAnswerAsIndex answer
 
 checkSyntax :: OutputCapable m => TaskData -> Submission -> LangM m
 checkSyntax _ _  = pure ()
@@ -427,50 +419,34 @@ checkSemantics _ inst@NameCdErrorInstance{..} (scReason, mcCauses) = addPretext 
     correctRelationships = filter (contributingToProblem . annotation . snd) relevant
     classDiagramDescription points
       | points == Right 1 = do
-        english """
-          You correctly gave all relationships constituting the problem.
-          """
-        german """
-          Sie haben alle das Problem ausmachenden Beziehungen korrekt angegebenen.
-          """
+        english "You correctly gave all relationships constituting the problem."
+        german "Sie haben alle das Problem ausmachenden Beziehungen korrekt angegebenen."
       | correctRelationships == chosenRelevant = do
-        english """
-          You correctly gave all relationships constituting the actual problem,
-          but the selected statement is incorrect.
-          """
-        german """
-          Sie haben alle das tatsächliche Problem ausmachenden Beziehungen korrekt angegebenen,
-          aber die ausgewählte Aussage ist nicht korrekt.
-          """
+        english $
+          "You correctly gave all relationships constituting the actual problem, " ++
+          "but the selected statement is incorrect."
+        german $
+          "Sie haben alle das tatsächliche Problem ausmachenden Beziehungen korrekt angegebenen, " ++
+          "aber die ausgewählte Aussage ist nicht korrekt."
       -- this guard is never used for this concrete instance with exactly one cause
       | all (contributingToProblem . annotation . snd) chosenRelevant &&
         notNull chosenRelevant = do
-        english """
-          All of the given relationships are involved in the problem,
-          but there are additional causes which were not selected.
-          """
-        german """
-          Alle angegebenen Beziehungen sind in das Problem involviert,
-          allerdings gibt es noch weitere, die nicht aufgeführt wurden.
-          """
+        english $
+          "All of the given relationships are involved in the problem, " ++
+          "but there are additional causes which were not selected."
+        german $
+          "Alle angegebenen Beziehungen sind in das Problem involviert, " ++
+          "allerdings gibt es noch weitere, die nicht aufgeführt wurden."
       | any (contributingToProblem . annotation . snd) chosenRelevant = do
-        english """
-          Some of the given relationships are involved in the problem,
-          but you also gave non-involved relationships.
-          """
-        german """
-          Einige der angegebenen Beziehungen sind in das Problem involviert,
-          allerdings wurden auch nicht involvierte Beziehungen angegeben.
-          """
+        english $
+          "Some of the given relationships are involved in the problem, " ++
+          "but you also gave non-involved relationships."
+        german $
+          "Einige der angegebenen Beziehungen sind in das Problem involviert, " ++
+          "allerdings wurden auch nicht involvierte Beziehungen angegeben."
       | otherwise = do
-        english """
-          All relationships you gave as contributing
-          are not involved in the problem.
-          """
-        german """
-          Die von Ihnen als zum Problem beitragend angegebenen
-          Beziehungen sind nicht involviert.
-          """
+        english "All relationships you gave as contributing are not involved in the problem."
+        german "Die von Ihnen als zum Problem beitragend angegebenen Beziehungen sind nicht involviert."
 
     x = NameCdErrorAnswer (getReason inst scReason) (getAnswers mcCauses)
 |]
