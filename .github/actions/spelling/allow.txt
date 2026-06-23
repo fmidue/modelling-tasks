@@ -50,6 +50,7 @@ Verzweigungsknoten
 Vielfachheit
 WColor
 XNode
+Yesod
 anyclass
 apps
 automorphisms
@@ -82,6 +83,7 @@ foldl
 foldr
 forkagain
 forkend
+formify
 fst
 fusable
 ghci
