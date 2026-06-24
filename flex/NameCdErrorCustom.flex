@@ -390,10 +390,6 @@ checkSemantics _ inst@NameCdErrorInstance{..} (scReason, mcCauses) = addPretext 
         (English, "statement"),
         (German, "Aussage")
         ]
-      dueToTranslation = M.fromAscList [
-        (English, "relationships constituting the problem"),
-        (German, "das Problem ausmachenden Beziehungen")
-        ]
       solutionReason = headDef (error "No correct statement found") . M.keys . M.filter fst $ errorReasons
       solutionDueTo = M.fromAscList
         $ map (second (contributingToProblem . annotation))
@@ -404,7 +400,7 @@ checkSemantics _ inst@NameCdErrorInstance{..} (scReason, mcCauses) = addPretext 
   recoverWith 0 (
     singleChoice reasonTranslation Nothing solutionReason (reason x)
       $>> multipleChoice
-        (Just dueToTranslation)
+        Nothing
         Nothing
         solutionDueTo
         (dueTo x)
