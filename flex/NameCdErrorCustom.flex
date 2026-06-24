@@ -233,7 +233,6 @@ import Control.Monad.Catch
 import Control.Monad.Random             (MonadRandom, evalRandT, getRandom)
 import Control.OutputCapable.Blocks     (Language(..))
 import Data.Maybe                       (fromMaybe)
-import FlexTask.FormUtil                (addCss)
 import FlexTask.Generic.Form
 import FlexTask.YesodConfig            (Rendered, Widget)
 import Modelling.Auxiliary.Shuffle.All (shuffleInstance)
@@ -245,7 +244,6 @@ import Yesod (
   Lang,
   RenderMessage(..),
   SomeMessage(..),
-  cassius,
   fieldSettingsLabel,
   )
 
@@ -316,7 +314,7 @@ form inst@NameCdErrorInstance{..} =
 
     relText = map (fmap relToLangMap) $ relevantRelationships inst
   in
-    addCss css $ formify (Nothing :: Maybe (SingleChoiceSelection, MultipleChoiceSelection))
+    formify (Nothing :: Maybe (SingleChoiceSelection, MultipleChoiceSelection))
       [
         [buttons
           Vertical
@@ -329,11 +327,6 @@ form inst@NameCdErrorInstance{..} =
           $ map (SomeMessage . DueToOption) relText
         ]
       ]
-  where
-    css = [cassius|
-      label:has(input[type="checkbox"])
-        font-weight: normal
-    |]
 
 checkers :: String
 checkers = [i|
