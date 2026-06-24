@@ -414,6 +414,10 @@ checkSemantics _ inst@NameCdErrorInstance{..} (scReason, mcCauses) = addPretext 
     chosenRelevant = filter ((`elem` nubOrd (dueTo x)) . fst) relevant
     correctRelationships = filter (contributingToProblem . annotation . snd) relevant
     classDiagramDescription points
+      | null correctRelationships = descriptionForCorrectDiagram points
+      | otherwise = descriptionForFaultyDiagram points
+
+    descriptionForFaultyDiagram points
       | points == Right 1 = do
         english "You correctly gave all relationships constituting the problem."
         german "Sie haben alle das Problem ausmachenden Beziehungen korrekt angegeben."
@@ -443,6 +447,19 @@ checkSemantics _ inst@NameCdErrorInstance{..} (scReason, mcCauses) = addPretext 
       | otherwise = do
         english "All relationships you gave as contributing are not involved in the problem."
         german "Die von Ihnen als zum Problem beitragend angegebenen Beziehungen sind nicht involviert."
+
+    -- This feedback would be given if there is no problem, i.e. the diagram is correct.
+    -- (also not used for the current task instance)
+    descriptionForCorrectDiagram points
+      | points == Right 1 = do
+        english "Your submission is correct."
+        german "Ihre Einsendung ist richtig."
+      | null chosenRelevant = do
+        english "Your selection indicating that no relationship is involved in a problem is correct."
+        german "Ihre Angabe, dass keine Beziehung zu einem Problem beiträgt, ist richtig."
+      | otherwise = do
+        english "You selected relationships as contributing to the problem, but there are none."
+        german "Sie haben Beziehungen als zum Problem beitragend angegebenen, allerdings gibt es keine solchen."
 
     x = NameCdErrorAnswer (getReason inst scReason) (getAnswers mcCauses)
 |]
