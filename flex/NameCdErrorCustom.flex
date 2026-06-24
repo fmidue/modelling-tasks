@@ -351,7 +351,6 @@ import Data.ByteString.UTF8             (toString)
 import Data.Either.Extra                (fromEither)
 import Data.List.Extra (
   headDef,
-  notNull,
   nubOrd,
   replace,
   )
@@ -421,6 +420,9 @@ checkSemantics _ inst@NameCdErrorInstance{..} (scReason, mcCauses) = addPretext 
       | points == Right 1 = do
         english "You correctly gave all relationships constituting the problem."
         german "Sie haben alle das Problem ausmachenden Beziehungen korrekt angegeben."
+      | null chosenRelevant = do
+        english "You did not give any relationships."
+        german "Sie haben keine Beziehungen angegeben."
       | correctRelationships == chosenRelevant = do
         english $
           "You correctly gave all relationships constituting the actual problem, " ++
@@ -429,8 +431,7 @@ checkSemantics _ inst@NameCdErrorInstance{..} (scReason, mcCauses) = addPretext 
           "Sie haben alle das tatsächliche Problem ausmachenden Beziehungen korrekt angegeben, " ++
           "aber die ausgewählte Aussage ist nicht korrekt."
       -- this guard is never used for this concrete instance with exactly one cause
-      | all (contributingToProblem . annotation . snd) chosenRelevant &&
-        notNull chosenRelevant = do
+      | all (contributingToProblem . annotation . snd) chosenRelevant = do
         english $
           "All of the given relationships are involved in the problem, " ++
           "but there are additional causes which were not selected."
