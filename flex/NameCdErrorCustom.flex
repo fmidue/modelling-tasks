@@ -340,6 +340,7 @@ import Capabilities.Cache
 import Capabilities.Diagrams
 import Capabilities.Graphviz
 import Control.Applicative              (Alternative)
+import Control.Monad                    (when)
 import Data.ByteString.UTF8             (toString)
 import Data.Either.Extra                (fromEither)
 import Data.List.Extra (
@@ -382,7 +383,6 @@ checkSemantics _ inst@NameCdErrorInstance{..} (scReason, mcCauses) = addPretext 
         (English, "statement"),
         (German, "Aussage")
         ]
-      solutionReason = headDef (error "No correct statement found") . M.keys . M.filter fst $ errorReasons
       solutionDueTo = M.fromAscList
         $ map (second (contributingToProblem . annotation))
         relevant
@@ -402,6 +402,7 @@ checkSemantics _ inst@NameCdErrorInstance{..} (scReason, mcCauses) = addPretext 
       pure ()
     $>> printSolutionAndAssert correctAnswer $ fromEither points
   where
+    solutionReason = headDef (error "No correct statement found") . M.keys . M.filter fst $ errorReasons
     relevant = relevantRelationships inst
     chosenRelevant = filter ((`elem` nubOrd (dueTo x)) . fst) relevant
     correctRelationships = filter (contributingToProblem . annotation . snd) relevant
@@ -413,9 +414,9 @@ checkSemantics _ inst@NameCdErrorInstance{..} (scReason, mcCauses) = addPretext 
       | points == Right 1 = do
         english "You correctly gave all relationships constituting the problem."
         german "Sie haben alle das Problem ausmachenden Beziehungen korrekt angegeben."
-      | null chosenRelevant = do
-        english "You did not give any relationships."
-        german "Sie haben keine Beziehungen angegeben."
+      | null chosenRelevant = when (solutionReason == reason x) $ do
+        english "But you only partially solved the task."
+        german "Allerdings haben Sie die Aufgabe damit nur teilweise gelöst."
       | correctRelationships == chosenRelevant = do
         english $
           "You correctly gave all relationships constituting the actual problem, " ++
