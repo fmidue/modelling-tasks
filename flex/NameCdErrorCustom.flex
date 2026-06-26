@@ -405,9 +405,9 @@ checkSemantics _ inst@NameCdErrorInstance{..} (scReason, mcCauses) = addPretext 
     relevant = relevantRelationships inst
     chosenRelevant = filter ((`elem` xDueTo) . fst) relevant
     correctRelationships = filter (contributingToProblem . annotation . snd) relevant
-    classDiagramDescription points
-      | null correctRelationships = descriptionForCorrectDiagram points
-      | otherwise = descriptionForFaultyDiagram points
+    classDiagramDescription
+      | null correctRelationships = descriptionForCorrectDiagram
+      | otherwise = descriptionForFaultyDiagram
 
     descriptionForFaultyDiagram points
       | points == Right 1 = do
