@@ -415,8 +415,8 @@ checkSemantics _ inst@NameCdErrorInstance{..} (scReason, mcCauses) = addPretext 
         english "You correctly gave all relationships constituting the problem."
         german "Sie haben alle das Problem ausmachenden Beziehungen korrekt angegeben."
       | null chosenRelevant = when (solutionReason == xReason) $ do
-        english "But you only partially solved the task."
-        german "Allerdings haben Sie die Aufgabe damit nur teilweise gelöst."
+        english "But you did not give any relationships constituting the problem."
+        german "Allerdings haben Sie keine das Problem ausmachenden Beziehungen angegeben."
       | correctRelationships == chosenRelevant = do
         english $
           "You correctly gave all relationships constituting the actual problem, " ++
