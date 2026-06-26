@@ -390,12 +390,12 @@ checkSemantics _ inst@NameCdErrorInstance{..} (scReason, mcCauses) = addPretext 
         | showSolution = Just (True, DefiniteArticle, replace "reason" "statement" $ toString $ encode $ nameCdErrorSolution inst)
         | otherwise = Nothing
   recoverWith 0 (
-    singleChoice reasonTranslation Nothing solutionReason (reason x)
+    singleChoice reasonTranslation Nothing solutionReason xReason
       $>> multipleChoice
         Nothing
         Nothing
         solutionDueTo
-        (dueTo x)
+        xDueTo
     )
     $>>= \\points -> do
       paragraph $ translate $ classDiagramDescription points
@@ -404,7 +404,7 @@ checkSemantics _ inst@NameCdErrorInstance{..} (scReason, mcCauses) = addPretext 
   where
     solutionReason = headDef (error "No correct statement found") . M.keys . M.filter fst $ errorReasons
     relevant = relevantRelationships inst
-    chosenRelevant = filter ((`elem` nubOrd (dueTo x)) . fst) relevant
+    chosenRelevant = filter ((`elem` xDueTo) . fst) relevant
     correctRelationships = filter (contributingToProblem . annotation . snd) relevant
     classDiagramDescription points
       | null correctRelationships = descriptionForCorrectDiagram points
@@ -414,7 +414,7 @@ checkSemantics _ inst@NameCdErrorInstance{..} (scReason, mcCauses) = addPretext 
       | points == Right 1 = do
         english "You correctly gave all relationships constituting the problem."
         german "Sie haben alle das Problem ausmachenden Beziehungen korrekt angegeben."
-      | null chosenRelevant = when (solutionReason == reason x) $ do
+      | null chosenRelevant = when (solutionReason == xReason) $ do
         english "But you only partially solved the task."
         german "Allerdings haben Sie die Aufgabe damit nur teilweise gelöst."
       | correctRelationships == chosenRelevant = do
@@ -456,7 +456,8 @@ checkSemantics _ inst@NameCdErrorInstance{..} (scReason, mcCauses) = addPretext 
         english "You selected relationships as contributing to the problem, but there are none."
         german "Sie haben Beziehungen als zum Problem beitragend angegebenen, allerdings gibt es keine solchen."
 
-    x = NameCdErrorAnswer (getReason inst scReason) (getAnswers mcCauses)
+    xReason = getReason inst scReason
+    xDueTo = nubOrd (getAnswers mcCauses)
 |]
 
 =============================================
