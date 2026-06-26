@@ -425,14 +425,14 @@ checkSemantics _ inst@NameCdErrorInstance{..} (scReason, mcCauses) = addPretext 
           "aber die ausgewählte Aussage ist nicht korrekt."
       -- this guard is never used for this concrete instance with exactly one cause
       -- because one of the previous two guards would already have matched
-      | all (contributingToProblem . annotation . snd) chosenRelevant = do
+      | all (`elem` correctRelationships) chosenRelevant = do
         english $
           "All of the relationships you gave are indeed involved in the problem, " ++
           "but these are not all contributing relationships."
         german $
           "Alle von Ihnen angegebenen Beziehungen sind tatsächlich in das Problem involviert, " ++
           "allerdings sind dies nicht alle beitragenden Beziehungen."
-      | any (contributingToProblem . annotation . snd) chosenRelevant = do
+      | any (`elem` correctRelationships) chosenRelevant = do
         english $
           "You gave part of the relationships that are involved in the problem, " ++
           "but not all the relationships you gave do indeed contribute."
