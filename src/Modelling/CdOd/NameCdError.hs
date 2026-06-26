@@ -852,19 +852,22 @@ renameInstance inst@NameCdErrorInstance {..} names' nonInheritances' = do
 
 nameCdErrorGenerate
   :: (MonadAlloy m, MonadCatch m)
-  => NameCdErrorConfig
+  => Bool
+  -- ^ If 'False', omit the numbered relationships list from generated task text.
+  -> NameCdErrorConfig
   -> Int
   -> Int
   -> m NameCdErrorInstance
-nameCdErrorGenerate config segment seed = do
+nameCdErrorGenerate withRelationshipChoices config segment seed = do
   let g = mkStdGen $ (segment +) $ 4 * seed
-  flip evalRandT g $ generateAndRandomise config
+  flip evalRandT g $ generateAndRandomise withRelationshipChoices config
 
 generateAndRandomise
   :: (MonadAlloy m, MonadCatch m, RandomGen g)
-  => NameCdErrorConfig
+  => Bool
+  -> NameCdErrorConfig
   -> RandT g m NameCdErrorInstance
-generateAndRandomise config@NameCdErrorConfig {..} = do
+generateAndRandomise withRelationshipChoices config@NameCdErrorConfig {..} = do
   (cd, reason, rs) <- nameCdError config
   reasons <- shuffleM possibleReasons
   let (custom, predefined) = partition isCustom $ delete (PreDefined reason) reasons
@@ -888,7 +891,7 @@ generateAndRandomise config@NameCdErrorConfig {..} = do
       $ (True, PreDefined reason)
       : map (False,) chosenReasons,
     showSolution = printSolution,
-    taskText = defaultNameCdErrorTaskText,
+    taskText = nameCdErrorTaskText withRelationshipChoices,
     addText = extraText
     }
   where
