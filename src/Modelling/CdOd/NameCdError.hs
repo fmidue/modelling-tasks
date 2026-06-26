@@ -537,9 +537,6 @@ checkNameCdErrorInstance withRelationshipChoices NameCdErrorInstance {..}
       . filter isRelevant
       $ annotatedRelationships classDiagram
 
-defaultNameCdErrorTaskText :: NameCdErrorTaskText
-defaultNameCdErrorTaskText = nameCdErrorTaskText True
-
 nameCdErrorTaskText :: Bool -> NameCdErrorTaskText
 nameCdErrorTaskText withRelationshipChoices = concat [
  [
@@ -1141,6 +1138,6 @@ defaultNameCdErrorInstance = NameCdErrorInstance {
     ('k', (False, PreDefined ReverseRelationships))
     ],
   showSolution = True,
-  taskText = defaultNameCdErrorTaskText,
+  taskText = nameCdErrorTaskText True,
   addText = NoExtraText
   }
