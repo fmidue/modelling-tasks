@@ -39,10 +39,10 @@ spec = do
           seed <- randomIO
           let check x = any isRelevant (annotatedRelationships $ classDiagram x)
                 && not (M.null $ errorReasons x)
-          check <$> nameCdErrorGenerate defaultNameCdErrorConfig segment seed
+          check <$> nameCdErrorGenerate True defaultNameCdErrorConfig segment seed
         `shouldReturn` True
       it "reproducibly generates defaultNameCdErrorInstance" $
-        nameCdErrorGenerate defaultNameCdErrorConfig 0 0
+        nameCdErrorGenerate True defaultNameCdErrorConfig 0 0
         `shouldReturn` defaultNameCdErrorInstance
   describe "renameInstance" $
     it "is reversible" $ do
