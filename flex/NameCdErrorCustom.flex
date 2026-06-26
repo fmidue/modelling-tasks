@@ -397,10 +397,9 @@ checkSemantics _ inst@NameCdErrorInstance{..} (scReason, mcCauses) = addPretext 
         solutionDueTo
         xDueTo
     )
-    $>>= \\points -> do
-      paragraph $ translate $ classDiagramDescription points
-      pure ()
-    $>> printSolutionAndAssert correctAnswer $ fromEither points
+    $>>= \\points ->
+      paragraph (translate $ classDiagramDescription points) $>>
+      printSolutionAndAssert correctAnswer (fromEither points)
   where
     solutionReason = headDef (error "No correct statement found") . M.keys . M.filter fst $ errorReasons
     relevant = relevantRelationships inst
