@@ -429,27 +429,27 @@ checkSemantics _ inst@NameCdErrorInstance{..} (scReason, mcCauses) = addPretext 
       | all (contributingToProblem . annotation . snd) chosenRelevant = do
         english $
           "All of the relationships you gave are indeed involved in the problem, " ++
-          "but these are not all causes."
+          "but these are not all contributing relationships."
         german $
           "Alle von Ihnen angegebenen Beziehungen sind tatsächlich in das Problem involviert, " ++
-          "allerdings sind dies nicht alle Ursachen."
+          "allerdings sind dies nicht alle beitragenden Beziehungen."
       | any (contributingToProblem . annotation . snd) chosenRelevant = do
         english $
           "You gave part of the relationships that are involved in the problem, " ++
-          "but not all the relationships you gave are indeed involved."
+          "but not all the relationships you gave do indeed contribute."
         german $
           "Sie haben einen Teil der in das Problem involvierten Beziehungen angegeben, " ++
-          "allerdings sind nicht alle von Ihnen angegebenen Beziehungen tatsächlich involviert."
+          "allerdings tragen nicht alle von Ihnen angegebenen Beziehungen tatsächlich bei."
       | otherwise = do
         english "None of the relationships you gave are actually involved in the problem."
         german "Keine der von Ihnen angegebenen Beziehungen sind tatsächlich in das Problem involviert."
 
-    -- This feedback would be given if there is no problem, i.e. the diagram is correct.
+    -- This feedback would be given if there is no problem, i.e., if the diagram is correct.
     -- (also not used for the current task instance)
     descriptionForCorrectDiagram points
       | points == Right 1 = do
-        english "Your submission is correct."
-        german "Ihre Einsendung ist richtig."
+        english "Your submitted solution is correct."
+        german "Ihre eingereichte Lösung ist korrekt."
       | null chosenRelevant = do
         english "Your selection indicating that no relationship is involved in a problem is correct."
         german "Ihre Angabe, dass keine Beziehung zu einem Problem beiträgt, ist richtig."
