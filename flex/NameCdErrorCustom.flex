@@ -412,37 +412,37 @@ checkSemantics _ inst@NameCdErrorInstance{..} (scReason, mcCauses) = addPretext 
 
     descriptionForFaultyDiagram points
       | points == Right 1 = do
-        english "You correctly gave all relationships constituting the problem."
-        german "Sie haben alle das Problem ausmachenden Beziehungen korrekt angegeben."
+        english "You correctly gave the relationships constituting the problem."
+        german "Sie haben korrekt die das Problem ausmachenden Beziehungen angegeben."
       | null chosenRelevant = when (solutionReason == xReason) $ do
-        english "But you did not give any relationships constituting the problem."
-        german "Allerdings haben Sie keine das Problem ausmachenden Beziehungen angegeben."
+        english "But you did not give any relationships contributing to the problem."
+        german "Allerdings haben Sie keine zum Problem beitragenden Beziehungen angegeben."
       | correctRelationships == chosenRelevant = do
         english $
-          "You correctly gave all relationships constituting the actual problem, " ++
+          "You correctly gave the relationships constituting the actual problem, " ++
           "but the selected statement is incorrect."
         german $
-          "Sie haben alle das tatsächliche Problem ausmachenden Beziehungen korrekt angegeben, " ++
+          "Sie haben korrekt die das tatsächliche Problem ausmachenden Beziehungen angegeben, " ++
           "aber die ausgewählte Aussage ist nicht korrekt."
       -- this guard is never used for this concrete instance with exactly one cause
       -- because one of the previous two guards would already have matched
       | all (contributingToProblem . annotation . snd) chosenRelevant = do
         english $
-          "All of the given relationships are involved in the problem, " ++
-          "but there are additional causes which were not selected."
+          "All of the relationships you gave are indeed involved in the problem, " ++
+          "but these are not all causes."
         german $
-          "Alle angegebenen Beziehungen sind in das Problem involviert, " ++
-          "allerdings gibt es noch weitere, die nicht aufgeführt wurden."
+          "Alle von Ihnen angegebenen Beziehungen sind tatsächlich in das Problem involviert, " ++
+          "allerdings sind dies nicht alle Ursachen."
       | any (contributingToProblem . annotation . snd) chosenRelevant = do
         english $
-          "Some of the given relationships are involved in the problem, " ++
-          "but you also gave non-involved relationships."
+          "You gave part of the relationships that are involved in the problem, " ++
+          "but not all the relationships you gave are indeed involved."
         german $
-          "Einige der angegebenen Beziehungen sind in das Problem involviert, " ++
-          "allerdings wurden auch nicht involvierte Beziehungen angegeben."
+          "Sie haben einen Teil der in das Problem involvierten Beziehungen angegeben, " ++
+          "allerdings sind nicht alle von Ihnen angegebenen Beziehungen tatsächlich involviert."
       | otherwise = do
-        english "All relationships you gave as contributing are not involved in the problem."
-        german "Die von Ihnen als zum Problem beitragend angegebenen Beziehungen sind nicht involviert."
+        english "None of the relationships you gave are actually involved in the problem."
+        german "Keine der von Ihnen angegebenen Beziehungen sind tatsächlich in das Problem involviert."
 
     -- This feedback would be given if there is no problem, i.e. the diagram is correct.
     -- (also not used for the current task instance)
