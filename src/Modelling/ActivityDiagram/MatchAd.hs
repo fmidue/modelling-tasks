@@ -223,15 +223,40 @@ matchAdInitial = MatchAdSolution {
 
 matchAdSyntax
   :: OutputCapable m
-  => MatchAdInstance
+  => Bool
+  -- ^ Whether to do a full check. If False, skips checks regarding the possible range
+  -- of answer for the counts
+  -> MatchAdInstance
   -> MatchAdSolution
   -> LangM m
-matchAdSyntax task sub = do
+matchAdSyntax fullCheck task sub = do
   let adNames = map name $ filter (\n -> isActionNode n || isObjectNode n) $ nodes $ activityDiagram task
       subNames = actionNodeNames sub ++ objectNodeNames sub
   assertion (all (`elem` adNames) subNames) $ translate $ do
     english "Referenced node names are part of the given activity diagram?"
     german "Referenzierte Knotennamen sind Bestandteil des gegebenen Aktivitätsdiagramms?"
+
+  when fullCheck $ paragraph $ do
+    withinBounds "decision nodes" "Verzweigungsknoten" countOfDecisionNodes
+    withinBounds "merge nodes" "Verbindungsknoten" countOfMergeNodes
+    withinBounds "forks" "Gabelungen" countOfForks
+    withinBounds "joins" "Vereinigungen" countOfJoins
+    withinBounds "initial nodes" "Startknoten" countOfInitialNodes
+    withinBounds "activity final nodes" "Aktivitätsenden" countOfActivityFinalNodes
+    withinBounds "flow final nodes" "Flussenden" countOfFlowFinalNodes
+    pure ()
+
+  pure ()
+
+  where
+    withinBounds en de field = do
+      assertion (field sub >= 0) $ translate $ do
+        english [iii|Stated count of #{en} is not negative?|]
+        german [iii|Angegebene Anzahl von #{de} ist nicht negativ?|]
+      assertion (field sub <= length (nodes $ activityDiagram task)) $ translate $ do
+        english [iii|Stated count of #{en} does not exceed total number of activity diagram nodes?|]
+        german [iii|Angegebene Anzahl von #{de} ist höchstens der Gesamtanzahl der Knoten in Aktivitätsdiagramm?|]
+      pure ()
 
 matchAdEvaluation
   :: OutputCapable m
