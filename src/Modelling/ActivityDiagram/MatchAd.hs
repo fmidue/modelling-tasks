@@ -251,8 +251,8 @@ matchAdSyntax fullCheck task sub = do
         english [iii|Stated count of #{en} is not negative?|]
         german [iii|Angegebene Anzahl von #{de} ist nicht negativ?|]
       assertion (field sub <= length (nodes $ activityDiagram task)) $ translate $ do
-        english [iii|Stated count of #{en} does not exceed total number of activity diagram nodes?|]
-        german [iii|Angegebene Anzahl von #{de} ist höchstens der Gesamtanzahl der Knoten in Aktivitätsdiagramm?|]
+        english [iii|Stated count of #{en} is not greater than count of elements in the activity diagram?|]
+        german [iii|Angegebene Anzahl von #{de} ist nicht größer als Anzahl von Elementen im Aktivitätsdiagramm?|]
       pure ()
 
 matchAdEvaluation
