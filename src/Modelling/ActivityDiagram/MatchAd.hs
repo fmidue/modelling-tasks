@@ -224,8 +224,7 @@ matchAdInitial = MatchAdSolution {
 matchAdSyntax
   :: OutputCapable m
   => Bool
-  -- ^ Whether to do a full check. If False, skips checks regarding the possible range
-  -- of answer for the counts
+  -- ^ Whether to do a full check. If False, skips non-negativity checks.
   -> MatchAdInstance
   -> MatchAdSolution
   -> LangM m
