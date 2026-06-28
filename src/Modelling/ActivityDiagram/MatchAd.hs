@@ -236,21 +236,19 @@ matchAdSyntax fullCheck task sub = do
     english "Referenced node names are part of the given activity diagram?"
     german "Referenzierte Knotennamen sind Bestandteil des gegebenen Aktivitätsdiagramms?"
 
-  when fullCheck $ paragraph $ do
-    withinBounds "decision nodes" "Verzweigungsknoten" countOfDecisionNodes
-    withinBounds "merge nodes" "Verbindungsknoten" countOfMergeNodes
-    withinBounds "forks" "Gabelungen" countOfForks
-    withinBounds "joins" "Vereinigungen" countOfJoins
-    withinBounds "initial nodes" "Startknoten" countOfInitialNodes
-    withinBounds "activity final nodes" "Aktivitätsenden" countOfActivityFinalNodes
-    withinBounds "flow final nodes" "Flussenden" countOfFlowFinalNodes
-    pure ()
+  withinBounds "decision nodes" "Verzweigungsknoten" countOfDecisionNodes
+  withinBounds "merge nodes" "Verbindungsknoten" countOfMergeNodes
+  withinBounds "forks" "Gabelungen" countOfForks
+  withinBounds "joins" "Vereinigungen" countOfJoins
+  withinBounds "initial nodes" "Startknoten" countOfInitialNodes
+  withinBounds "activity final nodes" "Aktivitätsenden" countOfActivityFinalNodes
+  withinBounds "flow final nodes" "Flussenden" countOfFlowFinalNodes
 
   pure ()
 
   where
     withinBounds en de field = do
-      assertion (field sub >= 0) $ translate $ do
+      when fullCheck $ assertion (field sub >= 0) $ translate $ do
         english [iii|Stated count of #{en} is not negative?|]
         german [iii|Angegebene Anzahl von #{de} ist nicht negativ?|]
       assertion (field sub <= length (nodes $ activityDiagram task)) $ translate $ do
