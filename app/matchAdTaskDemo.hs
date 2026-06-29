@@ -26,7 +26,7 @@ main = do
       print task
       matchAdTask True path task `withLang` English
       sub <- read <$> getLine
-      matchAdSyntax task sub `withLang` English
+      matchAdSyntax True task sub `withLang` English
       points <- matchAdEvaluation task sub `withLang` English
       putStrLn $ "Points: " ++ show points
     _ -> error "usage: three parameters required: FilePath (Output Folder) Segment (Int) Seed (Int)"
