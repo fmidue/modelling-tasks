@@ -482,7 +482,7 @@ checkSemantics _ inst@NameCdErrorInstance{..} (scReason, mcCauses) = addPretext 
       -- skip feedback below if selected reason is incorrect
       | solutionReason /= xReason = pure ()
       -- this guard is never used for this concrete instance with exactly one cause
-      -- because one of the previous two guards would already have matched
+      -- because the third guard is equivalent then
       | all (`elem` correctRelationships) chosenRelevant = do
         english $
           "All of the relationships you gave are indeed involved in the problem, " ++
