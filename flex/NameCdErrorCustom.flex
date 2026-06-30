@@ -401,7 +401,6 @@ import Capabilities.Cache
 import Capabilities.Diagrams
 import Capabilities.Graphviz
 import Control.Applicative              (Alternative)
-import Control.Monad                    (when)
 import Data.ByteString.UTF8             (toString)
 import Data.Either.Extra                (fromEither)
 import Data.List.Extra (
