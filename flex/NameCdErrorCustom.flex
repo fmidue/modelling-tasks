@@ -466,16 +466,12 @@ checkSemantics _ inst@NameCdErrorInstance{..} (scReason, mcCauses) = addPretext 
     relevant = relevantRelationships inst
     chosenRelevant = filter ((`elem` xDueTo) . fst) relevant
     correctRelationships = filter (contributingToProblem . annotation . snd) relevant
-    classDiagramDescription
-      | null correctRelationships = descriptionForCorrectDiagram
-      | otherwise = descriptionForFaultyDiagram
-
-    descriptionForFaultyDiagram points
+    classDiagramDescription points
+      -- singleChoice's feedback on the selected reason is enough in these cases
+      | null correctRelationships || null chosenRelevant = pure ()
       | points == Right 1 = do
         english "You correctly gave the relationships constituting the problem."
         german "Sie haben korrekt die das Problem ausmachenden Beziehungen angegeben."
-      -- only possible when selecting the "diagram is correct" option
-      | null chosenRelevant = pure ()
       | correctRelationships == chosenRelevant = do
         english $
           "You correctly gave the relationships constituting the actual problem, " ++
@@ -502,12 +498,6 @@ checkSemantics _ inst@NameCdErrorInstance{..} (scReason, mcCauses) = addPretext 
       | otherwise = do
         english "None of the relationships you gave are actually involved in the problem."
         german "Keine der von Ihnen angegebenen Beziehungen sind tatsächlich in das Problem involviert."
-
-    -- This feedback would be given if there is no problem, i.e., if the diagram is correct.
-    -- (also not used for the current task instance)
-    descriptionForCorrectDiagram points = when (points == Right 1) $ do
-      english "Your submitted solution is correct."
-      german "Ihre eingereichte Lösung ist korrekt."
 
     xDueTo = nubOrd (getAnswers mcCauses)
 |]
