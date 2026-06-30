@@ -618,6 +618,7 @@ inputHelpText = [
 nameCdErrorTask
   :: (MonadCache m, MonadDiagrams m, MonadGraphviz m, OutputCapable m)
   => Bool
+  -> Bool
   -> FilePath
   -> NameCdErrorInstance
   -> LangM m
