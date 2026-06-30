@@ -458,14 +458,14 @@ checkSemantics _ inst@NameCdErrorInstance{..} (scReason, mcCauses) = addPretext 
         xDueTo
     )
     $>>= \\points ->
-      paragraph (translate $ classDiagramDescription points) $>>
+      paragraph (translate $ feedbackOnRelationships points) $>>
       printSolutionAndAssert correctAnswer (fromEither points)
   where
     solutionReason = headDef (error "No correct statement found") . M.keys . M.filter fst $ errorReasons
     relevant = relevantRelationships inst
     chosenRelevant = filter ((`elem` xDueTo) . fst) relevant
     problematicRelationships = filter (contributingToProblem . annotation . snd) relevant
-    classDiagramDescription points
+    feedbackOnRelationships points
       -- singleChoice's feedback on the selected reason is enough in these cases
       | null problematicRelationships || null chosenRelevant = pure ()
       | points == Right 1 = do
