@@ -466,10 +466,23 @@ average generation time per instance on the cluster (without considering concurr
 total run time on the cluster (not including queuing time): 1:10:30h
 average CPU usage: 175.75%
 average memory usage: 3777 MB
-used in 2025 as: MatchCdOdCheckboxesUnAvailable-Quiz
+used as: MatchCdOdCheckboxesUnAvailable-Quiz (at the time)
 -}
 task2025_17 :: MatchCdOdConfig
 task2025_17 = task2024_17
+
+{-|
+points: 0.15
+the amount of generated instances:
+maximum concurrent amount of tasks:
+average generation time per instance on the cluster (without considering concurrency):
+total run time on the cluster (not including queuing time):
+average CPU usage:
+average memory usage:
+used as: MatchCdOdFormInputCheckboxesUnAvailable-Quiz
+-}
+task2025_repeat_23 :: MatchCdOdConfig
+task2025_repeat_23 = task2025_17
 
 {-|
 points: 0.15
@@ -479,10 +492,23 @@ average generation time per instance on the cluster (without considering concurr
 total run time on the cluster (not including queuing time): 18:21min
 average CPU usage: 107.96%
 average memory usage: 3792 MB
-used in 2025 as: MatchCdOdCheckboxesUnAvailable-Quiz
+used as: MatchCdOdCheckboxesUnAvailable-Quiz (at the time)
 -}
 task2025_18 :: MatchCdOdConfig
 task2025_18 = task2024_18
+
+{-|
+points: 0.15
+the amount of generated instances:
+maximum concurrent amount of tasks:
+average generation time per instance on the cluster (without considering concurrency):
+total run time on the cluster (not including queuing time):
+average CPU usage:
+average memory usage:
+used as: MatchCdOdFormInputCheckboxesUnAvailable-Quiz
+-}
+task2025_repeat_24 :: MatchCdOdConfig
+task2025_repeat_24 = task2025_18
 
 {-|
 points: 0.15
@@ -492,10 +518,23 @@ average generation time per instance on the cluster (without considering concurr
 total run time on the cluster (not including queuing time): 33:51min
 average CPU usage: 106.16%
 average memory usage: 5232.74 MB
-used in 2025 as: MatchCdOdCheckboxesUnAvailable-Quiz
+used as: MatchCdOdCheckboxesUnAvailable-Quiz (at the time)
 -}
 task2025_19 :: MatchCdOdConfig
 task2025_19 = task2024_19
+
+{-|
+points: 0.15
+the amount of generated instances:
+maximum concurrent amount of tasks:
+average generation time per instance on the cluster (without considering concurrency):
+total run time on the cluster (not including queuing time):
+average CPU usage:
+average memory usage:
+used as: MatchCdOdFormInputCheckboxesUnAvailable-Quiz
+-}
+task2025_repeat_25 :: MatchCdOdConfig
+task2025_repeat_25 = task2025_19
 
 {-|
 points: 0.15
@@ -505,10 +544,28 @@ average generation time per instance on the cluster (without considering concurr
 total run time on the cluster (not including queuing time): 19:07min
 average CPU usage: 105.74%
 average memory usage: 3530.61 MB
-used in 2025 as: MatchCdOdCheckboxesUnAvailable-Quiz
+used as: MatchCdOdCheckboxesUnAvailable-Quiz (at the time)
 -}
 task2025_20 :: MatchCdOdConfig
 task2025_20 = task2024_20
+
+{-|
+points: 0.15
+variant 1:
+the amount of generated instances:
+maximum concurrent amount of tasks:
+average generation time per instance on the cluster (without considering concurrency):
+total run time on the cluster (not including queuing time):
+average CPU usage:
+average memory usage:
+average concept generation time per instance (no concurrency):
+used LLM model for generation:
+approximate input tokens:
+approximate output tokens:
+used as: MatchCdOdFormInputCheckboxesUnAvailable-Quiz
+-}
+task2025_repeat_26 :: MatchCdOdConfig
+task2025_repeat_26 = task2025_20
 
 {-|
 points: 0.1
@@ -518,7 +575,20 @@ average generation time per instance on the cluster (without considering concurr
 total run time on the cluster (not including queuing time): 9:00min
 average CPU usage: 105.19%
 average memory usage: 3747.66 MB
-used in 2025 as: MatchCdOdCheckboxesUnAvailable-Quiz
+used as: MatchCdOdCheckboxesUnAvailable-Quiz (at the time)
 -}
 task2025_56 :: MatchCdOdConfig
 task2025_56 = task2025_18
+
+{-|
+points: 0.1
+variant 2:
+share same instances as task2025_repeat_24
+average concept generation time per instance (no concurrency):
+used LLM model for generation:
+approximate input tokens:
+approximate output tokens:
+used as: MatchCdOdFormInputCheckboxesUnAvailable-Quiz
+-}
+task2025_repeat_27 :: MatchCdOdConfig
+task2025_repeat_27 = task2025_repeat_24

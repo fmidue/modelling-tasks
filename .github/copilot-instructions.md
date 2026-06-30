@@ -183,8 +183,8 @@ Example GHCi session for NameCdError task:
 ```haskell
 :m + Capabilities.Alloy.IO Capabilities.Cache.IO Capabilities.Diagrams.IO Capabilities.Graphviz.IO Capabilities.PlantUml.IO
 :m + Control.OutputCapable.Blocks Control.OutputCapable.Blocks.Generic
-inst <- nameCdErrorGenerate defaultNameCdErrorConfig 0 0
-runLangMReport (return ()) (>>) (nameCdErrorTask "/tmp/" inst) >>= \(Just (), x) -> (x English :: IO ())
+inst <- nameCdErrorGenerate True defaultNameCdErrorConfig 0 0
+runLangMReport (return ()) (>>) (nameCdErrorTask False True "/tmp/" inst) >>= \(Just (), x) -> (x English :: IO ())
 ```
 
 ## Validation and Linting
