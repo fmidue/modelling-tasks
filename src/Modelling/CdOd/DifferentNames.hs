@@ -447,7 +447,7 @@ toTaskSpecificText path inst@DifferentNamesInstance {..} = \case
   GivenOd -> paragraph $ image $=<<
     cacheOd oDiagram mLabelLength Forward True path
   RelationshipNamesFromCd -> paragraph $
-    itemizeM $ map code $ sort $ associationNames cDiagram
+    itemizeM $ map text $ sort $ associationNames cDiagram
   MappingAdvice -> mappingAdvice hasGivenCd
   DirectionsAdvice b -> directionsAdvice b
   SimplifiedInformation b -> simplifiedInformation b
