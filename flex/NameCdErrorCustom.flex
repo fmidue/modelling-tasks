@@ -201,7 +201,7 @@ task = ShuffleInstance {
         Translated (listToFM [
           ( English
           , "Analyse and take a stance on the created class diagram regarding the scenario task of the student! " ++
-            "In case, indicate all the specific relationships that would need to be changed!"
+            "If applicable, indicate all the specific relationships that would need to be changed!"
           ),
           ( German
           , "Analysieren Sie und beziehen Sie Stellung zum erzeugten Klassendiagramm hinsichtlich der Szenario-Aufgabe des Studierenden! " ++
