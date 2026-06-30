@@ -451,7 +451,7 @@ checkSemantics _ inst@NameCdErrorInstance{..} (scReason, mcCauses) = addPretext 
         | showSolution = Just (True, DefiniteArticle, replace "reason" "statement" $ toString $ encode $ nameCdErrorSolution inst)
         | otherwise = Nothing
   recoverWith 0 (
-    singleChoice reasonTranslation Nothing solutionReason xReason
+    singleChoice reasonTranslation Nothing solutionReason (getReason inst scReason)
       $>> multipleChoice
         Nothing
         Nothing
@@ -509,7 +509,6 @@ checkSemantics _ inst@NameCdErrorInstance{..} (scReason, mcCauses) = addPretext 
       english "Your submitted solution is correct."
       german "Ihre eingereichte Lösung ist korrekt."
 
-    xReason = getReason inst scReason
     xDueTo = nubOrd (getAnswers mcCauses)
 |]
 
