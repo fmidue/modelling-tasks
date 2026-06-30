@@ -489,6 +489,14 @@ checkSemantics _ inst@NameCdErrorInstance{..} (scReason, mcCauses) = addPretext 
         german $
           "Alle von Ihnen angegebenen Beziehungen sind tatsächlich in das Problem involviert, " ++
           "allerdings sind dies nicht alle beitragenden Beziehungen."
+      | all (`elem` chosenRelevant) correctRelationships = do
+        english $
+          "You gave all of the relationships that are involved in the problem, " ++
+          "but not every relationship you gave does indeed contribute."
+        german $
+          "Sie haben alle in das Problem involvierten Beziehungen angegeben, " ++
+          "allerdings trägt nicht jede von Ihnen angegebene Beziehung tatsächlich bei."
+      -- this guard is also overlapped by the previous for instances with one cause
       | any (`elem` correctRelationships) chosenRelevant = do
         english $
           "You gave part of the relationships that are involved in the problem, " ++
