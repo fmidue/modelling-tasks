@@ -464,14 +464,14 @@ checkSemantics _ inst@NameCdErrorInstance{..} (scReason, mcCauses) = addPretext 
     solutionReason = headDef (error "No correct statement found") . M.keys . M.filter fst $ errorReasons
     relevant = relevantRelationships inst
     chosenRelevant = filter ((`elem` xDueTo) . fst) relevant
-    correctRelationships = filter (contributingToProblem . annotation . snd) relevant
+    problematicRelationships = filter (contributingToProblem . annotation . snd) relevant
     classDiagramDescription points
       -- singleChoice's feedback on the selected reason is enough in these cases
-      | null correctRelationships || null chosenRelevant = pure ()
+      | null problematicRelationships || null chosenRelevant = pure ()
       | points == Right 1 = do
         english "You correctly gave the relationships constituting the problem."
         german "Sie haben korrekt die das Problem ausmachenden Beziehungen angegeben."
-      | correctRelationships == chosenRelevant = do
+      | problematicRelationships == chosenRelevant = do
         english $
           "You correctly gave the relationships constituting the actual problem, " ++
           "but the selected statement is incorrect."
@@ -482,14 +482,14 @@ checkSemantics _ inst@NameCdErrorInstance{..} (scReason, mcCauses) = addPretext 
       | solutionReason /= xReason = pure ()
       -- this guard is never used for this concrete instance with exactly one cause
       -- because the third guard is equivalent then
-      | all (`elem` correctRelationships) chosenRelevant = do
+      | all (`elem` problematicRelationships) chosenRelevant = do
         english $
           "All of the relationships you gave are indeed involved in the problem, " ++
           "but these are not all contributing relationships."
         german $
           "Alle von Ihnen angegebenen Beziehungen sind tatsächlich in das Problem involviert, " ++
           "allerdings sind dies nicht alle beitragenden Beziehungen."
-      | all (`elem` chosenRelevant) correctRelationships = do
+      | all (`elem` chosenRelevant) problematicRelationships = do
         english $
           "You gave all of the relationships that are involved in the problem, " ++
           "but not every relationship you gave does indeed contribute."
@@ -497,7 +497,7 @@ checkSemantics _ inst@NameCdErrorInstance{..} (scReason, mcCauses) = addPretext 
           "Sie haben alle in das Problem involvierten Beziehungen angegeben, " ++
           "allerdings trägt nicht jede von Ihnen angegebene Beziehung tatsächlich bei."
       -- this guard is also overlapped by the previous for instances with one cause
-      | any (`elem` correctRelationships) chosenRelevant = do
+      | any (`elem` problematicRelationships) chosenRelevant = do
         english $
           "You gave part of the relationships that are involved in the problem, " ++
           "but not all the relationships you gave do indeed contribute."
