@@ -451,7 +451,7 @@ checkSemantics _ inst@NameCdErrorInstance{..} (scReason, mcCauses) = addPretext 
         | showSolution = Just (True, DefiniteArticle, replace "reason" "statement" $ toString $ encode $ nameCdErrorSolution inst)
         | otherwise = Nothing
   recoverWith 0 (
-    singleChoice reasonTranslation Nothing solutionReason (getReason inst scReason)
+    singleChoice reasonTranslation Nothing solutionReason xReason
       $>> multipleChoice
         Nothing
         Nothing
@@ -479,6 +479,8 @@ checkSemantics _ inst@NameCdErrorInstance{..} (scReason, mcCauses) = addPretext 
         german $
           "Sie haben korrekt die das tatsächliche Problem ausmachenden Beziehungen angegeben, " ++
           "aber die ausgewählte Aussage ist nicht korrekt."
+      -- skip feedback below if selected reason is incorrect
+      | solutionReason /= xReason = pure ()
       -- this guard is never used for this concrete instance with exactly one cause
       -- because one of the previous two guards would already have matched
       | all (`elem` correctRelationships) chosenRelevant = do
@@ -500,6 +502,7 @@ checkSemantics _ inst@NameCdErrorInstance{..} (scReason, mcCauses) = addPretext 
         german "Keine der von Ihnen angegebenen Beziehungen sind tatsächlich in das Problem involviert."
 
     xDueTo = nubOrd (getAnswers mcCauses)
+    xReason = getReason inst scReason
 |]
 
 =============================================
