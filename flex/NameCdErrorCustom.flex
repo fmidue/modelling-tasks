@@ -9,6 +9,7 @@ import Modelling.CdOd.NameCdError
 
 type Submission = (SingleChoiceSelection, MultipleChoiceSelection)
 type DescData = (Int,Int,Int)
+type FormData = (NameCdErrorInstance, Maybe Char)
 type TaskData = NameCdErrorInstance
 
 =============================================
@@ -200,7 +201,7 @@ task = ShuffleInstance {
         Translated (listToFM [
           ( English
           , "Analyse and take a stance on the created class diagram regarding the scenario task of the student! " ++
-            "In case, indicate all the specific relationships that would need to be changed!"
+            "If applicable, indicate all the specific relationships that would need to be changed!"
           ),
           ( German
           , "Analysieren Sie und beziehen Sie Stellung zum erzeugten Klassendiagramm hinsichtlich der Szenario-Aufgabe des Studierenden! " ++
@@ -215,6 +216,9 @@ task = ShuffleInstance {
   shuffleNames = False,
   shuffleOptions = True
   }
+
+diagramIsCorrectOption :: Maybe Char
+diagramIsCorrectOption = Just 'c'
 
 validateSettings :: OutputCapable m => LangM m
 validateSettings = pure ()
@@ -233,10 +237,11 @@ import Control.Monad.Catch
 import Control.Monad.Random             (MonadRandom, evalRandT, getRandom)
 import Control.OutputCapable.Blocks     (Language(..))
 import Data.Maybe                       (fromMaybe)
-import FlexTask.FormUtil                (addCss)
+import Data.Tuple                       (swap)
+import FlexTask.FormUtil                (addCssClass, addJs)
 import FlexTask.Generic.Form
 import FlexTask.YesodConfig            (Rendered, Widget)
-import Modelling.Auxiliary.Shuffle.All (shuffleInstance)
+import Modelling.Auxiliary.Shuffle.All (ShuffleInstance(..), shuffleInstance)
 import Modelling.CdOd.NameCdError
 import Modelling.CdOd.Types
 import Data.String.Interpolate (i)
@@ -245,8 +250,8 @@ import Yesod (
   Lang,
   RenderMessage(..),
   SomeMessage(..),
-  cassius,
   fieldSettingsLabel,
+  julius,
   )
 
 import Global
@@ -292,15 +297,19 @@ getTask :: (MonadRandom m, MonadThrow m) => m (TaskData, String, Rendered Widget
 getTask = do
   seed <- getRandom
   inst <- evalRandT (shuffleInstance task) (mkStdGen seed)
-  pure (inst, checkers, form inst)
+  -- there is no predefined function to look up keys using the value in Data.Map
+  let newIsCorrectOption =
+        diagramIsCorrectOption >>=
+        flip M.lookup (errorReasons $ taskInstance task) >>=
+        flip lookup (map swap $ M.toList $ errorReasons inst)
+  pure (inst, checkers, form (inst, newIsCorrectOption))
 
-form :: TaskData -> Rendered Widget
-form inst@NameCdErrorInstance{..} =
+form :: FormData -> Rendered Widget
+form (inst@NameCdErrorInstance{..}, mCorrectDiagramOption) =
   let
     reasonToLangs (Custom m) = m
     reasonToLangs _ = error "this task has no predefined reasons"
 
-    reasonList = M.toList errorReasons
     letterLangMap = map (fmap (reasonToLangs . snd)) reasonList
 
     defaults = omittedDefaults cdDrawSettings
@@ -316,24 +325,69 @@ form inst@NameCdErrorInstance{..} =
 
     relText = map (fmap relToLangMap) $ relevantRelationships inst
   in
-    addCss css $ formify (Nothing :: Maybe (SingleChoiceSelection, MultipleChoiceSelection))
+    addJs js $ formify (Nothing :: Maybe (SingleChoiceSelection, MultipleChoiceSelection))
       [
         [buttons
           Vertical
-          (fieldSettingsLabel NameCdErrorReasonLabel)
+          (addCssClass radioClass $ fieldSettingsLabel NameCdErrorReasonLabel)
           $ map (SomeMessage . ReasonOption) letterLangMap
         ],
         [buttons
           Vertical
-          (fieldSettingsLabel NameCdErrorRelationshipsLabel)
+          (addCssClass checkboxClass $ fieldSettingsLabel NameCdErrorRelationshipsLabel)
           $ map (SomeMessage . DueToOption) relText
         ]
       ]
-  where
-    css = [cassius|
-      label:has(input[type="checkbox"])
-        font-weight: normal
-    |]
+    where
+      radioClass = "flex-radio"
+      checkboxClass = "flex-checkbox"
+      reasonList = M.toList errorReasons
+      errorIndex = flip lookup $ zip (map fst reasonList) [1 :: Integer ..]
+      diagramCorrectOption = maybe "" show $ mCorrectDiagramOption >>= errorIndex
+      js = [julius|
+const formContainers = Array.from(document.getElementsByClassName("flex-form-div"));
+const radios = Array.from(document.getElementsByClassName(#{radioClass}));
+const checkboxes = Array.from(document.getElementsByClassName(#{checkboxClass}));
+
+const checkboxDisabledRadioValue = #{diagramCorrectOption};
+
+function updateFormValidity() {
+  const selectedRadio = radios.find(radio => radio.checked);
+
+  if (selectedRadio?.value === checkboxDisabledRadioValue) {
+    checkboxes.forEach(checkbox => {
+      checkbox.checked = false;
+      checkbox.disabled = true;
+      checkbox.setCustomValidity("");
+    });
+
+    return;
+  }
+  else {
+    checkboxes.forEach(checkbox => {
+      checkbox.disabled = false;
+    });
+
+    const message = checkboxes.some(checkbox => checkbox.checked)
+      ? ""
+      : "Please select at least one relationship.";
+
+    checkboxes.forEach(checkbox => {
+      checkbox.setCustomValidity(message);
+    });
+
+    return;
+  }
+}
+
+formContainers.forEach(container => {
+  container.addEventListener("change", event => {
+    updateFormValidity();
+  });
+});
+
+document.addEventListener("flex-form:submission-loaded", updateFormValidity);
+|]
 
 checkers :: String
 checkers = [i|
@@ -351,7 +405,6 @@ import Data.ByteString.UTF8             (toString)
 import Data.Either.Extra                (fromEither)
 import Data.List.Extra (
   headDef,
-  notNull,
   nubOrd,
   replace,
   )
@@ -390,11 +443,6 @@ checkSemantics _ inst@NameCdErrorInstance{..} (scReason, mcCauses) = addPretext 
         (English, "statement"),
         (German, "Aussage")
         ]
-      dueToTranslation = M.fromAscList [
-        (English, "relationships constituting the problem"),
-        (German, "das Problem ausmachenden Beziehungen")
-        ]
-      solutionReason = headDef (error "No correct statement found") . M.keys . M.filter fst $ errorReasons
       solutionDueTo = M.fromAscList
         $ map (second (contributingToProblem . annotation))
         relevant
@@ -402,53 +450,66 @@ checkSemantics _ inst@NameCdErrorInstance{..} (scReason, mcCauses) = addPretext 
         | showSolution = Just (True, DefiniteArticle, replace "reason" "statement" $ toString $ encode $ nameCdErrorSolution inst)
         | otherwise = Nothing
   recoverWith 0 (
-    singleChoice reasonTranslation Nothing solutionReason (reason x)
+    singleChoice reasonTranslation Nothing solutionReason xReason
       $>> multipleChoice
-        (Just dueToTranslation)
+        Nothing
         Nothing
         solutionDueTo
-        (dueTo x)
+        xDueTo
     )
-    $>>= \\points -> do
-      paragraph $ translate $ classDiagramDescription points
-      pure ()
-    $>> printSolutionAndAssert correctAnswer $ fromEither points
+    $>>= \\points ->
+      paragraph (translate $ classDiagramDescription points) $>>
+      printSolutionAndAssert correctAnswer (fromEither points)
   where
+    solutionReason = headDef (error "No correct statement found") . M.keys . M.filter fst $ errorReasons
     relevant = relevantRelationships inst
-    chosenRelevant = filter ((`elem` nubOrd (dueTo x)) . fst) relevant
+    chosenRelevant = filter ((`elem` xDueTo) . fst) relevant
     correctRelationships = filter (contributingToProblem . annotation . snd) relevant
     classDiagramDescription points
+      -- singleChoice's feedback on the selected reason is enough in these cases
+      | null correctRelationships || null chosenRelevant = pure ()
       | points == Right 1 = do
-        english "You correctly gave all relationships constituting the problem."
-        german "Sie haben alle das Problem ausmachenden Beziehungen korrekt angegeben."
+        english "You correctly gave the relationships constituting the problem."
+        german "Sie haben korrekt die das Problem ausmachenden Beziehungen angegeben."
       | correctRelationships == chosenRelevant = do
         english $
-          "You correctly gave all relationships constituting the actual problem, " ++
+          "You correctly gave the relationships constituting the actual problem, " ++
           "but the selected statement is incorrect."
         german $
-          "Sie haben alle das tatsächliche Problem ausmachenden Beziehungen korrekt angegeben, " ++
+          "Sie haben korrekt die das tatsächliche Problem ausmachenden Beziehungen angegeben, " ++
           "aber die ausgewählte Aussage ist nicht korrekt."
+      -- skip feedback below if selected reason is incorrect
+      | solutionReason /= xReason = pure ()
       -- this guard is never used for this concrete instance with exactly one cause
-      | all (contributingToProblem . annotation . snd) chosenRelevant &&
-        notNull chosenRelevant = do
+      -- because the third guard is equivalent then
+      | all (`elem` correctRelationships) chosenRelevant = do
         english $
-          "All of the given relationships are involved in the problem, " ++
-          "but there are additional causes which were not selected."
+          "All of the relationships you gave are indeed involved in the problem, " ++
+          "but these are not all contributing relationships."
         german $
-          "Alle angegebenen Beziehungen sind in das Problem involviert, " ++
-          "allerdings gibt es noch weitere, die nicht aufgeführt wurden."
-      | any (contributingToProblem . annotation . snd) chosenRelevant = do
+          "Alle von Ihnen angegebenen Beziehungen sind tatsächlich in das Problem involviert, " ++
+          "allerdings sind dies nicht alle beitragenden Beziehungen."
+      | all (`elem` chosenRelevant) correctRelationships = do
         english $
-          "Some of the given relationships are involved in the problem, " ++
-          "but you also gave non-involved relationships."
+          "You gave all of the relationships that are involved in the problem, " ++
+          "but not every relationship you gave does indeed contribute."
         german $
-          "Einige der angegebenen Beziehungen sind in das Problem involviert, " ++
-          "allerdings wurden auch nicht involvierte Beziehungen angegeben."
+          "Sie haben alle in das Problem involvierten Beziehungen angegeben, " ++
+          "allerdings trägt nicht jede von Ihnen angegebene Beziehung tatsächlich bei."
+      -- this guard is also overlapped by the previous for instances with one cause
+      | any (`elem` correctRelationships) chosenRelevant = do
+        english $
+          "You gave part of the relationships that are involved in the problem, " ++
+          "but not all the relationships you gave do indeed contribute."
+        german $
+          "Sie haben einen Teil der in das Problem involvierten Beziehungen angegeben, " ++
+          "allerdings tragen nicht alle von Ihnen angegebenen Beziehungen tatsächlich bei."
       | otherwise = do
-        english "All relationships you gave as contributing are not involved in the problem."
-        german "Die von Ihnen als zum Problem beitragend angegebenen Beziehungen sind nicht involviert."
+        english "None of the relationships you gave are actually involved in the problem."
+        german "Keine der von Ihnen angegebenen Beziehungen sind tatsächlich in das Problem involviert."
 
-    x = NameCdErrorAnswer (getReason inst scReason) (getAnswers mcCauses)
+    xDueTo = nubOrd (getAnswers mcCauses)
+    xReason = getReason inst scReason
 |]
 
 =============================================
