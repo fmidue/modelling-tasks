@@ -474,9 +474,8 @@ checkSemantics _ inst@NameCdErrorInstance{..} (scReason, mcCauses) = addPretext 
       | points == Right 1 = do
         english "You correctly gave the relationships constituting the problem."
         german "Sie haben korrekt die das Problem ausmachenden Beziehungen angegeben."
-      | null chosenRelevant = when (solutionReason == xReason) $ do
-        english "But you did not give any relationships contributing to the problem."
-        german "Allerdings haben Sie keine zum Problem beitragenden Beziehungen angegeben."
+      -- only possible when selecting the "diagram is correct" option
+      | null chosenRelevant = pure ()
       | correctRelationships == chosenRelevant = do
         english $
           "You correctly gave the relationships constituting the actual problem, " ++
@@ -506,16 +505,9 @@ checkSemantics _ inst@NameCdErrorInstance{..} (scReason, mcCauses) = addPretext 
 
     -- This feedback would be given if there is no problem, i.e., if the diagram is correct.
     -- (also not used for the current task instance)
-    descriptionForCorrectDiagram points
-      | points == Right 1 = do
-        english "Your submitted solution is correct."
-        german "Ihre eingereichte Lösung ist korrekt."
-      | null chosenRelevant = do
-        english "Your selection indicating that no relationship is involved in a problem is correct."
-        german "Ihre Angabe, dass keine Beziehung zu einem Problem beiträgt, ist richtig."
-      | otherwise = do
-        english "You selected relationships as contributing to the problem, but there are none."
-        german "Sie haben Beziehungen als zum Problem beitragend angegebenen, allerdings gibt es keine solchen."
+    descriptionForCorrectDiagram points = when (points == Right 1) $ do
+      english "Your submitted solution is correct."
+      german "Ihre eingereichte Lösung ist korrekt."
 
     xReason = getReason inst scReason
     xDueTo = nubOrd (getAnswers mcCauses)
