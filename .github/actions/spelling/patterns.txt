@@ -41,6 +41,7 @@ obj\sobj\ssig
 [0-9a-f]{40}
 
 # ignore specific
+(?:Enter|Select)ASUnAvailable(?:-Quiz)?
 ExceptT(?![a-z])
 LangM(?![a-z])
 RandT(?![a-z])
