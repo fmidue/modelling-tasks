@@ -9,6 +9,7 @@ import Modelling.CdOd.NameCdError
 
 type Submission = (SingleChoiceSelection, MultipleChoiceSelection)
 type DescData = (Int,Int,Int)
+type FormData = (NameCdErrorInstance, Maybe Char)
 type TaskData = NameCdErrorInstance
 
 =============================================
@@ -216,6 +217,9 @@ task = ShuffleInstance {
   shuffleOptions = True
   }
 
+diagramIsCorrectOption :: Maybe Char
+diagramIsCorrectOption = Just 'c'
+
 validateSettings :: OutputCapable m => LangM m
 validateSettings = pure ()
 
@@ -233,9 +237,11 @@ import Control.Monad.Catch
 import Control.Monad.Random             (MonadRandom, evalRandT, getRandom)
 import Control.OutputCapable.Blocks     (Language(..))
 import Data.Maybe                       (fromMaybe)
+import Data.Tuple                       (swap)
+import FlexTask.FormUtil                (addCssClass, addJs)
 import FlexTask.Generic.Form
 import FlexTask.YesodConfig            (Rendered, Widget)
-import Modelling.Auxiliary.Shuffle.All (shuffleInstance)
+import Modelling.Auxiliary.Shuffle.All (ShuffleInstance(..), shuffleInstance)
 import Modelling.CdOd.NameCdError
 import Modelling.CdOd.Types
 import Data.String.Interpolate (i)
@@ -245,6 +251,7 @@ import Yesod (
   RenderMessage(..),
   SomeMessage(..),
   fieldSettingsLabel,
+  julius,
   )
 
 import Global
@@ -290,15 +297,19 @@ getTask :: (MonadRandom m, MonadThrow m) => m (TaskData, String, Rendered Widget
 getTask = do
   seed <- getRandom
   inst <- evalRandT (shuffleInstance task) (mkStdGen seed)
-  pure (inst, checkers, form inst)
+  -- there is no predefined function to look up keys using the value in Data.Map
+  let newIsCorrectOption =
+        diagramIsCorrectOption >>=
+        flip M.lookup (errorReasons $ taskInstance task) >>=
+        flip lookup (map swap $ M.toList $ errorReasons inst)
+  pure (inst, checkers, form (inst, newIsCorrectOption))
 
-form :: TaskData -> Rendered Widget
-form inst@NameCdErrorInstance{..} =
+form :: FormData -> Rendered Widget
+form (inst@NameCdErrorInstance{..}, mCorrectDiagramOption) =
   let
     reasonToLangs (Custom m) = m
     reasonToLangs _ = error "this task has no predefined reasons"
 
-    reasonList = M.toList errorReasons
     letterLangMap = map (fmap (reasonToLangs . snd)) reasonList
 
     defaults = omittedDefaults cdDrawSettings
@@ -314,19 +325,69 @@ form inst@NameCdErrorInstance{..} =
 
     relText = map (fmap relToLangMap) $ relevantRelationships inst
   in
-    formify (Nothing :: Maybe (SingleChoiceSelection, MultipleChoiceSelection))
+    addJs js $ formify (Nothing :: Maybe (SingleChoiceSelection, MultipleChoiceSelection))
       [
         [buttons
           Vertical
-          (fieldSettingsLabel NameCdErrorReasonLabel)
+          (addCssClass radioClass $ fieldSettingsLabel NameCdErrorReasonLabel)
           $ map (SomeMessage . ReasonOption) letterLangMap
         ],
         [buttons
           Vertical
-          (fieldSettingsLabel NameCdErrorRelationshipsLabel)
+          (addCssClass checkboxClass $ fieldSettingsLabel NameCdErrorRelationshipsLabel)
           $ map (SomeMessage . DueToOption) relText
         ]
       ]
+    where
+      radioClass = "flex-radio"
+      checkboxClass = "flex-checkbox"
+      reasonList = M.toList errorReasons
+      errorIndex = flip lookup $ zip (map fst reasonList) [1 :: Integer ..]
+      diagramCorrectOption = maybe "" show $ mCorrectDiagramOption >>= errorIndex
+      js = [julius|
+const formContainers = Array.from(document.getElementsByClassName("flex-form-div"));
+const radios = Array.from(document.getElementsByClassName(#{radioClass}));
+const checkboxes = Array.from(document.getElementsByClassName(#{checkboxClass}));
+
+const checkboxDisabledRadioValue = #{diagramCorrectOption};
+
+function updateFormValidity() {
+  const selectedRadio = radios.find(radio => radio.checked);
+
+  if (selectedRadio?.value === checkboxDisabledRadioValue) {
+    checkboxes.forEach(checkbox => {
+      checkbox.checked = false;
+      checkbox.disabled = true;
+      checkbox.setCustomValidity("");
+    });
+
+    return;
+  }
+  else {
+    checkboxes.forEach(checkbox => {
+      checkbox.disabled = false;
+    });
+
+    const message = checkboxes.some(checkbox => checkbox.checked)
+      ? ""
+      : "Please select at least one relationship.";
+
+    checkboxes.forEach(checkbox => {
+      checkbox.setCustomValidity(message);
+    });
+
+    return;
+  }
+}
+
+formContainers.forEach(container => {
+  container.addEventListener("change", event => {
+    updateFormValidity();
+  });
+});
+
+document.addEventListener("flex-form:submission-loaded", updateFormValidity);
+|]
 
 checkers :: String
 checkers = [i|
