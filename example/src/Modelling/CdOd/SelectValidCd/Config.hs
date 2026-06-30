@@ -455,12 +455,12 @@ task2024_52 = SelectValidCdConfig {
 
 {-|
 points: 0.15
-the amount of generated instances:
-maximum concurrent amount of tasks:
-average generation time per instance on the cluster (without considering concurrency):
-total run time on the cluster (not including queuing time):
-average CPU usage:
-average memory usage:
+the amount of generated instances: 100
+maximum concurrent amount of tasks: 100
+average generation time per instance on the cluster (without considering concurrency): 1:45:26h
+total run time on the cluster (not including queuing time): 3:36:29h
+average CPU usage: 232.17%
+average memory usage: 2072.76 MB
 used as: SelectValidCdFormInputCheckboxesUnAvailable-Quiz
 -}
 task2025_repeat_07 :: SelectValidCdConfig
@@ -468,12 +468,12 @@ task2025_repeat_07 = task2024_07
 
 {-|
 points: 0.15
-the amount of generated instances:
-maximum concurrent amount of tasks:
-average generation time per instance on the cluster (without considering concurrency):
-total run time on the cluster (not including queuing time):
-average CPU usage:
-average memory usage:
+the amount of generated instances: 100
+maximum concurrent amount of tasks: 100
+average generation time per instance on the cluster (without considering concurrency): 1:18:25h
+total run time on the cluster (not including queuing time): 5:35:31h
+average CPU usage: 165.28%
+average memory usage: 1995.84 MB
 used as: SelectValidCdFormInputCheckboxesUnAvailable-Quiz
 -}
 task2025_repeat_08 :: SelectValidCdConfig
@@ -481,12 +481,12 @@ task2025_repeat_08 = task2024_08
 
 {-|
 points: 0.15
-the amount of generated instances:
-maximum concurrent amount of tasks:
-average generation time per instance on the cluster (without considering concurrency):
-total run time on the cluster (not including queuing time):
-average CPU usage:
-average memory usage:
+the amount of generated instances: 100
+maximum concurrent amount of tasks: 100
+average generation time per instance on the cluster (without considering concurrency): 1:55:14h
+total run time on the cluster (not including queuing time): 8:11:36h
+average CPU usage: 161.79%
+average memory usage: 1861.84 MB
 used as: SelectValidCdFormInputCheckboxesUnAvailable-Quiz
 -}
 task2025_repeat_10 :: SelectValidCdConfig
@@ -507,12 +507,12 @@ task2025_53 = task2024_07
 
 {-|
 points: 0.1
-the amount of generated instances:
-maximum concurrent amount of tasks:
-average generation time per instance on the cluster (without considering concurrency):
-total run time on the cluster (not including queuing time):
-average CPU usage:
-average memory usage:
+the amount of generated instances: 100
+maximum concurrent amount of tasks: 100
+average generation time per instance on the cluster (without considering concurrency): 1:46:11h
+total run time on the cluster (not including queuing time): 3:39:12h
+average CPU usage: 234.93%
+average memory usage: 2088.63 MB
 used as: SelectValidCdFormInputCheckboxesUnAvailable-Quiz
 -}
 task2025_repeat_11 :: SelectValidCdConfig

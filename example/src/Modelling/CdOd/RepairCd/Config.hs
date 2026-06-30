@@ -324,12 +324,12 @@ task2024_55 = RepairCdConfig {
 
 {-|
 points: 0.15
-the amount of generated instances:
-maximum concurrent amount of tasks:
-average generation time per instance on the cluster (without considering concurrency):
-total run time on the cluster (not including queuing time):
-average CPU usage:
-average memory usage:
+the amount of generated instances: 100
+maximum concurrent amount of tasks: 100
+average generation time per instance on the cluster (without considering concurrency): 1:48:30h
+total run time on the cluster (not including queuing time): 3:12:47h
+average CPU usage: 212.11%
+average memory usage: 1935.99 MB
 used as: RepairCdFormInputCheckboxesUnAvailable-Quiz
 -}
 task2025_repeat_12 :: RepairCdConfig
@@ -389,12 +389,12 @@ task2025_repeat_12 = RepairCdConfig {
 
 {-|
 points: 0.15
-the amount of generated instances:
-maximum concurrent amount of tasks:
-average generation time per instance on the cluster (without considering concurrency):
-total run time on the cluster (not including queuing time):
-average CPU usage:
-average memory usage:
+the amount of generated instances: 100
+maximum concurrent amount of tasks: 100
+average generation time per instance on the cluster (without considering concurrency): 53:10min
+total run time on the cluster (not including queuing time): 2:42:00h
+average CPU usage: 157.80%
+average memory usage: 1921.89 MB
 used as: RepairCdFormInputCheckboxesUnAvailable-Quiz
 -}
 task2025_repeat_13 :: RepairCdConfig
