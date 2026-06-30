@@ -469,7 +469,7 @@ description
   => FilePath
   -> TaskData
   -> LangM m
-description = nameCdErrorTask False
+description = nameCdErrorTask True False
 
 =============================================
 

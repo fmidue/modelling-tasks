@@ -621,10 +621,10 @@ nameCdErrorTask
   -> FilePath
   -> NameCdErrorInstance
   -> LangM m
-nameCdErrorTask showInputHelp path task = do
+nameCdErrorTask collapseHints showInputHelp path task = do
   toTaskText showInputHelp path task
-  simplifiedInformation False
-  hoveringInformation False
+  simplifiedInformation collapseHints
+  hoveringInformation collapseHints
   extra $ addText task
   pure ()
 

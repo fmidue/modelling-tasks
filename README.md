@@ -39,7 +39,7 @@ stack ghci --stack-yaml=stack-examples.yaml  --package=autotool-capabilities-io-
 :m + Capabilities.Alloy.IO Capabilities.Cache.IO Capabilities.Diagrams.IO Capabilities.Graphviz.IO Capabilities.LatexSvg.IO Capabilities.PlantUml.IO Capabilities.WriteFile.IO
 :m + Control.OutputCapable.Blocks Control.OutputCapable.Blocks.Generic
 inst <- nameCdErrorGenerate True defaultNameCdErrorConfig 0 0
-runLangMReport (return ()) (>>) (nameCdErrorTask True "/tmp/" inst) >>= \(Just (), x) -> (x English :: IO ())
+runLangMReport (return ()) (>>) (nameCdErrorTask False True "/tmp/" inst) >>= \(Just (), x) -> (x English :: IO ())
 runLangMReport (return ()) (>>) (nameCdErrorSyntax inst NameCdErrorAnswer {reason = 'b', dueTo = [1,2,4]}) >>= \(Just (), x) -> (x English :: IO ())
 runLangMReport (return ()) (>>) (nameCdErrorEvaluation "/tmp/" inst NameCdErrorAnswer {reason = 'b', dueTo = [1,2,4]}) >>= \(r, x) -> (x English :: IO ()) >> return r :: IO (Maybe Rational)
 ```
@@ -49,7 +49,7 @@ For running all steps at once in `ghci`, the following approach is also possible
 ```haskell
 :m + Control.OutputCapable.Blocks.Debug System.Random Autolib.Reader
 let getLines = init <$> getLines' where getLines' = do { x <- getLine; if null x then pure [] else (\l -> x ++ '\n' : l) <$> getLines' }
-testTask Nothing English (randomRIO (0,1000) >>= nameCdErrorGenerate True defaultNameCdErrorConfig 0) (nameCdErrorTask True "/tmp/") nameCdErrorSyntax (nameCdErrorEvaluation "/tmp/") (reading <$> getLines)
+testTask Nothing English (randomRIO (0,1000) >>= nameCdErrorGenerate True defaultNameCdErrorConfig 0) (nameCdErrorTask False True "/tmp/") nameCdErrorSyntax (nameCdErrorEvaluation "/tmp/") (reading <$> getLines)
 ```
 
 Please also note that the `..Task`, `..Syntax`, and `..Evaluation` functions sometimes require arguments for a directory (above `"/tmp/"`) and sometimes don't.
