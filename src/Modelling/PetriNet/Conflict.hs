@@ -134,10 +134,8 @@ import Modelling.PetriNet.Types         (
   SimpleNode (..),
   SimplePetriNet,
   allDrawSettings,
-  placeNames,
   lConflictPlaces,
   transitionPairShow,
-  transitionNames,
   )
 
 import Control.Applicative              (Alternative, (<|>))

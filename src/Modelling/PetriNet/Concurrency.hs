@@ -116,8 +116,6 @@ import Modelling.PetriNet.Types         (
   SimpleNode (..),
   SimplePetriNet,
   allDrawSettings,
-  placeNames,
-  transitionNames,
   transitionPairShow,
   )
 
