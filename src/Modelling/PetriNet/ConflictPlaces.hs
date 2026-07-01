@@ -171,7 +171,7 @@ Die Reihenfolge von Stellen innerhalb der Auflistung der den Konflikt verursache
   pure ()
 
 conflictInitial :: ConflictPlaces
-conflictInitial = (findInitial, [placeFromNumber 1, placeFromNumber 2])
+conflictInitial = (findInitial, [placeFromNumber 0, placeFromNumber 1])
 
 findConflictPlacesSyntax
   :: OutputCapable m

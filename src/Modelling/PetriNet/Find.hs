@@ -90,7 +90,7 @@ data FindInstance n a = FindInstance {
 makeLensesFor [("toFind", "lToFind")] ''FindInstance
 
 findInitial :: (Transition, Transition)
-findInitial = (transitionFromNumber 1, transitionFromNumber 2)
+findInitial = (transitionFromNumber 0, transitionFromNumber 1)
 
 toFindSyntax
   :: OutputCapable m
