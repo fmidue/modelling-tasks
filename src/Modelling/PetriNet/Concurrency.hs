@@ -372,11 +372,12 @@ findConcurrencyGenerate config segment = evalRandT getInstance . mkStdGen
         drawFindWith = drawSettings,
         toFind = c',
         net = petri,
-        namesOfPlaces = Set.fromDistinctAscList $ placeNames petri,
-        namesOfTransitions = Set.fromDistinctAscList $ transitionNames petri,
+        namesOfPlaces = Set.fromList $ map showPlace $ placesFromOneTo (places bc),
+        namesOfTransitions = Set.fromList $ map showTransition $ transitionsFromOneTo (transitions bc),
         showSolution = Find.printSolution config,
         addText = Find.extraText config
         }
+    bc = Find.basicConfig config
 
 findConcurrency
   :: (MonadAlloy m, MonadThrow m, Net p n, RandomGen g)
@@ -616,8 +617,8 @@ defaultFindConcurrencyInstance = FindInstance {
       ("t3",SimpleTransition {flowOut = M.fromList [("s2",2)]})
       ]
     },
-  namesOfPlaces = Set.fromList $ map showPlace $ placesFromOneTo 4,
-  namesOfTransitions = Set.fromList $ map showTransition $ transitionsFromOneTo 3,
+  namesOfPlaces = Set.fromList ["s1", "s2", "s3", "s4"],
+  namesOfTransitions = Set.fromList ["t1", "t2", "t3"],
   showSolution = True,
   addText = NoExtraText
   }

@@ -45,7 +45,6 @@ import qualified Data.Map                         as M (
   fromList,
   )
 import qualified Data.Set                         as Set (
-  fromDistinctAscList,
   fromList,
   size,
   toList,
@@ -429,11 +428,15 @@ findConflictGenerate config segment = evalRandT getInstance . mkStdGen
         drawFindWith = drawSettings,
         toFind = over lConflictPlaces nubSort c',
         net = petri,
+        namesOfPlaces = Set.fromList $ map showPlace $ placesFromOneTo (places bc),
+        namesOfTransitions = Set.fromList $ map showTransition $ transitionsFromOneTo (transitions bc),
+
         namesOfPlaces = Set.fromDistinctAscList $ placeNames petri,
         namesOfTransitions = Set.fromDistinctAscList $ transitionNames petri,
         showSolution = Find.printSolution config,
         addText = Find.extraText config
         }
+    bc = Find.basicConfig config
 
 pickConflictGenerate
   :: (MonadAlloy m, MonadCatch m, MonadDiagrams m, MonadGraphviz m, Net p n)
@@ -772,8 +775,8 @@ defaultFindConflictInstance = FindInstance {
       ("t3",SimpleTransition {flowOut = M.fromList [("s3",1)]})
       ]
     },
-  namesOfPlaces = Set.fromList $ map showPlace $ placesFromOneTo 4,
-  namesOfTransitions = Set.fromList $ map showTransition $ transitionsFromOneTo 3,
+  namesOfPlaces = Set.fromList ["s1", "s2", "s3", "s4"],
+  namesOfTransitions = Set.fromList ["t1", "t2", "t3"],
   showSolution = True,
   addText = NoExtraText
   }
