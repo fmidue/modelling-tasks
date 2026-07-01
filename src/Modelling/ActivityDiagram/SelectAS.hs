@@ -23,7 +23,7 @@ module Modelling.ActivityDiagram.SelectAS (
   defaultSelectASInstance
 ) where
 
-import qualified Data.Map as M (fromList, toList, keys, filter, map)
+import qualified Data.Map as M (elems, fromList, toList, keys, filter, map)
 import qualified Data.Vector as V (fromList)
 
 import Autolib.Hash                     (Hashable)
@@ -90,7 +90,7 @@ import Control.Monad.Random (
   mkStdGen
   )
 import Control.Monad.Trans.Maybe (MaybeT(..), runMaybeT)
-import Data.List (permutations, sortBy)
+import Data.List (partition, permutations, sortBy)
 import Data.List.Extra (groupOn, nubOrd)
 import Data.Ord (comparing)
 import Data.Map (Map)
@@ -204,9 +204,10 @@ checkSelectASInstance inst
   = Nothing
   where
     (net, actionNameToPetriKey) = netAndMap $ convertToPetriNet $ activityDiagram inst
-    pairs = map snd $ M.toList $ actionSequences inst
-    correctSeqs = [sequ | (True, sequ) <- pairs]
-    wrongSeqs = [sequ | (False, sequ) <- pairs]
+    pairs = M.elems $ actionSequences inst
+    (corrects, wrongs) = partition fst pairs
+    correctSeqs = map snd corrects
+    wrongSeqs = map snd wrongs
 
 
 data SelectASSolution = SelectASSolution {

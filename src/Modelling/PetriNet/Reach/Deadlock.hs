@@ -103,6 +103,7 @@ import Modelling.PetriNet.Reach.Type (
 import Control.Applicative              (Alternative, (<|>))
 import Control.OutputCapable.Blocks (
   ExtraText (..),
+  GenericOutputCapable (assertion),
   LangM,
   OutputCapable,
   Rated,
@@ -122,7 +123,7 @@ import Data.Bifunctor                   (bimap)
 import Data.Either.Combinators          (whenRight)
 import Data.Either.Extra                (fromEither)
 import Control.Functor.Trans            (FunctorTrans (lift))
-import Control.Monad                    (guard, when)
+import Control.Monad                    (foldM, guard, when)
 import Data.Foldable                    (traverse_)
 import Control.Monad.Catch              (MonadCatch, MonadThrow)
 import Control.Monad.Extra              (whenJust)
@@ -145,10 +146,15 @@ verifyDeadlock inst =
   validate Default (petriNet inst)
   *> traverse_ checkSolution (fromEither $ shortestSolutions inst)
   where
+    net = petriNet inst
     checkSolution ts =
-      transitionsValid (petriNet inst) ts
-      *> isNoLonger (noLongerThan inst) ts
-      *> rejectSpaceballsPattern (rejectSpaceballsLength inst) ts
+      deadlockSyntax True inst ts
+      *> assertion (isDeadlockReached ts) (translate $ do
+           english "Solution sequence leads to a deadlock state?"
+           german "Lösungssequenz führt zu einem Deadlock-Zustand?")
+    isDeadlockReached ts = case foldM (\state t -> lookup t (successors net state)) (start net) ts of
+      Just finalState -> null (successors net finalState)
+      Nothing         -> False
 
 deadlockTask
   :: (
@@ -186,7 +192,7 @@ deadlockSyntax
   :: OutputCapable m
   => Bool
   -- ^ Whether to do a full check. If False, only check for Spaceballs pattern.
-  -> DeadlockInstance Place Transition
+  -> DeadlockInstance a Transition
   -> [Transition]
   -> LangM m
 deadlockSyntax fullCheck inst ts =

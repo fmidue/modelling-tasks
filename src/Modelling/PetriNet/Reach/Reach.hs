@@ -104,7 +104,7 @@ import Modelling.PetriNet.Reach.Type (
 
 import Control.Applicative              (Alternative, (<|>))
 import Control.Functor.Trans            (FunctorTrans (lift))
-import Control.Monad                    (guard, msum, replicateM, when, unless, (>=>))
+import Control.Monad                    (foldM, guard, msum, replicateM, when, unless, (>=>))
 import Control.Monad.Catch              (MonadCatch, MonadThrow)
 import Control.Monad.Extra              (findM, whenJust)
 import Control.Monad.Trans.Maybe        (MaybeT (MaybeT, runMaybeT))
@@ -160,8 +160,14 @@ verifyReach inst = do
   assertion (showGoalNet inst || showPlaceNames inst) $ translate $ do
     english "At least one of goal net or place names must be shown."
     german "Mindestens eines von Zielnetz oder Plätze-Namen muss angezeigt werden."
-  traverse_ (reachSyntax True inst) $ fromEither $ shortestSolutions inst
+  traverse_ (\ts -> reachSyntax True inst ts *> checkReachesGoal n ts) $ fromEither $ shortestSolutions inst
   pure ()
+  where
+    checkReachesGoal n ts = assertion
+      (foldM (\state t -> lookup t (successors n state)) (start n) ts == Just (goal (netGoal inst)))
+      $ translate $ do
+          english "Solution sequence reaches the goal marking?"
+          german "Lösungssequenz erreicht die Zielmarkierung?"
 
 reachTask
   :: (

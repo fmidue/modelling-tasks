@@ -35,7 +35,7 @@ import Modelling.ActivityDiagram.ActionSequences (
   netAndMap,
   computeActionSequenceLevels,
   isFinalPetriNode,
-  validActionSequence,
+  validActionSequenceWithPetri,
   )
 import Modelling.ActivityDiagram.Auxiliary.ActionSequences (actionSequencesAlloy)
 import Modelling.ActivityDiagram.Config (
@@ -188,10 +188,12 @@ checkEnterASInstance inst
   = Just "'suppressNodeNames' must be set to 'False' for this task type"
   | maybe False (length (sampleSequence inst) >) (noLongerThan inst)
   = Just "The sample sequence exceeds the maximum allowed length"
-  | not (validActionSequence (sampleSequence inst) (activityDiagram inst))
+  | not (validActionSequenceWithPetri (sampleSequence inst) net actionNameToPetriKey)
   = Just "The sample sequence is not a valid action sequence for the given activity diagram"
   | otherwise
   = Nothing
+  where
+    (net, actionNameToPetriKey) = netAndMap $ petriNet inst
 
 checkEnterASInstanceForConfig :: EnterASInstance -> EnterASConfig -> Maybe String
 checkEnterASInstanceForConfig inst EnterASConfig {
