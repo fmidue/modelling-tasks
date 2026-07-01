@@ -154,7 +154,7 @@ hasInsufficientTransitionCoverage totalTransitions transitionSequence minCoverag
 
 -- | Check if a sequence begins with a Spaceballs PIN pattern
 hasSpaceballsPrefix :: (Eq a, Sequential a) => Int -> [a] -> Bool
-hasSpaceballsPrefix minLength = (>= minLength) . length . longestSequentialPrefix
+hasSpaceballsPrefix minLength = (minLength ==) . length . take minLength . longestSequentialPrefix
 
 -- | Check if a sequence follows a cyclic pattern (e.g., @[t3,t2,t1,t4,t3,t2,t1,t4]@)
 -- The pattern is considered cyclic if it can be represented as `take n (cycle pattern)`

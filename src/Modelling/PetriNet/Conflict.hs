@@ -46,6 +46,7 @@ import qualified Data.Map                         as M (
   )
 import qualified Data.Set                         as Set (
   fromDistinctAscList,
+  fromList,
   size,
   toList,
   )
@@ -771,8 +772,8 @@ defaultFindConflictInstance = FindInstance {
       ("t3",SimpleTransition {flowOut = M.fromList [("s3",1)]})
       ]
     },
-  namesOfPlaces = Set.fromDistinctAscList $ map showPlace $ placesFromOneTo 4,
-  namesOfTransitions = Set.fromDistinctAscList $ map showTransition $ transitionsFromOneTo 3,
+  namesOfPlaces = Set.fromList $ map showPlace $ placesFromOneTo 4,
+  namesOfTransitions = Set.fromList $ map showTransition $ transitionsFromOneTo 3,
   showSolution = True,
   addText = NoExtraText
   }

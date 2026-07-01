@@ -616,8 +616,8 @@ defaultFindConcurrencyInstance = FindInstance {
       ("t3",SimpleTransition {flowOut = M.fromList [("s2",2)]})
       ]
     },
-  namesOfPlaces = Set.fromDistinctAscList $ map showPlace $ placesFromOneTo 4,
-  namesOfTransitions = Set.fromDistinctAscList $ map showTransition $ transitionsFromOneTo 3,
+  namesOfPlaces = Set.fromList $ map showPlace $ placesFromOneTo 4,
+  namesOfTransitions = Set.fromList $ map showTransition $ transitionsFromOneTo 3,
   showSolution = True,
   addText = NoExtraText
   }
