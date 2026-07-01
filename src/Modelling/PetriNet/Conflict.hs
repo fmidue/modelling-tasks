@@ -112,7 +112,11 @@ import Modelling.PetriNet.Reach.Type (
   parsePlacePrec,
   parseTransitionPrec,
   placeFromNumber,
+  placesFromOneTo,
+  showPlace,
+  showTransition,
   transitionFromNumber,
+  transitionsFromOneTo,
   )
 import Modelling.PetriNet.Types         (
   AdvConfig,
@@ -767,8 +771,8 @@ defaultFindConflictInstance = FindInstance {
       ("t3",SimpleTransition {flowOut = M.fromList [("s3",1)]})
       ]
     },
-  namesOfPlaces = Set.fromDistinctAscList ["s1", "s2", "s3", "s4"],
-  namesOfTransitions = Set.fromDistinctAscList ["t1", "t2", "t3"],
+  namesOfPlaces = Set.fromDistinctAscList $ map showPlace $ placesFromOneTo 4,
+  namesOfTransitions = Set.fromDistinctAscList $ map showTransition $ transitionsFromOneTo 3,
   showSolution = True,
   addText = NoExtraText
   }

@@ -27,6 +27,7 @@ module Modelling.PetriNet.Reach.Filter (
   hasSpaceballsPrefix,
   hasGroupedRepeats,
   hasInsufficientTransitionCoverage,
+  longestSequentialPrefix,
 
   -- * Solution set validation
   shouldDiscardSolutions,

@@ -77,6 +77,7 @@ import Modelling.PetriNet.Reach.Filter (
   shouldDiscardSolutions,
   defaultFilterConfig,
   hasSpaceballsPrefix,
+  longestSequentialPrefix,
   noFiltering,
   )
 import Modelling.PetriNet.Reach.Property (
@@ -457,7 +458,7 @@ rejectSpaceballsPattern
   -> LangM m
 rejectSpaceballsPattern maybeRejectSpaceballsLength ts =
   when (maybe False (`hasSpaceballsPrefix` ts) maybeRejectSpaceballsLength) $ do
-    let longestSpaceballsPrefix = findLongestSpaceballsPrefix ts
+    let longestSpaceballsPrefix = longestSequentialPrefix ts
         prefixString = show longestSpaceballsPrefix
     refuse $ paragraph $ translate $ do
       english $ concat [
@@ -470,20 +471,6 @@ rejectSpaceballsPattern maybeRejectSpaceballsLength ts =
         prefixString,
         ", die Sie eingereicht haben, wäre vielleicht eine gute PIN im Spaceballs-Film gewesen, ist hier aber nicht korrekt."
         ]
-
--- | Find the longest Spaceballs-like prefix in a sequence
--- A Spaceballs prefix is one where elements follow the pattern [x, x+1, x+2, ...]
-findLongestSpaceballsPrefix :: (Eq a, Sequential a) => [a] -> [a]
-findLongestSpaceballsPrefix [] = []
-findLongestSpaceballsPrefix (x:xs) =
-  x : map snd (takeWhile (uncurry (==)) (zip expectedElements xs))
-  where
-    expectedElements = unfoldExpectedElements x
-
-    unfoldExpectedElements currentElement =
-      case nextInSequence currentElement of
-        Just nextElement -> nextElement : unfoldExpectedElements nextElement
-        Nothing -> []
 
 data ReachInstance s t = ReachInstance {
   netGoal           :: NetGoal s t,

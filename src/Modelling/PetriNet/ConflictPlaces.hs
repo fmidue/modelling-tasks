@@ -265,8 +265,8 @@ defaultFindConflictPlacesInstance = FindInstance {
       ("t3",SimpleTransition {flowOut = M.fromList [("s3",1)]})
       ]
     },
-  namesOfPlaces = Set.fromList ["s1", "s2", "s3", "s4"],
-  namesOfTransitions = Set.fromList ["t1", "t2", "t3"],
+  namesOfPlaces = Set.fromDistinctAscList ["s1", "s2", "s3", "s4"],
+  namesOfTransitions = Set.fromDistinctAscList ["t1", "t2", "t3"],
   showSolution = True,
   addText = NoExtraText
   }
