@@ -21,6 +21,7 @@ module Modelling.PetriNet.Find (
   ) where
 
 import qualified Data.Bimap                       as BM (lookup)
+import qualified Data.Set                         as Set
 
 import Modelling.Auxiliary.Common       (Object)
 import Modelling.Auxiliary.Output (
@@ -32,6 +33,7 @@ import Modelling.PetriNet.Diagram (
 import Modelling.PetriNet.Reach.Type (
   ShowTransition (ShowTransition),
   Transition (Transition),
+  transitionFromNumber,
   )
 import Modelling.PetriNet.Types (
   BasicConfig (..),
@@ -68,6 +70,7 @@ import Control.Monad.Random (
   )
 import Control.Monad.Trans.Class        (MonadTrans (lift))
 import Data.Map                         (Map)
+import Data.Set                         (Set)
 import Language.Alloy.Call (
   AlloyInstance,
   )
@@ -77,8 +80,8 @@ data FindInstance n a = FindInstance {
   drawFindWith :: !DrawSettings,
   toFind :: !a,
   net :: !n,
-  numberOfPlaces :: !Int,
-  numberOfTransitions :: !Int,
+  namesOfPlaces :: !(Set String),
+  namesOfTransitions :: !(Set String),
   showSolution :: !Bool,
   addText :: !ExtraText
   }
@@ -87,15 +90,15 @@ data FindInstance n a = FindInstance {
 makeLensesFor [("toFind", "lToFind")] ''FindInstance
 
 findInitial :: (Transition, Transition)
-findInitial = (Transition 0, Transition 1)
+findInitial = (transitionFromNumber 1, transitionFromNumber 2)
 
 toFindSyntax
   :: OutputCapable m
   => Bool
-  -> Int
+  -> Set String
   -> (Transition, Transition)
   -> LangM' m ()
-toFindSyntax withSol n (fi, si) = addPretext $ do
+toFindSyntax withSol transitionNamesSet (fi, si) = addPretext $ do
   assertTransition fi
   assertTransition si
   assert (fi /= si) $ translate $ do
@@ -108,7 +111,7 @@ toFindSyntax withSol n (fi, si) = addPretext $ do
       let t' = show $ ShowTransition t
       english $ t' ++ " is a transition of the given Petri net?"
       german $ t' ++ " ist eine Transition des gegebenen Petrinetzes?"
-    isValidTransition (Transition x) = x >= 1 && x <= n
+    isValidTransition (Transition x) = x `Set.member` transitionNamesSet
 
 findTaskInstance
   :: (MonadThrow m, Net p n, RandomGen g, Traversable t)

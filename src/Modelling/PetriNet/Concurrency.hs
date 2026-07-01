@@ -40,6 +40,7 @@ import qualified Data.Map                         as M (
   empty,
   fromList,
   )
+import qualified Data.Set                         as Set
 
 import Capabilities.Alloy               (MonadAlloy)
 import Capabilities.Cache               (MonadCache)
@@ -94,8 +95,9 @@ import Modelling.PetriNet.Pick (
   wrongInstances,
   )
 import Modelling.PetriNet.Reach.Type (
-  Transition (Transition),
+  Transition,
   parseTransitionPrec,
+  transitionFromNumber,
   )
 import Modelling.PetriNet.Types         (
   AdvConfig (..),
@@ -110,6 +112,8 @@ import Modelling.PetriNet.Types         (
   SimpleNode (..),
   SimplePetriNet,
   allDrawSettings,
+  placeNames,
+  transitionNames,
   transitionPairShow,
   )
 
@@ -238,7 +242,7 @@ findConcurrencySyntax
   => FindInstance net (Concurrent Transition)
   -> (Transition, Transition)
   -> LangM' m ()
-findConcurrencySyntax = toFindSyntax False . numberOfTransitions
+findConcurrencySyntax = toFindSyntax False . namesOfTransitions
 
 findConcurrencyEvaluation
   :: (Monad m, OutputCapable m)
@@ -364,12 +368,11 @@ findConcurrencyGenerate config segment = evalRandT getInstance . mkStdGen
         drawFindWith = drawSettings,
         toFind = c',
         net = petri,
-        numberOfPlaces = places bc,
-        numberOfTransitions = transitions bc,
+        namesOfPlaces = Set.fromList $ placeNames petri,
+        namesOfTransitions = Set.fromList $ transitionNames petri,
         showSolution = Find.printSolution config,
         addText = Find.extraText config
         }
-    bc = Find.basicConfig config
 
 findConcurrency
   :: (MonadAlloy m, MonadThrow m, Net p n, RandomGen g)
@@ -597,7 +600,7 @@ defaultFindConcurrencyInstance = FindInstance {
     with1Weights = False,
     withGraphvizCommand = Circo
     },
-  toFind = Concurrent (Transition 1,Transition 3),
+  toFind = Concurrent (transitionFromNumber 1, transitionFromNumber 3),
   net = PetriLike {
     allNodes = M.fromList [
       ("s1",SimplePlace {initial = 2, flowOut = M.fromList [("t1",1),("t2",2),("t3",1)]}),
@@ -609,8 +612,8 @@ defaultFindConcurrencyInstance = FindInstance {
       ("t3",SimpleTransition {flowOut = M.fromList [("s2",2)]})
       ]
     },
-  numberOfPlaces = 4,
-  numberOfTransitions = 3,
+  namesOfPlaces = Set.fromList ["s1", "s2", "s3", "s4"],
+  namesOfTransitions = Set.fromList ["t1", "t2", "t3"],
   showSolution = True,
   addText = NoExtraText
   }

@@ -21,6 +21,7 @@ The filtering only happens on/with minimal solution sequences for a task.
 -}
 module Modelling.PetriNet.Reach.Filter (
   -- * Pattern detection
+  Sequential (..),
   isCyclicPatternWithAnyOf,
   hasRepetitiveSubsequence,
   hasSpaceballsPrefix,
@@ -41,10 +42,12 @@ import qualified Data.Set                         as Set
 import Autolib.Reader                   (Reader)
 import Autolib.ToDoc                    (ToDoc)
 import Data.Data                        (Data)
+import Data.Char                        (isDigit)
 import Data.List                        (group, sort)
 import Data.List.Extra                  (notNull, nubOrd)
 import Data.Ratio                       (Ratio, (%))
 import GHC.Generics                     (Generic)
+import Modelling.PetriNet.Reach.Type    (Transition (Transition))
 
 -- | Configuration for sequence filtering
 data FilterConfig = FilterConfig {
@@ -126,6 +129,22 @@ defaultFilterConfig = FilterConfig {
   transitionCoverageRequirement = 4 % 5
   }
 
+class Sequential a where
+  nextInSequence :: a -> Maybe a
+
+instance Sequential Int where
+  nextInSequence = Just . succ
+
+instance Sequential Transition where
+  nextInSequence (Transition name) = Transition <$> incrementTrailingNumber name
+
+incrementTrailingNumber :: String -> Maybe String
+incrementTrailingNumber name
+  | null reversedDigits = Nothing
+  | otherwise = Just $ reverse reversedPrefix ++ show (read (reverse reversedDigits) + 1 :: Int)
+  where
+    (reversedDigits, reversedPrefix) = span isDigit $ reverse name
+
 -- | Check if a sequence has insufficient transition coverage
 hasInsufficientTransitionCoverage :: Ord a => Int -> [a] -> Ratio Int -> Bool
 hasInsufficientTransitionCoverage totalTransitions transitionSequence minCoverage
@@ -133,8 +152,8 @@ hasInsufficientTransitionCoverage totalTransitions transitionSequence minCoverag
     in fromIntegral usedCount < minCoverage * fromIntegral totalTransitions
 
 -- | Check if a sequence begins with a Spaceballs PIN pattern
-hasSpaceballsPrefix :: (Enum a, Eq a) => Int -> [a] -> Bool
-hasSpaceballsPrefix minLength xs = take minLength xs == take minLength [head xs ..]
+hasSpaceballsPrefix :: (Eq a, Sequential a) => Int -> [a] -> Bool
+hasSpaceballsPrefix minLength = (>= minLength) . length . longestSequentialPrefix
 
 -- | Check if a sequence follows a cyclic pattern (e.g., @[t3,t2,t1,t4,t3,t2,t1,t4]@)
 -- The pattern is considered cyclic if it can be represented as `take n (cycle pattern)`
@@ -169,7 +188,7 @@ hasGroupedRepeats xs =
 --
 -- Returns 'True' if the solution set should be discarded (filtered out),
 -- 'False' if it should be kept.
-shouldDiscardSolutions :: (Enum a, Ord a) => FilterConfig -> Int -> [[a]] -> Bool
+shouldDiscardSolutions :: (Ord a, Sequential a) => FilterConfig -> Int -> [[a]] -> Bool
 shouldDiscardSolutions FilterConfig{..} numTransitions solutions =
   maybe False (\n -> notNull (drop n solutions)) solutionSetLimit
   || maybe False ((`any` solutions) . hasSpaceballsPrefix) spaceballsPrefixThreshold
@@ -193,3 +212,14 @@ areAllPermutationsOfEachOther [] = True
 areAllPermutationsOfEachOther (firstSolution:restSolutions) =
   let sortedFirst = sort firstSolution
   in all (\solution -> sort solution == sortedFirst) restSolutions
+
+longestSequentialPrefix :: (Eq a, Sequential a) => [a] -> [a]
+longestSequentialPrefix [] = []
+longestSequentialPrefix (firstElement:remainingElements) =
+  firstElement : collectSequentialElements firstElement remainingElements
+  where
+    collectSequentialElements currentElement (nextElement:tailElements)
+      | Just expectedElement <- nextInSequence currentElement
+      , expectedElement == nextElement
+      = nextElement : collectSequentialElements nextElement tailElements
+    collectSequentialElements _ _ = []

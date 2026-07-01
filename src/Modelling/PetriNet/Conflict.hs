@@ -45,6 +45,8 @@ import qualified Data.Map                         as M (
   fromList,
   )
 import qualified Data.Set                         as Set (
+  fromList,
+  size,
   toList,
   )
 
@@ -103,12 +105,14 @@ import Modelling.PetriNet.Pick (
   wrongInstances,
   )
 import Modelling.PetriNet.Reach.Type (
-  Place (Place),
+  Place,
   ShowPlace (ShowPlace),
   ShowTransition (ShowTransition),
-  Transition (Transition),
+  Transition,
   parsePlacePrec,
   parseTransitionPrec,
+  placeFromNumber,
+  transitionFromNumber,
   )
 import Modelling.PetriNet.Types         (
   AdvConfig,
@@ -126,8 +130,10 @@ import Modelling.PetriNet.Types         (
   SimpleNode (..),
   SimplePetriNet,
   allDrawSettings,
+  placeNames,
   lConflictPlaces,
   transitionPairShow,
+  transitionNames,
   )
 
 import Control.Applicative              (Alternative, (<|>))
@@ -245,7 +251,7 @@ findConflictSyntax
   => FindInstance net Conflict
   -> (Transition, Transition)
   -> LangM' m ()
-findConflictSyntax = toFindSyntax False . numberOfTransitions
+findConflictSyntax = toFindSyntax False . namesOfTransitions
 
 findConflictEvaluation
   :: (Alternative m, Monad m, OutputCapable m)
@@ -303,7 +309,7 @@ findConflictPlacesEvaluation task (conflict, ps) =
     withSol = Find.showSolution task
     ps' = nubSort ps
     (correct, wrong') = partition (`elem` inducing) ps
-    base = fromIntegral $ 2 + numberOfPlaces task
+    base = fromIntegral $ 2 + Set.size (namesOfPlaces task)
     size = fromIntegral . length
     what = translations $ do
         english "have a conflict"
@@ -418,12 +424,11 @@ findConflictGenerate config segment = evalRandT getInstance . mkStdGen
         drawFindWith = drawSettings,
         toFind = over lConflictPlaces nubSort c',
         net = petri,
-        numberOfPlaces = places bc,
-        numberOfTransitions = transitions bc,
+        namesOfPlaces = Set.fromList $ placeNames petri,
+        namesOfTransitions = Set.fromList $ transitionNames petri,
         showSolution = Find.printSolution config,
         addText = Find.extraText config
         }
-    bc = Find.basicConfig config
 
 pickConflictGenerate
   :: (MonadAlloy m, MonadCatch m, MonadDiagrams m, MonadGraphviz m, Net p n)
@@ -748,8 +753,8 @@ defaultFindConflictInstance = FindInstance {
     withGraphvizCommand = Circo
     },
   toFind = Conflict {
-    conflictTrans = (Transition 1,Transition 3),
-    conflictPlaces = [Place 4]
+    conflictTrans = (transitionFromNumber 1, transitionFromNumber 3),
+    conflictPlaces = [placeFromNumber 4]
     },
   net = PetriLike {
     allNodes = M.fromList [
@@ -762,8 +767,8 @@ defaultFindConflictInstance = FindInstance {
       ("t3",SimpleTransition {flowOut = M.fromList [("s3",1)]})
       ]
     },
-  numberOfPlaces = 4,
-  numberOfTransitions = 3,
+  namesOfPlaces = Set.fromList ["s1", "s2", "s3", "s4"],
+  namesOfTransitions = Set.fromList ["t1", "t2", "t3"],
   showSolution = True,
   addText = NoExtraText
   }

@@ -39,6 +39,11 @@ import Modelling.PetriNet.Types (
   defaultFindConflictConfig,
   defaultPickConflictConfig,
   )
+import Modelling.PetriNet.Reach.Type (
+  Place (Place),
+  Transition (Transition),
+  parsePlacePrec,
+  )
 
 import Modelling.PetriNet.TestCommon (
   alloyTestConfig,
@@ -57,12 +62,20 @@ import Control.Monad.Trans.Class        (lift)
 import Control.OutputCapable.Blocks     (ExtraText (..))
 import Data.Maybe                       (isNothing)
 import Test.Hspec
+import Text.Parsec                      (parse)
 
 spec :: Spec
 spec = do
   describe "checkFindConflictConfig" $
     it "accepts the default config" $
       checkFindConflictConfig defaultFindConflictConfig `shouldBe` Nothing
+  describe "named place and transition handling" $ do
+    it "serializes conflict answers with string-based names" $
+      show (Conflict (Transition "t5", Transition "t2") [Place "washing up"])
+        `shouldBe` "Conflict {conflictTrans = (Transition \"t5\",Transition \"t2\"), conflictPlaces = [Place \"washing up\"]}"
+    it "parses quoted place names" $
+      parse (parsePlacePrec 0) "" "\"washing up\""
+        `shouldBe` Right (Place "washing up")
   describe "checkPickConflictConfig" $
     it "accepts the default config" $
       checkPickConflictConfig defaultPickConflictConfig `shouldBe` Nothing

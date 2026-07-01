@@ -17,6 +17,7 @@ module Modelling.PetriNet.ConflictPlaces (
   ) where
 
 import qualified Data.Map                         as M (empty, fromList)
+import qualified Data.Set                         as Set
 
 import Capabilities.Cache               (MonadCache)
 import Capabilities.Diagrams            (MonadDiagrams)
@@ -42,9 +43,10 @@ import Modelling.PetriNet.Diagram (
 import Modelling.PetriNet.Reach.Type (
   Place (Place),
   ShowPlace (ShowPlace),
-  Transition (Transition),
   parsePlacePrec,
   parseTransitionPrec,
+  placeFromNumber,
+  transitionFromNumber,
   )
 import Modelling.PetriNet.Types (
   Conflict,
@@ -169,7 +171,7 @@ Die Reihenfolge von Stellen innerhalb der Auflistung der den Konflikt verursache
   pure ()
 
 conflictInitial :: ConflictPlaces
-conflictInitial = (findInitial, [Place 0, Place 1])
+conflictInitial = (findInitial, [placeFromNumber 1, placeFromNumber 2])
 
 findConflictPlacesSyntax
   :: OutputCapable m
@@ -184,7 +186,7 @@ findConflictPlacesSyntax task (conflict, ps) = do
     german $ x' ++ " ist eine Stelle des gegebenen Petrinetzes?"
   pure ()
   where
-    isValidPlace (Place x) = x >= 1 && x <= numberOfPlaces task
+    isValidPlace (Place x) = x `Set.member` namesOfPlaces task
     assert = continueOrAbort False
 
 parseConflictPlacesPrec :: Int -> Parser ConflictPlaces
@@ -249,8 +251,8 @@ defaultFindConflictPlacesInstance = FindInstance {
     withGraphvizCommand = Circo
     },
   toFind = Conflict {
-    conflictTrans = (Transition 1,Transition 3),
-    conflictPlaces = [Place 4]
+    conflictTrans = (transitionFromNumber 1, transitionFromNumber 3),
+    conflictPlaces = [placeFromNumber 4]
     },
   net = PetriLike {
     allNodes = M.fromList [
@@ -263,8 +265,8 @@ defaultFindConflictPlacesInstance = FindInstance {
       ("t3",SimpleTransition {flowOut = M.fromList [("s3",1)]})
       ]
     },
-  numberOfPlaces = 4,
-  numberOfTransitions = 3,
+  namesOfPlaces = Set.fromList ["s1", "s2", "s3", "s4"],
+  namesOfTransitions = Set.fromList ["t1", "t2", "t3"],
   showSolution = True,
   addText = NoExtraText
   }
