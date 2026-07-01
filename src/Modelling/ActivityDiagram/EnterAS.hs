@@ -35,6 +35,7 @@ import Modelling.ActivityDiagram.ActionSequences (
   netAndMap,
   computeActionSequenceLevels,
   isFinalPetriNode,
+  validActionSequence,
   )
 import Modelling.ActivityDiagram.Auxiliary.ActionSequences (actionSequencesAlloy)
 import Modelling.ActivityDiagram.Config (
@@ -185,6 +186,10 @@ checkEnterASInstance :: EnterASInstance -> Maybe String
 checkEnterASInstance inst
   | suppressNodeNames (drawSettings inst)
   = Just "'suppressNodeNames' must be set to 'False' for this task type"
+  | maybe False (length (sampleSequence inst) >) (noLongerThan inst)
+  = Just "The sample sequence exceeds the maximum allowed length"
+  | not (validActionSequence (sampleSequence inst) (activityDiagram inst))
+  = Just "The sample sequence is not a valid action sequence for the given activity diagram"
   | otherwise
   = Nothing
 

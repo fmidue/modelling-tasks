@@ -138,6 +138,7 @@ import Control.Monad.Trans.Random       (RandT, evalRandT)
 import System.Random.Shuffle            (shuffleM)
 import Data.Bifunctor                   (Bifunctor (second), bimap)
 import Data.Either.Combinators          (whenRight)
+import Data.Either.Extra                (fromEither)
 import Data.Foldable                    (sequenceA_, traverse_)
 import Data.GraphViz                    (GraphvizCommand (..))
 import Data.List                        (singleton, transpose)
@@ -149,8 +150,8 @@ import Data.Typeable                    (Typeable)
 #endif
 import GHC.Generics                     (Generic)
 
-verifyReach :: (Ord a, Ord t, OutputCapable m, Show a, Show t)
-  => ReachInstance a t
+verifyReach :: (Ord a, OutputCapable m, Show a)
+  => ReachInstance a Transition
   -> LangM m
 verifyReach inst = do
   let n = petriNet (netGoal inst)
@@ -159,6 +160,7 @@ verifyReach inst = do
   assertion (showGoalNet inst || showPlaceNames inst) $ translate $ do
     english "At least one of goal net or place names must be shown."
     german "Mindestens eines von Zielnetz oder Plätze-Namen muss angezeigt werden."
+  traverse_ (reachSyntax True inst) $ fromEither $ shortestSolutions inst
   pure ()
 
 reachTask

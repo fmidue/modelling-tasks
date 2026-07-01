@@ -120,8 +120,10 @@ import Control.OutputCapable.Blocks.Generic (
 import Data.Functor                     ((<&>))
 import Data.Bifunctor                   (bimap)
 import Data.Either.Combinators          (whenRight)
+import Data.Either.Extra                (fromEither)
 import Control.Functor.Trans            (FunctorTrans (lift))
 import Control.Monad                    (guard, when)
+import Data.Foldable                    (traverse_)
 import Control.Monad.Catch              (MonadCatch, MonadThrow)
 import Control.Monad.Extra              (whenJust)
 import Control.Monad.Random             (RandomGen, evalRandT, mkStdGen)
@@ -136,10 +138,17 @@ import Data.Typeable                    (Typeable)
 import GHC.Generics                     (Generic)
 
 verifyDeadlock
-  :: (OutputCapable m, Show a, Show t, Ord t, Ord a)
-  => DeadlockInstance a t
+  :: (Ord a, OutputCapable m, Show a)
+  => DeadlockInstance a Transition
   -> LangM m
-verifyDeadlock = validate Default . petriNet
+verifyDeadlock inst =
+  validate Default (petriNet inst)
+  *> traverse_ checkSolution (fromEither $ shortestSolutions inst)
+  where
+    checkSolution ts =
+      transitionsValid (petriNet inst) ts
+      *> isNoLonger (noLongerThan inst) ts
+      *> rejectSpaceballsPattern (rejectSpaceballsLength inst) ts
 
 deadlockTask
   :: (

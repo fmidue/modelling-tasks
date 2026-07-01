@@ -17,6 +17,7 @@ import Modelling.PetriNet.Reach.Reach (
   generateReach,
   checkReachConfig,
   reachEvaluation,
+  verifyReach,
   )
 import Modelling.PetriNet.Reach.Filter (
   shouldDiscardSolutions,
@@ -440,6 +441,9 @@ spec = do
         forM sols $
           runWithoutOutput . reachEvaluation tempDir defaultReachInstance
       results `shouldSatisfy` all (== Just 1)
+    it "passes verifyReach" $ do
+      result <- runWithoutOutput $ verifyReach defaultReachInstance
+      result `shouldBe` Just ()
 
 hasMinTransitionLength
   :: (Ord s, Show s)
