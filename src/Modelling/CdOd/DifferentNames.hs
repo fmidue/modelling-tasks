@@ -375,27 +375,11 @@ differentNamesTask
   -> FilePath
   -> DifferentNamesInstance
   -> LangM m
-differentNamesTask showInputHelp path task = do
-  toTaskText showInputHelp path task
-  hoveringInformation True
-  pure ()
-
-toTaskText
-  :: (
-    MonadCache m,
-    MonadDiagrams m,
-    MonadGraphviz m,
-    MonadThrow m,
-    OutputCapable m
-    )
-  => Bool
-  -> FilePath
-  -> DifferentNamesInstance
-  -> LangM m
-toTaskText showInputHelp path task@DifferentNamesInstance {..} = do
+differentNamesTask showInputHelp path task@DifferentNamesInstance{..} = do
   specialToOutputCapable (toTaskSpecificText path task) taskText
   when showInputHelp $
     toOutputCapable [inputHelpText hasGivenCd]
+  hoveringInformation True
   extra addText
   pure ()
   where
