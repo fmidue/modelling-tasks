@@ -430,9 +430,6 @@ findConflictGenerate config segment = evalRandT getInstance . mkStdGen
         net = petri,
         namesOfPlaces = Set.fromList $ map showPlace $ placesFromOneTo (places bc),
         namesOfTransitions = Set.fromList $ map showTransition $ transitionsFromOneTo (transitions bc),
-
-        namesOfPlaces = Set.fromDistinctAscList $ placeNames petri,
-        namesOfTransitions = Set.fromDistinctAscList $ transitionNames petri,
         showSolution = Find.printSolution config,
         addText = Find.extraText config
         }
