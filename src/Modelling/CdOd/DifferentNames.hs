@@ -643,7 +643,7 @@ differentNamesEvaluation path task cs = do
       ShowMappingAndReprintCDAndOD -> do
         paragraph $ translate $ do
           english "Here is the reference class diagram:"
-          german "Hier ist das Referenzklassendiagramm:"
+          german "Hier ist das Referenz-Klassendiagramm:"
 
         image $=<<
           cacheCd (cdDrawSettings task) mempty mLabelLength (fromClassDiagram $ cDiagram task) path
