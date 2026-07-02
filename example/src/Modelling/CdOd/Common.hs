@@ -38,4 +38,4 @@ classDiagramFirstHintText = M.fromList [
   ]
 
 classDiagramFirstHint :: ExtraText
-classDiagramFirstHint = Collapsible True classDiagramFirstHintTitle classDiagramFirstHintText
+classDiagramFirstHint = Collapsible False classDiagramFirstHintTitle classDiagramFirstHintText
