@@ -157,8 +157,8 @@ successors n z0 = [ (t, z2) |
     conforms (capacity n) z2
   ]
 
-fireTransition :: (Eq t, Ord s) => Net s t -> t -> State s -> Maybe (State s)
-fireTransition n theTransition z0 = listToMaybe [ z2
+fireTransition :: (Eq t, Ord s) => Net s t -> State s -> t -> Maybe (State s)
+fireTransition n z0 theTransition = listToMaybe [ z2
   | (vor, t, nach) <- connections n
   , t == theTransition
   , let z1 = change pred vor z0
@@ -168,7 +168,7 @@ fireTransition n theTransition z0 = listToMaybe [ z2
   ]
 
 executeSequence :: (Eq t, Ord s) => Net s t -> [t] -> Maybe (State s)
-executeSequence n = foldM (flip (fireTransition n)) (start n)
+executeSequence n = foldM (fireTransition n) (start n)
 
 change
   :: Ord s
