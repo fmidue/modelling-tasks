@@ -4,7 +4,7 @@ module Modelling.CdOd.Common (
   classDiagramFirstHint,
   validClassDiagramAdviceTitle,
   validClassDiagramAdviceText,
-  validClassDiagramAdvice
+  validClassDiagramAdvice,
   ) where
 
 import qualified Data.Map as M
