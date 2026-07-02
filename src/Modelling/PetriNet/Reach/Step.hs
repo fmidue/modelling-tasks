@@ -26,7 +26,7 @@ import Modelling.PetriNet.Reach.Type (
 
 import Control.Applicative              (Alternative)
 import Control.Functor.Trans            (FunctorTrans (lift))
-import Control.Monad                    (unless)
+import Control.Monad                    (foldM, unless)
 import Control.Monad.Catch              (MonadThrow)
 import Control.OutputCapable.Blocks (
   GenericOutputCapable (image, indent, paragraph, refuse, text),
@@ -45,7 +45,6 @@ import Control.OutputCapable.Blocks.Generic (
 #if !MIN_VERSION_base(4,20,0)
 import Data.Foldable                    (Foldable (foldl'))
 #endif
-import Control.Monad                    (foldM)
 import Data.GraphViz                    (GraphvizCommand)
 import Data.Maybe                       (listToMaybe)
 

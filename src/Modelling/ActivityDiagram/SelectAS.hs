@@ -49,6 +49,7 @@ import Modelling.ActivityDiagram.Datatype (
   AdConnection (..),
   AdNode (..),
   UMLActivityDiagram (..),
+  isActionNode,
   )
 import Modelling.ActivityDiagram.Instance (parseInstance)
 import Modelling.ActivityDiagram.PlantUMLConverter (
@@ -196,6 +197,8 @@ checkSelectASInstance :: SelectASInstance -> Maybe String
 checkSelectASInstance inst
   | suppressNodeNames (drawSettings inst)
   = Just "'suppressNodeNames' must be set to 'False' for this task type"
+  | not (all (all (`elem` actionNodeNames) . snd) (corrects ++ wrongs))
+  = Just "A sequence contains action names not present in the activity diagram"
   | not (all (isValid . snd) corrects)
   = Just "A correct action sequence is not valid for the given activity diagram"
   | any (isValid . snd) wrongs
@@ -206,6 +209,7 @@ checkSelectASInstance inst
     (net, actionNameToPetriKey) = netAndMap $ convertToPetriNet $ activityDiagram inst
     isValid s = validActionSequenceWithPetri s net actionNameToPetriKey
     (corrects, wrongs) = partition fst $ M.elems $ actionSequences inst
+    actionNodeNames = map name $ filter isActionNode $ nodes $ activityDiagram inst
 
 
 data SelectASSolution = SelectASSolution {
