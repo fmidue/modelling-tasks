@@ -37,6 +37,10 @@ import Modelling.PetriNet.Types (
   defaultFindConcurrencyConfig,
   defaultPickConcurrencyConfig,
   )
+import Modelling.PetriNet.Reach.Type (
+  Transition (Transition),
+  parseTransitionPrec,
+  )
 
 import Modelling.PetriNet.TestCommon (
   alloyTestConfig,
@@ -55,12 +59,20 @@ import Control.Lens.Lens                ((??))
 import Control.Monad.Trans.Class        (lift)
 import Control.OutputCapable.Blocks     (ExtraText (..))
 import Test.Hspec
+import Text.Parsec                      (parse)
 
 spec :: Spec
 spec = do
   describe "checkFindConcurrencyConfig" $
     it "accepts the default config" $
       checkFindConcurrencyConfig defaultFindConcurrencyConfig `shouldBe` Nothing
+  describe "named transition handling" $ do
+    it "serializes transition names as strings" $
+      show (Concurrent (Transition "t5", Transition "t2"))
+        `shouldBe` "Concurrent (Transition \"t5\",Transition \"t2\")"
+    it "parses quoted transition names" $
+      parse (parseTransitionPrec 0) "" "\"prepare coffee\""
+        `shouldBe` Right (Transition "prepare coffee")
   describe "checkPickConcurrencyConfig" $
     it "accepts the default config" $
       checkPickConcurrencyConfig defaultPickConcurrencyConfig `shouldBe` Nothing

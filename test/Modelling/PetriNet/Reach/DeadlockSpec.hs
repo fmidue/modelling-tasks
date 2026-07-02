@@ -29,6 +29,8 @@ import Modelling.PetriNet.Reach.Type (
   countFusableTransitionsConsuming,
   countFusableTransitionsProducing,
   noArrowDensityConstraints,
+  placeFromNumber,
+  placesFromOneTo,
   )
 
 import Data.Either.Extra                (fromEither)
@@ -88,7 +90,7 @@ spec = do
         checkDeadlockConfig config `shouldBe` Nothing
         deadlockInstance <- generateDeadlock config seed
         let net = petriNet deadlockInstance
-            places = [Place 1 .. Place (numPlaces config)]
+            places = placesFromOneTo (numPlaces config)
             incomingArrowsPerPlaceList = map (\p -> countIncomingToPlace p (connections net)) places
         all (\count -> count >= 1 && count <= 2) incomingArrowsPerPlaceList `shouldBe` True
 
@@ -109,7 +111,7 @@ spec = do
         checkDeadlockConfig config `shouldBe` Nothing
         deadlockInstance <- generateDeadlock config seed
         let net = petriNet deadlockInstance
-            places = [Place 1 .. Place (numPlaces config)]
+            places = placesFromOneTo (numPlaces config)
             outgoingArrowsPerPlaceList = map (\p -> countOutgoingFromPlace p (connections net)) places
         all (\count -> count >= 1 && count <= 2) outgoingArrowsPerPlaceList `shouldBe` True
 
@@ -274,7 +276,7 @@ spec = do
 
     it "rejects Bounded capacity" $ do
       let config = defaultDeadlockConfig {
-            capacity = Bounded (M.fromList [(Place 1, 3), (Place 2, 5)])
+            capacity = Bounded (M.fromList [(placeFromNumber 1, 3), (placeFromNumber 2, 5)])
             }
       checkDeadlockConfig config `shouldSatisfy` isJust
 

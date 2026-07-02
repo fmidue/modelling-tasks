@@ -38,6 +38,8 @@ import Modelling.PetriNet.Reach.Type (
   mark,
   noArrowDensityConstraints,
   noTransitionBehaviorConstraints,
+  placeFromNumber,
+  placesFromOneTo,
   )
 
 import Data.Either.Extra                (fromEither)
@@ -94,7 +96,7 @@ spec = do
             startState = start net
             goalState = goal (netGoal inst)
             numberOfPlaces = numPlaces $ netGoalConfig config
-            places = [Place 1 .. Place numberOfPlaces]
+            places = placesFromOneTo numberOfPlaces
             numberOfDifferentPlaces = length $ filter (\p -> mark startState p /= mark goalState p) places
         numberOfDifferentPlaces `shouldSatisfy` (<= 2)
 
@@ -118,7 +120,7 @@ spec = do
         checkReachConfig config `shouldBe` Nothing
         inst <- generateReach config seed
         let net = petriNet (netGoal inst)
-            places = [Place 1 .. Place (numPlaces $ netGoalConfig config)]
+            places = placesFromOneTo (numPlaces $ netGoalConfig config)
             incomingArrowsPerPlaceList = map (\p -> countIncomingToPlace p (connections net)) places
         all (\count -> count >= 1 && count <= 2) incomingArrowsPerPlaceList `shouldBe` True
 
@@ -142,7 +144,7 @@ spec = do
         checkReachConfig config `shouldBe` Nothing
         inst <- generateReach config seed
         let net = petriNet (netGoal inst)
-            places = [Place 1 .. Place (numPlaces $ netGoalConfig config)]
+            places = placesFromOneTo (numPlaces $ netGoalConfig config)
             outgoingArrowsPerPlaceList = map (\p -> countOutgoingFromPlace p (connections net)) places
         all (\count -> count >= 1 && count <= 2) outgoingArrowsPerPlaceList `shouldBe` True
 
@@ -267,7 +269,7 @@ spec = do
     it "rejects Bounded capacity" $ do
       let config = defaultReachConfig {
             netGoalConfig = (netGoalConfig defaultReachConfig) {
-              capacity = Bounded (M.fromList [(Place 1, 3), (Place 2, 5)])
+              capacity = Bounded (M.fromList [(placeFromNumber 1, 3), (placeFromNumber 2, 5)])
               }
             }
       checkReachConfig config `shouldSatisfy` isJust
