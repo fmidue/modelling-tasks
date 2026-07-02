@@ -91,6 +91,7 @@ import Control.Monad.Random (
   mkStdGen
   )
 import Control.Monad.Trans.Maybe (MaybeT(..), runMaybeT)
+import Data.Bifunctor (bimap)
 import Data.List (partition, permutations, sortBy)
 import Data.List.Extra (groupOn, nubOrd)
 import Data.Ord (comparing)
