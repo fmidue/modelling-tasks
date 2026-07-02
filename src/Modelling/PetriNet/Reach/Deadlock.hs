@@ -143,7 +143,7 @@ verifyDeadlock
   => DeadlockInstance a Transition
   -> LangM m
 verifyDeadlock inst =
-  validate Default (petriNet inst)
+  validate Default net
   *> traverse_ checkSolution (fromEither $ shortestSolutions inst)
   where
     net = petriNet inst
@@ -152,9 +152,7 @@ verifyDeadlock inst =
       *> assertion (isDeadlockReached ts) (translate $ do
            english "Solution sequence leads to a deadlock state?"
            german "Lösungssequenz führt zu einem Deadlock-Zustand?")
-    isDeadlockReached ts = case executeSequence net ts of
-      Just finalState -> null (successors net finalState)
-      Nothing         -> False
+    isDeadlockReached = maybe False (null . successors net) . executeSequence net
 
 deadlockTask
   :: (

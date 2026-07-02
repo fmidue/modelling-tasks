@@ -197,18 +197,18 @@ checkSelectASInstance :: SelectASInstance -> Maybe String
 checkSelectASInstance inst
   | suppressNodeNames (drawSettings inst)
   = Just "'suppressNodeNames' must be set to 'False' for this task type"
-  | not (all (all (`elem` actionNodeNames) . snd) (corrects ++ wrongs))
+  | not (all (all (`elem` actionNodeNames)) (corrects ++ wrongs))
   = Just "A sequence contains action names not present in the activity diagram"
-  | not (all (isValid . snd) corrects)
+  | not (all isValid corrects)
   = Just "A correct action sequence is not valid for the given activity diagram"
-  | any (isValid . snd) wrongs
+  | any isValid wrongs
   = Just "A wrong action sequence is actually valid for the given activity diagram"
   | otherwise
   = Nothing
   where
     (net, actionNameToPetriKey) = netAndMap $ convertToPetriNet $ activityDiagram inst
     isValid s = validActionSequenceWithPetri s net actionNameToPetriKey
-    (corrects, wrongs) = partition fst $ M.elems $ actionSequences inst
+    (corrects, wrongs) = bimap (map snd) (map snd) $ partition fst $ M.elems $ actionSequences inst
     actionNodeNames = map name $ filter isActionNode $ nodes $ activityDiagram inst
 
 
