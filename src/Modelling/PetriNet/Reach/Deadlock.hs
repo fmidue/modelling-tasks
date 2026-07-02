@@ -80,7 +80,7 @@ import Modelling.PetriNet.Reach.Reach   (
   validateDrawabilityAndSolutionFiltering,
   )
 import Modelling.PetriNet.Reach.Roll    (netLimitsFiltered, simpleConnectionGenerator)
-import Modelling.PetriNet.Reach.Step    (executes, successors)
+import Modelling.PetriNet.Reach.Step    (executes, executeSequence, successors)
 import Modelling.PetriNet.Reach.Type (
   ArrowDensityConstraints(..),
   Capacity (Unbounded),
@@ -123,7 +123,7 @@ import Data.Bifunctor                   (bimap)
 import Data.Either.Combinators          (whenRight)
 import Data.Either.Extra                (fromEither)
 import Control.Functor.Trans            (FunctorTrans (lift))
-import Control.Monad                    (foldM, guard, when)
+import Control.Monad                    (guard, when)
 import Data.Foldable                    (traverse_)
 import Control.Monad.Catch              (MonadCatch, MonadThrow)
 import Control.Monad.Extra              (whenJust)
@@ -152,7 +152,7 @@ verifyDeadlock inst =
       *> assertion (isDeadlockReached ts) (translate $ do
            english "Solution sequence leads to a deadlock state?"
            german "Lösungssequenz führt zu einem Deadlock-Zustand?")
-    isDeadlockReached ts = case foldM (\state t -> lookup t (successors net state)) (start net) ts of
+    isDeadlockReached ts = case executeSequence net ts of
       Just finalState -> null (successors net finalState)
       Nothing         -> False
 
@@ -230,7 +230,7 @@ deadlockEvaluation path deadlock ts =
     (const $ null . successors n)
     minLength
     deadlockInstance
-    ts
+    (length ts)
     eitherOutcome
   where
     deadlockInstance = toShowDeadlockInstance deadlock

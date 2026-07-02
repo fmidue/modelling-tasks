@@ -45,7 +45,9 @@ import Control.OutputCapable.Blocks.Generic (
 #if !MIN_VERSION_base(4,20,0)
 import Data.Foldable                    (Foldable (foldl'))
 #endif
+import Control.Monad                    (foldM)
 import Data.GraphViz                    (GraphvizCommand)
+import Data.Maybe                       (listToMaybe)
 
 equalling :: Eq a => (t -> a) -> t -> t -> Bool
 equalling f x y = f x == f y
@@ -154,6 +156,19 @@ successors n z0 = [ (t, z2) |
     let z2 = change succ nach z1,
     conforms (capacity n) z2
   ]
+
+fireTransition :: (Eq t, Ord s) => Net s t -> t -> State s -> Maybe (State s)
+fireTransition n theTransition z0 = listToMaybe [ z2
+  | (vor, t, nach) <- connections n
+  , t == theTransition
+  , let z1 = change pred vor z0
+  , allNonNegative z1
+  , let z2 = change succ nach z1
+  , conforms (capacity n) z2
+  ]
+
+executeSequence :: (Eq t, Ord s) => Net s t -> [t] -> Maybe (State s)
+executeSequence n = foldM (flip (fireTransition n)) (start n)
 
 change
   :: Ord s

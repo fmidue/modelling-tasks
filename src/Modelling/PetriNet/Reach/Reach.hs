@@ -83,7 +83,7 @@ import Modelling.PetriNet.Reach.Property (
   validate,
   )
 import Modelling.PetriNet.Reach.Roll    (netLimitsFiltered, simpleConnectionGenerator)
-import Modelling.PetriNet.Reach.Step    (executes, successors)
+import Modelling.PetriNet.Reach.Step    (executes, executeSequence, successors)
 import Modelling.PetriNet.Reach.Type (
   ArrowDensityConstraints(..),
   Capacity (Unbounded),
@@ -104,7 +104,7 @@ import Modelling.PetriNet.Reach.Type (
 
 import Control.Applicative              (Alternative, (<|>))
 import Control.Functor.Trans            (FunctorTrans (lift))
-import Control.Monad                    (foldM, guard, msum, replicateM, when, unless, (>=>))
+import Control.Monad                    (guard, msum, replicateM, when, unless, (>=>))
 import Control.Monad.Catch              (MonadCatch, MonadThrow)
 import Control.Monad.Extra              (findM, whenJust)
 import Control.Monad.Trans.Maybe        (MaybeT (MaybeT, runMaybeT))
@@ -164,7 +164,7 @@ verifyReach inst = do
   pure ()
   where
     checkReachesGoal n ts = assertion
-      (foldM (\state t -> lookup t (successors n state)) (start n) ts == Just (goal (netGoal inst)))
+      (executeSequence n ts == Just (goal (netGoal inst)))
       $ translate $ do
           english "Solution sequence reaches the goal marking?"
           german "Lösungssequenz erreicht die Zielmarkierung?"
@@ -388,7 +388,7 @@ reachEvaluation path reach ts =
     ((==) . goal . netGoal)
     minLength
     reachInstance
-    ts
+    (length ts)
     eitherOutcome
   where
     reachInstance = toShowReachInstance reach
@@ -420,13 +420,13 @@ assertReachPoints
   -> (i -> a -> Bool)
   -> (i -> Int)
   -> i
-  -> [b]
+  -> Int
   -> Either Int a
   -> Rated m
-assertReachPoints aCorrectSolution p size inst ts eitherOutcome = do
+assertReachPoints aCorrectSolution p size inst numberOfTransitions eitherOutcome = do
   let points = either
         partly
-        (\x -> if p inst x then 1 else partly $ length ts)
+        (\x -> if p inst x then 1 else partly numberOfTransitions)
         eitherOutcome
   printSolutionAndAssertWithMinimum
     (MinimumThreshold $ 1 % 3)
