@@ -109,6 +109,7 @@ library:
     - Modelling.CdOd.MatchCdOd
     - Modelling.CdOd.NameCdError
     - Modelling.CdOd.Output
+    - Modelling.CdOd.Phrasing
     - Modelling.CdOd.RepairCd
     - Modelling.CdOd.SelectValidCd
     - Modelling.CdOd.Types
