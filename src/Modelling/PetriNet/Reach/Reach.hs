@@ -83,7 +83,7 @@ import Modelling.PetriNet.Reach.Property (
   validate,
   )
 import Modelling.PetriNet.Reach.Roll    (netLimitsFiltered, simpleConnectionGenerator)
-import Modelling.PetriNet.Reach.Step    (executes, successors)
+import Modelling.PetriNet.Reach.Step    (executes, executeSequence, successors)
 import Modelling.PetriNet.Reach.Type (
   ArrowDensityConstraints(..),
   Capacity (Unbounded),
@@ -138,6 +138,7 @@ import Control.Monad.Trans.Random       (RandT, evalRandT)
 import System.Random.Shuffle            (shuffleM)
 import Data.Bifunctor                   (Bifunctor (second), bimap)
 import Data.Either.Combinators          (whenRight)
+import Data.Either.Extra                (fromEither)
 import Data.Foldable                    (sequenceA_, traverse_)
 import Data.GraphViz                    (GraphvizCommand (..))
 import Data.List                        (singleton, transpose)
@@ -149,8 +150,8 @@ import Data.Typeable                    (Typeable)
 #endif
 import GHC.Generics                     (Generic)
 
-verifyReach :: (Ord a, Ord t, OutputCapable m, Show a, Show t)
-  => ReachInstance a t
+verifyReach :: (Ord a, OutputCapable m, Show a)
+  => ReachInstance a Transition
   -> LangM m
 verifyReach inst = do
   let n = petriNet (netGoal inst)
@@ -159,7 +160,14 @@ verifyReach inst = do
   assertion (showGoalNet inst || showPlaceNames inst) $ translate $ do
     english "At least one of goal net or place names must be shown."
     german "Mindestens eines von Zielnetz oder Plätze-Namen muss angezeigt werden."
+  traverse_ (\ts -> reachSyntax True inst ts *> checkReachesGoal n ts) $ fromEither $ shortestSolutions inst
   pure ()
+  where
+    checkReachesGoal n ts = assertion
+      (executeSequence n ts == Just (goal (netGoal inst)))
+      $ translate $ do
+          english "Solution sequence reaches the goal marking?"
+          german "Lösungssequenz erreicht die Zielmarkierung?"
 
 reachTask
   :: (
@@ -380,7 +388,7 @@ reachEvaluation path reach ts =
     ((==) . goal . netGoal)
     minLength
     reachInstance
-    ts
+    (length ts)
     eitherOutcome
   where
     reachInstance = toShowReachInstance reach
@@ -412,13 +420,13 @@ assertReachPoints
   -> (i -> a -> Bool)
   -> (i -> Int)
   -> i
-  -> [b]
+  -> Int
   -> Either Int a
   -> Rated m
-assertReachPoints aCorrectSolution p size inst ts eitherOutcome = do
+assertReachPoints aCorrectSolution p size inst numberOfTransitions eitherOutcome = do
   let points = either
         partly
-        (\x -> if p inst x then 1 else partly $ length ts)
+        (\x -> if p inst x then 1 else partly numberOfTransitions)
         eitherOutcome
   printSolutionAndAssertWithMinimum
     (MinimumThreshold $ 1 % 3)

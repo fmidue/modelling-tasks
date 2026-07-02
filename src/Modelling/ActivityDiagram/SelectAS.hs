@@ -23,7 +23,7 @@ module Modelling.ActivityDiagram.SelectAS (
   defaultSelectASInstance
 ) where
 
-import qualified Data.Map as M (fromList, toList, keys, filter, map)
+import qualified Data.Map as M (elems, fromList, toList, keys, filter, map)
 import qualified Data.Vector as V (fromList)
 
 import Autolib.Hash                     (Hashable)
@@ -49,6 +49,7 @@ import Modelling.ActivityDiagram.Datatype (
   AdConnection (..),
   AdNode (..),
   UMLActivityDiagram (..),
+  isActionNode,
   )
 import Modelling.ActivityDiagram.Instance (parseInstance)
 import Modelling.ActivityDiagram.PlantUMLConverter (
@@ -90,7 +91,8 @@ import Control.Monad.Random (
   mkStdGen
   )
 import Control.Monad.Trans.Maybe (MaybeT(..), runMaybeT)
-import Data.List (permutations, sortBy)
+import Data.Bifunctor (bimap)
+import Data.List (partition, permutations, sortBy)
 import Data.List.Extra (groupOn, nubOrd)
 import Data.Ord (comparing)
 import Data.Map (Map)
@@ -196,8 +198,19 @@ checkSelectASInstance :: SelectASInstance -> Maybe String
 checkSelectASInstance inst
   | suppressNodeNames (drawSettings inst)
   = Just "'suppressNodeNames' must be set to 'False' for this task type"
+  | not (all (all (`elem` actionNodeNames)) (corrects ++ wrongs))
+  = Just "A sequence contains action names not present in the activity diagram"
+  | not (all isValid corrects)
+  = Just "A correct action sequence is not valid for the given activity diagram"
+  | any isValid wrongs
+  = Just "A wrong action sequence is actually valid for the given activity diagram"
   | otherwise
   = Nothing
+  where
+    (net, actionNameToPetriKey) = netAndMap $ convertToPetriNet $ activityDiagram inst
+    isValid s = validActionSequenceWithPetri s net actionNameToPetriKey
+    (corrects, wrongs) = bimap (map snd) (map snd) $ partition fst $ M.elems $ actionSequences inst
+    actionNodeNames = map name $ filter isActionNode $ nodes $ activityDiagram inst
 
 
 data SelectASSolution = SelectASSolution {

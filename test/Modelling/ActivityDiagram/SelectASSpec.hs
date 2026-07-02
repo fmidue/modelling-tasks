@@ -4,7 +4,9 @@ import Modelling.ActivityDiagram.SelectAS (
   SelectASConfig(..),
   SelectASSolution(correctSequence),
   checkSelectASConfig,
+  checkSelectASInstance,
   defaultSelectASConfig,
+  defaultSelectASInstance,
   selectActionSequence
   )
 
@@ -78,3 +80,7 @@ spec = do
         let Just solution = runIdentity $ evalRandT (runMaybeT (selectActionSequence True 2 (5, 15) testDiagram)) (mkStdGen 42)
             actionSeq = correctSequence solution
         actionRepetitionDistance actionSeq `shouldSatisfy` maybe False (>= 3)
+
+  describe "defaultSelectASInstance" $
+    it "passes checkSelectASInstance" $
+      checkSelectASInstance defaultSelectASInstance `shouldBe` Nothing

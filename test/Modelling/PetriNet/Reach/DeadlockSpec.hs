@@ -12,6 +12,7 @@ import Modelling.PetriNet.Reach.Deadlock (
   defaultDeadlockInstance,
   generateDeadlock,
   checkDeadlockConfig,
+  verifyDeadlock,
   )
 import Modelling.PetriNet.Reach.Filter (
   shouldDiscardSolutions,
@@ -417,3 +418,6 @@ spec = do
         forM sols $
           runWithoutOutput . deadlockEvaluation tempDir defaultDeadlockInstance
       results `shouldSatisfy` all (== Just 1)
+    it "passes verifyDeadlock" $ do
+      result <- runWithoutOutput $ verifyDeadlock defaultDeadlockInstance
+      result `shouldBe` Just ()
