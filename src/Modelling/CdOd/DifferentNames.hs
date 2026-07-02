@@ -215,6 +215,7 @@ data SolutionDisplay
   | ShowMapping
   | ShowMappingAndReprintCD
   | ShowMappingAndReprintOD
+  | ShowMappingAndReprintCDAndOD
   deriving (Eq, Generic, Hashable, Read, Reader, Show, ToDoc)
 
 data DifferentNamesInstance = DifferentNamesInstance {
@@ -639,7 +640,22 @@ differentNamesEvaluation path task cs = do
           cacheOd relabelledOd mLabelLength Forward True path)
 
         pure ()
+      ShowMappingAndReprintCDAndOD -> do
+        paragraph $ translate $ do
+          english "Here is the reference class diagram:"
+          german "Hier ist das Referenzklassendiagramm:"
 
+        image $=<<
+          cacheCd (cdDrawSettings task) mempty mLabelLength (fromClassDiagram $ cDiagram task) path
+
+        paragraph $ translate $ do
+          english "Consider the correctly labelled object diagram:"
+          german "Betrachten Sie das korrekt beschriftete Objektdiagramm:"
+
+        image $=<< (relabelOd task >>= \relabelledOd ->
+          cacheOd relabelledOd mLabelLength Forward True path)
+
+        pure ()
     pure ()
 
 relabelCd :: MonadThrow m => DifferentNamesInstance -> m Cd
