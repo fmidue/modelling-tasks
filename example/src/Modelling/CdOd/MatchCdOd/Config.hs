@@ -2,7 +2,6 @@
 
 module Modelling.CdOd.MatchCdOd.Config where
 
-import Modelling.CdOd.Common (classDiagramFirstHint)
 import Modelling.CdOd.MatchCdOd (
   MatchCdOdConfig (..),
   OdDistributionConfig (..),
@@ -592,6 +591,4 @@ approximate output tokens:
 used as: MatchCdOdFormInputCheckboxesUnAvailable-Quiz
 -}
 task2025_repeat_27 :: MatchCdOdConfig
-task2025_repeat_27 = task2025_repeat_24 {
-  extraText = classDiagramFirstHint
-}
+task2025_repeat_27 = task2025_repeat_24

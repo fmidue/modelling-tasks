@@ -2,7 +2,6 @@
 
 module Modelling.CdOd.DifferentNames.Config where
 
-import Modelling.CdOd.Common (classDiagramFirstHint)
 import Modelling.CdOd.DifferentNames (
   DifferentNamesConfig (..),
   SolutionDisplay (..),
@@ -401,9 +400,7 @@ share same concept injection as task2025_15
 used as: DifferentNamesRadiobuttonsUnAvailable-Quiz (at the time)
 -}
 task2025_16 :: DifferentNamesConfig
-task2025_16 = task2025_15 {
-  printSolution = ShowMappingAndReprintCD
-  }
+task2025_16 = task2025_15
 
 {-|
 points: 0.15
@@ -413,9 +410,7 @@ share same concept injection as task2025_repeat_15
 used as: DifferentNamesFormInputRadioButtonsUnAvailable-Quiz
 -}
 task2025_repeat_16 :: DifferentNamesConfig
-task2025_repeat_16 = task2025_repeat_15 {
-  printSolution = ShowMappingAndReprintCD
-  }
+task2025_repeat_16 = task2025_repeat_15
 
 {-|
 points: 0.15
@@ -437,10 +432,7 @@ used LLM for story generation:
 used as: DifferentNamesFormInputDropdownsUnAvailable-Quiz
 -}
 task2025_repeat_17 :: DifferentNamesConfig
-task2025_repeat_17 = task2025_repeat_15 {
-  printSolution = ShowMappingAndReprintCDAndOD,
-  extraText = classDiagramFirstHint
-}
+task2025_repeat_17 = task2025_repeat_15
 
 {-|
 points: 0.15
@@ -508,7 +500,4 @@ used LLM for story generation:
 used as: DifferentNamesFormInputDropdownsUnAvailable-Quiz
 -}
 task2025_repeat_22 :: DifferentNamesConfig
-task2025_repeat_22 = task2025_21 {
-  printSolution = ShowMappingAndReprintCDAndOD,
-  extraText = classDiagramFirstHint
-}
+task2025_repeat_22 = task2025_21
