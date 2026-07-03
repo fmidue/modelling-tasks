@@ -1,7 +1,4 @@
 module Modelling.CdOd.Common (
-  classDiagramFirstHintTitle,
-  classDiagramFirstHintText,
-  classDiagramFirstHint,
   validClassDiagramAdviceTitle,
   validClassDiagramAdviceText,
   validClassDiagramAdvice,
@@ -24,18 +21,3 @@ validClassDiagramAdviceText = M.fromList [
 
 validClassDiagramAdvice :: ExtraText
 validClassDiagramAdvice = Collapsible True validClassDiagramAdviceTitle validClassDiagramAdviceText
-
-classDiagramFirstHintTitle :: M.Map Language String
-classDiagramFirstHintTitle = M.fromList [
-  (English, "Hint on correctly solving the task"),
-  (German, "Hinweis zur korrekten Lösung der Aufgabe")
-  ]
-
-classDiagramFirstHintText :: M.Map Language String
-classDiagramFirstHintText = M.fromList [
-  (English, "When solving the task, consider first creating a class diagram based on the given scenario description, before answering."),
-  (German, "Wenn Sie die Aufgabe lösen, sollten Sie zuerst ein Klassendiagramm basierend auf der gegebenen Szenariobeschreibung erstellen, bevor Sie die Aufgabe beantworten.")
-  ]
-
-classDiagramFirstHint :: ExtraText
-classDiagramFirstHint = Collapsible False classDiagramFirstHintTitle classDiagramFirstHintText
