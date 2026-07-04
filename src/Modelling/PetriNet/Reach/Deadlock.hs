@@ -68,6 +68,7 @@ import Modelling.PetriNet.Reach.Property (
 import Modelling.PetriNet.Reach.ConfigValidation (
   checkBasicPetriConfig,
   checkFilterConfigWith,
+  checkBaseInstance,
   )
 import Modelling.PetriNet.Reach.Reach   (
   assertReachPoints,
@@ -145,9 +146,10 @@ verifyDeadlock
   :: (Ord a, OutputCapable m, Show a)
   => DeadlockInstance a Transition
   -> LangM m
-verifyDeadlock inst =
+verifyDeadlock inst@DeadlockInstance{..} =
   validate Default net
-  *> traverse_ checkSolution (fromEither $ shortestSolutions inst)
+  *> checkBaseInstance minLength withLengthHint rejectSpaceballsLength
+  *> traverse_ checkSolution (fromEither shortestSolutions)
   where
     net = petriNet inst
     checkSolution ts =

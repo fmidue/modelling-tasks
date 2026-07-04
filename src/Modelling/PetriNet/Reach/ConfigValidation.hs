@@ -10,7 +10,8 @@ module Modelling.PetriNet.Reach.ConfigValidation (
   checkCapacity,
   checkTransitionBehaviorConstraints,
   checkFilterConfigWith,
-  checkArrowDensityCrossValidation
+  checkArrowDensityCrossValidation,
+  checkInstanceLengthConsistency,
 ) where
 
 import Control.Applicative (Alternative ((<|>)))
@@ -446,3 +447,21 @@ checkArrowDensityCrossValidation
     outgoingPerTransHighBound = fromMaybe numPlaces outgoingPerTransHigh
     incomingPerPlaceHighBound = fromMaybe numTransitions incomingPerPlaceHigh
     outgoingPerPlaceHighBound = fromMaybe numTransitions outgoingPerPlaceHigh
+
+checkBaseInstance :: OutputCapable m => Int -> Maybe Int -> Maybe Int -> LangM m
+checkBaseInstance minLength withLengthHint rejectSpaceballsLength = do
+  assertion (minLength > 0) $ translate $ do
+    english "minLength must be positive"
+    german "minLength muss positiv sein"
+
+  whenJust withLengthHint $ \hint ->
+    assertion (minLength <= hint) $ translate $ do
+      english "minLength must not exceed withLengthHint"
+      german "minLength darf nicht größer als withLengthHint"
+
+  whenJust rejectSpaceballsLength $ \n ->
+    assertion (n >= 2) $ translate $ do
+      english "rejectSpaceballsLength must be at least 2"
+      german "rejectSpaceballsLength muss mindestens 2 sein"
+
+  pure ()
