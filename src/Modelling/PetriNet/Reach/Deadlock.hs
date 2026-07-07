@@ -147,17 +147,16 @@ verifyDeadlock
   => DeadlockInstance a Transition
   -> LangM m
 verifyDeadlock inst@DeadlockInstance{..} =
-  validate Default net
-  *> checkBaseInstance minLength withLengthHint rejectSpaceballsLength
+  validate Default petriNet
+  *> checkBaseInstance minLength noLongerThan withLengthHint rejectSpaceballsLength
   *> traverse_ checkSolution (fromEither shortestSolutions)
   where
-    net = petriNet inst
     checkSolution ts =
       deadlockSyntax True inst ts
       *> assertion (isDeadlockReached ts) (translate $ do
            english "Solution sequence leads to a deadlock state?"
            german "Lösungssequenz führt zu einem Deadlock-Zustand?")
-    isDeadlockReached = maybe False (null . successors net) . executeSequence net
+    isDeadlockReached = maybe False (null . successors petriNet) . executeSequence petriNet
 
 deadlockTask
   :: (

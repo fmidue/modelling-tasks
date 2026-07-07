@@ -114,6 +114,7 @@ import Control.Monad.Catch              (MonadCatch, MonadThrow)
 import Control.Monad.Extra              (findM, whenJust)
 import Control.Monad.Trans.Maybe        (MaybeT (MaybeT, runMaybeT))
 import Modelling.PetriNet.Reach.ConfigValidation (
+  checkBaseInstance,
   checkBasicPetriConfig,
   checkFilterConfigWith,
   )
@@ -165,12 +166,12 @@ verifyReach inst@ReachInstance{..} = do
   assertion (showGoalNet || showPlaceNames) $ translate $ do
     english "At least one of goal net or place names must be shown."
     german "Mindestens eines von Zielnetz oder Plätze-Namen muss angezeigt werden."
-  checkBaseInstance minLength withLengthHint rejectSpaceballsLength
+  checkBaseInstance minLength noLongerThan withLengthHint rejectSpaceballsLength
   traverse_ (\ts -> reachSyntax True inst ts *> checkReachesGoal n ts) $ fromEither shortestSolutions
   pure ()
   where
     checkReachesGoal n ts = assertion
-      (executeSequence n ts == Just (goal (netGoal inst)))
+      (executeSequence n ts == Just (goal netGoal))
       $ translate $ do
           english "Solution sequence reaches the goal marking?"
           german "Lösungssequenz erreicht die Zielmarkierung?"
