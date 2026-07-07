@@ -559,7 +559,7 @@ total run time on the cluster (not including queuing time): 12:04min
 average CPU usage: 104%
 average memory usage: 3540.15 MB
 average concept generation time per instance (no concurrency):
-used LLM model for generation: qwen3.5-397b-a17b
+used LLM model for generation: Qwen3.5-397b-a17b
 approximate input tokens:
 approximate output tokens:
 used as: MatchCdOdFormInputCheckboxesUnAvailable-Quiz
@@ -585,7 +585,7 @@ points: 0.1
 variant 2:
 share same instances as task2025_repeat_24
 average concept generation time per instance (no concurrency):
-used LLM model for generation: qwen3.5-397b-a17b
+used LLM model for generation: Qwen3.5-397b-a17b
 approximate input tokens:
 approximate output tokens:
 used as: MatchCdOdFormInputCheckboxesUnAvailable-Quiz

@@ -381,7 +381,7 @@ variant 1: concepts are printed in class diagrams
 share same instances as task2025_repeat_20 (85/100)
 the number of finally assigned instances: 21
 average concept generation time per instance (no concurrency): 495s
-used LLM model for generation: qwen3.5-397b-a17b
+used LLM model for generation: Qwen3.5-397b-a17b
 approximate input tokens: N/A
 approximate output tokens: N/A
 used as: DifferentNamesFormInputDropdownsUnAvailable-Quiz
@@ -435,7 +435,7 @@ variant 3: Give scenario descriptions instead of class diagrams with object diag
 share same instances as task2025_repeat_20 (85/100)
 share same concept injection as task2025_repeat_15
 the number of finally assigned instances: 22 (different from task2025_repeat_15 and task2025_repeat_16)
-used LLM for story generation: qwen3.6-35b-a3b
+used LLM for story generation: Qwen3.6-35b-a3b
 used as: DifferentNamesFormInputDropdownsUnAvailable-Quiz
 -}
 task2025_repeat_17 :: DifferentNamesConfig
@@ -502,10 +502,10 @@ variant 3: Give scenario descriptions instead of class diagrams with object diag
 new instances, new concept injection
 the number of finally assigned instances: 83
 average concept generation time per instance (no concurrency): 495s
-used LLM model for generation: qwen3.5-397b-a17b
+used LLM model for generation: Qwen3.5-397b-a17b
 approximate input tokens: N/A
 approximate output tokens: N/A
-used LLM for story generation: qwen3.6-35b-a3b
+used LLM for story generation: Qwen3.6-35b-a3b
 used as: DifferentNamesFormInputDropdownsUnAvailable-Quiz
 -}
 task2025_repeat_22 :: DifferentNamesConfig
