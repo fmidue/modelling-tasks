@@ -473,12 +473,12 @@ task2025_17 = task2024_17
 
 {-|
 points: 0.15
-the amount of generated instances:
-maximum concurrent amount of tasks:
-average generation time per instance on the cluster (without considering concurrency):
-total run time on the cluster (not including queuing time):
-average CPU usage:
-average memory usage:
+the amount of generated instances: 100
+maximum concurrent amount of tasks: 100
+average generation time per instance on the cluster (without considering concurrency): 13:48min
+total run time on the cluster (not including queuing time): 37:55min
+average CPU usage: 151%
+average memory usage: 3747.55 MB
 used as: MatchCdOdFormInputCheckboxesUnAvailable-Quiz
 -}
 task2025_repeat_23 :: MatchCdOdConfig
@@ -499,12 +499,12 @@ task2025_18 = task2024_18
 
 {-|
 points: 0.15
-the amount of generated instances:
-maximum concurrent amount of tasks:
-average generation time per instance on the cluster (without considering concurrency):
-total run time on the cluster (not including queuing time):
-average CPU usage:
-average memory usage:
+the amount of generated instances: 100
+maximum concurrent amount of tasks: 100
+average generation time per instance on the cluster (without considering concurrency): 8:07min
+total run time on the cluster (not including queuing time): 9:14min
+average CPU usage: 105%
+average memory usage: 3750.84 MB
 used as: MatchCdOdFormInputCheckboxesUnAvailable-Quiz
 -}
 task2025_repeat_24 :: MatchCdOdConfig
@@ -525,12 +525,12 @@ task2025_19 = task2024_19
 
 {-|
 points: 0.15
-the amount of generated instances:
-maximum concurrent amount of tasks:
-average generation time per instance on the cluster (without considering concurrency):
-total run time on the cluster (not including queuing time):
-average CPU usage:
-average memory usage:
+the amount of generated instances: 100
+maximum concurrent amount of tasks: 100
+average generation time per instance on the cluster (without considering concurrency): 13:08min
+total run time on the cluster (not including queuing time): 39:50min
+average CPU usage: 104%
+average memory usage: 5583.71 MB
 used as: MatchCdOdFormInputCheckboxesUnAvailable-Quiz
 -}
 task2025_repeat_25 :: MatchCdOdConfig
@@ -552,14 +552,14 @@ task2025_20 = task2024_20
 {-|
 points: 0.15
 variant 1:
-the amount of generated instances:
-maximum concurrent amount of tasks:
-average generation time per instance on the cluster (without considering concurrency):
-total run time on the cluster (not including queuing time):
-average CPU usage:
-average memory usage:
+the amount of generated instances: 100
+maximum concurrent amount of tasks: 100
+average generation time per instance on the cluster (without considering concurrency): 7:32min
+total run time on the cluster (not including queuing time): 12:04min
+average CPU usage: 104%
+average memory usage: 3540.15 MB
 average concept generation time per instance (no concurrency):
-used LLM model for generation:
+used LLM model for generation: qwen3.5-397b-a17b
 approximate input tokens:
 approximate output tokens:
 used as: MatchCdOdFormInputCheckboxesUnAvailable-Quiz
@@ -585,7 +585,7 @@ points: 0.1
 variant 2:
 share same instances as task2025_repeat_24
 average concept generation time per instance (no concurrency):
-used LLM model for generation:
+used LLM model for generation: qwen3.5-397b-a17b
 approximate input tokens:
 approximate output tokens:
 used as: MatchCdOdFormInputCheckboxesUnAvailable-Quiz

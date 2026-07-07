@@ -258,12 +258,12 @@ task2024_56 = DifferentNamesConfig {
 
 {-|
 points: 0.15
-the amount of generated instances:
-maximum concurrent amount of tasks:
-average generation time per instance on the cluster (without considering concurrency):
-total run time on the cluster (not including queuing time):
-average CPU usage:
-average memory usage:
+the amount of generated instances: 100
+maximum concurrent amount of tasks: 100
+average generation time per instance on the cluster (without considering concurrency): 1:41min
+total run time on the cluster (not including queuing time): 3:50min
+average CPU usage: 155%
+average memory usage: 2624.17 MB
 used as: DifferentNamesFormInputDropdownsUnAvailable-Quiz
 -}
 task2025_repeat_19 :: DifferentNamesConfig
@@ -346,12 +346,12 @@ task2025_14 = DifferentNamesConfig {
 
 {-|
 points: 0.15
-the amount of generated instances:
-maximum concurrent amount of tasks:
-average generation time per instance on the cluster (without considering concurrency):
-total run time on the cluster (not including queuing time):
-average CPU usage:
-average memory usage:
+the amount of generated instances: 100
+maximum concurrent amount of tasks: 100
+average generation time per instance on the cluster (without considering concurrency): 2:15min
+total run time on the cluster (not including queuing time): 5:24min
+average CPU usage: 165%
+average memory usage: 2774.81 MB
 used as: DifferentNamesFormInputDropdownsUnAvailable-Quiz
 -}
 task2025_repeat_20 :: DifferentNamesConfig
@@ -378,11 +378,12 @@ task2025_15 = task2025_14 {
 {-|
 points: 0.15
 variant 1: concepts are printed in class diagrams
-share same instances as task2025_repeat_20
-average concept generation time per instance (no concurrency):
-used LLM model for generation:
-approximate input tokens:
-approximate output tokens:
+share same instances as task2025_repeat_20 (85/100)
+the number of finally assigned instances: 21
+average concept generation time per instance (no concurrency): 495s
+used LLM model for generation: qwen3.5-397b-a17b
+approximate input tokens: N/A
+approximate output tokens: N/A
 used as: DifferentNamesFormInputDropdownsUnAvailable-Quiz
 -}
 task2025_repeat_15 :: DifferentNamesConfig
@@ -407,8 +408,9 @@ task2025_16 = task2025_15 {
 {-|
 points: 0.15
 variant 2: concepts are printed in object diagrams
-share same instances as task2025_repeat_20
+share same instances as task2025_repeat_20 (85/100)
 share same concept injection as task2025_repeat_15
+the number of finally assigned instances: 21 (different from task2025_repeat_15)
 used as: DifferentNamesFormInputRadioButtonsUnAvailable-Quiz
 -}
 task2025_repeat_16 :: DifferentNamesConfig
@@ -430,9 +432,10 @@ task2025_21 = task2025_15
 {-|
 points: 0.15
 variant 3: Give scenario descriptions instead of class diagrams with object diagrams
-share same instances as task2025_repeat_20
+share same instances as task2025_repeat_20 (85/100)
 share same concept injection as task2025_repeat_15
-used LLM for story generation:
+the number of finally assigned instances: 22 (different from task2025_repeat_15 and task2025_repeat_16)
+used LLM for story generation: qwen3.6-35b-a3b
 used as: DifferentNamesFormInputDropdownsUnAvailable-Quiz
 -}
 task2025_repeat_17 :: DifferentNamesConfig
@@ -453,6 +456,7 @@ points: 0.15
 variant 4: Only give object diagrams
 share same instances as task2025_repeat_20
 share same concept injection as task2025_repeat_15
+the number of finally assigned instances: 21 (different from task2025_repeat_15, task2025_repeat_16, and task2025_repeat_17)
 used as: DifferentNamesFormInputDropdownsUnAvailable-Quiz
 -}
 task2025_repeat_18 :: DifferentNamesConfig
@@ -473,12 +477,12 @@ task2025_55 = task2025_14
 
 {-|
 points: 0.1
-the amount of generated instances:
-maximum concurrent amount of tasks:
-average generation time per instance on the cluster (without considering concurrency):
-total run time on the cluster (not including queuing time):
-average CPU usage:
-average memory usage:
+the amount of generated instances: 100
+maximum concurrent amount of tasks: 100
+average generation time per instance on the cluster (without considering concurrency): 2:22min
+total run time on the cluster (not including queuing time): 6:23min
+average CPU usage: 164%
+average memory usage: 2785.52 MB
 used as: DifferentNamesFormInputDropdownsUnAvailable-Quiz
 -}
 task2025_repeat_21 :: DifferentNamesConfig
@@ -495,12 +499,13 @@ task2025_57 = task2025_21
 {-
 points: 0.1
 variant 3: Give scenario descriptions instead of class diagrams with object diagrams
-share same instances as task2025_repeat_20, but new concept injection
-average concept generation time per instance (no concurrency):
-used LLM model for generation:
-approximate input tokens:
-approximate output tokens:
-used LLM for story generation:
+new instances, new concept injection
+the number of finally assigned instances: 83
+average concept generation time per instance (no concurrency): 495s
+used LLM model for generation: qwen3.5-397b-a17b
+approximate input tokens: N/A
+approximate output tokens: N/A
+used LLM for story generation: qwen3.6-35b-a3b
 used as: DifferentNamesFormInputDropdownsUnAvailable-Quiz
 -}
 task2025_repeat_22 :: DifferentNamesConfig
