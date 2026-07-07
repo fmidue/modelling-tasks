@@ -167,9 +167,15 @@ verifyReach inst@ReachInstance{..} = do
     english "At least one of goal net or place names must be shown."
     german "Mindestens eines von Zielnetz oder Plätze-Namen muss angezeigt werden."
   checkBaseInstance minLength noLongerThan withLengthHint rejectSpaceballsLength
-  traverse_ (\ts -> reachSyntax True inst ts *> checkReachesGoal n ts) $ fromEither shortestSolutions
+  traverse_
+    (\ts -> reachSyntax True inst ts *> checkSolutionMinLength ts *> checkReachesGoal n ts)
+    $ fromEither shortestSolutions
   pure ()
   where
+    checkSolutionMinLength ts =
+      assertion (length ts == minLength) $ translate $ do
+        english "Solution sequence is at least as long as minLength?"
+        german "Lösungssequenz ist mindestens so lang wie minLength?"
     checkReachesGoal n ts = assertion
       (executeSequence n ts == Just (goal netGoal))
       $ translate $ do
