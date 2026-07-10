@@ -558,6 +558,7 @@ average generation time per instance on the cluster (without considering concurr
 total run time on the cluster (not including queuing time): 12:04min
 average CPU usage: 104%
 average memory usage: 3540.15 MB
+the number of finally assigned instances: 64
 average concept generation time per successful instance (no concurrency): 1486s (median is 522s)
 used LLM model for generation: Qwen3.5-397b-a17b
 approximate input tokens (per successful instance): 41632

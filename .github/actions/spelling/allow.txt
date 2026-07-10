@@ -88,6 +88,7 @@ fst
 fusable
 ghci
 github
+glm
 gpt
 graphviz
 hspace
