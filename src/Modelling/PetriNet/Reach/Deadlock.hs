@@ -80,7 +80,7 @@ import Modelling.PetriNet.Reach.Reach   (
   validateDrawabilityAndSolutionFiltering,
   )
 import Modelling.PetriNet.Reach.Roll    (netLimitsFiltered, simpleConnectionGenerator)
-import Modelling.PetriNet.Reach.Step    (executes, successors)
+import Modelling.PetriNet.Reach.Step    (executes, executeSequence, successors)
 import Modelling.PetriNet.Reach.Type (
   ArrowDensityConstraints(..),
   Capacity (Unbounded),
@@ -98,11 +98,15 @@ import Modelling.PetriNet.Reach.Type (
   example,
   noArrowDensityConstraints,
   noTransitionBehaviorConstraints,
+  placesFromOneTo,
+  transitionFromNumber,
+  transitionsFromOneTo,
   )
 
 import Control.Applicative              (Alternative, (<|>))
 import Control.OutputCapable.Blocks (
   ExtraText (..),
+  GenericOutputCapable (assertion),
   LangM,
   OutputCapable,
   Rated,
@@ -120,8 +124,10 @@ import Control.OutputCapable.Blocks.Generic (
 import Data.Functor                     ((<&>))
 import Data.Bifunctor                   (bimap)
 import Data.Either.Combinators          (whenRight)
+import Data.Either.Extra                (fromEither)
 import Control.Functor.Trans            (FunctorTrans (lift))
 import Control.Monad                    (guard, when)
+import Data.Foldable                    (traverse_)
 import Control.Monad.Catch              (MonadCatch, MonadThrow)
 import Control.Monad.Extra              (whenJust)
 import Control.Monad.Random             (RandomGen, evalRandT, mkStdGen)
@@ -136,10 +142,20 @@ import Data.Typeable                    (Typeable)
 import GHC.Generics                     (Generic)
 
 verifyDeadlock
-  :: (OutputCapable m, Show a, Show t, Ord t, Ord a)
-  => DeadlockInstance a t
+  :: (Ord a, OutputCapable m, Show a)
+  => DeadlockInstance a Transition
   -> LangM m
-verifyDeadlock = validate Default . petriNet
+verifyDeadlock inst =
+  validate Default net
+  *> traverse_ checkSolution (fromEither $ shortestSolutions inst)
+  where
+    net = petriNet inst
+    checkSolution ts =
+      deadlockSyntax True inst ts
+      *> assertion (isDeadlockReached ts) (translate $ do
+           english "Solution sequence leads to a deadlock state?"
+           german "Lösungssequenz führt zu einem Deadlock-Zustand?")
+    isDeadlockReached = maybe False (null . successors net) . executeSequence net
 
 deadlockTask
   :: (
@@ -177,7 +193,7 @@ deadlockSyntax
   :: OutputCapable m
   => Bool
   -- ^ Whether to do a full check. If False, only check for Spaceballs pattern.
-  -> DeadlockInstance Place Transition
+  -> DeadlockInstance a Transition
   -> [Transition]
   -> LangM m
 deadlockSyntax fullCheck inst ts =
@@ -215,7 +231,7 @@ deadlockEvaluation path deadlock ts =
     (const $ null . successors n)
     minLength
     deadlockInstance
-    ts
+    (length ts)
     eitherOutcome
   where
     deadlockInstance = toShowDeadlockInstance deadlock
@@ -337,8 +353,8 @@ defaultDeadlockInstance = DeadlockInstance {
   showPlaceNames    = False,
   maxDisplayedSolutions = 1,
   shortestSolutions = Left ([
-    Transition 3, Transition 3, Transition 3,
-    Transition 2, Transition 2, Transition 2
+    transitionFromNumber 3, transitionFromNumber 3, transitionFromNumber 3,
+    transitionFromNumber 2, transitionFromNumber 2, transitionFromNumber 2
     ] :| []),
   withLengthHint    = Just 9,
   withMinLengthHint = True,
@@ -452,8 +468,8 @@ try
   => DeadlockConfig
   -> MaybeT (RandT g m) (Net Place Transition, GraphvizCommand, Either (NonEmpty [Transition]) (NonEmpty [Transition]))
 try conf = do
-    let ps = [Place 1 .. Place (numPlaces conf)]
-        ts = [Transition 1 .. Transition (numTransitions conf)]
+    let ps = placesFromOneTo (numPlaces conf)
+        ts = transitionsFromOneTo (numTransitions conf)
         requiredFusableTransitionsConsuming = fromMaybe 0 $ fusableTransitionsConsumingAreExactly conf
         requiredFusableTransitionsProducing = fromMaybe 0 $ fusableTransitionsProducingAreExactly conf
     -- Pre-generate fusable node connections and bind appropriate version of netLimitsFiltered

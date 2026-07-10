@@ -376,26 +376,10 @@ matchCdOdTask
   -> MatchCdOdInstance
   -> LangM m
 matchCdOdTask showInputHelp path task = do
-  toTaskText showInputHelp path task
-  hoveringInformation True
-  pure ()
-
-toTaskText
-  :: (
-    MonadCache m,
-    MonadDiagrams m,
-    MonadGraphviz m,
-    MonadThrow m,
-    OutputCapable m
-    )
-  => Bool
-  -> FilePath
-  -> MatchCdOdInstance
-  -> LangM m
-toTaskText showInputHelp path task = do
   specialToOutputCapable (toTaskSpecificText path task) (taskText task)
   when showInputHelp $
     toOutputCapable (inputHelpText hasGivenCds $ M.size $ diagrams task)
+  hoveringInformation True
   extra $ addText task
   pure ()
   where

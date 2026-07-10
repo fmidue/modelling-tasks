@@ -284,21 +284,11 @@ selectValidCdTask
   -> SelectValidCdInstance
   -> LangM m
 selectValidCdTask showInputHelp path task = do
-  toTaskText showInputHelp path task
-  simplifiedInformation True
-  hoveringInformation True
-  pure ()
-
-toTaskText
-  :: (MonadCache m, MonadDiagrams m, MonadGraphviz m, OutputCapable m)
-  => Bool
-  -> FilePath
-  -> SelectValidCdInstance
-  -> LangM m
-toTaskText showInputHelp path task = do
   specialToOutputCapable (toTaskSpecificText path task) (taskText task)
   when showInputHelp $
     toOutputCapable inputHelpText
+  simplifiedInformation True
+  hoveringInformation True
   extra $ addText task
   pure ()
 

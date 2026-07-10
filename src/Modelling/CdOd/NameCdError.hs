@@ -411,18 +411,6 @@ data NameCdErrorTaskTextElement =
   RelationshipsList
   deriving (Bounded, Data, Enum, Eq, Generic, Hashable, Ord, Read, Reader, Show, ToDoc)
 
-toTaskText
-  :: (MonadCache m, MonadDiagrams m, MonadGraphviz m, OutputCapable m)
-  => Bool
-  -> FilePath
-  -> NameCdErrorInstance
-  -> LangM m
-toTaskText showInputHelp path task = do
-  specialToOutputCapable (toTaskSpecificText path task) (taskText task)
-  when showInputHelp $
-    toOutputCapable inputHelpText
-  pure ()
-
 toTaskSpecificText
   :: (MonadCache m, MonadDiagrams m, MonadGraphviz m, OutputCapable m)
   => FilePath
@@ -623,7 +611,9 @@ nameCdErrorTask
   -> NameCdErrorInstance
   -> LangM m
 nameCdErrorTask collapseHints showInputHelp path task = do
-  toTaskText showInputHelp path task
+  specialToOutputCapable (toTaskSpecificText path task) (taskText task)
+  when showInputHelp $
+    toOutputCapable inputHelpText
   simplifiedInformation collapseHints
   hoveringInformation collapseHints
   extra $ addText task

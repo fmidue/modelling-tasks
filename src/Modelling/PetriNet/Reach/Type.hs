@@ -3,7 +3,6 @@
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DerivingStrategies #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE MonoLocalBinds #-}
 {-# LANGUAGE RecordWildCards #-}
 
@@ -29,12 +28,12 @@ import qualified Data.Set                         as S (
   map,
   )
 
-import Modelling.Auxiliary.Common       (parseInt, skipSpaces)
+import Modelling.Auxiliary.Common       (skipSpaces)
 
 import Autolib.Hash                     (Hashable)
 import Autolib.Reader.Class             (Reader (atomic_readerPrec))
 import Autolib.ToDoc                    (ToDoc (toDocPrec), text)
-import Control.Monad                    (void)
+import Data.Char                        (isSpace)
 import Data.Data                        (Data)
 import Data.List                        (intercalate)
 import Data.Map                         (Map, (!))
@@ -42,11 +41,16 @@ import Data.Set                         (Set)
 import GHC.Generics                     (Generic)
 import Text.ParserCombinators.Parsec (
   Parser,
+  (<|>),
   char,
+  many,
+  many1,
+  noneOf,
   optional,
   sepBy,
   skipMany,
   space,
+  satisfy,
   )
 
 type Connection s t = ([s], t, [s])
@@ -173,16 +177,15 @@ conforms cap (State z) = case cap of
     )
     (M.toList z)
 
-newtype Place = Place Int
+newtype Place = Place String
   deriving anyclass Hashable
-  deriving newtype Enum
   deriving stock (Data, Eq, Generic, Ord, Read, Show)
 
 newtype ShowPlace = ShowPlace Place
   deriving (Eq, Ord)
 
 instance Show ShowPlace where
-  show (ShowPlace (Place p)) = "s" ++ show p
+  show (ShowPlace (Place p)) = renderPetriName p
 
 instance Reader Place where
   atomic_readerPrec = parsePlacePrec
@@ -193,22 +196,26 @@ instance ToDoc Place where
 showPlace :: Place -> String
 showPlace = show . ShowPlace
 
+placeFromNumber :: Int -> Place
+placeFromNumber = Place . ('s':) . show
+
+placesFromOneTo :: Int -> [Place]
+placesFromOneTo = map placeFromNumber . enumFromTo 1
+
 parsePlacePrec :: Int -> Parser Place
 parsePlacePrec _ = do
   skipMany space
-  void $ char 's'
-  Place <$> parseInt <* skipMany space
+  Place <$> parsePetriName <* skipMany space
 
-newtype Transition = Transition Int
+newtype Transition = Transition String
   deriving anyclass Hashable
-  deriving newtype Enum
   deriving stock (Data, Eq, Generic, Ord, Read, Show)
 
 newtype ShowTransition = ShowTransition Transition
   deriving (Eq, Ord)
 
 instance Show ShowTransition where
-  show (ShowTransition (Transition t)) = "t" ++ show t
+  show (ShowTransition (Transition t)) = renderPetriName t
 
 instance Reader Transition where
   atomic_readerPrec = parseTransitionPrec
@@ -219,11 +226,16 @@ instance ToDoc Transition where
 showTransition :: Transition -> String
 showTransition = show . ShowTransition
 
+transitionFromNumber :: Int -> Transition
+transitionFromNumber = Transition . ('t':) . show
+
+transitionsFromOneTo :: Int -> [Transition]
+transitionsFromOneTo = map transitionFromNumber . enumFromTo 1
+
 parseTransitionPrec :: Int -> Parser Transition
 parseTransitionPrec _ = do
   skipMany space
-  void $ char 't'
-  Transition <$> parseInt <* skipMany space
+  Transition <$> parsePetriName <* skipMany space
 
 newtype TransitionsList = TransitionsList {
   transitionsList :: [Transition]
@@ -254,20 +266,38 @@ parseTransitionsListPrec _ = do
 example :: (Net Place Transition, State Place)
 example =
   (Net {
-    places = S.fromList [Place 1, Place 2, Place 3, Place 4],
-    transitions = S.fromList [Transition 1, Transition 2, Transition 3, Transition 4],
+    places = S.fromList [placeFromNumber 1, placeFromNumber 2, placeFromNumber 3, placeFromNumber 4],
+    transitions = S.fromList [transitionFromNumber 1, transitionFromNumber 2, transitionFromNumber 3, transitionFromNumber 4],
     connections = [
-        ([Place 3, Place 4], Transition 1, [Place 2]),
-        ([Place 4], Transition 2, [Place 3]),
-        ([Place 1], Transition 3, [Place 4]),
-        ([Place 2], Transition 4, [Place 1])
+        ([placeFromNumber 3, placeFromNumber 4], transitionFromNumber 1, [placeFromNumber 2]),
+        ([placeFromNumber 4], transitionFromNumber 2, [placeFromNumber 3]),
+        ([placeFromNumber 1], transitionFromNumber 3, [placeFromNumber 4]),
+        ([placeFromNumber 2], transitionFromNumber 4, [placeFromNumber 1])
     ],
     capacity = Unbounded,
     start = State $ M.fromList
-      [(Place 1, 3), (Place 2, 0), (Place 3, 0), (Place 4, 0)]
+      [(placeFromNumber 1, 3), (placeFromNumber 2, 0), (placeFromNumber 3, 0), (placeFromNumber 4, 0)]
     },
-   State $ M.fromList [(Place 1, 0), (Place 2, 0), (Place 3, 1), (Place 4, 0)]
+   State $ M.fromList [(placeFromNumber 1, 0), (placeFromNumber 2, 0), (placeFromNumber 3, 1), (placeFromNumber 4, 0)]
   )
+
+renderPetriName :: String -> String
+renderPetriName name
+  | all isUnquotedPetriNameCharacter name = name
+  | otherwise = show name
+  where
+    isUnquotedPetriNameCharacter character =
+      not (isSpace character) && character `notElem` ",()[]\""
+
+parsePetriName :: Parser String
+parsePetriName = parseQuotedPetriName <|> parseUnquotedPetriName
+
+parseQuotedPetriName :: Parser String
+parseQuotedPetriName = char '"' *> many (noneOf "\"") <* char '"'
+
+parseUnquotedPetriName :: Parser String
+parseUnquotedPetriName =
+  many1 $ satisfy (\character -> not (isSpace character) && character `notElem` ",()[]")
 
 -- | Check if a net has any isolated nodes (nodes with no connections)
 hasIsolatedNodes :: (Ord s, Ord t) => Net s t -> Bool

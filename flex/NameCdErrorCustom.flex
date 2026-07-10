@@ -9,6 +9,7 @@ import Modelling.CdOd.NameCdError
 
 type Submission = (SingleChoiceSelection, MultipleChoiceSelection)
 type DescData = (Int,Int,Int)
+type FormData = (NameCdErrorInstance, Maybe Char)
 type TaskData = NameCdErrorInstance
 
 =============================================
@@ -200,7 +201,7 @@ task = ShuffleInstance {
         Translated (listToFM [
           ( English
           , "Analyse and take a stance on the created class diagram regarding the scenario task of the student! " ++
-            "In case, indicate all the specific relationships that would need to be changed!"
+            "If applicable, indicate all the specific relationships that would need to be changed!"
           ),
           ( German
           , "Analysieren Sie und beziehen Sie Stellung zum erzeugten Klassendiagramm hinsichtlich der Szenario-Aufgabe des Studierenden! " ++
@@ -215,6 +216,9 @@ task = ShuffleInstance {
   shuffleNames = False,
   shuffleOptions = True
   }
+
+diagramIsCorrectOption :: Maybe Char
+diagramIsCorrectOption = Just 'c'
 
 validateSettings :: OutputCapable m => LangM m
 validateSettings = pure ()
@@ -233,11 +237,13 @@ import Control.Monad.Catch
 import Control.Monad.Random             (MonadRandom, evalRandT, getRandom)
 import Control.OutputCapable.Blocks     (Language(..))
 import Data.Maybe                       (fromMaybe)
-import FlexTask.FormUtil                (addCss)
+import Data.Tuple                       (swap)
+import FlexTask.FormUtil                (addCssClass, addJs)
 import FlexTask.Generic.Form
 import FlexTask.YesodConfig            (Rendered, Widget)
-import Modelling.Auxiliary.Shuffle.All (shuffleInstance)
+import Modelling.Auxiliary.Shuffle.All (ShuffleInstance(..), shuffleInstance)
 import Modelling.CdOd.NameCdError
+import Modelling.CdOd.Phrasing          (phraseRelationship)
 import Modelling.CdOd.Types
 import Data.String.Interpolate (i)
 import System.Random                   (mkStdGen)
@@ -245,13 +251,12 @@ import Yesod (
   Lang,
   RenderMessage(..),
   SomeMessage(..),
-  cassius,
   fieldSettingsLabel,
+  julius,
   )
 
 import Global
 import TaskSettings
-import Phrasing
 
 
 data NameCdErrorReasonLabel = NameCdErrorReasonLabel
@@ -292,15 +297,19 @@ getTask :: (MonadRandom m, MonadThrow m) => m (TaskData, String, Rendered Widget
 getTask = do
   seed <- getRandom
   inst <- evalRandT (shuffleInstance task) (mkStdGen seed)
-  pure (inst, checkers, form inst)
+  -- there is no predefined function to look up keys using the value in Data.Map
+  let newIsCorrectOption =
+        diagramIsCorrectOption >>=
+        flip M.lookup (errorReasons $ taskInstance task) >>=
+        flip lookup (map swap $ M.toList $ errorReasons inst)
+  pure (inst, checkers, form (inst, newIsCorrectOption))
 
-form :: TaskData -> Rendered Widget
-form inst@NameCdErrorInstance{..} =
+form :: FormData -> Rendered Widget
+form (inst@NameCdErrorInstance{..}, mCorrectDiagramOption) =
   let
     reasonToLangs (Custom m) = m
     reasonToLangs _ = error "this task has no predefined reasons"
 
-    reasonList = M.toList errorReasons
     letterLangMap = map (fmap (reasonToLangs . snd)) reasonList
 
     defaults = omittedDefaults cdDrawSettings
@@ -316,24 +325,69 @@ form inst@NameCdErrorInstance{..} =
 
     relText = map (fmap relToLangMap) $ relevantRelationships inst
   in
-    addCss css $ formify (Nothing :: Maybe (SingleChoiceSelection, MultipleChoiceSelection))
+    addJs js $ formify (Nothing :: Maybe (SingleChoiceSelection, MultipleChoiceSelection))
       [
         [buttons
           Vertical
-          (fieldSettingsLabel NameCdErrorReasonLabel)
+          (addCssClass radioClass $ fieldSettingsLabel NameCdErrorReasonLabel)
           $ map (SomeMessage . ReasonOption) letterLangMap
         ],
         [buttons
           Vertical
-          (fieldSettingsLabel NameCdErrorRelationshipsLabel)
+          (addCssClass checkboxClass $ fieldSettingsLabel NameCdErrorRelationshipsLabel)
           $ map (SomeMessage . DueToOption) relText
         ]
       ]
-  where
-    css = [cassius|
-      label:has(input[type="checkbox"])
-        font-weight: normal
-    |]
+    where
+      radioClass = "flex-radio"
+      checkboxClass = "flex-checkbox"
+      reasonList = M.toList errorReasons
+      errorIndex = flip lookup $ zip (map fst reasonList) [1 :: Integer ..]
+      diagramCorrectOption = maybe "" show $ mCorrectDiagramOption >>= errorIndex
+      js = [julius|
+const formContainers = Array.from(document.getElementsByClassName("flex-form-div"));
+const radios = Array.from(document.getElementsByClassName(#{radioClass}));
+const checkboxes = Array.from(document.getElementsByClassName(#{checkboxClass}));
+
+const checkboxDisabledRadioValue = #{diagramCorrectOption};
+
+function updateFormValidity() {
+  const selectedRadio = radios.find(radio => radio.checked);
+
+  if (selectedRadio?.value === checkboxDisabledRadioValue) {
+    checkboxes.forEach(checkbox => {
+      checkbox.checked = false;
+      checkbox.disabled = true;
+      checkbox.setCustomValidity("");
+    });
+
+    return;
+  }
+  else {
+    checkboxes.forEach(checkbox => {
+      checkbox.disabled = false;
+    });
+
+    const message = checkboxes.some(checkbox => checkbox.checked)
+      ? ""
+      : "Please select at least one relationship.";
+
+    checkboxes.forEach(checkbox => {
+      checkbox.setCustomValidity(message);
+    });
+
+    return;
+  }
+}
+
+formContainers.forEach(container => {
+  container.addEventListener("change", event => {
+    updateFormValidity();
+  });
+});
+
+document.addEventListener("flex-form:submission-loaded", updateFormValidity);
+|]
 
 checkers :: String
 checkers = [i|
@@ -351,7 +405,6 @@ import Data.ByteString.UTF8             (toString)
 import Data.Either.Extra                (fromEither)
 import Data.List.Extra (
   headDef,
-  notNull,
   nubOrd,
   replace,
   )
@@ -390,11 +443,6 @@ checkSemantics _ inst@NameCdErrorInstance{..} (scReason, mcCauses) = addPretext 
         (English, "statement"),
         (German, "Aussage")
         ]
-      dueToTranslation = M.fromAscList [
-        (English, "relationships constituting the problem"),
-        (German, "das Problem ausmachenden Beziehungen")
-        ]
-      solutionReason = headDef (error "No correct statement found") . M.keys . M.filter fst $ errorReasons
       solutionDueTo = M.fromAscList
         $ map (second (contributingToProblem . annotation))
         relevant
@@ -402,53 +450,66 @@ checkSemantics _ inst@NameCdErrorInstance{..} (scReason, mcCauses) = addPretext 
         | showSolution = Just (True, DefiniteArticle, replace "reason" "statement" $ toString $ encode $ nameCdErrorSolution inst)
         | otherwise = Nothing
   recoverWith 0 (
-    singleChoice reasonTranslation Nothing solutionReason (reason x)
+    singleChoice reasonTranslation Nothing solutionReason xReason
       $>> multipleChoice
-        (Just dueToTranslation)
+        Nothing
         Nothing
         solutionDueTo
-        (dueTo x)
+        xDueTo
     )
-    $>>= \\points -> do
-      paragraph $ translate $ classDiagramDescription points
-      pure ()
-    $>> printSolutionAndAssert correctAnswer $ fromEither points
+    $>>= \\points ->
+      paragraph (translate $ feedbackOnRelationships points) $>>
+      printSolutionAndAssert correctAnswer (fromEither points)
   where
+    solutionReason = headDef (error "No correct statement found") . M.keys . M.filter fst $ errorReasons
     relevant = relevantRelationships inst
-    chosenRelevant = filter ((`elem` nubOrd (dueTo x)) . fst) relevant
-    correctRelationships = filter (contributingToProblem . annotation . snd) relevant
-    classDiagramDescription points
+    chosenRelevant = filter ((`elem` xDueTo) . fst) relevant
+    problematicRelationships = filter (contributingToProblem . annotation . snd) relevant
+    feedbackOnRelationships points
+      -- singleChoice's feedback on the selected reason is enough in these cases
+      | null problematicRelationships || null chosenRelevant = pure ()
       | points == Right 1 = do
-        english "You correctly gave all relationships constituting the problem."
-        german "Sie haben alle das Problem ausmachenden Beziehungen korrekt angegeben."
-      | correctRelationships == chosenRelevant = do
+        english "You correctly gave the relationships constituting the problem."
+        german "Sie haben korrekt die das Problem ausmachenden Beziehungen angegeben."
+      | problematicRelationships == chosenRelevant = do
         english $
-          "You correctly gave all relationships constituting the actual problem, " ++
+          "You correctly gave the relationships constituting the actual problem, " ++
           "but the selected statement is incorrect."
         german $
-          "Sie haben alle das tatsächliche Problem ausmachenden Beziehungen korrekt angegeben, " ++
+          "Sie haben korrekt die das tatsächliche Problem ausmachenden Beziehungen angegeben, " ++
           "aber die ausgewählte Aussage ist nicht korrekt."
+      -- skip feedback below if selected reason is incorrect
+      | solutionReason /= xReason = pure ()
       -- this guard is never used for this concrete instance with exactly one cause
-      | all (contributingToProblem . annotation . snd) chosenRelevant &&
-        notNull chosenRelevant = do
+      -- because the third guard is equivalent then
+      | all (`elem` problematicRelationships) chosenRelevant = do
         english $
-          "All of the given relationships are involved in the problem, " ++
-          "but there are additional causes which were not selected."
+          "All of the relationships you gave are indeed involved in the problem, " ++
+          "but these are not all contributing relationships."
         german $
-          "Alle angegebenen Beziehungen sind in das Problem involviert, " ++
-          "allerdings gibt es noch weitere, die nicht aufgeführt wurden."
-      | any (contributingToProblem . annotation . snd) chosenRelevant = do
+          "Alle von Ihnen angegebenen Beziehungen sind tatsächlich in das Problem involviert, " ++
+          "allerdings sind dies nicht alle beitragenden Beziehungen."
+      | all (`elem` chosenRelevant) problematicRelationships = do
         english $
-          "Some of the given relationships are involved in the problem, " ++
-          "but you also gave non-involved relationships."
+          "You gave all of the relationships that are involved in the problem, " ++
+          "but not every relationship you gave does indeed contribute."
         german $
-          "Einige der angegebenen Beziehungen sind in das Problem involviert, " ++
-          "allerdings wurden auch nicht involvierte Beziehungen angegeben."
+          "Sie haben alle in das Problem involvierten Beziehungen angegeben, " ++
+          "allerdings trägt nicht jede von Ihnen angegebene Beziehung tatsächlich bei."
+      -- this guard is also overlapped by the previous for instances with one cause
+      | any (`elem` problematicRelationships) chosenRelevant = do
+        english $
+          "You gave part of the relationships that are involved in the problem, " ++
+          "but not all the relationships you gave do indeed contribute."
+        german $
+          "Sie haben einen Teil der in das Problem involvierten Beziehungen angegeben, " ++
+          "allerdings tragen nicht alle von Ihnen angegebenen Beziehungen tatsächlich bei."
       | otherwise = do
-        english "All relationships you gave as contributing are not involved in the problem."
-        german "Die von Ihnen als zum Problem beitragend angegebenen Beziehungen sind nicht involviert."
+        english "None of the relationships you gave are actually involved in the problem."
+        german "Keine der von Ihnen angegebenen Beziehungen sind tatsächlich in das Problem involviert."
 
-    x = NameCdErrorAnswer (getReason inst scReason) (getAnswers mcCauses)
+    xDueTo = nubOrd (getAnswers mcCauses)
+    xReason = getReason inst scReason
 |]
 
 =============================================
@@ -494,620 +555,3 @@ parseSubmission ::
   -> LangM' (ReportT o m) Submission
 parseSubmission = parseWithOrReport formParser reportWithFieldNumber
 
-=============================================
-
--- The following are copies of unexposed modules from modelling-tasks
-
-{-# LANGUAGE LambdaCase #-}
-module Phrasing (
-  phraseChange,
-  phraseRelationship,
-  trailingCommaGerman,
-  ) where
-
-import qualified PhrasingGerman    as German
-import qualified PhrasingEnglish   as English
-
-import Control.OutputCapable.Blocks (
-  ArticleToUse,
-  Language (English, German),
-  )
-
-import Modelling.Types (
-  Change,
-  )
-import Modelling.CdOd.Types (
-  AnyRelationship,
-  OmittedDefaultMultiplicities,
-  PhrasingKind,
-  )
-
-phraseChange
-  :: Language
-  -> OmittedDefaultMultiplicities
-  -> ArticleToUse
-  -> Bool
-  -> Bool
-  -> Change (AnyRelationship String String)
-  -> String
-phraseChange = \case
-  English -> English.phraseChange
-  German -> German.phraseChange
-
-phraseRelationship
-  :: Language
-  -> OmittedDefaultMultiplicities
-  -> ArticleToUse
-  -> PhrasingKind
-  -> Bool
-  -> Bool
-  -> AnyRelationship String String -> String
-phraseRelationship = \case
-  English -> English.phraseRelationship
-  German -> German.phraseRelationship
-
-trailingCommaGerman :: String -> String
-trailingCommaGerman = German.trailingComma
-
-=========================
-
-{-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE QuasiQuotes #-}
-{-# LANGUAGE RecordWildCards #-}
-module PhrasingGerman (
-  phraseChange,
-  phraseRelationship,
-  trailingComma,
-  ) where
-
-import Modelling.Types (
-  Change (..),
-  )
-import Modelling.CdOd.Auxiliary.Util    (oneAndOther)
-import PhrasingCommon   (phraseChangeWith, PhrasingStrings (..))
-import Modelling.CdOd.Types (
-  AnyRelationship,
-  DefaultedLimitedLinking (..),
-  InvalidRelationship (..),
-  LimitedLinking (..),
-  NonInheritancePhrasing (..),
-  OmittedDefaultMultiplicities (..),
-  PhrasingKind (..),
-  Relationship (..),
-  defaultedLimitedLinking,
-  sortLimits,
-  toPhrasing,
-  )
-
-import Control.OutputCapable.Blocks     (ArticleToUse (..))
-import Data.String.Interpolate          (iii)
-import Data.Tuple.Extra                 (curry3)
-
-phraseChange
-  :: OmittedDefaultMultiplicities
-  -> ArticleToUse
-  -> Bool
-  -> Bool
-  -> Change (AnyRelationship String String)
-  -> String
-phraseChange = phraseChangeWith germanStrings
-
-germanStrings :: PhrasingStrings
-germanStrings = PhrasingStrings
-  { changeNothing = "verändere nichts"
-  , addPrefix = "ergänze "
-  , removePrefix = "entferne "
-  , replacePrefix = "ersetze "
-  , byInfix = " durch "
-  , postProcess = trailingComma
-  , phraseRelationWith = phraseRelation
-  }
-
-trailingComma :: String -> String
-trailingComma xs
-      | ',' `elem` xs = xs ++ ","
-      | otherwise     = xs
-
-femaleArticle :: ArticleToUse -> String
-femaleArticle = \case
-  DefiniteArticle -> "die"
-  IndefiniteArticle -> "eine"
-
-phraseRelationship
-  :: OmittedDefaultMultiplicities
-  -> ArticleToUse
-  -> PhrasingKind
-  -> Bool
-  -> Bool
-  -> AnyRelationship String String
-  -> String
-phraseRelationship defaultMultiplicities article kind byName withDir =
-  phraseRelation defaultMultiplicities article kind phrasing
-  where
-    phrasing = toPhrasing byName withDir
-
-phraseRelation
-  :: OmittedDefaultMultiplicities
-  -> ArticleToUse
-  -> PhrasingKind
-  -> NonInheritancePhrasing
-  -> AnyRelationship String String
-  -> String
-phraseRelation OmittedDefaultMultiplicities {..} article = curry3 $ \case
-  (kind,_, Left InvalidInheritance {..}) -> [iii|
-    #{femaleArticle article} Vererbung,
-    bei der #{linking invalidSubClass} von #{linking invalidSuperClass} erbt
-    |]
-    ++ phraseParticipations
-      kind
-      (defaultedInheritance invalidSubClass)
-      (defaultedInheritance invalidSuperClass)
-  (_, _, Right Inheritance {..}) -> [iii|
-    #{femaleArticle article} Vererbung,
-    bei der #{subClass} von #{superClass} erbt
-    |]
-  (_, ByName, Right Association {..}) -> "Assoziation " ++ associationName
-  (_, ByName, Right Aggregation {..}) -> "Aggregation " ++ aggregationName
-  (_, ByName, Right Composition {..}) -> "Komposition " ++ compositionName
-  (kind, how, Right Association {..})
-    | from <- defaultedAssociation associationFrom
-    , to <- defaultedAssociation associationTo
-    -> case (how, kind, linking associationFrom == linking associationTo) of
-      (Lengthy, Participations, True) -> [iii|
-        #{femaleArticle article} Selbst-Assoziation
-        für #{linking associationFrom},
-        bei der #{linking associationFrom}
-        an einem Ende #{phraseLimitDefault $ defaultedLimits from}
-        und am anderen Ende #{phraseLimitDefault $ defaultedLimits to}
-        beteiligt ist
-        |]
-      (Lengthy, Denoted, True)
-        | denoted <- uncurry denotions
-          $ oneAndOther "einem Ende" "dem anderen Ende"
-          $ sortLimits from to
-        -> [iii|
-          #{femaleArticle article} Selbst-Assoziation
-          für #{linking associationFrom}
-          |] ++ denoted
-      (Lengthy, _, False) -> femaleArticle article ++ " Assoziation"
-        ++ phraseParticipations kind from to
-      (ByDirection, Participations, True) -> [iii|
-        #{femaleArticle article} Selbst-Assoziation
-        für #{linking associationFrom},
-        bei der #{linking associationFrom}
-        am Anfang #{phraseLimitDefault $ defaultedLimits from}
-        und am Ende #{phraseLimitDefault $ defaultedLimits to} beteiligt ist
-        |]
-      (ByDirection, Denoted, True)
-        | denoted <- uncurry denotions
-          $ uncurry sortLimits
-          $ oneAndOther "seinem Anfang" "seinem Pfeilende" (from, to)
-        -> [iii|
-          #{femaleArticle article} Selbst-Assoziation
-          für #{linking associationFrom}
-          |] ++ denoted
-      (ByDirection, _, False) -> [iii|
-        #{femaleArticle article} Assoziation von #{linking associationFrom}
-        nach #{linking associationTo}
-        |] ++ phraseParticipations kind from to
-  (kind, _, Right Aggregation {..})
-    | part <- defaultedAssociation aggregationPart
-    , whole <- defaultedAssociation aggregationWhole
-    ->
-      if linking aggregationPart == linking aggregationWhole
-      then [iii|
-        #{femaleArticle article} Selbst-Aggregation
-        #{selfParticipatesPartWhole kind part whole}
-        |]
-      else [iii|
-        #{femaleArticle article} Beziehung, die #{linking aggregationWhole}
-        eine Aggregation aus #{linking aggregationPart}s macht
-        |] ++ phraseParticipations kind whole part
-  (kind, _, Right Composition {..})
-    | part <- defaultedAssociation compositionPart
-    , whole <- defaultedCompositionWhole compositionWhole
-    ->
-      if linking compositionPart == linking compositionWhole
-      then [iii|
-        #{femaleArticle article} Selbst-Komposition
-        #{selfParticipatesPartWhole kind part whole}
-        |]
-      else [iii|
-        #{femaleArticle article} Beziehung, die #{linking compositionWhole}
-        eine Komposition aus #{linking compositionPart}s macht
-        |] ++ phraseParticipations kind whole part
-  where
-    defaultedCompositionWhole =
-      defaultedLimitedLinking compositionWholeOmittedDefaultMultiplicity
-    defaultedAssociation =
-      defaultedLimitedLinking associationOmittedDefaultMultiplicity
-    defaultedInheritance = defaultedLimitedLinking Nothing
-
-selfParticipatesPartWhole
-  :: PhrasingKind
-  -> DefaultedLimitedLinking
-  -> DefaultedLimitedLinking
-  -> String
-selfParticipatesPartWhole Denoted part whole = [iii|
-  für #{defaultedLinking part},
-  #{which}
-  |]
-  where
-    which = uncurry denotions $ sortLimits
-      part {defaultedLinking = "dem Teil-Ende"}
-      whole {defaultedLinking = "dem Ganzen-Ende"}
-selfParticipatesPartWhole Participations part whole = [iii|
-  für #{defaultedLinking part},
-  wobei es #{phraseLimitDefault $ defaultedLimits part} als Teil
-  und #{phraseLimitDefault $ defaultedLimits whole} als Ganzes beteiligt ist
-  |]
-
-phraseParticipations
-  :: PhrasingKind
-  -> DefaultedLimitedLinking
-  -> DefaultedLimitedLinking
-  -> String
-phraseParticipations = \case
-  Denoted -> denotions
-  Participations -> participations
-
-denotions
-  :: DefaultedLimitedLinking
-  -> DefaultedLimitedLinking
-  -> String
-denotions one other = case (defaultedRange one, defaultedRange other) of
-  (Nothing, Nothing) -> [iii|, bei der keine Multiplizitäten angegeben sind|]
-  (Nothing, Just otherRange) -> [iii|
-    , bei der keine Multiplizität neben #{defaultedLinking one}
-    und #{otherRange} neben #{defaultedLinking other} angegeben ist
-    |]
-  (Just oneRange, Nothing) -> [iii|
-    , bei der keine Multiplizität neben #{defaultedLinking other}
-    und #{oneRange} neben #{defaultedLinking one} angegeben ist
-    |]
-  (Just oneRange, Just otherRange) -> [iii|
-    , bei der die Multiplizität
-    #{oneRange} neben #{defaultedLinking one}
-    und #{otherRange} neben #{defaultedLinking other} angegeben ist
-    |]
-
-participations
-  :: DefaultedLimitedLinking
-  -> DefaultedLimitedLinking
-  -> String
-participations one other = [iii|
-  , wobei #{defaultedLinking one} #{phraseLimitDefault $ defaultedLimits one}
-  und #{defaultedLinking other} #{phraseLimitDefault $ defaultedLimits other}
-  beteiligt ist
-  |]
-
-phraseLimitDefault :: Maybe (Int, Maybe Int) -> String
-phraseLimitDefault = maybe "mit der Standardmultiplizität" phraseLimit
-
-phraseLimit :: (Int, Maybe Int) -> String
-phraseLimit (0, Just 0)  = "gar nicht"
-phraseLimit (1, Just 1)  = "genau einmal"
-phraseLimit (2, Just 2)  = "genau zweimal"
-phraseLimit (-1, Just n) = "*.." ++ show n ++ "-mal"
-phraseLimit (m, Nothing) = show m ++ "..*-mal"
-phraseLimit (m, Just n)  = show m ++ ".." ++ show n ++ "-mal"
-
-=========================
-{-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE QuasiQuotes #-}
-{-# LANGUAGE RecordWildCards #-}
-module PhrasingEnglish (
-  phraseChange,
-  phraseRelationship,
-  ) where
-
-import Modelling.Types (
-  Change (..),
-  )
-import Modelling.CdOd.Auxiliary.Util    (oneAndOther)
-import PhrasingCommon   (phraseChangeWith, PhrasingStrings (..))
-import Modelling.CdOd.Types (
-  AnyRelationship,
-  DefaultedLimitedLinking (..),
-  InvalidRelationship (..),
-  LimitedLinking (..),
-  NonInheritancePhrasing (..),
-  OmittedDefaultMultiplicities (..),
-  PhrasingKind (..),
-  Relationship (..),
-  defaultedLimitedLinking,
-  sortLimits,
-  toPhrasing,
-  )
-
-import Control.OutputCapable.Blocks     (ArticleToUse (..))
-import Data.String.Interpolate          (iii)
-import Data.Tuple.Extra                 (curry3)
-
-phraseChange
-  :: OmittedDefaultMultiplicities
-  -> ArticleToUse
-  -> Bool
-  -> Bool
-  -> Change (AnyRelationship String String)
-  -> String
-phraseChange = phraseChangeWith englishStrings
-
-englishStrings :: PhrasingStrings
-englishStrings = PhrasingStrings
-  { changeNothing = "change nothing"
-  , addPrefix = "add "
-  , removePrefix = "remove "
-  , replacePrefix = "replace "
-  , byInfix = " by "
-  , postProcess = id
-  , phraseRelationWith = phraseRelation
-  }
-
-consonantArticle :: ArticleToUse -> String
-consonantArticle = \case
-  DefiniteArticle -> "the"
-  IndefiniteArticle -> "a"
-
-vowelArticle :: ArticleToUse -> String
-vowelArticle = \case
-  DefiniteArticle -> "the"
-  IndefiniteArticle -> "an"
-
-phraseRelationship
-  :: OmittedDefaultMultiplicities
-  -> ArticleToUse
-  -> PhrasingKind
-  -> Bool
-  -> Bool
-  -> AnyRelationship String String
-  -> String
-phraseRelationship defaultMultiplicities article kind byName withDir =
-  phraseRelation defaultMultiplicities article kind phrasing
-  where
-    phrasing = toPhrasing byName withDir
-
-phraseRelation
-  :: OmittedDefaultMultiplicities
-  -> ArticleToUse
-  -> PhrasingKind
-  -> NonInheritancePhrasing
-  -> AnyRelationship String String
-  -> String
-phraseRelation OmittedDefaultMultiplicities {..} article = curry3 $ \case
-  (kind,_, Left InvalidInheritance {..}) -> [iii|
-    #{vowelArticle article} inheritance
-    where #{linking invalidSubClass} inherits from #{linking invalidSuperClass}
-    and #{phraseParticipations
-      kind
-      (defaultedInheritance invalidSubClass)
-      (defaultedInheritance invalidSuperClass)
-      }
-    |]
-  (_, _, Right Inheritance {..}) -> [iii|
-    #{vowelArticle article} inheritance
-    where #{subClass} inherits from #{superClass}
-    |]
-  (_, ByName, Right Association {..}) -> "association " ++ associationName
-  (_, ByName, Right Aggregation {..}) -> "aggregation " ++ aggregationName
-  (_, ByName, Right Composition {..}) -> "composition " ++ compositionName
-  (kind, how, Right Association {..})
-    | from <- defaultedAssociation associationFrom
-    , to <- defaultedAssociation associationTo
-    -> case (how, kind, linking associationFrom == linking associationTo) of
-      (Lengthy, Participations, True)
-        | fromIt <- from {defaultedLinking = "it"}
-        -> [iii|
-          #{consonantArticle article} self-association
-          for #{linking associationFrom}
-          where #{participates fromIt} at one end
-          and #{phraseLimitDefault $ defaultedLimits to} at the other end
-          |]
-      (Lengthy, Denoted, True)
-        | denoted <- uncurry denotions
-          $ oneAndOther "one end" "the other end"
-          $ sortLimits from to
-        -> [iii|
-          #{consonantArticle article} self-association
-          for #{linking associationFrom} #{denoted}
-          |]
-      (Lengthy, _, False) -> [iii|
-        #{vowelArticle article} association
-        #{phraseParticipations kind from to}
-        |]
-      (ByDirection, Participations, True)
-        | fromIt <- from {defaultedLinking = "it"}
-        -> [iii|
-          #{consonantArticle article} self-association
-          for #{linking associationFrom}
-          where #{participates fromIt} at its beginning
-          and #{phraseLimitDefault $ defaultedLimits to} at its arrow end
-          |]
-      (ByDirection, Denoted, True)
-        | denoted <- uncurry denotions
-          $ uncurry sortLimits
-          $ oneAndOther "its beginning" "its arrow end" (from, to)
-        -> [iii|
-          #{consonantArticle article} self-association
-          for #{linking associationFrom} #{denoted}
-          |]
-      (ByDirection, _, False) -> [iii|
-        #{vowelArticle article} association from #{linking associationFrom}
-        to #{linking associationTo}
-        #{phraseParticipations kind from to}
-        |]
-  (kind, _, Right Aggregation {..})
-    | part <- defaultedAssociation aggregationPart
-    , whole <- defaultedAssociation aggregationWhole
-    ->
-      if linking aggregationPart == linking aggregationWhole
-      then [iii|
-        #{consonantArticle article} self-aggregation
-        #{selfParticipatesPartWhole kind part whole}
-        |]
-      else [iii|
-        #{consonantArticle article} relationship
-        that makes #{linking aggregationWhole}
-        an aggregation of #{linking aggregationPart}s
-        #{phraseParticipations kind whole part}
-        |]
-  (kind, _, Right Composition {..})
-    | part <- defaultedAssociation compositionPart
-    , whole <- defaultedCompositionWhole compositionWhole
-    ->
-      if linking compositionPart == linking compositionWhole
-      then [iii|
-        #{consonantArticle article} self-composition
-        #{selfParticipatesPartWhole kind part whole}
-        |]
-      else [iii|
-        #{consonantArticle article} relationship
-        that makes #{linking compositionWhole}
-        a composition of #{linking compositionPart}s
-        #{phraseParticipations kind whole part}
-        |]
-  where
-    defaultedCompositionWhole =
-      defaultedLimitedLinking compositionWholeOmittedDefaultMultiplicity
-    defaultedAssociation =
-      defaultedLimitedLinking associationOmittedDefaultMultiplicity
-    defaultedInheritance = defaultedLimitedLinking Nothing
-
-selfParticipatesPartWhole
-  :: PhrasingKind
-  -> DefaultedLimitedLinking
-  -> DefaultedLimitedLinking
-  -> String
-selfParticipatesPartWhole Denoted part whole = [iii|
-  for #{defaultedLinking part}
-  #{which}
-  |]
-  where
-    which = uncurry denotions $ sortLimits
-      part {defaultedLinking = "its part end"}
-      whole {defaultedLinking = "its whole end"}
-selfParticipatesPartWhole Participations part whole = [iii|
-  for #{defaultedLinking part}
-  where #{participates partIt} as part
-  and #{phraseLimitDefault $ defaultedLimits whole} as whole
-  |]
-  where
-    partIt = part {defaultedLinking = "it"}
-
-phraseParticipations
-  :: PhrasingKind
-  -> DefaultedLimitedLinking
-  -> DefaultedLimitedLinking
-  -> String
-phraseParticipations = \case
-  Denoted -> denotions
-  Participations -> participations
-
-denotions
-  :: DefaultedLimitedLinking
-  -> DefaultedLimitedLinking
-  -> String
-denotions one other = case (defaultedRange one, defaultedRange other) of
-  (Nothing, Nothing) -> [iii|which has not denoted multiplicities at all|]
-  (Nothing, Just otherRange) -> [iii|
-    which has no multiplicity denoted near #{defaultedLinking one}
-    and #{otherRange} near #{defaultedLinking other}
-    |]
-  (Just oneRange, Nothing) -> [iii|
-    which has no multiplicity denoted near #{defaultedLinking other}
-    and #{oneRange} near #{defaultedLinking one}
-    |]
-  (Just oneRange, Just otherRange) -> [iii|
-    which has denoted the multiplicity
-    #{oneRange} near #{defaultedLinking one}
-    and #{otherRange} near #{defaultedLinking other}
-    |]
-
-participations
-  :: DefaultedLimitedLinking
-  -> DefaultedLimitedLinking
-  -> String
-participations one other = [iii|
-  where #{participates one}
-  and #{participates other}
-  |]
-
-participates :: DefaultedLimitedLinking -> String
-participates DefaultedLimitedLinking {..}
-  = defaultedLinking ++ " participates "
-  ++ phraseLimitDefault defaultedLimits
-
-phraseLimitDefault :: Maybe (Int, Maybe Int) -> String
-phraseLimitDefault = maybe "with the default multiplicity" phraseLimit
-
-phraseLimit :: (Int, Maybe Int) -> String
-phraseLimit (0, Just 0)  = "not at all"
-phraseLimit (1, Just 1)  = "exactly once"
-phraseLimit (2, Just 2)  = "exactly twice"
-phraseLimit (-1, Just n) = "*.." ++ show n ++ " times"
-phraseLimit (m, Nothing) = show m ++ "..* times"
-phraseLimit (m, Just n)  = show m ++ ".." ++ show n ++ " times"
-
-=========================
-
-module PhrasingCommon (
-  PhrasingStrings (..),
-  phraseChangeWith
-) where
-
-import Modelling.Types (
-  Change (..),
-  )
-import Modelling.CdOd.Types (
-  AnyRelationship,
-  NonInheritancePhrasing (..),
-  OmittedDefaultMultiplicities (..),
-  PhrasingKind (..),
-  toPhrasing,
-  )
-
-import Control.OutputCapable.Blocks     (ArticleToUse (..))
-
-data PhrasingStrings = PhrasingStrings
-  { changeNothing :: String
-  , addPrefix :: String
-  , removePrefix :: String
-  , replacePrefix :: String
-  , byInfix :: String
-  , postProcess :: String -> String  -- ^ Post-processing function for things like trailing commas
-  , phraseRelationWith
-      :: OmittedDefaultMultiplicities
-      -> ArticleToUse
-      -> PhrasingKind
-      -> NonInheritancePhrasing
-      -> AnyRelationship String String
-      -> String
-  }
-
-phraseChangeWith
-  :: PhrasingStrings
-  -> OmittedDefaultMultiplicities
-  -> ArticleToUse
-  -> Bool
-  -> Bool
-  -> Change (AnyRelationship String String)
-  -> String
-phraseChangeWith strings defaultMultiplicities article byName withDir c =
-  case (add c, remove c) of
-  (Nothing, Nothing) -> changeNothing strings
-  (Just e,  Nothing) -> addPrefix strings ++ postProcess strings (phrasingNew e)
-  (Nothing, Just e ) -> removePrefix strings ++ phrasingOld e
-  (Just e1, Just e2) ->
-    replacePrefix strings ++ postProcess strings (phrasingOld e2)
-    ++ byInfix strings ++ phrasingNew e1
-  where
-    phrasingOld = phraseRelationWith strings
-      defaultMultiplicities
-      article
-      Denoted
-      $ toPhrasing byName withDir
-    phrasingNew = phraseRelationWith strings
-      defaultMultiplicities
-      IndefiniteArticle
-      Participations
-      $ toPhrasing False withDir

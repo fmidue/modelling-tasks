@@ -61,6 +61,7 @@ library
       Modelling.CdOd.MatchCdOd
       Modelling.CdOd.NameCdError
       Modelling.CdOd.Output
+      Modelling.CdOd.Phrasing
       Modelling.CdOd.RepairCd
       Modelling.CdOd.SelectValidCd
       Modelling.CdOd.Types
@@ -87,7 +88,6 @@ library
       Modelling.ActivityDiagram.Auxiliary.ActionSequences
       Modelling.ActivityDiagram.Auxiliary.PetriValidation
       Modelling.Auxiliary.Diagrams
-      Modelling.CdOd.Phrasing
       Modelling.CdOd.Phrasing.Common
       Modelling.CdOd.Phrasing.English
       Modelling.CdOd.Phrasing.German

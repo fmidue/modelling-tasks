@@ -401,9 +401,7 @@ share same concept injection as task2025_15
 used as: DifferentNamesRadiobuttonsUnAvailable-Quiz (at the time)
 -}
 task2025_16 :: DifferentNamesConfig
-task2025_16 = task2025_15 {
-  printSolution = ShowMappingAndReprintCD
-  }
+task2025_16 = task2025_15
 
 {-|
 points: 0.15
@@ -414,9 +412,7 @@ the number of finally assigned instances: 21 (different from task2025_repeat_15)
 used as: DifferentNamesFormInputRadioButtonsUnAvailable-Quiz
 -}
 task2025_repeat_16 :: DifferentNamesConfig
-task2025_repeat_16 = task2025_repeat_15 {
-  printSolution = ShowMappingAndReprintCD
-  }
+task2025_repeat_16 = task2025_repeat_15
 
 {-|
 points: 0.15

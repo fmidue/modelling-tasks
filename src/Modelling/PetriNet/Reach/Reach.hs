@@ -73,9 +73,11 @@ import Data.Data                        (Data)
 import Modelling.PetriNet.Reach.Draw    (drawToFile, isPetriDrawable)
 import Modelling.PetriNet.Reach.Filter (
   FilterConfig (..),
+  Sequential (..),
   shouldDiscardSolutions,
   defaultFilterConfig,
   hasSpaceballsPrefix,
+  longestSequentialPrefix,
   noFiltering,
   )
 import Modelling.PetriNet.Reach.Property (
@@ -83,7 +85,7 @@ import Modelling.PetriNet.Reach.Property (
   validate,
   )
 import Modelling.PetriNet.Reach.Roll    (netLimitsFiltered, simpleConnectionGenerator)
-import Modelling.PetriNet.Reach.Step    (executes, successors)
+import Modelling.PetriNet.Reach.Step    (executes, executeSequence, successors)
 import Modelling.PetriNet.Reach.Type (
   ArrowDensityConstraints(..),
   Capacity (Unbounded),
@@ -100,6 +102,9 @@ import Modelling.PetriNet.Reach.Type (
   mapState,
   mark,
   noArrowDensityConstraints,
+  placesFromOneTo,
+  transitionFromNumber,
+  transitionsFromOneTo,
   )
 
 import Control.Applicative              (Alternative, (<|>))
@@ -138,6 +143,7 @@ import Control.Monad.Trans.Random       (RandT, evalRandT)
 import System.Random.Shuffle            (shuffleM)
 import Data.Bifunctor                   (Bifunctor (second), bimap)
 import Data.Either.Combinators          (whenRight)
+import Data.Either.Extra                (fromEither)
 import Data.Foldable                    (sequenceA_, traverse_)
 import Data.GraphViz                    (GraphvizCommand (..))
 import Data.List                        (singleton, transpose)
@@ -149,8 +155,8 @@ import Data.Typeable                    (Typeable)
 #endif
 import GHC.Generics                     (Generic)
 
-verifyReach :: (Ord a, Ord t, OutputCapable m, Show a, Show t)
-  => ReachInstance a t
+verifyReach :: (Ord a, OutputCapable m, Show a)
+  => ReachInstance a Transition
   -> LangM m
 verifyReach inst = do
   let n = petriNet (netGoal inst)
@@ -159,7 +165,14 @@ verifyReach inst = do
   assertion (showGoalNet inst || showPlaceNames inst) $ translate $ do
     english "At least one of goal net or place names must be shown."
     german "Mindestens eines von Zielnetz oder Plätze-Namen muss angezeigt werden."
+  traverse_ (\ts -> reachSyntax True inst ts *> checkReachesGoal n ts) $ fromEither $ shortestSolutions inst
   pure ()
+  where
+    checkReachesGoal n ts = assertion
+      (executeSequence n ts == Just (goal (netGoal inst)))
+      $ translate $ do
+          english "Solution sequence reaches the goal marking?"
+          german "Lösungssequenz erreicht die Zielmarkierung?"
 
 reachTask
   :: (
@@ -229,7 +242,7 @@ reportReachFor showInputHelp img noLonger lengthHint minLength showMinLengthHint
       english "State your answer as a sequence of the following kind:"
       german "Geben Sie Ihre Antwort als Auflistung der folgenden Art an:"
    let
-      (t1, t2, t3) = (Transition 1, Transition 2, Transition 3)
+      (t1, t2, t3) = (transitionFromNumber 1, transitionFromNumber 2, transitionFromNumber 3)
       showT = show . ShowTransition
       (st1, st2, st3) = (showT t1, showT t2, showT t3)
    code $ show $ TransitionsList [t1, t2, t3]
@@ -380,7 +393,7 @@ reachEvaluation path reach ts =
     ((==) . goal . netGoal)
     minLength
     reachInstance
-    ts
+    (length ts)
     eitherOutcome
   where
     reachInstance = toShowReachInstance reach
@@ -412,13 +425,13 @@ assertReachPoints
   -> (i -> a -> Bool)
   -> (i -> Int)
   -> i
-  -> [b]
+  -> Int
   -> Either Int a
   -> Rated m
-assertReachPoints aCorrectSolution p size inst ts eitherOutcome = do
+assertReachPoints aCorrectSolution p size inst numberOfTransitions eitherOutcome = do
   let points = either
         partly
-        (\x -> if p inst x then 1 else partly $ length ts)
+        (\x -> if p inst x then 1 else partly numberOfTransitions)
         eitherOutcome
   printSolutionAndAssertWithMinimum
     (MinimumThreshold $ 1 % 3)
@@ -447,13 +460,13 @@ isNoLonger maybeMaxLength ts =
         ]
 
 rejectSpaceballsPattern
-  :: (Enum t, Eq t, OutputCapable m, Show t)
+  :: (Eq t, OutputCapable m, Sequential t, Show t)
   => Maybe Int
   -> [t]
   -> LangM m
 rejectSpaceballsPattern maybeRejectSpaceballsLength ts =
   when (maybe False (`hasSpaceballsPrefix` ts) maybeRejectSpaceballsLength) $ do
-    let longestSpaceballsPrefix = findLongestSpaceballsPrefix ts
+    let longestSpaceballsPrefix = longestSequentialPrefix ts
         prefixString = show longestSpaceballsPrefix
     refuse $ paragraph $ translate $ do
       english $ concat [
@@ -466,13 +479,6 @@ rejectSpaceballsPattern maybeRejectSpaceballsLength ts =
         prefixString,
         ", die Sie eingereicht haben, wäre vielleicht eine gute PIN im Spaceballs-Film gewesen, ist hier aber nicht korrekt."
         ]
-
--- | Find the longest Spaceballs-like prefix in a sequence
--- A Spaceballs prefix is one where elements follow the pattern [x, x+1, x+2, ...]
-findLongestSpaceballsPrefix :: (Enum a, Eq a) => [a] -> [a]
-findLongestSpaceballsPrefix [] = []
-findLongestSpaceballsPrefix (x:xs) =
-  x : map snd (takeWhile (uncurry (==)) (zip [succ x ..] xs))
 
 data ReachInstance s t = ReachInstance {
   netGoal           :: NetGoal s t,
@@ -630,9 +636,9 @@ defaultReachInstance = ReachInstance {
   showPlaceNames    = False,
   maxDisplayedSolutions = 1,
   shortestSolutions = Left ([
-    Transition 3, Transition 3, Transition 2, Transition 1, Transition 4,
-    Transition 3, Transition 3, Transition 2, Transition 1, Transition 4,
-    Transition 3, Transition 2
+    transitionFromNumber 3, transitionFromNumber 3, transitionFromNumber 2, transitionFromNumber 1, transitionFromNumber 4,
+    transitionFromNumber 3, transitionFromNumber 3, transitionFromNumber 2, transitionFromNumber 1, transitionFromNumber 4,
+    transitionFromNumber 3, transitionFromNumber 2
     ] :| []),
   withLengthHint    = Just 12,
   withMinLengthHint = False,
@@ -647,7 +653,7 @@ findNetGoalWithSolutions
   -> NetGoalConfig
   -> RandT g m (Maybe (NetGoal Place Transition, Either (NonEmpty [Transition]) (NonEmpty [Transition])))
 findNetGoalWithSolutions filterConfig maxPrintedSolutions NetGoalConfig {..} =
-  let ps = [Place 1 .. Place numPlaces]
+  let ps = placesFromOneTo numPlaces
       try :: RandT g m [[(Int, MaybeT (RandT g m) (NetGoal Place Transition, Either (NonEmpty [Transition]) (NonEmpty [Transition])))]]
       try = do
         let generateNet =
@@ -689,11 +695,11 @@ findNetGoalWithSolutions filterConfig maxPrintedSolutions NetGoalConfig {..} =
             choosePerDistance = M.elems . foldr (M.unionWith (<|>) . M.map (shuffleM >=> msum) . M.fromDistinctAscList . groupSort) M.empty
         runMaybeT (msum (map (msum . choosePerDistance) groupedByLevel))
   where
-    ts = [Transition 1 .. Transition numTransitions]
+    ts = transitionsFromOneTo numTransitions
 
 -- | Validate drawability and solution filter criteria, then prepare solutions for output
 validateDrawabilityAndSolutionFiltering
-  :: (Enum t, MonadCatch m, MonadDiagrams m, MonadGraphviz m, Ord p, Ord t, RandomGen g, Show p, Show t)
+  :: (MonadCatch m, MonadDiagrams m, MonadGraphviz m, Ord p, Ord t, RandomGen g, Sequential t, Show p, Show t)
   => Net p t
        -- ^ Petri net to validate for drawability and from which the solutions were derived.
   -> [GraphvizCommand]

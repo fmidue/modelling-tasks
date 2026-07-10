@@ -215,6 +215,7 @@ data SolutionDisplay
   | ShowMapping
   | ShowMappingAndReprintCD
   | ShowMappingAndReprintOD
+  | ShowMappingAndReprintCDAndOD
   deriving (Eq, Generic, Hashable, Read, Reader, Show, ToDoc)
 
 data DifferentNamesInstance = DifferentNamesInstance {
@@ -375,27 +376,11 @@ differentNamesTask
   -> FilePath
   -> DifferentNamesInstance
   -> LangM m
-differentNamesTask showInputHelp path task = do
-  toTaskText showInputHelp path task
-  hoveringInformation True
-  pure ()
-
-toTaskText
-  :: (
-    MonadCache m,
-    MonadDiagrams m,
-    MonadGraphviz m,
-    MonadThrow m,
-    OutputCapable m
-    )
-  => Bool
-  -> FilePath
-  -> DifferentNamesInstance
-  -> LangM m
-toTaskText showInputHelp path task@DifferentNamesInstance {..} = do
+differentNamesTask showInputHelp path task@DifferentNamesInstance{..} = do
   specialToOutputCapable (toTaskSpecificText path task) taskText
   when showInputHelp $
     toOutputCapable [inputHelpText hasGivenCd]
+  hoveringInformation True
   extra addText
   pure ()
   where
@@ -446,7 +431,7 @@ toTaskSpecificText path inst@DifferentNamesInstance {..} = \case
     paragraph $ image $=<< cacheCd cdDrawSettings mempty mLabelLength cd path
   GivenOd -> paragraph $ image $=<<
     cacheOd oDiagram mLabelLength Forward True path
-  RelationshipNamesFromCd -> paragraph $
+  RelationshipNamesFromCd ->
     itemizeM $ map text $ sort $ associationNames cDiagram
   MappingAdvice -> mappingAdvice hasGivenCd
   DirectionsAdvice b -> directionsAdvice b
@@ -655,7 +640,22 @@ differentNamesEvaluation path task cs = do
           cacheOd relabelledOd mLabelLength Forward True path)
 
         pure ()
+      ShowMappingAndReprintCDAndOD -> do
+        paragraph $ translate $ do
+          english "Here is the reference class diagram:"
+          german "Hier ist das Referenz-Klassendiagramm:"
 
+        image $=<<
+          cacheCd (cdDrawSettings task) mempty mLabelLength (fromClassDiagram $ cDiagram task) path
+
+        paragraph $ translate $ do
+          english "Consider the correctly labelled object diagram:"
+          german "Betrachten Sie das korrekt beschriftete Objektdiagramm:"
+
+        image $=<< (relabelOd task >>= \relabelledOd ->
+          cacheOd relabelledOd mLabelLength Forward True path)
+
+        pure ()
     pure ()
 
 relabelCd :: MonadThrow m => DifferentNamesInstance -> m Cd

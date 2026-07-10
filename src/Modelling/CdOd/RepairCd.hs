@@ -376,7 +376,9 @@ repairCdTask
   -> RepairCdInstance
   -> LangM m
 repairCdTask showInputHelp path task = do
-  toTaskText showInputHelp path task
+  specialToOutputCapable (toTaskSpecificText path task) (taskText task)
+  when showInputHelp $
+    toOutputCapable inputHelpText
   simplifiedInformation True
   hoveringInformation True
   extra $ addText task
@@ -454,18 +456,6 @@ data RepairCdTaskTextElement
   = IncorrectCd
   | PotentialFixes
   deriving (Bounded, Enum, Eq, Generic, Hashable, Ord, Read, Reader, Show, ToDoc)
-
-toTaskText
-  :: (MonadCache m, MonadDiagrams m, MonadGraphviz m, OutputCapable m)
-  => Bool
-  -> FilePath
-  -> RepairCdInstance
-  -> LangM m
-toTaskText showInputHelp path task = do
-  specialToOutputCapable (toTaskSpecificText path task) (taskText task)
-  when showInputHelp $
-    toOutputCapable inputHelpText
-  pure ()
 
 toTaskSpecificText
   :: (MonadCache m, MonadDiagrams m, MonadGraphviz m, OutputCapable m)
