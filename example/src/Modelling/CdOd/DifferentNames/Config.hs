@@ -380,7 +380,7 @@ points: 0.15
 variant 1: concepts are printed in class diagrams
 share same instances as task2025_repeat_20 (85/100)
 the number of finally assigned instances: 21
-average concept generation time per instance (no concurrency): 495s
+average concept generation time per successful instance (no concurrency): 495s
 used LLM model for generation: Qwen3.5-397b-a17b
 approximate input tokens: N/A
 approximate output tokens: N/A
@@ -501,7 +501,7 @@ points: 0.1
 variant 3: Give scenario descriptions instead of class diagrams with object diagrams
 new instances, new concept injection
 the number of finally assigned instances: 83
-average concept generation time per instance (no concurrency): 495s
+average concept generation time per successful instance (no concurrency): 495s
 used LLM model for generation: Qwen3.5-397b-a17b
 approximate input tokens: N/A
 approximate output tokens: N/A
