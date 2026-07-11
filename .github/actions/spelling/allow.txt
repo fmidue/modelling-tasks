@@ -88,6 +88,7 @@ fst
 fusable
 ghci
 github
+glm
 gpt
 graphviz
 hspace
@@ -117,6 +118,7 @@ pagebreak
 parenthesise
 postbreak
 println
+Qwen
 raisebox
 randomisability
 randomisable

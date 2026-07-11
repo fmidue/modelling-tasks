@@ -383,12 +383,12 @@ task2024_54 = NameCdErrorConfig {
 
 {-|
 points: 0.15
-the amount of generated instances:
-maximum concurrent amount of tasks:
-average generation time per instance on the cluster (without considering concurrency):
-total run time on the cluster (not including queuing time):
-average CPU usage:
-average memory usage:
+the amount of generated instances: 100
+maximum concurrent amount of tasks: 100
+average generation time per instance on the cluster (without considering concurrency): 2:21min
+total run time on the cluster (not including queuing time): 2:28min
+average CPU usage: 105.05%
+average memory usage: 1300.12 MB
 used as: NameCdErrorFormInputSelectionUnAvailable-Quiz
 -}
 task2025_repeat_04 :: NameCdErrorConfig
@@ -396,12 +396,12 @@ task2025_repeat_04 = task2024_10
 
 {-|
 points: 0.15
-the amount of generated instances:
-maximum concurrent amount of tasks:
-average generation time per instance on the cluster (without considering concurrency):
-total run time on the cluster (not including queuing time):
-average CPU usage:
-average memory usage:
+the amount of generated instances: 100
+maximum concurrent amount of tasks: 100
+average generation time per instance on the cluster (without considering concurrency): 1:11min
+total run time on the cluster (not including queuing time): 1:14min
+average CPU usage: 107.07%
+average memory usage: 1337.27 MB
 used as: NameCdErrorFormInputSelectionUnAvailable-Quiz
 -}
 task2025_repeat_05 :: NameCdErrorConfig
@@ -422,12 +422,12 @@ task2025_54 = task2024_10
 
 {-|
 points: 0.1
-the amount of generated instances:
-maximum concurrent amount of tasks:
-average generation time per instance on the cluster (without considering concurrency):
-total run time on the cluster (not including queuing time):
-average CPU usage:
-average memory usage:
+the amount of generated instances: 100
+maximum concurrent amount of tasks: 100
+average generation time per instance on the cluster (without considering concurrency): 2:20min
+total run time on the cluster (not including queuing time): 2:25min
+average CPU usage: 105.84%
+average memory usage: 1303.15 MB
 used as: NameCdErrorFormInputSelectionUnAvailable-Quiz
 -}
 task2025_repeat_06 :: NameCdErrorConfig
