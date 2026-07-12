@@ -152,7 +152,7 @@ verifyDeadlock inst@DeadlockInstance{..} =
   *> traverse_ checkSolution (fromEither shortestSolutions)
   where
     checkSolutionMinLength ts =
-      assertion (length ts == minLength) $ translate $ do
+      assertion (length ts >= minLength) $ translate $ do
         english "Solution sequence is at least as long as minLength?"
         german "Lösungssequenz ist mindestens so lang wie minLength?"
 

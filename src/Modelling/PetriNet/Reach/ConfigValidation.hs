@@ -472,12 +472,12 @@ checkBaseInstance minLength noLongerThan withLengthHint rejectSpaceballsLength =
       german "minLength ist positiv?"
 
     whenJust withLengthHint $ \lengthHint -> do
-      assertion (minLength <= lengthHint) $ translate $ do
-        english "withLengthHint is larger than minLength?"
-        german "withLengHint ist größer als minLength?"
+      assertion (lengthHint >= minLength) $ translate $ do
+        english "withLengthHint is at least as large as minLength?"
+        german "withLengHint ist mindestens so groß wie minLength?"
 
       whenJust noLongerThan $ \rejectLength ->
-        assertion (lengthHint < rejectLength) $ translate $ do
+        assertion (rejectLength > lengthHint) $ translate $ do
           english "noLongerThan is larger than withLengthHint when specified?"
           german "noLongerThan ist größer als withLengthHint, falls angegeben?"
       pure ()
