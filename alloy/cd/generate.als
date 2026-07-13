@@ -152,6 +152,11 @@ pred flip [c : Change] {
   c.add in NonInheritance implies equalLimits [c.add, c.remove]
 }
 
+pred flipNonInheritance [c : Change] {
+  flip [c]
+  c.add in NonInheritance
+}
+
 pred changedKind [c : Change] {
   equalDirection [c.add, c.remove]
   not sameKind [c.add, c.remove]

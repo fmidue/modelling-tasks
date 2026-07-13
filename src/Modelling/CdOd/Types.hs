@@ -257,6 +257,7 @@ data RelationshipMutation
   = ChangeKind
   | ChangeLimit
   | Flip
+  | FlipNonInheritance
   deriving (Bounded, Enum, Eq, Generic, Ord, Read, Reader, Show, ToDoc)
 
 deriveEnumerable ''RelationshipMutation
@@ -280,6 +281,12 @@ checkCdMutations mutations
   = Just [iii|
     There are no duplications allowed for the configured cd mutations
     but #{show x} appears twice.
+    |]
+  | MutateRelationship Flip `elem` mutations
+  , MutateRelationship FlipNonInheritance `elem` mutations
+  = Just [iii|
+    Flip and FlipNonInheritance must not be enabled at the same time,
+    because FlipNonInheritance is a more restrictive variant of Flip.
     |]
   | otherwise
   = Nothing

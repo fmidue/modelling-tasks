@@ -330,6 +330,7 @@ changePredicate allowed = [__i|
       ChangeLimit -> [iii|changedLimit [c]|]
       ChangeKind -> [iii|changedKind [c]|]
       Flip -> [iii|flip [c]|]
+      FlipNonInheritance -> [iii|flipNonInheritance [c]|]
 
 changes
   :: Maybe ClassConfig
