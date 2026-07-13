@@ -237,7 +237,7 @@ defaultMatchCdOdConfig
         inheritanceLimits  = (1, Just 2),
         relationshipLimits = (3, Just 4)
       },
-    maxInstances     = Just 200,
+    maxInstances     = Just 500,
     objectConfig = ObjectConfig {
       linkLimits           = (4, Just 10),
       linksPerObjectLimits = (0, Just 4),
