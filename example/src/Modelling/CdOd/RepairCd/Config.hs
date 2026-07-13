@@ -32,7 +32,8 @@ task2023_07 = RepairCdConfig {
     RemoveRelationship,
     MutateRelationship ChangeKind,
     MutateRelationship ChangeLimit,
-    MutateRelationship Flip
+    MutateRelationship FlipInheritance,
+    MutateRelationship FlipNonInheritance
     ],
   allowedProperties = AllowedProperties {
     compositionCycles = False,
@@ -93,7 +94,8 @@ task2023_08 = RepairCdConfig {
     RemoveRelationship,
     MutateRelationship ChangeKind,
     MutateRelationship ChangeLimit,
-    MutateRelationship Flip
+    MutateRelationship FlipInheritance,
+    MutateRelationship FlipNonInheritance
     ],
   allowedProperties = AllowedProperties {
     compositionCycles = True,
@@ -153,7 +155,8 @@ task2024_12 = RepairCdConfig {
   allowedCdMutations = [
     AddRelationship,
     MutateRelationship ChangeKind,
-    MutateRelationship Flip
+    MutateRelationship FlipInheritance,
+    MutateRelationship FlipNonInheritance
     ],
   allowedProperties = AllowedProperties {
     compositionCycles = False,
@@ -212,7 +215,8 @@ task2024_13 :: RepairCdConfig
 task2024_13 = RepairCdConfig {
   allowedCdMutations = [
     MutateRelationship ChangeKind,
-    MutateRelationship Flip
+    MutateRelationship FlipInheritance,
+    MutateRelationship FlipNonInheritance
     ],
   allowedProperties = AllowedProperties {
     compositionCycles = True,
@@ -272,7 +276,8 @@ task2024_55 = RepairCdConfig {
   allowedCdMutations = [
     AddRelationship,
     MutateRelationship ChangeKind,
-    MutateRelationship Flip
+    MutateRelationship FlipInheritance,
+    MutateRelationship FlipNonInheritance
     ],
   allowedProperties = AllowedProperties {
     compositionCycles = False,
@@ -337,7 +342,8 @@ task2025_repeat_12 = RepairCdConfig {
   allowedCdMutations = [
     AddRelationship,
     MutateRelationship ChangeKind,
-    MutateRelationship Flip
+    MutateRelationship FlipInheritance,
+    MutateRelationship FlipNonInheritance
     ],
   allowedProperties = AllowedProperties {
     compositionCycles = False,

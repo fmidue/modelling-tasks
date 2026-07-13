@@ -30,7 +30,8 @@ task2023_14 = MatchCdOdConfig {
     RemoveRelationship,
     MutateRelationship ChangeKind,
     MutateRelationship ChangeLimit,
-    MutateRelationship Flip
+    MutateRelationship FlipInheritance,
+    MutateRelationship FlipNonInheritance
     ],
   classConfig = ClassConfig {
     classLimits = (5, 5),
@@ -82,7 +83,8 @@ task2023_15 = MatchCdOdConfig {
     RemoveRelationship,
     MutateRelationship ChangeKind,
     MutateRelationship ChangeLimit,
-    MutateRelationship Flip
+    MutateRelationship FlipInheritance,
+    MutateRelationship FlipNonInheritance
     ],
   classConfig = ClassConfig {
     classLimits = (5, 5),
@@ -178,7 +180,8 @@ CPU usage: 130%
 task2024_18 :: MatchCdOdConfig
 task2024_18 = MatchCdOdConfig {
   allowedCdMutations = [
-    MutateRelationship Flip
+    MutateRelationship FlipInheritance,
+    MutateRelationship FlipNonInheritance
     ],
   classConfig = ClassConfig {
     classLimits = (5, 5),
@@ -370,7 +373,8 @@ CPU usage: 141%
 task2024_58 :: MatchCdOdConfig
 task2024_58 = MatchCdOdConfig {
   allowedCdMutations = [
-    MutateRelationship Flip
+    MutateRelationship FlipInheritance,
+    MutateRelationship FlipNonInheritance
     ],
   classConfig = ClassConfig {
     classLimits = (5, 5),

@@ -152,6 +152,11 @@ pred flip [c : Change] {
   c.add in NonInheritance implies equalLimits [c.add, c.remove]
 }
 
+pred flipInheritance [c : Change] {
+  flip [c]
+  c.add in Inheritance
+}
+
 pred flipNonInheritance [c : Change] {
   flip [c]
   c.add in NonInheritance
