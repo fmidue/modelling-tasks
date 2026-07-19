@@ -1,5 +1,4 @@
 {-# LANGUAGE ApplicativeDo #-}
-{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE RecordWildCards #-}
 
 -- | Common validation logic for Petri Net configurations (Deadlock and Reach)
