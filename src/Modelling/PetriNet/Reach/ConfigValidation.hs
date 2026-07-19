@@ -483,6 +483,10 @@ checkBaseInstance minLength noLongerThan withLengthHint rejectSpaceballsLength =
       pure ()
 
     whenJust rejectSpaceballsLength $ \n -> do
+      assertion (noLongerThan == Just minLength) $ translate $ do
+        english "when rejectSpaceballsLenght is given, noLongerThan must be Just minLength"
+        german "Wenn rejectSpaceballsLenght angegeben wird, muss noLongerThan genau Just minLength sein."
+
       assertion (n >= 2) $ translate $ do
         english "rejectSpaceballsLength is at least 2?"
         german "rejectSpaceballsLength ist mindestens 2?"
