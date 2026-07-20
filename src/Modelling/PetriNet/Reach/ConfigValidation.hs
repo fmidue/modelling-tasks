@@ -495,7 +495,7 @@ checkBaseInstance minLength noLongerThan withLengthHint rejectSpaceballsLength =
       pure ()
     pure ()
 
-checkSolutionLength :: OutputCapable m => Int -> Maybe Int -> [t]
+checkSolutionLength :: OutputCapable m => Int -> Maybe Int -> [t] -> LangM m
 checkSolutionLength minLength withLengthHint ts = do
   assertion (length ts >= minLength) $ translate $ do
     english "Solution sequence is at least as long as minLength?"
