@@ -14,6 +14,7 @@ module Modelling.PetriNet.Reach.ConfigValidation (
   checkFilterConfigWith,
   checkArrowDensityCrossValidation,
   checkBaseInstance,
+  checkSolutionLength,
 ) where
 
 import Control.Applicative (Alternative ((<|>)))
@@ -494,3 +495,15 @@ checkBaseInstance minLength noLongerThan withLengthHint rejectSpaceballsLength =
       pure ()
     pure ()
 
+checkSolutionLength :: OutputCapable m => Int -> Maybe Int -> [t]
+checkSolutionLength minLength withLengthHint ts = do
+  assertion (length ts >= minLength) $ translate $ do
+    english "Solution sequence is at least as long as minLength?"
+    german "Lösungssequenz ist mindestens so lang wie minLength?"
+
+  whenJust withLengthHint $ \hint ->
+    assertion (length ts <= hint) $ translate $ do
+      english "Solution sequence is at most as long as withLengthHint?"
+      german "Lösungssequenz ist maximal so lang wie withLengthHint?"
+
+  pure ()

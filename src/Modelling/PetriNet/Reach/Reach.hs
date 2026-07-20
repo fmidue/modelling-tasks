@@ -117,6 +117,7 @@ import Modelling.PetriNet.Reach.ConfigValidation (
   checkBaseInstance,
   checkBasicPetriConfig,
   checkFilterConfigWith,
+  checkSolutionLength,
   )
 import Control.OutputCapable.Blocks (
   ArticleToUse (IndefiniteArticle),
@@ -170,16 +171,11 @@ verifyReach inst@ReachInstance{..} = do
   traverse_
     (\ts ->
       reachSyntax True inst ts
-      *> checkSolutionMinLength ts
-      *> isNoLonger noLongerThan ts
+      *> checkSolutionLength minLength withLengthHint ts
       *> checkReachesGoal n ts)
     $ fromEither shortestSolutions
   pure ()
   where
-    checkSolutionMinLength ts =
-      assertion (length ts >= minLength) $ translate $ do
-        english "Solution sequence is at least as long as minLength?"
-        german "Lösungssequenz ist mindestens so lang wie minLength?"
     checkReachesGoal n ts = assertion
       (executeSequence n ts == Just (goal netGoal))
       $ translate $ do
