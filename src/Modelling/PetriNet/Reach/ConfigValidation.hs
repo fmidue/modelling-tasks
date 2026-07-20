@@ -483,9 +483,10 @@ checkBaseInstance minLength noLongerThan withLengthHint rejectSpaceballsLength =
         english "rejectSpaceballsLength is at least 2?"
         german "rejectSpaceballsLength ist mindestens 2?"
 
-      assertion (n <= minLength) $ translate $ do
-        english "rejectSpaceballsLength is not greater than minLength?"
-        german "rejectSpaceballsLength ist nicht größer als minLength?"
+      whenJust noLongerThan $ \rejectLength ->
+        assertion (n <= rejectLength) $ translate $ do
+          english "rejectSpaceballsLength is not greater than noLongerThan?"
+          german "rejectSpaceballsLength ist nicht größer als noLongerThan?"
 
       pure ()
     pure ()
@@ -503,4 +504,3 @@ checkSolutionLength minLength withLengthHint ts = do
 
   pure ()
   where l = length ts
-
