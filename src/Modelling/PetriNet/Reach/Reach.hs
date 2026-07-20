@@ -168,7 +168,11 @@ verifyReach inst@ReachInstance{..} = do
     german "Mindestens eines von Zielnetz oder Plätze-Namen muss angezeigt werden."
   checkBaseInstance minLength noLongerThan withLengthHint rejectSpaceballsLength
   traverse_
-    (\ts -> reachSyntax True inst ts *> checkSolutionMinLength ts *> checkReachesGoal n ts)
+    (\ts ->
+      reachSyntax True inst ts
+      *> checkSolutionMinLength ts
+      *> isNoLonger noLongerThan ts
+      *> checkReachesGoal n ts)
     $ fromEither shortestSolutions
   pure ()
   where

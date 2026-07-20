@@ -159,6 +159,7 @@ verifyDeadlock inst@DeadlockInstance{..} =
     checkSolution ts =
       deadlockSyntax True inst ts
       *> checkSolutionMinLength ts
+      *> isNoLonger noLongerThan ts
       *> assertion (isDeadlockReached ts) (translate $ do
            english "Solution sequence leads to a deadlock state?"
            german "Lösungssequenz führt zu einem Deadlock-Zustand?")
