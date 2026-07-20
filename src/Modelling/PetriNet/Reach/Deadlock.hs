@@ -68,6 +68,8 @@ import Modelling.PetriNet.Reach.Property (
 import Modelling.PetriNet.Reach.ConfigValidation (
   checkBasicPetriConfig,
   checkFilterConfigWith,
+  checkBaseInstance,
+  checkSolutionLength,
   )
 import Modelling.PetriNet.Reach.Reach   (
   assertReachPoints,
@@ -145,17 +147,18 @@ verifyDeadlock
   :: (Ord a, OutputCapable m, Show a)
   => DeadlockInstance a Transition
   -> LangM m
-verifyDeadlock inst =
-  validate Default net
-  *> traverse_ checkSolution (fromEither $ shortestSolutions inst)
+verifyDeadlock inst@DeadlockInstance{..} =
+  validate Default petriNet
+  *> checkBaseInstance minLength noLongerThan withLengthHint rejectSpaceballsLength
+  *> traverse_ checkSolution (fromEither shortestSolutions)
   where
-    net = petriNet inst
     checkSolution ts =
       deadlockSyntax True inst ts
+      *> checkSolutionLength minLength withLengthHint ts
       *> assertion (isDeadlockReached ts) (translate $ do
            english "Solution sequence leads to a deadlock state?"
            german "Lösungssequenz führt zu einem Deadlock-Zustand?")
-    isDeadlockReached = maybe False (null . successors net) . executeSequence net
+    isDeadlockReached = maybe False (null . successors petriNet) . executeSequence petriNet
 
 deadlockTask
   :: (

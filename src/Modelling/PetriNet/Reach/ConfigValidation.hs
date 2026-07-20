@@ -1,3 +1,5 @@
+{-# LANGUAGE ApplicativeDo #-}
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE RecordWildCards #-}
 
 -- | Common validation logic for Petri Net configurations (Deadlock and Reach)
@@ -10,10 +12,21 @@ module Modelling.PetriNet.Reach.ConfigValidation (
   checkCapacity,
   checkTransitionBehaviorConstraints,
   checkFilterConfigWith,
-  checkArrowDensityCrossValidation
+  checkArrowDensityCrossValidation,
+  checkBaseInstance,
+  checkSolutionLength,
 ) where
 
 import Control.Applicative (Alternative ((<|>)))
+import Control.Monad.Extra (whenJust)
+import Control.OutputCapable.Blocks (
+  LangM,
+  OutputCapable,
+  assertion,
+  english,
+  german,
+  translate,
+  )
 import Data.GraphViz.Commands (GraphvizCommand)
 import Data.List.Extra (notNull)
 import Data.Maybe (fromMaybe, isJust, isNothing)
@@ -446,3 +459,48 @@ checkArrowDensityCrossValidation
     outgoingPerTransHighBound = fromMaybe numPlaces outgoingPerTransHigh
     incomingPerPlaceHighBound = fromMaybe numTransitions incomingPerPlaceHigh
     outgoingPerPlaceHighBound = fromMaybe numTransitions outgoingPerPlaceHigh
+
+checkBaseInstance
+  :: OutputCapable m
+  => Int        -- ^ minLength
+  -> Maybe Int  -- ^ noLongerThan
+  -> Maybe Int  -- ^ withLengthHint
+  -> Maybe Int  -- ^ rejectSpaceballsLength
+  -> LangM m
+checkBaseInstance minLength noLongerThan withLengthHint rejectSpaceballsLength = do
+    assertion (minLength > 0) $ translate $ do
+      english "minLength is positive?"
+      german "minLength ist positiv?"
+
+    whenJust withLengthHint $ \lengthHint ->
+      whenJust noLongerThan $ \rejectLength ->
+        assertion (rejectLength > lengthHint) $ translate $ do
+          english "noLongerThan is larger than withLengthHint when both specified?"
+          german "noLongerThan ist größer als withLengthHint falls beide angegeben?"
+
+    whenJust rejectSpaceballsLength $ \n -> do
+      assertion (n >= 2) $ translate $ do
+        english "rejectSpaceballsLength is at least 2?"
+        german "rejectSpaceballsLength ist mindestens 2?"
+
+      whenJust noLongerThan $ \rejectLength ->
+        assertion (n <= rejectLength) $ translate $ do
+          english "rejectSpaceballsLength is not greater than noLongerThan?"
+          german "rejectSpaceballsLength ist nicht größer als noLongerThan?"
+
+      pure ()
+    pure ()
+
+checkSolutionLength :: OutputCapable m => Int -> Maybe Int -> [t] -> LangM m
+checkSolutionLength minLength withLengthHint ts = do
+  assertion (l >= minLength) $ translate $ do
+    english "Solution sequence is at least as long as minLength?"
+    german "Lösungssequenz ist mindestens so lang wie minLength?"
+
+  whenJust withLengthHint $ \lengthHint ->
+    assertion (l <= lengthHint) $ translate $ do
+      english "Solution sequence is at most as long as withLengthHint?"
+      german "Lösungssequenz ist maximal so lang wie withLengthHint?"
+
+  pure ()
+  where l = length ts

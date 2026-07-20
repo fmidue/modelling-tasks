@@ -114,8 +114,10 @@ import Control.Monad.Catch              (MonadCatch, MonadThrow)
 import Control.Monad.Extra              (findM, whenJust)
 import Control.Monad.Trans.Maybe        (MaybeT (MaybeT, runMaybeT))
 import Modelling.PetriNet.Reach.ConfigValidation (
+  checkBaseInstance,
   checkBasicPetriConfig,
   checkFilterConfigWith,
+  checkSolutionLength,
   )
 import Control.OutputCapable.Blocks (
   ArticleToUse (IndefiniteArticle),
@@ -158,18 +160,24 @@ import GHC.Generics                     (Generic)
 verifyReach :: (Ord a, OutputCapable m, Show a)
   => ReachInstance a Transition
   -> LangM m
-verifyReach inst = do
-  let n = petriNet (netGoal inst)
+verifyReach inst@ReachInstance{..} = do
+  let n = petriNet netGoal
   validate Default n
-  validate Default $ n { start = goal (netGoal inst) }
-  assertion (showGoalNet inst || showPlaceNames inst) $ translate $ do
+  validate Default $ n { start = goal netGoal }
+  assertion (showGoalNet || showPlaceNames) $ translate $ do
     english "At least one of goal net or place names must be shown."
     german "Mindestens eines von Zielnetz oder Plätze-Namen muss angezeigt werden."
-  traverse_ (\ts -> reachSyntax True inst ts *> checkReachesGoal n ts) $ fromEither $ shortestSolutions inst
+  checkBaseInstance minLength noLongerThan withLengthHint rejectSpaceballsLength
+  traverse_
+    (\ts ->
+      reachSyntax True inst ts
+      *> checkSolutionLength minLength withLengthHint ts
+      *> checkReachesGoal n ts)
+    $ fromEither shortestSolutions
   pure ()
   where
     checkReachesGoal n ts = assertion
-      (executeSequence n ts == Just (goal (netGoal inst)))
+      (executeSequence n ts == Just (goal netGoal))
       $ translate $ do
           english "Solution sequence reaches the goal marking?"
           german "Lösungssequenz erreicht die Zielmarkierung?"
