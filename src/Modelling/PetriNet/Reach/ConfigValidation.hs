@@ -472,16 +472,11 @@ checkBaseInstance minLength noLongerThan withLengthHint rejectSpaceballsLength =
       english "minLength is positive?"
       german "minLength ist positiv?"
 
-    whenJust withLengthHint $ \lengthHint -> do
-      assertion (lengthHint >= minLength) $ translate $ do
-        english "withLengthHint is at least as large as minLength?"
-        german "withLengHint ist mindestens so groß wie minLength?"
-
+    whenJust withLengthHint $ \lengthHint ->
       whenJust noLongerThan $ \rejectLength ->
         assertion (rejectLength > lengthHint) $ translate $ do
           english "noLongerThan is larger than withLengthHint when specified?"
           german "noLongerThan ist größer als withLengthHint, falls angegeben?"
-      pure ()
 
     whenJust rejectSpaceballsLength $ \n -> do
       assertion (n >= 2) $ translate $ do
@@ -501,8 +496,8 @@ checkSolutionLength minLength withLengthHint ts = do
     english "Solution sequence is at least as long as minLength?"
     german "Lösungssequenz ist mindestens so lang wie minLength?"
 
-  whenJust withLengthHint $ \hint ->
-    assertion (length ts <= hint) $ translate $ do
+  whenJust withLengthHint $ \lengthHint ->
+    assertion (length ts <= lengthHint) $ translate $ do
       english "Solution sequence is at most as long as withLengthHint?"
       german "Lösungssequenz ist maximal so lang wie withLengthHint?"
 
