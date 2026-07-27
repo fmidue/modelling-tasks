@@ -190,7 +190,6 @@ task2024_63 = FindConcurrencyConfig {
   extraText = NoExtraText
   }
 
-
 {-|
 points: 0.15
 the amount of generated instances: 100
@@ -199,10 +198,23 @@ average generation time per instance on the cluster (without considering concurr
 total run time on the cluster (not including queuing time): 28:25min
 average CPU usage: 99.85%
 average max memory usage: 1542.47 MB
-used in 2025 as: PetriFindConcurrencyRadioButtonsUnAvailable-Quiz
+used in 2025 as: PetriFindConcurrencyRadioButtonsUnAvailable-Quiz (at the time)
 -}
 task2025_34 :: FindConcurrencyConfig
 task2025_34 = task2024_32
+
+{-|
+points: 0.15
+the amount of generated instances:
+maximum concurrent amount of tasks:
+average generation time per instance on the cluster (without considering concurrency):
+total run time on the cluster (not including queuing time):
+average CPU usage:
+average max memory usage:
+used as: PetriFindConcurrencyFormInputPairMatrixUnAvailable-Quiz
+-}
+task2025_repeat_43 :: FindConcurrencyConfig
+task2025_repeat_43 = task2025_34
 
 {-|
 points: 0.15
@@ -212,7 +224,20 @@ average generation time per instance on the cluster (without considering concurr
 total run time on the cluster (not including queuing time): 2:01:28h
 average CPU usage: 99.08%
 average max memory usage: 2023.23 MB
-used in 2025 as: PetriFindConcurrencyRadioButtonsUnAvailable-Quiz
+used in 2025 as: PetriFindConcurrencyRadioButtonsUnAvailable-Quiz (at the time)
 -}
 task2025_35 :: FindConcurrencyConfig
 task2025_35 = task2024_33
+
+{-|
+points: 0.15
+the amount of generated instances:
+maximum concurrent amount of tasks:
+average generation time per instance on the cluster (without considering concurrency):
+total run time on the cluster (not including queuing time):
+average CPU usage:
+average max memory usage:
+used as: PetriFindConcurrencyFormInputPairMatrixUnAvailable-Quiz
+-}
+task2025_repeat_44 :: FindConcurrencyConfig
+task2025_repeat_44 = task2025_35

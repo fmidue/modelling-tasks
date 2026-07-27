@@ -339,10 +339,23 @@ average generation time per instance on the cluster (without considering concurr
 total run time on the cluster (not including queuing time): 02:00:56h
 average CPU usage: 99%
 average max memory usage: 2465.03 MB
-used in 2025 as: PetriFindConflictPlacesCheckboxesUnAvailable-Quiz, next time maybe PetriFindConflictRadioButtonsUnAvailable-Quiz
+used in 2025 as: PetriFindConflictPlacesCheckboxesUnAvailable-Quiz (at the time)
 -}
 task2025_36 :: FindConflictConfig
 task2025_36 = task2024_34
+
+{-|
+points: 0.2
+the amount of generated instances:
+maximum concurrent amount of tasks:
+average generation time per instance on the cluster (without considering concurrency):
+total run time on the cluster (not including queuing time):
+average CPU usage:
+average max memory usage:
+used as: PetriFindConflictPlacesSelectionInputsUnAvailable-Quiz
+-}
+task2025_repeat_45 :: FindConflictConfig
+task2025_repeat_45 = task2025_36
 
 {-|
 points: 0.2
@@ -352,10 +365,23 @@ average generation time per instance on the cluster (without considering concurr
 total run time on the cluster (not including queuing time): 01:00:20h
 average CPU usage: 99%
 average max memory usage: 2341.11 MB
-used in 2025 as: PetriFindConflictPlacesCheckboxesUnAvailable-Quiz
+used in 2025 as: PetriFindConflictPlacesCheckboxesUnAvailable-Quiz (at the time)
 -}
 task2025_37 :: FindConflictConfig
 task2025_37 = task2024_35
+
+{-|
+points: 0.2
+the amount of generated instances:
+maximum concurrent amount of tasks:
+average generation time per instance on the cluster (without considering concurrency):
+total run time on the cluster (not including queuing time):
+average CPU usage:
+average max memory usage:
+used as: PetriFindConflictPlacesSelectionInputsUnAvailable-Quiz
+-}
+task2025_repeat_46 :: FindConflictConfig
+task2025_repeat_46 = task2025_37
 
 {-|
 points: 0.2
@@ -365,10 +391,23 @@ average generation time per instance on the cluster (without considering concurr
 total run time on the cluster (not including queuing time): 01:15:18h
 average CPU usage: 99%
 average max memory usage: 2819.17 MB
-used in 2025 as: PetriFindConflictPlacesCheckboxesUnAvailable-Quiz
+used in 2025 as: PetriFindConflictPlacesCheckboxesUnAvailable-Quiz (at the time)
 -}
 task2025_38 :: FindConflictConfig
 task2025_38 = task2024_36
+
+{-|
+points: 0.15
+the amount of generated instances:
+maximum concurrent amount of tasks:
+average generation time per instance on the cluster (without considering concurrency):
+total run time on the cluster (not including queuing time):
+average CPU usage:
+average max memory usage:
+used as: PetriFindConflictPlacesSelectionInputsUnAvailable-Quiz
+-}
+task2025_repeat_47 :: FindConflictConfig
+task2025_repeat_47 = task2025_38
 
 {-|
 points: 0.1
@@ -378,7 +417,20 @@ average generation time per instance on the cluster (without considering concurr
 total run time on the cluster (not including queuing time): 02:20:18h
 average CPU usage: 99%
 average max memory usage: 2719.65 MB
-used in 2025 as: PetriFindConflictPlacesCheckboxesUnAvailable-Quiz
+used in 2025 as: PetriFindConflictPlacesCheckboxesUnAvailable-Quiz (at the time)
 -}
 task2025_62 :: FindConflictConfig
 task2025_62 = task2025_38
+
+{-|
+points: 0.15
+the amount of generated instances:
+maximum concurrent amount of tasks:
+average generation time per instance on the cluster (without considering concurrency):
+total run time on the cluster (not including queuing time):
+average CPU usage:
+average max memory usage:
+used as: PetriFindConflictPlacesSelectionInputsUnAvailable-Quiz
+-}
+task2025_repeat_48 :: FindConflictConfig
+task2025_repeat_48 = task2025_38

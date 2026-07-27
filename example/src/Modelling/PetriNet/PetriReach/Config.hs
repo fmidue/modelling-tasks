@@ -137,7 +137,7 @@ average generation time per instance on the cluster (without considering concurr
 total run time on the cluster (not including queuing time): 1:41min
 average CPU usage: 95.72%
 average memory usage: 342.53 MB
-used in 2025 as: PetriReachDropdownsUnAvailable-Quiz, next time maybe PetriReachDropdowns-Quiz
+used in 2025 as: PetriReachDropdownsUnAvailable-Quiz (at the time)
 -}
 task2025_27 :: ReachConfig
 task2025_27 = ReachConfig {
@@ -183,6 +183,13 @@ task2025_27 = ReachConfig {
   }
 
 {-|
+points: 0.2
+used as: PetriReachFormInputDropdowns-Quiz
+-}
+task2025_repeat_32 :: ReachConfig
+task2025_repeat_32 = task2025_27
+
+{-|
 points: 0.25
 the amount of generated instances: 100
 maximum concurrent amount of tasks: 50
@@ -190,7 +197,7 @@ average generation time per instance on the cluster (without considering concurr
 total run time on the cluster (not including queuing time): 1:47min
 average CPU usage: 98.74%
 average memory usage: 374.26 MB
-used in 2025 as: PetriReachDropdownsUnAvailable-Quiz, next time maybe PetriReachDropdowns-Quiz
+used in 2025 as: PetriReachDropdownsUnAvailable-Quiz (at the time)
 -}
 task2025_28 :: ReachConfig
 task2025_28 = ReachConfig {
@@ -236,6 +243,19 @@ task2025_28 = ReachConfig {
   }
 
 {-|
+points: 0.175
+the amount of generated instances:
+maximum concurrent amount of tasks:
+average generation time per instance on the cluster (without considering concurrency):
+total run time on the cluster (not including queuing time):
+average CPU usage:
+average memory usage:
+used as: PetriReachFormInputDropdownsUnAvailable-Quiz
+-}
+task2025_repeat_33 :: ReachConfig
+task2025_repeat_33 = task2025_28
+
+{-|
 points: 0.1
 the amount of generated instances: 100
 maximum concurrent amount of tasks: 100
@@ -243,7 +263,20 @@ average generation time per instance on the cluster (without considering concurr
 total run time on the cluster (not including queuing time): 12s
 average CPU usage: 81.44%
 average memory usage: 367.35 MB
-used in 2025 as: PetriReachDropdownsUnAvailable-Quiz, next time maybe PetriReachDropdowns-Quiz
+used in 2025 as: PetriReachDropdownsUnAvailable-Quiz (at the time)
 -}
 task2025_58 :: ReachConfig
 task2025_58 = task2025_28
+
+{-|
+points: 0.175
+the amount of generated instances:
+maximum concurrent amount of tasks:
+average generation time per instance on the cluster (without considering concurrency):
+total run time on the cluster (not including queuing time):
+average CPU usage:
+average memory usage:
+used as: PetriReachFormInputDropdownsUnAvailable-Quiz
+-}
+task2025_repeat_34 :: ReachConfig
+task2025_repeat_34 = task2025_28

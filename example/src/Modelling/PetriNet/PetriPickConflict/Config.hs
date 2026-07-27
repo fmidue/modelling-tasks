@@ -132,10 +132,23 @@ average generation time per instance on the cluster (without considering concurr
 total run time on the cluster (not including queuing time): 01:04:26h
 average CPU usage: 99%
 average max memory usage: 1216.20 MB
-used in 2025 as: PetriPickConflictRadioButtonsUnAvailable-Quiz
+used in 2025 as: PetriPickConflictRadioButtonsUnAvailable-Quiz (at the time)
 -}
 task2025_32 :: PickConflictConfig
 task2025_32 = task2024_30
+
+{-|
+points: 0.1
+the amount of generated instances:
+maximum concurrent amount of tasks:
+average generation time per instance on the cluster (without considering concurrency):
+total run time on the cluster (not including queuing time):
+average CPU usage:
+average max memory usage:
+used as: PetriPickConflictFormInputRadioButtonsUnAvailable-Quiz
+-}
+task2025_repeat_40 :: PickConflictConfig
+task2025_repeat_40 = task2025_32
 
 {-|
 points: 0.1
@@ -145,10 +158,23 @@ average generation time per instance on the cluster (without considering concurr
 total run time on the cluster (not including queuing time): 16:12min
 average CPU usage: 100%
 average max memory usage: 1375.05 MB
-used in 2025 as: PetriPickConflictRadioButtonsUnAvailable-Quiz
+used in 2025 as: PetriPickConflictRadioButtonsUnAvailable-Quiz (at the time)
 -}
 task2025_33 :: PickConflictConfig
 task2025_33 = task2024_31
+
+{-|
+points: 0.1
+the amount of generated instances:
+maximum concurrent amount of tasks:
+average generation time per instance on the cluster (without considering concurrency):
+total run time on the cluster (not including queuing time):
+average CPU usage:
+average max memory usage:
+used as: PetriPickConflictFormInputRadioButtonsUnAvailable-Quiz
+-}
+task2025_repeat_41 :: PickConflictConfig
+task2025_repeat_41 = task2025_33
 
 {-|
 points: 0.1
@@ -158,7 +184,20 @@ average generation time per instance on the cluster (without considering concurr
 total run time on the cluster (not including queuing time): 01:00:51h
 average CPU usage: 99%
 average max memory usage: 1179.45 MB
-used in 2025 as: PetriPickConflictRadioButtonsUnAvailable-Quiz
+used in 2025 as: PetriPickConflictRadioButtonsUnAvailable-Quiz (at the time)
 -}
 task2025_61 :: PickConflictConfig
 task2025_61 = task2025_32
+
+{-|
+points: 0.1
+the amount of generated instances:
+maximum concurrent amount of tasks:
+average generation time per instance on the cluster (without considering concurrency):
+total run time on the cluster (not including queuing time):
+average CPU usage:
+average max memory usage:
+used as: PetriPickConflictFormInputRadioButtonsUnAvailable-Quiz
+-}
+task2025_repeat_42 :: PickConflictConfig
+task2025_repeat_42 = task2025_32

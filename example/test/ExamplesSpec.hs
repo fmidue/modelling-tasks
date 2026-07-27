@@ -212,7 +212,9 @@ import Modelling.PetriNet.PetriFindConcurrency.Config (
   task2024_62,
   task2024_63,
   task2025_34,
+  task2025_repeat_43,
   task2025_35,
+  task2025_repeat_44,
   )
 import Modelling.PetriNet.PetriFindConflictPlaces.Config (
   task2023_24,
@@ -224,9 +226,13 @@ import Modelling.PetriNet.PetriFindConflictPlaces.Config (
   task2024_65,
   task2024_66,
   task2025_36,
+  task2025_repeat_45,
   task2025_37,
+  task2025_repeat_46,
   task2025_38,
+  task2025_repeat_47,
   task2025_62,
+  task2025_repeat_48,
   )
 import Modelling.PetriNet.PetriGraphToMath.Config (
   task2023_17,
@@ -234,7 +240,9 @@ import Modelling.PetriNet.PetriGraphToMath.Config (
   task2024_21,
   task2024_22,
   task2025_23,
+  task2025_repeat_28,
   task2025_24,
+  task2025_repeat_29,
   )
 import Modelling.PetriNet.PetriMathToGraph.Config (
   task2023_19,
@@ -242,13 +250,17 @@ import Modelling.PetriNet.PetriMathToGraph.Config (
   task2024_23,
   task2024_24,
   task2025_25,
+  task2025_repeat_30,
   task2025_26,
+  task2025_repeat_31,
   )
 import Modelling.PetriNet.PetriPickConcurrency.Config (
   task2023_21,
   task2024_29,
   task2025_31,
+  task2025_repeat_38,
   task2025_60,
+  task2025_repeat_39,
   )
 import Modelling.PetriNet.PetriPickConflict.Config (
   task2023_22,
@@ -256,8 +268,11 @@ import Modelling.PetriNet.PetriPickConflict.Config (
   task2024_30,
   task2024_31,
   task2025_32,
+  task2025_repeat_40,
   task2025_33,
+  task2025_repeat_41,
   task2025_61,
+  task2025_repeat_42,
   )
 import Modelling.PetriNet.Reach.Deadlock (
   checkDeadlockConfig,
@@ -269,8 +284,11 @@ import Modelling.PetriNet.PetriDeadlock.Config (
   task2024_28,
   task2024_61,
   task2025_29,
+  task2025_repeat_35,
   task2025_30,
+  task2025_repeat_36,
   task2025_59,
+  task2025_repeat_37,
   )
 import Modelling.PetriNet.Reach.Reach (
   checkReachConfig,
@@ -282,8 +300,11 @@ import Modelling.PetriNet.PetriReach.Config (
   task2024_26,
   task2024_60,
   task2025_27,
+  task2025_repeat_32,
   task2025_28,
+  task2025_repeat_33,
   task2025_58,
+  task2025_repeat_34,
   )
 
 import Test.Hspec
@@ -665,3 +686,45 @@ spec =
         checkMatchCdOdConfig task2025_repeat_26 `shouldBe` Nothing
       it "task27" $
         checkMatchCdOdConfig task2025_repeat_27 `shouldBe` Nothing
+      it "task28" $
+        checkGraphToMathConfig task2025_repeat_28 `shouldBe` Nothing
+      it "task29" $
+        checkGraphToMathConfig task2025_repeat_29 `shouldBe` Nothing
+      it "task30" $
+        checkMathConfig task2025_repeat_30 `shouldBe` Nothing
+      it "task31" $
+        checkMathConfig task2025_repeat_31 `shouldBe` Nothing
+      it "task32" $
+        checkReachConfig task2025_repeat_32 `shouldBe` Nothing
+      it "task33" $
+        checkReachConfig task2025_repeat_33 `shouldBe` Nothing
+      it "task34" $
+        checkReachConfig task2025_repeat_34 `shouldBe` Nothing
+      it "task35" $
+        checkDeadlockConfig task2025_repeat_35 `shouldBe` Nothing
+      it "task36" $
+        checkDeadlockConfig task2025_repeat_36 `shouldBe` Nothing
+      it "task37" $
+        checkDeadlockConfig task2025_repeat_37 `shouldBe` Nothing
+      it "task38" $
+        checkPickConcurrencyConfig task2025_repeat_38 `shouldBe` Nothing
+      it "task39" $
+        checkPickConcurrencyConfig task2025_repeat_39 `shouldBe` Nothing
+      it "task40" $
+        checkPickConflictConfig task2025_repeat_40 `shouldBe` Nothing
+      it "task41" $
+        checkPickConflictConfig task2025_repeat_41 `shouldBe` Nothing
+      it "task42" $
+        checkPickConflictConfig task2025_repeat_42 `shouldBe` Nothing
+      it "task43" $
+        checkFindConcurrencyConfig task2025_repeat_43 `shouldBe` Nothing
+      it "task44" $
+        checkFindConcurrencyConfig task2025_repeat_44 `shouldBe` Nothing
+      it "task45" $
+        checkFindConflictPlacesConfig task2025_repeat_45 `shouldBe` Nothing
+      it "task46" $
+        checkFindConflictPlacesConfig task2025_repeat_46 `shouldBe` Nothing
+      it "task47" $
+        checkFindConflictPlacesConfig task2025_repeat_47 `shouldBe` Nothing
+      it "task48" $
+        checkFindConflictPlacesConfig task2025_repeat_48 `shouldBe` Nothing

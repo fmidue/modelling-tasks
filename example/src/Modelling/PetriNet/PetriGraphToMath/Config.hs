@@ -132,10 +132,23 @@ total run time on the cluster (not including queuing time): 26:50min
 average CPU usage: 101%
 average max memory usage: 986.73 MB
 Note: 1 student task is rendered faulty on Autotool due to the different graphviz version (manually fixed).
-used in 2025 as: PetriGraphToMathRadioButtonsUnAvailable-Quiz
+used in 2025 as: PetriGraphToMathRadioButtonsUnAvailable-Quiz (at the time)
 -}
 task2025_23 :: MathConfig
 task2025_23 = task2024_21
+
+{-|
+points: 0.05
+the amount of generated instances:
+maximum concurrent amount of tasks:
+average generation time per instance on the cluster (without considering concurrency):
+total run time on the cluster (not including queuing time):
+average CPU usage:
+average max memory usage:
+used as: PetriGraphToMathFormInputRadioButtonsUnAvailable-Quiz
+-}
+task2025_repeat_28 :: MathConfig
+task2025_repeat_28 = task2025_23
 
 {-|
 points: 0.05
@@ -146,7 +159,20 @@ total run time on the cluster (not including queuing time): 01:51:17h
 average CPU usage: 100%
 average max memory usage: 1255.89 MB
 Note: about 15 student tasks are rendered faulty on Autotool due to the different graphviz version (manually fixed).
-used in 2025 as: PetriGraphToMathRadioButtonsUnAvailable-Quiz
+used in 2025 as: PetriGraphToMathRadioButtonsUnAvailable-Quiz (at the time)
 -}
 task2025_24 :: MathConfig
 task2025_24 = task2024_22
+
+{-|
+points: 0.05
+the amount of generated instances:
+maximum concurrent amount of tasks:
+average generation time per instance on the cluster (without considering concurrency):
+total run time on the cluster (not including queuing time):
+average CPU usage:
+average max memory usage:
+used as: PetriGraphToMathFormInputRadioButtonsUnAvailable-Quiz
+-}
+task2025_repeat_29 :: MathConfig
+task2025_repeat_29 = task2025_24
