@@ -205,12 +205,12 @@ task2025_34 = task2024_32
 
 {-|
 points: 0.15
-the amount of generated instances:
-maximum concurrent amount of tasks:
-average generation time per instance on the cluster (without considering concurrency):
-total run time on the cluster (not including queuing time):
-average CPU usage:
-average max memory usage:
+the amount of generated instances: 100
+maximum concurrent amount of tasks: 100
+average generation time per instance on the cluster (without considering concurrency): 27:33min
+total run time on the cluster (not including queuing time): 30:28min
+average CPU usage: 99.96%
+average max memory usage: 1566.85 MB
 used as: PetriFindConcurrencyFormInputPairMatrixUnAvailable-Quiz
 -}
 task2025_repeat_43 :: FindConcurrencyConfig
@@ -231,12 +231,12 @@ task2025_35 = task2024_33
 
 {-|
 points: 0.15
-the amount of generated instances:
-maximum concurrent amount of tasks:
-average generation time per instance on the cluster (without considering concurrency):
-total run time on the cluster (not including queuing time):
-average CPU usage:
-average max memory usage:
+the amount of generated instances: 100
+maximum concurrent amount of tasks: 100
+average generation time per instance on the cluster (without considering concurrency): 1:08:42h
+total run time on the cluster (not including queuing time): 02:57:03h
+average CPU usage: 99.16%
+average max memory usage: 1970.14 MB
 used as: PetriFindConcurrencyFormInputPairMatrixUnAvailable-Quiz
 -}
 task2025_repeat_44 :: FindConcurrencyConfig

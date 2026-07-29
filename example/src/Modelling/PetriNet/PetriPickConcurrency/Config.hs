@@ -75,12 +75,12 @@ task2025_31 = task2024_29
 
 {-|
 points: 0.1
-the amount of generated instances:
-maximum concurrent amount of tasks:
-average generation time per instance on the cluster (without considering concurrency):
-total run time on the cluster (not including queuing time):
-average CPU usage:
-average max memory usage:
+the amount of generated instances: 100
+maximum concurrent amount of tasks: 100
+average generation time per instance on the cluster (without considering concurrency): 2:19:39h
+total run time on the cluster (not including queuing time): 02:27:13h
+average CPU usage: 99%
+average max memory usage: 1233.71 MB
 used as: PetriPickConcurrencyFormInputRadioButtonsUnAvailable-Quiz
 -}
 task2025_repeat_38 :: PickConcurrencyConfig
@@ -101,12 +101,12 @@ task2025_60 = task2025_31
 
 {-|
 points: 0.1
-the amount of generated instances:
-maximum concurrent amount of tasks:
-average generation time per instance on the cluster (without considering concurrency):
-total run time on the cluster (not including queuing time):
-average CPU usage:
-average max memory usage:
+the amount of generated instances: 100
+maximum concurrent amount of tasks: 100
+average generation time per instance on the cluster (without considering concurrency): 2:19:31h
+total run time on the cluster (not including queuing time): 02:28:44h
+average CPU usage: 99%
+average max memory usage: 1231.40 MB
 used as: PetriPickConcurrencyFormInputRadioButtonsUnAvailable-Quiz
 -}
 task2025_repeat_39 :: PickConcurrencyConfig
