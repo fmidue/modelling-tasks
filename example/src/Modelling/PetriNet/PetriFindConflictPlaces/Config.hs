@@ -346,12 +346,12 @@ task2025_36 = task2024_34
 
 {-|
 points: 0.2
-the amount of generated instances:
-maximum concurrent amount of tasks:
-average generation time per instance on the cluster (without considering concurrency):
-total run time on the cluster (not including queuing time):
-average CPU usage:
-average max memory usage:
+the amount of generated instances: 100
+maximum concurrent amount of tasks: 100
+average generation time per instance on the cluster (without considering concurrency): 1:01:37h
+total run time on the cluster (not including queuing time): 01:04:14h
+average CPU usage: 99%
+average max memory usage: 2606.03 MB
 used as: PetriFindConflictPlacesSelectionInputsUnAvailable-Quiz
 -}
 task2025_repeat_45 :: FindConflictConfig
@@ -372,12 +372,12 @@ task2025_37 = task2024_35
 
 {-|
 points: 0.2
-the amount of generated instances:
-maximum concurrent amount of tasks:
-average generation time per instance on the cluster (without considering concurrency):
-total run time on the cluster (not including queuing time):
-average CPU usage:
-average max memory usage:
+the amount of generated instances: 100
+maximum concurrent amount of tasks: 100
+average generation time per instance on the cluster (without considering concurrency): 57:59min
+total run time on the cluster (not including queuing time): 01:05:07h
+average CPU usage: 99.01%
+average max memory usage: 2435.97 MB
 used as: PetriFindConflictPlacesSelectionInputsUnAvailable-Quiz
 -}
 task2025_repeat_46 :: FindConflictConfig
@@ -398,12 +398,12 @@ task2025_38 = task2024_36
 
 {-|
 points: 0.15
-the amount of generated instances:
-maximum concurrent amount of tasks:
-average generation time per instance on the cluster (without considering concurrency):
-total run time on the cluster (not including queuing time):
-average CPU usage:
-average max memory usage:
+the amount of generated instances: 100
+maximum concurrent amount of tasks: 100
+average generation time per instance on the cluster (without considering concurrency): 1:20:03h
+total run time on the cluster (not including queuing time): 02:21:15h
+average CPU usage: 99%
+average max memory usage: 2892.92 MB
 used as: PetriFindConflictPlacesSelectionInputsUnAvailable-Quiz
 -}
 task2025_repeat_47 :: FindConflictConfig
@@ -424,12 +424,12 @@ task2025_62 = task2025_38
 
 {-|
 points: 0.15
-the amount of generated instances:
-maximum concurrent amount of tasks:
-average generation time per instance on the cluster (without considering concurrency):
-total run time on the cluster (not including queuing time):
-average CPU usage:
-average max memory usage:
+the amount of generated instances: 100
+maximum concurrent amount of tasks: 100
+average generation time per instance on the cluster (without considering concurrency): 1:11:11h
+total run time on the cluster (not including queuing time): 01:15:12h
+average CPU usage: 99%
+average max memory usage: 2829.89 MB
 used as: PetriFindConflictPlacesSelectionInputsUnAvailable-Quiz
 -}
 task2025_repeat_48 :: FindConflictConfig

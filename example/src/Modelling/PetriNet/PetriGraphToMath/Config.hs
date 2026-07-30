@@ -139,12 +139,12 @@ task2025_23 = task2024_21
 
 {-|
 points: 0.05
-the amount of generated instances:
-maximum concurrent amount of tasks:
-average generation time per instance on the cluster (without considering concurrency):
-total run time on the cluster (not including queuing time):
-average CPU usage:
-average max memory usage:
+the amount of generated instances: 100
+maximum concurrent amount of tasks: 100
+average generation time per instance on the cluster (without considering concurrency): 12:09min
+total run time on the cluster (not including queuing time): 12:38min
+average CPU usage: 100%
+average max memory usage: 983.64 MB
 used as: PetriGraphToMathFormInputRadioButtonsUnAvailable-Quiz
 -}
 task2025_repeat_28 :: MathConfig
@@ -166,12 +166,12 @@ task2025_24 = task2024_22
 
 {-|
 points: 0.05
-the amount of generated instances:
-maximum concurrent amount of tasks:
-average generation time per instance on the cluster (without considering concurrency):
-total run time on the cluster (not including queuing time):
-average CPU usage:
-average max memory usage:
+the amount of generated instances: 100
+maximum concurrent amount of tasks: 100
+average generation time per instance on the cluster (without considering concurrency): 31:31min
+total run time on the cluster (not including queuing time): 1:51:31h
+average CPU usage: 100%
+average max memory usage: 1004.07 MB
 used as: PetriGraphToMathFormInputRadioButtonsUnAvailable-Quiz
 -}
 task2025_repeat_29 :: MathConfig

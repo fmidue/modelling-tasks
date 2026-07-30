@@ -139,12 +139,12 @@ task2025_32 = task2024_30
 
 {-|
 points: 0.1
-the amount of generated instances:
-maximum concurrent amount of tasks:
-average generation time per instance on the cluster (without considering concurrency):
-total run time on the cluster (not including queuing time):
-average CPU usage:
-average max memory usage:
+the amount of generated instances: 100
+maximum concurrent amount of tasks: 100
+average generation time per instance on the cluster (without considering concurrency): 59:02min
+total run time on the cluster (not including queuing time): 01:54:06h
+average CPU usage: 99%
+average max memory usage: 1256.44 MB
 used as: PetriPickConflictFormInputRadioButtonsUnAvailable-Quiz
 -}
 task2025_repeat_40 :: PickConflictConfig
@@ -165,12 +165,12 @@ task2025_33 = task2024_31
 
 {-|
 points: 0.1
-the amount of generated instances:
-maximum concurrent amount of tasks:
-average generation time per instance on the cluster (without considering concurrency):
-total run time on the cluster (not including queuing time):
-average CPU usage:
-average max memory usage:
+the amount of generated instances: 100
+maximum concurrent amount of tasks: 100
+average generation time per instance on the cluster (without considering concurrency): 15:08min
+total run time on the cluster (not including queuing time): 15:50min
+average CPU usage: 100%
+average max memory usage: 1294.50 MB
 used as: PetriPickConflictFormInputRadioButtonsUnAvailable-Quiz
 -}
 task2025_repeat_41 :: PickConflictConfig
@@ -191,12 +191,12 @@ task2025_61 = task2025_32
 
 {-|
 points: 0.1
-the amount of generated instances:
-maximum concurrent amount of tasks:
-average generation time per instance on the cluster (without considering concurrency):
-total run time on the cluster (not including queuing time):
-average CPU usage:
-average max memory usage:
+the amount of generated instances: 100
+maximum concurrent amount of tasks: 100
+average generation time per instance on the cluster (without considering concurrency): 58:38min
+total run time on the cluster (not including queuing time): 01:01:37h
+average CPU usage: 99%
+average max memory usage: 1179.76 MB
 used as: PetriPickConflictFormInputRadioButtonsUnAvailable-Quiz
 -}
 task2025_repeat_42 :: PickConflictConfig

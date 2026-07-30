@@ -244,12 +244,12 @@ task2025_28 = ReachConfig {
 
 {-|
 points: 0.175
-the amount of generated instances:
-maximum concurrent amount of tasks:
-average generation time per instance on the cluster (without considering concurrency):
-total run time on the cluster (not including queuing time):
-average CPU usage:
-average memory usage:
+the amount of generated instances: 100
+maximum concurrent amount of tasks: 100
+average generation time per instance on the cluster (without considering concurrency): 8.27s
+total run time on the cluster (not including queuing time): 11s
+average CPU usage: 88.64%
+average memory usage: 362.72 MB
 used as: PetriReachFormInputDropdownsUnAvailable-Quiz
 -}
 task2025_repeat_33 :: ReachConfig
@@ -270,12 +270,12 @@ task2025_58 = task2025_28
 
 {-|
 points: 0.175
-the amount of generated instances:
-maximum concurrent amount of tasks:
-average generation time per instance on the cluster (without considering concurrency):
-total run time on the cluster (not including queuing time):
-average CPU usage:
-average memory usage:
+the amount of generated instances: 100
+maximum concurrent amount of tasks: 100
+average generation time per instance on the cluster (without considering concurrency): 8.38s
+total run time on the cluster (not including queuing time): 11s
+average CPU usage: 87.73%
+average memory usage: 358.07 MB
 used as: PetriReachFormInputDropdownsUnAvailable-Quiz
 -}
 task2025_repeat_34 :: ReachConfig
