@@ -139,8 +139,8 @@ task2025_32 = task2024_30
 
 {-|
 points: 0.1
-the amount of generated instances:
-maximum concurrent amount of tasks:
+the amount of generated instances: 100
+maximum concurrent amount of tasks: 100
 average generation time per instance on the cluster (without considering concurrency): 59:02min
 total run time on the cluster (not including queuing time): 01:54:06h
 average CPU usage: 99%
