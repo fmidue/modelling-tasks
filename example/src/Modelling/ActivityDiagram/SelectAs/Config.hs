@@ -84,10 +84,23 @@ average generation time per instance on the cluster (without considering concurr
 total run time on the cluster (not including queuing time): 26:13min
 average CPU usage: 99.12%
 average memory usage: 1744.60 MB
-used in 2025 as: SelectASUnAvailable-Quiz, next time in form-based version
+used as: SelectASUnAvailable-Quiz (at the time)
 -}
 task2025_41 :: SelectASConfig
 task2025_41 = task2024_39
+
+{-|
+points: 0.15
+the amount of generated instances:
+maximum concurrent amount of tasks:
+average generation time per instance on the cluster (without considering concurrency):
+total run time on the cluster (not including queuing time):
+average CPU usage:
+average memory usage:
+used as: SelectASFormInputRadioButtonsUnAvailable-Quiz
+-}
+task2025_repeat_51 :: SelectASConfig
+task2025_repeat_51 = task2025_41
 
 {-|
 points: 0.15
@@ -97,7 +110,7 @@ average generation time per instance on the cluster (without considering concurr
 total run time on the cluster (not including queuing time): 37:46min
 average CPU usage: 99%
 average memory usage: 11696.96 MB
-used in 2025 as: SelectASUnAvailable-Quiz, next time in form-based version
+used as: SelectASUnAvailable-Quiz (at the time)
 -}
 task2025_42 :: SelectASConfig
 task2025_42 = SelectASConfig {
@@ -122,11 +135,24 @@ task2025_42 = SelectASConfig {
 }
 
 {-|
+points: 0.125
+the amount of generated instances:
+maximum concurrent amount of tasks:
+average generation time per instance on the cluster (without considering concurrency):
+total run time on the cluster (not including queuing time):
+average CPU usage:
+average memory usage:
+used as: SelectASFormInputRadioButtonsUnAvailable-Quiz
+-}
+task2025_repeat_52 :: SelectASConfig
+task2025_repeat_52 = task2025_42
+
+{-|
 points: 0.15
 the amount of generated instances: 50
 maximum concurrent amount of tasks: 1 (Out-of-memory errors sometimes occur, which can cause parallel programs to terminate)
 average generation time per instance on the cluster (without considering concurrency): about 7:17min (if successful generation)
-used in 2025 as: SelectASUnAvailable-Quiz, next time in form-based version
+used as: SelectASUnAvailable-Quiz (at the time)
 -}
 task2025_43 :: SelectASConfig
 task2025_43 = SelectASConfig {
@@ -151,6 +177,19 @@ task2025_43 = SelectASConfig {
 }
 
 {-|
+points: 0.15
+the amount of generated instances:
+maximum concurrent amount of tasks:
+average generation time per instance on the cluster (without considering concurrency):
+total run time on the cluster (not including queuing time):
+average CPU usage:
+average memory usage:
+used as: SelectASFormInputRadioButtonsUnAvailable-Quiz
+-}
+task2025_repeat_53 :: SelectASConfig
+task2025_repeat_53 = task2025_43
+
+{-|
 points: 0.1
 the amount of generated instances: 100
 maximum concurrent amount of tasks: 100
@@ -158,7 +197,20 @@ average generation time per instance on the cluster (without considering concurr
 total run time on the cluster (not including queuing time): 39:31min
 average CPU usage: 99.03%
 average memory usage: 11647.41 MB
-used in 2025 as: SelectASUnAvailable-Quiz, next time in form-based version
+used as: SelectASUnAvailable-Quiz (at the time)
 -}
 task2025_63 :: SelectASConfig
 task2025_63 = task2025_42
+
+{-|
+points: 0.125
+the amount of generated instances:
+maximum concurrent amount of tasks:
+average generation time per instance on the cluster (without considering concurrency):
+total run time on the cluster (not including queuing time):
+average CPU usage:
+average memory usage:
+used as: SelectASFormInputRadioButtonsUnAvailable-Quiz
+-}
+task2025_repeat_54 :: SelectASConfig
+task2025_repeat_54 = task2025_42

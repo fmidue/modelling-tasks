@@ -124,7 +124,7 @@ average generation time per instance on the cluster (without considering concurr
 total run time on the cluster (not including queuing time): 8:48min
 average CPU usage: 100%
 average memory usage: 1688.99 MB
-used in 2025 as: SelectPetriUnAvailable-Quiz, next time in form-based version
+used as: SelectPetriUnAvailable-Quiz (at the time)
 -}
 task2025_46 :: SelectPetriConfig
 task2025_46 = SelectPetriConfig {
@@ -156,6 +156,19 @@ task2025_46 = SelectPetriConfig {
     }
 
 {-|
+points: 0.125
+the amount of generated instances:
+maximum concurrent amount of tasks:
+average generation time per instance on the cluster (without considering concurrency):
+total run time on the cluster (not including queuing time):
+average CPU usage:
+average memory usage:
+used as: SelectPetriFormInputRadioButtonsUnAvailable-Quiz
+-}
+task2025_repeat_58 :: SelectPetriConfig
+task2025_repeat_58 = task2025_46
+
+{-|
 points: 0.15
 the amount of generated instances: 100
 maximum concurrent amount of tasks: 100
@@ -163,7 +176,7 @@ average generation time per instance on the cluster (without considering concurr
 total run time on the cluster (not including queuing time): 4:24min
 average CPU usage: 101.04%
 average memory usage: 1172.15 MB
-used in 2025 as: SelectPetriUnAvailable-Quiz, next time in form-based version
+used as: SelectPetriUnAvailable-Quiz (at the time)
 -}
 task2025_47 :: SelectPetriConfig
 task2025_47 = SelectPetriConfig {
@@ -195,6 +208,19 @@ task2025_47 = SelectPetriConfig {
   }
 
 {-|
+points: 0.15
+the amount of generated instances:
+maximum concurrent amount of tasks:
+average generation time per instance on the cluster (without considering concurrency):
+total run time on the cluster (not including queuing time):
+average CPU usage:
+average memory usage:
+used as: SelectPetriFormInputRadioButtonsUnAvailable-Quiz
+-}
+task2025_repeat_59 :: SelectPetriConfig
+task2025_repeat_59 = task2025_47
+
+{-|
 points: 0.1
 the amount of generated instances: 100
 maximum concurrent amount of tasks: 100
@@ -202,7 +228,20 @@ average generation time per instance on the cluster (without considering concurr
 total run time on the cluster (not including queuing time): 8:51min
 average CPU usage: 100%
 average max memory usage: 1644.37 MB
-used in 2025 as: SelectPetriUnAvailable-Quiz, next time in form-based version
+used as: SelectPetriUnAvailable-Quiz (at the time)
 -}
 task2025_65 :: SelectPetriConfig
 task2025_65 = task2025_46
+
+{-|
+points: 0.125
+the amount of generated instances:
+maximum concurrent amount of tasks:
+average generation time per instance on the cluster (without considering concurrency):
+total run time on the cluster (not including queuing time):
+average CPU usage:
+average memory usage:
+used as: SelectPetriFormInputRadioButtonsUnAvailable-Quiz
+-}
+task2025_repeat_60 :: SelectPetriConfig
+task2025_repeat_60 = task2025_46

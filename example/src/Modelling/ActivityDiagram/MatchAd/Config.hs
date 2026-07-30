@@ -83,11 +83,23 @@ average generation time per instance on the cluster (without considering concurr
 total run time on the cluster (not including queuing time): 2:20min
 average CPU usage: 101.93%
 average memory usage: 408.60 MB
-used in 2025 as: MatchAdUnAvailable-Quiz, next time in form-based version
+used as: MatchAdUnAvailable-Quiz (at the time)
 -}
 task2025_39 :: MatchAdConfig
 task2025_39 = task2024_37
 
+{-|
+points: 0.15
+the amount of generated instances:
+maximum concurrent amount of tasks:
+average generation time per instance on the cluster (without considering concurrency):
+total run time on the cluster (not including queuing time):
+average CPU usage:
+average memory usage:
+used as: MatchAdFormInputMultiFieldUnAvailable-Quiz
+-}
+task2025_repeat_49 :: MatchAdConfig
+task2025_repeat_49 = task2025_39
 
 {-|
 points: 0.15
@@ -97,7 +109,20 @@ average generation time per instance on the cluster (without considering concurr
 total run time on the cluster (not including queuing time): 3:27min
 average CPU usage: 100.80%
 average memory usage: 455.67 MB
-used in 2025 as: MatchAdUnAvailable-Quiz, next time in form-based version
+used as: MatchAdUnAvailable-Quiz (at the time)
 -}
 task2025_40 :: MatchAdConfig
 task2025_40 = task2024_38
+
+{-|
+points: 0.15
+the amount of generated instances:
+maximum concurrent amount of tasks:
+average generation time per instance on the cluster (without considering concurrency):
+total run time on the cluster (not including queuing time):
+average CPU usage:
+average memory usage:
+used as: MatchAdFormInputMultiFieldUnAvailable-Quiz
+-}
+task2025_repeat_50 :: MatchAdConfig
+task2025_repeat_50 = task2025_40

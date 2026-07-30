@@ -17,8 +17,11 @@ import Modelling.ActivityDiagram.EnterAs.Config (
   task2024_68,
   task2024_69,
   task2025_44,
+  task2025_repeat_55,
   task2025_45,
+  task2025_repeat_56,
   task2025_64,
+  task2025_repeat_57,
   )
 import Modelling.ActivityDiagram.FindAuxiliaryPetriNodes (
   checkFindAuxiliaryPetriNodesConfig,
@@ -31,8 +34,11 @@ import Modelling.ActivityDiagram.FindAuxiliaryPetriNodes.Config (
   task2024_72,
   task2024_73,
   task2025_50,
+  task2025_repeat_64,
   task2025_51,
+  task2025_repeat_65,
   task2025_67,
+  task2025_repeat_66,
   )
 import Modelling.ActivityDiagram.MatchAd (
   checkMatchAdConfig,
@@ -44,7 +50,9 @@ import Modelling.ActivityDiagram.MatchAd.Config (
   task2024_38,
   task2024_67,
   task2025_39,
+  task2025_repeat_49,
   task2025_40,
+  task2025_repeat_50,
   )
 import Modelling.ActivityDiagram.MatchPetri (
   checkMatchPetriConfig,
@@ -57,8 +65,11 @@ import Modelling.ActivityDiagram.MatchPetri.Config (
   task2024_70,
   task2024_71,
   task2025_48,
+  task2025_repeat_61,
   task2025_49,
+  task2025_repeat_62,
   task2025_66,
+  task2025_repeat_63,
   )
 import Modelling.ActivityDiagram.SelectAS (
   checkSelectASConfig,
@@ -69,9 +80,13 @@ import Modelling.ActivityDiagram.SelectAs.Config (
   task2024_39,
   task2024_40,
   task2025_41,
+  task2025_repeat_51,
   task2025_42,
+  task2025_repeat_52,
   task2025_43,
+  task2025_repeat_53,
   task2025_63,
+  task2025_repeat_54,
   )
 import Modelling.ActivityDiagram.SelectPetri (
   checkSelectPetriConfig,
@@ -82,8 +97,11 @@ import Modelling.ActivityDiagram.SelectPetri.Config (
   task2024_43,
   task2024_44,
   task2025_46,
+  task2025_repeat_58,
   task2025_47,
+  task2025_repeat_59,
   task2025_65,
+  task2025_repeat_60,
   )
 import Modelling.CdOd.DifferentNames (
   checkDifferentNamesConfig,
@@ -728,3 +746,39 @@ spec =
         checkFindConflictPlacesConfig task2025_repeat_47 `shouldBe` Nothing
       it "task48" $
         checkFindConflictPlacesConfig task2025_repeat_48 `shouldBe` Nothing
+      it "task49" $
+        checkMatchAdConfig task2025_repeat_49 `shouldBe` Nothing
+      it "task50" $
+        checkMatchAdConfig task2025_repeat_50 `shouldBe` Nothing
+      it "task51" $
+        checkSelectASConfig task2025_repeat_51 `shouldBe` Nothing
+      it "task52" $
+        checkSelectASConfig task2025_repeat_52 `shouldBe` Nothing
+      it "task53" $
+        checkSelectASConfig task2025_repeat_53 `shouldBe` Nothing
+      it "task54" $
+        checkSelectASConfig task2025_repeat_54 `shouldBe` Nothing
+      it "task55" $
+        checkEnterASConfig task2025_repeat_55 `shouldBe` Nothing
+      it "task56" $
+        checkEnterASConfig task2025_repeat_56 `shouldBe` Nothing
+      it "task57" $
+        checkEnterASConfig task2025_repeat_57 `shouldBe` Nothing
+      it "task58" $
+        checkSelectPetriConfig task2025_repeat_58 `shouldBe` Nothing
+      it "task59" $
+        checkSelectPetriConfig task2025_repeat_59 `shouldBe` Nothing
+      it "task60" $
+        checkSelectPetriConfig task2025_repeat_60 `shouldBe` Nothing
+      it "task61" $
+        checkMatchPetriConfig task2025_repeat_61 `shouldBe` Nothing
+      it "task62" $
+        checkMatchPetriConfig task2025_repeat_62 `shouldBe` Nothing
+      it "task63" $
+        checkMatchPetriConfig task2025_repeat_63 `shouldBe` Nothing
+      it "task64" $
+        checkFindAuxiliaryPetriNodesConfig task2025_repeat_64 `shouldBe` Nothing
+      it "task65" $
+        checkFindAuxiliaryPetriNodesConfig task2025_repeat_65 `shouldBe` Nothing
+      it "task66" $
+        checkFindAuxiliaryPetriNodesConfig task2025_repeat_66 `shouldBe` Nothing

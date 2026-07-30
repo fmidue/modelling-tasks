@@ -148,7 +148,7 @@ average generation time per instance on the cluster (without considering concurr
 total run time on the cluster (not including queuing time): 40:26min
 average CPU usage: 100%
 average memory usage: 9190.32 MB
-used in 2025 as: MatchPetriUnAvailable-Quiz, next time in form-based version
+used as: MatchPetriUnAvailable-Quiz (at the time)
 -}
 task2025_48 :: MatchPetriConfig
 task2025_48 = MatchPetriConfig {
@@ -176,13 +176,26 @@ task2025_48 = MatchPetriConfig {
 
 {-|
 points: 0.15
+the amount of generated instances:
+maximum concurrent amount of tasks:
+average generation time per instance on the cluster (without considering concurrency):
+total run time on the cluster (not including queuing time):
+average CPU usage:
+average memory usage:
+used as: MatchPetriFormInputDropdownsUnAvailable-Quiz
+-}
+task2025_repeat_61 :: MatchPetriConfig
+task2025_repeat_61 = task2025_48
+
+{-|
+points: 0.15
 the amount of generated instances: 100
 maximum concurrent amount of tasks: 100
 average generation time per instance on the cluster (without considering concurrency): 41:20min
 total run time on the cluster (not including queuing time): 49:04min
 average CPU usage: 99.24%
 average memory usage: 2268.47 MB
-used in 2025 as: MatchPetriUnAvailable-Quiz, next time in form-based version
+used as: MatchPetriUnAvailable-Quiz (at the time)
 -}
 task2025_49 :: MatchPetriConfig
 task2025_49 = MatchPetriConfig {
@@ -209,6 +222,19 @@ task2025_49 = MatchPetriConfig {
     }
 
 {-|
+points: 0.15
+the amount of generated instances:
+maximum concurrent amount of tasks:
+average generation time per instance on the cluster (without considering concurrency):
+total run time on the cluster (not including queuing time):
+average CPU usage:
+average memory usage:
+used as: MatchPetriFormInputDropdownsUnAvailable-Quiz
+-}
+task2025_repeat_62 :: MatchPetriConfig
+task2025_repeat_62 = task2025_49
+
+{-|
 points: 0.1
 the amount of generated instances: 100
 maximum concurrent amount of tasks: 100
@@ -216,7 +242,20 @@ average generation time per instance on the cluster (without considering concurr
 total run time on the cluster (not including queuing time): 46:16min
 average CPU usage: 99.26%
 average memory usage: 2265.84 MB
-used in 2025 as: MatchPetriUnAvailable-Quiz, next time in form-based version
+used as: MatchPetriUnAvailable-Quiz (at the time)
 -}
 task2025_66 :: MatchPetriConfig
 task2025_66 = task2025_49
+
+{-|
+points: 0.15
+the amount of generated instances:
+maximum concurrent amount of tasks:
+average generation time per instance on the cluster (without considering concurrency):
+total run time on the cluster (not including queuing time):
+average CPU usage:
+average memory usage:
+used as: MatchPetriFormInputDropdownsUnAvailable-Quiz
+-}
+task2025_repeat_63 :: MatchPetriConfig
+task2025_repeat_63 = task2025_49

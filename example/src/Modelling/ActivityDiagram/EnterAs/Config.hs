@@ -117,10 +117,23 @@ average generation time per instance on the cluster (without considering concurr
 total run time on the cluster (not including queuing time): 19:42min
 average CPU usage: 100%
 average memory usage: 2297.78 MB
-used in 2025 as: EnterASUnAvailable-Quiz, next time in form-based version
+used as: EnterASUnAvailable-Quiz (at the time)
 -}
 task2025_44 :: EnterASConfig
 task2025_44 = task2024_41
+
+{-|
+points: 0.15
+the amount of generated instances:
+maximum concurrent amount of tasks:
+average generation time per instance on the cluster (without considering concurrency):
+total run time on the cluster (not including queuing time):
+average CPU usage:
+average memory usage:
+used as: EnterASFormInputDropdownsUnAvailable-Quiz
+-}
+task2025_repeat_55 :: EnterASConfig
+task2025_repeat_55 = task2025_44
 
 {-|
 points: 0.15
@@ -130,10 +143,23 @@ average generation time per instance on the cluster (without considering concurr
 total run time on the cluster (not including queuing time): 19:10min
 average CPU usage: 100%
 average memory usage: 2273.13 MB
-used in 2025 as: EnterASUnAvailable-Quiz, next time in form-based version
+used as: EnterASUnAvailable-Quiz (at the time)
 -}
 task2025_45 :: EnterASConfig
 task2025_45 = task2024_42
+
+{-|
+points: 0.125
+the amount of generated instances:
+maximum concurrent amount of tasks:
+average generation time per instance on the cluster (without considering concurrency):
+total run time on the cluster (not including queuing time):
+average CPU usage:
+average memory usage:
+used as: EnterASFormInputDropdownsUnAvailable-Quiz
+-}
+task2025_repeat_56 :: EnterASConfig
+task2025_repeat_56 = task2025_45
 
 {-|
 points: 0.1
@@ -143,7 +169,20 @@ average generation time per instance on the cluster (without considering concurr
 total run time on the cluster (not including queuing time): 18:29min
 average CPU usage: 100%
 average memory usage: 2278.10 MB
-used in 2025 as: EnterASUnAvailable-Quiz, next time in form-based version
+used as: EnterASUnAvailable-Quiz (at the time)
 -}
 task2025_64 :: EnterASConfig
 task2025_64 = task2025_45
+
+{-|
+points: 0.125
+the amount of generated instances:
+maximum concurrent amount of tasks:
+average generation time per instance on the cluster (without considering concurrency):
+total run time on the cluster (not including queuing time):
+average CPU usage:
+average memory usage:
+used as: EnterASFormInputDropdownsUnAvailable-Quiz
+-}
+task2025_repeat_57 :: EnterASConfig
+task2025_repeat_57 = task2025_45

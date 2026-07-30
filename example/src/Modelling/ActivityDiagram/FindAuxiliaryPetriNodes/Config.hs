@@ -172,7 +172,7 @@ average generation time per instance on the cluster (without considering concurr
 total run time on the cluster (not including queuing time): 6:34min
 average CPU usage: 100.80%
 average memory usage: 1356.30 MB
-used in 2025 as: FindAuxiliaryPetriNodesUnAvailable-Quiz, next time in form-based version
+used as: FindAuxiliaryPetriNodesUnAvailable-Quiz (at the time)
 -}
 task2025_50 :: FindAuxiliaryPetriNodesConfig
 task2025_50 = FindAuxiliaryPetriNodesConfig {
@@ -197,13 +197,26 @@ task2025_50 = FindAuxiliaryPetriNodesConfig {
 
 {-|
 points: 0.15
+the amount of generated instances:
+maximum concurrent amount of tasks:
+average generation time per instance on the cluster (without considering concurrency):
+total run time on the cluster (not including queuing time):
+average CPU usage:
+average memory usage:
+used as: FindAuxiliaryPetriNodesFormInputMultiFieldUnAvailable-Quiz
+-}
+task2025_repeat_64 :: FindAuxiliaryPetriNodesConfig
+task2025_repeat_64 = task2025_50
+
+{-|
+points: 0.15
 the amount of generated instances: 100
 maximum concurrent amount of tasks: 100
 average generation time per instance on the cluster (without considering concurrency): 12:11min
 total run time on the cluster (not including queuing time): 12:32min
 average CPU usage: 100.00%
 average memory usage: 1775.43 MB
-used in 2025 as: FindAuxiliaryPetriNodesUnAvailable-Quiz, next time in form-based version
+used as: FindAuxiliaryPetriNodesUnAvailable-Quiz (at the time)
 -}
 task2025_51 :: FindAuxiliaryPetriNodesConfig
 task2025_51 = FindAuxiliaryPetriNodesConfig {
@@ -227,6 +240,19 @@ task2025_51 = FindAuxiliaryPetriNodesConfig {
     }
 
 {-|
+points: 0.15
+the amount of generated instances:
+maximum concurrent amount of tasks:
+average generation time per instance on the cluster (without considering concurrency):
+total run time on the cluster (not including queuing time):
+average CPU usage:
+average memory usage:
+used as: FindAuxiliaryPetriNodesFormInputMultiFieldUnAvailable-Quiz
+-}
+task2025_repeat_65 :: FindAuxiliaryPetriNodesConfig
+task2025_repeat_65 = task2025_51
+
+{-|
 points: 0.1
 the amount of generated instances: 100
 maximum concurrent amount of tasks: 100
@@ -234,7 +260,20 @@ average generation time per instance on the cluster (without considering concurr
 total run time on the cluster (not including queuing time): 6:37min
 average CPU usage: 100.96%
 average memory usage: 1290.99 MB
-used in 2025 as: FindAuxiliaryPetriNodesUnAvailable-Quiz, next time in form-based version
+used as: FindAuxiliaryPetriNodesUnAvailable-Quiz (at the time)
 -}
 task2025_67 :: FindAuxiliaryPetriNodesConfig
 task2025_67 = task2025_50
+
+{-|
+points: 0.15
+the amount of generated instances:
+maximum concurrent amount of tasks:
+average generation time per instance on the cluster (without considering concurrency):
+total run time on the cluster (not including queuing time):
+average CPU usage:
+average memory usage:
+used as: FindAuxiliaryPetriNodesFormInputMultiFieldUnAvailable-Quiz
+-}
+task2025_repeat_66 :: FindAuxiliaryPetriNodesConfig
+task2025_repeat_66 = task2025_50
