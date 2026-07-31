@@ -504,13 +504,6 @@ selectPetriEvaluation path task n = do
 
       paragraph $ do
         translate $ do
-          english "Activity final nodes:"
-          german "Aktivitätsenden:"
-        code $ show activityFinalNodes
-        pure ()
-
-      paragraph $ do
-        translate $ do
           english "Object nodes:"
           german "Objektknoten:"
         code $ show objectNodes
@@ -521,13 +514,6 @@ selectPetriEvaluation path task n = do
           english "Decision nodes:"
           german "Verzweigungsknoten:"
         code $ show decisionNodes
-        pure ()
-
-      paragraph $ do
-        translate $ do
-          english "Flow final nodes:"
-          german "Flussenden:"
-        code $ show flowFinalNodes
         pure ()
 
       paragraph $ do
@@ -556,6 +542,20 @@ selectPetriEvaluation path task n = do
           english "Initial nodes:"
           german "Startknoten:"
         code $ show initialNodes
+        pure ()
+
+      paragraph $ do
+        translate $ do
+          english "Activity final nodes:"
+          german "Aktivitätsenden:"
+        code $ show activityFinalNodes
+        pure ()
+
+      paragraph $ do
+        translate $ do
+          english "Flow final nodes:"
+          german "Flussenden:"
+        code $ show flowFinalNodes
         pure ()
 
       paragraph $ do
