@@ -189,6 +189,4 @@ average memory usage: 2279.90 MB
 used as: EnterASFormInputDropdownsUnAvailable-Quiz
 -}
 task2025_repeat_57 :: EnterASConfig
-task2025_repeat_57 = task2025_45{
-  rejectLongerThan = Just 14
-}
+task2025_repeat_57 = task2025_repeat_56
