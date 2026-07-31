@@ -90,12 +90,12 @@ task2025_39 = task2024_37
 
 {-|
 points: 0.15
-the amount of generated instances:
-maximum concurrent amount of tasks:
-average generation time per instance on the cluster (without considering concurrency):
-total run time on the cluster (not including queuing time):
-average CPU usage:
-average memory usage:
+the amount of generated instances: 100
+maximum concurrent amount of tasks: 100
+average generation time per instance on the cluster (without considering concurrency): 2:16min
+total run time on the cluster (not including queuing time): 2:22min
+average CPU usage: 101.98%
+average memory usage: 407.97 MB
 used as: MatchAdFormInputMultiFieldUnAvailable-Quiz
 -}
 task2025_repeat_49 :: MatchAdConfig
@@ -116,12 +116,12 @@ task2025_40 = task2024_38
 
 {-|
 points: 0.15
-the amount of generated instances:
-maximum concurrent amount of tasks:
-average generation time per instance on the cluster (without considering concurrency):
-total run time on the cluster (not including queuing time):
-average CPU usage:
-average memory usage:
+the amount of generated instances: 100
+maximum concurrent amount of tasks: 100
+average generation time per instance on the cluster (without considering concurrency): 3:21min
+total run time on the cluster (not including queuing time): 3:26min
+average CPU usage: 101.95%
+average memory usage: 453.66 MB
 used as: MatchAdFormInputMultiFieldUnAvailable-Quiz
 -}
 task2025_repeat_50 :: MatchAdConfig

@@ -176,12 +176,12 @@ task2025_48 = MatchPetriConfig {
 
 {-|
 points: 0.15
-the amount of generated instances:
-maximum concurrent amount of tasks:
-average generation time per instance on the cluster (without considering concurrency):
-total run time on the cluster (not including queuing time):
-average CPU usage:
-average memory usage:
+the amount of generated instances: 100
+maximum concurrent amount of tasks: 100
+average generation time per instance on the cluster (without considering concurrency): 39:48min
+total run time on the cluster (not including queuing time): 40:46min
+average CPU usage: 100%
+average memory usage: 9202.17 MB
 used as: MatchPetriFormInputDropdownsUnAvailable-Quiz
 -}
 task2025_repeat_61 :: MatchPetriConfig
@@ -223,12 +223,12 @@ task2025_49 = MatchPetriConfig {
 
 {-|
 points: 0.15
-the amount of generated instances:
-maximum concurrent amount of tasks:
-average generation time per instance on the cluster (without considering concurrency):
-total run time on the cluster (not including queuing time):
-average CPU usage:
-average memory usage:
+the amount of generated instances: 100
+maximum concurrent amount of tasks: 100
+average generation time per instance on the cluster (without considering concurrency): 40:33min
+total run time on the cluster (not including queuing time): 48:56min
+average CPU usage: 99.25%
+average memory usage: 2266.64 MB
 used as: MatchPetriFormInputDropdownsUnAvailable-Quiz
 -}
 task2025_repeat_62 :: MatchPetriConfig
@@ -249,12 +249,12 @@ task2025_66 = task2025_49
 
 {-|
 points: 0.15
-the amount of generated instances:
-maximum concurrent amount of tasks:
-average generation time per instance on the cluster (without considering concurrency):
-total run time on the cluster (not including queuing time):
-average CPU usage:
-average memory usage:
+the amount of generated instances: 100
+maximum concurrent amount of tasks: 100
+average generation time per instance on the cluster (without considering concurrency): 38:36min
+total run time on the cluster (not including queuing time): 48:02min
+average CPU usage: 99.32%
+average memory usage: 2266.29 MB
 used as: MatchPetriFormInputDropdownsUnAvailable-Quiz
 -}
 task2025_repeat_63 :: MatchPetriConfig
