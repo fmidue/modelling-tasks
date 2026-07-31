@@ -334,7 +334,7 @@ evaluateAndCheckDifferentNames
   -> [(String, String)]
   -- ^ task instance mapping
   -> [(String, String)]
-  -- ^ submitted mapping
+  -- ^ mapping submitted
   -> IO Bool
 evaluateAndCheckDifferentNames check coins cs cs' = do
   let i = DifferentNamesInstance {

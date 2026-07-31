@@ -304,7 +304,7 @@ enterASEvaluation task sub = do
         else Nothing
 
   yesNo correct $ translate $ do
-    english "The submitted node sequence is correct?"
+    english "The node sequence submitted is correct?"
     german "Die eingereichte Knotenfolge ist korrekt?"
 
   -- Provide specific feedback for sequences that terminate some but not all flows
@@ -319,7 +319,7 @@ enterASEvaluation task sub = do
           Eine korrekte Lösung muss alle im Ablauf befindlichen Flüsse terminieren.
           |]
         english [iii|
-          With the submitted sequence a flow final node is reached, but it does not terminate all flows.
+          With the sequence submitted a flow final node is reached, but it does not terminate all flows.
           Note that reaching a flow final node only terminates the incoming control flow,
           while other flows (e.g., after splitting at a fork node) may remain active.
           A correct solution must terminate all flows under execution.
