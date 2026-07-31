@@ -133,7 +133,9 @@ average memory usage: 2296.90 MB
 used as: EnterASFormInputDropdownsUnAvailable-Quiz
 -}
 task2025_repeat_55 :: EnterASConfig
-task2025_repeat_55 = task2025_44
+task2025_repeat_55 = task2025_44{
+  rejectLongerThan = Just 11
+}
 
 {-|
 points: 0.15
@@ -159,7 +161,9 @@ average memory usage: 2274.62 MB
 used as: EnterASFormInputDropdownsUnAvailable-Quiz
 -}
 task2025_repeat_56 :: EnterASConfig
-task2025_repeat_56 = task2025_45
+task2025_repeat_56 = task2025_45{
+  rejectLongerThan = Just 14
+}
 
 {-|
 points: 0.1
@@ -185,4 +189,6 @@ average memory usage: 2279.90 MB
 used as: EnterASFormInputDropdownsUnAvailable-Quiz
 -}
 task2025_repeat_57 :: EnterASConfig
-task2025_repeat_57 = task2025_45
+task2025_repeat_57 = task2025_45{
+  rejectLongerThan = Just 14
+}
