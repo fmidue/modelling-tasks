@@ -124,12 +124,12 @@ task2025_44 = task2024_41
 
 {-|
 points: 0.15
-the amount of generated instances:
-maximum concurrent amount of tasks:
-average generation time per instance on the cluster (without considering concurrency):
-total run time on the cluster (not including queuing time):
-average CPU usage:
-average memory usage:
+the amount of generated instances: 100
+maximum concurrent amount of tasks: 100
+average generation time per instance on the cluster (without considering concurrency): 19:12min
+total run time on the cluster (not including queuing time): 19:49min
+average CPU usage: 100%
+average memory usage: 2296.90 MB
 used as: EnterASFormInputDropdownsUnAvailable-Quiz
 -}
 task2025_repeat_55 :: EnterASConfig
@@ -150,12 +150,12 @@ task2025_45 = task2024_42
 
 {-|
 points: 0.125
-the amount of generated instances:
-maximum concurrent amount of tasks:
-average generation time per instance on the cluster (without considering concurrency):
-total run time on the cluster (not including queuing time):
-average CPU usage:
-average memory usage:
+the amount of generated instances: 100
+maximum concurrent amount of tasks: 100
+average generation time per instance on the cluster (without considering concurrency): 18:07min
+total run time on the cluster (not including queuing time): 18:37min
+average CPU usage: 99.99%
+average memory usage: 2274.62 MB
 used as: EnterASFormInputDropdownsUnAvailable-Quiz
 -}
 task2025_repeat_56 :: EnterASConfig
@@ -176,12 +176,12 @@ task2025_64 = task2025_45
 
 {-|
 points: 0.125
-the amount of generated instances:
-maximum concurrent amount of tasks:
-average generation time per instance on the cluster (without considering concurrency):
-total run time on the cluster (not including queuing time):
-average CPU usage:
-average memory usage:
+the amount of generated instances: 100
+maximum concurrent amount of tasks: 100
+average generation time per instance on the cluster (without considering concurrency): 18:05min
+total run time on the cluster (not including queuing time): 18:30min
+average CPU usage: 100%
+average memory usage: 2279.90 MB
 used as: EnterASFormInputDropdownsUnAvailable-Quiz
 -}
 task2025_repeat_57 :: EnterASConfig

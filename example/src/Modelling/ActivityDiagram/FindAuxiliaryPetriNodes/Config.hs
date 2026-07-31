@@ -197,12 +197,12 @@ task2025_50 = FindAuxiliaryPetriNodesConfig {
 
 {-|
 points: 0.15
-the amount of generated instances:
-maximum concurrent amount of tasks:
-average generation time per instance on the cluster (without considering concurrency):
-total run time on the cluster (not including queuing time):
-average CPU usage:
-average memory usage:
+the amount of generated instances: 100
+maximum concurrent amount of tasks: 100
+average generation time per instance on the cluster (without considering concurrency): 6:30min
+total run time on the cluster (not including queuing time): 6:35min
+average CPU usage: 100.15%
+average memory usage: 1291.28 MB
 used as: FindAuxiliaryPetriNodesFormInputMultiFieldUnAvailable-Quiz
 -}
 task2025_repeat_64 :: FindAuxiliaryPetriNodesConfig
@@ -241,12 +241,12 @@ task2025_51 = FindAuxiliaryPetriNodesConfig {
 
 {-|
 points: 0.15
-the amount of generated instances:
-maximum concurrent amount of tasks:
-average generation time per instance on the cluster (without considering concurrency):
-total run time on the cluster (not including queuing time):
-average CPU usage:
-average memory usage:
+the amount of generated instances: 100
+maximum concurrent amount of tasks: 100
+average generation time per instance on the cluster (without considering concurrency): 12:10min
+total run time on the cluster (not including queuing time): 12:24min
+average CPU usage: 100.00%
+average memory usage: 1720.13 MB
 used as: FindAuxiliaryPetriNodesFormInputMultiFieldUnAvailable-Quiz
 -}
 task2025_repeat_65 :: FindAuxiliaryPetriNodesConfig
@@ -267,12 +267,12 @@ task2025_67 = task2025_50
 
 {-|
 points: 0.15
-the amount of generated instances:
-maximum concurrent amount of tasks:
-average generation time per instance on the cluster (without considering concurrency):
-total run time on the cluster (not including queuing time):
-average CPU usage:
-average memory usage:
+the amount of generated instances: 100
+maximum concurrent amount of tasks: 100
+average generation time per instance on the cluster (without considering concurrency): 6:30min
+total run time on the cluster (not including queuing time): 6:38min
+average CPU usage: 100.84%
+average memory usage: 1290.70 MB
 used as: FindAuxiliaryPetriNodesFormInputMultiFieldUnAvailable-Quiz
 -}
 task2025_repeat_66 :: FindAuxiliaryPetriNodesConfig
