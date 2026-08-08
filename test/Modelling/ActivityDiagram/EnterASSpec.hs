@@ -12,7 +12,8 @@ import Modelling.ActivityDiagram.Config (
   AdConfig (objectNodeLimits),
   defaultAdConfig,
   )
-import Test.Hspec (Spec, describe, it, context, shouldBe, shouldSatisfy)
+import Modelling.Common (runWithoutOutput)
+import Test.Hspec (Spec, describe, it, context, shouldBe, shouldSatisfy, shouldReturn)
 import Data.Maybe (isJust)
 
 spec :: Spec
@@ -28,4 +29,5 @@ spec = do
       } `shouldSatisfy` isJust
  describe "defaultEnterASInstance" $
   it "passes checkEnterASInstance" $
-    checkEnterASInstance defaultEnterASInstance `shouldBe` Nothing
+    runWithoutOutput (checkEnterASInstance defaultEnterASInstance)
+    `shouldReturn` Just ()
