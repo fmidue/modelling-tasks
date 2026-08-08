@@ -14,6 +14,7 @@ module Modelling.PetriNet.ConflictPlaces (
   findConflictPlacesTask,
   parseConflictPlacesPrec,
   simpleFindConflictPlacesTask,
+  checkFindConflictPlacesInstance,
   ) where
 
 import qualified Data.Map                         as M (empty, fromList)
@@ -29,6 +30,7 @@ import Modelling.PetriNet.Conflict (
   ConflictPlaces,
   checkConflictConfig,
   conflictPlacesShow,
+  findConflictPlacesSolution,
   findConflictSyntax,
   )
 import Modelling.PetriNet.Find (
@@ -188,6 +190,12 @@ findConflictPlacesSyntax task (conflict, ps) = do
   where
     isValidPlace (Place x) = x `Set.member` namesOfPlaces task
     assert = continueOrAbort False
+
+checkFindConflictPlacesInstance
+  :: OutputCapable m
+  => FindInstance net Conflict
+  -> LangM m
+checkFindConflictPlacesInstance inst = findConflictPlacesSyntax inst (findConflictPlacesSolution inst)
 
 parseConflictPlacesPrec :: Int -> Parser ConflictPlaces
 parseConflictPlacesPrec _  = do

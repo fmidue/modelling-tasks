@@ -23,6 +23,7 @@ module Modelling.ActivityDiagram.FindAuxiliaryPetriNodes (
   findAuxiliaryPetriNodesSolution,
   findAuxiliaryPetriNodesSyntax,
   findAuxiliaryPetriNodesTask,
+  checkFindAuxiliaryPetriNodesInstance,
 ) where
 
 import qualified Modelling.ActivityDiagram.Datatype as Ad (UMLActivityDiagram (nodes))
@@ -196,6 +197,13 @@ findAuxiliaryPetriNodesSolution
   -> FindAuxiliaryPetriNodesSolution
 findAuxiliaryPetriNodesSolution task =
   findAuxiliaryPetriNodesSolution' $ matchingNet task
+
+-- TODO: checking that isPetriIsomorphic matchingPetri (convertToSimple activityDiagram)
+-- is probably more useful as it would also ensure the solution is correct
+checkFindAuxiliaryPetriNodesInstance :: OutputCapable m => FindAuxiliaryPetriNodesInstance -> LangM m
+checkFindAuxiliaryPetriNodesInstance inst =
+  -- fullCheck=False to skip non-negativity checks
+  findAuxiliaryPetriNodesSyntax False inst (findAuxiliaryPetriNodesSolution inst)
 
 findAuxiliaryPetriNodesSolution'
   :: Net p n

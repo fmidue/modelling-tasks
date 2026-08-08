@@ -3,10 +3,13 @@ module Modelling.ActivityDiagram.FindAuxiliaryPetriNodesSpec where
 import Modelling.ActivityDiagram.FindAuxiliaryPetriNodes (
   FindAuxiliaryPetriNodesConfig (..),
   checkFindAuxiliaryPetriNodesConfig,
+  checkFindAuxiliaryPetriNodesInstance,
   defaultFindAuxiliaryPetriNodesConfig,
+  defaultFindAuxiliaryPetriNodesInstance,
   )
 
-import Test.Hspec (Spec, describe, it, context, shouldBe, shouldSatisfy)
+import Modelling.Common (runWithoutOutput)
+import Test.Hspec (Spec, describe, it, context, shouldBe, shouldSatisfy, shouldReturn)
 import Data.Maybe (isJust)
 import Modelling.ActivityDiagram.Config (
   AdConfig (actionLimits, forkJoinPairs),
@@ -15,7 +18,7 @@ import Modelling.ActivityDiagram.Config (
 
 
 spec :: Spec
-spec =
+spec = do
   describe "checkFindAuxiliaryPetriNodesConfig" $ do
     it "checks if the basic Input is in given boundaries" $
       checkFindAuxiliaryPetriNodesConfig defaultFindAuxiliaryPetriNodesConfig
@@ -27,3 +30,7 @@ spec =
           presenceOfSinkTransitionsForFinals = Just False
           }
             `shouldSatisfy` isJust
+  describe "checkFindAuxiliaryPetriNodesInstance" $ do
+    it "checks if the instance matchingNet is consistent" $
+      runWithoutOutput (checkFindAuxiliaryPetriNodesInstance defaultFindAuxiliaryPetriNodesInstance)
+      `shouldReturn` Just ()

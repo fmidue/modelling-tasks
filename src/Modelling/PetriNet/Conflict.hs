@@ -29,6 +29,7 @@ module Modelling.PetriNet.Conflict (
   pickConflictTask,
   simpleFindConflictTask,
   simplePickConflictTask,
+  checkFindConflictInstance,
   ) where
 
 import qualified Modelling.PetriNet.Find          as Find (FindInstance (..), showSolution)
@@ -320,6 +321,12 @@ findConflictPlacesEvaluation task (conflict, ps) =
 findConflictPlacesSolution :: FindInstance n (PetriConflict p t) -> ((t, t), [p])
 findConflictPlacesSolution task =
   (findConflictSolution task, conflictPlaces $ toFind task)
+
+checkFindConflictInstance
+  :: OutputCapable m
+  => FindInstance net Conflict
+  -> LangM m
+checkFindConflictInstance inst = findConflictSyntax inst (findConflictSolution inst)
 
 simplePickConflictTask
   :: (

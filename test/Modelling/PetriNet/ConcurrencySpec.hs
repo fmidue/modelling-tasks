@@ -9,10 +9,14 @@ import qualified Modelling.PetriNet.Types         as Find (
 import qualified Modelling.PetriNet.Types         as Pick (
   PickConcurrencyConfig (..),
   )
+import qualified Modelling.PetriNet.Concurrency   as Concur (
+  checkFindConcurrencyInstance,
+  )
 
 import Modelling.PetriNet.Concurrency (
   checkFindConcurrencyConfig,
   checkPickConcurrencyConfig,
+  defaultFindConcurrencyInstance,
   findConcurrency,
   parseConcurrency,
   petriNetFindConcur,
@@ -53,6 +57,7 @@ import Modelling.PetriNet.TestCommon (
   validConfigsForPick,
   validGraphConfig,
   )
+import Modelling.Common                 (runWithoutOutput)
 import Settings                         (configDepth, needsTuning)
 
 import Control.Lens.Lens                ((??))
@@ -89,6 +94,10 @@ spec = do
       testFindConcurrencyConfig findConfigs
   describe "validPickConcurrencyConfigs" $
     checkConfigs checkPickConcurrencyConfig pickConfigs
+  describe "defaultInstances" $ do
+    it "passes checkFindConcurrencyInstance" $ do
+      result <- runWithoutOutput $ Concur.checkFindConcurrencyInstance defaultFindConcurrencyInstance
+      result `shouldBe` Just ()
   describe "pickConcurrency" $ do
     defaultConfigTaskGeneration
       (pickConcurrency defaultPickConcurrencyConfig {
