@@ -68,6 +68,7 @@ import Modelling.ActivityDiagram.Config (
   defaultAdConfig,
   )
 import Modelling.ActivityDiagram.Instance (parseInstance)
+import Modelling.ActivityDiagram.Isomorphism (isPetriIsomorphic)
 import Modelling.ActivityDiagram.PlantUMLConverter (
   PlantUmlConfig (..),
   defaultPlantUmlConfig,
@@ -198,12 +199,12 @@ findAuxiliaryPetriNodesSolution
 findAuxiliaryPetriNodesSolution task =
   findAuxiliaryPetriNodesSolution' $ matchingNet task
 
--- TODO: checking that isPetriIsomorphic matchingPetri (convertToSimple activityDiagram)
--- is probably more useful as it would also ensure the solution is correct
 checkFindAuxiliaryPetriNodesInstance :: OutputCapable m => FindAuxiliaryPetriNodesInstance -> LangM m
-checkFindAuxiliaryPetriNodesInstance inst =
-  -- fullCheck=False to skip non-negativity checks
-  findAuxiliaryPetriNodesSyntax False inst (findAuxiliaryPetriNodesSolution inst)
+checkFindAuxiliaryPetriNodesInstance FindAuxiliaryPetriNodesInstance{..} =
+  when (not $ isPetriIsomorphic (convertToSimple activityDiagram) matchingNet) $
+    refuse $ translate $ do
+      english "The given activity diagram does not match the corresponding Petri net."
+      german "Das gegebene Aktivitätsdiagramm passt nicht zum entsprechenden Petrinetz."
 
 findAuxiliaryPetriNodesSolution'
   :: Net p n
