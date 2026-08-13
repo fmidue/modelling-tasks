@@ -23,6 +23,7 @@ module Modelling.ActivityDiagram.FindAuxiliaryPetriNodes (
   findAuxiliaryPetriNodesSolution,
   findAuxiliaryPetriNodesSyntax,
   findAuxiliaryPetriNodesTask,
+  checkFindAuxiliaryPetriNodesInstance,
 ) where
 
 import qualified Modelling.ActivityDiagram.Datatype as Ad (UMLActivityDiagram (nodes))
@@ -67,6 +68,7 @@ import Modelling.ActivityDiagram.Config (
   defaultAdConfig,
   )
 import Modelling.ActivityDiagram.Instance (parseInstance)
+import Modelling.ActivityDiagram.Isomorphism (isPetriIsomorphic)
 import Modelling.ActivityDiagram.PlantUMLConverter (
   PlantUmlConfig (..),
   defaultPlantUmlConfig,
@@ -85,7 +87,7 @@ import Modelling.PetriNet.Types (
   )
 
 import Control.Applicative (Alternative ((<|>)))
-import Control.Monad                    (when)
+import Control.Monad                    (when, unless)
 import Control.Monad.Catch              (MonadThrow)
 import Control.Monad.Trans.Class (lift)
 import Control.OutputCapable.Blocks (
@@ -196,6 +198,13 @@ findAuxiliaryPetriNodesSolution
   -> FindAuxiliaryPetriNodesSolution
 findAuxiliaryPetriNodesSolution task =
   findAuxiliaryPetriNodesSolution' $ matchingNet task
+
+checkFindAuxiliaryPetriNodesInstance :: OutputCapable m => FindAuxiliaryPetriNodesInstance -> LangM m
+checkFindAuxiliaryPetriNodesInstance FindAuxiliaryPetriNodesInstance{..} =
+  unless (isPetriIsomorphic (convertToSimple activityDiagram) matchingNet) $
+    refuse $ translate $ do
+      english "The given activity diagram does not match the corresponding Petri net."
+      german "Das gegebene Aktivitätsdiagramm passt nicht zum entsprechenden Petrinetz."
 
 findAuxiliaryPetriNodesSolution'
   :: Net p n

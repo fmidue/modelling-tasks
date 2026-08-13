@@ -25,6 +25,7 @@ module Modelling.ActivityDiagram.MatchPetri (
   matchPetri,
   defaultMatchPetriInstance,
   hoveringInformationOnlyPetri,
+  checkMatchPetriInstance,
 ) where
 
 import qualified Data.Map as M (empty, fromList, keys)
@@ -285,6 +286,9 @@ data MatchPetriSolution = MatchPetriSolution {
 
 matchPetriSolution :: MatchPetriInstance -> MatchPetriSolution
 matchPetriSolution task = mapTypesToLabels $ petriNet task
+
+checkMatchPetriInstance :: OutputCapable m => MatchPetriInstance -> LangM m
+checkMatchPetriInstance inst = matchPetriSyntax True inst (matchPetriSolution inst)
 
 petriSolutionPairwiseDisjunct :: MatchPetriSolution -> Bool
 petriSolutionPairwiseDisjunct MatchPetriSolution{..} =
