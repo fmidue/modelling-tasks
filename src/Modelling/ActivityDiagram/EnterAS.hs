@@ -21,7 +21,7 @@ module Modelling.ActivityDiagram.EnterAS (
   enterASEvaluation,
   enterASSolution,
   enterAS,
-  defaultEnterASInstance,
+  defaultEnterASInstance
 ) where
 
 import Autolib.Hash                     (Hashable)
@@ -182,18 +182,8 @@ enterASAlloy EnterASConfig {
     objectNodeOnEveryPath
   } = actionSequencesAlloy adConfig objectNodeOnEveryPath
 
-checkEnterASInstance
-  :: OutputCapable m
-  => EnterASInstance
-  -> LangM m
-checkEnterASInstance inst = do
-  whenJust (checkEnterASInstance' inst) $ \msg ->
-    refuse $ paragraph $ text msg
-  enterASSyntax inst (sampleSequence inst)
-  pure ()
-
-checkEnterASInstance' :: EnterASInstance -> Maybe String
-checkEnterASInstance' inst
+checkEnterASInstance :: EnterASInstance -> Maybe String
+checkEnterASInstance inst
   | suppressNodeNames (drawSettings inst)
   = Just "'suppressNodeNames' must be set to 'False' for this task type"
   | maybe False (length (sampleSequence inst) >) (noLongerThan inst)
