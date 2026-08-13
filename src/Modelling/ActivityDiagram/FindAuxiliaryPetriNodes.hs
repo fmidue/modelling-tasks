@@ -87,7 +87,7 @@ import Modelling.PetriNet.Types (
   )
 
 import Control.Applicative (Alternative ((<|>)))
-import Control.Monad                    (when)
+import Control.Monad                    (when, unless)
 import Control.Monad.Catch              (MonadThrow)
 import Control.Monad.Trans.Class (lift)
 import Control.OutputCapable.Blocks (
@@ -201,7 +201,7 @@ findAuxiliaryPetriNodesSolution task =
 
 checkFindAuxiliaryPetriNodesInstance :: OutputCapable m => FindAuxiliaryPetriNodesInstance -> LangM m
 checkFindAuxiliaryPetriNodesInstance FindAuxiliaryPetriNodesInstance{..} =
-  when (not $ isPetriIsomorphic (convertToSimple activityDiagram) matchingNet) $
+  unless (isPetriIsomorphic (convertToSimple activityDiagram) matchingNet) $
     refuse $ translate $ do
       english "The given activity diagram does not match the corresponding Petri net."
       german "Das gegebene Aktivitätsdiagramm passt nicht zum entsprechenden Petrinetz."
