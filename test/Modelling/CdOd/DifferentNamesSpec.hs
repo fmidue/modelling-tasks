@@ -90,22 +90,21 @@ spec = do
       checkDifferentNamesConfig defaultDifferentNamesConfig `shouldBe` Nothing
   describe "defaultDifferentNamesInstance" $ do
     it "is valid" $
-      runWithoutOutput (checkDifferentNamesInstance defaultDifferentNamesInstance)
-      `shouldReturn` Just ()
+      checkDifferentNamesInstance defaultDifferentNamesInstance
+      `shouldBe` Nothing
     context "using WithAdditionalNames" $
       it "is valid" $
-        runWithoutOutput (checkDifferentNamesInstance defaultDifferentNamesInstance {
+        checkDifferentNamesInstance defaultDifferentNamesInstance {
           linkShuffling = WithAdditionalNames ["v"]
-          })
-        `shouldReturn` Just ()
+          }
+        `shouldBe` Nothing
   describe "differentNames" $ do
     context "using defaultDifferentNamesConfig" $ do
       it "generates an okay instance" $ do
         segment <- oneOf [0 .. 3]
         seed <- randomIO
         inst <- differentNames defaultDifferentNamesConfig segment seed
-        runWithoutOutput (checkDifferentNamesInstance inst)
-          `shouldReturn` Just ()
+        checkDifferentNamesInstance inst `shouldBe` Nothing
       it "reproducibly generates defaultDifferentNamesInstance" $
         differentNames defaultDifferentNamesConfig 0 0
         `shouldReturn` defaultDifferentNamesInstance

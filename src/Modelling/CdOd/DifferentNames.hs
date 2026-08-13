@@ -229,18 +229,8 @@ data DifferentNamesInstance = DifferentNamesInstance {
     addText :: ExtraText
   } deriving (Eq, Generic, Hashable, Read, Reader, Show, ToDoc)
 
-checkDifferentNamesInstance
-  :: OutputCapable m
-  => DifferentNamesInstance
-  -> LangM m
-checkDifferentNamesInstance inst = do
-  whenJust (checkDifferentNamesInstance' inst) $ \msg ->
-    refuse $ paragraph $ text msg
-  differentNamesSyntax True inst (differentNamesSolution inst)
-  pure ()
-
-checkDifferentNamesInstance' :: DifferentNamesInstance -> Maybe String
-checkDifferentNamesInstance' DifferentNamesInstance {..}
+checkDifferentNamesInstance :: DifferentNamesInstance -> Maybe String
+checkDifferentNamesInstance DifferentNamesInstance {..}
   | not $ printNames cdDrawSettings
   = Just [iii|printNames has to be set to True for this task type.|]
   | not $ printNavigations cdDrawSettings
