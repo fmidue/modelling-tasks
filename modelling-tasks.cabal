@@ -34,6 +34,7 @@ library
   exposed-modules:
       Modelling.ActivityDiagram.ActionSequences
       Modelling.ActivityDiagram.Alloy
+      Modelling.ActivityDiagram.Auxiliary.PetriValidation
       Modelling.ActivityDiagram.Auxiliary.Parser
       Modelling.ActivityDiagram.Config
       Modelling.ActivityDiagram.Datatype
@@ -86,7 +87,6 @@ library
       Modelling.Types
   other-modules:
       Modelling.ActivityDiagram.Auxiliary.ActionSequences
-      Modelling.ActivityDiagram.Auxiliary.PetriValidation
       Modelling.Auxiliary.Diagrams
       Modelling.CdOd.Phrasing.Common
       Modelling.CdOd.Phrasing.English

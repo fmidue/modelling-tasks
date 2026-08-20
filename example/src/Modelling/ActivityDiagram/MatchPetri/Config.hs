@@ -25,7 +25,7 @@ task2023_39 = MatchPetriConfig {
     flowFinalNodes = 2,
     cycles = 1
     },
-  countOfPetriNodesBounds = (0, Nothing),
+  countOfPetriNodesBounds = (25, Just 25),  -- generates successfully, but (0, Just 24) times out with maxInstances = Nothing
   maxInstances = Just 10000,
   hideBranchConditions = True,
   petriLayout = [Fdp],
@@ -54,8 +54,8 @@ task2023_40 = MatchPetriConfig {
     flowFinalNodes = 3,
     cycles = 3
     },
-  countOfPetriNodesBounds = (0, Nothing),
-  maxInstances = Just 2000,
+  countOfPetriNodesBounds = (28, Just 34),  -- fails to generate, but works with (37, Just 37); value smaller than 37 leads to NoInstanceAvailable; and (0, Just 36) times out with maxInstances = Nothing
+  maxInstances = Just 2000, -- fails to generate with Nothing, it diverges
   hideBranchConditions = True,
   petriLayout = [Fdp],
   petriSvgHighlighting = True,
@@ -99,7 +99,7 @@ task2024_70 = MatchPetriConfig {
     flowFinalNodes = 1,
     cycles = 0
     },
-  countOfPetriNodesBounds = (0, Nothing),
+  countOfPetriNodesBounds = (20, Just 30),  -- fails to generate, even with (0, Nothing): NoInstanceAvailable
   maxInstances = Just 10000,
   hideBranchConditions = True,
   petriLayout = [Fdp],
@@ -128,7 +128,7 @@ task2024_71 = MatchPetriConfig {
     flowFinalNodes = 3,
     cycles = 3
     },
-  countOfPetriNodesBounds = (0, Nothing),
+  countOfPetriNodesBounds = (28, Just 34),  -- fails to generate: NoInstanceAvailable; diverges when (0, Nothing)
   maxInstances = Just 2000,
   hideBranchConditions = True,
   petriLayout = [Fdp],
