@@ -34,6 +34,7 @@ import Modelling.ActivityDiagram.ActionSequences (
   generateActionSequencesWithPetri,
   netAndMap,
   computeActionSequenceLevels,
+  getActionsLeadingToActivityFinals,
   isFinalPetriNode,
   validActionSequenceWithPetri,
   )
@@ -220,9 +221,9 @@ newtype EnterASSolution = EnterASSolution {
   sampleSolution :: [String]
 } deriving (Show, Eq)
 
-enterActionSequence :: PetriLike Node PetriKey -> EnterASSolution
-enterActionSequence petri =
-  EnterASSolution {sampleSolution = head $ generateActionSequencesWithPetri petri Nothing}
+enterActionSequence :: UMLActivityDiagram -> PetriLike Node PetriKey -> EnterASSolution
+enterActionSequence ad petri =
+  EnterASSolution {sampleSolution = head $ generateActionSequencesWithPetri ad petri Nothing}
 
 enterASTask
   :: (MonadPlantUml m, MonadWriteFile m, OutputCapable m)
@@ -290,11 +291,12 @@ enterASEvaluation
   -> [String]
   -> Rated m
 enterASEvaluation task sub = do
-  let objectNames = map name $ filter isObjectNode $ nodes $ activityDiagram task
+  let diag = activityDiagram task
+      objectNames = map name $ filter isObjectNode $ nodes diag
       objectNamesInSubmission = nubOrd $ sub `intersect` objectNames
       (net, actionNameToPetriKey) = netAndMap (petriNet task)
       zeroState = State $ M.map (const 0) $ unState $ start net
-      levels = computeActionSequenceLevels sub net actionNameToPetriKey
+      levels = computeActionSequenceLevels sub net actionNameToPetriKey (getActionsLeadingToActivityFinals diag)
       reachesZeroState = any (isJust . lookup zeroState) levels
       correct = null objectNamesInSubmission && reachesZeroState
       points = if correct then 1 else 0
@@ -372,7 +374,7 @@ getEnterASTask config = do
           drawSettings = defaultPlantUmlConfig {
             suppressBranchConditions = hideBranchConditions config
             },
-          sampleSequence = sampleSolution $ enterActionSequence petri,
+          sampleSequence = sampleSolution $ enterActionSequence x petri,
           noLongerThan = rejectLongerThan config,
           showSolution = printSolution config,
           addText = extraText config
