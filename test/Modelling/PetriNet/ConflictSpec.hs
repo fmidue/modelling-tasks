@@ -9,7 +9,9 @@ import qualified Modelling.PetriNet.Types         as Pick (
   PickConflictConfig (alloyConfig),
   )
 
-import Modelling.Common (withLang)
+import Capabilities.Diagrams.IO          ()
+import Capabilities.Graphviz.IO          ()
+import Modelling.Common                  (withLang)
 
 import Modelling.PetriNet.Conflict (
   checkConflictConfig,
@@ -122,7 +124,7 @@ testFindConflictConfig :: [FindConflictConfig] -> Spec
 testFindConflictConfig = testTaskGeneration
   petriNetFindConflict
   (findTaskInstance parseConflict)
-  $ isValidConflict . snd
+  $ isValidConflict . snd @(SimplePetriLike _)
 
 testPickConflictConfig :: [PickConflictConfig] -> Spec
 testPickConflictConfig = testTaskGeneration
