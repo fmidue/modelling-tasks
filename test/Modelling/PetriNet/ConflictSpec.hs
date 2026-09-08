@@ -1,4 +1,5 @@
 {-# LANGUAGE DuplicateRecordFields #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeApplications #-}
 module Modelling.PetriNet.ConflictSpec where
 
@@ -26,6 +27,7 @@ import Modelling.PetriNet.Conflict (
   )
 
 import Modelling.PetriNet.Find (
+  FindInstance,
   findTaskInstance,
   )
 import Modelling.PetriNet.Pick (
@@ -35,12 +37,14 @@ import Modelling.PetriNet.Types (
   AdvConfig (AdvConfig),
   BasicConfig,
   ChangeConfig,
+  Conflict,
   ConflictConfig (ConflictConfig),
   FindConflictConfig (FindConflictConfig),
   PetriConflict (Conflict),
   PetriConflict' (PetriConflict'),
   PickConflictConfig (PickConflictConfig),
   SimplePetriLike,
+  SimplePetriNet,
   defaultFindConflictConfig,
   defaultPickConflictConfig,
   )
@@ -88,9 +92,8 @@ spec = do
     checkConfigs checkFindConflictConfig findConfigs'
   describe "findConflicts" $ do
     it "generates a FindConflictInstance required to create the task" $ do
-      inst <- findConflictGenerate defaultFindConflictConfig {
-          Find.alloyConfig = firstInstanceConfig
-        } 0 0
+      (inst :: FindInstance SimplePetriNet Conflict) <- findConflictGenerate
+        defaultFindConflictConfig { Find.alloyConfig = firstInstanceConfig } 0 0
       withLang (checkFindConflictInstance inst) English `shouldBe` Right ()
     needsTuning $
       testFindConflictConfig findConfigs
