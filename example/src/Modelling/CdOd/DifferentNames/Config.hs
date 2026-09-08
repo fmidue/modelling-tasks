@@ -295,7 +295,7 @@ task2025_repeat_19 = DifferentNamesConfig {
     associationOmittedDefaultMultiplicity = Just (0, Nothing),
     compositionWholeOmittedDefaultMultiplicity = Nothing
     },
-  printSolution = ShowMappingAndReprintOD,
+  printSolution = ShowMappingAndRelabelledOd,
   timeout = Nothing,
   withObviousMapping = Just True,
   extraText = NoExtraText
@@ -338,7 +338,7 @@ task2025_14 = DifferentNamesConfig {
     associationOmittedDefaultMultiplicity = Just (0, Nothing),
     compositionWholeOmittedDefaultMultiplicity = Nothing
     },
-  printSolution = ShowMappingAndReprintOD,
+  printSolution = ShowMappingAndRelabelledOd,
   timeout = Nothing,
   withObviousMapping = Just False,
   extraText = NoExtraText
