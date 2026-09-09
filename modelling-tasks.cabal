@@ -34,7 +34,6 @@ library
   exposed-modules:
       Modelling.ActivityDiagram.ActionSequences
       Modelling.ActivityDiagram.Alloy
-      Modelling.ActivityDiagram.Auxiliary.Parser
       Modelling.ActivityDiagram.Config
       Modelling.ActivityDiagram.Datatype
       Modelling.ActivityDiagram.EnterAS
@@ -152,7 +151,6 @@ test-suite modelling-tasks-test
   other-modules:
       Modelling.ActivityDiagram.ActionSequencesSpec
       Modelling.ActivityDiagram.AlloySpec
-      Modelling.ActivityDiagram.Auxiliary.ParserSpec
       Modelling.ActivityDiagram.ConfigSpec
       Modelling.ActivityDiagram.EnterASSpec
       Modelling.ActivityDiagram.FindAuxiliaryPetriNodesSpec
