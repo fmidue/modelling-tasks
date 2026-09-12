@@ -329,7 +329,8 @@ changePredicate allowed = [__i|
     mutationConstraint mutation = case mutation of
       ChangeLimit -> [iii|changedLimit [c]|]
       ChangeKind -> [iii|changedKind [c]|]
-      Flip -> [iii|flip [c]|]
+      FlipInheritance -> [iii|flipInheritance [c]|]
+      FlipNonInheritance -> [iii|flipNonInheritance [c]|]
 
 changes
   :: Maybe ClassConfig

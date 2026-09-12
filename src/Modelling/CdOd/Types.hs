@@ -256,7 +256,8 @@ The basic mutation operations.
 data RelationshipMutation
   = ChangeKind
   | ChangeLimit
-  | Flip
+  | FlipInheritance
+  | FlipNonInheritance
   deriving (Bounded, Enum, Eq, Generic, Ord, Read, Reader, Show, ToDoc)
 
 deriveEnumerable ''RelationshipMutation

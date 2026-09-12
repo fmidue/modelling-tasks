@@ -35,7 +35,8 @@ task2023_05 = SelectValidCdConfig {
     RemoveRelationship,
     MutateRelationship ChangeKind,
     MutateRelationship ChangeLimit,
-    MutateRelationship Flip
+    MutateRelationship FlipInheritance,
+    MutateRelationship FlipNonInheritance
     ],
   allowedProperties = AllowedProperties {
     compositionCycles = True,
@@ -98,7 +99,8 @@ task2023_06 = SelectValidCdConfig {
     RemoveRelationship,
     MutateRelationship ChangeKind,
     MutateRelationship ChangeLimit,
-    MutateRelationship Flip
+    MutateRelationship FlipInheritance,
+    MutateRelationship FlipNonInheritance
     ],
   allowedProperties = AllowedProperties {
     compositionCycles = False,
@@ -159,7 +161,8 @@ task2024_06 = SelectValidCdConfig {
   allowedCdMutations = [
     AddRelationship,
     MutateRelationship ChangeKind,
-    MutateRelationship Flip
+    MutateRelationship FlipInheritance,
+    MutateRelationship FlipNonInheritance
     ],
   allowedProperties = AllowedProperties {
     compositionCycles = True,
@@ -221,7 +224,8 @@ task2024_07 = SelectValidCdConfig {
     AddRelationship,
     RemoveRelationship,
     MutateRelationship ChangeKind,
-    MutateRelationship Flip
+    MutateRelationship FlipInheritance,
+    MutateRelationship FlipNonInheritance
     ],
   allowedProperties = AllowedProperties {
     compositionCycles = False,
@@ -342,7 +346,8 @@ task2024_51 = SelectValidCdConfig {
   allowedCdMutations = [
     AddRelationship,
     MutateRelationship ChangeKind,
-    MutateRelationship Flip
+    MutateRelationship FlipInheritance,
+    MutateRelationship FlipNonInheritance
     ],
   allowedProperties = AllowedProperties {
     compositionCycles = True,
