@@ -28,6 +28,7 @@ import Modelling.Auxiliary.Output (
   )
 import Modelling.PetriNet.Conflict (
   ConflictPlaces,
+  checkFindConflictConfig,
   conflictPlacesShow,
   findConflictPlacesSolution,
   findConflictSyntax,
