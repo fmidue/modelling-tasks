@@ -28,14 +28,12 @@ import Modelling.Auxiliary.Output (
   )
 import Modelling.PetriNet.Conflict (
   ConflictPlaces,
-  checkConflictConfig,
   conflictPlacesShow,
   findConflictPlacesSolution,
   findConflictSyntax,
   )
 import Modelling.PetriNet.Find (
   FindInstance (..),
-  checkConfigForFind,
   drawFindWith,
   findInitial,
   )
@@ -232,15 +230,9 @@ defaultFindConflictPlacesConfig = defaultFindConflictConfig
   & lGraphConfig . lHidePlaceNames .~ False
 
 checkFindConflictPlacesConfig :: FindConflictConfig -> Maybe String
-checkFindConflictPlacesConfig FindConflictConfig {
-  basicConfig,
-  changeConfig,
-  conflictConfig,
-  graphConfig
-  }
-  = prohibitHidePlaceNames graphConfig
-  <|> checkConfigForFind basicConfig changeConfig graphConfig
-  <|> checkConflictConfig basicConfig conflictConfig
+checkFindConflictPlacesConfig config
+  = prohibitHidePlaceNames (graphConfig config)
+  <|> checkFindConflictConfig config
 
 prohibitHidePlaceNames :: GraphConfig -> Maybe String
 prohibitHidePlaceNames gc
