@@ -25,7 +25,7 @@ import Modelling.PetriNet.Conflict (
   pickConflict,
   )
 import Modelling.PetriNet.ConflictPlaces (
-  checkFindConflictPlacesInstance,
+  checkFindConflictInstance,
   )
 
 import Modelling.PetriNet.Find (
@@ -96,7 +96,7 @@ spec = do
     it "generates a FindConflictInstance required to create the task" $ do
       (inst :: FindInstance SimplePetriNet Conflict) <- findConflictGenerate
         defaultFindConflictConfig { Find.alloyConfig = firstInstanceConfig } 0 0
-      withLang (checkFindConflictPlacesInstance inst) English `shouldBe` Right ()
+      withLang (checkFindConflictInstance inst) English `shouldBe` Right ()
     needsTuning $
       testFindConflictConfig findConfigs
   describe "validPickConflictConfigs" $

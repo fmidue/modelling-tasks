@@ -5,7 +5,7 @@ import Modelling.PetriNet.ConflictPlaces (
   checkFindConflictPlacesConfig,
   defaultFindConflictPlacesConfig,
   defaultFindConflictPlacesInstance,
-  checkFindConflictPlacesInstance,
+  checkFindConflictInstance,
   )
 
 import Test.Hspec (Spec, describe, it, shouldBe, shouldReturn)
@@ -17,6 +17,6 @@ spec = do
       checkFindConflictPlacesConfig defaultFindConflictPlacesConfig
       `shouldBe` Nothing
   describe "defaultFindConflictPlacesInstance" $
-    it "passes checkFindConflictPlacesInstance" $ do
-      runWithoutOutput (checkFindConflictPlacesInstance defaultFindConflictPlacesInstance)
+    it "passes checkFindConflictInstance" $ do
+      runWithoutOutput (checkFindConflictInstance defaultFindConflictPlacesInstance)
       `shouldReturn` Just ()
