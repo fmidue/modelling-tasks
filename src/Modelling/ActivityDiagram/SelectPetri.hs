@@ -492,6 +492,7 @@ selectPetriEvaluation path task n = do
         english "The mapping of elements from the activity diagram to nodes from the Petri net is as follows."
         german "Die Zuordnung von Elementen aus dem Aktivitätsdiagramm zu Knoten aus dem Petrinetz ist wie folgt."
 
+      paragraph $ text ""
 
       let MatchPetriSolution{..} = mapTypesToLabels correctNet
 
