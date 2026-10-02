@@ -133,7 +133,7 @@ import Control.Monad.Extra              (when, whenJust)
 import Control.Monad.Trans.Class (lift)
 import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
-  ExtraText (..),
+  ExtraText,
   GenericOutputCapable (..),
   LangM,
   OutputCapable,
@@ -226,7 +226,7 @@ data DifferentNamesInstance = DifferentNamesInstance {
     mapping  :: NameMapping,
     linkShuffling :: ShufflingOption String,
     taskText :: !DifferentNamesTaskText,
-    addText :: ExtraText
+    addTexts :: [ExtraText]
   } deriving (Eq, Generic, Hashable, Read, Reader, Show, ToDoc)
 
 checkDifferentNamesInstance :: DifferentNamesInstance -> Maybe String
@@ -285,7 +285,7 @@ data DifferentNamesConfig
     -- | Obvious means here that each individual relationship to link mapping
     -- can be made without considering other relationships.
     withObviousMapping :: !(Maybe Bool),
-    extraText :: ExtraText
+    extraTexts :: [ExtraText]
   } deriving (Generic, Read, Reader, Show, ToDoc)
 
 checkDifferentNamesConfig :: DifferentNamesConfig -> Maybe String
@@ -348,7 +348,7 @@ defaultDifferentNamesConfig = DifferentNamesConfig {
     withObviousMapping = Nothing,
     maxInstances     = Just 200,
     timeout          = Nothing,
-    extraText        = NoExtraText
+    extraTexts       = []
   }
 
 newtype ShowName = ShowName { showName' :: Name }
@@ -381,7 +381,7 @@ differentNamesTask showInputHelp path task@DifferentNamesInstance{..} = do
   when showInputHelp $
     toOutputCapable [inputHelpText hasGivenCd]
   hoveringInformation True
-  extra addText
+  extra addTexts
   pure ()
   where
     hasGivenCd = Special GivenCd `elem` taskText
@@ -775,7 +775,7 @@ defaultDifferentNamesInstance = DifferentNamesInstance {
   mapping = toNameMapping $ BM.fromList [("x", "2."), ("y", "3."), ("z", "1.")],
   linkShuffling = ConsecutiveNumbers,
   taskText = defaultDifferentNamesTaskText,
-  addText = NoExtraText
+  addTexts = []
   }
 
 getDifferentNamesTask
@@ -840,7 +840,7 @@ getDifferentNamesTask tryNext DifferentNamesConfig {..} cd = do
               mapping   = toNameMapping bm',
               linkShuffling = ConsecutiveNumbers,
               taskText = defaultDifferentNamesTaskText,
-              addText = extraText
+              addTexts = extraTexts
               }
         else tryNext
   where
@@ -912,7 +912,7 @@ instance RandomiseLayout DifferentNamesInstance where
       mapping = mapping,
       linkShuffling = linkShuffling,
       taskText = taskText,
-      addText = addText
+      addTexts = addTexts
       }
 
 renameInstance
@@ -947,5 +947,5 @@ renameInstance inst@DifferentNamesInstance {..} names' nonInheritances' linkNs' 
     mapping   = toNameMapping bm',
     linkShuffling = shuffling,
     taskText = taskText,
-    addText = addText
+    addTexts = addTexts
     }

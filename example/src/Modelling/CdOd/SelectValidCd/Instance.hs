@@ -27,7 +27,6 @@ import Modelling.Types                  (Change (..))
 
 import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
-  ExtraText (..),
   Language (English, German),
   )
 import Control.OutputCapable.Blocks.Generic.Type (
@@ -180,7 +179,7 @@ task2024_05 = SelectValidCdInstance {
         ])
       ]
     ],
-  addText = NoExtraText
+  addTexts = []
   }
 
 {-|
@@ -409,7 +408,7 @@ task2024_06picked = ShuffleInstance {
           ])
         ]
       ],
-    addText = NoExtraText
+    addTexts = []
     },
   allowLayoutMangling = True,
   shuffleNames = True,
@@ -828,7 +827,7 @@ task2024_09 = ShuffleInstance {
           ])
         ]
       ],
-    addText = validClassDiagramAdvice
+    addTexts = [validClassDiagramAdvice]
     },
   allowLayoutMangling = True,
   shuffleNames = True,
@@ -1108,7 +1107,7 @@ task2024_53 = ShuffleInstance {
           ])
         ]
       ],
-    addText = NoExtraText
+    addTexts = []
     },
   allowLayoutMangling = True,
   shuffleNames = False,

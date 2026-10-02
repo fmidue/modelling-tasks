@@ -11,7 +11,6 @@ import Modelling.PetriNet.Types (
   PickConflictConfig (..),
   )
 
-import Control.OutputCapable.Blocks     (ExtraText (..))
 import Data.GraphViz.Commands           (GraphvizCommand(..))
 
 {-|
@@ -58,7 +57,7 @@ task2023_22 = PickConflictConfig {
     maxInstances = Just 2000,
     timeout = Nothing
     },
-  extraText = NoExtraText
+  extraTexts = []
   }
 
 {-|
@@ -105,7 +104,7 @@ task2023_16 = PickConflictConfig {
     maxInstances = Just 1000,
     timeout = Nothing
     },
-  extraText = NoExtraText
+  extraTexts = []
   }
 
 {-|

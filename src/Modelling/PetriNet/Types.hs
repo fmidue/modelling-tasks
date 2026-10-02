@@ -71,7 +71,7 @@ module Modelling.PetriNet.Types (
   lConflictConfig,
   lConflictPlaces,
   lConflictTrans,
-  lExtraText,
+  lExtraTexts,
   lFlowOverall,
   lGraphConfig,
   lGraphLayouts,
@@ -130,7 +130,7 @@ import Control.Monad                    ((<=<))
 import Control.Monad.Catch              (Exception, MonadThrow (throwM))
 import Control.Monad.Random             (RandT, RandomGen)
 import Control.Monad.Trans              (MonadTrans(lift))
-import Control.OutputCapable.Blocks     (ExtraText (..))
+import Control.OutputCapable.Blocks     (ExtraText)
 import Data.Bimap                       (Bimap)
 import Data.Data                        (Data)
 import Data.GraphViz.Attributes.Complete (GraphvizCommand (..))
@@ -815,7 +815,7 @@ data FindConflictConfig = FindConflictConfig
   , printSolution :: Bool
   , uniqueConflictPlace :: Maybe Bool
   , alloyConfig  :: AlloyConfig
-  , extraText :: ExtraText
+  , extraTexts :: [ExtraText]
   }
   deriving (Generic, Read, Reader, Show, ToDoc)
 
@@ -831,7 +831,7 @@ defaultFindConflictConfig = FindConflictConfig
   , printSolution = True
   , uniqueConflictPlace = Just True
   , alloyConfig  = defaultAlloyConfig
-  , extraText = NoExtraText
+  , extraTexts = []
   }
 
 data PickConflictConfig = PickConflictConfig
@@ -844,7 +844,7 @@ data PickConflictConfig = PickConflictConfig
   , uniqueConflictPlace :: Maybe Bool
   , useDifferentGraphLayouts :: Bool
   , alloyConfig  :: AlloyConfig
-  , extraText :: ExtraText
+  , extraTexts :: [ExtraText]
   }
   deriving (Generic, Read, Reader, Show, ToDoc)
 
@@ -859,7 +859,7 @@ defaultPickConflictConfig = PickConflictConfig
   , uniqueConflictPlace = Nothing
   , useDifferentGraphLayouts = False
   , alloyConfig  = defaultAlloyConfig
-  , extraText = NoExtraText
+  , extraTexts = []
   }
 
 data FindConcurrencyConfig = FindConcurrencyConfig
@@ -869,7 +869,7 @@ data FindConcurrencyConfig = FindConcurrencyConfig
   , graphConfig :: GraphConfig
   , printSolution :: Bool
   , alloyConfig  :: AlloyConfig
-  , extraText :: ExtraText
+  , extraTexts :: [ExtraText]
   }
   deriving (Generic, Read, Reader, Show, ToDoc)
 
@@ -881,7 +881,7 @@ defaultFindConcurrencyConfig = FindConcurrencyConfig
   , graphConfig = defaultGraphConfig { hidePlaceNames = True }
   , printSolution = True
   , alloyConfig  = defaultAlloyConfig
-  , extraText = NoExtraText
+  , extraTexts = []
   }
 
 data PickConcurrencyConfig = PickConcurrencyConfig
@@ -892,7 +892,7 @@ data PickConcurrencyConfig = PickConcurrencyConfig
   , prohibitSourceTransitions :: Bool
   , useDifferentGraphLayouts :: Bool
   , alloyConfig  :: AlloyConfig
-  , extraText :: ExtraText
+  , extraTexts :: [ExtraText]
   }
   deriving (Generic, Read, Reader, Show, ToDoc)
 
@@ -905,7 +905,7 @@ defaultPickConcurrencyConfig = PickConcurrencyConfig
   , prohibitSourceTransitions = False
   , useDifferentGraphLayouts = False
   , alloyConfig  = defaultAlloyConfig
-  , extraText = NoExtraText
+  , extraTexts = []
   }
 
 data DrawSettings = DrawSettings {

@@ -95,7 +95,7 @@ import Control.Monad.Extra (loopM, firstJustM, allM)
 import Control.Monad.Trans.Class (lift)
 import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
-  ExtraText (..),
+  ExtraText,
   GenericOutputCapable (..),
   LangM,
   OutputCapable,
@@ -139,7 +139,7 @@ data SelectPetriInstance = SelectPetriInstance {
   petriDrawConf :: DrawSettings,
   petriNets :: Map Int (Bool, SimplePetriLike PetriKey),
   showSolution :: Bool,
-  addText :: ExtraText
+  addTexts :: [ExtraText]
 }
   deriving (Eq, Generic, Hashable, Read, Reader, Show, ToDoc)
 
@@ -165,7 +165,7 @@ data SelectPetriConfig = SelectPetriConfig {
   -- | Avoid Activity Finals in concurrent flows to reduce confusion
   withActivityFinalInForkBlocks :: !(Maybe Bool),
   printSolution :: Bool,
-  extraText :: ExtraText
+  extraTexts :: [ExtraText]
 }
   deriving (Generic, Read, Reader, Show, ToDoc)
 
@@ -192,7 +192,7 @@ defaultSelectPetriConfig = SelectPetriConfig {
   presenceOfSinkTransitionsForFinals = Nothing,
   withActivityFinalInForkBlocks = Just False,
   printSolution = True,
-  extraText = NoExtraText
+  extraTexts = []
 }
 
 checkSelectPetriConfig :: SelectPetriConfig -> Maybe String
@@ -414,7 +414,7 @@ Geben Sie Ihre Antwort als Zahl an, welche das passende Petrinetz repräsentiert
 
   when (withSvgHighlighting drawSetting) $ hoveringInformationOnlyPetri True
 
-  extra $ addText task
+  extra $ addTexts task
 
   pure ()
 
@@ -628,7 +628,7 @@ getSelectPetriTask config = do
                 petriDrawConf=petriDrawConf,
                 petriNets = petriNets,
                 showSolution = printSolution config,
-                addText = extraText config
+                addTexts = extraTexts config
               }
           case checkPetriInstance petriInst config of
             Just _ -> return Nothing
@@ -950,5 +950,5 @@ defaultSelectPetriInstance =  SelectPetriInstance {
     ]
   }))],
   showSolution = True,
-  addText = NoExtraText
+  addTexts = []
 }

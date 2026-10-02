@@ -69,7 +69,6 @@ import Control.Monad                    (void)
 import Control.Monad.Catch              (MonadThrow)
 import Control.OutputCapable.Blocks (
   GenericOutputCapable (..),
-  ExtraText (..),
   LangM',
   LangM,
   OutputCapable,
@@ -167,7 +166,7 @@ The order of places within the listing of places inducing the conflict is irrele
 Die Reihenfolge von Stellen innerhalb der Auflistung der den Konflikt verursachenden Stellen spielt ebenso keine Rolle.|]
     pure ()
   hoveringInformation True
-  extra $ addText task
+  extra $ addTexts task
   pure ()
 
 conflictInitial :: ConflictPlaces
@@ -268,5 +267,5 @@ defaultFindConflictPlacesInstance = FindInstance {
   namesOfPlaces = Set.fromList ["s1", "s2", "s3", "s4"],
   namesOfTransitions = Set.fromList ["t1", "t2", "t3"],
   showSolution = True,
-  addText = NoExtraText
+  addTexts = []
   }

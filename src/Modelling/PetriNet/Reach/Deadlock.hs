@@ -187,7 +187,7 @@ deadlockTask showInputHelp path inst = do
     (minLength inst)
     (withMinLengthHint inst)
     Nothing
-    (addText inst)
+    (addTexts inst)
 
 deadlockInitial :: DeadlockInstance s Transition -> TransitionsList
 deadlockInitial = TransitionsList . reverse . S.toList . transitions . petriNet
@@ -255,7 +255,7 @@ data DeadlockInstance s t = DeadlockInstance {
   shortestSolutions :: Either (NonEmpty [t]) (NonEmpty [t]),
   withLengthHint    :: Maybe Int,
   withMinLengthHint :: Bool,
-  addText           :: ExtraText,
+  addTexts          :: [ExtraText],
   -- | Minimum length of Spaceballs PIN pattern to reject during syntax checking.
   -- If set to @Just n@, sequences starting with @n@ or more consecutive transitions
   -- (e.g., @[t1, t2, t3, t4]@) will be rejected.
@@ -281,7 +281,7 @@ bimapDeadlockInstance f g DeadlockInstance {..} = DeadlockInstance {
     shortestSolutions = bimap (fmap (map g)) (fmap (map g)) shortestSolutions,
     withLengthHint    = withLengthHint,
     withMinLengthHint = withMinLengthHint,
-    addText           = addText,
+    addTexts          = addTexts,
     rejectSpaceballsLength = rejectSpaceballsLength
     }
 
@@ -309,7 +309,7 @@ data DeadlockConfig = DeadlockConfig {
   showLengthHint      :: Bool,
   showMinLengthHint   :: Bool,
   showPlaceNamesInNet :: Bool,
-  extraText           :: ExtraText,
+  extraTexts          :: [ExtraText],
   -- | Require exactly this many transitions with exactly one input place,
   -- which is exclusively consumed from by that transition.
   -- If @Nothing@, no constraint on fusable transitions consuming.
@@ -341,7 +341,7 @@ defaultDeadlockConfig =
   showLengthHint      = False,
   showMinLengthHint   = True,
   showPlaceNamesInNet = False,
-  extraText           = NoExtraText,
+  extraTexts          = [],
   fusableTransitionsConsumingAreExactly = Nothing,
   fusableTransitionsProducingAreExactly = Nothing,
   filterConfig        = defaultFilterConfig { solutionSetLimit = Nothing, forbiddenCycleLengths = [4], requireCycleLengthsAny = [], transitionCoverageRequirement = 1 % 2 }
@@ -361,7 +361,7 @@ defaultDeadlockInstance = DeadlockInstance {
     ] :| []),
   withLengthHint    = Just 9,
   withMinLengthHint = True,
-  addText           = NoExtraText,
+  addTexts          = [],
   rejectSpaceballsLength = Nothing
   }
 
@@ -449,7 +449,7 @@ generateDeadlock conf@DeadlockConfig {..} seed = do
     withLengthHint    =
       if showLengthHint then Just maxTransitionLength else Nothing,
     withMinLengthHint = showMinLengthHint,
-    addText           = extraText,
+    addTexts          = extraTexts,
     rejectSpaceballsLength = spaceballsPrefixThreshold filterConfig
     }
 

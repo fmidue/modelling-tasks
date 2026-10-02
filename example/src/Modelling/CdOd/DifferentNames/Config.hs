@@ -13,7 +13,6 @@ import Modelling.CdOd.Types (
   OmittedDefaultMultiplicities (..),
   )
 
-import Control.OutputCapable.Blocks     (ExtraText (..))
 import Data.Ratio                       ((%))
 
 {-|
@@ -53,7 +52,7 @@ task2023_12 = DifferentNamesConfig {
   printSolution = ShowMapping,
   timeout = Nothing,
   withObviousMapping = Nothing,
-  extraText = NoExtraText
+  extraTexts = []
   }
 
 {-|
@@ -93,7 +92,7 @@ task2023_13 = DifferentNamesConfig {
   printSolution = ShowMapping,
   timeout = Nothing,
   withObviousMapping = Nothing,
-  extraText = NoExtraText
+  extraTexts = []
   }
 
 {-|
@@ -133,7 +132,7 @@ task2023_25 = DifferentNamesConfig {
   printSolution = ShowMapping,
   timeout = Nothing,
   withObviousMapping = Nothing,
-  extraText = NoExtraText
+  extraTexts = []
   }
 
 {-|
@@ -173,7 +172,7 @@ task2024_15 = DifferentNamesConfig {
   printSolution = ShowMapping,
   timeout = Nothing,
   withObviousMapping = Nothing,
-  extraText = NoExtraText
+  extraTexts = []
   }
 
 {-|
@@ -213,7 +212,7 @@ task2024_16 = DifferentNamesConfig {
   printSolution = ShowMapping,
   timeout = Nothing,
   withObviousMapping = Nothing,
-  extraText = NoExtraText
+  extraTexts = []
   }
 
 {-|
@@ -253,7 +252,7 @@ task2024_56 = DifferentNamesConfig {
   printSolution = ShowMapping,
   timeout = Nothing,
   withObviousMapping = Nothing,
-  extraText = NoExtraText
+  extraTexts = []
   }
 
 {-|
@@ -298,7 +297,7 @@ task2025_repeat_19 = DifferentNamesConfig {
   printSolution = ShowMappingAndReprintOD,
   timeout = Nothing,
   withObviousMapping = Just True,
-  extraText = NoExtraText
+  extraTexts = []
   }
 
 {-|
@@ -341,7 +340,7 @@ task2025_14 = DifferentNamesConfig {
   printSolution = ShowMappingAndReprintOD,
   timeout = Nothing,
   withObviousMapping = Just False,
-  extraText = NoExtraText
+  extraTexts = []
   }
 
 {-|

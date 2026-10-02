@@ -10,7 +10,6 @@ import Modelling.PetriNet.Types (
   PickConcurrencyConfig (..),
   )
 
-import Control.OutputCapable.Blocks     (ExtraText (..))
 import Data.GraphViz.Commands           (GraphvizCommand(..))
 
 {-|
@@ -49,7 +48,7 @@ task2023_21 = PickConcurrencyConfig {
     maxInstances = Just 2000,
     timeout = Nothing
     },
-  extraText = NoExtraText
+  extraTexts = []
   }
 
 {-|

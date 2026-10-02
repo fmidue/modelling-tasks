@@ -11,7 +11,6 @@ import Modelling.PetriNet.Types (
   FindConcurrencyConfig (..),
   )
 
-import Control.OutputCapable.Blocks     (ExtraText (..))
 import Data.GraphViz.Commands           (GraphvizCommand(..))
 
 {-|
@@ -53,7 +52,7 @@ task2023_23 = FindConcurrencyConfig {
     maxInstances = Just 2000,
     timeout = Nothing
     },
-  extraText = NoExtraText
+  extraTexts = []
   }
 
 {-|
@@ -103,7 +102,7 @@ task2024_33 = FindConcurrencyConfig {
     maxInstances = Just 2000,
     timeout = Nothing
     },
-  extraText = NoExtraText
+  extraTexts = []
   }
 
 {-|
@@ -145,7 +144,7 @@ task2024_62 = FindConcurrencyConfig {
     maxInstances = Just 2000,
     timeout = Nothing
     },
-  extraText = NoExtraText
+  extraTexts = []
   }
 
 {-|
@@ -187,7 +186,7 @@ task2024_63 = FindConcurrencyConfig {
     maxInstances = Just 2000,
     timeout = Nothing
     },
-  extraText = NoExtraText
+  extraTexts = []
   }
 
 {-|

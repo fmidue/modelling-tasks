@@ -23,7 +23,6 @@ import Modelling.CdOd.Types (
 
 import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
-  ExtraText (..),
   Language (English, German),
   )
 import Control.OutputCapable.Blocks.Generic.Type (
@@ -209,7 +208,7 @@ task2024_14 = ShuffleInstance {
         ],
       Paragraph [Special ReasonsList]
       ],
-    addText = NoExtraText
+    addTexts = []
     },
   allowLayoutMangling = False,
   shuffleNames = False,

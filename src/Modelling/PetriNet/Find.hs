@@ -83,7 +83,7 @@ data FindInstance n a = FindInstance {
   namesOfPlaces :: !(Set String),
   namesOfTransitions :: !(Set String),
   showSolution :: !Bool,
-  addText :: !ExtraText
+  addTexts :: ![ExtraText]
   }
   deriving (Eq, Functor, Generic, Hashable, Read, Reader, Show, ToDoc)
 

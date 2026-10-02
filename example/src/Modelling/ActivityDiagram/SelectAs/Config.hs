@@ -4,7 +4,6 @@ module Modelling.ActivityDiagram.SelectAs.Config where
 import Modelling.ActivityDiagram.Config (AdConfig(..))
 import Modelling.ActivityDiagram.SelectAS (SelectASConfig(..))
 
-import Control.OutputCapable.Blocks     (ExtraText (..))
 
 {-|
 points: 0.15
@@ -30,7 +29,7 @@ task2023_33 = SelectASConfig {
   answerLength = (10, 10),
   printSolution = True,
   withActionRepetition = False,
-  extraText = NoExtraText
+  extraTexts = []
   }
 
 {-|
@@ -57,7 +56,7 @@ task2023_34 = SelectASConfig {
   answerLength = (9, 9),
   printSolution = True,
   withActionRepetition = False,
-  extraText = NoExtraText
+  extraTexts = []
   }
 
 {-|
@@ -131,7 +130,7 @@ task2025_42 = SelectASConfig {
   answerLength = (11, 11),
   printSolution = True,
   withActionRepetition = True,
-  extraText = NoExtraText
+  extraTexts = []
 }
 
 {-|
@@ -173,7 +172,7 @@ task2025_43 = SelectASConfig {
   answerLength = (11, 11),
   printSolution = True,
   withActionRepetition = True,
-  extraText = NoExtraText
+  extraTexts = []
 }
 
 {-|

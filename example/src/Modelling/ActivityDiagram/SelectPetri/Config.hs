@@ -39,7 +39,7 @@ task2023_37 = SelectPetriConfig {
   presenceOfSinkTransitionsForFinals = Nothing,
   withActivityFinalInForkBlocks = Just False,
   printSolution = True,
-  extraText = finalNodesAdvice
+  extraTexts = [finalNodesAdvice]
   }
 
 {-|
@@ -71,7 +71,7 @@ task2023_38 = SelectPetriConfig {
   presenceOfSinkTransitionsForFinals = Nothing,
   withActivityFinalInForkBlocks = Just False,
   printSolution = True,
-  extraText = finalNodesAdvice
+  extraTexts = [finalNodesAdvice]
   }
 
 {-|
@@ -113,7 +113,7 @@ task2024_44 = SelectPetriConfig {
   presenceOfSinkTransitionsForFinals = Nothing,
   withActivityFinalInForkBlocks = Just False,
   printSolution = True,
-  extraText = finalNodesAdvice
+  extraTexts = [finalNodesAdvice]
   }
 
 {-|
@@ -152,7 +152,7 @@ task2025_46 = SelectPetriConfig {
     presenceOfSinkTransitionsForFinals = Nothing,
     withActivityFinalInForkBlocks = Just False,
     printSolution = True,
-    extraText = finalNodesAdvice
+    extraTexts = [finalNodesAdvice]
     }
 
 {-|
@@ -204,7 +204,7 @@ task2025_47 = SelectPetriConfig {
     presenceOfSinkTransitionsForFinals = Nothing,
     withActivityFinalInForkBlocks = Just False,
     printSolution = True,
-    extraText = finalNodesAdvice
+    extraTexts = [finalNodesAdvice]
   }
 
 {-|

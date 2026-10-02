@@ -102,7 +102,7 @@ import Control.Monad.Extra              (firstJustM)
 import Control.Monad.Trans.Class (lift)
 import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
-  ExtraText (..),
+  ExtraText,
   GenericOutputCapable (..),
   LangM,
   Rated,
@@ -141,7 +141,7 @@ data MatchPetriInstance = MatchPetriInstance {
   plantUMLConf :: PlantUmlConfig,
   petriDrawConf :: DrawSettings,
   showSolution :: Bool,
-  addText :: ExtraText
+  addTexts :: [ExtraText]
 }
   deriving (Eq, Generic, Hashable, Read, Reader, Show, ToDoc)
 
@@ -162,7 +162,7 @@ data MatchPetriConfig = MatchPetriConfig {
   -- | Avoid Activity Finals in concurrent flows to reduce confusion
   withActivityFinalInForkBlocks :: !(Maybe Bool),
   printSolution :: Bool,
-  extraText :: ExtraText
+  extraTexts :: [ExtraText]
 }
   deriving (Generic, Read, Reader, Show, ToDoc)
 
@@ -185,7 +185,7 @@ defaultMatchPetriConfig =
     presenceOfSinkTransitionsForFinals = Nothing,
     withActivityFinalInForkBlocks = Just False,
     printSolution = True,
-    extraText = NoExtraText
+    extraTexts = []
   }
 
 checkMatchPetriConfig :: MatchPetriConfig -> Maybe String
@@ -402,7 +402,7 @@ matchPetriTask showInputHelp path task = do
 
   when (withSvgHighlighting drawSetting) $ hoveringInformationOnlyPetri True
 
-  extra $ addText task
+  extra $ addTexts task
 
   pure ()
 
@@ -544,7 +544,7 @@ getMatchPetriTask config = do
             },
           petriDrawConf = drawSettings,
           showSolution = printSolution config,
-          addText = extraText config
+          addTexts = extraTexts config
         }
     ) candidates
   case maybeInstance of
@@ -1010,5 +1010,5 @@ defaultMatchPetriInstance = MatchPetriInstance
       withGraphvizCommand = Dot
     },
   showSolution = True,
-  addText = NoExtraText
+  addTexts = []
   }

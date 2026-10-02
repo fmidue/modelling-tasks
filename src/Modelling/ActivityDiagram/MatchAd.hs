@@ -56,7 +56,7 @@ import Control.Monad.Catch              (MonadThrow)
 import Control.Monad.Trans.Class (lift)
 import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
-  ExtraText (..),
+  ExtraText,
   GenericOutputCapable (..),
   LangM,
   Rated,
@@ -85,7 +85,7 @@ data MatchAdInstance = MatchAdInstance {
   activityDiagram :: UMLActivityDiagram,
   plantUMLConf :: PlantUmlConfig,
   showSolution :: Bool,
-  addText :: ExtraText
+  addTexts :: [ExtraText]
 }
   deriving (Eq, Generic, Hashable, Read, Reader, Show, ToDoc)
 
@@ -95,7 +95,7 @@ data MatchAdConfig = MatchAdConfig {
   hideBranchConditions :: Bool,
   withActivityFinalInForkBlocks :: !(Maybe Bool),
   printSolution :: Bool,
-  extraText :: ExtraText
+  extraTexts :: [ExtraText]
 }
   deriving (Generic, Read, Reader, Show, ToDoc)
 
@@ -106,7 +106,7 @@ defaultMatchAdConfig = MatchAdConfig {
   hideBranchConditions = False,
   withActivityFinalInForkBlocks = Just True,
   printSolution = True,
-  extraText = NoExtraText
+  extraTexts = []
 }
 
 checkMatchAdConfig :: MatchAdConfig -> Maybe String
@@ -204,7 +204,7 @@ matchAdTask showInputHelp path task = do
     code $ render $ toDoc matchAdInitial
     pure ()
 
-  extra $ addText task
+  extra $ addTexts task
 
   pure ()
 
@@ -314,7 +314,7 @@ getMatchAdTask config = do
       suppressBranchConditions = hideBranchConditions config
       },
     showSolution = printSolution config,
-    addText = extraText config
+    addTexts = extraTexts config
   }
 
 defaultMatchAdInstance :: MatchAdInstance
@@ -363,5 +363,5 @@ defaultMatchAdInstance = MatchAdInstance {
   },
   plantUMLConf = defaultPlantUmlConfig,
   showSolution = True,
-  addText = NoExtraText
+  addTexts = []
 }

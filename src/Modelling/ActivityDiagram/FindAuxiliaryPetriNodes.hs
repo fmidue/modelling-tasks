@@ -90,7 +90,7 @@ import Control.Monad.Catch              (MonadThrow)
 import Control.Monad.Trans.Class (lift)
 import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
-  ExtraText (..),
+  ExtraText,
   GenericOutputCapable (..),
   LangM,
   OutputCapable,
@@ -118,7 +118,7 @@ data FindAuxiliaryPetriNodesInstance = FindAuxiliaryPetriNodesInstance {
   matchingNet :: SimplePetriLike PetriKey,
   plantUMLConf :: PlantUmlConfig,
   showSolution :: Bool,
-  addText :: ExtraText
+  addTexts :: [ExtraText]
 }
   deriving (Eq, Generic, Hashable, Read, Reader, Show, ToDoc)
 
@@ -133,7 +133,7 @@ data FindAuxiliaryPetriNodesConfig = FindAuxiliaryPetriNodesConfig {
   -- | Force presence or absence of new sink transitions for representing finals
   presenceOfSinkTransitionsForFinals :: Maybe Bool,
   printSolution :: Bool,
-  extraText :: ExtraText
+  extraTexts :: [ExtraText]
 }
   deriving (Generic, Read, Reader, Show, ToDoc)
 
@@ -147,7 +147,7 @@ defaultFindAuxiliaryPetriNodesConfig =
     hideBranchConditions = False,
     presenceOfSinkTransitionsForFinals = Nothing,
     printSolution = True,
-    extraText = NoExtraText
+    extraTexts = []
   }
 
 checkFindAuxiliaryPetriNodesConfig :: FindAuxiliaryPetriNodesConfig -> Maybe String
@@ -244,7 +244,7 @@ an Nicht-Hilfsknoten (Stellen und Transitionen minus Hilfsstellen und Hilfstrans
 dazu 2 Hilfsstellen und 3 Hilfstransitionen.|]
     pure ()
 
-  extra $ addText task
+  extra $ addTexts task
 
   pure ()
 
@@ -339,7 +339,7 @@ getFindAuxiliaryPetriNodesTask config@FindAuxiliaryPetriNodesConfig {..} = do
         suppressBranchConditions = hideBranchConditions
       },
     showSolution = printSolution,
-    addText = extraText
+    addTexts = extraTexts
   }
 
 defaultFindAuxiliaryPetriNodesInstance :: FindAuxiliaryPetriNodesInstance
@@ -391,5 +391,5 @@ defaultFindAuxiliaryPetriNodesInstance =
     matchingNet = convertToSimple ad,
     plantUMLConf = defaultPlantUmlConfig,
     showSolution = True,
-    addText = NoExtraText
+    addTexts = []
   }

@@ -18,7 +18,6 @@ module TaskSettings where
 
 import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
-  ExtraText(..),
   LangM,
   Language(..),
   OutputCapable
@@ -210,7 +209,7 @@ task = ShuffleInstance {
           ])
         ]
       ],
-    addText = NoExtraText
+    addTexts = []
     },
   allowLayoutMangling = False,
   shuffleNames = False,

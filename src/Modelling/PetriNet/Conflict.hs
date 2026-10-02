@@ -145,7 +145,6 @@ import Control.Monad.Catch              (MonadCatch, MonadThrow)
 import Control.Monad.Extra              (findM)
 import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
-  ExtraText (..),
   GenericOutputCapable (..),
   LangM',
   LangM,
@@ -245,7 +244,7 @@ findConflictTask showInputHelp path task = do
       german "Die Reihenfolge der Transitionen innerhalb des Paars spielt hierbei keine Rolle."
     pure ()
   hoveringInformation True
-  extra $ Find.addText task
+  extra $ Find.addTexts task
   pure ()
 
 findConflictSyntax
@@ -400,7 +399,7 @@ pickConflictTask showInputHelp path task = do
     pure ()
    pure ()
   hoveringInformation True
-  extra $ Pick.addText task
+  extra $ Pick.addTexts task
   pure ()
 
 findConflictGenerate
@@ -429,7 +428,7 @@ findConflictGenerate config segment = evalRandT getInstance . mkStdGen
         namesOfPlaces = Set.fromList $ map showPlace $ placesFromOneTo (places bc),
         namesOfTransitions = Set.fromList $ map showTransition $ transitionsFromOneTo (transitions bc),
         showSolution = Find.printSolution config,
-        addText = Find.extraText config
+        addTexts = Find.extraTexts config
         }
     bc = Find.basicConfig config
 
@@ -444,7 +443,7 @@ pickConflictGenerate = pickGenerate pickConflict gc ud ws et
     gc = Pick.graphConfig
     ud = Pick.useDifferentGraphLayouts
     ws = Pick.printSolution
-    et = Pick.extraText
+    et = Pick.extraTexts
 
 findConflict
   :: (MonadAlloy m, MonadThrow m, Net p n, RandomGen g)
@@ -743,7 +742,7 @@ defaultPickConflictInstance = PickInstance {
       )))
     ],
   showSolution = True,
-  addText = NoExtraText
+  addTexts = []
   }
 
 defaultFindConflictInstance :: FindInstance SimplePetriNet Conflict
@@ -773,5 +772,5 @@ defaultFindConflictInstance = FindInstance {
   namesOfPlaces = Set.fromList ["s1", "s2", "s3", "s4"],
   namesOfTransitions = Set.fromList ["t1", "t2", "t3"],
   showSolution = True,
-  addText = NoExtraText
+  addTexts = []
   }

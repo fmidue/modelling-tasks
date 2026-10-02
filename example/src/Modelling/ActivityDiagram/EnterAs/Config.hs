@@ -5,7 +5,6 @@ module Modelling.ActivityDiagram.EnterAs.Config where
 import Modelling.ActivityDiagram.Config (AdConfig(..))
 import Modelling.ActivityDiagram.EnterAS (EnterASConfig(..))
 
-import Control.OutputCapable.Blocks     (ExtraText (..))
 
 {-|
 points: 0.15
@@ -30,7 +29,7 @@ task2023_35 = EnterASConfig {
   answerLength = (10, 10),
   rejectLongerThan = Nothing,
   printSolution = True,
-  extraText = NoExtraText
+  extraTexts = []
   }
 
 {-|
@@ -56,7 +55,7 @@ task2023_36 = EnterASConfig {
   answerLength = (14, 14),
   rejectLongerThan = Nothing,
   printSolution = True,
-  extraText = NoExtraText
+  extraTexts = []
   }
 
 {-|
@@ -82,7 +81,7 @@ task2024_41 = EnterASConfig {
   answerLength = (11, 11),
   rejectLongerThan = Nothing,
   printSolution = True,
-  extraText = NoExtraText
+  extraTexts = []
   }
 
 {-|

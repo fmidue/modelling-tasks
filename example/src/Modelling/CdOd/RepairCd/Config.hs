@@ -17,7 +17,6 @@ import Modelling.CdOd.Types (
   RelationshipMutation (..),
   )
 
-import Control.OutputCapable.Blocks     (ExtraText (..))
 import Data.Ratio                       ((%))
 
 {-|
@@ -79,7 +78,7 @@ task2023_07 = RepairCdConfig {
   printSolution = True,
   timeout = Nothing,
   useNames = True,
-  extraText = NoExtraText
+  extraTexts = []
   }
 
 {-|
@@ -140,7 +139,7 @@ task2023_08 = RepairCdConfig {
   printSolution = True,
   timeout = Nothing,
   useNames = False,
-  extraText = NoExtraText
+  extraTexts = []
   }
 
 {-|
@@ -200,7 +199,7 @@ task2024_12 = RepairCdConfig {
   printSolution = True,
   timeout = Nothing,
   useNames = True,
-  extraText = NoExtraText
+  extraTexts = []
   }
 
 {-|
@@ -259,7 +258,7 @@ task2024_13 = RepairCdConfig {
   printSolution = True,
   timeout = Nothing,
   useNames = False,
-  extraText = NoExtraText
+  extraTexts = []
   }
 
 {-|
@@ -319,7 +318,7 @@ task2024_55 = RepairCdConfig {
   printSolution = True,
   timeout = Nothing,
   useNames = True,
-  extraText = NoExtraText
+  extraTexts = []
   }
 
 {-|
@@ -384,7 +383,7 @@ task2025_repeat_12 = RepairCdConfig {
   printSolution = True,
   timeout = Nothing,
   useNames = True,
-  extraText = NoExtraText
+  extraTexts = []
   }
 
 {-|

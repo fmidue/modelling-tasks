@@ -73,7 +73,7 @@ import Control.Monad.Extra              (whenJust)
 import Control.Monad.Trans.Class (lift)
 import Control.OutputCapable.Blocks (
   ArticleToUse (IndefiniteArticle),
-  ExtraText(..),
+  ExtraText,
   GenericOutputCapable (..),
   LangM,
   Rated,
@@ -110,7 +110,7 @@ data EnterASInstance = EnterASInstance {
   sampleSequence :: [String],
   noLongerThan :: Maybe Int,
   showSolution :: Bool,
-  addText :: ExtraText
+  addTexts :: [ExtraText]
 }
   deriving (Eq, Generic, Hashable, Read, Reader, Show, ToDoc)
 
@@ -122,7 +122,7 @@ data EnterASConfig = EnterASConfig {
   answerLength :: !(Int, Int),
   rejectLongerThan :: Maybe Int,
   printSolution :: Bool,
-  extraText :: ExtraText
+  extraTexts :: [ExtraText]
 }
   deriving (Generic, Read, Reader, Show, ToDoc)
 
@@ -142,7 +142,7 @@ defaultEnterASConfig = EnterASConfig {
   answerLength = (5, 8),
   rejectLongerThan = Nothing,
   printSolution = True,
-  extraText = NoExtraText
+  extraTexts = []
 }
 
 checkEnterASConfig :: EnterASConfig -> Maybe String
@@ -262,7 +262,7 @@ enterASTask showInputHelp path task = do
   whenJust (noLongerThan task) $ \maxL -> paragraph $ translate $ do
     english $ "Your answer must not exceed " ++ show maxL ++ " steps."
     german $ "Ihre Antwort darf maximal " ++ show maxL ++ " Schritte enthalten."
-  extra $ addText task
+  extra $ addTexts task
   pure ()
 
 enterASInitial :: [String]
@@ -375,7 +375,7 @@ getEnterASTask config = do
           sampleSequence = sampleSolution $ enterActionSequence petri,
           noLongerThan = rejectLongerThan config,
           showSolution = printSolution config,
-          addText = extraText config
+          addTexts = extraTexts config
         }) ad
 
 defaultEnterASInstance :: EnterASInstance
@@ -429,5 +429,5 @@ defaultEnterASInstance =
   sampleSequence = ["D","E","G","B","F"],
   noLongerThan = Nothing,
   showSolution = True,
-  addText = NoExtraText
+  addTexts = []
 }

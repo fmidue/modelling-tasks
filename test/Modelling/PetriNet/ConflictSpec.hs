@@ -59,7 +59,6 @@ import Modelling.PetriNet.TestCommon (
 import Settings                         (configDepth, needsTuning)
 
 import Control.Monad.Trans.Class        (lift)
-import Control.OutputCapable.Blocks     (ExtraText (..))
 import Data.Maybe                       (isNothing)
 import Test.Hspec
 import Text.Parsec                      (parse)
@@ -145,7 +144,7 @@ validFindConflictConfigs cs advancedConfig = [
     False
     uniqueConflictPlace
     alloyTestConfig
-    NoExtraText |
+    [] |
       (bc, ch) <- cs,
       validConflictConfig <- validConflictConfigs bc,
       uniqueConflictPlace <- [Nothing, Just True, Just False]
@@ -180,7 +179,7 @@ validPickConflictConfigs cs = [
     uniqueConflictPlace
     False
     alloyTestConfig
-    NoExtraText |
+    [] |
       (bc, ch) <- cs,
       validConflictConfig <- validConflictConfigs bc,
       prohibitSourceTransitions <- [False, True],

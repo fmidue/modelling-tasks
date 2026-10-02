@@ -140,7 +140,7 @@ import Control.Monad.Fail               (MonadFail)
 #endif
 import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
-  ExtraText (..),
+  ExtraText,
   GenericOutputCapable (..),
   LangM,
   OutputCapable,
@@ -199,7 +199,7 @@ data MatchCdOdInstance
     instances      :: Map Char ([Int], Od),
     showSolution   :: !Bool,
     taskText       :: !MatchCdOdTaskText,
-    addText        :: ExtraText
+    addTexts       :: [ExtraText]
   } deriving (Eq, Generic, Hashable, Read, Reader, Show, ToDoc)
 
 data OdDistributionConfig =
@@ -222,7 +222,7 @@ data MatchCdOdConfig
     printSolution    :: Bool,
     timeout          :: Maybe Int,
     withNonTrivialInheritance :: Maybe Bool,
-    extraText        :: ExtraText
+    extraTexts       :: [ExtraText]
   } deriving (Generic, Read, Reader, Show, ToDoc)
 
 defaultMatchCdOdConfig :: MatchCdOdConfig
@@ -260,7 +260,7 @@ defaultMatchCdOdConfig
     printSolution    = True,
     timeout          = Nothing,
     withNonTrivialInheritance = Just True,
-    extraText        = NoExtraText
+    extraTexts       = []
   }
 
 toMatching :: [Int] -> Map Char [Int] -> Map (Int, Char) Bool
@@ -380,7 +380,7 @@ matchCdOdTask showInputHelp path task = do
   when showInputHelp $
     toOutputCapable (inputHelpText hasGivenCds $ M.size $ diagrams task)
   hoveringInformation True
-  extra $ addText task
+  extra $ addTexts task
   pure ()
   where
     hasGivenCds = Special GivenCds `elem` taskText task
@@ -662,7 +662,7 @@ getMatchCdOdTask f config@MatchCdOdConfig {..} = do
         instances      = ods',
         showSolution = printSolution,
         taskText = defaultMatchCdOdTaskText (M.size cds) (M.size ods'),
-        addText = extraText
+        addTexts = extraTexts
         }
   where
     toOd possibleLinkNames =
@@ -885,7 +885,7 @@ defaultMatchCdOdInstance = MatchCdOdInstance {
     ],
   showSolution = True,
   taskText = defaultMatchCdOdTaskText 2 5,
-  addText = NoExtraText
+  addTexts = []
   }
 
 classAndNonInheritanceNames :: MatchCdOdInstance -> ([String], [String])
@@ -926,7 +926,7 @@ shuffleNodesAndEdges MatchCdOdInstance {..} = do
     instances = ods,
     showSolution = showSolution,
     taskText = taskText,
-    addText = addText
+    addTexts = addTexts
     }
 
 shuffleInstance
@@ -950,7 +950,7 @@ shuffleInstance MatchCdOdInstance {..} = do
     instances = M.fromAscList ods',
     showSolution = showSolution,
     taskText = taskText,
-    addText = addText
+    addTexts = addTexts
     }
 
 renameInstance
@@ -981,7 +981,7 @@ renameInstance inst@MatchCdOdInstance {..} names' nonInheritances' = do
     instances = ods,
     showSolution = showSolution,
     taskText = taskText,
-    addText = addText
+    addTexts = addTexts
     }
 
 getRandomTask
