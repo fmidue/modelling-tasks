@@ -511,11 +511,7 @@ average memory usage: 3750.84 MB
 used as: MatchCdOdFormInputCheckboxesUnAvailable-Quiz
 -}
 task2025_repeat_24 :: MatchCdOdConfig
-task2025_repeat_24 = task2025_18 {
-  allowedCdMutations = [
-    MutateRelationship FlipNonInheritance
-    ]
-}
+task2025_repeat_24 = task2025_18
 
 {-|
 points: 0.15
@@ -607,6 +603,9 @@ used as: MatchCdOdFormInputCheckboxesUnAvailable-Quiz
 -}
 task2025_repeat_27 :: MatchCdOdConfig
 task2025_repeat_27 = task2025_repeat_24{
+  allowedCdMutations = [
+    MutateRelationship FlipNonInheritance
+    ],
   odDistribution = (odDistribution task2025_repeat_24) {
     objectDiagramCount = 5,
     maxPerJustEachCd = 3,
