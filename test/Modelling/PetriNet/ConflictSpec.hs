@@ -70,6 +70,7 @@ import Modelling.PetriNet.TestCommon (
 import Settings                         (configDepth, needsTuning)
 
 import Control.Monad.Trans.Class        (lift)
+import Control.OutputCapable.Blocks     (Language (English))
 import Data.Maybe                       (isNothing)
 import Test.Hspec
 import Text.Parsec                      (parse)
