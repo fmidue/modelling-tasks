@@ -498,7 +498,11 @@ average memory usage: 3792 MB
 used as: MatchCdOdCheckboxesUnAvailable-Quiz (at the time)
 -}
 task2025_18 :: MatchCdOdConfig
-task2025_18 = task2024_18
+task2025_18 = task2024_18 {
+  allowedCdMutations = [
+    MutateRelationship FlipNonInheritance
+    ]
+}
 
 {-|
 points: 0.15
