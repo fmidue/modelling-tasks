@@ -14,6 +14,7 @@ module Modelling.PetriNet.ConflictPlaces (
   findConflictPlacesTask,
   parseConflictPlacesPrec,
   simpleFindConflictPlacesTask,
+  checkFindConflictInstance,
   ) where
 
 import qualified Data.Map                         as M (empty, fromList)
@@ -27,13 +28,13 @@ import Modelling.Auxiliary.Output (
   )
 import Modelling.PetriNet.Conflict (
   ConflictPlaces,
-  checkConflictConfig,
+  checkFindConflictConfig,
   conflictPlacesShow,
+  findConflictPlacesSolution,
   findConflictSyntax,
   )
 import Modelling.PetriNet.Find (
   FindInstance (..),
-  checkConfigForFind,
   drawFindWith,
   findInitial,
   )
@@ -188,6 +189,12 @@ findConflictPlacesSyntax task (conflict, ps) = do
     isValidPlace (Place x) = x `Set.member` namesOfPlaces task
     assert = continueOrAbort False
 
+checkFindConflictInstance
+  :: OutputCapable m
+  => FindInstance net Conflict
+  -> LangM m
+checkFindConflictInstance inst = findConflictPlacesSyntax inst (findConflictPlacesSolution inst)
+
 parseConflictPlacesPrec :: Int -> Parser ConflictPlaces
 parseConflictPlacesPrec _  = do
   spaces
@@ -223,15 +230,9 @@ defaultFindConflictPlacesConfig = defaultFindConflictConfig
   & lGraphConfig . lHidePlaceNames .~ False
 
 checkFindConflictPlacesConfig :: FindConflictConfig -> Maybe String
-checkFindConflictPlacesConfig FindConflictConfig {
-  basicConfig,
-  changeConfig,
-  conflictConfig,
-  graphConfig
-  }
-  = prohibitHidePlaceNames graphConfig
-  <|> checkConfigForFind basicConfig changeConfig graphConfig
-  <|> checkConflictConfig basicConfig conflictConfig
+checkFindConflictPlacesConfig config
+  = prohibitHidePlaceNames (graphConfig config)
+  <|> checkFindConflictConfig config
 
 prohibitHidePlaceNames :: GraphConfig -> Maybe String
 prohibitHidePlaceNames gc

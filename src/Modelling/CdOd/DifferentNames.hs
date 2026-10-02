@@ -213,9 +213,9 @@ data ShufflingOption a =
 data SolutionDisplay
   = ShowNothing
   | ShowMapping
-  | ShowMappingAndReprintCD
-  | ShowMappingAndReprintOD
-  | ShowMappingAndReprintCDAndOD
+  | ShowMappingAndRelabelledCd
+  | ShowMappingAndRelabelledOd
+  | ShowMappingAndCdAndRelabelledOd
   deriving (Eq, Generic, Hashable, Read, Reader, Show, ToDoc)
 
 data DifferentNamesInstance = DifferentNamesInstance {
@@ -229,8 +229,18 @@ data DifferentNamesInstance = DifferentNamesInstance {
     addTexts :: [ExtraText]
   } deriving (Eq, Generic, Hashable, Read, Reader, Show, ToDoc)
 
-checkDifferentNamesInstance :: DifferentNamesInstance -> Maybe String
-checkDifferentNamesInstance DifferentNamesInstance {..}
+checkDifferentNamesInstance
+  :: OutputCapable m
+  => DifferentNamesInstance
+  -> LangM m
+checkDifferentNamesInstance inst = do
+  whenJust (checkDifferentNamesInstance' inst) $ \msg ->
+    refuse $ paragraph $ text msg
+  differentNamesSyntax True inst (differentNamesSolution inst)
+  pure ()
+
+checkDifferentNamesInstance' :: DifferentNamesInstance -> Maybe String
+checkDifferentNamesInstance' DifferentNamesInstance {..}
   | not $ printNames cdDrawSettings
   = Just [iii|printNames has to be set to True for this task type.|]
   | not $ printNavigations cdDrawSettings
@@ -622,7 +632,7 @@ differentNamesEvaluation path task cs = do
     case showSolution task of
       ShowNothing -> pure ()
       ShowMapping -> pure ()
-      ShowMappingAndReprintCD -> do
+      ShowMappingAndRelabelledCd -> do
         paragraph $ translate $ do
           english "Consider the correctly labelled class diagram:"
           german "Betrachten Sie das korrekt beschriftete Klassendiagramm:"
@@ -631,7 +641,7 @@ differentNamesEvaluation path task cs = do
           cacheCd (cdDrawSettings task) mempty mLabelLength (fromClassDiagram relabelledCd) path)
 
         pure ()
-      ShowMappingAndReprintOD -> do
+      ShowMappingAndRelabelledOd -> do
         paragraph $ translate $ do
           english "Consider the correctly labelled object diagram:"
           german "Betrachten Sie das korrekt beschriftete Objektdiagramm:"
@@ -640,7 +650,7 @@ differentNamesEvaluation path task cs = do
           cacheOd relabelledOd mLabelLength Forward True path)
 
         pure ()
-      ShowMappingAndReprintCDAndOD -> do
+      ShowMappingAndCdAndRelabelledOd -> do
         paragraph $ translate $ do
           english "Here is the reference class diagram:"
           german "Hier ist das Referenz-Klassendiagramm:"

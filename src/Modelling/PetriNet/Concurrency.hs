@@ -25,6 +25,7 @@ module Modelling.PetriNet.Concurrency (
   pickConcurrencyTask,
   simpleFindConcurrencyTask,
   simplePickConcurrencyTask,
+  checkFindConcurrencyInstance,
   ) where
 
 import qualified Modelling.PetriNet.Find          as Find (FindInstance (..), showSolution)
@@ -265,6 +266,12 @@ findConcurrencySolution :: FindInstance net (Concurrent a) -> (a, a)
 findConcurrencySolution task = concur
   where
     Concurrent concur = toFind task
+
+checkFindConcurrencyInstance
+  :: OutputCapable m
+  => FindInstance net (Concurrent Transition)
+  -> LangM m
+checkFindConcurrencyInstance inst = findConcurrencySyntax inst (findConcurrencySolution inst)
 
 simplePickConcurrencyTask
   :: (MonadCache m,

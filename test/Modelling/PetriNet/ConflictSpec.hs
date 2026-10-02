@@ -1,4 +1,5 @@
 {-# LANGUAGE DuplicateRecordFields #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeApplications #-}
 module Modelling.PetriNet.ConflictSpec where
 
@@ -9,18 +10,26 @@ import qualified Modelling.PetriNet.Types         as Pick (
   PickConflictConfig (alloyConfig),
   )
 
+import Capabilities.Diagrams.IO          ()
+import Capabilities.Graphviz.IO          ()
+import Modelling.Common                  (withLang)
+
 import Modelling.PetriNet.Conflict (
   checkConflictConfig,
   checkFindConflictConfig,
   checkPickConflictConfig,
-  findConflict,
+  findConflictGenerate,
   parseConflict,
   petriNetFindConflict,
   petriNetPickConflict,
   pickConflict,
   )
+import Modelling.PetriNet.ConflictPlaces (
+  checkFindConflictInstance,
+  )
 
 import Modelling.PetriNet.Find (
+  FindInstance,
   findTaskInstance,
   )
 import Modelling.PetriNet.Pick (
@@ -30,12 +39,14 @@ import Modelling.PetriNet.Types (
   AdvConfig (AdvConfig),
   BasicConfig,
   ChangeConfig,
+  Conflict,
   ConflictConfig (ConflictConfig),
   FindConflictConfig (FindConflictConfig),
   PetriConflict (Conflict),
   PetriConflict' (PetriConflict'),
   PickConflictConfig (PickConflictConfig),
   SimplePetriLike,
+  SimplePetriNet,
   defaultFindConflictConfig,
   defaultPickConflictConfig,
   )
@@ -81,12 +92,10 @@ spec = do
   describe "validFindConflictConfigs" $
     checkConfigs checkFindConflictConfig findConfigs'
   describe "findConflicts" $ do
-    defaultConfigTaskGeneration
-      (findConflict defaultFindConflictConfig {
-          Find.alloyConfig = firstInstanceConfig
-          } 0)
-      0
-      $ checkFindConflictInstance @(SimplePetriLike _)
+    it "generates a FindConflictInstance required to create the task" $ do
+      (inst :: FindInstance SimplePetriNet Conflict) <- findConflictGenerate
+        defaultFindConflictConfig { Find.alloyConfig = firstInstanceConfig } 0 0
+      withLang (checkFindConflictInstance inst) English `shouldBe` Right ()
     needsTuning $
       testFindConflictConfig findConfigs
   describe "validPickConflictConfigs" $
@@ -109,9 +118,6 @@ spec = do
     validFinds = validConfigsForFind 0 configDepth
     validPicks = validConfigsForPick 0 configDepth
 
-checkFindConflictInstance :: (a, PetriConflict' String) -> Bool
-checkFindConflictInstance = isValidConflict . snd
-
 checkPickConflictInstance :: [(a, Maybe (PetriConflict' String))] -> Bool
 checkPickConflictInstance = f . map snd
   where
@@ -122,7 +128,7 @@ testFindConflictConfig :: [FindConflictConfig] -> Spec
 testFindConflictConfig = testTaskGeneration
   petriNetFindConflict
   (findTaskInstance parseConflict)
-  $ checkFindConflictInstance @(SimplePetriLike _)
+  $ isValidConflict . snd @(SimplePetriLike _)
 
 testPickConflictConfig :: [PickConflictConfig] -> Spec
 testPickConflictConfig = testTaskGeneration

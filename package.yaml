@@ -82,7 +82,6 @@ library:
   exposed-modules:
     - Modelling.ActivityDiagram.ActionSequences
     - Modelling.ActivityDiagram.Alloy
-    - Modelling.ActivityDiagram.Auxiliary.Parser
     - Modelling.ActivityDiagram.Config
     - Modelling.ActivityDiagram.Datatype
     - Modelling.ActivityDiagram.EnterAS

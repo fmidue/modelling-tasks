@@ -3,6 +3,7 @@ module Modelling.ActivityDiagram.MatchPetriSpec where
 import Modelling.ActivityDiagram.MatchPetri (
   MatchPetriConfig (..),
   checkMatchPetriConfig,
+  checkMatchPetriInstance,
   defaultMatchPetriConfig,
   defaultMatchPetriInstance,
   extractAuxiliaryPetriNodes,
@@ -11,7 +12,7 @@ import Modelling.ActivityDiagram.MatchPetri (
   matchPetriSolution,
   )
 
-import Test.Hspec (Spec, describe, it, context, shouldBe, shouldSatisfy)
+import Test.Hspec (Spec, describe, it, context, shouldBe, shouldSatisfy, shouldReturn)
 import Control.OutputCapable.Blocks     (Language (English))
 import Data.Maybe (isJust)
 import Modelling.ActivityDiagram.Config (
@@ -21,7 +22,7 @@ import Modelling.ActivityDiagram.Config (
 
 import Modelling.ActivityDiagram.Instance(parseInstance)
 import Modelling.ActivityDiagram.PetriNet (convertToSimple)
-import Modelling.Common                 (withLang)
+import Modelling.Common                 (withLang, runWithoutOutput)
 
 import Language.Alloy.Call (getInstances)
 
@@ -61,4 +62,8 @@ spec = do
         (matchPetriSolution defaultMatchPetriInstance)
       `withLang` English
       `shouldBe` Right 1
+  describe "defaultMatchPetriInstance" $
+    it "passes checkMatchPetriInstance" $ do
+      runWithoutOutput $ checkMatchPetriInstance defaultMatchPetriInstance
+      `shouldReturn` Just ()
   where hasAuxiliaryPetriNodes = not . null . extractAuxiliaryPetriNodes
