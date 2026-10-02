@@ -31,7 +31,7 @@ task2023_41 = FindAuxiliaryPetriNodesConfig {
   hideBranchConditions = True,
   presenceOfSinkTransitionsForFinals = Nothing,
   printSolution = True,
-  extraText = finalNodesAndTransitionsAdvice
+  extraTexts = [finalNodesAndTransitionsAdvice]
   }
 
 {-|
@@ -57,7 +57,7 @@ task2023_42 = FindAuxiliaryPetriNodesConfig {
   hideBranchConditions = True,
   presenceOfSinkTransitionsForFinals = Nothing,
   printSolution = True,
-  extraText = finalNodesAndTransitionsAdvice
+  extraTexts = [finalNodesAndTransitionsAdvice]
   }
 
 {-|
@@ -83,7 +83,7 @@ task2024_47 = FindAuxiliaryPetriNodesConfig {
   hideBranchConditions = True,
   presenceOfSinkTransitionsForFinals = Nothing,
   printSolution = True,
-  extraText = finalNodesAndTransitionsAdvice
+  extraTexts = [finalNodesAndTransitionsAdvice]
   }
 
 {-|
@@ -109,7 +109,7 @@ task2024_48 = FindAuxiliaryPetriNodesConfig {
   hideBranchConditions = True,
   presenceOfSinkTransitionsForFinals = Nothing,
   printSolution = True,
-  extraText = finalNodesAndTransitionsAdvice
+  extraTexts = [finalNodesAndTransitionsAdvice]
   }
 
 {-|
@@ -135,7 +135,7 @@ task2024_72 = FindAuxiliaryPetriNodesConfig {
   hideBranchConditions = True,
   presenceOfSinkTransitionsForFinals = Just False,
   printSolution = True,
-  extraText = finalNodesAndTransitionsAdvice
+  extraTexts = [finalNodesAndTransitionsAdvice]
   }
 
 {-|
@@ -161,7 +161,7 @@ task2024_73 = FindAuxiliaryPetriNodesConfig {
   hideBranchConditions = True,
   presenceOfSinkTransitionsForFinals = Just True,
   printSolution = True,
-  extraText = finalNodesAndTransitionsAdvice
+  extraTexts = [finalNodesAndTransitionsAdvice]
   }
 
 {-|
@@ -192,7 +192,7 @@ task2025_50 = FindAuxiliaryPetriNodesConfig {
     hideBranchConditions = True,
     presenceOfSinkTransitionsForFinals = Nothing,
     printSolution = True,
-    extraText = finalNodesAndTransitionsAdvice
+    extraTexts = [finalNodesAndTransitionsAdvice]
     }
 
 {-|
@@ -236,7 +236,7 @@ task2025_51 = FindAuxiliaryPetriNodesConfig {
     hideBranchConditions = True,
     presenceOfSinkTransitionsForFinals = Nothing,
     printSolution = True,
-    extraText = finalNodesAndTransitionsAdvice
+    extraTexts = [finalNodesAndTransitionsAdvice]
     }
 
 {-|

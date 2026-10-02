@@ -109,7 +109,7 @@ import Control.Monad                    (when)
 import Control.Monad.Catch              (MonadCatch, MonadThrow)
 import Control.OutputCapable.Blocks       (
   ArticleToUse (DefiniteArticle),
-  ExtraText (..),
+  ExtraText,
   GenericOutputCapable (..),
   LangM,
   Language,
@@ -176,7 +176,7 @@ data MathConfig = MathConfig {
   useDifferentGraphLayouts :: Bool,
   wrongInstances :: Int,
   alloyConfig :: AlloyConfig,
-  extraText :: ExtraText
+  extraTexts :: [ExtraText]
   } deriving (Generic, Read, Reader, Show, ToDoc)
 
 defaultMathConfig :: MathConfig
@@ -193,14 +193,14 @@ defaultMathConfig = MathConfig {
   useDifferentGraphLayouts = False,
   wrongInstances = 3,
   alloyConfig = defaultAlloyConfig,
-  extraText = NoExtraText
+  extraTexts = []
   }
 
 data MatchInstance a b = MatchInstance {
   from :: a,
   showSolution :: Bool,
   to :: Map Int (Bool, b),
-  addText :: ExtraText
+  addTexts :: [ExtraText]
   }
   deriving (Data, Functor, Generic, Read, Reader, Show, ToDoc)
 
@@ -211,7 +211,7 @@ instance Bifunctor MatchInstance where
   bimap f g m@MatchInstance {} = m {
     from = f $ from m,
     to   = second g <$> to m,
-    addText = addText m
+    addTexts = addTexts m
     }
 
 instance Bitraversable MatchInstance where
@@ -219,7 +219,7 @@ instance Bitraversable MatchInstance where
     <$> f (from m)
     <*> pure (showSolution m)
     <*> traverse (traverse g) (to m)
-    <*> pure (addText m)
+    <*> pure (addTexts m)
 
 evalWithStdGen
   :: Monad m
@@ -343,7 +343,7 @@ matchMathInstance c x y ys = do
     from = x,
     showSolution = printSolution c,
     to = fromList $ zip [1..] ys',
-    addText = extraText c
+    addTexts = extraTexts c
     }
 
 matchToMath
@@ -434,7 +434,7 @@ graphToMathTask showInputHelp path task = do
     pure ()
    pure ()
   hoveringInformation True
-  extra $ addText task
+  extra $ addTexts task
   pure ()
 
 mathToOutput :: OutputCapable m => (a -> LangM m) -> PetriMath a -> LangM m
@@ -498,7 +498,7 @@ mathToGraphTask showInputHelp path task = do
     pure ()
    pure ()
   hoveringInformation True
-  extra $ addText task
+  extra $ addTexts task
   pure ()
 
 graphToMathSyntax
@@ -758,7 +758,7 @@ defaultGraphToMathInstance = MatchInstance {
       placeOrderMath = Just "\\left(s_{1},s_{2},s_{3},s_{4}\\right)"
       }))
     ],
-    addText = NoExtraText
+    addTexts = []
   }
 
 defaultMathToGraphInstance :: MathToGraphInstance
@@ -857,5 +857,5 @@ defaultMathToGraphInstance = MatchInstance {
         }
       )))
     ],
-    addText = NoExtraText
+    addTexts = []
   }

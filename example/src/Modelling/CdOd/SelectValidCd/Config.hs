@@ -20,7 +20,6 @@ import Modelling.CdOd.Types (
   RelationshipMutation (..),
   )
 
-import Control.OutputCapable.Blocks     (ExtraText (..))
 import Data.Ratio                       ((%))
 
 {-|
@@ -83,7 +82,7 @@ task2023_05 = SelectValidCdConfig {
   printSolution = True,
   shuffleEachCd = True,
   timeout = Nothing,
-  extraText = NoExtraText
+  extraTexts = []
   }
 
 {-|
@@ -146,7 +145,7 @@ task2023_06 = SelectValidCdConfig {
   printSolution = True,
   shuffleEachCd = True,
   timeout = Nothing,
-  extraText = NoExtraText
+  extraTexts = []
   }
 
 {-|
@@ -207,7 +206,7 @@ task2024_06 = SelectValidCdConfig {
   printSolution = True,
   shuffleEachCd = True,
   timeout = Nothing,
-  extraText = NoExtraText
+  extraTexts = []
   }
 
 {-|
@@ -269,7 +268,7 @@ task2024_07 = SelectValidCdConfig {
   printSolution = True,
   shuffleEachCd = True,
   timeout = Nothing,
-  extraText = NoExtraText
+  extraTexts = []
   }
 
 {-|
@@ -329,7 +328,7 @@ task2024_08 = SelectValidCdConfig {
   printSolution = True,
   shuffleEachCd = True,
   timeout = Nothing,
-  extraText = NoExtraText
+  extraTexts = []
   }
 
 {-|
@@ -390,7 +389,7 @@ task2024_51 = SelectValidCdConfig {
   printSolution = True,
   shuffleEachCd = False,
   timeout = Nothing,
-  extraText = NoExtraText
+  extraTexts = []
   }
 
 {-|
@@ -450,7 +449,7 @@ task2024_52 = SelectValidCdConfig {
   printSolution = True,
   shuffleEachCd = False,
   timeout = Nothing,
-  extraText = NoExtraText
+  extraTexts = []
   }
 
 {-|

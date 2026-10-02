@@ -62,7 +62,6 @@ import Settings                         (configDepth, needsTuning)
 
 import Control.Lens.Lens                ((??))
 import Control.Monad.Trans.Class        (lift)
-import Control.OutputCapable.Blocks     (ExtraText (..))
 import Test.Hspec
 import Text.Parsec                      (parse)
 
@@ -151,7 +150,7 @@ validFindConcurrencyConfigs cs advancedConfig =
     ?? validGraphConfig
     ?? False
     ?? alloyTestConfig
-    ?? NoExtraText
+    ?? []
  )
 
 validPickConcurrencyConfigs
@@ -166,7 +165,7 @@ validPickConcurrencyConfigs cs = [
     printSolution
     False
     alloyTestConfig
-    NoExtraText |
+    [] |
       (basic,change) <- cs,
       printSolution <- [False, True]
     ]

@@ -18,7 +18,6 @@ import Modelling.CdOd.Types (
   Property (..),
   )
 
-import Control.OutputCapable.Blocks     (ExtraText (..))
 import Data.Ratio                       ((%))
 
 {-|
@@ -90,7 +89,7 @@ task2023_09 = NameCdErrorConfig {
     },
   timeout = Nothing,
   useNames = True,
-  extraText = NoExtraText
+  extraTexts = []
   }
 
 {-|
@@ -162,7 +161,7 @@ task2023_10 = NameCdErrorConfig {
     },
   timeout = Nothing,
   useNames = True,
-  extraText = NoExtraText
+  extraTexts = []
   }
 
 {-|
@@ -234,7 +233,7 @@ task2024_10 = NameCdErrorConfig {
     },
   timeout = Nothing,
   useNames = True,
-  extraText = NoExtraText
+  extraTexts = []
   }
 
 {-|
@@ -306,7 +305,7 @@ task2024_11 = NameCdErrorConfig {
     },
   timeout = Nothing,
   useNames = False,
-  extraText = NoExtraText
+  extraTexts = []
   }
 
 {-|
@@ -378,7 +377,7 @@ task2024_54 = NameCdErrorConfig {
     },
   timeout = Nothing,
   useNames = True,
-  extraText = NoExtraText
+  extraTexts = []
   }
 
 {-|

@@ -126,7 +126,6 @@ import Control.Monad.Catch              (MonadCatch, MonadThrow)
 import Control.Monad.Extra              (findM)
 import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
-  ExtraText (..),
   GenericOutputCapable (..),
   LangM',
   LangM,
@@ -237,7 +236,7 @@ findConcurrencyTask showInputHelp path task = do
         |]
     pure ()
   hoveringInformation True
-  extra $ Find.addText task
+  extra $ Find.addTexts task
   pure ()
 
 findConcurrencySyntax
@@ -353,7 +352,7 @@ pickConcurrencyTask showInputHelp path task = do
     pure ()
    pure ()
   hoveringInformation True
-  extra $ Pick.addText task
+  extra $ Pick.addTexts task
   pure ()
 
 findConcurrencyGenerate
@@ -380,7 +379,7 @@ findConcurrencyGenerate config segment = evalRandT getInstance . mkStdGen
         namesOfPlaces = Set.fromList $ map showPlace $ placesFromOneTo (places bc),
         namesOfTransitions = Set.fromList $ map showTransition $ transitionsFromOneTo (transitions bc),
         showSolution = Find.printSolution config,
-        addText = Find.extraText config
+        addTexts = Find.extraTexts config
         }
     bc = Find.basicConfig config
 
@@ -406,7 +405,7 @@ pickConcurrencyGenerate = pickGenerate pickConcurrency gc ud ws et
     gc = Pick.graphConfig
     ud = Pick.useDifferentGraphLayouts
     ws = Pick.printSolution
-    et = Pick.extraText
+    et = Pick.extraTexts
 
 
 pickConcurrency
@@ -598,7 +597,7 @@ defaultPickConcurrencyInstance = PickInstance {
       )))
     ],
   showSolution = True,
-  addText = NoExtraText
+  addTexts = []
   }
 
 defaultFindConcurrencyInstance :: FindInstance SimplePetriNet (Concurrent Transition)
@@ -625,5 +624,5 @@ defaultFindConcurrencyInstance = FindInstance {
   namesOfPlaces = Set.fromList ["s1", "s2", "s3", "s4"],
   namesOfTransitions = Set.fromList ["t1", "t2", "t3"],
   showSolution = True,
-  addText = NoExtraText
+  addTexts = []
   }

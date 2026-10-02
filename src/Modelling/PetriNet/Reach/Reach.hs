@@ -121,7 +121,7 @@ import Modelling.PetriNet.Reach.ConfigValidation (
   )
 import Control.OutputCapable.Blocks (
   ArticleToUse (IndefiniteArticle),
-  ExtraText (..),
+  ExtraText,
   GenericOutputCapable (assertion, code, image, indent, refuse, paragraph, text),
   LangM,
   MinimumThreshold (MinimumThreshold),
@@ -213,7 +213,7 @@ reachTask showInputHelp path inst = do
     (minLength inst)
     (withMinLengthHint inst)
     (Just g)
-    (addText inst)
+    (addTexts inst)
   where
     n = petriNet (netGoal inst)
     drawFileWithSettings = drawToFile (not $ showPlaceNames inst) False path (drawUsing (netGoal inst))
@@ -227,9 +227,9 @@ reportReachFor
   -> Int
   -> Bool
   -> Maybe (Either FilePath String)
-  -> ExtraText
+  -> [ExtraText]
   -> LangM m
-reportReachFor showInputHelp img noLonger lengthHint minLength showMinLengthHint maybeGoal addText = do
+reportReachFor showInputHelp img noLonger lengthHint minLength showMinLengthHint maybeGoal addTexts = do
   paragraph $ translate $ do
     english "For the Petri net"
     german "Gesucht ist für das Petrinetz"
@@ -310,7 +310,7 @@ reportReachFor showInputHelp img noLonger lengthHint minLength showMinLengthHint
           english "Hint on solution length"
           german "Hinweis zur Lösungslänge"
   unless (null hints) $ collapsed True titleText $ sequenceA_ hints
-  extra addText
+  extra addTexts
   pure ()
 
 reachInitial :: ReachInstance s Transition -> TransitionsList
@@ -502,7 +502,7 @@ data ReachInstance s t = ReachInstance {
   shortestSolutions :: Either (NonEmpty [t]) (NonEmpty [t]),
   withLengthHint    :: Maybe Int,
   withMinLengthHint :: Bool,
-  addText           :: ExtraText,
+  addTexts          :: [ExtraText],
   -- | Minimum length of Spaceballs PIN pattern to reject during syntax checking.
   -- If set to @Just n@, sequences starting with @n@ or more consecutive transitions
   -- (e.g., @[t1, t2, t3, t4]@) will be rejected.
@@ -539,7 +539,7 @@ bimapReachInstance f g ReachInstance {..} = ReachInstance {
     shortestSolutions = bimap (fmap (map g)) (fmap (map g)) shortestSolutions,
     withLengthHint    = withLengthHint,
     withMinLengthHint = withMinLengthHint,
-    addText           = addText,
+    addTexts          = addTexts,
     rejectSpaceballsLength = rejectSpaceballsLength
     }
 
@@ -573,7 +573,7 @@ data ReachConfig = ReachConfig {
   showMinLengthHint   :: Bool,
   showTargetNet       :: Bool,
   showPlaceNamesInNet :: Bool,
-  extraText           :: ExtraText,
+  extraTexts          :: [ExtraText],
   filterConfig        :: FilterConfig
   }
   deriving (Generic, Read, Show)
@@ -627,7 +627,7 @@ defaultReachConfig = ReachConfig {
   showMinLengthHint   = True,
   showTargetNet       = True,
   showPlaceNamesInNet = False,
-  extraText           = NoExtraText,
+  extraTexts          = [],
   filterConfig        = defaultFilterConfig { forbiddenCycleLengths = [], requireCycleLengthsAny = [3], transitionCoverageRequirement = 1 % 2 }
   }
 
@@ -650,7 +650,7 @@ defaultReachInstance = ReachInstance {
     ] :| []),
   withLengthHint    = Just 12,
   withMinLengthHint = False,
-  addText           = NoExtraText,
+  addTexts          = [],
   rejectSpaceballsLength = Nothing
 }
 
@@ -806,6 +806,6 @@ generateReach ReachConfig {..} seed = do
     withLengthHint    =
       if showLengthHint then Just $ maxTransitionLength netGoalConfig else Nothing,
     withMinLengthHint = showMinLengthHint,
-    addText           = extraText,
+    addTexts          = extraTexts,
     rejectSpaceballsLength = spaceballsPrefixThreshold filterConfig
     }

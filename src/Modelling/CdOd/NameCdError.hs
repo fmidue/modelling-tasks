@@ -160,7 +160,7 @@ import Control.Monad.Catch              (MonadCatch, MonadThrow)
 import Control.Monad.Except             (runExceptT)
 import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
-  ExtraText (..),
+  ExtraText,
   GenericOutputCapable (..),
   LangM,
   Language (English, German),
@@ -286,7 +286,7 @@ data NameCdErrorConfig = NameCdErrorConfig {
   reasonsPerInstance          :: NumberOfReasons,
   timeout                     :: Maybe Int,
   useNames                    :: Bool,
-  extraText                   :: ExtraText
+  extraTexts                  :: [ExtraText]
   } deriving (Generic, Read, Reader, Show, ToDoc)
 
 defaultNameCdErrorConfig :: NameCdErrorConfig
@@ -323,7 +323,7 @@ defaultNameCdErrorConfig = NameCdErrorConfig {
     },
   timeout = Nothing,
   useNames = True,
-  extraText = NoExtraText
+  extraTexts = []
   }
 
 checkNameCdErrorConfig :: NameCdErrorConfig -> Maybe String
@@ -458,7 +458,7 @@ data NameCdErrorInstance = NameCdErrorInstance {
   errorReasons                :: !(Map Char (Bool, Reason)),
   showSolution                :: Bool,
   taskText                    :: !NameCdErrorTaskText,
-  addText                     :: ExtraText
+  addTexts                    :: [ExtraText]
   } deriving (Data, Eq, Generic, Hashable, Read, Reader, Show, ToDoc)
 
 relevantRelationships
@@ -616,7 +616,7 @@ nameCdErrorTask collapseHints showInputHelp path task = do
     toOutputCapable inputHelpText
   simplifiedInformation collapseHints
   hoveringInformation collapseHints
-  extra $ addText task
+  extra $ addTexts task
   pure ()
 
 dueTo1 :: Int
@@ -782,7 +782,7 @@ instance RandomiseLayout NameCdErrorInstance where
       errorReasons = errorReasons,
       showSolution = showSolution,
       taskText = taskText,
-      addText = addText
+      addTexts = addTexts
       }
 
 shuffleInstance :: MonadRandom m => NameCdErrorInstance -> m NameCdErrorInstance
@@ -804,7 +804,7 @@ shuffleInstance NameCdErrorInstance {..} = do
     errorReasons = rs,
     showSolution = showSolution,
     taskText = taskText,
-    addText = addText
+    addTexts = addTexts
     }
   where
     updatePriority x (priorities, ys) = case x of
@@ -835,7 +835,7 @@ renameInstance inst@NameCdErrorInstance {..} names' nonInheritances' = do
     errorReasons = errorReasons,
     showSolution = showSolution,
     taskText = taskText,
-    addText = addText
+    addTexts = addTexts
     }
 
 nameCdErrorGenerate
@@ -880,7 +880,7 @@ generateAndRandomise withRelationshipChoices config@NameCdErrorConfig {..} = do
       : map (False,) chosenReasons,
     showSolution = printSolution,
     taskText = nameCdErrorTaskText withRelationshipChoices,
-    addText = extraText
+    addTexts = extraTexts
     }
   where
     relevanceFor xs n x = Annotation {
@@ -1130,5 +1130,5 @@ defaultNameCdErrorInstance = NameCdErrorInstance {
     ],
   showSolution = True,
   taskText = nameCdErrorTaskText True,
-  addText = NoExtraText
+  addTexts = []
   }

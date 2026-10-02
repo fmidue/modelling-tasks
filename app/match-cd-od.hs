@@ -21,7 +21,7 @@ import Modelling.CdOd.MatchCdOd (
   )
 import EvaluateArgs                     (evaluateArgs)
 
-import Control.OutputCapable.Blocks     (ExtraText (..), Language (English))
+import Control.OutputCapable.Blocks     (Language (English))
 import Data.Ratio                       ((%))
 import System.Environment               (getArgs)
 
@@ -61,7 +61,7 @@ main = do
           printSolution    = False,
           timeout          = Nothing,
           withNonTrivialInheritance = Nothing,
-          extraText = NoExtraText
+          extraTexts = []
         }
   putStrLn $ "Seed: " ++ show seed
   putStrLn $ "Segment: " ++ show s

@@ -5,7 +5,6 @@ module Modelling.PetriNet.PetriDeadlock.Config where
 import Modelling.PetriNet.Reach.Deadlock (DeadlockConfig(..))
 import Modelling.PetriNet.Reach.Filter  (defaultFilterConfig, FilterConfig(..))
 import Modelling.PetriNet.Reach.Type    (Capacity(..), TransitionBehaviorConstraints(..), ArrowDensityConstraints(..))
-import Control.OutputCapable.Blocks     (ExtraText(..))
 import Data.GraphViz.Commands           (GraphvizCommand(..))
 import Data.Ratio                       ((%))
 
@@ -34,7 +33,7 @@ task2023_29 = DeadlockConfig {
   showLengthHint = False,
   showMinLengthHint = True,
   showPlaceNamesInNet = False,
-  extraText = NoExtraText,
+  extraTexts = [],
   fusableTransitionsConsumingAreExactly = Nothing,
   fusableTransitionsProducingAreExactly = Nothing,
   filterConfig = defaultFilterConfig { forbiddenCycleLengths = [], absentTransitionsRequirement = 0, requireCycleLengthsAny = [] }
@@ -65,7 +64,7 @@ task2023_30 = DeadlockConfig {
   showLengthHint = False,
   showMinLengthHint = True,
   showPlaceNamesInNet = False,
-  extraText = NoExtraText,
+  extraTexts = [],
   fusableTransitionsConsumingAreExactly = Nothing,
   fusableTransitionsProducingAreExactly = Nothing,
   filterConfig = defaultFilterConfig { forbiddenCycleLengths = [], requireCycleLengthsAny = [] }
@@ -110,7 +109,7 @@ task2024_61 = DeadlockConfig {
   showLengthHint = False,
   showMinLengthHint = True,
   showPlaceNamesInNet = False,
-  extraText = NoExtraText,
+  extraTexts = [],
   fusableTransitionsConsumingAreExactly = Nothing,
   fusableTransitionsProducingAreExactly = Nothing,
   filterConfig = defaultFilterConfig { absentTransitionsRequirement = 0, forbiddenCycleLengths = [], requireCycleLengthsAny = [] }
@@ -151,7 +150,7 @@ task2025_29 = DeadlockConfig {
   showLengthHint = False,
   showMinLengthHint = True,
   showPlaceNamesInNet = False,
-  extraText = NoExtraText,
+  extraTexts = [],
   fusableTransitionsConsumingAreExactly  = Nothing,
   fusableTransitionsProducingAreExactly  = Just 1,
   filterConfig = FilterConfig {
@@ -215,7 +214,7 @@ task2025_30 = DeadlockConfig {
   showLengthHint = False,
   showMinLengthHint = True,
   showPlaceNamesInNet = False,
-  extraText = NoExtraText,
+  extraTexts = [],
   fusableTransitionsConsumingAreExactly  = Just 2,
   fusableTransitionsProducingAreExactly  = Just 2,
   filterConfig = FilterConfig {

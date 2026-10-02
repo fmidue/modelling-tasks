@@ -95,7 +95,7 @@ import System.Random.Shuffle            (shuffleM)
 data PickInstance n = PickInstance {
   nets :: !(Map Int (Bool, Drawable n)),
   showSolution :: !Bool,
-  addText :: !ExtraText
+  addTexts :: ![ExtraText]
   }
   deriving (Eq, Generic, Hashable, Read, Reader, Show, ToDoc)
 
@@ -126,12 +126,12 @@ pickGenerate
   -> (c -> GraphConfig)
   -> (c -> Bool)
   -> (c -> Bool)
-  -> (c -> ExtraText)
+  -> (c -> [ExtraText])
   -> c
   -> Int
   -> Int
   -> m (PickInstance (p n String))
-pickGenerate pick gc useDifferent withSol getExtraText config segment seed
+pickGenerate pick gc useDifferent withSol getExtraTexts config segment seed
   = evalRandT getInstance (mkStdGen seed)
   where
     getInstance = do
@@ -149,7 +149,7 @@ pickGenerate pick gc useDifferent withSol getExtraText config segment seed
         nets = M.fromList
           $ zip [1 ..] [(isJust m, (n, d)) | ((n, m), d) <- zip ns ds],
         showSolution = withSol config,
-        addText = getExtraText config
+        addTexts = getExtraTexts config
         }
     getPickInstance petriNets =
       let predicates = map (\(x,_) -> lift . isNetDrawable x) petriNets

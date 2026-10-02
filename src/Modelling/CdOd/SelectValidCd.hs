@@ -116,7 +116,7 @@ import Control.Monad                    ((>=>), unless, void, when)
 import Control.Monad.Catch              (MonadCatch, MonadThrow (throwM))
 import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
-  ExtraText (..),
+  ExtraText,
   GenericOutputCapable (..),
   LangM,
   Language (English, German),
@@ -175,7 +175,7 @@ data SelectValidCdConfig
     printSolution    :: Bool,
     shuffleEachCd    :: Bool,
     timeout          :: Maybe Int,
-    extraText        :: ExtraText
+    extraTexts       :: [ExtraText]
   } deriving (Generic, Read, Reader, Show, ToDoc)
 
 defaultSelectValidCdConfig :: SelectValidCdConfig
@@ -210,7 +210,7 @@ defaultSelectValidCdConfig
     printSolution    = True,
     shuffleEachCd    = False,
     timeout          = Nothing,
-    extraText        = NoExtraText
+    extraTexts       = []
   }
 
 checkSelectValidCdConfig :: SelectValidCdConfig -> Maybe String
@@ -249,7 +249,7 @@ data SelectValidCdInstance
     showExtendedFeedback :: Bool,
     showSolution    :: !Bool,
     taskText        :: !SelectValidCdTaskText,
-    addText         :: ExtraText
+    addTexts        :: [ExtraText]
   } deriving (Eq, Generic, Hashable, Read, Reader, Show, ToDoc)
 
 checkSelectValidCdInstance :: SelectValidCdInstance -> Maybe String
@@ -289,7 +289,7 @@ selectValidCdTask showInputHelp path task = do
     toOutputCapable inputHelpText
   simplifiedInformation True
   hoveringInformation True
-  extra $ addText task
+  extra $ addTexts task
   pure ()
 
 toTaskSpecificText
@@ -489,7 +489,7 @@ selectValidCd SelectValidCdConfig {..} segment seed = flip evalRandT g $ do
     showExtendedFeedback = printExtendedFeedback,
     showSolution    = printSolution,
     taskText        = defaultSelectValidCdTaskText,
-    addText          = extraText
+    addTexts         = extraTexts
     }
   where
     g = mkStdGen $ (segment +) $ 4 * seed
@@ -520,7 +520,7 @@ instance RandomiseLayout SelectValidCdInstance where
       showExtendedFeedback    = showExtendedFeedback,
       showSolution            = showSolution,
       taskText                = taskText,
-      addText                 = addText
+      addTexts                = addTexts
       }
 
 shuffleEach
@@ -535,7 +535,7 @@ shuffleEach inst@SelectValidCdInstance {..} = do
     showExtendedFeedback    = showExtendedFeedback,
     showSolution            = showSolution,
     taskText                = taskText,
-    addText                 = addText
+    addTexts                = addTexts
     }
 
 shuffleCdChange
@@ -571,7 +571,7 @@ shuffleInstance SelectValidCdInstance {..} =
   <*> pure showExtendedFeedback
   <*> pure showSolution
   <*> pure taskText
-  <*> pure addText
+  <*> pure addTexts
   where
     replaceId x (_, cd) = (x, cd)
 
@@ -609,7 +609,7 @@ renameInstance inst@SelectValidCdInstance {..} names' nonInheritances' = do
     showExtendedFeedback = showExtendedFeedback,
     showSolution    = showSolution,
     taskText        = taskText,
-    addText         = addText
+    addTexts        = addTexts
     }
 
 defaultSelectValidCdInstance :: SelectValidCdInstance
@@ -710,5 +710,5 @@ defaultSelectValidCdInstance = SelectValidCdInstance {
   showExtendedFeedback = True,
   showSolution = True,
   taskText = defaultSelectValidCdTaskText,
-  addText = NoExtraText
+  addTexts = []
   }

@@ -53,7 +53,6 @@ import Modelling.Types (
   )
 
 import Control.OutputCapable.Blocks (
-  ExtraText (..),
   )
 import Control.Monad.Random (
   evalRandT,
@@ -352,7 +351,7 @@ evaluateAndCheckDifferentNames check coins cs cs' = do
         mapping = toNameMapping $ BM.fromList cs,
         linkShuffling = ConsecutiveNumbers,
         taskText = defaultDifferentNamesTaskText,
-        addText = NoExtraText
+        addTexts = []
         }
       cs'' = map (bimap Name Name) cs'
   synResult <- runWithoutOutput $ differentNamesSyntax True i cs''

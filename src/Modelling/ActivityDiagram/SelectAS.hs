@@ -69,7 +69,7 @@ import Control.Monad.Trans.Class (lift)
 import Control.Monad.Extra (firstJustM)
 import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
-  ExtraText (..),
+  ExtraText,
   GenericOutputCapable (..),
   LangM,
   OutputCapable,
@@ -110,7 +110,7 @@ data SelectASInstance = SelectASInstance {
   actionSequences :: Map Int (Bool, [String]),
   drawSettings :: PlantUmlConfig,
   showSolution :: Bool,
-  addText :: ExtraText
+  addTexts :: [ExtraText]
 }
   deriving (Eq, Generic, Hashable, Read, Reader, Show, ToDoc)
 
@@ -123,7 +123,7 @@ data SelectASConfig = SelectASConfig {
   answerLength :: !(Int, Int),
   printSolution :: Bool,
   withActionRepetition :: Bool,
-  extraText :: ExtraText
+  extraTexts :: [ExtraText]
 }
   deriving (Generic, Read, Reader, Show, ToDoc)
 
@@ -143,7 +143,7 @@ defaultSelectASConfig = SelectASConfig {
   answerLength = (5, 6),
   printSolution = True,
   withActionRepetition = False,
-  extraText = NoExtraText
+  extraTexts = []
 }
 
 checkSelectASConfig :: SelectASConfig -> Maybe String
@@ -341,7 +341,7 @@ selectASTask showInputHelp path task = do
         |]
     pure ()
    pure ()
-  extra $ addText task
+  extra $ addTexts task
   pure ()
 
 selectASSolutionToMap
@@ -415,7 +415,7 @@ getSelectASTask config = do
               suppressBranchConditions = hideBranchConditions config
               },
             showSolution = printSolution config,
-            addText = extraText config
+            addTexts = extraTexts config
           }
     ) ad
   case validInstances of
@@ -469,5 +469,5 @@ defaultSelectASInstance = SelectASInstance {
     ],
   drawSettings = defaultPlantUmlConfig,
   showSolution = True,
-  addText = NoExtraText
+  addTexts = []
 }

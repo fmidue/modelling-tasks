@@ -14,7 +14,6 @@ import Modelling.PetriNet.Types (
   GraphConfig (..),
   )
 
-import Control.OutputCapable.Blocks     (ExtraText (..))
 import Data.GraphViz.Commands           (GraphvizCommand(..))
 
 {-|
@@ -59,7 +58,7 @@ task2023_19 = MathConfig {
     maxInstances = Just 2000,
     timeout = Nothing
     },
-  extraText = NoExtraText
+  extraTexts = []
   }
 
 {-|
@@ -104,7 +103,7 @@ task2023_20 = MathConfig {
     maxInstances = Just 2000,
     timeout = Nothing
     },
-  extraText = NoExtraText
+  extraTexts = []
   }
 
 {-|
