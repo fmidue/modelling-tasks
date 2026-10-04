@@ -603,6 +603,9 @@ used as: MatchCdOdFormInputCheckboxesUnAvailable-Quiz
 -}
 task2025_repeat_27 :: MatchCdOdConfig
 task2025_repeat_27 = task2025_repeat_24{
+  allowedCdMutations = [
+    MutateRelationship FlipNonInheritance
+    ],
   odDistribution = (odDistribution task2025_repeat_24) {
     objectDiagramCount = 5,
     maxPerJustEachCd = 3,
