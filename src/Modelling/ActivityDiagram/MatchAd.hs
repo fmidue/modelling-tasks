@@ -26,7 +26,7 @@ import qualified Data.Map as M (fromList, keys)
 
 import Capabilities.Alloy               (MonadAlloy, getInstances)
 import Capabilities.PlantUml            (MonadPlantUml)
-import Capabilities.WriteFile           (MonadWriteFile)
+import Capabilities.Cache               (MonadCache)
 import Modelling.ActivityDiagram.Alloy  (adConfigToAlloy)
 import Modelling.ActivityDiagram.Config (
   AdConfig (..),
@@ -177,7 +177,7 @@ matchAdSolution task =
     }
 
 matchAdTask
-  :: (MonadPlantUml m, MonadWriteFile m, OutputCapable m)
+  :: (MonadPlantUml m, MonadCache m, OutputCapable m)
   => Bool
   -> FilePath
   -> MatchAdInstance
