@@ -318,7 +318,7 @@ checkRepairCdConfig RepairCdConfig {..}
       |]
   | otherwise
   = checkClassConfigAndChanges classConfig allowedProperties
-  <|> checkCdConstraints allowedProperties cdConstraints
+  <|> checkCdConstraints classConfig allowedProperties cdConstraints
   <|> checkCdMutations allowedCdMutations
   <|> checkCdDrawSettings drawSettings
   <|> checkObjectProperties objectProperties

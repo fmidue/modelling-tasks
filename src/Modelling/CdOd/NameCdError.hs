@@ -371,7 +371,7 @@ checkNameCdErrorConfig NameCdErrorConfig {..}
       |]
   | otherwise
   = checkClassConfigAndChanges classConfig allowedProperties
-  <|> checkCdConstraints allowedProperties cdConstraints
+  <|> checkCdConstraints classConfig allowedProperties cdConstraints
   <|> checkObjectProperties objectProperties
   <|> checkClassConfigAndObjectProperties classConfig objectProperties
   <|> checkCdDrawSettings drawSettings

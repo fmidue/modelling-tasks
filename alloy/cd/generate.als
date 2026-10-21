@@ -68,6 +68,22 @@ pred noCompositionCyclesWithInheritances [is : set Inheritance, cs : set Composi
     c in c.(^~inheritance + ^inheritance).composition.*((*~inheritance + *inheritance).composition)
 }
 
+pred noAggregationCycles [is : set Inheritance, aggs : set Aggregation] {
+  let inheritance = relationship [is],
+      aggregation = relationship [aggs] |
+  no c : Class |
+    c in c.^((*~inheritance + *inheritance).aggregation)
+}
+
+pred noAggregationCompositionCycles [is : set Inheritance, aggs : set Aggregation, cs : set Composition] {
+  let inheritance = relationship [is],
+      aggregation = (*~inheritance + *inheritance).(relationship [aggs]),
+      composition = (*~inheritance + *inheritance).(relationship [cs]),
+      wholePart = aggregation + composition |
+  no c : Class |
+    c in c.*wholePart.aggregation.*wholePart.composition
+}
+
 pred canDifferentlyBePartOfSameClass [is : set Inheritance, cs : set Composition] {
   let inheritance = relationship [is] |
     some disj x, y : cs {
@@ -198,6 +214,7 @@ one sig True, False extends Boolean {}
 
 pred classDiagram [
   nonInheritances : set NonInheritance,
+  aggregations : set Aggregation,
   compositions : set Composition,
   inheritances : set Inheritance,
   relationships : set Relationship,
@@ -207,6 +224,9 @@ pred classDiagram [
   selfRelationships : one Int,
   selfInheritances : one Int,
   anyCompositionCyclesInvolveInheritances : lone Boolean,
+  hasAggregationCycles : lone Boolean,
+  hasAggregationCompositionCycles : lone Boolean,
+  onlyCommonMultiplicities : lone Boolean,
   hasDoubleRelationships : lone Boolean,
   hasReverseRelationships : lone Boolean,
   hasReverseInheritances : one Boolean,
@@ -228,6 +248,18 @@ pred classDiagram [
     implies noCompositionCycles[none, compositions]
     else anyCompositionCyclesInvolveInheritances = False
       implies noCompositionCyclesWithInheritances[inheritances, compositions]
+  hasAggregationCycles = True
+    implies not noAggregationCycles [inheritances, aggregations]
+    else hasAggregationCycles = False
+      implies noAggregationCycles [inheritances, aggregations]
+  hasAggregationCompositionCycles = True
+    implies not noAggregationCompositionCycles [inheritances, aggregations, compositions]
+    else hasAggregationCompositionCycles = False
+      implies noAggregationCompositionCycles [inheritances, aggregations, compositions]
+  onlyCommonMultiplicities = True
+    implies (all a : nonInheritances | validLimitsAreCommon [a])
+    else onlyCommonMultiplicities = False
+      implies (some a : nonInheritances | not validLimitsAreCommon [a])
   hasDoubleRelationships = True
     implies not noDoubleRelationships [nonInheritances]
     else hasDoubleRelationships = False implies noDoubleRelationships [nonInheritances]
@@ -265,6 +297,9 @@ pred changeOfFirstCD [
   selfRelationships : one Int,
   selfInheritances : one Int,
   anyCompositionCyclesInvolveInheritances : lone Boolean,
+  hasAggregationCycles : lone Boolean,
+  hasAggregationCompositionCycles : lone Boolean,
+  onlyCommonMultiplicities : lone Boolean,
   hasDoubleRelationships : lone Boolean,
   hasReverseRelationships : lone Boolean,
   hasReverseInheritances : one Boolean,
@@ -274,14 +309,16 @@ pred changeOfFirstCD [
   hasCompositionsPreventingParts : lone Boolean,
   hasThickEdges : lone Boolean] {
     let NonInheritance2 = NonInheritance - (Change.add - c.add) - c.remove,
+        Aggregation2 = Aggregation - (Change.add - c.add) - c.remove,
         Composition2 = Composition - (Change.add - c.add) - c.remove,
         Relationship2 = Relationship - (Change.add - c.add) - c.remove,
         Inheritance2 = Inheritance - (Change.add - c.add) - c.remove {
       change[c, Relationship - Change.add]
-      classDiagram [NonInheritance2, Composition2, Inheritance2, Relationship2,
+      classDiagram [NonInheritance2, Aggregation2, Composition2, Inheritance2, Relationship2,
         invalidInheritances,
         wrongNonInheritances, wrongCompositions, selfRelationships, selfInheritances,
         anyCompositionCyclesInvolveInheritances,
+        hasAggregationCycles, hasAggregationCompositionCycles, onlyCommonMultiplicities,
         hasDoubleRelationships, hasReverseRelationships, hasReverseInheritances,
         hasMultipleInheritances, hasNonTrivialInheritanceCycles, hasCompositionCycles,
         hasCompositionsPreventingParts, hasThickEdges]
