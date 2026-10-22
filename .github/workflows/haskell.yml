@@ -46,7 +46,7 @@ jobs:
         os: [ubuntu-latest]
         include:
           - os: ubuntu-latest
-            apt-get: graphviz texlive-base texlive-latex-base libssl-dev
+            apt-get: graphviz texlive-base texlive-latex-base
 
     runs-on: ${{ matrix.os }}
 
