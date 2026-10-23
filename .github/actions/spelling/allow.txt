@@ -51,6 +51,7 @@ Vielfachheit
 WColor
 XNode
 Yesod
+aggs
 anyclass
 apps
 automorphisms

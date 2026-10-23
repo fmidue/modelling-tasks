@@ -371,7 +371,7 @@ checkNameCdErrorConfig NameCdErrorConfig {..}
       |]
   | otherwise
   = checkClassConfigAndChanges classConfig allowedProperties
-  <|> checkCdConstraints allowedProperties cdConstraints
+  <|> checkCdConstraints classConfig allowedProperties cdConstraints
   <|> checkObjectProperties objectProperties
   <|> checkClassConfigAndObjectProperties classConfig objectProperties
   <|> checkCdDrawSettings drawSettings
@@ -1061,7 +1061,7 @@ defaultNameCdErrorInstance = NameCdErrorInstance {
         annotated = Right Association {
           associationName = "w",
           associationFrom =
-            LimitedLinking {linking = "A", limits = (1, Just 2)},
+            LimitedLinking {linking = "C", limits = (2, Nothing)},
           associationTo =
             LimitedLinking {linking = "B", limits = (2, Nothing)}
           },
@@ -1075,9 +1075,9 @@ defaultNameCdErrorInstance = NameCdErrorInstance {
         annotated = Right Composition {
           compositionName = "x",
           compositionPart =
-            LimitedLinking {linking = "B", limits = (1, Just 1)},
+            LimitedLinking {linking = "B", limits = (1, Just 2)},
           compositionWhole =
-            LimitedLinking {linking = "D", limits = (1, Just 2)}
+            LimitedLinking {linking = "D", limits = (2, Nothing)}
           },
         annotation = Relevant {
           contributingToProblem = True,
@@ -1089,9 +1089,9 @@ defaultNameCdErrorInstance = NameCdErrorInstance {
         annotated = Right Aggregation {
           aggregationName = "y",
           aggregationPart =
-            LimitedLinking {linking = "A", limits = (2, Just 2)},
+            LimitedLinking {linking = "B", limits = (1, Just 1)},
           aggregationWhole =
-            LimitedLinking {linking = "C", limits = (1, Nothing)}
+            LimitedLinking {linking = "A", limits = (0, Nothing)}
           },
         annotation = Relevant {
           contributingToProblem = False,
@@ -1103,9 +1103,9 @@ defaultNameCdErrorInstance = NameCdErrorInstance {
         annotated = Right Composition {
           compositionName = "z",
           compositionPart =
-            LimitedLinking {linking = "C", limits = (2, Nothing)},
+            LimitedLinking {linking = "C", limits = (1, Nothing)},
           compositionWhole =
-            LimitedLinking {linking = "B", limits = (1, Just 1)}
+            LimitedLinking {linking = "A", limits = (0, Just 1)}
           },
         annotation = Relevant {
           contributingToProblem = False,

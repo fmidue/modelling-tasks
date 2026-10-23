@@ -266,13 +266,16 @@ pred cd {
       Composition2 = Composition - Change.add,
       Relationship2 = Relationship - Change.add,
       Inheritance2 = Inheritance - Change.add {
-    classDiagram [NonInheritance2, Composition2, Inheritance2, Relationship2,
+    classDiagram [NonInheritance2, Aggregation2, Composition2, Inheritance2, Relationship2,
       #{invalidInheritances},
       #{wrongNonInheritances},
       #{wrongCompositions},
       #{selfRelationshipsAmount},
       #{selfInheritancesAmount},
       #{maybeToAlloySet anyCompositionCyclesInvolveInheritances},
+      #{maybeToAlloySet hasAggregationCycles},
+      #{maybeToAlloySet hasAggregationCompositionCycles},
+      #{maybeToAlloySet onlyCommonMultiplicities},
       #{maybeToAlloySet hasDoubleRelationships},
       #{maybeToAlloySet hasReverseRelationships},
       #{hasReverseInheritances},
@@ -380,6 +383,9 @@ pred #{change} {
     #{selfRelationshipsAmount},
     #{selfInheritancesAmount},
     #{maybeToAlloySet anyCompositionCyclesInvolveInheritances},
+    #{maybeToAlloySet hasAggregationCycles},
+    #{maybeToAlloySet hasAggregationCompositionCycles},
+    #{maybeToAlloySet onlyCommonMultiplicities},
     #{maybeToAlloySet hasDoubleRelationships},
     #{maybeToAlloySet hasReverseRelationships},
     #{hasReverseInheritances},
@@ -412,9 +418,9 @@ pred changes {
         #{nonTrivialInheritanceConstraint "c2Inheritances" "c2NonInheritances" withNonTrivialInheritance}
       }
     }
-    changeOfFirstCD [C1, 0, 0, 0, 0, 0, none, False, False, False, False, False, False, False, none]
-    changeOfFirstCD [C2, 0, 0, 0, 0, 0, none, False, False, False, False, False, False, False, none]
-    changeOfFirstCD [C3, 0, 0, 0, 0, 0, none, False, False, False, False, False, False, False, none]
+    changeOfFirstCD [C1, 0, 0, 0, 0, 0, none, none, none, none, False, False, False, False, False, False, False, none]
+    changeOfFirstCD [C2, 0, 0, 0, 0, 0, none, none, none, none, False, False, False, False, False, False, False, none]
+    changeOfFirstCD [C3, 0, 0, 0, 0, 0, none, none, none, none, False, False, False, False, False, False, False, none]
 }
 |] ++ changeLimits config
 

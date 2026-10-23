@@ -15,6 +15,7 @@ import Modelling.CdOd.Types (
   ObjectProperties (..),
   OmittedDefaultMultiplicities (..),
   RelationshipMutation (..),
+  defaultCdConstraints,
   )
 
 import Data.Ratio                       ((%))
@@ -47,9 +48,7 @@ task2023_07 = RepairCdConfig {
     wrongCompositionLimits = True
     },
   articleToUse = UseDefiniteArticleWherePossible,
-  cdConstraints = CdConstraints {
-    anyCompositionCyclesInvolveInheritances = Nothing
-    },
+  cdConstraints = defaultCdConstraints,
   classConfig = ClassConfig {
     classLimits = (5, 5),
     aggregationLimits = (2, Just 3),
@@ -109,7 +108,7 @@ task2023_08 = RepairCdConfig {
     wrongCompositionLimits = False
     },
   articleToUse = UseDefiniteArticleWherePossible,
-  cdConstraints = CdConstraints {
+  cdConstraints = defaultCdConstraints {
     anyCompositionCyclesInvolveInheritances = Just True
     },
   classConfig = ClassConfig {
@@ -170,9 +169,7 @@ task2024_12 = RepairCdConfig {
     wrongCompositionLimits = False
     },
   articleToUse = UseDefiniteArticleWherePossible,
-  cdConstraints = CdConstraints {
-    anyCompositionCyclesInvolveInheritances = Nothing
-    },
+  cdConstraints = defaultCdConstraints,
   classConfig = ClassConfig {
     classLimits = (5, 5),
     aggregationLimits = (1, Just 2),
@@ -230,7 +227,7 @@ task2024_13 = RepairCdConfig {
     wrongCompositionLimits = False
     },
   articleToUse = UseDefiniteArticleWherePossible,
-  cdConstraints = CdConstraints {
+  cdConstraints = defaultCdConstraints {
     anyCompositionCyclesInvolveInheritances = Just False
     },
   classConfig = ClassConfig {
@@ -291,9 +288,7 @@ task2024_55 = RepairCdConfig {
     wrongCompositionLimits = False
     },
   articleToUse = UseDefiniteArticleWherePossible,
-  cdConstraints = CdConstraints {
-    anyCompositionCyclesInvolveInheritances = Nothing
-    },
+  cdConstraints = defaultCdConstraints,
   classConfig = ClassConfig {
     classLimits = (5, 5),
     aggregationLimits = (1, Just 2),
@@ -357,9 +352,7 @@ task2025_repeat_12 = RepairCdConfig {
     wrongCompositionLimits = False
     },
   articleToUse = UseDefiniteArticleWherePossible,
-  cdConstraints = CdConstraints {
-    anyCompositionCyclesInvolveInheritances = Nothing
-    },
+  cdConstraints = defaultCdConstraints,
   classConfig = ClassConfig {
     classLimits = (5, 5),
     aggregationLimits = (1, Just 2),
