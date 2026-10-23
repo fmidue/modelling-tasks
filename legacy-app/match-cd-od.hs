@@ -12,7 +12,6 @@ import Modelling.CdOd.Types (
   ObjectConfig (..),
   ObjectProperties (..),
   allCdMutations,
-  defaultCdConstraints,
   defaultOmittedDefaultMultiplicities,
   )
 import Modelling.CdOd.Generate.MatchCdOd (
@@ -34,7 +33,6 @@ main = do
   (s, seed) <- getArgs >>= evaluateArgs
   let config = MatchCdOdConfig {
           allowedCdMutations = allCdMutations,
-          cdConstraints = defaultCdConstraints,
           classConfig = ClassConfig {
               classLimits        = (4, 4),
               aggregationLimits  = (0, Just 2),

@@ -13,7 +13,6 @@ import Modelling.CdOd.Types (
   ObjectProperties (..),
   OmittedDefaultMultiplicities (..),
   RelationshipMutation (..),
-  defaultCdConstraints,
   )
 
 import Data.Ratio                       ((%))
@@ -33,7 +32,6 @@ task2023_14 = MatchCdOdConfig {
     MutateRelationship FlipInheritance,
     MutateRelationship FlipNonInheritance
     ],
-  cdConstraints = defaultCdConstraints,
   classConfig = ClassConfig {
     classLimits = (5, 5),
     aggregationLimits = (2, Just 2),
@@ -87,7 +85,6 @@ task2023_15 = MatchCdOdConfig {
     MutateRelationship FlipInheritance,
     MutateRelationship FlipNonInheritance
     ],
-  cdConstraints = defaultCdConstraints,
   classConfig = ClassConfig {
     classLimits = (5, 5),
     aggregationLimits = (1, Just 1),
@@ -136,7 +133,6 @@ task2024_17 = MatchCdOdConfig {
   allowedCdMutations = [
     MutateRelationship ChangeLimit
     ],
-  cdConstraints = defaultCdConstraints,
   classConfig = ClassConfig {
     classLimits = (5, 5),
     aggregationLimits = (2, Just 2),
@@ -186,7 +182,6 @@ task2024_18 = MatchCdOdConfig {
     MutateRelationship FlipInheritance,
     MutateRelationship FlipNonInheritance
     ],
-  cdConstraints = defaultCdConstraints,
   classConfig = ClassConfig {
     classLimits = (5, 5),
     aggregationLimits = (1, Just 1),
@@ -235,7 +230,6 @@ task2024_19 = MatchCdOdConfig {
   allowedCdMutations = [
     MutateRelationship ChangeKind
     ],
-  cdConstraints = defaultCdConstraints,
   classConfig = ClassConfig {
     classLimits = (5, 5),
     aggregationLimits = (1, Just 2),
@@ -284,7 +278,6 @@ task2024_20 = MatchCdOdConfig {
   allowedCdMutations = [
     AddRelationship
     ],
-  cdConstraints = defaultCdConstraints,
   classConfig = ClassConfig {
     classLimits = (5, 5),
     aggregationLimits = (1, Just 1),
@@ -333,7 +326,6 @@ task2024_57 = MatchCdOdConfig {
   allowedCdMutations = [
     MutateRelationship ChangeLimit
     ],
-  cdConstraints = defaultCdConstraints,
   classConfig = ClassConfig {
     classLimits = (5, 5),
     aggregationLimits = (2, Just 2),
@@ -383,7 +375,6 @@ task2024_58 = MatchCdOdConfig {
     MutateRelationship FlipInheritance,
     MutateRelationship FlipNonInheritance
     ],
-  cdConstraints = defaultCdConstraints,
   classConfig = ClassConfig {
     classLimits = (5, 5),
     aggregationLimits = (1, Just 1),
@@ -432,7 +423,6 @@ task2024_59 = MatchCdOdConfig {
   allowedCdMutations = [
     MutateRelationship ChangeKind
     ],
-  cdConstraints = defaultCdConstraints,
   classConfig = ClassConfig {
     classLimits = (5, 5),
     aggregationLimits = (1, Just 2),
