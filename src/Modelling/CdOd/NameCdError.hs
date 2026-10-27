@@ -7,6 +7,7 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE TupleSections #-}
 
@@ -105,6 +106,7 @@ import Modelling.CdOd.Phrasing (
   phraseRelationship,
   )
 import Modelling.CdOd.RepairCd (
+  StructuralWeakening,
   (.&.),
   checkClassConfigAndChanges,
   illegalStructuralWeakenings,
@@ -120,12 +122,14 @@ import Modelling.CdOd.Types (
   AnyClassDiagram (..),
   AnyRelationship,
   ArticlePreference (..),
+  Cd,
   CdConstraints (..),
   CdDrawSettings (..),
   ClassConfig (..),
   ClassDiagram (..),
   LimitedLinking (..),
   ObjectProperties (..),
+  Od,
   PhrasingKind (Denoted),
   Property (..),
   Relationship (..),
@@ -221,6 +225,7 @@ import Data.Yaml                        (
   encode,
   )
 import GHC.Generics                     (Generic)
+import Language.Alloy.Call              (AlloyInstance)
 import System.Random.Shuffle            (shuffleM)
 import Text.Parsec                      (parserFail, parserReturn)
 import Text.ParserCombinators.Parsec    (Parser, anyToken, many)
@@ -893,7 +898,7 @@ generateAndRandomise withRelationshipChoices config@NameCdErrorConfig {..} = do
       }
 
 nameCdError
-  :: (MonadAlloy m, MonadCatch m, RandomGen g)
+  :: forall m g. (MonadAlloy m, MonadCatch m, RandomGen g)
   => NameCdErrorConfig
   -> RandT g m (AnyCd, Property, [AnyRelationship String String])
 nameCdError NameCdErrorConfig {..}  = do
@@ -903,6 +908,7 @@ nameCdError NameCdErrorConfig {..}  = do
     ]
   getInstanceWithStructuralWeakenings structuralWeakenings
   where
+    getFixWith :: Maybe AnyCd -> RelationshipProperties -> String
     getFixWith cd properties = Changes.transformGetNextFix
       cd
       classConfig
@@ -910,6 +916,9 @@ nameCdError NameCdErrorConfig {..}  = do
       properties
       allowedProperties
       useNames
+    getInstanceWithStructuralWeakenings
+      :: [(StructuralWeakening, StructuralWeakening)]
+      -> RandT g m (AnyCd, Property, [AnyRelationship String String])
     getInstanceWithStructuralWeakenings [] =
       error "there seems to be no instance for the provided configuration"
     getInstanceWithStructuralWeakenings ((e0, l0) : chs) = do
@@ -918,6 +927,11 @@ nameCdError NameCdErrorConfig {..}  = do
       instances <- lift $ getInstances maxInstances timeout alloyCode
       randomInstances <- shuffleM instances
       getInstanceWithODs chs p randomInstances
+    getInstanceWithODs
+      :: [(StructuralWeakening, StructuralWeakening)]
+      -> RelationshipProperties
+      -> [AlloyInstance]
+      -> RandT g m (AnyCd, Property, [AnyRelationship String String])
     getInstanceWithODs chs _ [] = getInstanceWithStructuralWeakenings chs
     getInstanceWithODs chs p (randomInstance:randomInstances) = do
       cdInstance <- lift
@@ -946,6 +960,7 @@ nameCdError NameCdErrorConfig {..}  = do
           in case S.toList fixes of
             [problem] -> return (cd2, problem, removes)
             _ -> error "error in task type: property fix is not unique"
+    getOD :: Cd -> RandT g m (Maybe Od)
     getOD cd = do
       let maxNumberOfObjects = maxObjects $ snd $ classLimits classConfig
           parts = transform
