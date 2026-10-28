@@ -42,7 +42,7 @@ import Autolib.Reader                   (Reader)
 import Autolib.ToDoc                    (ToDoc, toDoc, render)
 import Capabilities.Alloy               (MonadAlloy, getInstances)
 import Capabilities.PlantUml            (MonadPlantUml)
-import Capabilities.WriteFile           (MonadWriteFile)
+import Capabilities.Cache               (MonadCache)
 import Modelling.ActivityDiagram.Alloy (
   adConfigToAlloy,
   modulePetriNet,
@@ -224,7 +224,7 @@ findAuxiliaryPetriNodesSolution' petri = FindAuxiliaryPetriNodesSolution {
     auxiliaryTransitionsCount = M.size $ M.filter isTransitionNode auxiliaryPetriNodeMap
 
 findAuxiliaryPetriNodesTask
-  :: (MonadPlantUml m, MonadWriteFile m, OutputCapable m)
+  :: (MonadPlantUml m, MonadCache m, OutputCapable m)
   => Bool
   -> FilePath
   -> FindAuxiliaryPetriNodesInstance
