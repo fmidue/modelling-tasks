@@ -9,7 +9,7 @@ permissions: read-all
 
 jobs:
   check:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     outputs:
       has-changes: ${{ steps.new-commits.outputs.has-new-commits }}
@@ -26,7 +26,7 @@ jobs:
     needs: check
     if: needs.check.outputs.has-changes == 'true'
 
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     steps:
       - name: Install Packages

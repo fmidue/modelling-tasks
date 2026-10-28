@@ -18,7 +18,7 @@ jobs:
   check:
     if: ${{ github.ref_name == github.event.repository.default_branch }}
 
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     outputs:
       has-changes: ${{ steps.new-commits.outputs.has-new-commits }}
@@ -41,9 +41,9 @@ jobs:
     strategy:
       matrix:
         os:
-          - ubuntu-latest
+          - ubuntu-24.04
         include:
-          - os: ubuntu-latest
+          - os: ubuntu-24.04
             apt-get: graphviz texlive-base texlive-latex-base
 
     runs-on: ${{ matrix.os }}
@@ -109,7 +109,7 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
 
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
