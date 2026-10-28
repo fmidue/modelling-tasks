@@ -1071,43 +1071,15 @@ defaultNameCdErrorInstance = NameCdErrorInstance {
   byName = True,
   cdDrawSettings = defaultCdDrawSettings {printNames = True},
   classDiagram = AnnotatedClassDiagram {
-    annotatedClasses = ["C", "B", "D", "A"],
+    annotatedClasses = ["A", "D", "B", "C"],
     annotatedRelationships = [
       Annotation {
         annotated = Right Association {
-          associationName = "w",
+          associationName = "x",
           associationFrom =
-            LimitedLinking {linking = "A", limits = (1, Just 2)},
+            LimitedLinking {linking = "C", limits = (1, Just 1)},
           associationTo =
-            LimitedLinking {linking = "B", limits = (2, Nothing)}
-          },
-        annotation = Relevant {
-          contributingToProblem = False,
-          listingPriority = 3,
-          referenceUsing = DefiniteArticle
-          }
-        },
-      Annotation {
-        annotated = Right Composition {
-          compositionName = "x",
-          compositionPart =
-            LimitedLinking {linking = "B", limits = (1, Just 1)},
-          compositionWhole =
-            LimitedLinking {linking = "D", limits = (1, Just 2)}
-          },
-        annotation = Relevant {
-          contributingToProblem = True,
-          listingPriority = 2,
-          referenceUsing = DefiniteArticle
-          }
-        },
-      Annotation {
-        annotated = Right Aggregation {
-          aggregationName = "y",
-          aggregationPart =
-            LimitedLinking {linking = "A", limits = (2, Just 2)},
-          aggregationWhole =
-            LimitedLinking {linking = "C", limits = (1, Nothing)}
+            LimitedLinking {linking = "D", limits = (2, Nothing)}
           },
         annotation = Relevant {
           contributingToProblem = False,
@@ -1119,30 +1091,58 @@ defaultNameCdErrorInstance = NameCdErrorInstance {
         annotated = Right Composition {
           compositionName = "z",
           compositionPart =
-            LimitedLinking {linking = "C", limits = (2, Nothing)},
+            LimitedLinking {linking = "D", limits = (1, Just 1)},
           compositionWhole =
-            LimitedLinking {linking = "B", limits = (1, Just 1)}
+            LimitedLinking {linking = "B", limits = (1, Just 2)}
+          },
+        annotation = Relevant {
+          contributingToProblem = True,
+          listingPriority = 3,
+          referenceUsing = DefiniteArticle
+          }
+        },
+      Annotation {
+        annotated = Right Aggregation {
+          aggregationName = "y",
+          aggregationPart =
+            LimitedLinking {linking = "C", limits = (2, Just 2)},
+          aggregationWhole =
+            LimitedLinking {linking = "A", limits = (1, Nothing)}
           },
         annotation = Relevant {
           contributingToProblem = False,
           listingPriority = 4,
           referenceUsing = DefiniteArticle
           }
+        },
+      Annotation {
+        annotated = Right Composition {
+          compositionName = "w",
+          compositionPart =
+            LimitedLinking {linking = "A", limits = (0, Just 2)},
+          compositionWhole =
+            LimitedLinking {linking = "B", limits = (1, Just 1)}
+          },
+        annotation = Relevant {
+          contributingToProblem = False,
+          listingPriority = 2,
+          referenceUsing = DefiniteArticle
+          }
         }
       ]
     },
   errorReasons = M.fromAscList [
-    ('a', (False, PreDefined DoubleRelationships)),
-    ('b', (False, PreDefined SelfRelationships)),
+    ('a', (False, PreDefined ReverseRelationships)),
+    ('b', (False, PreDefined DoubleRelationships)),
     ('c', (True, PreDefined WrongCompositionLimits)),
-    ('d', (False, PreDefined WrongAssociationLimits)),
-    ('e', (False, PreDefined SelfInheritances)),
+    ('d', (False, PreDefined SelfInheritances)),
+    ('e', (False, PreDefined WrongAssociationLimits)),
     ('f', (False, PreDefined InvalidInheritanceLimits)),
-    ('g', (False, PreDefined CompositionCycles)),
-    ('h', (False, PreDefined ReverseInheritances)),
+    ('g', (False, PreDefined ReverseInheritances)),
+    ('h', (False, PreDefined CompositionCycles)),
     ('i', (False, PreDefined InheritanceCycles)),
-    ('j', (False, PreDefined MultipleInheritances)),
-    ('k', (False, PreDefined ReverseRelationships))
+    ('j', (False, PreDefined SelfRelationships)),
+    ('k', (False, PreDefined MultipleInheritances))
     ],
   showSolution = True,
   taskText = nameCdErrorTaskText True,
