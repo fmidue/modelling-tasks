@@ -963,7 +963,7 @@ nameCdError NameCdErrorConfig {..}  = do
             _ -> error "error in task type: property fix is not unique"
     getOD :: Cd -> RandT g m (Maybe Od)
     getOD cd = do
-      let maxNumberOfObjects = maxObjects $ snd $ classLimits classConfig
+      let maxNumberOfObjects = maxObjects $ 2 * snd (classLimits classConfig)
           parts = transform
             (ExtendsAnd FieldPlacement)
             cd
