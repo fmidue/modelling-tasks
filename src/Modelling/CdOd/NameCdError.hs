@@ -162,6 +162,7 @@ import Control.Applicative              (Alternative ((<|>)))
 import Control.Monad                    ((>=>), forM, join, when, unless)
 import Control.Monad.Catch              (MonadCatch, MonadThrow)
 import Control.Monad.Except             (runExceptT)
+import Control.Monad.Extra              (allM)
 import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
   ExtraText,
@@ -214,7 +215,7 @@ import Data.List (
   sortOn,
   )
 import Data.Map                         (Map)
-import Data.Maybe                       (catMaybes, listToMaybe, mapMaybe)
+import Data.Maybe                       (catMaybes, isJust, listToMaybe, mapMaybe)
 import Data.Ratio                       ((%))
 import Data.Set                         (Set)
 import Data.String.Interpolate          (i, iii)
@@ -950,8 +951,8 @@ nameCdError NameCdErrorConfig {..}  = do
           cd2 = instanceClassDiagram $ head correctInstance
       possibleRemoves <- do
         validCds <- lift $ mapM (toValidCd . changeClassDiagram) allChs
-        mapM_ getOD validCds
-        return $ traverse (remove . relationshipChange) allChs
+        allHaveOd <- allM (fmap isJust . getOD) validCds
+        return $ if allHaveOd then traverse (remove . relationshipChange) allChs else Nothing
       case possibleRemoves of
         Nothing -> getInstanceWithODs chs p randomInstances
         Just removes ->
