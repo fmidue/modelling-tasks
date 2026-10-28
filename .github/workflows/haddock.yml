@@ -18,7 +18,7 @@ jobs:
   check:
     if: ${{ github.ref_name == github.event.repository.default_branch }}
 
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     outputs:
       has-changes: ${{ steps.new-commits.outputs.has-new-commits }}
@@ -109,7 +109,7 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
 
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
