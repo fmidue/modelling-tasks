@@ -945,9 +945,9 @@ nameCdError NameCdErrorConfig {..}  = do
       correctInstance <- lift $ mapM fromInstanceWithPredefinedNames instances
       let allChs = concatMap instanceChangesAndCds correctInstance
           cd2 = instanceClassDiagram $ head correctInstance
-      possibleRemoves <- do
-        validCds <- lift $ mapM (toValidCd . changeClassDiagram) allChs
-        allHaveOd <- lift $ allM hasOD validCds
+      possibleRemoves <- lift $ do
+        validCds <- mapM (toValidCd . changeClassDiagram) allChs
+        allHaveOd <- allM hasOD validCds
         return $ if allHaveOd then traverse (remove . relationshipChange) allChs else Nothing
       case possibleRemoves of
         Nothing -> getInstanceWithODs chs p randomInstances
