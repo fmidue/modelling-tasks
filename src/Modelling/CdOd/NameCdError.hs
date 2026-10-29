@@ -209,6 +209,7 @@ import Data.List (
   singleton,
   sortOn,
   )
+import Data.List.Extra                  (notNull)
 import Data.Map                         (Map)
 import Data.Maybe                       (catMaybes)
 import Data.Ratio                       ((%))
@@ -974,7 +975,7 @@ nameCdError NameCdErrorConfig {..}  = do
             (length $ classNames cd)
             maxNumberOfObjects
             (relationships cd)
-      not . null <$> getInstances (Just 1) timeout (combineParts parts ++ command)
+      notNull <$> getInstances (Just 1) timeout (combineParts parts ++ command)
 
 translateProperty :: Bool -> Property -> Map Language String
 translateProperty True x = translatePropertyWithDirections x
