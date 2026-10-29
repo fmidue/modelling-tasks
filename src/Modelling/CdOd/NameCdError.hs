@@ -84,7 +84,6 @@ import Modelling.Auxiliary.Output (
   uniform,
   )
 import Modelling.Auxiliary.Shuffle.All  (shuffleEverything)
-import Modelling.CdOd.Auxiliary.Util    (alloyInstanceToOd)
 import Modelling.CdOd.CD2Alloy.Transform (
   ExtendsAnd (FieldPlacement),
   LinguisticReuse (ExtendsAnd),
@@ -129,13 +128,11 @@ import Modelling.CdOd.Types (
   ClassDiagram (..),
   LimitedLinking (..),
   ObjectProperties (..),
-  Od,
   PhrasingKind (Denoted),
   Property (..),
   Relationship (..),
   RelationshipProperties (..),
   allowEverything,
-  anonymiseObjects,
   anyAssociationNames,
   checkCdConstraints,
   checkCdDrawProperties,
@@ -147,7 +144,6 @@ import Modelling.CdOd.Types (
   defaultCdDrawSettings,
   isIllegal,
   maxObjects,
-  relationshipName,
   renameClassesAndRelationships,
   shuffleAnnotatedClassAndConnectionOrder,
   toArticleToUse,
@@ -159,9 +155,8 @@ import Modelling.CdOd.Types (
 import Modelling.Types                  (Change (..))
 
 import Control.Applicative              (Alternative ((<|>)))
-import Control.Monad                    ((>=>), forM, join, when, unless)
+import Control.Monad                    (when, unless)
 import Control.Monad.Catch              (MonadCatch, MonadThrow)
-import Control.Monad.Except             (runExceptT)
 import Control.Monad.Extra              (allM)
 import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
@@ -206,7 +201,7 @@ import Data.Aeson.Types                 (parseEither)
 import Data.Bifunctor                   (second)
 import Data.ByteString.UTF8             (fromString, toString)
 import Data.Containers.ListUtils        (nubOrd)
-import Data.Either.Extra                (eitherToMaybe, fromEither)
+import Data.Either.Extra                (fromEither)
 import Data.List (
   (\\),
   delete,
@@ -215,7 +210,7 @@ import Data.List (
   sortOn,
   )
 import Data.Map                         (Map)
-import Data.Maybe                       (catMaybes, isJust, listToMaybe, mapMaybe)
+import Data.Maybe                       (catMaybes)
 import Data.Ratio                       ((%))
 import Data.Set                         (Set)
 import Data.String.Interpolate          (i, iii)
@@ -951,7 +946,7 @@ nameCdError NameCdErrorConfig {..}  = do
           cd2 = instanceClassDiagram $ head correctInstance
       possibleRemoves <- do
         validCds <- lift $ mapM (toValidCd . changeClassDiagram) allChs
-        allHaveOd <- allM (fmap isJust . getOD) validCds
+        allHaveOd <- lift $ allM hasOD validCds
         return $ if allHaveOd then traverse (remove . relationshipChange) allChs else Nothing
       case possibleRemoves of
         Nothing -> getInstanceWithODs chs p randomInstances
@@ -961,8 +956,8 @@ nameCdError NameCdErrorConfig {..}  = do
           in case S.toList fixes of
             [problem] -> return (cd2, problem, removes)
             _ -> error "error in task type: property fix is not unique"
-    getOD :: Cd -> RandT g m (Maybe Od)
-    getOD cd = do
+    hasOD :: Cd -> m Bool
+    hasOD cd = do
       let maxNumberOfObjects = maxObjects $ 2 * snd (classLimits classConfig)
           parts = transform
             (ExtendsAnd FieldPlacement)
@@ -979,13 +974,7 @@ nameCdError NameCdErrorConfig {..}  = do
             (length $ classNames cd)
             maxNumberOfObjects
             (relationships cd)
-          possibleLinkNames = mapMaybe relationshipName $ relationships cd
-      od <- listToMaybe
-        <$> lift (getInstances (Just 1) timeout (combineParts parts ++ command))
-      od' <- fmap join $ lift $ forM od
-        $ runExceptT . alloyInstanceToOd (Just $ classNames cd) possibleLinkNames
-        >=> return . eitherToMaybe
-      mapM (anonymiseObjects (anonymousObjectProportion objectProperties)) od'
+      not . null <$> getInstances (Just 1) timeout (combineParts parts ++ command)
 
 translateProperty :: Bool -> Property -> Map Language String
 translateProperty True x = translatePropertyWithDirections x
@@ -1071,15 +1060,43 @@ defaultNameCdErrorInstance = NameCdErrorInstance {
   byName = True,
   cdDrawSettings = defaultCdDrawSettings {printNames = True},
   classDiagram = AnnotatedClassDiagram {
-    annotatedClasses = ["A", "D", "B", "C"],
+    annotatedClasses = ["C", "B", "D", "A"],
     annotatedRelationships = [
       Annotation {
         annotated = Right Association {
-          associationName = "x",
+          associationName = "w",
           associationFrom =
-            LimitedLinking {linking = "C", limits = (1, Just 1)},
+            LimitedLinking {linking = "A", limits = (1, Just 1)},
           associationTo =
-            LimitedLinking {linking = "D", limits = (2, Nothing)}
+            LimitedLinking {linking = "B", limits = (2, Nothing)}
+          },
+        annotation = Relevant {
+          contributingToProblem = False,
+          listingPriority = 3,
+          referenceUsing = DefiniteArticle
+          }
+        },
+      Annotation {
+        annotated = Right Composition {
+          compositionName = "x",
+          compositionPart =
+            LimitedLinking {linking = "B", limits = (1, Just 1)},
+          compositionWhole =
+            LimitedLinking {linking = "D", limits = (1, Just 2)}
+          },
+        annotation = Relevant {
+          contributingToProblem = True,
+          listingPriority = 2,
+          referenceUsing = DefiniteArticle
+          }
+        },
+      Annotation {
+        annotated = Right Aggregation {
+          aggregationName = "y",
+          aggregationPart =
+            LimitedLinking {linking = "A", limits = (2, Just 2)},
+          aggregationWhole =
+            LimitedLinking {linking = "C", limits = (1, Nothing)}
           },
         annotation = Relevant {
           contributingToProblem = False,
@@ -1091,58 +1108,30 @@ defaultNameCdErrorInstance = NameCdErrorInstance {
         annotated = Right Composition {
           compositionName = "z",
           compositionPart =
-            LimitedLinking {linking = "D", limits = (1, Just 1)},
+            LimitedLinking {linking = "C", limits = (0, Just 2)},
           compositionWhole =
-            LimitedLinking {linking = "B", limits = (1, Just 2)}
-          },
-        annotation = Relevant {
-          contributingToProblem = True,
-          listingPriority = 3,
-          referenceUsing = DefiniteArticle
-          }
-        },
-      Annotation {
-        annotated = Right Aggregation {
-          aggregationName = "y",
-          aggregationPart =
-            LimitedLinking {linking = "C", limits = (2, Just 2)},
-          aggregationWhole =
-            LimitedLinking {linking = "A", limits = (1, Nothing)}
+            LimitedLinking {linking = "D", limits = (1, Just 1)}
           },
         annotation = Relevant {
           contributingToProblem = False,
           listingPriority = 4,
           referenceUsing = DefiniteArticle
           }
-        },
-      Annotation {
-        annotated = Right Composition {
-          compositionName = "w",
-          compositionPart =
-            LimitedLinking {linking = "A", limits = (0, Just 2)},
-          compositionWhole =
-            LimitedLinking {linking = "B", limits = (1, Just 1)}
-          },
-        annotation = Relevant {
-          contributingToProblem = False,
-          listingPriority = 2,
-          referenceUsing = DefiniteArticle
-          }
         }
       ]
     },
   errorReasons = M.fromAscList [
-    ('a', (False, PreDefined ReverseRelationships)),
-    ('b', (False, PreDefined DoubleRelationships)),
+    ('a', (False, PreDefined DoubleRelationships)),
+    ('b', (False, PreDefined SelfRelationships)),
     ('c', (True, PreDefined WrongCompositionLimits)),
-    ('d', (False, PreDefined SelfInheritances)),
-    ('e', (False, PreDefined WrongAssociationLimits)),
+    ('d', (False, PreDefined WrongAssociationLimits)),
+    ('e', (False, PreDefined SelfInheritances)),
     ('f', (False, PreDefined InvalidInheritanceLimits)),
-    ('g', (False, PreDefined ReverseInheritances)),
-    ('h', (False, PreDefined CompositionCycles)),
+    ('g', (False, PreDefined CompositionCycles)),
+    ('h', (False, PreDefined ReverseInheritances)),
     ('i', (False, PreDefined InheritanceCycles)),
-    ('j', (False, PreDefined SelfRelationships)),
-    ('k', (False, PreDefined MultipleInheritances))
+    ('j', (False, PreDefined MultipleInheritances)),
+    ('k', (False, PreDefined ReverseRelationships))
     ],
   showSolution = True,
   taskText = nameCdErrorTaskText True,
