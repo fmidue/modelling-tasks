@@ -1005,7 +1005,7 @@ generateSetOfCds
         <$> traverse fromInstanceWithPredefinedNames changes
     getOD :: Cd -> RandT g m (Maybe Od)
     getOD cd = do
-      let maxNumberOfObjects = maxObjects $ snd $ classLimits config
+      let maxNumberOfObjects = maxObjects $ 2 * snd (classLimits config)
           parts = transform
             (ExtendsAnd FieldPlacement)
             cd
