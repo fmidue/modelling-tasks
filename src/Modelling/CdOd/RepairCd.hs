@@ -642,35 +642,35 @@ defaultRepairCdInstance = RepairCdInstance {
   changes = M.fromList [
     (1, InValidOption {
       hint = Left AnyClassDiagram {
-        anyClassNames = ["D", "C", "A", "B"],
+        anyClassNames = ["B", "A", "D", "C"],
         anyRelationships = [
-          Right Composition {
-            compositionName = "z",
-            compositionPart =
-              LimitedLinking {linking = "A", limits = (0, Just 2)},
-            compositionWhole =
-              LimitedLinking {linking = "C", limits = (1, Just 1)}
-            },
           Right Composition {
             compositionName = "v",
             compositionPart =
-              LimitedLinking {linking = "D", limits = (1, Just 2)},
+              LimitedLinking {linking = "C", limits = (2, Nothing)},
             compositionWhole =
-              LimitedLinking {linking = "A", limits = (0, Just 1)}
+              LimitedLinking {linking = "B", limits = (1, Just 1)}
             },
           Right Composition {
-            compositionName = "w",
+            compositionName = "u",
             compositionPart =
-              LimitedLinking {linking = "C", limits = (0, Nothing)},
+              LimitedLinking {linking = "A", limits = (2, Nothing)},
             compositionWhole =
-              LimitedLinking {linking = "D", limits = (1, Just 1)}
+              LimitedLinking {linking = "C", limits = (0, Just 1)}
             },
           Right Association {
             associationName = "x",
             associationFrom =
-              LimitedLinking {linking = "B", limits = (2, Nothing)},
+              LimitedLinking {linking = "D", limits = (0, Nothing)},
             associationTo =
-              LimitedLinking {linking = "A", limits = (2, Nothing)}
+              LimitedLinking {linking = "B", limits = (2, Nothing)}
+            },
+          Right Composition {
+            compositionName = "w",
+            compositionPart =
+              LimitedLinking {linking = "B", limits = (2, Nothing)},
+            compositionWhole =
+              LimitedLinking {linking = "A", limits = (1, Just 1)}
             }
           ]
         },
@@ -679,9 +679,9 @@ defaultRepairCdInstance = RepairCdInstance {
           add = Just $ Right Association {
             associationName = "x",
             associationFrom =
-              LimitedLinking {linking = "B", limits = (2, Nothing)},
+              LimitedLinking {linking = "D", limits = (0, Nothing)},
             associationTo =
-              LimitedLinking {linking = "A", limits = (2, Nothing)}
+              LimitedLinking {linking = "B", limits = (2, Nothing)}
             },
           remove = Nothing
           },
@@ -690,46 +690,46 @@ defaultRepairCdInstance = RepairCdInstance {
       }),
     (2, InValidOption {
       hint = Left AnyClassDiagram {
-        anyClassNames = ["C", "D", "B", "A"],
+        anyClassNames = ["D", "C", "A", "B"],
         anyRelationships = [
-          Right Association {
-            associationName = "y",
-            associationFrom =
-              LimitedLinking {linking = "A", limits = (2, Nothing)},
-            associationTo =
-              LimitedLinking {linking = "B", limits = (2, Nothing)}
+          Right Composition {
+            compositionName = "v",
+            compositionPart =
+              LimitedLinking {linking = "C", limits = (2, Nothing)},
+            compositionWhole =
+              LimitedLinking {linking = "B", limits = (1, Just 1)}
             },
           Right Composition {
-            compositionName = "z",
+            compositionName = "u",
             compositionPart =
-              LimitedLinking {linking = "A", limits = (0, Just 2)},
+              LimitedLinking {linking = "A", limits = (2, Nothing)},
             compositionWhole =
-              LimitedLinking {linking = "C", limits = (1, Just 1)}
+              LimitedLinking {linking = "C", limits = (0, Just 1)}
+            },
+          Right Association {
+            associationName = "z",
+            associationFrom =
+              LimitedLinking {linking = "D", limits = (2, Just 2)},
+            associationTo =
+              LimitedLinking {linking = "D", limits = (2, Just 2)}
             },
           Right Composition {
             compositionName = "w",
             compositionPart =
-              LimitedLinking {linking = "C", limits = (0, Nothing)},
+              LimitedLinking {linking = "B", limits = (2, Nothing)},
             compositionWhole =
-              LimitedLinking {linking = "D", limits = (1, Just 1)}
-            },
-          Right Composition {
-            compositionName = "v",
-            compositionPart =
-              LimitedLinking {linking = "D", limits = (1, Just 2)},
-            compositionWhole =
-              LimitedLinking {linking = "A", limits = (0, Just 1)}
+              LimitedLinking {linking = "A", limits = (1, Just 1)}
             }
           ]
         },
       option = Annotation {
         annotated = Change {
           add = Just $ Right Association {
-            associationName = "y",
+            associationName = "z",
             associationFrom =
-              LimitedLinking {linking = "A", limits = (2, Nothing)},
+              LimitedLinking {linking = "D", limits = (2, Just 2)},
             associationTo =
-              LimitedLinking {linking = "B", limits = (2, Nothing)}
+              LimitedLinking {linking = "D", limits = (2, Just 2)}
             },
           remove = Nothing
           },
@@ -738,21 +738,21 @@ defaultRepairCdInstance = RepairCdInstance {
       }),
     (3, InValidOption {
       hint = Right ClassDiagram {
-        classNames = ["D", "A", "B", "C"],
+        classNames = ["A", "B", "D", "C"],
         relationships = [
           Composition {
-            compositionName = "z",
+            compositionName = "u",
             compositionPart =
-              LimitedLinking {linking = "A", limits = (0, Just 2)},
+              LimitedLinking {linking = "A", limits = (2, Nothing)},
             compositionWhole =
-              LimitedLinking {linking = "C", limits = (1, Just 1)}
+              LimitedLinking {linking = "C", limits = (0, Just 1)}
             },
           Composition {
             compositionName = "w",
             compositionPart =
-              LimitedLinking {linking = "C", limits = (0, Nothing)},
+              LimitedLinking {linking = "B", limits = (2, Nothing)},
             compositionWhole =
-              LimitedLinking {linking = "D", limits = (1, Just 1)}
+              LimitedLinking {linking = "A", limits = (1, Just 1)}
             }
           ]
         },
@@ -762,72 +762,86 @@ defaultRepairCdInstance = RepairCdInstance {
           remove = Just $ Right Composition {
             compositionName = "v",
             compositionPart =
-              LimitedLinking {linking = "D", limits = (1, Just 2)},
+              LimitedLinking {linking = "C", limits = (2, Nothing)},
             compositionWhole =
-              LimitedLinking {linking = "A", limits = (0, Just 1)}
+              LimitedLinking {linking = "B", limits = (1, Just 1)}
             }
           },
         annotation = DefiniteArticle
         }
       }),
     (4, InValidOption {
-      hint = Right ClassDiagram {
-        classNames = ["C", "A", "D", "B"],
-        relationships = [
-          Composition {
+      hint = Left AnyClassDiagram {
+        anyClassNames = ["B", "D", "A", "C"],
+        anyRelationships = [
+          Right Association {
+            associationName = "y",
+            associationFrom =
+              LimitedLinking {linking = "C", limits = (0, Just 1)},
+            associationTo =
+              LimitedLinking {linking = "D", limits = (1, Just 2)}
+            },
+          Right Composition {
+            compositionName = "u",
+            compositionPart =
+              LimitedLinking {linking = "A", limits = (2, Nothing)},
+            compositionWhole =
+              LimitedLinking {linking = "C", limits = (0, Just 1)}
+            },
+          Right Composition {
+            compositionName = "w",
+            compositionPart =
+              LimitedLinking {linking = "B", limits = (2, Nothing)},
+            compositionWhole =
+              LimitedLinking {linking = "A", limits = (1, Just 1)}
+            },
+          Right Composition {
             compositionName = "v",
             compositionPart =
-              LimitedLinking {linking = "D", limits = (1, Just 2)},
+              LimitedLinking {linking = "C", limits = (2, Nothing)},
             compositionWhole =
-              LimitedLinking {linking = "A", limits = (0, Just 1)}
-            },
-          Composition {
-            compositionName = "z",
-            compositionPart =
-              LimitedLinking {linking = "A", limits = (0, Just 2)},
-            compositionWhole =
-              LimitedLinking {linking = "C", limits = (1, Just 1)}
+              LimitedLinking {linking = "B", limits = (1, Just 1)}
             }
           ]
         },
       option = Annotation {
         annotated = Change {
-          add = Nothing,
-          remove = Just $ Right Composition {
-            compositionName = "w",
-            compositionPart =
-              LimitedLinking {linking = "C", limits = (0, Nothing)},
-            compositionWhole =
-              LimitedLinking {linking = "D", limits = (1, Just 1)}
-            }
+          add = Just $ Right Association {
+            associationName = "y",
+            associationFrom =
+              LimitedLinking {linking = "C", limits = (0, Just 1)},
+            associationTo =
+              LimitedLinking {linking = "D", limits = (1, Just 2)}
+            },
+          remove = Nothing
           },
         annotation = DefiniteArticle
         }
       })
     ],
   classDiagram = AnyClassDiagram {
-    anyClassNames = ["C", "D", "B", "A"],
+    anyClassNames = ["A", "D", "C", "B"],
     anyRelationships = [
-      Right Composition {
-        compositionName = "w",
-        compositionPart =
-          LimitedLinking {linking = "C", limits = (0, Nothing)},
-        compositionWhole =
-          LimitedLinking {linking = "D", limits = (1, Just 1)}
-        },
       Right Composition {
         compositionName = "v",
         compositionPart =
-          LimitedLinking {linking = "D", limits = (1, Just 2)},
+          LimitedLinking {linking = "C", limits = (2, Nothing)},
         compositionWhole =
-          LimitedLinking {linking = "A", limits = (0, Just 1)}
+          LimitedLinking {linking = "B", limits = (1, Just 1)}
         },
       Right Composition {
-        compositionName = "z",
+        compositionName = "w",
         compositionPart =
-          LimitedLinking {linking = "A", limits = (0, Just 2)},
+          LimitedLinking {linking = "B", limits = (2, Nothing)},
         compositionWhole =
-          LimitedLinking {linking = "C", limits = (1, Just 1)}
+          LimitedLinking {linking = "A", limits = (1, Just 1)}
+        },
+      Right Composition {
+        compositionName = "u",
+        compositionPart =
+          LimitedLinking {linking = "A", limits = (2, Nothing)},
+        compositionWhole =
+          LimitedLinking {linking = "C", limits = (0, Just 1)}
         }
       ]
     },
@@ -1005,7 +1019,7 @@ generateSetOfCds
         <$> traverse fromInstanceWithPredefinedNames changes
     getOD :: Cd -> RandT g m (Maybe Od)
     getOD cd = do
-      let maxNumberOfObjects = maxObjects $ snd $ classLimits config
+      let maxNumberOfObjects = maxObjects $ 2 * snd (classLimits config)
           parts = transform
             (ExtendsAnd FieldPlacement)
             cd

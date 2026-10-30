@@ -7,6 +7,7 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE TupleSections #-}
 
@@ -83,7 +84,6 @@ import Modelling.Auxiliary.Output (
   uniform,
   )
 import Modelling.Auxiliary.Shuffle.All  (shuffleEverything)
-import Modelling.CdOd.Auxiliary.Util    (alloyInstanceToOd)
 import Modelling.CdOd.CD2Alloy.Transform (
   ExtendsAnd (FieldPlacement),
   LinguisticReuse (ExtendsAnd),
@@ -105,6 +105,7 @@ import Modelling.CdOd.Phrasing (
   phraseRelationship,
   )
 import Modelling.CdOd.RepairCd (
+  StructuralWeakening,
   (.&.),
   checkClassConfigAndChanges,
   illegalStructuralWeakenings,
@@ -120,6 +121,7 @@ import Modelling.CdOd.Types (
   AnyClassDiagram (..),
   AnyRelationship,
   ArticlePreference (..),
+  Cd,
   CdConstraints (..),
   CdDrawSettings (..),
   ClassConfig (..),
@@ -131,7 +133,6 @@ import Modelling.CdOd.Types (
   Relationship (..),
   RelationshipProperties (..),
   allowEverything,
-  anonymiseObjects,
   anyAssociationNames,
   checkCdConstraints,
   checkCdDrawProperties,
@@ -143,7 +144,6 @@ import Modelling.CdOd.Types (
   defaultCdDrawSettings,
   isIllegal,
   maxObjects,
-  relationshipName,
   renameClassesAndRelationships,
   shuffleAnnotatedClassAndConnectionOrder,
   toArticleToUse,
@@ -155,9 +155,9 @@ import Modelling.CdOd.Types (
 import Modelling.Types                  (Change (..))
 
 import Control.Applicative              (Alternative ((<|>)))
-import Control.Monad                    ((>=>), forM, join, when, unless)
+import Control.Monad                    (when, unless)
 import Control.Monad.Catch              (MonadCatch, MonadThrow)
-import Control.Monad.Except             (runExceptT)
+import Control.Monad.Extra              (allM)
 import Control.OutputCapable.Blocks (
   ArticleToUse (DefiniteArticle),
   ExtraText,
@@ -201,7 +201,7 @@ import Data.Aeson.Types                 (parseEither)
 import Data.Bifunctor                   (second)
 import Data.ByteString.UTF8             (fromString, toString)
 import Data.Containers.ListUtils        (nubOrd)
-import Data.Either.Extra                (eitherToMaybe, fromEither)
+import Data.Either.Extra                (fromEither)
 import Data.List (
   (\\),
   delete,
@@ -209,8 +209,9 @@ import Data.List (
   singleton,
   sortOn,
   )
+import Data.List.Extra                  (notNull)
 import Data.Map                         (Map)
-import Data.Maybe                       (catMaybes, listToMaybe, mapMaybe)
+import Data.Maybe                       (catMaybes)
 import Data.Ratio                       ((%))
 import Data.Set                         (Set)
 import Data.String.Interpolate          (i, iii)
@@ -221,6 +222,7 @@ import Data.Yaml                        (
   encode,
   )
 import GHC.Generics                     (Generic)
+import Language.Alloy.Call              (AlloyInstance)
 import System.Random.Shuffle            (shuffleM)
 import Text.Parsec                      (parserFail, parserReturn)
 import Text.ParserCombinators.Parsec    (Parser, anyToken, many)
@@ -893,7 +895,7 @@ generateAndRandomise withRelationshipChoices config@NameCdErrorConfig {..} = do
       }
 
 nameCdError
-  :: (MonadAlloy m, MonadCatch m, RandomGen g)
+  :: forall m g. (MonadAlloy m, MonadCatch m, RandomGen g)
   => NameCdErrorConfig
   -> RandT g m (AnyCd, Property, [AnyRelationship String String])
 nameCdError NameCdErrorConfig {..}  = do
@@ -903,6 +905,7 @@ nameCdError NameCdErrorConfig {..}  = do
     ]
   getInstanceWithStructuralWeakenings structuralWeakenings
   where
+    getFixWith :: Maybe AnyCd -> RelationshipProperties -> String
     getFixWith cd properties = Changes.transformGetNextFix
       cd
       classConfig
@@ -910,6 +913,9 @@ nameCdError NameCdErrorConfig {..}  = do
       properties
       allowedProperties
       useNames
+    getInstanceWithStructuralWeakenings
+      :: [(StructuralWeakening, StructuralWeakening)]
+      -> RandT g m (AnyCd, Property, [AnyRelationship String String])
     getInstanceWithStructuralWeakenings [] =
       error "there seems to be no instance for the provided configuration"
     getInstanceWithStructuralWeakenings ((e0, l0) : chs) = do
@@ -918,6 +924,11 @@ nameCdError NameCdErrorConfig {..}  = do
       instances <- lift $ getInstances maxInstances timeout alloyCode
       randomInstances <- shuffleM instances
       getInstanceWithODs chs p randomInstances
+    getInstanceWithODs
+      :: [(StructuralWeakening, StructuralWeakening)]
+      -> RelationshipProperties
+      -> [AlloyInstance]
+      -> RandT g m (AnyCd, Property, [AnyRelationship String String])
     getInstanceWithODs chs _ [] = getInstanceWithStructuralWeakenings chs
     getInstanceWithODs chs p (randomInstance:randomInstances) = do
       cdInstance <- lift
@@ -934,10 +945,11 @@ nameCdError NameCdErrorConfig {..}  = do
       correctInstance <- lift $ mapM fromInstanceWithPredefinedNames instances
       let allChs = concatMap instanceChangesAndCds correctInstance
           cd2 = instanceClassDiagram $ head correctInstance
-      possibleRemoves <- do
-        validCds <- lift $ mapM (toValidCd . changeClassDiagram) allChs
-        mapM_ getOD validCds
-        return $ traverse (remove . relationshipChange) allChs
+      possibleRemoves <- lift $ do
+        validCds <- mapM (toValidCd . changeClassDiagram) allChs
+        allHaveOd <- allM hasOD validCds
+        -- as soon as one of the changes does not involve a removal, result also becomes Nothing
+        return $ if allHaveOd then traverse (remove . relationshipChange) allChs else Nothing
       case possibleRemoves of
         Nothing -> getInstanceWithODs chs p randomInstances
         Just removes ->
@@ -946,8 +958,9 @@ nameCdError NameCdErrorConfig {..}  = do
           in case S.toList fixes of
             [problem] -> return (cd2, problem, removes)
             _ -> error "error in task type: property fix is not unique"
-    getOD cd = do
-      let maxNumberOfObjects = maxObjects $ snd $ classLimits classConfig
+    hasOD :: Cd -> m Bool
+    hasOD cd = do
+      let maxNumberOfObjects = maxObjects $ 2 * snd (classLimits classConfig)
           parts = transform
             (ExtendsAnd FieldPlacement)
             cd
@@ -963,13 +976,7 @@ nameCdError NameCdErrorConfig {..}  = do
             (length $ classNames cd)
             maxNumberOfObjects
             (relationships cd)
-          possibleLinkNames = mapMaybe relationshipName $ relationships cd
-      od <- listToMaybe
-        <$> lift (getInstances (Just 1) timeout (combineParts parts ++ command))
-      od' <- fmap join $ lift $ forM od
-        $ runExceptT . alloyInstanceToOd (Just $ classNames cd) possibleLinkNames
-        >=> return . eitherToMaybe
-      mapM (anonymiseObjects (anonymousObjectProportion objectProperties)) od'
+      notNull <$> getInstances (Just 1) timeout (combineParts parts ++ command)
 
 translateProperty :: Bool -> Property -> Map Language String
 translateProperty True x = translatePropertyWithDirections x
@@ -1061,7 +1068,7 @@ defaultNameCdErrorInstance = NameCdErrorInstance {
         annotated = Right Association {
           associationName = "w",
           associationFrom =
-            LimitedLinking {linking = "A", limits = (1, Just 2)},
+            LimitedLinking {linking = "A", limits = (1, Just 1)},
           associationTo =
             LimitedLinking {linking = "B", limits = (2, Nothing)}
           },
@@ -1103,9 +1110,9 @@ defaultNameCdErrorInstance = NameCdErrorInstance {
         annotated = Right Composition {
           compositionName = "z",
           compositionPart =
-            LimitedLinking {linking = "C", limits = (2, Nothing)},
+            LimitedLinking {linking = "C", limits = (0, Just 2)},
           compositionWhole =
-            LimitedLinking {linking = "B", limits = (1, Just 1)}
+            LimitedLinking {linking = "D", limits = (1, Just 1)}
           },
         annotation = Relevant {
           contributingToProblem = False,
