@@ -948,6 +948,7 @@ nameCdError NameCdErrorConfig {..}  = do
       possibleRemoves <- lift $ do
         validCds <- mapM (toValidCd . changeClassDiagram) allChs
         allHaveOd <- allM hasOD validCds
+        -- as soon as one of the changes does not involve a removal, result also becomes Nothing
         return $ if allHaveOd then traverse (remove . relationshipChange) allChs else Nothing
       case possibleRemoves of
         Nothing -> getInstanceWithODs chs p randomInstances
