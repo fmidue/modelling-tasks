@@ -836,7 +836,7 @@ data CdConstraints
     -- (inheritances may be traversed in between)
     onlyCommonMultiplicities :: Maybe Bool
     -- ^ if all valid multiplicities have to be common ones
-    -- (i.e. @0..1@, @1@, @*@, or @1..*@) (@Just True@),
+    -- (i.e. @0..1@, @1@, @0..*@, or @1..*@) (@Just True@),
     -- at least one valid multiplicity has to be an uncommon one
     -- (i.e. involving @2@) (@Just False@),
     -- or any multiplicities could appear (@Nothing@);
