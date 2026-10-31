@@ -68,20 +68,11 @@ pred noCompositionCyclesWithInheritances [is : set Inheritance, cs : set Composi
     c in c.(^~inheritance + ^inheritance).composition.*((*~inheritance + *inheritance).composition)
 }
 
-pred noAggregationCycles [is : set Inheritance, aggs : set Aggregation] {
+pred noWholePartCycles [is : set Inheritance, wps : set Aggregation + Composition] {
   let inheritance = relationship [is],
-      aggregation = relationship [aggs] |
+      wholePart = relationship [wps] |
   no c : Class |
-    c in c.^((*~inheritance + *inheritance).aggregation)
-}
-
-pred noAggregationCompositionCycles [is : set Inheritance, aggs : set Aggregation, cs : set Composition] {
-  let inheritance = relationship [is],
-      aggregation = (*~inheritance + *inheritance).(relationship [aggs]),
-      composition = (*~inheritance + *inheritance).(relationship [cs]),
-      wholePart = aggregation + composition |
-  no c : Class |
-    c in c.*wholePart.aggregation.*wholePart.composition
+    c in c.^((*~inheritance + *inheritance).wholePart)
 }
 
 pred canDifferentlyBePartOfSameClass [is : set Inheritance, cs : set Composition] {
@@ -224,9 +215,8 @@ pred classDiagram [
   selfRelationships : one Int,
   selfInheritances : one Int,
   anyCompositionCyclesInvolveInheritances : lone Boolean,
-  hasAggregationCycles : lone Boolean,
-  hasAggregationCompositionCycles : lone Boolean,
-  onlyCommonMultiplicities : lone Boolean,
+  preventWholePartCycles : one Boolean,
+  onlyCommonMultiplicities : one Boolean,
   hasDoubleRelationships : lone Boolean,
   hasReverseRelationships : lone Boolean,
   hasReverseInheritances : one Boolean,
@@ -248,18 +238,10 @@ pred classDiagram [
     implies noCompositionCycles[none, compositions]
     else anyCompositionCyclesInvolveInheritances = False
       implies noCompositionCyclesWithInheritances[inheritances, compositions]
-  hasAggregationCycles = True
-    implies not noAggregationCycles [inheritances, aggregations]
-    else hasAggregationCycles = False
-      implies noAggregationCycles [inheritances, aggregations]
-  hasAggregationCompositionCycles = True
-    implies not noAggregationCompositionCycles [inheritances, aggregations, compositions]
-    else hasAggregationCompositionCycles = False
-      implies noAggregationCompositionCycles [inheritances, aggregations, compositions]
+  preventWholePartCycles = True
+    implies noWholePartCycles [inheritances, aggregations + compositions]
   onlyCommonMultiplicities = True
     implies (all a : nonInheritances | validLimitsAreCommon [a])
-    else onlyCommonMultiplicities = False
-      implies (some a : nonInheritances | not validLimitsAreCommon [a])
   hasDoubleRelationships = True
     implies not noDoubleRelationships [nonInheritances]
     else hasDoubleRelationships = False implies noDoubleRelationships [nonInheritances]
@@ -297,9 +279,8 @@ pred changeOfFirstCD [
   selfRelationships : one Int,
   selfInheritances : one Int,
   anyCompositionCyclesInvolveInheritances : lone Boolean,
-  hasAggregationCycles : lone Boolean,
-  hasAggregationCompositionCycles : lone Boolean,
-  onlyCommonMultiplicities : lone Boolean,
+  preventWholePartCycles : one Boolean,
+  onlyCommonMultiplicities : one Boolean,
   hasDoubleRelationships : lone Boolean,
   hasReverseRelationships : lone Boolean,
   hasReverseInheritances : one Boolean,
@@ -318,7 +299,7 @@ pred changeOfFirstCD [
         invalidInheritances,
         wrongNonInheritances, wrongCompositions, selfRelationships, selfInheritances,
         anyCompositionCyclesInvolveInheritances,
-        hasAggregationCycles, hasAggregationCompositionCycles, onlyCommonMultiplicities,
+        preventWholePartCycles, onlyCommonMultiplicities,
         hasDoubleRelationships, hasReverseRelationships, hasReverseInheritances,
         hasMultipleInheritances, hasNonTrivialInheritanceCycles, hasCompositionCycles,
         hasCompositionsPreventingParts, hasThickEdges]

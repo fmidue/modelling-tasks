@@ -273,9 +273,8 @@ pred cd {
       #{selfRelationshipsAmount},
       #{selfInheritancesAmount},
       #{maybeToAlloySet anyCompositionCyclesInvolveInheritances},
-      #{maybeToAlloySet hasAggregationCycles},
-      #{maybeToAlloySet hasAggregationCompositionCycles},
-      #{maybeToAlloySet onlyCommonMultiplicities},
+      #{preventWholePartCycles},
+      #{onlyCommonMultiplicities},
       #{maybeToAlloySet hasDoubleRelationships},
       #{maybeToAlloySet hasReverseRelationships},
       #{hasReverseInheritances},
@@ -383,9 +382,8 @@ pred #{change} {
     #{selfRelationshipsAmount},
     #{selfInheritancesAmount},
     #{maybeToAlloySet anyCompositionCyclesInvolveInheritances},
-    #{maybeToAlloySet hasAggregationCycles},
-    #{maybeToAlloySet hasAggregationCompositionCycles},
-    #{maybeToAlloySet onlyCommonMultiplicities},
+    #{preventWholePartCycles},
+    #{onlyCommonMultiplicities},
     #{maybeToAlloySet hasDoubleRelationships},
     #{maybeToAlloySet hasReverseRelationships},
     #{hasReverseInheritances},
@@ -418,9 +416,9 @@ pred changes {
         #{nonTrivialInheritanceConstraint "c2Inheritances" "c2NonInheritances" withNonTrivialInheritance}
       }
     }
-    changeOfFirstCD [C1, 0, 0, 0, 0, 0, none, none, none, none, False, False, False, False, False, False, False, none]
-    changeOfFirstCD [C2, 0, 0, 0, 0, 0, none, none, none, none, False, False, False, False, False, False, False, none]
-    changeOfFirstCD [C3, 0, 0, 0, 0, 0, none, none, none, none, False, False, False, False, False, False, False, none]
+    changeOfFirstCD [C1, 0, 0, 0, 0, 0, none, False, False, False, False, False, False, False, False, False, none]
+    changeOfFirstCD [C2, 0, 0, 0, 0, 0, none, False, False, False, False, False, False, False, False, False, none]
+    changeOfFirstCD [C3, 0, 0, 0, 0, 0, none, False, False, False, False, False, False, False, False, False, none]
 }
 |] ++ changeLimits config
 
