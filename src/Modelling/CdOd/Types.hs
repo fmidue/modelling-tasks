@@ -825,64 +825,37 @@ data CdConstraints
     -- ^ if composition cycles have to contain inheritances (@Just True@),
     -- must not contain inheritances (@Just False@),
     -- or could contain inheritances (@Nothing@)
-    hasAggregationCycles :: Maybe Bool,
-    -- ^ if there has to be (@Just True@), must not be (@Just False@),
-    -- or could be (@Nothing@) a cycle consisting of aggregations only
-    -- (inheritances may be traversed in between)
-    hasAggregationCompositionCycles :: Maybe Bool,
-    -- ^ if there has to be (@Just True@), must not be (@Just False@),
-    -- or could be (@Nothing@) a cycle containing
-    -- at least one aggregation and at least one composition
-    -- (inheritances may be traversed in between)
-    onlyCommonMultiplicities :: Maybe Bool
+    preventWholePartCycles :: Bool,
+    -- ^ if there must not be any cycle formed by
+    -- aggregations and/or compositions,
+    -- possibly via inheritances in between
+    onlyCommonMultiplicities :: Bool
     -- ^ if all valid multiplicities have to be common ones
-    -- (i.e. @0..1@, @1@, @0..*@, or @1..*@) (@Just True@),
-    -- at least one valid multiplicity has to be an uncommon one
-    -- (i.e. involving @2@) (@Just False@),
-    -- or any multiplicities could appear (@Nothing@);
+    -- (i.e. @0..1@, @1@, @0..*@, or @1..*@);
     -- invalid multiplicities are not affected
     } deriving (Eq, Generic, Read, Reader, Show, ToDoc)
 
 defaultCdConstraints :: CdConstraints
 defaultCdConstraints = CdConstraints {
   anyCompositionCyclesInvolveInheritances = Nothing,
-  hasAggregationCycles = Nothing,
-  hasAggregationCompositionCycles = Nothing,
-  onlyCommonMultiplicities = Nothing
+  preventWholePartCycles = False,
+  onlyCommonMultiplicities = False
   }
 
-checkCdConstraints
-  :: ClassConfig
-  -> AllowedProperties
-  -> CdConstraints
-  -> Maybe String
-checkCdConstraints ClassConfig {..} AllowedProperties {..} CdConstraints {..}
+checkCdConstraints :: AllowedProperties -> CdConstraints -> Maybe String
+checkCdConstraints AllowedProperties {..} CdConstraints {..}
   | not compositionCycles, isJust anyCompositionCyclesInvolveInheritances
   = Just [iii|
     Setting anyCompositionCyclesInvolveInheritances to True or False
     makes no sense when composition cycles are not allowed.
     |]
-  | hasAggregationCycles == Just True, noneAllowed aggregationLimits
+  | preventWholePartCycles, compositionCycles
   = Just [iii|
-    Setting hasAggregationCycles to True
-    requires aggregations to be allowed.
-    |]
-  | hasAggregationCompositionCycles == Just True
-  , noneAllowed aggregationLimits || noneAllowed compositionLimits
-  = Just [iii|
-    Setting hasAggregationCompositionCycles to True
-    requires aggregations and compositions to be allowed.
-    |]
-  | onlyCommonMultiplicities == Just False
-  , all noneAllowed [aggregationLimits, associationLimits, compositionLimits]
-  = Just [iii|
-    Setting onlyCommonMultiplicities to False
-    requires aggregations, associations, or compositions to be allowed.
+    Setting preventWholePartCycles to True
+    makes no sense when composition cycles are allowed.
     |]
   | otherwise
   = Nothing
-  where
-    noneAllowed = (== Just 0) . snd
 
 checkRange
   :: (Num n, Ord n, Show b, Show n)

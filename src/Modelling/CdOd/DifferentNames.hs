@@ -336,7 +336,7 @@ checkDifferentNamesConfig DifferentNamesConfig {..}
       are generated.
       |]
   | otherwise = checkClassConfigWithProperties classConfig defaultProperties
-    <|> checkCdConstraints classConfig allowNothing cdConstraints
+    <|> checkCdConstraints allowNothing cdConstraints
     <|> checkObjectProperties objectProperties
     <|> checkClassConfigAndObjectProperties classConfig objectProperties
     <|> checkOmittedDefaultMultiplicities omittedDefaultMultiplicities
@@ -738,70 +738,70 @@ using 'defaultDifferentNamesConfig'.
 defaultDifferentNamesInstance :: DifferentNamesInstance
 defaultDifferentNamesInstance = DifferentNamesInstance {
   cDiagram = ClassDiagram {
-    classNames = ["C", "B", "A", "D"],
+    classNames = ["A", "C", "D", "B"],
     relationships = [
-      Composition {
-        compositionName = "y",
-        compositionPart = LimitedLinking {
-          linking = "C",
-          limits = (0, Just 2)
-          },
-        compositionWhole = LimitedLinking {
-          linking = "B",
-          limits = (0, Just 1)
-          }
-        },
       Aggregation {
         aggregationName = "x",
         aggregationPart = LimitedLinking {
-          linking = "D",
-          limits = (2, Nothing)
+          linking = "A",
+          limits = (0, Nothing)
           },
         aggregationWhole = LimitedLinking {
           linking = "C",
-          limits = (2, Just 2)
+          limits = (0, Just 2)
           }
         },
-      Association {
-        associationName = "z",
-        associationFrom = LimitedLinking {
+      Inheritance {
+        subClass = "D",
+        superClass = "C"
+        },
+      Composition {
+        compositionName = "z",
+        compositionPart = LimitedLinking {
           linking = "B",
-          limits = (1, Just 1)
+          limits = (0, Nothing)
           },
-        associationTo = LimitedLinking {
+        compositionWhole = LimitedLinking {
           linking = "A",
           limits = (1, Just 1)
           }
         },
-      Inheritance {
-        subClass = "A",
-        superClass = "D"
+      Association {
+        associationName = "y",
+        associationFrom = LimitedLinking {
+          linking = "D",
+          limits = (2, Nothing)
+          },
+        associationTo = LimitedLinking {
+          linking = "B",
+          limits = (2, Nothing)
+          }
         }
       ]
     },
   cdDrawSettings = defaultCdDrawSettings,
   oDiagram = ObjectDiagram {
     objects = [
-      Object {isAnonymous = True, objectName = "c",  objectClass = "C"},
-      Object {isAnonymous = True, objectName = "b",  objectClass = "B"},
-      Object {isAnonymous = True, objectName = "c1", objectClass = "C"},
-      Object {isAnonymous = True, objectName = "b1", objectClass = "B"},
+      Object {isAnonymous = True, objectName = "d1", objectClass = "D"},
+      Object {isAnonymous = True, objectName = "d",  objectClass = "D"},
       Object {isAnonymous = True, objectName = "a",  objectClass = "A"},
+      Object {isAnonymous = True, objectName = "b",  objectClass = "B"},
+      Object {isAnonymous = True, objectName = "b1", objectClass = "B"},
       Object {isAnonymous = True, objectName = "a1", objectClass = "A"}
       ],
     links = [
-      Link {linkLabel = "2.", linkFrom = "a1", linkTo = "c"},
-      Link {linkLabel = "1.", linkFrom = "c",  linkTo = "b1"},
-      Link {linkLabel = "3.", linkFrom = "b",  linkTo = "a1"},
-      Link {linkLabel = "1.", linkFrom = "c1", linkTo = "b"},
-      Link {linkLabel = "3.", linkFrom = "b1", linkTo = "a"},
-      Link {linkLabel = "2.", linkFrom = "a",  linkTo = "c1"},
-      Link {linkLabel = "2.", linkFrom = "a",  linkTo = "c"},
-      Link {linkLabel = "2.", linkFrom = "a1", linkTo = "c1"}
+      Link {linkLabel = "3.", linkFrom = "d1", linkTo = "b1"},
+      Link {linkLabel = "3.", linkFrom = "d",  linkTo = "b1"},
+      Link {linkLabel = "1.", linkFrom = "a",  linkTo = "d1"},
+      Link {linkLabel = "1.", linkFrom = "a1", linkTo = "d"},
+      Link {linkLabel = "2.", linkFrom = "b1", linkTo = "a1"},
+      Link {linkLabel = "2.", linkFrom = "b",  linkTo = "a"},
+      Link {linkLabel = "3.", linkFrom = "d1", linkTo = "b"},
+      Link {linkLabel = "3.", linkFrom = "d",  linkTo = "b"}
       ]
     },
   showSolution = ShowMapping,
-  mapping = toNameMapping $ BM.fromList [("x", "2."), ("y", "1."), ("z", "3.")],
+  mapping = toNameMapping $ BM.fromList [("x", "1."), ("y", "3."), ("z", "2.")],
   linkShuffling = ConsecutiveNumbers,
   taskText = defaultDifferentNamesTaskText,
   addTexts = []

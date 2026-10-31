@@ -51,7 +51,6 @@ Vielfachheit
 WColor
 XNode
 Yesod
-aggs
 anyclass
 apps
 automorphisms
@@ -152,6 +151,7 @@ utf
 varepsilon
 vphantom
 weakenings
+wps
 xdescribe
 xlink
 xss
