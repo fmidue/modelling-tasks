@@ -23,6 +23,7 @@ import Modelling.CdOd.Types (
   ClassConfig (..),
   RelationshipProperties (..),
   anyThickEdge,
+  defaultCdConstraints,
   defaultProperties,
   )
 
@@ -38,7 +39,7 @@ generateCd
   -> Maybe Int
   -> IO ([String], [DiagramEdge])
 generateCd wi c p mis to = do
-  i <- head <$> evalRandTIO (generateCds wi c p mis to)
+  i <- head <$> evalRandTIO (generateCds wi c defaultCdConstraints p mis to)
   anyCd <- instanceToAnyCd i
   toEdges' anyCd
   where

@@ -88,6 +88,7 @@ import Modelling.CdOd.Output            (cacheCd, cacheOd)
 import Modelling.CdOd.Phrasing          (numberWords)
 import Modelling.CdOd.Types (
   Cd,
+  CdConstraints (..),
   CdDrawSettings (..),
   CdMutation (..),
   ClassConfig (..),
@@ -103,8 +104,10 @@ import Modelling.CdOd.Types (
   Relationship (..),
   RelationshipMutation (ChangeKind),
   allCdMutations,
+  allowNothing,
   anonymiseObjects,
   associationNames,
+  checkCdConstraints,
   checkCdDrawSettings,
   checkCdMutations,
   checkClassConfigAndObjectProperties,
@@ -113,6 +116,7 @@ import Modelling.CdOd.Types (
   checkObjectProperties,
   checkOmittedDefaultMultiplicities,
   classNames,
+  defaultCdConstraints,
   defaultOmittedDefaultMultiplicities,
   defaultProperties,
   fromClassDiagram,
@@ -213,6 +217,7 @@ data OdDistributionConfig =
 data MatchCdOdConfig
   = MatchCdOdConfig {
     allowedCdMutations :: ![CdMutation],
+    cdConstraints    :: !CdConstraints,
     classConfig      :: ClassConfig,
     maxInstances     :: Maybe Integer,
     odDistribution   :: OdDistributionConfig,
@@ -229,6 +234,7 @@ defaultMatchCdOdConfig :: MatchCdOdConfig
 defaultMatchCdOdConfig
   = MatchCdOdConfig {
     allowedCdMutations = allCdMutations,
+    cdConstraints = defaultCdConstraints,
     classConfig  = ClassConfig {
         classLimits        = (4, 4),
         aggregationLimits  = (1, Just 2),
@@ -336,8 +342,16 @@ checkMatchCdOdConfig MatchCdOdConfig {..}
     class diagrams, i.e. if 'allowedCdMutations' include any of
     'AddRelationship', 'RemoveRelationship' or 'MutateRelationship ChangeKind'.
     |]
+  | isJust (anyCompositionCyclesInvolveInheritances cdConstraints)
+  = Just [iii|
+    Setting anyCompositionCyclesInvolveInheritances to True or False
+    makes no sense for this task type,
+    as only valid class diagrams (i.e. without composition cycles)
+    are generated.
+    |]
   | otherwise
   = checkClassConfigWithProperties classConfig defaultProperties
+  <|> checkCdConstraints allowNothing cdConstraints
   <|> checkCdMutations allowedCdMutations
   <|> checkOdDistributionConfig maxInstances odDistribution
   <|> checkObjectProperties objectProperties
@@ -1003,6 +1017,7 @@ getRandomTask
 getRandomTask config = do
   let alloyCode = Changes.transform
         (classConfig config)
+        (cdConstraints config)
         (allowedCdMutations config)
         defaultProperties
         (withNonTrivialInheritance config)

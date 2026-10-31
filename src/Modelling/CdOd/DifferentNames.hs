@@ -85,6 +85,7 @@ import Modelling.CdOd.Generate          (generateCds, instanceToCd)
 import Modelling.CdOd.Output            (cacheCd, cacheOd)
 import Modelling.CdOd.Types (
   Cd,
+  CdConstraints (..),
   CdDrawSettings (..),
   ClassConfig (..),
   ClassDiagram (..),
@@ -98,7 +99,9 @@ import Modelling.CdOd.Types (
   OmittedDefaultMultiplicities,
   Relationship (..),
   anonymiseObjects,
+  allowNothing,
   associationNames,
+  checkCdConstraints,
   checkCdDrawSettings,
   checkClassConfigAndObjectProperties,
   checkClassConfigWithProperties,
@@ -106,6 +109,7 @@ import Modelling.CdOd.Types (
   checkObjectProperties,
   checkOmittedDefaultMultiplicities,
   classNames,
+  defaultCdConstraints,
   defaultCdDrawSettings,
   defaultOmittedDefaultMultiplicities,
   defaultProperties,
@@ -184,6 +188,7 @@ import Data.List (
   )
 import Data.Maybe (
   catMaybes,
+  isJust,
   isNothing,
   listToMaybe,
   mapMaybe,
@@ -284,6 +289,7 @@ checkDifferentNamesInstance' DifferentNamesInstance {..}
 
 data DifferentNamesConfig
   = DifferentNamesConfig {
+    cdConstraints    :: !CdConstraints,
     classConfig      :: ClassConfig,
     withNonTrivialInheritance :: Maybe Bool,
     maxInstances     :: Maybe Integer,
@@ -322,7 +328,15 @@ checkDifferentNamesConfig DifferentNamesConfig {..}
       if the maximum number of relationships is not fixed.
       Otherwise task instances would vary too much in complexity.
       |]
+  | isJust (anyCompositionCyclesInvolveInheritances cdConstraints)
+  = Just [iii|
+      Setting anyCompositionCyclesInvolveInheritances to True or False
+      makes no sense for this task type,
+      as only valid class diagrams (i.e. without composition cycles)
+      are generated.
+      |]
   | otherwise = checkClassConfigWithProperties classConfig defaultProperties
+    <|> checkCdConstraints allowNothing cdConstraints
     <|> checkObjectProperties objectProperties
     <|> checkClassConfigAndObjectProperties classConfig objectProperties
     <|> checkOmittedDefaultMultiplicities omittedDefaultMultiplicities
@@ -332,6 +346,7 @@ checkDifferentNamesConfig DifferentNamesConfig {..}
 
 defaultDifferentNamesConfig :: DifferentNamesConfig
 defaultDifferentNamesConfig = DifferentNamesConfig {
+    cdConstraints = defaultCdConstraints,
     classConfig  = ClassConfig {
         classLimits        = (4, 4),
         aggregationLimits  = (1, Just 1),
@@ -699,6 +714,7 @@ differentNames config segment seed = do
     is <- generateCds
       (withNonTrivialInheritance config)
       (classConfig config)
+      (cdConstraints config)
       defaultProperties
       (maxInstances config)
       (timeout config)
