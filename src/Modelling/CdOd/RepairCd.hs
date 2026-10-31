@@ -656,14 +656,14 @@ defaultRepairCdInstance = RepairCdInstance {
             compositionPart =
               LimitedLinking {linking = "A", limits = (2, Nothing)},
             compositionWhole =
-              LimitedLinking {linking = "C", limits = (0, Just 1)}
+              LimitedLinking {linking = "C", limits = (1, Just 1)}
             },
           Right Association {
             associationName = "x",
             associationFrom =
-              LimitedLinking {linking = "D", limits = (0, Nothing)},
+              LimitedLinking {linking = "B", limits = (2, Just 2)},
             associationTo =
-              LimitedLinking {linking = "B", limits = (2, Nothing)}
+              LimitedLinking {linking = "D", limits = (2, Nothing)}
             },
           Right Composition {
             compositionName = "w",
@@ -679,9 +679,9 @@ defaultRepairCdInstance = RepairCdInstance {
           add = Just $ Right Association {
             associationName = "x",
             associationFrom =
-              LimitedLinking {linking = "D", limits = (0, Nothing)},
+              LimitedLinking {linking = "B", limits = (2, Just 2)},
             associationTo =
-              LimitedLinking {linking = "B", limits = (2, Nothing)}
+              LimitedLinking {linking = "D", limits = (2, Nothing)}
             },
           remove = Nothing
           },
@@ -704,14 +704,14 @@ defaultRepairCdInstance = RepairCdInstance {
             compositionPart =
               LimitedLinking {linking = "A", limits = (2, Nothing)},
             compositionWhole =
-              LimitedLinking {linking = "C", limits = (0, Just 1)}
+              LimitedLinking {linking = "C", limits = (1, Just 1)}
             },
           Right Association {
             associationName = "z",
             associationFrom =
-              LimitedLinking {linking = "D", limits = (2, Just 2)},
+              LimitedLinking {linking = "D", limits = (2, Nothing)},
             associationTo =
-              LimitedLinking {linking = "D", limits = (2, Just 2)}
+              LimitedLinking {linking = "D", limits = (2, Nothing)}
             },
           Right Composition {
             compositionName = "w",
@@ -727,9 +727,9 @@ defaultRepairCdInstance = RepairCdInstance {
           add = Just $ Right Association {
             associationName = "z",
             associationFrom =
-              LimitedLinking {linking = "D", limits = (2, Just 2)},
+              LimitedLinking {linking = "D", limits = (2, Nothing)},
             associationTo =
-              LimitedLinking {linking = "D", limits = (2, Just 2)}
+              LimitedLinking {linking = "D", limits = (2, Nothing)}
             },
           remove = Nothing
           },
@@ -745,7 +745,7 @@ defaultRepairCdInstance = RepairCdInstance {
             compositionPart =
               LimitedLinking {linking = "A", limits = (2, Nothing)},
             compositionWhole =
-              LimitedLinking {linking = "C", limits = (0, Just 1)}
+              LimitedLinking {linking = "C", limits = (1, Just 1)}
             },
           Composition {
             compositionName = "w",
@@ -777,16 +777,16 @@ defaultRepairCdInstance = RepairCdInstance {
           Right Association {
             associationName = "y",
             associationFrom =
-              LimitedLinking {linking = "C", limits = (0, Just 1)},
+              LimitedLinking {linking = "B", limits = (1, Just 2)},
             associationTo =
-              LimitedLinking {linking = "D", limits = (1, Just 2)}
+              LimitedLinking {linking = "D", limits = (0, Just 2)}
             },
           Right Composition {
             compositionName = "u",
             compositionPart =
               LimitedLinking {linking = "A", limits = (2, Nothing)},
             compositionWhole =
-              LimitedLinking {linking = "C", limits = (0, Just 1)}
+              LimitedLinking {linking = "C", limits = (1, Just 1)}
             },
           Right Composition {
             compositionName = "w",
@@ -809,9 +809,9 @@ defaultRepairCdInstance = RepairCdInstance {
           add = Just $ Right Association {
             associationName = "y",
             associationFrom =
-              LimitedLinking {linking = "C", limits = (0, Just 1)},
+              LimitedLinking {linking = "B", limits = (1, Just 2)},
             associationTo =
-              LimitedLinking {linking = "D", limits = (1, Just 2)}
+              LimitedLinking {linking = "D", limits = (0, Just 2)}
             },
           remove = Nothing
           },
@@ -841,7 +841,7 @@ defaultRepairCdInstance = RepairCdInstance {
         compositionPart =
           LimitedLinking {linking = "A", limits = (2, Nothing)},
         compositionWhole =
-          LimitedLinking {linking = "C", limits = (0, Just 1)}
+          LimitedLinking {linking = "C", limits = (1, Just 1)}
         }
       ]
     },

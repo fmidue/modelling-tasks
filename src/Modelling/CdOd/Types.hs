@@ -819,17 +819,27 @@ checkClassConfig c@ClassConfig {..}
 {-|
 Additional structural constraints that should be applied to all class diagrams.
 -}
-newtype CdConstraints
+data CdConstraints
   = CdConstraints {
-    anyCompositionCyclesInvolveInheritances :: Maybe Bool
+    anyCompositionCyclesInvolveInheritances :: Maybe Bool,
     -- ^ if composition cycles have to contain inheritances (@Just True@),
     -- must not contain inheritances (@Just False@),
     -- or could contain inheritances (@Nothing@)
+    preventWholePartCycles :: Bool,
+    -- ^ if there must not be any cycle formed by
+    -- aggregations and/or compositions,
+    -- possibly via inheritances in between
+    onlyCommonMultiplicities :: Bool
+    -- ^ if all valid multiplicities have to be common ones
+    -- (i.e. @0..1@, @1@, @0..*@, or @1..*@);
+    -- invalid multiplicities are not affected
     } deriving (Eq, Generic, Read, Reader, Show, ToDoc)
 
 defaultCdConstraints :: CdConstraints
 defaultCdConstraints = CdConstraints {
-  anyCompositionCyclesInvolveInheritances = Nothing
+  anyCompositionCyclesInvolveInheritances = Nothing,
+  preventWholePartCycles = False,
+  onlyCommonMultiplicities = False
   }
 
 checkCdConstraints :: AllowedProperties -> CdConstraints -> Maybe String
@@ -838,6 +848,11 @@ checkCdConstraints AllowedProperties {..} CdConstraints {..}
   = Just [iii|
     Setting anyCompositionCyclesInvolveInheritances to True or False
     makes no sense when composition cycles are not allowed.
+    |]
+  | preventWholePartCycles, compositionCycles
+  = Just [iii|
+    Setting preventWholePartCycles to True
+    makes no sense when composition cycles are allowed.
     |]
   | otherwise
   = Nothing

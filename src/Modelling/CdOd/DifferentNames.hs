@@ -722,43 +722,43 @@ using 'defaultDifferentNamesConfig'.
 defaultDifferentNamesInstance :: DifferentNamesInstance
 defaultDifferentNamesInstance = DifferentNamesInstance {
   cDiagram = ClassDiagram {
-    classNames = ["C", "B", "D", "A"],
+    classNames = ["A", "C", "D", "B"],
     relationships = [
-      Composition {
-        compositionName = "x",
-        compositionPart = LimitedLinking {
-          linking = "D",
-          limits = (2, Nothing)
+      Aggregation {
+        aggregationName = "x",
+        aggregationPart = LimitedLinking {
+          linking = "A",
+          limits = (0, Nothing)
           },
-        compositionWhole = LimitedLinking {
-          linking = "B",
-          limits = (0, Just 1)
+        aggregationWhole = LimitedLinking {
+          linking = "C",
+          limits = (0, Just 2)
           }
         },
       Inheritance {
-        subClass = "A",
+        subClass = "D",
         superClass = "C"
+        },
+      Composition {
+        compositionName = "z",
+        compositionPart = LimitedLinking {
+          linking = "B",
+          limits = (0, Nothing)
+          },
+        compositionWhole = LimitedLinking {
+          linking = "A",
+          limits = (1, Just 1)
+          }
         },
       Association {
         associationName = "y",
         associationFrom = LimitedLinking {
-          linking = "C",
-          limits = (0, Nothing)
+          linking = "D",
+          limits = (2, Nothing)
           },
         associationTo = LimitedLinking {
-          linking = "D",
-          limits = (0, Just 1)
-          }
-        },
-      Aggregation {
-        aggregationName = "z",
-        aggregationPart = LimitedLinking {
           linking = "B",
-          limits = (0, Just 2)
-          },
-        aggregationWhole = LimitedLinking {
-          linking = "A",
-          limits = (0, Just 2)
+          limits = (2, Nothing)
           }
         }
       ]
@@ -766,23 +766,26 @@ defaultDifferentNamesInstance = DifferentNamesInstance {
   cdDrawSettings = defaultCdDrawSettings,
   oDiagram = ObjectDiagram {
     objects = [
-      Object {isAnonymous = True, objectName = "c",  objectClass = "C"},
-      Object {isAnonymous = True, objectName = "c1", objectClass = "C"},
-      Object {isAnonymous = True, objectName = "d",  objectClass = "D"},
-      Object {isAnonymous = True, objectName = "b",  objectClass = "B"},
       Object {isAnonymous = True, objectName = "d1", objectClass = "D"},
-      Object {isAnonymous = True, objectName = "a",  objectClass = "A"}
+      Object {isAnonymous = True, objectName = "d",  objectClass = "D"},
+      Object {isAnonymous = True, objectName = "a",  objectClass = "A"},
+      Object {isAnonymous = True, objectName = "b",  objectClass = "B"},
+      Object {isAnonymous = True, objectName = "b1", objectClass = "B"},
+      Object {isAnonymous = True, objectName = "a1", objectClass = "A"}
       ],
     links = [
-      Link {linkLabel = "2.", linkFrom = "d1", linkTo = "b"},
-      Link {linkLabel = "1.", linkFrom = "b",  linkTo = "a"},
-      Link {linkLabel = "2.", linkFrom = "d",  linkTo = "b"},
-      Link {linkLabel = "3.", linkFrom = "c",  linkTo = "d1"},
-      Link {linkLabel = "3.", linkFrom = "c1", linkTo = "d1"}
+      Link {linkLabel = "3.", linkFrom = "d1", linkTo = "b1"},
+      Link {linkLabel = "3.", linkFrom = "d",  linkTo = "b1"},
+      Link {linkLabel = "1.", linkFrom = "a",  linkTo = "d1"},
+      Link {linkLabel = "1.", linkFrom = "a1", linkTo = "d"},
+      Link {linkLabel = "2.", linkFrom = "b1", linkTo = "a1"},
+      Link {linkLabel = "2.", linkFrom = "b",  linkTo = "a"},
+      Link {linkLabel = "3.", linkFrom = "d1", linkTo = "b"},
+      Link {linkLabel = "3.", linkFrom = "d",  linkTo = "b"}
       ]
     },
   showSolution = ShowMapping,
-  mapping = toNameMapping $ BM.fromList [("x", "2."), ("y", "3."), ("z", "1.")],
+  mapping = toNameMapping $ BM.fromList [("x", "1."), ("y", "3."), ("z", "2.")],
   linkShuffling = ConsecutiveNumbers,
   taskText = defaultDifferentNamesTaskText,
   addTexts = []
