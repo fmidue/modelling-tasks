@@ -216,7 +216,7 @@ pred classDiagram [
   selfInheritances : one Int,
   anyCompositionCyclesInvolveInheritances : lone Boolean,
   preventWholePartCycles : one Boolean,
-  onlyCommonMultiplicities : one Boolean,
+  onlyCommonMultiplicities : lone Boolean,
   hasDoubleRelationships : lone Boolean,
   hasReverseRelationships : lone Boolean,
   hasReverseInheritances : one Boolean,
@@ -242,6 +242,8 @@ pred classDiagram [
     implies noWholePartCycles [inheritances, aggregations + compositions]
   onlyCommonMultiplicities = True
     implies (all a : nonInheritances | validLimitsAreCommon [a])
+    else onlyCommonMultiplicities = False
+      implies (some a : nonInheritances | not validLimitsAreCommon [a])
   hasDoubleRelationships = True
     implies not noDoubleRelationships [nonInheritances]
     else hasDoubleRelationships = False implies noDoubleRelationships [nonInheritances]
@@ -280,7 +282,7 @@ pred changeOfFirstCD [
   selfInheritances : one Int,
   anyCompositionCyclesInvolveInheritances : lone Boolean,
   preventWholePartCycles : one Boolean,
-  onlyCommonMultiplicities : one Boolean,
+  onlyCommonMultiplicities : lone Boolean,
   hasDoubleRelationships : lone Boolean,
   hasReverseRelationships : lone Boolean,
   hasReverseInheritances : one Boolean,
