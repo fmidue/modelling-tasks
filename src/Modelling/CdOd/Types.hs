@@ -829,9 +829,12 @@ data CdConstraints
     -- ^ if there must not be any cycle formed by
     -- aggregations and/or compositions,
     -- possibly via inheritances in between
-    onlyCommonMultiplicities :: Bool
+    onlyCommonMultiplicities :: Maybe Bool
     -- ^ if all valid multiplicities have to be common ones
-    -- (i.e. @0..1@, @1@, @0..*@, or @1..*@);
+    -- (i.e. @0..1@, @1@, @0..*@, or @1..*@) (@Just True@),
+    -- at least one valid multiplicity has to be an uncommon one
+    -- (i.e. involving @2@) (@Just False@),
+    -- or any multiplicities could appear (@Nothing@);
     -- invalid multiplicities are not affected
     } deriving (Eq, Generic, Read, Reader, Show, ToDoc)
 
@@ -839,7 +842,7 @@ defaultCdConstraints :: CdConstraints
 defaultCdConstraints = CdConstraints {
   anyCompositionCyclesInvolveInheritances = Nothing,
   preventWholePartCycles = False,
-  onlyCommonMultiplicities = False
+  onlyCommonMultiplicities = Nothing
   }
 
 checkCdConstraints :: AllowedProperties -> CdConstraints -> Maybe String
