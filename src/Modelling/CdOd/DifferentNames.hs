@@ -336,7 +336,7 @@ checkDifferentNamesConfig DifferentNamesConfig {..}
       are generated.
       |]
   | otherwise = checkClassConfigWithProperties classConfig defaultProperties
-    <|> checkCdConstraints allowNothing cdConstraints
+    <|> checkCdConstraints classConfig allowNothing cdConstraints
     <|> checkObjectProperties objectProperties
     <|> checkClassConfigAndObjectProperties classConfig objectProperties
     <|> checkOmittedDefaultMultiplicities omittedDefaultMultiplicities

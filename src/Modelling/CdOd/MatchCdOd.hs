@@ -351,7 +351,7 @@ checkMatchCdOdConfig MatchCdOdConfig {..}
     |]
   | otherwise
   = checkClassConfigWithProperties classConfig defaultProperties
-  <|> checkCdConstraints allowNothing cdConstraints
+  <|> checkCdConstraints classConfig allowNothing cdConstraints
   <|> checkCdMutations allowedCdMutations
   <|> checkOdDistributionConfig maxInstances odDistribution
   <|> checkObjectProperties objectProperties
