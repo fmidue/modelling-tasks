@@ -862,10 +862,12 @@ checkCdConstraints ClassConfig {..} AllowedProperties {..} CdConstraints {..}
     requires inheritances to be allowed.
     |]
   | anyCompositionCyclesInvolveInheritances == Just False
+  , not selfRelationships, not reverseRelationships
   , maybe False (< 3) $ snd compositionLimits
   = Just [iii|
     Setting anyCompositionCyclesInvolveInheritances to False
-    requires at least three compositions to be allowed.
+    requires at least three compositions to be allowed
+    unless self or reverse relationships are allowed.
     |]
   | preventWholePartCycles, compositionCycles
   = Just [iii|
