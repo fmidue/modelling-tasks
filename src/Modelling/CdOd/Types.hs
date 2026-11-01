@@ -845,20 +845,51 @@ defaultCdConstraints = CdConstraints {
   onlyCommonMultiplicities = Nothing
   }
 
-checkCdConstraints :: AllowedProperties -> CdConstraints -> Maybe String
-checkCdConstraints AllowedProperties {..} CdConstraints {..}
+checkCdConstraints
+  :: ClassConfig
+  -> AllowedProperties
+  -> CdConstraints
+  -> Maybe String
+checkCdConstraints ClassConfig {..} AllowedProperties {..} CdConstraints {..}
   | not compositionCycles, isJust anyCompositionCyclesInvolveInheritances
   = Just [iii|
     Setting anyCompositionCyclesInvolveInheritances to True or False
     makes no sense when composition cycles are not allowed.
+    |]
+  | anyCompositionCyclesInvolveInheritances == Just True, noneAllowed inheritanceLimits
+  = Just [iii|
+    Setting anyCompositionCyclesInvolveInheritances to True
+    requires inheritances to be allowed.
+    |]
+  | anyCompositionCyclesInvolveInheritances == Just False
+  , maybe False (< 3) $ snd compositionLimits
+  = Just [iii|
+    Setting anyCompositionCyclesInvolveInheritances to False
+    requires at least three compositions to be allowed.
     |]
   | preventWholePartCycles, compositionCycles
   = Just [iii|
     Setting preventWholePartCycles to True
     makes no sense when composition cycles are allowed.
     |]
+  | preventWholePartCycles
+  , selfRelationships || reverseRelationships
+  , noneAllowed associationLimits
+  = Just [iii|
+    Setting preventWholePartCycles to True
+    requires associations to be allowed
+    when self or reverse relationships are allowed.
+    |]
+  | onlyCommonMultiplicities == Just False
+  , all noneAllowed [aggregationLimits, associationLimits, compositionLimits]
+  = Just [iii|
+    Setting onlyCommonMultiplicities to False
+    requires aggregations, associations, or compositions to be allowed.
+    |]
   | otherwise
   = Nothing
+  where
+    noneAllowed = (== Just 0) . snd
 
 checkRange
   :: (Num n, Ord n, Show b, Show n)
