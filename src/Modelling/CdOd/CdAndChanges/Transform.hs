@@ -69,7 +69,10 @@ transformNoChanges
 transformNoChanges config properties withNonTrivialInheritance =
   transformWith
     config
-    defaultCdConstraints {preventWholePartCycles = False}
+    defaultCdConstraints {
+      preventWholePartCycles = False,
+      preventIsolatedClasses = False
+      }
     []
     (Right properties)
     (0, [], part)
@@ -102,7 +105,10 @@ transform
 transform config mutations props withNonTrivialInheritance =
   transformWith
     config
-    defaultCdConstraints {preventWholePartCycles = False}
+    defaultCdConstraints {
+      preventWholePartCycles = False,
+      preventIsolatedClasses = False
+      }
     mutations
     (Right props)
   $ matchCdOdChanges config withNonTrivialInheritance
