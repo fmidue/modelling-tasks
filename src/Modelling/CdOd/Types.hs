@@ -829,6 +829,9 @@ data CdConstraints
     -- ^ if there must not be any cycle formed by
     -- aggregations and/or compositions,
     -- possibly via inheritances in between
+    preventIsolatedClasses :: Bool,
+    -- ^ if every class has to take part in at least one relationship
+    -- to another class
     onlyCommonMultiplicities :: Maybe Bool
     -- ^ if all valid multiplicities have to be common ones
     -- (i.e. @0..1@, @1@, @0..*@, or @1..*@) (@Just True@),
@@ -839,10 +842,11 @@ data CdConstraints
     } deriving (Eq, Generic, Read, Reader, Show, ToDoc)
 
 defaultCdConstraints :: CdConstraints
-defaultCdConstraints = CdConstraints {
-  anyCompositionCyclesInvolveInheritances = Nothing,
-  preventWholePartCycles = False,
-  onlyCommonMultiplicities = Nothing
+defaultCdConstraints = CdConstraints
+  { anyCompositionCyclesInvolveInheritances = Nothing
+  , preventWholePartCycles = True
+  , preventIsolatedClasses = True
+  , onlyCommonMultiplicities = Nothing
   }
 
 checkCdConstraints
@@ -881,6 +885,22 @@ checkCdConstraints ClassConfig {..} AllowedProperties {..} CdConstraints {..}
     Setting preventWholePartCycles to True
     requires associations to be allowed
     when self or reverse relationships are allowed.
+    |]
+  | preventIsolatedClasses
+  , maybe False (< (snd classLimits + 1) `div` 2) $ snd relationshipLimits
+  = Just [iii|
+    Setting preventIsolatedClasses to True
+    requires the maximum number of relationships
+    to be at least half the maximum number of classes,
+    as otherwise the maximum number of classes could never be reached.
+    |]
+  | preventIsolatedClasses
+  , fst relationshipLimits < (fst classLimits + 1) `div` 2
+  = Just [iii|
+    Setting preventIsolatedClasses to True
+    requires the minimum number of relationships
+    to be at least half the minimum number of classes,
+    as otherwise the minimum number of relationships would never be enough.
     |]
   | onlyCommonMultiplicities == Just False
   , all noneAllowed [aggregationLimits, associationLimits, compositionLimits]
@@ -981,10 +1001,10 @@ checkCdDrawProperties :: CdDrawSettings -> AllowedProperties -> Maybe String
 checkCdDrawProperties CdDrawSettings {..} AllowedProperties {..}
   | doubleRelationships && not printNames
   = Just [iii|
-    'doubleRelationships' can only be enabled,
-    if relationship names are printed.
+    'doubleRelationships' cannot be enabled
+    if relationship names are not printed.
     Otherwise this constellation might be determined as illegal
-    (as they could have the same name).
+    (as they could be imagined to have the same name).
     |]
   | otherwise
   = Nothing

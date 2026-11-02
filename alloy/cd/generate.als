@@ -75,6 +75,10 @@ pred noWholePartCycles [is : set Inheritance, wps : set Aggregation + Compositio
     c in c.^((*~inheritance + *inheritance).wholePart)
 }
 
+pred noIsolatedClasses [rs : set Relationship] {
+  all c : Class | some r : rs | not selfRelationship [r] and c in r.from + r.to
+}
+
 pred canDifferentlyBePartOfSameClass [is : set Inheritance, cs : set Composition] {
   let inheritance = relationship [is] |
     some disj x, y : cs {
@@ -216,6 +220,7 @@ pred classDiagram [
   selfInheritances : one Int,
   anyCompositionCyclesInvolveInheritances : lone Boolean,
   preventWholePartCycles : one Boolean,
+  preventIsolatedClasses : one Boolean,
   onlyCommonMultiplicities : lone Boolean,
   hasDoubleRelationships : lone Boolean,
   hasReverseRelationships : lone Boolean,
@@ -240,6 +245,8 @@ pred classDiagram [
       implies noCompositionCyclesWithInheritances[inheritances, compositions]
   preventWholePartCycles = True
     implies noWholePartCycles [inheritances, aggregations + compositions]
+  preventIsolatedClasses = True
+    implies noIsolatedClasses [relationships]
   onlyCommonMultiplicities = True
     implies (all a : nonInheritances | validLimitsAreCommon [a])
     else onlyCommonMultiplicities = False
@@ -282,6 +289,7 @@ pred changeOfFirstCD [
   selfInheritances : one Int,
   anyCompositionCyclesInvolveInheritances : lone Boolean,
   preventWholePartCycles : one Boolean,
+  preventIsolatedClasses : one Boolean,
   onlyCommonMultiplicities : lone Boolean,
   hasDoubleRelationships : lone Boolean,
   hasReverseRelationships : lone Boolean,
@@ -301,7 +309,7 @@ pred changeOfFirstCD [
         invalidInheritances,
         wrongNonInheritances, wrongCompositions, selfRelationships, selfInheritances,
         anyCompositionCyclesInvolveInheritances,
-        preventWholePartCycles, onlyCommonMultiplicities,
+        preventWholePartCycles, preventIsolatedClasses, onlyCommonMultiplicities,
         hasDoubleRelationships, hasReverseRelationships, hasReverseInheritances,
         hasMultipleInheritances, hasNonTrivialInheritanceCycles, hasCompositionCycles,
         hasCompositionsPreventingParts, hasThickEdges]

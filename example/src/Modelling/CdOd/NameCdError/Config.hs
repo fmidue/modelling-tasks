@@ -42,7 +42,8 @@ task2023_09 = NameCdErrorConfig {
     },
   articleToUse = UseDefiniteArticleWherePossible,
   cdConstraints = defaultCdConstraints {
-    anyCompositionCyclesInvolveInheritances = Just True
+    anyCompositionCyclesInvolveInheritances = Just True,
+    preventWholePartCycles = False
     },
   classConfig = ClassConfig {
     classLimits = (5, 5),
@@ -184,7 +185,8 @@ task2024_10 = NameCdErrorConfig {
     },
   articleToUse = UseDefiniteArticleWherePossible,
   cdConstraints = defaultCdConstraints {
-    anyCompositionCyclesInvolveInheritances = Just True
+    anyCompositionCyclesInvolveInheritances = Just True,
+    preventWholePartCycles = False
     },
   classConfig = ClassConfig {
     classLimits = (5, 5),
@@ -270,7 +272,7 @@ task2024_11 = NameCdErrorConfig {
       associationOmittedDefaultMultiplicity = Nothing,
       compositionWholeOmittedDefaultMultiplicity = Nothing
       },
-    printNames = True,  -- switch to False next time
+    printNames = True,
     printNavigations = True
     },
   maxInstances = Just 4000,
@@ -425,4 +427,4 @@ average memory usage: 1303.15 MB
 used as: NameCdErrorFormInputSelectionUnAvailable-Quiz
 -}
 task2025_repeat_06 :: NameCdErrorConfig
-task2025_repeat_06 = task2025_repeat_04
+task2025_repeat_06 = task2024_10

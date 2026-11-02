@@ -62,7 +62,7 @@ spec = do
   describe "matchingToSolution . toMatching" $
     it "returns expected mapping for default instance" $
       matchCdOdSolution defaultMatchCdOdInstance
-      `shouldBe` [(1, Letters "ac"), (2, Letters "ace")]
+      `shouldBe` [(1, Letters "de"), (2, Letters "a")]
   describe "getODsFor" $ do
     it "does not generate specific false instance" $ ioProperty $ do
       getOdsFor cdAggregateBofAs cdAtoB

@@ -298,7 +298,9 @@ defaultNameCdErrorConfig = NameCdErrorConfig {
     selfInheritances = False
     },
   articleToUse = UseDefiniteArticleWherePossible,
-  cdConstraints = defaultCdConstraints,
+  cdConstraints = defaultCdConstraints {
+    preventWholePartCycles = False
+    },
   classConfig = ClassConfig {
     classLimits = (4, 4),
     aggregationLimits = (1, Just 1),
@@ -1065,26 +1067,26 @@ defaultNameCdErrorInstance = NameCdErrorInstance {
     annotatedClasses = ["B", "C", "A", "D"],
     annotatedRelationships = [
       Annotation {
-        annotated = Right Association {
-          associationName = "w",
-          associationFrom =
-            LimitedLinking {linking = "B", limits = (2, Nothing)},
-          associationTo =
-            LimitedLinking {linking = "C", limits = (2, Just 2)}
+        annotated = Right Composition {
+          compositionName = "y",
+          compositionPart =
+            LimitedLinking {linking = "B", limits = (0, Nothing)},
+          compositionWhole =
+            LimitedLinking {linking = "A", limits = (1, Just 2)}
           },
         annotation = Relevant {
           contributingToProblem = False,
-          listingPriority = 5,
+          listingPriority = 2,
           referenceUsing = DefiniteArticle
           }
         },
       Annotation {
         annotated = Right Aggregation {
-          aggregationName = "y",
+          aggregationName = "x",
           aggregationPart =
-            LimitedLinking {linking = "C", limits = (2, Just 2)},
+            LimitedLinking {linking = "B", limits = (0, Nothing)},
           aggregationWhole =
-            LimitedLinking {linking = "A", limits = (2, Just 2)}
+            LimitedLinking {linking = "D", limits = (1, Nothing)}
           },
         annotation = Relevant {
           contributingToProblem = False,
@@ -1094,39 +1096,11 @@ defaultNameCdErrorInstance = NameCdErrorInstance {
         },
       Annotation {
         annotated = Right Composition {
-          compositionName = "x",
-          compositionPart =
-            LimitedLinking {linking = "B", limits = (2, Nothing)},
-          compositionWhole =
-            LimitedLinking {linking = "D", limits = (1, Just 1)}
-          },
-        annotation = Relevant {
-          contributingToProblem = False,
-          listingPriority = 2,
-          referenceUsing = DefiniteArticle
-          }
-        },
-      Annotation {
-        annotated = Right Composition {
-          compositionName = "z",
-          compositionPart =
-            LimitedLinking {linking = "A", limits = (1, Just 2)},
-          compositionWhole =
-            LimitedLinking {linking = "B", limits = (2, Just 2)}
-          },
-        annotation = Relevant {
-          contributingToProblem = True,
-          listingPriority = 4,
-          referenceUsing = DefiniteArticle
-          }
-        },
-      Annotation {
-        annotated = Right Composition {
           compositionName = "v",
           compositionPart =
             LimitedLinking {linking = "C", limits = (2, Nothing)},
           compositionWhole =
-            LimitedLinking {linking = "D", limits = (1, Just 1)}
+            LimitedLinking {linking = "A", limits = (0, Just 1)}
           },
         annotation = Relevant {
           contributingToProblem = False,
