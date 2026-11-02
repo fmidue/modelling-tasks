@@ -42,7 +42,8 @@ task2023_09 = NameCdErrorConfig {
     },
   articleToUse = UseDefiniteArticleWherePossible,
   cdConstraints = defaultCdConstraints {
-    anyCompositionCyclesInvolveInheritances = Just True
+    anyCompositionCyclesInvolveInheritances = Just True,
+    preventWholePartCycles = False
     },
   classConfig = ClassConfig {
     classLimits = (5, 5),
@@ -184,7 +185,8 @@ task2024_10 = NameCdErrorConfig {
     },
   articleToUse = UseDefiniteArticleWherePossible,
   cdConstraints = defaultCdConstraints {
-    anyCompositionCyclesInvolveInheritances = Just True
+    anyCompositionCyclesInvolveInheritances = Just True,
+    preventWholePartCycles = False
     },
   classConfig = ClassConfig {
     classLimits = (5, 5),

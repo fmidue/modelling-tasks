@@ -109,7 +109,8 @@ task2023_08 = RepairCdConfig {
     },
   articleToUse = UseDefiniteArticleWherePossible,
   cdConstraints = defaultCdConstraints {
-    anyCompositionCyclesInvolveInheritances = Just True
+    anyCompositionCyclesInvolveInheritances = Just True,
+    preventWholePartCycles = False
     },
   classConfig = ClassConfig {
     classLimits = (5, 5),
@@ -228,7 +229,8 @@ task2024_13 = RepairCdConfig {
     },
   articleToUse = UseDefiniteArticleWherePossible,
   cdConstraints = defaultCdConstraints {
-    anyCompositionCyclesInvolveInheritances = Just False
+    anyCompositionCyclesInvolveInheritances = Just False,
+    preventWholePartCycles = False
     },
   classConfig = ClassConfig {
     classLimits = (5, 5),

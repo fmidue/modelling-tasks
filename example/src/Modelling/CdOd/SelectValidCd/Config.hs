@@ -53,7 +53,8 @@ task2023_05 = SelectValidCdConfig {
   articleToUse = UseDefiniteArticleWherePossible,
   basePropertiesOfBaseCdOn = IllegalStructuralWeakening,
   cdConstraints = defaultCdConstraints {
-    anyCompositionCyclesInvolveInheritances = Just True
+    anyCompositionCyclesInvolveInheritances = Just True,
+    preventWholePartCycles = False
     },
   classConfig = ClassConfig {
     classLimits = (5, 5),
@@ -177,7 +178,8 @@ task2024_06 = SelectValidCdConfig {
   articleToUse = UseDefiniteArticleWherePossible,
   basePropertiesOfBaseCdOn = IllegalStructuralWeakening,
   cdConstraints = defaultCdConstraints {
-    anyCompositionCyclesInvolveInheritances = Just True
+    anyCompositionCyclesInvolveInheritances = Just True,
+    preventWholePartCycles = False
     },
   classConfig = ClassConfig {
     classLimits = (5, 5),
@@ -358,7 +360,8 @@ task2024_51 = SelectValidCdConfig {
   articleToUse = UseDefiniteArticleWherePossible,
   basePropertiesOfBaseCdOn = IllegalStructuralWeakening,
   cdConstraints = defaultCdConstraints {
-    anyCompositionCyclesInvolveInheritances = Just True
+    anyCompositionCyclesInvolveInheritances = Just True,
+    preventWholePartCycles = False
     },
   classConfig = ClassConfig {
     classLimits = (5, 5),
