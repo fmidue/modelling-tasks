@@ -845,7 +845,7 @@ defaultCdConstraints :: CdConstraints
 defaultCdConstraints = CdConstraints
   { anyCompositionCyclesInvolveInheritances = Nothing
   , preventWholePartCycles = True
-  , preventIsolatedClasses = False
+  , preventIsolatedClasses = True
   , onlyCommonMultiplicities = Nothing
   }
 

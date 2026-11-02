@@ -1072,7 +1072,7 @@ defaultNameCdErrorInstance = NameCdErrorInstance {
           compositionPart =
             LimitedLinking {linking = "B", limits = (0, Nothing)},
           compositionWhole =
-            LimitedLinking {linking = "A", limits = (1, Nothing)}
+            LimitedLinking {linking = "A", limits = (1, Just 2)}
           },
         annotation = Relevant {
           contributingToProblem = True,
@@ -1084,9 +1084,9 @@ defaultNameCdErrorInstance = NameCdErrorInstance {
         annotated = Right Aggregation {
           aggregationName = "x",
           aggregationPart =
-            LimitedLinking {linking = "A", limits = (0, Just 1)},
+            LimitedLinking {linking = "B", limits = (0, Nothing)},
           aggregationWhole =
-            LimitedLinking {linking = "C", limits = (0, Nothing)}
+            LimitedLinking {linking = "D", limits = (1, Nothing)}
           },
         annotation = Relevant {
           contributingToProblem = False,
@@ -1098,9 +1098,9 @@ defaultNameCdErrorInstance = NameCdErrorInstance {
         annotated = Right Composition {
           compositionName = "z",
           compositionPart =
-            LimitedLinking {linking = "C", limits = (0, Nothing)},
+            LimitedLinking {linking = "C", limits = (2, Nothing)},
           compositionWhole =
-            LimitedLinking {linking = "B", limits = (0, Just 1)}
+            LimitedLinking {linking = "A", limits = (0, Just 1)}
           },
         annotation = Relevant {
           contributingToProblem = False,
