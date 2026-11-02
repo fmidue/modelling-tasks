@@ -829,6 +829,9 @@ data CdConstraints
     -- ^ if there must not be any cycle formed by
     -- aggregations and/or compositions,
     -- possibly via inheritances in between
+    preventIsolatedClasses :: Bool,
+    -- ^ if every class has to take part in at least one relationship
+    -- to another class
     onlyCommonMultiplicities :: Maybe Bool
     -- ^ if all valid multiplicities have to be common ones
     -- (i.e. @0..1@, @1@, @0..*@, or @1..*@) (@Just True@),
@@ -842,6 +845,7 @@ defaultCdConstraints :: CdConstraints
 defaultCdConstraints = CdConstraints
   { anyCompositionCyclesInvolveInheritances = Nothing
   , preventWholePartCycles = True
+  , preventIsolatedClasses = False
   , onlyCommonMultiplicities = Nothing
   }
 
@@ -881,6 +885,12 @@ checkCdConstraints ClassConfig {..} AllowedProperties {..} CdConstraints {..}
     Setting preventWholePartCycles to True
     requires associations to be allowed
     when self or reverse relationships are allowed.
+    |]
+  | preventIsolatedClasses
+  , maybe False (< (fst classLimits + 1) `div` 2) $ snd relationshipLimits
+  = Just [iii|
+    Setting preventIsolatedClasses to True
+    requires at least half as many relationships as classes to be allowed.
     |]
   | onlyCommonMultiplicities == Just False
   , all noneAllowed [aggregationLimits, associationLimits, compositionLimits]
