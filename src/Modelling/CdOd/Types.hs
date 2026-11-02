@@ -839,10 +839,10 @@ data CdConstraints
     } deriving (Eq, Generic, Read, Reader, Show, ToDoc)
 
 defaultCdConstraints :: CdConstraints
-defaultCdConstraints = CdConstraints {
-  anyCompositionCyclesInvolveInheritances = Nothing,
-  preventWholePartCycles = False,
-  onlyCommonMultiplicities = Nothing
+defaultCdConstraints = CdConstraints
+  { anyCompositionCyclesInvolveInheritances = Nothing
+  , preventWholePartCycles = True
+  , onlyCommonMultiplicities = Nothing
   }
 
 checkCdConstraints
