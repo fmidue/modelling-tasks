@@ -276,7 +276,9 @@ defaultRepairCdConfig
         selfRelationships = True
         },
     articleToUse = UseDefiniteArticleWherePossible,
-    cdConstraints = defaultCdConstraints,
+    cdConstraints = defaultCdConstraints {
+        preventWholePartCycle = False
+        },
     classConfig = ClassConfig {
         classLimits        = (4, 4),
         aggregationLimits  = (0, Just 0),
