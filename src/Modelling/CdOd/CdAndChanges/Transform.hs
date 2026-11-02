@@ -67,7 +67,12 @@ transformNoChanges
   -> Maybe Bool
   -> String
 transformNoChanges config properties withNonTrivialInheritance =
-  transformWith config defaultCdConstraints [] (Right properties) (0, [], part)
+  transformWith
+    config
+    defaultCdConstraints {preventWholePartCycles = False}
+    []
+    (Right properties)
+    (0, [], part)
   where
     part = [__i|
       fact{
@@ -95,7 +100,11 @@ transform
   -> Maybe Bool
   -> String
 transform config mutations props withNonTrivialInheritance =
-  transformWith config defaultCdConstraints mutations (Right props)
+  transformWith
+    config
+    defaultCdConstraints {preventWholePartCycles = False}
+    mutations
+    (Right props)
   $ matchCdOdChanges config withNonTrivialInheritance
 
 transformChanges
