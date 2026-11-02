@@ -21,10 +21,8 @@ import Modelling.CdOd.Generate (
 import Modelling.CdOd.Types (
   AnyClassDiagram (..),
   ClassConfig (..),
-  CdConstraints (..),
   RelationshipProperties (..),
   anyThickEdge,
-  defaultCdConstraints,
   defaultProperties,
   )
 
@@ -40,13 +38,11 @@ generateCd
   -> Maybe Int
   -> IO ([String], [DiagramEdge])
 generateCd wi c p mis to = do
-  i <- head <$> evalRandTIO (generateCds wi c constraints p mis to)
+  i <- head <$> evalRandTIO (generateCds wi c p mis to)
   anyCd <- instanceToAnyCd i
   toEdges' anyCd
   where
     toEdges' x = (anyClassNames x,) <$> toEdges x
-    -- only the given properties are tested
-    constraints = defaultCdConstraints {preventWholePartCycles = False}
 
 spec :: Spec
 spec =
