@@ -900,7 +900,7 @@ checkCdConstraints ClassConfig {..} AllowedProperties {..} CdConstraints {..}
     Setting preventIsolatedClasses to True
     requires the minimum number of relationships
     to be at least half the minimum number of classes,
-    as otherwise the minimum number of relationships could never be reached.
+    as otherwise the minimum number of relationships would never be enough.
     |]
   | onlyCommonMultiplicities == Just False
   , all noneAllowed [aggregationLimits, associationLimits, compositionLimits]
