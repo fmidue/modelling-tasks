@@ -63,11 +63,12 @@ given properties.
 -}
 transformNoChanges
   :: ClassConfig
+  -> CdConstraints
   -> RelationshipProperties
   -> Maybe Bool
   -> String
-transformNoChanges config properties withNonTrivialInheritance =
-  transformWith config defaultCdConstraints [] (Right properties) (0, [], part)
+transformNoChanges config constraints properties withNonTrivialInheritance =
+  transformWith config constraints [] (Right properties) (0, [], part)
   where
     part = [__i|
       fact{
