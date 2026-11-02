@@ -356,7 +356,7 @@ defaultDifferentNamesConfig = DifferentNamesConfig {
     printSolution    = ShowMapping,
     withNonTrivialInheritance = Just True,
     withObviousMapping = Nothing,
-    maxInstances     = Just 200,
+    maxInstances     = Just 400,
     timeout          = Nothing,
     extraTexts       = []
   }
@@ -722,43 +722,43 @@ using 'defaultDifferentNamesConfig'.
 defaultDifferentNamesInstance :: DifferentNamesInstance
 defaultDifferentNamesInstance = DifferentNamesInstance {
   cDiagram = ClassDiagram {
-    classNames = ["C", "B", "D", "A"],
+    classNames = ["A", "D", "B", "C"],
     relationships = [
-      Composition {
-        compositionName = "x",
-        compositionPart = LimitedLinking {
-          linking = "D",
-          limits = (2, Nothing)
-          },
-        compositionWhole = LimitedLinking {
-          linking = "B",
-          limits = (0, Just 1)
-          }
-        },
-      Inheritance {
-        subClass = "A",
-        superClass = "C"
-        },
       Association {
-        associationName = "y",
+        associationName = "z",
         associationFrom = LimitedLinking {
-          linking = "C",
-          limits = (0, Nothing)
+          linking = "D",
+          limits = (1, Nothing)
           },
         associationTo = LimitedLinking {
-          linking = "D",
-          limits = (0, Just 1)
+          linking = "C",
+          limits = (1, Just 1)
           }
         },
       Aggregation {
-        aggregationName = "z",
+        aggregationName = "x",
         aggregationPart = LimitedLinking {
           linking = "B",
-          limits = (0, Just 2)
+          limits = (1, Nothing)
           },
         aggregationWhole = LimitedLinking {
           linking = "A",
-          limits = (0, Just 2)
+          limits = (2, Just 2)
+          }
+        },
+      Inheritance {
+        subClass = "B",
+        superClass = "C"
+        },
+      Composition {
+        compositionName = "y",
+        compositionPart = LimitedLinking {
+          linking = "D",
+          limits = (0, Nothing)
+          },
+        compositionWhole = LimitedLinking {
+          linking = "A",
+          limits = (0, Just 1)
           }
         }
       ]
@@ -766,23 +766,24 @@ defaultDifferentNamesInstance = DifferentNamesInstance {
   cdDrawSettings = defaultCdDrawSettings,
   oDiagram = ObjectDiagram {
     objects = [
-      Object {isAnonymous = True, objectName = "c",  objectClass = "C"},
-      Object {isAnonymous = True, objectName = "c1", objectClass = "C"},
-      Object {isAnonymous = True, objectName = "d",  objectClass = "D"},
+      Object {isAnonymous = True, objectName = "a1", objectClass = "A"},
       Object {isAnonymous = True, objectName = "b",  objectClass = "B"},
       Object {isAnonymous = True, objectName = "d1", objectClass = "D"},
+      Object {isAnonymous = True, objectName = "d",  objectClass = "D"},
+      Object {isAnonymous = True, objectName = "c",  objectClass = "C"},
       Object {isAnonymous = True, objectName = "a",  objectClass = "A"}
       ],
     links = [
-      Link {linkLabel = "2.", linkFrom = "d1", linkTo = "b"},
+      Link {linkLabel = "3.", linkFrom = "d1", linkTo = "b"},
       Link {linkLabel = "1.", linkFrom = "b",  linkTo = "a"},
-      Link {linkLabel = "2.", linkFrom = "d",  linkTo = "b"},
-      Link {linkLabel = "3.", linkFrom = "c",  linkTo = "d1"},
-      Link {linkLabel = "3.", linkFrom = "c1", linkTo = "d1"}
+      Link {linkLabel = "2.", linkFrom = "d",  linkTo = "a1"},
+      Link {linkLabel = "2.", linkFrom = "d1", linkTo = "a"},
+      Link {linkLabel = "1.", linkFrom = "b",  linkTo = "a1"},
+      Link {linkLabel = "3.", linkFrom = "d",  linkTo = "c"}
       ]
     },
   showSolution = ShowMapping,
-  mapping = toNameMapping $ BM.fromList [("x", "2."), ("y", "3."), ("z", "1.")],
+  mapping = toNameMapping $ BM.fromList [("x", "1."), ("y", "2."), ("z", "3.")],
   linkShuffling = ConsecutiveNumbers,
   taskText = defaultDifferentNamesTaskText,
   addTexts = []

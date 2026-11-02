@@ -373,7 +373,7 @@ checkNameCdErrorConfig NameCdErrorConfig {..}
       |]
   | otherwise
   = checkClassConfigAndChanges classConfig allowedProperties
-  <|> checkCdConstraints allowedProperties cdConstraints
+  <|> checkCdConstraints classConfig allowedProperties cdConstraints
   <|> checkObjectProperties objectProperties
   <|> checkClassConfigAndObjectProperties classConfig objectProperties
   <|> checkCdDrawSettings drawSettings
@@ -1062,15 +1062,29 @@ defaultNameCdErrorInstance = NameCdErrorInstance {
   byName = True,
   cdDrawSettings = defaultCdDrawSettings {printNames = True},
   classDiagram = AnnotatedClassDiagram {
-    annotatedClasses = ["C", "B", "D", "A"],
+    annotatedClasses = ["B", "C", "A", "D"],
     annotatedRelationships = [
       Annotation {
         annotated = Right Association {
           associationName = "w",
           associationFrom =
-            LimitedLinking {linking = "A", limits = (1, Just 1)},
+            LimitedLinking {linking = "B", limits = (2, Nothing)},
           associationTo =
-            LimitedLinking {linking = "B", limits = (2, Nothing)}
+            LimitedLinking {linking = "C", limits = (2, Just 2)}
+          },
+        annotation = Relevant {
+          contributingToProblem = False,
+          listingPriority = 5,
+          referenceUsing = DefiniteArticle
+          }
+        },
+      Annotation {
+        annotated = Right Aggregation {
+          aggregationName = "y",
+          aggregationPart =
+            LimitedLinking {linking = "C", limits = (2, Just 2)},
+          aggregationWhole =
+            LimitedLinking {linking = "A", limits = (2, Just 2)}
           },
         annotation = Relevant {
           contributingToProblem = False,
@@ -1082,27 +1096,13 @@ defaultNameCdErrorInstance = NameCdErrorInstance {
         annotated = Right Composition {
           compositionName = "x",
           compositionPart =
-            LimitedLinking {linking = "B", limits = (1, Just 1)},
+            LimitedLinking {linking = "B", limits = (2, Nothing)},
           compositionWhole =
-            LimitedLinking {linking = "D", limits = (1, Just 2)}
-          },
-        annotation = Relevant {
-          contributingToProblem = True,
-          listingPriority = 2,
-          referenceUsing = DefiniteArticle
-          }
-        },
-      Annotation {
-        annotated = Right Aggregation {
-          aggregationName = "y",
-          aggregationPart =
-            LimitedLinking {linking = "A", limits = (2, Just 2)},
-          aggregationWhole =
-            LimitedLinking {linking = "C", limits = (1, Nothing)}
+            LimitedLinking {linking = "D", limits = (1, Just 1)}
           },
         annotation = Relevant {
           contributingToProblem = False,
-          listingPriority = 1,
+          listingPriority = 2,
           referenceUsing = DefiniteArticle
           }
         },
@@ -1110,13 +1110,27 @@ defaultNameCdErrorInstance = NameCdErrorInstance {
         annotated = Right Composition {
           compositionName = "z",
           compositionPart =
-            LimitedLinking {linking = "C", limits = (0, Just 2)},
+            LimitedLinking {linking = "A", limits = (1, Just 2)},
+          compositionWhole =
+            LimitedLinking {linking = "B", limits = (2, Just 2)}
+          },
+        annotation = Relevant {
+          contributingToProblem = True,
+          listingPriority = 4,
+          referenceUsing = DefiniteArticle
+          }
+        },
+      Annotation {
+        annotated = Right Composition {
+          compositionName = "v",
+          compositionPart =
+            LimitedLinking {linking = "C", limits = (2, Nothing)},
           compositionWhole =
             LimitedLinking {linking = "D", limits = (1, Just 1)}
           },
         annotation = Relevant {
           contributingToProblem = False,
-          listingPriority = 4,
+          listingPriority = 1,
           referenceUsing = DefiniteArticle
           }
         }
@@ -1124,16 +1138,16 @@ defaultNameCdErrorInstance = NameCdErrorInstance {
     },
   errorReasons = M.fromAscList [
     ('a', (False, PreDefined DoubleRelationships)),
-    ('b', (False, PreDefined SelfRelationships)),
-    ('c', (True, PreDefined WrongCompositionLimits)),
-    ('d', (False, PreDefined WrongAssociationLimits)),
-    ('e', (False, PreDefined SelfInheritances)),
-    ('f', (False, PreDefined InvalidInheritanceLimits)),
-    ('g', (False, PreDefined CompositionCycles)),
+    ('b', (True, PreDefined WrongCompositionLimits)),
+    ('c', (False, PreDefined WrongAssociationLimits)),
+    ('d', (False, PreDefined SelfInheritances)),
+    ('e', (False, PreDefined InvalidInheritanceLimits)),
+    ('f', (False, PreDefined CompositionCycles)),
+    ('g', (False, PreDefined MultipleInheritances)),
     ('h', (False, PreDefined ReverseInheritances)),
-    ('i', (False, PreDefined InheritanceCycles)),
-    ('j', (False, PreDefined MultipleInheritances)),
-    ('k', (False, PreDefined ReverseRelationships))
+    ('i', (False, PreDefined ReverseRelationships)),
+    ('j', (False, PreDefined SelfRelationships)),
+    ('k', (False, PreDefined InheritanceCycles))
     ],
   showSolution = True,
   taskText = nameCdErrorTaskText True,

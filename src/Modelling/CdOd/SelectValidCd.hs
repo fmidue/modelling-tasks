@@ -228,7 +228,7 @@ checkSelectValidCdConfig SelectValidCdConfig {..}
       |]
   | otherwise
   = checkClassConfigAndChanges classConfig allowedProperties
-  <|> checkCdConstraints allowedProperties cdConstraints
+  <|> checkCdConstraints classConfig allowedProperties cdConstraints
   <|> checkCdMutations allowedCdMutations
   <|> checkCdDrawSettings drawSettings
   <|> checkObjectProperties objectProperties
@@ -647,10 +647,7 @@ defaultSelectValidCdInstance = SelectValidCdInstance {
       hint = Left Annotation {
         annotated = Change {
           add = Nothing,
-          remove = Just (Right Inheritance {
-            subClass = "A",
-            superClass = "D"
-            })
+          remove = Just (Right Inheritance {subClass = "A", superClass = "D"})
           },
         annotation = DefiniteArticle
         },
@@ -668,10 +665,7 @@ defaultSelectValidCdInstance = SelectValidCdInstance {
       hint = Left Annotation {
         annotated = Change {
           add = Nothing,
-          remove = Just (Right Inheritance {
-            subClass = "B",
-            superClass = "D"
-            })
+          remove = Just (Right Inheritance {subClass = "B", superClass = "D"})
           },
         annotation = DefiniteArticle
         },
@@ -689,10 +683,7 @@ defaultSelectValidCdInstance = SelectValidCdInstance {
       hint = Left Annotation {
         annotated = Change {
           add = Nothing,
-          remove = Just (Right Inheritance {
-            subClass = "A",
-            superClass = "C"
-            })
+          remove = Just (Right Inheritance {subClass = "A", superClass = "C"})
           },
         annotation = DefiniteArticle
         },

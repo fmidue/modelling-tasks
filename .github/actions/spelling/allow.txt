@@ -151,6 +151,7 @@ utf
 varepsilon
 vphantom
 weakenings
+wps
 xdescribe
 xlink
 xss

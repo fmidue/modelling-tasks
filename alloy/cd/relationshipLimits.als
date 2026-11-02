@@ -51,6 +51,15 @@ pred validLimitsNonInheritance [a : Limited] {
   validToLimitsNonInheritance [a]
 }
 
+pred commonLimits [lower, upper : Limit] {
+  lower in Zero + One and upper in One + Star
+}
+
+pred validLimitsAreCommon [a : Limited] {
+  validFromLimitsNonInheritance [a] implies commonLimits [a.fromLower, a.fromUpper]
+  validToLimitsNonInheritance [a] implies commonLimits [a.toLower, a.toUpper]
+}
+
 pred validLimitsComposition [a : Limited] {
   (a.toLower = Zero or a.toLower = One) and a.toUpper = One
 }
