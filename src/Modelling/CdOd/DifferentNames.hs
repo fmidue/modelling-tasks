@@ -738,43 +738,43 @@ using 'defaultDifferentNamesConfig'.
 defaultDifferentNamesInstance :: DifferentNamesInstance
 defaultDifferentNamesInstance = DifferentNamesInstance {
   cDiagram = ClassDiagram {
-    classNames = ["D", "C", "A", "B"],
+    classNames = ["D", "C", "B", "A"],
     relationships = [
       Aggregation {
         aggregationName = "y",
         aggregationPart = LimitedLinking {
           linking = "A",
-          limits = (1, Just 1)
-          },
-        aggregationWhole = LimitedLinking {
-          linking = "C",
-          limits = (2, Nothing)
-          }
-        },
-      Inheritance {
-        subClass = "B",
-        superClass = "C"
-        },
-      Composition {
-        compositionName = "z",
-        compositionPart = LimitedLinking {
-          linking = "B",
           limits = (1, Nothing)
           },
-        compositionWhole = LimitedLinking {
+        aggregationWhole = LimitedLinking {
           linking = "D",
-          limits = (0, Just 1)
+          limits = (0, Just 2)
           }
         },
       Association {
-        associationName = "x",
+        associationName = "z",
         associationFrom = LimitedLinking {
           linking = "A",
           limits = (1, Nothing)
           },
         associationTo = LimitedLinking {
+          linking = "C",
+          limits = (0, Just 1)
+          }
+        },
+      Inheritance {
+        subClass = "C",
+        superClass = "B"
+        },
+      Composition {
+        compositionName = "x",
+        compositionPart = LimitedLinking {
           linking = "D",
-          limits = (1, Just 1)
+          limits = (0, Nothing)
+          },
+        compositionWhole = LimitedLinking {
+          linking = "B",
+          limits = (0, Just 1)
           }
         }
       ]
@@ -782,21 +782,24 @@ defaultDifferentNamesInstance = DifferentNamesInstance {
   cdDrawSettings = defaultCdDrawSettings,
   oDiagram = ObjectDiagram {
     objects = [
-      Object {isAnonymous = True, objectName = "b",  objectClass = "B"},
+      Object {isAnonymous = True, objectName = "a1", objectClass = "A"},
+      Object {isAnonymous = True, objectName = "d1", objectClass = "D"},
+      Object {isAnonymous = True, objectName = "c",  objectClass = "C"},
       Object {isAnonymous = True, objectName = "d",  objectClass = "D"},
-      Object {isAnonymous = True, objectName = "a",  objectClass = "A"},
-      Object {isAnonymous = True, objectName = "b1", objectClass = "B"}
+      Object {isAnonymous = True, objectName = "a",  objectClass = "A"}
       ],
     links = [
-      Link {linkLabel = "1.", linkFrom = "a",  linkTo = "d"},
-      Link {linkLabel = "2.", linkFrom = "b1", linkTo = "d"},
-      Link {linkLabel = "2.", linkFrom = "b",  linkTo = "d"},
-      Link {linkLabel = "3.", linkFrom = "a",  linkTo = "b1"},
-      Link {linkLabel = "3.", linkFrom = "a",  linkTo = "b"}
+      Link {linkLabel = "2.", linkFrom = "d",  linkTo = "c"},
+      Link {linkLabel = "2.", linkFrom = "d1", linkTo = "c"},
+      Link {linkLabel = "1.", linkFrom = "a1", linkTo = "c"},
+      Link {linkLabel = "3.", linkFrom = "a1", linkTo = "d"},
+      Link {linkLabel = "3.", linkFrom = "a",  linkTo = "d1"},
+      Link {linkLabel = "3.", linkFrom = "a",  linkTo = "d"},
+      Link {linkLabel = "3.", linkFrom = "a1", linkTo = "d1"}
       ]
     },
   showSolution = ShowMapping,
-  mapping = toNameMapping $ BM.fromList [("x", "1."), ("y", "3."), ("z", "2.")],
+  mapping = toNameMapping $ BM.fromList [("x", "2."), ("y", "3."), ("z", "1.")],
   linkShuffling = ConsecutiveNumbers,
   taskText = defaultDifferentNamesTaskText,
   addTexts = []

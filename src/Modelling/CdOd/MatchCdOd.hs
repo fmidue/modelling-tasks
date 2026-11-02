@@ -699,84 +699,58 @@ defaultMatchCdOdInstance = MatchCdOdInstance {
     },
   diagrams = M.fromList [
     (1, ClassDiagram {
-      classNames = ["C", "D", "B", "A"],
+      classNames = ["D", "A", "B", "C"],
       relationships = [
-        Inheritance {
-          subClass = "C",
-          superClass = "A"
-          },
-        Inheritance {
-          subClass = "B",
-          superClass = "A"
-          },
         Composition {
-          compositionName = "w",
+          compositionName = "y",
           compositionPart = LimitedLinking {
-            linking = "C",
-            limits = (0, Just 2)
+            linking = "A",
+            limits = (0, Just 1)
             },
-          associationTo = LimitedLinking {
+          compositionWhole = LimitedLinking {
             linking = "B",
-            limits = (1, Just 2)
+            limits = (0, Just 1)
             }
+          },
+        Inheritance {
+          subClass = "A",
+          superClass = "C"
           },
         Aggregation {
           aggregationName = "x",
           aggregationPart = LimitedLinking {
             linking = "D",
-            limits = (0, Just 1)
-            },
-          aggregationWhole = LimitedLinking {
-            linking = "A",
-            limits = (1, Just 2)
-            }
-          },
-        Aggregation {
-          aggregationName = "y",
-          aggregationPart = LimitedLinking {
-            linking = "C",
             limits = (1, Nothing)
             },
           aggregationWhole = LimitedLinking {
             linking = "B",
             limits = (1, Nothing)
+            }
+          },
+        Aggregation {
+          aggregationName = "z",
+          aggregationPart = LimitedLinking {
+            linking = "C",
+            limits = (0, Just 1)
+            },
+          aggregationWhole = LimitedLinking {
+            linking = "D",
+            limits = (0, Just 2)
             }
           }
         ]
       }),
     (2, ClassDiagram {
-      classNames = ["A", "B", "D", "C"],
+      classNames = ["D", "C", "B", "A"],
       relationships = [
-        Association {
-          associationName = "z",
-          associationFrom = LimitedLinking {
-            linking = "B",
-            limits = (2, Nothing)
-            },
-          associationTo = LimitedLinking {
-            linking = "D",
-            limits = (0, Just 1)
-            }
+        Inheritance {
+          subClass = "C",
+          superClass = "A"
           },
         Aggregation {
           aggregationName = "x",
           aggregationPart = LimitedLinking {
             linking = "D",
-            limits = (0, Just 1)
-            },
-          aggregationWhole = LimitedLinking {
-            linking = "A",
-            limits = (1, Just 2)
-            }
-          },
-        Inheritance {
-          subClass = "B",
-          superClass = "A"
-          },
-        Aggregation {
-          aggregationName = "y",
-          aggregationPart = LimitedLinking {
-            linking = "C",
             limits = (1, Nothing)
             },
           aggregationWhole = LimitedLinking {
@@ -784,53 +758,71 @@ defaultMatchCdOdInstance = MatchCdOdInstance {
             limits = (1, Nothing)
             }
           },
-        Composition {
-          compositionName = "w",
-          compositionPart = LimitedLinking {
+        Aggregation {
+          aggregationName = "z",
+          aggregationPart = LimitedLinking {
             linking = "C",
+            limits = (0, Just 1)
+            },
+          aggregationWhole = LimitedLinking {
+            linking = "D",
             limits = (0, Just 2)
+            }
+          },
+        Composition {
+          compositionName = "y",
+          compositionPart = LimitedLinking {
+            linking = "A",
+            limits = (0, Just 1)
             },
           compositionWhole = LimitedLinking {
-            linking = "D",
+            linking = "B",
             limits = (0, Just 1)
+            }
+          },
+        Association {
+          associationName = "w",
+          associationFrom = LimitedLinking {
+            linking = "C",
+            limits = (1, Nothing)
+            },
+          associationTo = LimitedLinking {
+            linking = "B",
+            limits = (0, Just 2)
             }
           }
         ]
       })
     ],
   hiddenReferenceCd  = Just $ ClassDiagram {
-    classNames = ["B", "C", "A", "D"],
+    classNames = ["A", "D", "C", "B"],
     relationships = [
-      Inheritance {
-        subClass = "D",
-        superClass = "B"
+      Aggregation {
+        aggregationName = "z",
+        aggregationPart = LimitedLinking {
+          linking = "C",
+          limits = (0, Just 1)
+          },
+        aggregationWhole = LimitedLinking {
+          linking = "D",
+          limits = (0, Just 2)
+          }
         },
-      Composition {
-        compositionName = "w",
-        compositionPart = LimitedLinking {
+      Association {
+        associationName = "v",
+        associationFrom = LimitedLinking {
           linking = "C",
           limits = (0, Just 2)
           },
-        compositionWhole = LimitedLinking {
-          linking = "D",
-          limits = (0, Just 1)
+        associationTo = LimitedLinking {
+          linking = "B",
+          limits = (2, Just 2)
           }
         },
       Aggregation {
         aggregationName = "x",
         aggregationPart = LimitedLinking {
           linking = "D",
-          limits = (0, Just 1)
-          },
-        aggregationWhole = LimitedLinking {
-          linking = "A",
-          limits = (1, Just 2)
-          }
-        },
-      Aggregation {
-        aggregationName = "y",
-        aggregationPart = LimitedLinking {
-          linking = "C",
           limits = (1, Nothing)
           },
         aggregationWhole = LimitedLinking {
@@ -838,86 +830,92 @@ defaultMatchCdOdInstance = MatchCdOdInstance {
           limits = (1, Nothing)
           }
         },
+      Composition {
+        compositionName = "y",
+        compositionPart = LimitedLinking {
+          linking = "A",
+          limits = (0, Just 1)
+          },
+        compositionWhole = LimitedLinking {
+          linking = "B",
+          limits = (0, Just 1)
+          }
+        },
       Inheritance {
-        subClass = "B",
+        subClass = "C",
         superClass = "A"
         }
       ]
     },
   instances = M.fromList [
-    ('a', ([2], ObjectDiagram {
-      objects = [
-        Object {isAnonymous = False, objectName = "d", objectClass = "D"},
-        Object {isAnonymous = False, objectName = "b", objectClass = "B"},
-        Object {isAnonymous = False, objectName = "c", objectClass = "C"},
-        Object {isAnonymous = True, objectName = "b1", objectClass = "B"}
-        ],
-      links = [
-        Link {linkLabel = "z", linkFrom = "b1", linkTo = "d"},
-        Link {linkLabel = "y", linkFrom = "c", linkTo = "b"},
-        Link {linkLabel = "x", linkFrom = "d", linkTo = "b"},
-        Link {linkLabel = "w", linkFrom = "c", linkTo = "d"},
-        Link {linkLabel = "z", linkFrom = "b", linkTo = "d"},
-        Link {linkLabel = "y", linkFrom = "c", linkTo = "b1"}
-        ]
-      })),
-    ('b', ([], ObjectDiagram {
+    ('a', ([1], ObjectDiagram {
       objects = [
         Object {isAnonymous = False, objectName = "b", objectClass = "B"},
-        Object {isAnonymous = True, objectName = "c", objectClass = "C"},
-        Object {isAnonymous = False, objectName = "b1", objectClass = "B"},
-        Object {isAnonymous = False, objectName = "d", objectClass = "D"}
-        ],
-      links = [
-        Link {linkLabel = "y", linkFrom = "c", linkTo = "d"},
-        Link {linkLabel = "y", linkFrom = "c", linkTo = "b1"},
-        Link {linkLabel = "w", linkFrom = "c", linkTo = "d"},
-        Link {linkLabel = "y", linkFrom = "c", linkTo = "b"},
-        Link {linkLabel = "x", linkFrom = "d", linkTo = "b1"}
-        ]
-      })),
-    ('c', ([], ObjectDiagram {
-      objects = [
-        Object {isAnonymous = False, objectName = "c", objectClass = "C"},
-        Object {isAnonymous = True, objectName = "d1", objectClass = "D"},
-        Object {isAnonymous = False, objectName = "d", objectClass = "D"},
-        Object {isAnonymous = False, objectName = "c1", objectClass = "C"}
-        ],
-      links = [
-        Link {linkLabel = "y", linkFrom = "c", linkTo = "d1"},
-        Link {linkLabel = "y", linkFrom = "c1", linkTo = "d"},
-        Link {linkLabel = "w", linkFrom = "c1", linkTo = "d"},
-        Link {linkLabel = "x", linkFrom = "d1", linkTo = "d"},
-        Link {linkLabel = "x", linkFrom = "d", linkTo = "d1"},
-        Link {linkLabel = "w", linkFrom = "c", linkTo = "d1"}
-        ]
-      })),
-    ('d', ([1], ObjectDiagram {
-      objects = [
-        Object {isAnonymous = True, objectName = "b", objectClass = "B"},
         Object {isAnonymous = False, objectName = "d1", objectClass = "D"},
-        Object {isAnonymous = False, objectName = "c", objectClass = "C"},
-        Object {isAnonymous = False, objectName = "d", objectClass = "D"}
+        Object {isAnonymous = False, objectName = "b1", objectClass = "B"},
+        Object {isAnonymous = True, objectName = "d", objectClass = "D"}
         ],
       links = [
-        Link {linkLabel = "w", linkFrom = "c", linkTo = "d1"},
-        Link {linkLabel = "x", linkFrom = "d1", linkTo = "c"},
-        Link {linkLabel = "y", linkFrom = "c", linkTo = "b"},
+        Link {linkLabel = "x", linkFrom = "d", linkTo = "b1"},
+        Link {linkLabel = "x", linkFrom = "d", linkTo = "b"},
+        Link {linkLabel = "x", linkFrom = "d1", linkTo = "b"},
+        Link {linkLabel = "x", linkFrom = "d1", linkTo = "b1"}
+        ]
+      })),
+    ('b', ([1], ObjectDiagram {
+      objects = [
+        Object {isAnonymous = False, objectName = "b", objectClass = "B"},
+        Object {isAnonymous = False, objectName = "d", objectClass = "D"},
+        Object {isAnonymous = True, objectName = "a", objectClass = "A"},
+        Object {isAnonymous = False, objectName = "d1", objectClass = "D"}
+        ],
+      links = [
+        Link {linkLabel = "z", linkFrom = "a", linkTo = "d1"},
+        Link {linkLabel = "z", linkFrom = "a", linkTo = "d"},
+        Link {linkLabel = "x", linkFrom = "d1", linkTo = "b"},
         Link {linkLabel = "x", linkFrom = "d", linkTo = "b"}
         ]
       })),
-    ('e', ([1], ObjectDiagram {
+    ('c', ([2], ObjectDiagram {
       objects = [
-        Object {isAnonymous = False, objectName = "d", objectClass = "D"},
-        Object {isAnonymous = False, objectName = "a", objectClass = "A"},
         Object {isAnonymous = False, objectName = "b", objectClass = "B"},
-        Object {isAnonymous = True, objectName = "c", objectClass = "C"}
+        Object {isAnonymous = False, objectName = "c1", objectClass = "C"},
+        Object {isAnonymous = True, objectName = "d", objectClass = "D"},
+        Object {isAnonymous = False, objectName = "c", objectClass = "C"}
         ],
       links = [
-        Link {linkLabel = "w", linkFrom = "c", linkTo = "d"},
-        Link {linkLabel = "x", linkFrom = "d", linkTo = "a"},
+        Link {linkLabel = "w", linkFrom = "c", linkTo = "b"},
+        Link {linkLabel = "z", linkFrom = "c1", linkTo = "d"},
         Link {linkLabel = "x", linkFrom = "d", linkTo = "b"},
+        Link {linkLabel = "w", linkFrom = "c1", linkTo = "b"},
         Link {linkLabel = "y", linkFrom = "c", linkTo = "b"}
+        ]
+      })),
+    ('d', ([], ObjectDiagram {
+      objects = [
+        Object {isAnonymous = False, objectName = "d", objectClass = "D"},
+        Object {isAnonymous = False, objectName = "c", objectClass = "C"},
+        Object {isAnonymous = False, objectName = "b1", objectClass = "B"},
+        Object {isAnonymous = True, objectName = "b", objectClass = "B"}
+        ],
+      links = [
+        Link {linkLabel = "x", linkFrom = "d", linkTo = "b"},
+        Link {linkLabel = "x", linkFrom = "d", linkTo = "b1"},
+        Link {linkLabel = "z", linkFrom = "c", linkTo = "d"}
+        ]
+      })),
+    ('e', ([2], ObjectDiagram {
+      objects = [
+        Object {isAnonymous = False, objectName = "c", objectClass = "C"},
+        Object {isAnonymous = True, objectName = "b", objectClass = "B"},
+        Object {isAnonymous = False, objectName = "a", objectClass = "A"},
+        Object {isAnonymous = False, objectName = "d", objectClass = "D"}
+        ],
+      links = [
+        Link {linkLabel = "w", linkFrom = "c", linkTo = "b"},
+        Link {linkLabel = "x", linkFrom = "d", linkTo = "b"},
+        Link {linkLabel = "z", linkFrom = "c", linkTo = "d"},
+        Link {linkLabel = "y", linkFrom = "a", linkTo = "b"}
         ]
       }))
     ],
