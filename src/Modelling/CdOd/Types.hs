@@ -981,10 +981,10 @@ checkCdDrawProperties :: CdDrawSettings -> AllowedProperties -> Maybe String
 checkCdDrawProperties CdDrawSettings {..} AllowedProperties {..}
   | doubleRelationships && not printNames
   = Just [iii|
-    'doubleRelationships' can only be enabled,
-    if relationship names are printed.
+    'doubleRelationships' cannot be enabled
+    if relationship names are not printed.
     Otherwise this constellation might be determined as illegal
-    (as they could have the same name).
+    (as they could be imagined to have the same name).
     |]
   | otherwise
   = Nothing

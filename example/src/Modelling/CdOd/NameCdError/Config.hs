@@ -272,7 +272,7 @@ task2024_11 = NameCdErrorConfig {
       associationOmittedDefaultMultiplicity = Nothing,
       compositionWholeOmittedDefaultMultiplicity = Nothing
       },
-    printNames = False,
+    printNames = True,
     printNavigations = True
     },
   maxInstances = Just 4000,
@@ -427,4 +427,4 @@ average memory usage: 1303.15 MB
 used as: NameCdErrorFormInputSelectionUnAvailable-Quiz
 -}
 task2025_repeat_06 :: NameCdErrorConfig
-task2025_repeat_06 = task2025_repeat_04
+task2025_repeat_06 = task2024_10
