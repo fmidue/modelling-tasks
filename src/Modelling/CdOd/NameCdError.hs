@@ -299,7 +299,7 @@ defaultNameCdErrorConfig = NameCdErrorConfig {
     },
   articleToUse = UseDefiniteArticleWherePossible,
   cdConstraints = defaultCdConstraints {
-    preventWholePartCycle = False
+    preventWholePartCycles = False
     },
   classConfig = ClassConfig {
     classLimits = (4, 4),
