@@ -18,7 +18,6 @@ import Modelling.CdOd.Types (
   ObjectProperties (..),
   OmittedDefaultMultiplicities (..),
   RelationshipMutation (..),
-  defaultCdConstraints,
   )
 
 import Data.Ratio                       ((%))
@@ -52,9 +51,11 @@ task2023_05 = SelectValidCdConfig {
     },
   articleToUse = UseDefiniteArticleWherePossible,
   basePropertiesOfBaseCdOn = IllegalStructuralWeakening,
-  cdConstraints = defaultCdConstraints {
+  cdConstraints = CdConstraints {
     anyCompositionCyclesInvolveInheritances = Just True,
-    preventWholePartCycles = False
+    preventWholePartCycles = False,
+    preventIsolatedClasses = False,
+    onlyCommonMultiplicities = Nothing
     },
   classConfig = ClassConfig {
     classLimits = (5, 5),
@@ -117,7 +118,12 @@ task2023_06 = SelectValidCdConfig {
     },
   articleToUse = UseDefiniteArticleWherePossible,
   basePropertiesOfBaseCdOn = IllegalStructuralWeakening,
-  cdConstraints = defaultCdConstraints,
+  cdConstraints = CdConstraints {
+    anyCompositionCyclesInvolveInheritances = Nothing,
+    preventWholePartCycles = False,
+    preventIsolatedClasses = False,
+    onlyCommonMultiplicities = Nothing
+    },
   classConfig = ClassConfig {
     classLimits = (5, 5),
     aggregationLimits = (2, Just 3),
@@ -177,9 +183,11 @@ task2024_06 = SelectValidCdConfig {
     },
   articleToUse = UseDefiniteArticleWherePossible,
   basePropertiesOfBaseCdOn = IllegalStructuralWeakening,
-  cdConstraints = defaultCdConstraints {
+  cdConstraints = CdConstraints {
     anyCompositionCyclesInvolveInheritances = Just True,
-    preventWholePartCycles = False
+    preventWholePartCycles = False,
+    preventIsolatedClasses = False,
+    onlyCommonMultiplicities = Nothing
     },
   classConfig = ClassConfig {
     classLimits = (5, 5),
@@ -241,7 +249,12 @@ task2024_07 = SelectValidCdConfig {
     },
   articleToUse = UseDefiniteArticleWherePossible,
   basePropertiesOfBaseCdOn = IllegalStructuralWeakening,
-  cdConstraints = defaultCdConstraints,
+  cdConstraints = CdConstraints {
+    anyCompositionCyclesInvolveInheritances = Nothing,
+    preventWholePartCycles = False,
+    preventIsolatedClasses = False,
+    onlyCommonMultiplicities = Nothing
+    },
   classConfig = ClassConfig {
     classLimits = (5, 5),
     aggregationLimits = (2, Just 2),
@@ -299,7 +312,12 @@ task2024_08 = SelectValidCdConfig {
     },
   articleToUse = UseDefiniteArticleWherePossible,
   basePropertiesOfBaseCdOn = IllegalStructuralWeakening,
-  cdConstraints = defaultCdConstraints,
+  cdConstraints = CdConstraints {
+    anyCompositionCyclesInvolveInheritances = Nothing,
+    preventWholePartCycles = False,
+    preventIsolatedClasses = False,
+    onlyCommonMultiplicities = Nothing
+    },
   classConfig = ClassConfig {
     classLimits = (5, 5),
     aggregationLimits = (2, Just 2),
@@ -359,9 +377,11 @@ task2024_51 = SelectValidCdConfig {
     },
   articleToUse = UseDefiniteArticleWherePossible,
   basePropertiesOfBaseCdOn = IllegalStructuralWeakening,
-  cdConstraints = defaultCdConstraints {
+  cdConstraints = CdConstraints {
     anyCompositionCyclesInvolveInheritances = Just True,
-    preventWholePartCycles = False
+    preventWholePartCycles = False,
+    preventIsolatedClasses = False,
+    onlyCommonMultiplicities = Nothing
     },
   classConfig = ClassConfig {
     classLimits = (5, 5),
@@ -420,7 +440,12 @@ task2024_52 = SelectValidCdConfig {
     },
   articleToUse = UseDefiniteArticleWherePossible,
   basePropertiesOfBaseCdOn = IllegalStructuralWeakening,
-  cdConstraints = defaultCdConstraints,
+  cdConstraints = CdConstraints {
+    anyCompositionCyclesInvolveInheritances = Nothing,
+    preventWholePartCycles = False,
+    preventIsolatedClasses = False,
+    onlyCommonMultiplicities = Nothing
+    },
   classConfig = ClassConfig {
     classLimits = (5, 5),
     aggregationLimits = (2, Just 2),

@@ -16,7 +16,6 @@ import Modelling.CdOd.Types (
   ObjectProperties (..),
   OmittedDefaultMultiplicities (..),
   Property (..),
-  defaultCdConstraints,
   )
 
 import Data.Ratio                       ((%))
@@ -41,9 +40,11 @@ task2023_09 = NameCdErrorConfig {
     wrongCompositionLimits = False
     },
   articleToUse = UseDefiniteArticleWherePossible,
-  cdConstraints = defaultCdConstraints {
+  cdConstraints = CdConstraints {
     anyCompositionCyclesInvolveInheritances = Just True,
-    preventWholePartCycles = False
+    preventWholePartCycles = False,
+    preventIsolatedClasses = False,
+    onlyCommonMultiplicities = Nothing
     },
   classConfig = ClassConfig {
     classLimits = (5, 5),
@@ -114,7 +115,12 @@ task2023_10 = NameCdErrorConfig {
     wrongCompositionLimits = False
     },
   articleToUse = UseDefiniteArticleWherePossible,
-  cdConstraints = defaultCdConstraints,
+  cdConstraints = CdConstraints {
+    anyCompositionCyclesInvolveInheritances = Nothing,
+    preventWholePartCycles = False,
+    preventIsolatedClasses = False,
+    onlyCommonMultiplicities = Nothing
+    },
   classConfig = ClassConfig {
     classLimits = (5, 5),
     aggregationLimits = (2, Just 2),
@@ -184,9 +190,11 @@ task2024_10 = NameCdErrorConfig {
     wrongCompositionLimits = False
     },
   articleToUse = UseDefiniteArticleWherePossible,
-  cdConstraints = defaultCdConstraints {
+  cdConstraints = CdConstraints {
     anyCompositionCyclesInvolveInheritances = Just True,
-    preventWholePartCycles = False
+    preventWholePartCycles = False,
+    preventIsolatedClasses = False,
+    onlyCommonMultiplicities = Nothing
     },
   classConfig = ClassConfig {
     classLimits = (5, 5),
@@ -257,7 +265,12 @@ task2024_11 = NameCdErrorConfig {
     wrongCompositionLimits = False
     },
   articleToUse = UseDefiniteArticleWherePossible,
-  cdConstraints = defaultCdConstraints,
+  cdConstraints = CdConstraints {
+    anyCompositionCyclesInvolveInheritances = Nothing,
+    preventWholePartCycles = False,
+    preventIsolatedClasses = False,
+    onlyCommonMultiplicities = Nothing
+    },
   classConfig = ClassConfig {
     classLimits = (5, 5),
     aggregationLimits = (2, Just 2),
@@ -327,7 +340,12 @@ task2024_54 = NameCdErrorConfig {
     wrongCompositionLimits = False
     },
   articleToUse = UseDefiniteArticleWherePossible,
-  cdConstraints = defaultCdConstraints,
+  cdConstraints = CdConstraints {
+    anyCompositionCyclesInvolveInheritances = Nothing,
+    preventWholePartCycles = False,
+    preventIsolatedClasses = False,
+    onlyCommonMultiplicities = Nothing
+    },
   classConfig = ClassConfig {
     classLimits = (5, 5),
     aggregationLimits = (2, Just 2),
