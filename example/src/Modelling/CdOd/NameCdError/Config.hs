@@ -192,7 +192,7 @@ task2024_10 = NameCdErrorConfig {
   articleToUse = UseDefiniteArticleWherePossible,
   cdConstraints = CdConstraints {
     anyCompositionCyclesInvolveInheritances = Just True,
-    preventWholePartCycles = True,
+    preventWholePartCycles = False,
     preventIsolatedClasses = True,
     onlyCommonMultiplicities = Nothing
     },
