@@ -63,19 +63,12 @@ given properties.
 -}
 transformNoChanges
   :: ClassConfig
+  -> CdConstraints
   -> RelationshipProperties
   -> Maybe Bool
   -> String
-transformNoChanges config properties withNonTrivialInheritance =
-  transformWith
-    config
-    defaultCdConstraints {
-      preventWholePartCycles = False,
-      preventIsolatedClasses = False
-      }
-    []
-    (Right properties)
-    (0, [], part)
+transformNoChanges config constraints properties withNonTrivialInheritance =
+  transformWith config constraints [] (Right properties) (0, [], part)
   where
     part = [__i|
       fact{
@@ -98,20 +91,14 @@ nonTrivialInheritanceConstraint inheritances nonInheritances withNonTrivialInher
 
 transform
   :: ClassConfig
+  -> CdConstraints
   -> [CdMutation]
   -> RelationshipProperties
   -> Maybe Bool
   -> String
-transform config mutations props withNonTrivialInheritance =
-  transformWith
-    config
-    defaultCdConstraints {
-      preventWholePartCycles = False,
-      preventIsolatedClasses = False
-      }
-    mutations
-    (Right props)
-  $ matchCdOdChanges config withNonTrivialInheritance
+transform config constraints mutations props withNonTrivialInheritance =
+  transformWith config constraints mutations (Right props)
+  $ matchCdOdChanges config constraints withNonTrivialInheritance
 
 transformChanges
   :: ClassConfig
@@ -414,9 +401,10 @@ pred #{change} {
 
 matchCdOdChanges
   :: ClassConfig
+  -> CdConstraints
   -> Maybe Bool
   -> (Int, [String], String)
-matchCdOdChanges config withNonTrivialInheritance =
+matchCdOdChanges config CdConstraints {..} withNonTrivialInheritance =
   (3, ["changes", "changeLimits"],) $ [i|
 //////////////////////////////////////////////////
 // Changes
@@ -433,9 +421,24 @@ pred changes {
         #{nonTrivialInheritanceConstraint "c2Inheritances" "c2NonInheritances" withNonTrivialInheritance}
       }
     }
-    changeOfFirstCD [C1, 0, 0, 0, 0, 0, none, False, False, none, False, False, False, False, False, False, False, none]
-    changeOfFirstCD [C2, 0, 0, 0, 0, 0, none, False, False, none, False, False, False, False, False, False, False, none]
-    changeOfFirstCD [C3, 0, 0, 0, 0, 0, none, False, False, none, False, False, False, False, False, False, False, none]
+    changeOfFirstCD [C1, 0, 0, 0, 0, 0,
+      #{maybeToAlloySet anyCompositionCyclesInvolveInheritances},
+      #{preventWholePartCycles},
+      #{preventIsolatedClasses},
+      #{maybeToAlloySet onlyCommonMultiplicities},
+      False, False, False, False, False, False, False, none]
+    changeOfFirstCD [C2, 0, 0, 0, 0, 0,
+      #{maybeToAlloySet anyCompositionCyclesInvolveInheritances},
+      #{preventWholePartCycles},
+      #{preventIsolatedClasses},
+      #{maybeToAlloySet onlyCommonMultiplicities},
+      False, False, False, False, False, False, False, none]
+    changeOfFirstCD [C3, 0, 0, 0, 0, 0,
+      #{maybeToAlloySet anyCompositionCyclesInvolveInheritances},
+      #{preventWholePartCycles},
+      #{preventIsolatedClasses},
+      #{maybeToAlloySet onlyCommonMultiplicities},
+      False, False, False, False, False, False, False, none]
 }
 |] ++ changeLimits config
 

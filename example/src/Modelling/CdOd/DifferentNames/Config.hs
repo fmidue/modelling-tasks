@@ -7,6 +7,7 @@ import Modelling.CdOd.DifferentNames (
   SolutionDisplay (..),
   )
 import Modelling.CdOd.Types (
+  CdConstraints (..),
   ClassConfig (..),
   ObjectConfig (..),
   ObjectProperties (..),
@@ -22,6 +23,12 @@ CPU usage: 350%
 -}
 task2023_12 :: DifferentNamesConfig
 task2023_12 = DifferentNamesConfig {
+  cdConstraints = CdConstraints {
+    anyCompositionCyclesInvolveInheritances = Nothing,
+    preventWholePartCycles = False,
+    preventIsolatedClasses = False,
+    onlyCommonMultiplicities = Nothing
+    },
   classConfig = ClassConfig {
     classLimits = (5, 5),
     aggregationLimits = (2, Just 2),
@@ -62,6 +69,12 @@ CPU usage: 350%
 -}
 task2023_13 :: DifferentNamesConfig
 task2023_13 = DifferentNamesConfig {
+  cdConstraints = CdConstraints {
+    anyCompositionCyclesInvolveInheritances = Nothing,
+    preventWholePartCycles = False,
+    preventIsolatedClasses = False,
+    onlyCommonMultiplicities = Nothing
+    },
   classConfig = ClassConfig {
     classLimits = (5, 5),
     aggregationLimits = (1, Just 1),
@@ -102,6 +115,12 @@ CPU usage: 150%
 -}
 task2023_25 :: DifferentNamesConfig
 task2023_25 = DifferentNamesConfig {
+  cdConstraints = CdConstraints {
+    anyCompositionCyclesInvolveInheritances = Nothing,
+    preventWholePartCycles = False,
+    preventIsolatedClasses = False,
+    onlyCommonMultiplicities = Nothing
+    },
   classConfig = ClassConfig {
     classLimits = (5, 5),
     aggregationLimits = (2, Just 2),
@@ -142,6 +161,12 @@ CPU usage: 355%
 -}
 task2024_15 :: DifferentNamesConfig
 task2024_15 = DifferentNamesConfig {
+  cdConstraints = CdConstraints {
+    anyCompositionCyclesInvolveInheritances = Nothing,
+    preventWholePartCycles = False,
+    preventIsolatedClasses = False,
+    onlyCommonMultiplicities = Nothing
+    },
   classConfig = ClassConfig {
     classLimits = (5, 5),
     aggregationLimits = (2, Just 2),
@@ -182,6 +207,12 @@ CPU usage: 346%
 -}
 task2024_16 :: DifferentNamesConfig
 task2024_16 = DifferentNamesConfig {
+  cdConstraints = CdConstraints {
+    anyCompositionCyclesInvolveInheritances = Nothing,
+    preventWholePartCycles = False,
+    preventIsolatedClasses = False,
+    onlyCommonMultiplicities = Nothing
+    },
   classConfig = ClassConfig {
     classLimits = (5, 5),
     aggregationLimits = (1, Just 1),
@@ -222,6 +253,12 @@ CPU usage: 227%
 -}
 task2024_56 :: DifferentNamesConfig
 task2024_56 = DifferentNamesConfig {
+  cdConstraints = CdConstraints {
+    anyCompositionCyclesInvolveInheritances = Nothing,
+    preventWholePartCycles = False,
+    preventIsolatedClasses = False,
+    onlyCommonMultiplicities = Nothing
+    },
   classConfig = ClassConfig {
     classLimits = (5, 5),
     aggregationLimits = (2, Just 2),
@@ -267,6 +304,12 @@ used as: DifferentNamesFormInputDropdownsUnAvailable-Quiz
 -}
 task2025_repeat_19 :: DifferentNamesConfig
 task2025_repeat_19 = DifferentNamesConfig {
+  cdConstraints = CdConstraints {
+    anyCompositionCyclesInvolveInheritances = Nothing,
+    preventWholePartCycles = False,
+    preventIsolatedClasses = False,
+    onlyCommonMultiplicities = Nothing
+    },
   classConfig = ClassConfig {
     classLimits = (5, 5),
     aggregationLimits = (2, Just 2),
@@ -310,6 +353,12 @@ used as: DifferentNamesCheckboxesUnAvailable-Quiz (at the time)
 -}
 task2025_14 :: DifferentNamesConfig
 task2025_14 = DifferentNamesConfig {
+  cdConstraints = CdConstraints {
+    anyCompositionCyclesInvolveInheritances = Nothing,
+    preventWholePartCycles = False,
+    preventIsolatedClasses = False,
+    onlyCommonMultiplicities = Nothing
+    },
   classConfig = ClassConfig {
     classLimits = (5, 5),
     aggregationLimits = (1, Just 1),

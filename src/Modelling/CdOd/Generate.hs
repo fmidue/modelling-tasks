@@ -20,6 +20,7 @@ import Modelling.CdOd.Types (
   AnyCd,
   AnyClassDiagram (..),
   Cd,
+  CdConstraints,
   ClassConfig (..),
   RelationshipProperties,
   anyClassNames,
@@ -40,12 +41,13 @@ generateCds
   :: (MonadAlloy m, RandomGen g)
   => Maybe Bool
   -> ClassConfig
+  -> CdConstraints
   -> RelationshipProperties
   -> Maybe Integer
   -> Maybe Int
   -> RandT g m [AlloyInstance]
-generateCds withNonTrivialInheritance config props maxInstances to = do
-  let alloyCode = transformNoChanges config props withNonTrivialInheritance
+generateCds withNonTrivialInheritance config constraints props maxInstances to = do
+  let alloyCode = transformNoChanges config constraints props withNonTrivialInheritance
   alloyInstances <- lift $ getInstances maxInstances to alloyCode
   shuffleM alloyInstances
 
