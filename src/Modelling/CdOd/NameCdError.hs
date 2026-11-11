@@ -558,7 +558,7 @@ nameCdErrorTaskText withRelationshipChoices = concat [
       |],
   Paragraph $ singleton $ Translated $ translations $ do
     english [i|Reasons available to choose from are:|]
-    german [i|Gründe, die hierfür zur Auswahl stehen, sind:|],
+    german [i|Gründe, die zur Auswahl stehen, sind:|],
   Paragraph $ singleton $ Translated $ translations $ do
     english [i|The class diagram ...|]
     german [i|Das Klassendiagramm ...|],
