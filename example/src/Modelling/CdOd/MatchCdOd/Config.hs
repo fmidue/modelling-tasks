@@ -7,6 +7,7 @@ import Modelling.CdOd.MatchCdOd (
   OdDistributionConfig (..),
   )
 import Modelling.CdOd.Types (
+  CdConstraints (..),
   CdMutation (..),
   ClassConfig (..),
   ObjectConfig (..),
@@ -32,6 +33,12 @@ task2023_14 = MatchCdOdConfig {
     MutateRelationship FlipInheritance,
     MutateRelationship FlipNonInheritance
     ],
+  cdConstraints = CdConstraints {
+    anyCompositionCyclesInvolveInheritances = Nothing,
+    preventWholePartCycles = False,
+    preventIsolatedClasses = False,
+    onlyCommonMultiplicities = Nothing
+    },
   classConfig = ClassConfig {
     classLimits = (5, 5),
     aggregationLimits = (2, Just 2),
@@ -85,6 +92,12 @@ task2023_15 = MatchCdOdConfig {
     MutateRelationship FlipInheritance,
     MutateRelationship FlipNonInheritance
     ],
+  cdConstraints = CdConstraints {
+    anyCompositionCyclesInvolveInheritances = Nothing,
+    preventWholePartCycles = False,
+    preventIsolatedClasses = False,
+    onlyCommonMultiplicities = Nothing
+    },
   classConfig = ClassConfig {
     classLimits = (5, 5),
     aggregationLimits = (1, Just 1),
@@ -133,6 +146,12 @@ task2024_17 = MatchCdOdConfig {
   allowedCdMutations = [
     MutateRelationship ChangeLimit
     ],
+  cdConstraints = CdConstraints {
+    anyCompositionCyclesInvolveInheritances = Nothing,
+    preventWholePartCycles = False,
+    preventIsolatedClasses = False,
+    onlyCommonMultiplicities = Nothing
+    },
   classConfig = ClassConfig {
     classLimits = (5, 5),
     aggregationLimits = (2, Just 2),
@@ -182,6 +201,12 @@ task2024_18 = MatchCdOdConfig {
     MutateRelationship FlipInheritance,
     MutateRelationship FlipNonInheritance
     ],
+  cdConstraints = CdConstraints {
+    anyCompositionCyclesInvolveInheritances = Nothing,
+    preventWholePartCycles = False,
+    preventIsolatedClasses = False,
+    onlyCommonMultiplicities = Nothing
+    },
   classConfig = ClassConfig {
     classLimits = (5, 5),
     aggregationLimits = (1, Just 1),
@@ -230,6 +255,12 @@ task2024_19 = MatchCdOdConfig {
   allowedCdMutations = [
     MutateRelationship ChangeKind
     ],
+  cdConstraints = CdConstraints {
+    anyCompositionCyclesInvolveInheritances = Nothing,
+    preventWholePartCycles = False,
+    preventIsolatedClasses = False,
+    onlyCommonMultiplicities = Nothing
+    },
   classConfig = ClassConfig {
     classLimits = (5, 5),
     aggregationLimits = (1, Just 2),
@@ -278,6 +309,12 @@ task2024_20 = MatchCdOdConfig {
   allowedCdMutations = [
     AddRelationship
     ],
+  cdConstraints = CdConstraints {
+    anyCompositionCyclesInvolveInheritances = Nothing,
+    preventWholePartCycles = False,
+    preventIsolatedClasses = False,
+    onlyCommonMultiplicities = Nothing
+    },
   classConfig = ClassConfig {
     classLimits = (5, 5),
     aggregationLimits = (1, Just 1),
@@ -326,6 +363,12 @@ task2024_57 = MatchCdOdConfig {
   allowedCdMutations = [
     MutateRelationship ChangeLimit
     ],
+  cdConstraints = CdConstraints {
+    anyCompositionCyclesInvolveInheritances = Nothing,
+    preventWholePartCycles = False,
+    preventIsolatedClasses = False,
+    onlyCommonMultiplicities = Nothing
+    },
   classConfig = ClassConfig {
     classLimits = (5, 5),
     aggregationLimits = (2, Just 2),
@@ -375,6 +418,12 @@ task2024_58 = MatchCdOdConfig {
     MutateRelationship FlipInheritance,
     MutateRelationship FlipNonInheritance
     ],
+  cdConstraints = CdConstraints {
+    anyCompositionCyclesInvolveInheritances = Nothing,
+    preventWholePartCycles = False,
+    preventIsolatedClasses = False,
+    onlyCommonMultiplicities = Nothing
+    },
   classConfig = ClassConfig {
     classLimits = (5, 5),
     aggregationLimits = (1, Just 1),
@@ -423,6 +472,12 @@ task2024_59 = MatchCdOdConfig {
   allowedCdMutations = [
     MutateRelationship ChangeKind
     ],
+  cdConstraints = CdConstraints {
+    anyCompositionCyclesInvolveInheritances = Nothing,
+    preventWholePartCycles = False,
+    preventIsolatedClasses = False,
+    onlyCommonMultiplicities = Nothing
+    },
   classConfig = ClassConfig {
     classLimits = (5, 5),
     aggregationLimits = (1, Just 2),
