@@ -446,7 +446,7 @@ checkSemantics _ inst@NameCdErrorInstance{..} (scReason, mcCauses) = addPretext 
         $ map (second (contributingToProblem . annotation))
         relevant
       correctAnswer
-        | showSolution = Just (True, DefiniteArticle, replace "reason" "statement" $ toString $ encode $ nameCdErrorSolution inst)
+        | showSolution = Just (True, DefiniteArticle, replace "answer" "statement" $ toString $ encode $ nameCdErrorSolution inst)
         | otherwise = Nothing
   recoverWith 0 (
     singleChoice reasonTranslation Nothing solutionReason xReason
@@ -553,4 +553,3 @@ parseSubmission ::
   => String
   -> LangM' (ReportT o m) Submission
 parseSubmission = parseWithOrReport formParser reportWithFieldNumber
-
