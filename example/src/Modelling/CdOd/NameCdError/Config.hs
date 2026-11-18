@@ -446,3 +446,129 @@ used as: NameCdErrorFormInputSelectionUnAvailable-Quiz
 -}
 task2025_repeat_06 :: NameCdErrorConfig
 task2025_repeat_06 = task2024_10
+
+{-|
+points: 0.15
+the amount of generated instances: 100
+maximum concurrent amount of tasks: 20
+average generation time per instance on the cluster (without considering concurrency): 2:24min
+total run time on the cluster (not including queuing time): 13:25min
+average CPU usage: 106.91%
+average memory usage: 1289.42 MB
+used as: NameCdErrorFormInputSelectionUnAvailable-Quiz
+-}
+task2026_04 :: NameCdErrorConfig
+task2026_04 = task2024_10
+
+{-|
+points: 0.15
+the amount of generated instances: 100
+maximum concurrent amount of tasks: 20
+average generation time per instance on the cluster (without considering concurrency): 1:14min
+total run time on the cluster (not including queuing time): 6:40min
+average CPU usage: 109.47%
+average memory usage: 1220.43 MB
+used as: NameCdErrorFormInputSelectionUnAvailable-Quiz
+-}
+task2026_05 :: NameCdErrorConfig
+task2026_05 = task2024_11
+
+{-|
+points: 0.2
+the amount of generated instances: 100
+maximum concurrent amount of tasks: 100
+variant 2: semantic variant, finding a specific relationship into an invalid cycle
+the number of finally assigned instances: 77
+average generation time per instance on the cluster (without considering concurrency): 1:26min
+total run time on the cluster (not including queuing time): 1:33min
+average CPU usage: 107.97%
+average memory usage: 1198.23 MB
+used as: NameCdErrorFormInputSelectionUnAvailable-Quiz
+-}
+task2026_06 :: NameCdErrorConfig
+task2026_06 = NameCdErrorConfig
+    { allowedProperties =
+        AllowedProperties
+          { compositionCycles = False,
+            doubleRelationships = True,
+            inheritanceCycles = True,
+            invalidInheritanceLimits = False,
+            reverseInheritances = False,
+            reverseRelationships = False,
+            selfInheritances = False,
+            selfRelationships = False,
+            wrongAssociationLimits = False,
+            wrongCompositionLimits = False
+          },
+      articleToUse = UseDefiniteArticleWherePossible,
+      cdConstraints =
+        CdConstraints
+          { anyCompositionCyclesInvolveInheritances = Nothing,
+            preventWholePartCycles = True,
+            preventIsolatedClasses = True,
+            onlyCommonMultiplicities = Just True
+          },
+      classConfig =
+        ClassConfig
+          { classLimits = (5, 5),
+            aggregationLimits = (0, Just 1),
+            associationLimits = (3, Just 3),
+            compositionLimits = (1, Just 1),
+            inheritanceLimits = (3, Just 3),
+            relationshipLimits = (7, Just 8)
+          },
+      drawSettings =
+        CdDrawSettings
+          { omittedDefaults =
+              OmittedDefaultMultiplicities
+                { aggregationWholeOmittedDefaultMultiplicity = Just (0, Nothing),
+                  associationOmittedDefaultMultiplicity = Just (0, Nothing),
+                  compositionWholeOmittedDefaultMultiplicity = Nothing
+                },
+            printNames = True,
+            printNavigations = False
+          },
+      maxInstances = Just 4000,
+      objectProperties =
+        ObjectProperties
+          { anonymousObjectProportion = 0 % 1,
+            completelyInhabited = Just True,
+            hasLimitedIsolatedObjects = False,
+            hasSelfLoops = Nothing,
+            usesEveryRelationshipName = Just True
+          },
+      possibleReasons =
+        [ PreDefined CompositionCycles,
+          PreDefined DoubleRelationships,
+          PreDefined InheritanceCycles,
+          PreDefined InvalidInheritanceLimits,
+          PreDefined MultipleInheritances,
+          PreDefined ReverseInheritances,
+          PreDefined ReverseRelationships,
+          PreDefined SelfInheritances,
+          PreDefined SelfRelationships,
+          PreDefined WrongAssociationLimits,
+          PreDefined WrongCompositionLimits
+        ],
+      printSolution = True,
+      reasonsPerInstance =
+        NumberOfReasons
+          { customReasons = 0,
+            preDefinedInvalid = 6,
+            preDefinedValid = 4
+          },
+      timeout = Nothing,
+      useNames = True,
+      extraTexts = []
+    }
+
+{-|
+points: 0.2
+shared same instances and concept injection as task2026_06 (77/100)
+variant 3: scenario variant, a fully correct model matching the scenario description or finding a specific relationship violating the description
+the number of finally assigned instances: 34
+used LLM for story generation: Qwen3.6-35b-a3b
+used as: NameCdErrorFormInputSelectionUnAvailable-Quiz
+-}
+task2026_07 :: NameCdErrorConfig
+task2026_07 = task2026_06
