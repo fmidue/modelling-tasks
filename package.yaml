@@ -96,6 +96,7 @@ library:
     - Modelling.ActivityDiagram.SelectPetri
     - Modelling.ActivityDiagram.Shuffle
     - Modelling.Auxiliary.Common
+    - Modelling.Auxiliary.Diagrams
     - Modelling.Auxiliary.Shuffle.All
     - Modelling.Auxiliary.Shuffle.NamesAndLayout
     - Modelling.Auxiliary.Output
