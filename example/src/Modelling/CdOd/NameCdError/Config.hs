@@ -84,6 +84,7 @@ task2023_09 = NameCdErrorConfig {
     PreDefined WrongAssociationLimits,
     PreDefined WrongCompositionLimits
     ],
+  printExtendedFeedback = True,
   printSolution = True,
   reasonsPerInstance = NumberOfReasons {
     customReasons = 0,
@@ -159,6 +160,7 @@ task2023_10 = NameCdErrorConfig {
     PreDefined WrongAssociationLimits,
     PreDefined WrongCompositionLimits
     ],
+  printExtendedFeedback = True,
   printSolution = True,
   reasonsPerInstance = NumberOfReasons {
     customReasons = 0,
@@ -234,6 +236,7 @@ task2024_10 = NameCdErrorConfig {
     PreDefined WrongAssociationLimits,
     PreDefined WrongCompositionLimits
     ],
+  printExtendedFeedback = True,
   printSolution = True,
   reasonsPerInstance = NumberOfReasons {
     customReasons = 0,
@@ -309,6 +312,7 @@ task2024_11 = NameCdErrorConfig {
     PreDefined WrongAssociationLimits,
     PreDefined WrongCompositionLimits
     ],
+  printExtendedFeedback = True,
   printSolution = True,
   reasonsPerInstance = NumberOfReasons {
     customReasons = 0,
@@ -384,6 +388,7 @@ task2024_54 = NameCdErrorConfig {
     PreDefined WrongAssociationLimits,
     PreDefined WrongCompositionLimits
     ],
+  printExtendedFeedback = True,
   printSolution = True,
   reasonsPerInstance = NumberOfReasons {
     customReasons = 0,

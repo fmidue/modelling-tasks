@@ -155,7 +155,7 @@ import Modelling.CdOd.Types (
 import Modelling.Types                  (Change (..))
 
 import Control.Applicative              (Alternative ((<|>)))
-import Control.Monad                    (when)
+import Control.Monad                    (when, unless)
 import Control.Monad.Catch              (MonadCatch, MonadThrow)
 import Control.Monad.Extra              (allM)
 import Control.OutputCapable.Blocks (
@@ -284,6 +284,7 @@ data NameCdErrorConfig = NameCdErrorConfig {
   maxInstances                :: Maybe Integer,
   objectProperties            :: ObjectProperties,
   possibleReasons             :: [Reason],
+  printExtendedFeedback       :: Bool,
   printSolution               :: Bool,
   reasonsPerInstance          :: NumberOfReasons,
   timeout                     :: Maybe Int,
@@ -319,6 +320,7 @@ defaultNameCdErrorConfig = NameCdErrorConfig {
     usesEveryRelationshipName = Just True
     },
   possibleReasons = map PreDefined [minBound ..],
+  printExtendedFeedback = True,
   printSolution = True,
   reasonsPerInstance = NumberOfReasons {
     customReasons = 0,
@@ -460,6 +462,10 @@ data NameCdErrorInstance = NameCdErrorInstance {
   classDiagram                :: AnnotatedCd Relevance,
   cdDrawSettings              :: !CdDrawSettings,
   errorReasons                :: !(Map Char (Bool, Reason)),
+  -- | whether to show, in case of a not fully correct answer,
+  -- how the class diagram would look like
+  -- after removing the relationships given as contributing to the problem
+  showExtendedFeedback        :: Bool,
   showSolution                :: Bool,
   taskText                    :: !NameCdErrorTaskText,
   addTexts                    :: [ExtraText]
@@ -680,15 +686,15 @@ nameCdErrorEvaluation
   :: (
     Alternative m,
     MonadCache m,
-    -- MonadDiagrams m,
-    -- MonadGraphviz m,
+    MonadDiagrams m,
+    MonadGraphviz m,
     OutputCapable m
     )
   => FilePath
   -> NameCdErrorInstance
   -> NameCdErrorAnswer
   -> Rated m
-nameCdErrorEvaluation _path inst@NameCdErrorInstance {..} x = addPretext $ do
+nameCdErrorEvaluation path inst@NameCdErrorInstance {..} x = addPretext $ do
   let reasonTranslation = M.fromAscList [
         (English, "reason"),
         (German, "Grund")
@@ -714,45 +720,43 @@ nameCdErrorEvaluation _path inst@NameCdErrorInstance {..} x = addPretext $ do
         (dueTo x)
     )
     $>>= \points ->
-    -- TODO: feedback temporarily dropped,
-    -- should be added back in later, guarded by a config option
-    --  unless (points == Right 1 || null (dueTo x) || all not solutionDueTo) (do
-    --   paragraph $ translate classDiagramDescription
-    --   paragraph $ image $=<< cacheCd cdDrawSettings mempty Nothing changedCd path
-    --   pure ()
-    --  )
-    -- $>>
-    printSolutionAndAssert correctAnswer $ fromEither points
+      when showExtendedFeedback (
+        unless (points == Right 1 || null (dueTo x) || all not solutionDueTo) $ do
+          paragraph $ translate classDiagramDescription
+          paragraph $ image $=<< cacheCd cdDrawSettings mempty Nothing changedCd path
+          pure ()
+      )
+    $>> printSolutionAndAssert correctAnswer $ fromEither points
   where
     relevant = relevantRelationships inst
-    -- changedCd = unannotateCd $ classDiagram {
-    --   annotatedRelationships = annotatedRelationships classDiagram
-    --     \\ map snd chosenRelevant
-    --   }
-    -- chosenRelevant = filter ((`elem` nubOrd (dueTo x)) . fst) relevant
-    -- classDiagramDescription
-    --   | any (contributingToProblem . annotation . snd) chosenRelevant = do
-    --     english [iii|
-    --       Nevertheless, the removal of all relationships you gave as
-    --       contributing to the problem results in resolving the invalidity
-    --       as the class diagram would then look like this:
-    --       |]
-    --     german [iii|
-    --       Dennoch behebt das Entfernen aller von Ihnen als zum Problem beitragend
-    --       angegebenen Beziehungen die Ungültigkeit,
-    --       da das Klassendiagramm dann so aussehen würde:
-    --       |]
-    --   | otherwise = do
-    --     english [iii|
-    --       The removal of all relationships you gave as contributing to the problem
-    --       still does not resolve the underlying issue
-    --       as the class diagram would then look like this and still be invalid:
-    --       |]
-    --     german [iii|
-    --       Das Entfernen aller von Ihnen als zum Problem beitragend angegebenen
-    --       Beziehungen behebt das vorliegende Problem nicht,
-    --       da das Klassendiagramm dann so aussehen würde und immer noch ungültig wäre:
-    --       |]
+    changedCd = unannotateCd $ classDiagram {
+      annotatedRelationships = annotatedRelationships classDiagram
+        \\ map snd chosenRelevant
+      }
+    chosenRelevant = filter ((`elem` nubOrd (dueTo x)) . fst) relevant
+    classDiagramDescription
+      | any (contributingToProblem . annotation . snd) chosenRelevant = do
+        english [iii|
+          Nevertheless, the removal of all relationships you gave as
+          contributing to the problem results in resolving the invalidity
+          as the class diagram would then look like this:
+          |]
+        german [iii|
+          Dennoch behebt das Entfernen aller von Ihnen als zum Problem beitragend
+          angegebenen Beziehungen die Ungültigkeit,
+          da das Klassendiagramm dann so aussehen würde:
+          |]
+      | otherwise = do
+        english [iii|
+          The removal of all relationships you gave as contributing to the problem
+          still does not resolve the underlying issue
+          as the class diagram would then look like this and still be invalid:
+          |]
+        german [iii|
+          Das Entfernen aller von Ihnen als zum Problem beitragend angegebenen
+          Beziehungen behebt das vorliegende Problem nicht,
+          da das Klassendiagramm dann so aussehen würde und immer noch ungültig wäre:
+          |]
 
 nameCdErrorSolution :: NameCdErrorInstance -> NameCdErrorAnswer
 nameCdErrorSolution x = NameCdErrorAnswer {
@@ -787,6 +791,7 @@ instance RandomiseLayout NameCdErrorInstance where
       cdDrawSettings = cdDrawSettings,
       classDiagram = cd,
       errorReasons = errorReasons,
+      showExtendedFeedback = showExtendedFeedback,
       showSolution = showSolution,
       taskText = taskText,
       addTexts = addTexts
@@ -809,6 +814,7 @@ shuffleInstance NameCdErrorInstance {..} = do
         (annotatedRelationships classDiagram)
       },
     errorReasons = rs,
+    showExtendedFeedback = showExtendedFeedback,
     showSolution = showSolution,
     taskText = taskText,
     addTexts = addTexts
@@ -840,6 +846,7 @@ renameInstance inst@NameCdErrorInstance {..} names' nonInheritances' = do
     cdDrawSettings = cdDrawSettings,
     classDiagram = cd,
     errorReasons = errorReasons,
+    showExtendedFeedback = showExtendedFeedback,
     showSolution = showSolution,
     taskText = taskText,
     addTexts = addTexts
@@ -885,6 +892,7 @@ generateAndRandomise withRelationshipChoices config@NameCdErrorConfig {..} = do
     errorReasons = M.fromAscList $ zip ['a' ..]
       $ (True, PreDefined reason)
       : map (False,) chosenReasons,
+    showExtendedFeedback = printExtendedFeedback,
     showSolution = printSolution,
     taskText = nameCdErrorTaskText withRelationshipChoices,
     addTexts = extraTexts
@@ -1126,6 +1134,7 @@ defaultNameCdErrorInstance = NameCdErrorInstance {
     ('j', (False, PreDefined MultipleInheritances)),
     ('k', (False, PreDefined ReverseRelationships))
     ],
+  showExtendedFeedback = True,
   showSolution = True,
   taskText = nameCdErrorTaskText True,
   addTexts = []
