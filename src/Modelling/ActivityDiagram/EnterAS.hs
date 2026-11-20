@@ -29,7 +29,7 @@ import Autolib.Reader                   (Reader)
 import Autolib.ToDoc                    (ToDoc)
 import Capabilities.Alloy               (MonadAlloy, getInstances)
 import Capabilities.PlantUml            (MonadPlantUml)
-import Capabilities.WriteFile           (MonadWriteFile)
+import Capabilities.Cache               (MonadCache)
 import Modelling.ActivityDiagram.ActionSequences (
   generateActionSequencesWithPetri,
   netAndMap,
@@ -225,7 +225,7 @@ enterActionSequence petri =
   EnterASSolution {sampleSolution = head $ generateActionSequencesWithPetri petri Nothing}
 
 enterASTask
-  :: (MonadPlantUml m, MonadWriteFile m, OutputCapable m)
+  :: (MonadPlantUml m, MonadCache m, OutputCapable m)
   => Bool
   -> FilePath
   -> EnterASInstance

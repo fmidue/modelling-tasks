@@ -13,14 +13,14 @@ module Modelling.ActivityDiagram.PlantUMLConverter (
 
 import Data.ByteString (ByteString)
 import Data.List ( delete, intercalate, intersect, union )
-import Data.String.Interpolate ( i, __i )
+import Data.String.Interpolate ( __i )
 import GHC.Generics (Generic)
 
 import Autolib.Hash                     (Hashable)
 import Autolib.Reader                   (Reader)
 import Autolib.ToDoc                    (ToDoc)
 import Capabilities.PlantUml            (MonadPlantUml (drawPlantUmlSvg))
-import Capabilities.WriteFile           (MonadWriteFile (writeToFile))
+import Capabilities.Cache               (MonadCache, cache)
 import Modelling.ActivityDiagram.Datatype (
   AdNode (..),
   UMLActivityDiagram(..),
@@ -41,18 +41,13 @@ defaultPlantUmlConfig = PlantUmlConfig {
 }
 
 drawAdToFile
-  :: (MonadPlantUml m, MonadWriteFile m)
+  :: (MonadPlantUml m, MonadCache m)
   => FilePath
   -> PlantUmlConfig
   -> UMLActivityDiagram
   -> m FilePath
-drawAdToFile path conf ad = do
-  renderedAd <- drawPlantUmlSvg $ convertToPlantUML' conf ad
-  writeToFile adFilename renderedAd
-  return adFilename
-  where
-    adFilename :: FilePath
-    adFilename = [i|#{path}Diagram.svg|]
+drawAdToFile path conf ad = cache path ".svg" "ActivityDiagram-" (conf,ad)
+  $ drawPlantUmlSvg . uncurry convertToPlantUML'
 
 convertToPlantUML :: UMLActivityDiagram -> ByteString
 convertToPlantUML = convertToPlantUML' defaultPlantUmlConfig

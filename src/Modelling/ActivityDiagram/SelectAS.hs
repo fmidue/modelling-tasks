@@ -31,7 +31,7 @@ import Autolib.Reader                   (Reader)
 import Autolib.ToDoc                    (ToDoc)
 import Capabilities.Alloy               (MonadAlloy, getInstances)
 import Capabilities.PlantUml            (MonadPlantUml)
-import Capabilities.WriteFile           (MonadWriteFile)
+import Capabilities.Cache               (MonadCache)
 import Modelling.ActivityDiagram.ActionSequences (
   generateActionSequencesWithPetri,
   generateActionSequenceWithPetriAndRepetition,
@@ -300,7 +300,7 @@ asEditDistParams xs = Params
     }
 
 selectASTask
-  :: (MonadPlantUml m, MonadWriteFile m, OutputCapable m)
+  :: (MonadPlantUml m, MonadCache m, OutputCapable m)
   => Bool
   -> FilePath
   -> SelectASInstance
