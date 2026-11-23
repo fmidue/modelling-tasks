@@ -4,6 +4,7 @@ Aeson
 Aggregationen
 Autolib
 Autotool
+Bézier
 Bifoldable
 Bifunctor
 Bitraversable
@@ -128,6 +129,7 @@ realweltlichen
 refactorings
 scanl
 schrittige
+signorm
 similars
 skolem
 snd

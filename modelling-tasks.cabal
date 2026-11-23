@@ -48,6 +48,7 @@ library
       Modelling.ActivityDiagram.SelectPetri
       Modelling.ActivityDiagram.Shuffle
       Modelling.Auxiliary.Common
+      Modelling.Auxiliary.Diagrams
       Modelling.Auxiliary.Shuffle.All
       Modelling.Auxiliary.Shuffle.NamesAndLayout
       Modelling.Auxiliary.Output
@@ -86,7 +87,6 @@ library
   other-modules:
       Modelling.ActivityDiagram.Auxiliary.ActionSequences
       Modelling.ActivityDiagram.Auxiliary.PetriValidation
-      Modelling.Auxiliary.Diagrams
       Modelling.CdOd.Phrasing.Common
       Modelling.CdOd.Phrasing.English
       Modelling.CdOd.Phrasing.German
@@ -159,6 +159,7 @@ test-suite modelling-tasks-test
       Modelling.ActivityDiagram.PetriNetSpec
       Modelling.ActivityDiagram.SelectASSpec
       Modelling.ActivityDiagram.SelectPetriSpec
+      Modelling.Auxiliary.DiagramsSpec
       Modelling.CdOd.CD2Alloy.TransformSpec
       Modelling.CdOd.CdAndChanges.InstanceSpec
       Modelling.CdOd.DifferentNamesSpec

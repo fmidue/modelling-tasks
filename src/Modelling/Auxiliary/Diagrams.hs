@@ -12,6 +12,7 @@ module Modelling.Auxiliary.Diagrams (
   connectWithPath,
   flipArrow,
   nonEmptyPathBetween,
+  pointAtShiftedBy,
   text',
   textU,
   trailBetween,
@@ -22,6 +23,7 @@ import Control.Lens.Operators           ((.~), (^.))
 import Data.Data                        (Typeable)
 import Data.Function                    ((&))
 import Data.GraphViz                    (DirType (Back, Both, Forward, NoDir))
+import Data.List                        (find)
 import Data.Maybe                       (fromJust, fromMaybe)
 import Data.Semigroup                   (Any)
 import Diagrams.Angle (
@@ -77,14 +79,17 @@ import Diagrams.Prelude (
   fromMeasured,
   negated,
   norm,
+  perp,
+  signorm,
   unP,
   unitX,
   unitY,
+  zero,
   )
 import Diagrams.Tangent (
   Tangent,
-  normalAtParam,
   tangentAtEnd,
+  tangentAtParam,
   tangentAtStart,
   )
 import Diagrams.Trace                   (maxTraceP, traceP)
@@ -532,9 +537,20 @@ dirParam Middle dir
   | dir == Back    = 0.6
   | otherwise      = 0.5
 
+{-|
+The point on the shaft at the given parameter,
+shifted along the normal of the shaft at that point.
+
+If the tangent vanishes at that parameter
+(e.g. on a segment of length zero or at a cusp of a Bézier curve),
+the direction of the shaft around that parameter is used instead,
+considering increasingly larger surroundings.
+If the shaft does not have any direction at all (i.e. is a single point),
+no shifting happens.
+-}
 pointAtShiftedBy
-  :: (Floating (N p), Affine (Codomain p), Parametric p, Parametric (Tangent p),
-      Diff (Codomain p) ~ V2, V p ~ V2)
+  :: (Floating (N p), Ord (N p), Affine (Codomain p), Parametric p,
+      Parametric (Tangent p), Diff (Codomain p) ~ V2, V p ~ V2)
   => p
   -> N p
   -> V2 (N p)
@@ -543,7 +559,13 @@ pointAtShiftedBy
 pointAtShiftedBy shaft param v additionalDistance =
   shaft `atParam` param .-^ n' .-^ additionalDistance * n
   where
-    n = shaft `normalAtParam` param
+    n = maybe zero (negated . perp . signorm)
+      $ find ((> epsilon) . norm) directions
+    directions = shaft `tangentAtParam` param
+      : map chord (takeWhile (< 2) $ iterate (* 2) 0.001)
+    chord d = shaft `atParam` min 1 (param + d)
+      .-. shaft `atParam` max 0 (param - d)
+    epsilon = 1e-6 -- an experimental threshold for the vanishing tangent
     x = v ^. _x
     y = v ^. _y
     n' = scaleX (abs x) . scaleY (abs y) $ n
