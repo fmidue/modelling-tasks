@@ -228,7 +228,7 @@ import Text.Parsec                      (parserFail, parserReturn)
 import Text.ParserCombinators.Parsec    (Parser, anyToken, many)
 
 data NameCdErrorAnswer = NameCdErrorAnswer {
-  reason                      :: Char,
+  answer                      :: Char,
   dueTo                       :: [Int]
   } deriving (Generic, Read, Show)
 
@@ -589,23 +589,23 @@ inputHelpText = [
         von deren individueller Präsenz die Ungültigkeit abhängt.
         Zum Beispiel würde
         |],
-    Paragraph $ singleton $ Code $ uniform $ showNameCdErrorAnswer answer,
+    Paragraph $ singleton $ Code $ uniform $ showNameCdErrorAnswer theAnswer,
     Paragraph $ singleton $ Translated $ translations $ do
       english [iii|
         would indicate that the class diagram is invalid
-        because of reason #{singleton $ reason answer}
+        because of reason #{singleton $ answer theAnswer}
         and that the #{dueTo1}. and #{dueTo2}. relationship (appearing together)
         create the invalidity.
         |]
       german [iii|
-        bedeuten, dass das Klassendiagramm wegen Grund #{singleton $ reason answer} ungültig ist
+        bedeuten, dass das Klassendiagramm wegen Grund #{singleton $ answer theAnswer} ungültig ist
         und dass die #{dueTo1}. und #{dueTo2}. Beziehung (zusammen auftretend)
         die Ungültigkeit erzeugen.
         |]
     ]
   ]
   where
-    answer = defaultNameCdErrorAnswer
+    theAnswer = defaultNameCdErrorAnswer
 
 nameCdErrorTask
   :: (MonadCache m, MonadDiagrams m, MonadGraphviz m, OutputCapable m)
@@ -631,7 +631,7 @@ dueTo2 = 4
 
 defaultNameCdErrorAnswer :: NameCdErrorAnswer
 defaultNameCdErrorAnswer = NameCdErrorAnswer {
-  reason = 'b',
+  answer = 'b',
   dueTo = [dueTo1, dueTo2]
   }
 
@@ -657,7 +657,7 @@ nameCdErrorSyntax inst x = do
   paragraph $ translate $ do
     english "Regarding the chosen reason:"
     german "Hinsichtlich des gewählten Grundes:"
-  singleChoiceSyntax False (M.keys $ errorReasons inst) $ reason x
+  singleChoiceSyntax False (M.keys $ errorReasons inst) $ answer x
   if null (dueTo x)
     then
       paragraph $ translate $ do
@@ -674,7 +674,7 @@ nameCdErrorSyntax inst x = do
 {-| Grading is done the following way:
 
  * 0 points if the reason is wrong
- * otherwise, multiple choice grading for answer on dueTo relationships
+ * otherwise, multiple choice grading on dueTo relationships
 -}
 nameCdErrorEvaluation
   :: (
@@ -706,7 +706,7 @@ nameCdErrorEvaluation _path inst@NameCdErrorInstance {..} x = addPretext $ do
           $ toString $ encode $ nameCdErrorSolution inst
         | otherwise = Nothing
   recoverWith 0 (
-    singleChoice reasonTranslation Nothing solutionReason (reason x)
+    singleChoice reasonTranslation Nothing solutionReason (answer x)
       $>> multipleChoice
         (Just dueToTranslation)
         Nothing
@@ -756,7 +756,7 @@ nameCdErrorEvaluation _path inst@NameCdErrorInstance {..} x = addPretext $ do
 
 nameCdErrorSolution :: NameCdErrorInstance -> NameCdErrorAnswer
 nameCdErrorSolution x = NameCdErrorAnswer {
-  reason = head . M.keys . M.filter fst $ errorReasons x,
+  answer = head . M.keys . M.filter fst $ errorReasons x,
   dueTo = map fst
     . filter (contributingToProblem . annotation . snd)
     $ relevantRelationships x

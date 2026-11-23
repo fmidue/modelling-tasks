@@ -40,8 +40,8 @@ stack ghci --stack-yaml=stack-examples.yaml  --package=autotool-capabilities-io-
 :m + Control.OutputCapable.Blocks Control.OutputCapable.Blocks.Generic
 inst <- nameCdErrorGenerate True defaultNameCdErrorConfig 0 0
 runLangMReport (return ()) (>>) (nameCdErrorTask False True "/tmp/" inst) >>= \(Just (), x) -> (x English :: IO ())
-runLangMReport (return ()) (>>) (nameCdErrorSyntax inst NameCdErrorAnswer {reason = 'b', dueTo = [1,2,4]}) >>= \(Just (), x) -> (x English :: IO ())
-runLangMReport (return ()) (>>) (nameCdErrorEvaluation "/tmp/" inst NameCdErrorAnswer {reason = 'b', dueTo = [1,2,4]}) >>= \(r, x) -> (x English :: IO ()) >> return r :: IO (Maybe Rational)
+runLangMReport (return ()) (>>) (nameCdErrorSyntax inst NameCdErrorAnswer {answer = 'b', dueTo = [1,2,4]}) >>= \(Just (), x) -> (x English :: IO ())
+runLangMReport (return ()) (>>) (nameCdErrorEvaluation "/tmp/" inst NameCdErrorAnswer {answer = 'b', dueTo = [1,2,4]}) >>= \(r, x) -> (x English :: IO ()) >> return r :: IO (Maybe Rational)
 ```
 
 For running all steps at once in `ghci`, the following approach is also possible:
