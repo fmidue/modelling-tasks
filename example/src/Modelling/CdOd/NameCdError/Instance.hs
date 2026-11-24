@@ -166,6 +166,7 @@ task2024_14 = ShuffleInstance {
         (German, "hält eine Vorgabe des Szenarios nicht ein")
         ])))
       ],
+    showExtendedFeedback = True,
     showSolution = True,
     taskText = [
       Paragraph [
