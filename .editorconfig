@@ -28,6 +28,3 @@ max_line_length = unset
 
 [**.{yml,yaml,md,tex,cabal}]
 max_line_length = unset
-
-[biome.json]
-indent_style = tab

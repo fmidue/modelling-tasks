@@ -4,7 +4,10 @@
   "IgnoreDefaults": false,
   "SpacesAftertabs": false,
   "NoColor": false,
-  "exclude": ["\\.cabal$", "example/.*/Instance\\.hs"],
+  "exclude": [
+    "\\.cabal$",
+    "example/.*/Instance\\.hs"
+  ],
   "AllowedContentTypes": [],
   "PassedFiles": [],
   "Disable": {

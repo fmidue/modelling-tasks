@@ -35,5 +35,6 @@ jobs:
           # Disable - overly strict for this project, apparently
           VALIDATE_GITHUB_ACTIONS_ZIZMOR: false
           VALIDATE_YAML_PRETTIER: false
+          VALIDATE_JSON_PRETTIER: false
           VALIDATE_SPELL_CODESPELL: false
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
